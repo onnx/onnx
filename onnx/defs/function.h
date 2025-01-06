@@ -141,20 +141,33 @@ class FunctionBuilder {
     return Add(node_txt, MakeAttribute(attr_name, attr_value));
   }
 
-  template <typename... Args>
-  FunctionBuilder& Add(const char* node_txt, Args... args) {
-    if constexpr (sizeof...(args) % 2 == 0) {
-      return AddAttributes(node_txt, args...);
+  template <typename T>
+  FunctionBuilder& AddAttributeToNode(const std::string& attr_name, const T& attr_value) {
+    auto& nodes = *funProto.mutable_node();
+    int nodes_size = nodes.size();
+    if (nodes_size != 0) {
+      auto& node = *funProto.mutable_node(nodes_size - 1);
+      *node.add_attribute() =  MakeAttribute(attr_name, attr_value);
     }
+    return *this;
   }
 
   template <typename T, typename... Args>
-  FunctionBuilder& AddAttributes(const char* node_txt, const std::string& attr_name, const T& attr_value, Args... args) {
-    Add(node_txt, MakeAttribute(attr_name, attr_value));
+  FunctionBuilder& AddAttributes(const std::string& attr_name, const T& attr_value, Args... args) {
+    AddAttributeToNode(attr_name, attr_value);
     if constexpr (sizeof...(args) > 0) {
-      AddAttributes(node_txt, args...);
+      AddAttributes(args...);
     }
     return *this;
+  }
+
+  // Adds variable number of attributes to a node
+  template <typename... Args>
+  FunctionBuilder& Add(const char* node_txt, Args... args) {
+    Add(node_txt);
+    if constexpr (sizeof...(args) % 2 == 0) {
+      return AddAttributes(args...);
+    }
   }
 
   FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {

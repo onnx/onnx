@@ -29062,7 +29062,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>X</tt> : T</dt>
 <dd>The output of the layer for which the skip connection is being created. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
 <dt><tt>scale</tt> : V</dt>
-<dd>Scale tensor. Shape is the normalized shape ([axis, .., Dn]) or a scalar (which will be broadcasted to the normalized shape.</dd>
+<dd>Scale tensor. Scale tensor shape should be broadcastable to the normalized shape ([axis, .., Dn]).</dd>
 </dl>
 
 #### Outputs

@@ -17,13 +17,13 @@ def _skip_rms_normalization(
     axis: int = -1,
     epsilon: float = 1e-5,
     scaling_factor: int = 1,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     input_skip_sum = X + (S * scaling_factor)
     if B is not None:
         input_skip_bias_sum = input_skip_sum + B
     else:
         input_skip_bias_sum = input_skip_sum
-    output, _, _ = _rms_normalization(input_skip_bias_sum, gamma, epsilon=epsilon, axis=axis)
+    output = _rms_normalization(input_skip_bias_sum, gamma, epsilon=epsilon, axis=axis)
     return output, input_skip_bias_sum
 
 
