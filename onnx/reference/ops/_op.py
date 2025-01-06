@@ -8,10 +8,7 @@ from typing import Any
 import numpy as np
 
 from onnx.onnx_pb import NodeProto
-from onnx.reference.custom_element_types import (
-    convert_from_ml_dtypes,
-    convert_to_ml_dtypes,
-)
+from from onnx.reference import custom_element_types
 from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 
@@ -27,7 +24,7 @@ class OpRunUnary(OpRun):
         Supports only unary operators.
         """
         self._log("-- begin %s.run(1 input)", self.__class__.__name__)
-        x = convert_to_ml_dtypes(x)
+        x = custom_element_types.convert_to_ml_dtypes(x)
         try:
             res = self._run(x)
         except TypeError as e:
@@ -35,7 +32,7 @@ class OpRunUnary(OpRun):
                 f"Issues with types {', '.join(str(type(_)) for _ in [x])} "
                 f"(unary operator {self.__class__.__name__!r})."
             ) from e
-        res = (convert_from_ml_dtypes(res[0]),)
+        res = (custom_element_types.convert_from_ml_dtypes(res[0]),)
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
         return self._check_and_fix_outputs(res)
 
@@ -85,8 +82,8 @@ class OpRunBinary(OpRun):
                 f"(operator '{self.__class__.__name__!r}', "
                 f"shapes {x.shape}, {y.shape})."
             )
-        x = convert_to_ml_dtypes(x)
-        y = convert_to_ml_dtypes(y)
+        x = custom_element_types.convert_to_ml_dtypes(x)
+        y = custom_element_types.convert_to_ml_dtypes(y)
         try:
             res = self._run(x, y)
         except (TypeError, ValueError) as e:
@@ -94,7 +91,7 @@ class OpRunBinary(OpRun):
                 f"Issues with types {', '.join(str(type(_)) for _ in [x, y])} "
                 f"(binary operator {self.__class__.__name__!r})."
             ) from e
-        res = (convert_from_ml_dtypes(res[0]),)
+        res = (custom_element_types.convert_from_ml_dtypes(res[0]),)
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
         return self._check_and_fix_outputs(res)
 
@@ -133,10 +130,10 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         self.numpy_fct = numpy_fct
 
     def _run(self, a, b):  # type: ignore
-        a = convert_to_ml_dtypes(a)
-        b = convert_to_ml_dtypes(b)
+        a = custom_element_types.convert_to_ml_dtypes(a)
+        b = custom_element_types.convert_to_ml_dtypes(b)
         res = (self.numpy_fct(a, b),)
-        res = (convert_from_ml_dtypes(res[0]),)
+        res = (custom_element_types.convert_from_ml_dtypes(res[0]),)
         return self._check_and_fix_outputs(res)
 
 
