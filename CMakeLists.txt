@@ -492,6 +492,7 @@ else()
   set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
+target_compile_features(onnx_proto PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
