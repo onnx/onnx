@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 try:
-
+    import ml_dtypes
 except ImportError:
     ml_dtypes = None  # type: ignore[assignment]
 
@@ -43,8 +43,10 @@ def convert_from_ml_dtypes(array: np.ndarray) -> np.ndarray:
         array: Numpy array with a dtype from ml_dtypes.
 
     Returns:
-        numpy array if
+        Numpy array viewed with a dtype from ONNX custom types.
     """
+    if ml_dtypes is None:
+        return array
     for dtype, _, ml_name in _SUPPORTED_TYPES:
         ml_dtype = getattr(ml_dtypes, ml_name, None)
         if ml_dtype == array.dtype:
@@ -57,18 +59,18 @@ def convert_to_ml_dtypes(array: np.ndarray) -> np.ndarray:
     defined in ``ml_dtypes`` if installed.
 
     Args:
-        array: array
+        array: Numpy array with a native dtype or custom ONNX dtype.
 
     Returns:
-        numpy Numpy array with a dtype from ml_dtypes.
+        Numpy array with a dtype from ml_dtypes.
     """
     ml_dtype_name = _ONNX_NAME_TO_ML_DTYPE_NAME.get(array.dtype.descr[0][0], None)
     if ml_dtype_name is None:
+        # The type is not a custom type
         return array
     if ml_dtypes is None:
         raise RuntimeError(
             f"ml_dtypes is not installed and the tensor cannot "
-            f"be converted into ml_dtypes.{array.dtype.descr[0][0]}"
+            f"be converted into ml_dtypes.{ml_dtype_name}"
         )
-
     return array.view(dtype=getattr(ml_dtypes, ml_dtype_name))
