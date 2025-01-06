@@ -91,7 +91,8 @@ def rotary_embedding(
 
 
 class RotaryEmbedding(OpRun):
-    def _run(self,
+    def _run(
+        self,
         input: np.ndarray,
         cos_cache: np.ndarray,
         sin_cache: np.ndarray,
@@ -101,10 +102,14 @@ class RotaryEmbedding(OpRun):
         num_heads=None,
     ) -> np.ndarray:
 
-        return (rotary_embedding(
-            input, cos_cache, sin_cache,
-            position_ids=position_ids,
-            interleaved=interleaved,
-            rotary_embedding_dim=rotary_embedding_dim,
-            num_heads=num_heads,
-        ),)  # type: ignore
+        return (
+            rotary_embedding(
+                input,
+                cos_cache,
+                sin_cache,
+                position_ids=position_ids,
+                interleaved=interleaved,
+                rotary_embedding_dim=rotary_embedding_dim,
+                num_heads=num_heads,
+            ),
+        )  # type: ignore

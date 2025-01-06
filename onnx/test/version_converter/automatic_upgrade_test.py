@@ -1112,7 +1112,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             23,
             [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
             [[2, 3, 4, 8]],
-            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
             [TensorProto.FLOAT],
         )
 
@@ -1122,7 +1127,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             23,
             [[2, 3, 32], [50, 4], [50, 4], [2, 3]],
             [[2, 3, 32]],
-            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
             [TensorProto.FLOAT],
             attrs={"num_heads": 4},
         )
@@ -1133,7 +1143,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             23,
             [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
             [[2, 3, 4, 8]],
-            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
             [TensorProto.FLOAT],
             attrs={"interleaved": 1},
         )
@@ -1144,7 +1159,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             23,
             [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
             [[2, 3, 4, 8]],
-            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
             [TensorProto.FLOAT],
             attrs={"rotary_embedding_dim": 4},
         )

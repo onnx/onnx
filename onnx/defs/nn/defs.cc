@@ -3001,12 +3001,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           FunctionBuilder builder(functionProto);
           // Set input tensor to the correct shape if input shape is 3D
           // NewShape = [batch_size, sequence_length, num_heads, head_size]
-          builder
-              .Add("BatchSize = Shape <start = 0, end = 1> (X)") // batch size
+          builder.Const1D("Zero1D", (int64_t)0)
               .Const1D("NumHeads", num_heads) // num_heads
-              .Add("SeqLen = Shape <start = 1, end = 2> (X)") // sequence_length
               .Const1D("NegOne", (int64_t)(-1)) // head_size, inferred from other dimensions
-              .Add("NewShape = Concat <axis = 0> (BatchSize, SeqLen, NumHeads, NegOne)")
+              .Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
               .Add("XReshaped = Reshape (X, NewShape)");
 
           // Rotary embedding dimension is the value along which the input is to be split
@@ -3022,7 +3020,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("RotaryEmbedDim = Identity(HeadSize)");
           }
           builder.Const1D("Two1D", (int64_t)2)
-              .Const1D("Zero1D", (int64_t)0)
               .Add("NoRotateLength = Sub(HeadSize, RotaryEmbedDim)")
               .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
           // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
