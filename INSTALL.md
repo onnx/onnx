@@ -71,7 +71,7 @@ You can get Protobuf by running the following commands:
 ```bat
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v29.2
+git checkout v5.29.2
 cd cmake
 cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
 cmake --build . --config Release --target install
@@ -111,8 +111,7 @@ Ubuntu 20.04 (and newer) users may choose to install Protobuf via
 ```sh
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
 ```
-
-In this case, it is required to add `-DONNX_USE_PROTOBUF_SHARED_LIBS=ON` to CMAKE_ARGS in the ONNX build step.
+In this case, ONNX is able to detect and use the system Profobuf. Users of other Linux distributions can use their system package manager to install Profobuf libraries similarly.
 
 A more general way is to build and install it from source. See the instructions below for more details.
 
@@ -122,7 +121,7 @@ A more general way is to build and install it from source. See the instructions 
 ```sh
   git clone https://github.com/protocolbuffers/protobuf.git
   cd protobuf
-  git checkout v29.2
+  git checkout v5.29.2
   git submodule update --init --recursive
   mkdir build_source && cd build_source
   cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
@@ -131,7 +130,7 @@ A more general way is to build and install it from source. See the instructions 
 
   Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
 
-  Once build is successful, update PATH to include Protobuf paths.
+  Once build is successful, update PATH to include Protobuf paths so that ONNX can find Protobuf.
 
 </details>
 
@@ -153,14 +152,14 @@ brew update
 brew install cmake
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v29.2
+git checkout v5.29.2
 git submodule update --init --recursive
 mkdir build_source && cd build_source
 cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
 cmake --build . --target install
 ```
 
-Once build is successful, update PATH to include Protobuf paths.
+Once build is successful, update PATH to include Protobuf paths so that ONNX can find Protobuf.
 
 Then you can build ONNX as:
 
