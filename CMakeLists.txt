@@ -192,11 +192,11 @@ else()
       set(Protobuf_USE_STATIC_LIBS ON)
     endif()
     find_package(Protobuf)
-    if (Protobuf_FOUND)
+    if(Protobuf_FOUND)
       set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
       set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
       set(Build_Protobuf OFF)
-      if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
+      if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
         # There are extra dependencies for protobuf.
         find_package(absl REQUIRED)
         find_package(utf8_range REQUIRED)
@@ -246,7 +246,7 @@ else()
   else()  # Protobuf_PROTOC_EXECUTABLE not found.
     set(Build_Protobuf ON)
   endif()
-  if (Build_Protobuf)
+  if(Build_Protobuf)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
     set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
 
@@ -586,7 +586,7 @@ if(ONNX_BUILD_PYTHON)
                                   "-Wl,--no-whole-archive")
     # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
     # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
-    if (CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    if(CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
       target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
     endif()
     set_target_properties(onnx_cpp2py_export
@@ -652,7 +652,7 @@ if(MSVC)
                                    "${onnx_static_library_flags}")
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
-  if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+  if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
     target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
     target_compile_options(onnx_proto PRIVATE "-Wno-stringop-overflow")
   endif()
@@ -690,7 +690,7 @@ install(EXPORT ONNXTargets
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
   NAMESPACE ONNX::
 )
-if (NOT Build_Protobuf)
+if(NOT Build_Protobuf)
   # If we fetched a Protobuf release (and didn't run its install step), then we
   # don't have the export sets for protobuf and its dependencies, which
   # prevents us from creating an export set for ONNXTargets.
@@ -718,9 +718,9 @@ if(ONNX_USE_UNITY_BUILD)
   set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
 
   # With unity build object file could get big, need this switch in MSVC.
-  if (MSVC)
+  if(MSVC)
     target_compile_options(onnx PRIVATE /bigobj)
-  endif ()
+  endif()
 
 # should be enabled for onnx_proto when protobuf can support Unity builds
 
