@@ -692,7 +692,7 @@ install(EXPORT ONNXTargets
 )
 if(NOT Build_Protobuf)
   # If we fetched a Protobuf release (and didn't run its install step), then we
-  # don't have the export sets for protobuf and its dependencies, which
+  # don't have the export sets for Protobuf and its dependencies, which
   # prevents us from creating an export set for ONNXTargets.
   export(EXPORT ONNXTargets
     FILE "${PROJECT_BINARY_DIR}/ONNXTargets.cmake"
@@ -701,7 +701,7 @@ if(NOT Build_Protobuf)
 endif()
 
 if(ONNX_USE_UNITY_BUILD)
-  # If ONNX_USE_UNITY_BUILD is set to ON, set onnx target to use Unity builds.
+  # If ONNX_USE_UNITY_BUILD is set to ON, set ONNX target to use Unity builds.
   #  We set Unity build to use groups, it allows us to set some specific files to be compiled individually
   set_target_properties(onnx
     PROPERTIES
@@ -711,7 +711,7 @@ if(ONNX_USE_UNITY_BUILD)
 
   set(NEW_LIST __unity_src_files)
   list(APPEND __unity_src_files ${ONNX_SRCS})
-  # These files have an issue with template explicit specialization after instanciation:
+  # These files have an issue with template explicit specialization after instantiation:
   #   We take them out of the unity group so they are compiled individually.
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
