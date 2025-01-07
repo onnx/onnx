@@ -564,35 +564,22 @@ if(ONNX_BUILD_PYTHON)
     "${pybind11_INCLUDE_DIRS}"
     "${Python3_INCLUDE_DIRS}")
 
-  if(APPLE)
-    set_target_properties(onnx_cpp2py_export
-                          PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
-    # Only put double quotes around $<TARGET_FILE:onnx> for Mac
-    # Other platforms like Windows and Ubuntu originally work fine without double quotes
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -Wl,-force_load,"$<TARGET_FILE:onnx>")
-  elseif(MSVC)
-    # In MSVC, we will add whole archive in default
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -WHOLEARCHIVE:$<TARGET_FILE:onnx>)
-  elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+  if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
     target_sources(onnx_cpp2py_export
                           PRIVATE $<TARGET_OBJECTS:onnx>)
   else()
-    # Assume everything else is like gcc
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE "-Wl,--whole-archive" $<TARGET_FILE:onnx>
-                                  "-Wl,--no-whole-archive")
-    # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
-    # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
-    if (CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-      target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
-    endif()
-    set_target_properties(onnx_cpp2py_export
-                          PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
+    add_whole_archive_flag(onnx onnx_cpp2py_export)
   endif()
-
+  if(APPLE)
+    set_target_properties(onnx_cpp2py_export
+                          PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+  endif()
+  # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
+  # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
+  if (CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
+  endif()
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
@@ -609,6 +596,9 @@ if(ONNX_BUILD_PYTHON)
                                    ${EXTRA_FLAGS})
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
+  elseif(NOT APPLE)
+    set_target_properties(onnx_cpp2py_export
+                          PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
   endif()
 endif()
 
