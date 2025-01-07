@@ -153,12 +153,8 @@ class Coverage:
                 if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
                     experimental.append(schema.name)
         all_ops.sort()
-        nodes_path = os.path.join(
-            str(os.environ.get("CSVDIR")), "nodes.csv"  # type: ignore
-        )  # type: ignore
-        models_path = os.path.join(
-            str(os.environ.get("CSVDIR")), "models.csv"  # type: ignore
-        )  # type: ignore
+        nodes_path = os.path.join(str(os.environ.get("CSVDIR")), "nodes.csv")
+        models_path = os.path.join(str(os.environ.get("CSVDIR")), "models.csv")
         existing_nodes: OrderedDict[str, dict[str, str]] = OrderedDict()
         existing_models: OrderedDict[str, dict[str, str]] = OrderedDict()
         frameworks: list[str] = []

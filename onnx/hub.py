@@ -14,7 +14,7 @@ import os
 import sys
 from io import BytesIO
 from os.path import join
-from typing import IO, Any, Dict, List, cast
+from typing import IO, Any, cast
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -50,14 +50,14 @@ class ModelInfo:
         self.model = cast(str, raw_model_info["model"])
 
         self.model_path = cast(str, raw_model_info["model_path"])
-        self.metadata: dict[str, Any] = cast(Dict[str, Any], raw_model_info["metadata"])
+        self.metadata: dict[str, Any] = cast(dict[str, Any], raw_model_info["metadata"])
         self.model_sha: str | None = None
         if "model_sha" in self.metadata:
             self.model_sha = cast(str, self.metadata["model_sha"])
 
         self.tags: set[str] = set()
         if "tags" in self.metadata:
-            self.tags = set(cast(List[str], self.metadata["tags"]))
+            self.tags = set(cast(list[str], self.metadata["tags"]))
 
         self.opset = cast(int, raw_model_info["opset_version"])
         self.raw_model_info: dict[str, Any] = raw_model_info

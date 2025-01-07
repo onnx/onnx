@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import _pytest
 import pytest
@@ -38,7 +39,8 @@ def pytest_runtest_logreport(report: Any) -> None:
 
 @pytest.hookimpl(trylast=True)  # type: ignore
 def pytest_terminal_summary(
-    terminalreporter: _pytest.terminal.TerminalReporter, exitstatus: int  # noqa: ARG001
+    terminalreporter: _pytest.terminal.TerminalReporter,
+    exitstatus: int,  # noqa: ARG001
 ) -> None:
     for mark in _marks.values():
         _add_mark(mark, "loaded")

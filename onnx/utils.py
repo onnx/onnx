@@ -32,6 +32,8 @@ class Extractor:
         output_to_index: dict[str, int] = {}
         for index, node in enumerate(graph.node):
             for output_name in node.output:
+                if output_name == "":
+                    continue
                 assert output_name not in output_to_index  # output_name is unique
                 output_to_index[output_name] = index
         return output_to_index
@@ -81,7 +83,11 @@ class Extractor:
                 if index not in reachable:
                     # add nodes connected to this output to sets
                     reachable.add(index)
-                    stack += self.graph.node[index].input
+                    stack += [
+                        input_name
+                        for input_name in self.graph.node[index].input
+                        if input_name != ""
+                    ]
 
     def _collect_reachable_nodes(
         self,
@@ -223,10 +229,13 @@ def extract_model(
     if infer_shapes and os.path.getsize(input_path) > onnx.checker.MAXIMUM_PROTOBUF:
         onnx.shape_inference.infer_shapes_path(input_path, output_path)
         model = onnx.load(output_path)
+    elif infer_shapes:
+        model = onnx.load(input_path, load_external_data=False)
+        model = onnx.shape_inference.infer_shapes(model)
+        base_dir = os.path.dirname(input_path)
+        onnx.load_external_data_for_model(model, base_dir)
     else:
         model = onnx.load(input_path)
-        if infer_shapes:
-            model = onnx.shape_inference.infer_shapes(model)
 
     e = Extractor(model)
     extracted = e.extract_model(input_names, output_names)

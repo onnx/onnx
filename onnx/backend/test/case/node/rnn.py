@@ -29,9 +29,9 @@ class RNNHelper:
         self.num_directions = params[str(W)].shape[0]
 
         if self.num_directions == 1:
-            for k in params:
+            for k, v in params.items():
                 if k != X:
-                    params[k] = np.squeeze(params[k], axis=0)
+                    params[k] = np.squeeze(v, axis=0)
 
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]

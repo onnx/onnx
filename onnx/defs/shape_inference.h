@@ -138,10 +138,10 @@ using DataPropagationFunction = std::function<void(DataPropagationContext&)>;
 
 // This no-op inference function is used for operators without an
 // inference implementation.
-inline void dummyInferenceFunction(InferenceContext&) {};
+inline void dummyInferenceFunction(InferenceContext&) {}
 
 // This no-op data propagation function is used for operators without a defined data propagator
-inline void dummyDataPropagationFunction(DataPropagationContext&) {};
+inline void dummyDataPropagationFunction(DataPropagationContext&) {}
 
 template <typename T>
 inline bool getRepeatedAttribute(InferenceContext& ctx, const std::string& attr_name, std::vector<T>& values) {

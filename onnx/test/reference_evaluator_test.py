@@ -12,16 +12,16 @@
 
 from __future__ import annotations
 
+import importlib
 import itertools
 import math
-import sys
 import unittest
+from collections.abc import Sequence
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
-from typing import Sequence
 
 import numpy as np
 import parameterized
@@ -80,6 +80,17 @@ ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
 ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
     getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
+
+
+def skip_if_no_re2(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        spec = importlib.util.find_spec("re2")
+        if spec is None:
+            raise unittest.SkipTest("google-re2 not installed")
+        fn(*args, **kwargs)
+
+    return wrapper
 
 
 def skip_if_no_onnxruntime(fn):
@@ -5713,9 +5724,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             ),
         ]
     )
-    @unittest.skipIf(
-        sys.platform == "win32", "google-re2 package is not built for win32"
-    )
+    @skip_if_no_re2
     def test_regex_full_match(self, x, pattern, expected, expected_shape):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
         Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
@@ -5727,9 +5736,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(result.dtype.kind, "b")
         self.assertEqual(result.shape, expected_shape)
 
-    @unittest.skipIf(
-        sys.platform == "win32", "google-re2 package is not built for win32"
-    )
+    @skip_if_no_re2
     def test_regex_invalid_pattern(self):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
         Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
@@ -6205,6 +6212,50 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         got = ref.run(None, {"data": data, "indices": indices, "updates": updates})
         assert_allclose(y, got[0])
+
+    def test_sequence_axis(self):
+        model = self._load_model(
+            """
+        <
+            ir_version: 8,
+            opset_import: [ "" : 21 ]
+        >
+        preprocess (seq(float[X, Y]) images) => (float[N, 5, 5] preprocessed)
+        {
+            seq = SequenceMap<
+                body=preprocess_single(float[X, Y] image) => (float[5, 5] resized)
+                {
+                    size = Constant<value=int64[2] {5, 5}>()
+
+                    resized = Resize<
+                        mode=\"linear\",
+                        axes=[0, 1]
+                    >(image, , , size)
+                }
+            >(images)
+            preprocessed = ConcatFromSequence<axis=0, new_axis=1>(seq)
+        }
+        """
+        )
+        evaluator = ReferenceEvaluator(model)
+        imageIn = np.zeros((10, 10), dtype=np.dtype("float32"))
+        output = evaluator.run(["preprocessed"], {"images": [imageIn]})[0]
+        self.assertEqual((1, 5, 5), output.shape)
+
+    def test_convert_ml_dtypes(self):
+        model = make_model(
+            make_graph(
+                [make_node("LeakyRelu", ["X"], ["Y"], alpha=1.5)],
+                "name",
+                [make_tensor_value_info("X", TensorProto.DOUBLE, None)],
+                [make_tensor_value_info("Y", TensorProto.DOUBLE, None)],
+            ),
+            opset_imports=[make_opsetid("", 18)],
+        )
+        x = np.random.randn(3, 4).astype(np.float64)
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": x})
+        self.assertEqual(x.dtype, got[0].dtype)
 
 
 if __name__ == "__main__":
