@@ -130,7 +130,7 @@ lint.select = [
     "F", # Pyflakes
     "FA", # flake8-future-annotations
     "G", # flake8-logging-format
-    "I002", # isort: required imports
+    "I", # isort
     "ISC", # flake8-implicit-str-concat
     "LOG", # flake8-logging
     "N", # pep8-naming
