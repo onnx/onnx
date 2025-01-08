@@ -9,6 +9,7 @@ import random
 import unittest
 from typing import Any
 
+import ml_dtypes
 import numpy as np
 import parameterized
 import pytest
@@ -28,7 +29,6 @@ from onnx import (
     helper,
     numpy_helper,
 )
-import ml_dtypes
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):

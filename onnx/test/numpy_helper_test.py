@@ -6,13 +6,13 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
+import ml_dtypes
 import numpy as np
 import parameterized
 
 import onnx
 import onnx.reference
 from onnx import helper, numpy_helper
-import ml_dtypes
 
 
 def bfloat16_to_float32(ival: int) -> Any:
