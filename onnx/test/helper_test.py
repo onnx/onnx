@@ -502,13 +502,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.26.0"),
-        "The test requires numpy 1.26.0 or later",
-    )
     def test_make_bfloat16_tensor_raw(self) -> None:
-        # numpy doesn't support bf16, so we have to compute the correct result manually
-        np_array = np.array(
+        array = np.array(
             [
                 [1.0, 2.0],
                 [3.0, 4.0],
@@ -516,27 +511,17 @@ class TestHelperTensorFunctions(unittest.TestCase):
                 [0.0998535081744, 0.1],
                 [np.nan, np.inf],
             ],
-            dtype=np.float32,
-        )
+            dtype=ml_dtypes.bfloat16,
+        ).view(np.uint16)
 
-        # write out 16-bit of fp32 to create bf16 using truncation, no rounding
-        def truncate(x):
-            return x >> 16
-
-        values_as_ints = np_array.view(np.uint32).flatten()
-        packed_values = truncate(values_as_ints).astype(np.uint16).tobytes()
         tensor = helper.make_tensor(
             name="test",
             data_type=TensorProto.BFLOAT16,
-            dims=np_array.shape,
-            vals=packed_values,
+            dims=array.shape,
+            vals=array.tobytes(),
             raw=True,
         )
-        np.testing.assert_allclose(
-            numpy_helper.to_array(tensor).view(np.uint16),
-            np_array.astype(ml_dtypes.bfloat16).view(np.uint16),
-            rtol=1e-4,  # truncate is not nearest even rounding
-        )
+        np.testing.assert_allclose(numpy_helper.to_array(tensor).view(np.uint16), array)
 
     def test_make_float8e4m3fn_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
