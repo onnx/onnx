@@ -1,6 +1,6 @@
 """Submodule containing all the ONNX schema definitions."""
-from typing import overload
 from collections.abc import Sequence
+from typing import overload
 
 from onnx import AttributeProto, FunctionProto
 
