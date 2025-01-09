@@ -42,9 +42,9 @@ Before building from source uninstall any existing versions of ONNX `pip uninsta
 
 C++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
 
-If you don't have protobuf installed, ONNX will internally download and build protobuf for ONNX build.
+If you don't have Protobuf installed, ONNX will internally download and build Protobuf for ONNX build.
 
-Or, you can manually install [protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) with specified version before proceeding forward. Then depending on how you installed protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF".  For example, you may need to run the following command:
+Or, you can manually install [Protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) with specified version before proceeding forward. Then depending on how you installed Protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF". For example, you may need to run the following command:
 
 Linux:
 
@@ -58,24 +58,23 @@ Windows:
 set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 ```
 
-The ON/OFF depends on what kind of protobuf library you have. Shared libraries are files ending with \*.dll/\*.so/\*.dylib. Static libraries are files ending with \*.a/\*.lib. This option depends on how you get your protobuf library and how it was built. And it is default OFF. You don't need to run the commands above if you'd prefer to use a static protobuf library.
+The ON/OFF depends on what kind of Protobuf library you have. Shared libraries are files ending with \*.dll/\*.so/\*.dylib. Static libraries are files ending with \*.a/\*.lib. This option depends on how you get your Protobuf library and how it was built. And it is default OFF. You don't need to run the commands above if you'd prefer to use a static Protobuf library.
 
 ### Windows
 
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building protobuf locally also lets you control the version of protobuf. The tested and recommended version is 3.21.12.
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building Protobuf locally also lets you control the version of Protobuf. The tested and recommended version is 3.21.12.
 
-The instructions in this README assume you are using Visual Studio.  It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building protobuf as well as ONNX.
+The instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building Protobuf as well as ONNX.
 
-You can get protobuf by running the following commands:
+You can get Protobuf by running the following commands:
 
 ```bat
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v21.12
+git checkout v5.29.2
 cd cmake
 cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
-msbuild protobuf.sln /m /p:Configuration=Release
-msbuild INSTALL.vcxproj /p:Configuration=Release
+cmake --build . --config Release --target install
 ```
 
 Then it will be built as a static library and installed to <protobuf_install_dir>. Please add the bin directory(which contains protoc.exe) to your PATH.
@@ -86,7 +85,7 @@ set CMAKE_PREFIX_PATH=<protobuf_install_dir>;%CMAKE_PREFIX_PATH%
 
 Please note: if your protobuf_install_dir contains spaces, **do not** add quotation marks around it.
 
-Alternative: if you don't want to change your PATH, you can set ONNX_PROTOC_EXECUTABLE instead.
+Alternative: if you have local Protobuf executable and want to use it for ONNX, you can set ONNX_PROTOC_EXECUTABLE instead.
 
 ```bat
 set CMAKE_ARGS=-DONNX_PROTOC_EXECUTABLE=<full_path_to_protoc.exe>
@@ -105,50 +104,33 @@ pip install -e . -v
 
 ### Linux
 
-First, you need to install protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.6.1. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
+First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.20.2. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
-Ubuntu 20.04 (and newer) users may choose to install protobuf via
+Ubuntu 20.04 (and newer) users may choose to install Protobuf via
 
 ```sh
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
 ```
-
-In this case, it is required to add `-DONNX_USE_PROTOBUF_SHARED_LIBS=ON` to CMAKE_ARGS in the ONNX build step.
+In this case, ONNX is able to detect and use the system Profobuf. Users of other Linux distributions can use their system package manager to install Profobuf libraries similarly.
 
 A more general way is to build and install it from source. See the instructions below for more details.
 
 <details>
   <summary> Installing Protobuf from source </summary>
 
-  Debian/Ubuntu:
-
-  ```sh
-    git clone https://github.com/protocolbuffers/protobuf.git
-    cd protobuf
-    git checkout v21.12
-    git submodule update --init --recursive
-    mkdir build_source && cd build_source
-    cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-    make -j$(nproc)
-    make install
-  ```
-
-  CentOS/RHEL/Fedora:
-
-  ```sh
-    git clone https://github.com/protocolbuffers/protobuf.git
-    cd protobuf
-    git checkout v21.12
-    git submodule update --init --recursive
-    mkdir build_source && cd build_source
-    cmake ../cmake  -DCMAKE_INSTALL_LIBDIR=lib64 -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-    make -j$(nproc)
-    make install
-  ```
+```sh
+  git clone https://github.com/protocolbuffers/protobuf.git
+  cd protobuf
+  git checkout v5.29.2
+  git submodule update --init --recursive
+  mkdir build_source && cd build_source
+  cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
+  cmake --build . --target install
+```
 
   Here "-DCMAKE_POSITION_INDEPENDENT_CODE=ON" is crucial. By default static libraries are built without "-fPIC" flag, they are not position independent code. But shared libraries must be position independent code. Python C/C++ extensions(like ONNX) are shared libraries. So if a static library was not built with "-fPIC", it can't be linked to such a shared library.
 
-  Once build is successful, update PATH to include protobuf paths.
+  Once build is successful, update PATH to include Protobuf paths so that ONNX can find Protobuf.
 
 </details>
 
@@ -166,19 +148,18 @@ pip install -e . -v
 ### Mac
 
 ```sh
-export NUM_CORES=`sysctl -n hw.ncpu`
 brew update
-brew install autoconf && brew install automake
-wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
-tar -xvf protobuf-cpp-3.21.12.tar.gz
-cd protobuf-3.21.12
+brew install cmake
+git clone https://github.com/protocolbuffers/protobuf.git
+cd protobuf
+git checkout v5.29.2
+git submodule update --init --recursive
 mkdir build_source && cd build_source
-cmake ../cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
-make -j${NUM_CORES}
-make install
+cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
+cmake --build . --target install
 ```
 
-Once build is successful, update PATH to include protobuf paths.
+Once build is successful, update PATH to include Protobuf paths so that ONNX can find Protobuf.
 
 Then you can build ONNX as:
 
@@ -209,18 +190,18 @@ For full list refer to CMakeLists.txt
 * `USE_MSVC_STATIC_RUNTIME` should be 1 or 0, not ON or OFF. When set to 1 ONNX links statically to runtime library.
 **Default**: `USE_MSVC_STATIC_RUNTIME=0`
 
-* `DEBUG` should be 0 or 1. When set to 1 ONNX is built in debug mode. or debug versions of the dependencies, you need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/main/CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
+* `DEBUG` should be 0 or 1. When set to 1 ONNX is built in debug mode. For debug versions of the dependencies, you need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/main/CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 **Default**: `Debug=0`
 
 ### CMake variables
 
 * `ONNX_USE_PROTOBUF_SHARED_LIBS` should be `ON` or `OFF`.
 **Default**: `ONNX_USE_PROTOBUF_SHARED_LIBS=OFF USE_MSVC_STATIC_RUNTIME=0`
-`ONNX_USE_PROTOBUF_SHARED_LIBS` determines how ONNX links to protobuf libraries.
-  * When set to `ON` - ONNX will dynamically link to protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/main/cmake/README.md#dlls-vs-static-linking).
-  * When set to `OFF` - ONNX will link statically to protobuf.
+`ONNX_USE_PROTOBUF_SHARED_LIBS` determines how ONNX links to Protobuf libraries.
+  * When set to `ON` - ONNX will dynamically link to Protobuf shared libs, PROTOBUF_USE_DLLS will be defined as described [here](https://github.com/protocolbuffers/protobuf/blob/main/cmake/README.md#dlls-vs-static-linking).
+  * When set to `OFF` - ONNX will link statically to Protobuf.
 
-* `ONNX_USE_LITE_PROTO` should be `ON` or `OFF`. When set to `ON` ONNX uses lite protobuf instead of full protobuf.
+* `ONNX_USE_LITE_PROTO` should be `ON` or `OFF`. When set to `ON` ONNX uses lite Protobuf instead of full Protobuf.
 **Default**: `ONNX_USE_LITE_PROTO=OFF`
 
 * `ONNX_WERROR` should be `ON` or `OFF`. When set to `ON` warnings are treated as errors.

@@ -7,6 +7,7 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
+from collections.abc import KeysView, MutableSequence, Sequence
 from typing import (
     Any,
     Callable,
@@ -14,7 +15,6 @@ from typing import (
     Union,
     cast,
 )
-from collections.abc import KeysView, MutableSequence, Sequence
 
 import google.protobuf.message
 import numpy as np

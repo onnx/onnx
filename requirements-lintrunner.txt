@@ -5,9 +5,6 @@ ruff==0.8.4
 # MYPY
 mypy==1.14.1
 types-protobuf==5.29.1.20241207
-# BLACK-ISORT
-black==24.10.0
-isort==5.13.2
 # CLANG-FORMAT
 clang-format==19.1.5
 # EDITORCONFIG-CHECKER
