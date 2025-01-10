@@ -21,7 +21,7 @@ class Softmax_13_12 final : public Adapter {
   explicit Softmax_13_12(const std::string& op_name) : Adapter(op_name, OpSetID(13), OpSetID(12)) {}
 
   void adapt_softmax_13_12(const std::shared_ptr<Graph>& graph, Node* node) const {
-    (void)graph;  // Suppress unused parameter warning
+    (void)graph; // Suppress unused parameter warning
 
     int new_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : -1;
 
