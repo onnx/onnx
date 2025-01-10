@@ -265,8 +265,9 @@ def unpack_float4e2m1(
     return unpacked_float4e2m1_to_float32(res)
 
 
-def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
+def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     """Converts a tensor def object to a numpy array.
+    Supports types defined in :mod:`onnx._custom_element_types`.
 
     Args:
         tensor: a TensorProto object.
@@ -306,36 +307,36 @@ def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: P
 
         # manually convert bf16 since there's no numpy support
         if tensor_dtype == TensorProto.BFLOAT16:
-            data = np.frombuffer(raw_data, dtype=np.int16)
-            return bfloat16_to_float32(data, dims)
+            data = np.frombuffer(raw_data, dtype=np.int16).reshape(dims)
+            return data.view(custom_np_types.bfloat16)
 
         if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-            data = np.frombuffer(raw_data, dtype=np.int8)
-            return float8e4m3_to_float32(data, dims)
+            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
+            return data.view(custom_np_types.float8e4m3fn)
 
         if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-            data = np.frombuffer(raw_data, dtype=np.int8)
-            return float8e4m3_to_float32(data, dims, uz=True)
+            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
+            return data.view(custom_np_types.float8e4m3fnuz)
 
         if tensor_dtype == TensorProto.FLOAT8E5M2:
-            data = np.frombuffer(raw_data, dtype=np.int8)
-            return float8e5m2_to_float32(data, dims)
+            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
+            return data.view(custom_np_types.float8e5m2)
 
         if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-            data = np.frombuffer(raw_data, dtype=np.int8)
-            return float8e5m2_to_float32(data, dims, fn=True, uz=True)
+            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
+            return data.view(custom_np_types.float8e5m2fnuz)
 
         if tensor_dtype == TensorProto.UINT4:
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            return unpack_int4(data, dims, signed=False)
+            return unpack_int4(data, dims, signed=False).view(custom_np_types.uint4)
 
         if tensor_dtype == TensorProto.INT4:
-            data = np.frombuffer(raw_data, dtype=np.int8)
-            return unpack_int4(data, dims, signed=True)
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            return unpack_int4(data, dims, signed=True).view(custom_np_types.int4)
 
         if tensor_dtype == TensorProto.FLOAT4E2M1:
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            return unpack_float4e2m1(data, dims)  # type: ignore[arg-type]
+            return unpack_float4e2m1(data, dims).view(custom_np_types.float4e2m1)
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
 
@@ -347,128 +348,43 @@ def _to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: P
             .view(np.float16)
         )
 
-    # bfloat16 is stored as int32 (uint16 type); no numpy support for bf16
     if tensor_dtype == TensorProto.BFLOAT16:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return bfloat16_to_float32(data, dims)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint16)
+        return data.view(custom_np_types.bfloat16)
 
     if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e4m3_to_float32(data, dims)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return data.view(custom_np_types.float8e4m3fn)
 
     if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e4m3_to_float32(data, dims, uz=True)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return data.view(custom_np_types.float8e4m3fnuz)
 
     if tensor_dtype == TensorProto.FLOAT8E5M2:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e5m2_to_float32(data, dims)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return data.view(custom_np_types.float8e5m2)
 
     if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-        data = np.asarray(tensor.int32_data, dtype=np.int32)
-        return float8e5m2_to_float32(data, dims, fn=True, uz=True)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return data.view(custom_np_types.float8e5m2fnuz)
 
     if tensor_dtype == TensorProto.UINT4:
-        data = np.asarray(tensor.int32_data, dtype=storage_np_dtype)
-        return unpack_int4(data, dims, signed=False)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return unpack_int4(data, dims, signed=False).view(custom_np_types.uint4)
 
     if tensor_dtype == TensorProto.INT4:
-        data = np.asarray(tensor.int32_data, dtype=storage_np_dtype)
-        return unpack_int4(data, dims, signed=True)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.int8)
+        return unpack_int4(data, dims, signed=True).view(custom_np_types.int4)
+
+    if tensor_dtype == TensorProto.FLOAT4E2M1:
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return unpack_float4e2m1(data, dims).view(custom_np_types.float4e2m1)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
         data = combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
 
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
-
-
-def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
-    """Converts a tensor def object to a numpy array.
-    Supports types defined in :mod:`onnx._custom_element_types`.
-
-    Args:
-        tensor: a TensorProto object.
-        base_dir: if external tensor exists, base_dir can help to find the path to it
-
-    Returns:
-        arr: the converted array.
-    """
-    elem_type = tensor.data_type
-    if elem_type == TensorProto.BFLOAT16:
-        if uses_external_data(tensor):
-            load_external_data_for_tensor(tensor, base_dir)
-        data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=custom_np_types.bfloat16).ravel()
-        for i, d in enumerate(data):
-            y[i] = d
-        return y.reshape(shape)
-
-    if elem_type in (
-        TensorProto.FLOAT8E4M3FN,
-        TensorProto.FLOAT8E4M3FNUZ,
-        TensorProto.FLOAT8E5M2,
-        TensorProto.FLOAT8E5M2FNUZ,
-    ):
-        m = {
-            TensorProto.FLOAT8E4M3FN: custom_np_types.float8e4m3fn,
-            TensorProto.FLOAT8E4M3FNUZ: custom_np_types.float8e4m3fnuz,
-            TensorProto.FLOAT8E5M2: custom_np_types.float8e5m2,
-            TensorProto.FLOAT8E5M2FNUZ: custom_np_types.float8e5m2fnuz,
-        }
-
-        if uses_external_data(tensor):
-            load_external_data_for_tensor(tensor, base_dir)
-        if tensor.HasField("raw_data"):
-            data = tensor.raw_data  # type: ignore[assignment]
-        else:
-            data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        y = np.empty(shape, dtype=m[elem_type]).ravel()  # type: ignore[index]
-        for i, d in enumerate(data):
-            y[i] = d
-        return y.reshape(shape)
-
-    if elem_type in (TensorProto.UINT4, TensorProto.INT4):
-        if uses_external_data(tensor):
-            load_external_data_for_tensor(tensor, base_dir)
-        if tensor.HasField("raw_data"):
-            data = tensor.raw_data  # type: ignore[assignment]
-        else:
-            data = tensor.int32_data
-        shape = tuple(tensor.dims)
-        m = {
-            TensorProto.INT4: custom_np_types.int4,
-            TensorProto.UINT4: custom_np_types.uint4,
-        }
-        dtype = m[elem_type]  # type: ignore[index]
-        signed = elem_type == TensorProto.INT4
-        # 2 packed int4 elements must be represented as a single uint8 value.
-        # Therefore, y is np.uint8 (not the dtype to which the int4 maps)
-        y = np.empty(len(data), dtype=np.uint8).ravel()  # type: ignore[assignment]
-        for i, d in enumerate(data):
-            y[i] = d
-        unpacked_data = unpack_int4(y, dims=shape, signed=signed)
-        return unpacked_data.astype(dtype)
-
-    if elem_type == TensorProto.FLOAT4E2M1:
-        if uses_external_data(tensor):
-            load_external_data_for_tensor(tensor, base_dir)
-        if tensor.HasField("raw_data"):
-            data = tensor.raw_data  # type: ignore[assignment]
-        else:
-            data = tensor.int32_data
-        shape = tuple(tensor.dims)
-
-        # 2 packed float4e2m1 elements must be represented as a single uint8 value.
-        # Therefore, y is np.uint8.
-        y = np.empty(len(data), dtype=custom_np_types.float4e2m1).ravel()  # type: ignore[assignment]
-        for i, d in enumerate(data):
-            y[i] = d
-        unpacked_data = subbyte.unpack_4bitx2(y, dims=shape)  # type: ignore[arg-type]
-        return unpacked_data.astype(custom_np_types.float4e2m1)
-    return _to_array(tensor, base_dir=base_dir)
 
 
 def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
