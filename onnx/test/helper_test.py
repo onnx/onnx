@@ -502,6 +502,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
+    @unittest.skipIf(
+        version_utils.numpy_older_than("1.26.0"),
+        "The test requires numpy 1.26.0 or later",
+    )
     def test_make_bfloat16_tensor_raw(self) -> None:
         array = np.array(
             [
