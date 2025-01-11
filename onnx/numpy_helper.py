@@ -9,6 +9,7 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+import typing_extensions
 
 import onnx._custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
@@ -19,6 +20,10 @@ def combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
 def bfloat16_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
     dims: int | Sequence[int] | None = None,
@@ -89,6 +94,10 @@ _float8e4m3_to_float32 = np.vectorize(
 )
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
 def float8e4m3_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
     dims: int | Sequence[int] | None = None,
@@ -164,6 +173,10 @@ _float8e5m2_to_float32 = np.vectorize(
 )
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
 def float8e5m2_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
     dims: int | Sequence[int] | None = None,
@@ -190,6 +203,10 @@ def float8e5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Consider implementing your own unpack logic",
+    category=FutureWarning,
+)
 def unpack_int4(
     data: np.int32 | np.ndarray,
     dims: int | Sequence[int],
