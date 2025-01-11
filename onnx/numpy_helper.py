@@ -248,7 +248,7 @@ def unpacked_float4e2m1_to_float32(x: npt.NDArray[np.uint8]) -> npt.NDArray[np.f
 
 def unpack_float4e2m1(
     data: npt.NDArray[np.uint8],
-    dims: int | Sequence[int],
+    dims: Sequence[int],
 ) -> np.ndarray:
     """Converts ndarray of float4e2m1 (as packed uint8) to f32
     See :ref:`onnx-detail-float4` for technical details.
@@ -261,11 +261,59 @@ def unpack_float4e2m1(
     Returns:
         A numpy array of float32 reshaped to dims.
     """
-    res = subbyte.unpack_4bitx2(data.ravel(), dims)
+    res = _unpack_uint4(data, dims)
     return unpacked_float4e2m1_to_float32(res)
 
 
-def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
+def _unpack_uint4(
+    data: npt.NDArray[np.uint8], dims: Sequence[int]
+) -> npt.NDArray[np.uint8]:
+    """Convert a packed uint4 array to unpacked uint4 array represented as uint8.
+
+    Args:
+        data: A numpy array.
+        dims: The dimensions are used to reshape the unpacked buffer.
+
+    Returns:
+        A numpy array of int8/uint8 reshaped to dims.
+    """
+    result = np.empty([data.size * 2], dtype=data.dtype)
+    array_low = data & np.uint8(0x0F)
+    array_high = data & np.uint8(0xF0)
+    array_high >>= np.uint8(4)
+    result[0::2] = array_low
+    result[1::2] = array_high
+    if result.size == np.prod(dims) + 1:
+        # handle single-element padding due to odd number of elements
+        result = result[:-1]
+    result.resize(dims, refcheck=False)
+    return result
+
+
+def _extend_int4_sign_bits(x: npt.NDArray[np.uint8]) -> npt.NDArray[np.int8]:
+    """Extend 4-bit signed integer to 8-bit signed integer."""
+    return np.where((x >> 3) == 0, x, x | 0xF0).astype(np.int8)
+
+
+def _unpack_int4(
+    data: npt.NDArray[np.uint8], dims: Sequence[int]
+) -> npt.NDArray[np.int8]:
+    """Convert a packed (signed) int4 array to unpacked int4 array represented as int8.
+
+    The sign bit is extended to the most significant bit of the int8.
+
+    Args:
+        data: A numpy array.
+        dims: The dimensions are used to reshape the unpacked buffer.
+
+    Returns:
+        A numpy array of int8 reshaped to dims.
+    """
+    unpacked = _unpack_uint4(data, dims)
+    return _extend_int4_sign_bits(unpacked)
+
+
+def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
     Supports types defined in :mod:`onnx._custom_element_types`.
 
@@ -328,15 +376,18 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
 
         if tensor_dtype == TensorProto.UINT4:
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            return unpack_int4(data, dims, signed=False).view(custom_np_types.uint4)
+            return _unpack_uint4(
+                data,
+                dims,
+            ).view(custom_np_types.uint4)
 
         if tensor_dtype == TensorProto.INT4:
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            return unpack_int4(data, dims, signed=True).view(custom_np_types.int4)
+            return _unpack_int4(data, dims).view(custom_np_types.int4)
 
         if tensor_dtype == TensorProto.FLOAT4E2M1:
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            return unpack_float4e2m1(data, dims).view(custom_np_types.float4e2m1)
+            return _unpack_uint4(data, dims).view(custom_np_types.float4e2m1)
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
 
@@ -349,32 +400,44 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         )
 
     if tensor_dtype == TensorProto.BFLOAT16:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint16).reshape(dims)
+        data = (
+            np.asarray(tensor.int32_data, dtype=np.int32)
+            .astype(np.uint16)
+            .reshape(dims)
+        )
         return data.view(custom_np_types.bfloat16)
 
     if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        data = (
+            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        )
         return data.view(custom_np_types.float8e4m3fn)
 
     if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        data = (
+            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        )
         return data.view(custom_np_types.float8e4m3fnuz)
 
     if tensor_dtype == TensorProto.FLOAT8E5M2:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        data = (
+            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        )
         return data.view(custom_np_types.float8e5m2)
 
     if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        data = (
+            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        )
         return data.view(custom_np_types.float8e5m2fnuz)
 
     if tensor_dtype == TensorProto.UINT4:
         data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
-        return unpack_int4(data, dims, signed=False).view(custom_np_types.uint4)
+        return _unpack_uint4(data, dims).view(custom_np_types.uint4)
 
     if tensor_dtype == TensorProto.INT4:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.int8)
-        return unpack_int4(data, dims, signed=True).view(custom_np_types.int4)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return _unpack_int4(data, dims).view(custom_np_types.int4)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
