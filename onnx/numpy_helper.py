@@ -349,23 +349,23 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
         )
 
     if tensor_dtype == TensorProto.BFLOAT16:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint16)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint16).reshape(dims)
         return data.view(custom_np_types.bfloat16)
 
     if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
         return data.view(custom_np_types.float8e4m3fn)
 
     if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
         return data.view(custom_np_types.float8e4m3fnuz)
 
     if tensor_dtype == TensorProto.FLOAT8E5M2:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
         return data.view(custom_np_types.float8e5m2)
 
     if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
         return data.view(custom_np_types.float8e5m2fnuz)
 
     if tensor_dtype == TensorProto.UINT4:
@@ -375,10 +375,6 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:
     if tensor_dtype == TensorProto.INT4:
         data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.int8)
         return unpack_int4(data, dims, signed=True).view(custom_np_types.int4)
-
-    if tensor_dtype == TensorProto.FLOAT4E2M1:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
-        return unpack_float4e2m1(data, dims).view(custom_np_types.float4e2m1)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
