@@ -439,6 +439,10 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
         data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
         return _unpack_int4(data, dims).view(custom_np_types.int4)
 
+    if tensor_dtype == TensorProto.FLOAT4E2M1:
+        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
+        return _unpack_uint4(data, dims).view(custom_np_types.float4e2m1)
+
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
         data = combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
