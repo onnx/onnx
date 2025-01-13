@@ -353,7 +353,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
             # Convert endian from little to big
             raw_data = np.frombuffer(raw_data, dtype=np_dtype).byteswap().tobytes()
 
-        # manually convert bf16 since there's no numpy support
+        data: np.ndarray[Any, Any]
         if tensor_dtype == TensorProto.BFLOAT16:
             data = np.frombuffer(raw_data, dtype=np.int16).reshape(dims)
             return data.view(custom_np_types.bfloat16)
