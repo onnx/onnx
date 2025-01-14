@@ -3574,17 +3574,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (ctx.hasOutput(1)) {
             if (ctx.hasInput(4)) {
               builder.Add("present_key = Concat <axis = 2> (past_key, KReshaped)");
+            } else {
+              builder.Add("present_key = Identity (KReshaped)");
             }
-          } else {
-            builder.Add("present_key = Identity (KReshaped)");
           }
 
           if (ctx.hasOutput(2)) {
             if (ctx.hasInput(5)) {
               builder.Add("present_value = Concat <axis = 2> (past_value, VReshaped)");
+            } else {
+              builder.Add("present_value = Identity (VReshaped)");
             }
-          } else {
-            builder.Add("present_value = Identity (VReshaped)");
           }
 
           // Create a attn_bias filled with zeros of shape (q_sequence_length, kv_sequence_length)
