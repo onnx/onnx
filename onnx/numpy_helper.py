@@ -16,7 +16,7 @@ from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, su
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
 
-def combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
+def _combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
@@ -462,7 +462,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-        data = combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
+        data = _combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
 
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
@@ -527,7 +527,7 @@ def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
     if sys.byteorder == "big":
         # Convert endian from big to little
-        convert_endian(tensor)
+        _convert_endian(tensor)
 
     return tensor
 
@@ -835,7 +835,7 @@ def from_optional(
     return optional
 
 
-def convert_endian(tensor: TensorProto) -> None:
+def _convert_endian(tensor: TensorProto) -> None:
     """Call to convert endianness of raw data in tensor.
 
     Args:
