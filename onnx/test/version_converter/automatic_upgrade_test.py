@@ -1096,6 +1096,79 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"coordinate_transformation_mode": "half_pixel"},
         )
 
+    def test_RotaryEmbedding_1(self) -> None:
+        self._test_op_upgrade(
+            "RotaryEmbedding",
+            23,
+            [[2, 3, 4, 8], [2, 3, 4], [2, 3, 4]],
+            [[2, 3, 4, 8]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+        )
+
+    def test_RotaryEmbedding_2(self) -> None:
+        self._test_op_upgrade(
+            "RotaryEmbedding",
+            23,
+            [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
+            [[2, 3, 4, 8]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
+            [TensorProto.FLOAT],
+        )
+
+    def test_RotaryEmbedding_3(self) -> None:
+        self._test_op_upgrade(
+            "RotaryEmbedding",
+            23,
+            [[2, 3, 32], [50, 4], [50, 4], [2, 3]],
+            [[2, 3, 32]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
+            [TensorProto.FLOAT],
+            attrs={"num_heads": 4},
+        )
+
+    def test_RotaryEmbedding_4(self) -> None:
+        self._test_op_upgrade(
+            "RotaryEmbedding",
+            23,
+            [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
+            [[2, 3, 4, 8]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
+            [TensorProto.FLOAT],
+            attrs={"interleaved": 1},
+        )
+
+    def test_RotaryEmbedding_5(self) -> None:
+        self._test_op_upgrade(
+            "RotaryEmbedding",
+            23,
+            [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
+            [[2, 3, 4, 8]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.INT64,
+            ],
+            [TensorProto.FLOAT],
+            attrs={"rotary_embedding_dim": 4},
+        )
+
     def test_Round(self) -> None:
         self._test_op_upgrade("Round", 11)
 

@@ -455,6 +455,29 @@ if ort is not None:
         ")"
     )
 
+    # Exclude all tests that require IR11 until onnxruntime aligns
+    # TODO: Unwaive tests once onnxruntime supports Opset23/IR11
+    backend_test.exclude(
+        "("
+        "test_rotary_embedding"
+        "|test_rotary_embedding_expanded"
+        "|test_rotary_embedding_3d_input"
+        "|test_rotary_embedding_3d_input_expanded"
+        "|test_rotary_embedding_interleaved"
+        "|test_rotary_embedding_interleaved_expanded"
+        "|test_rotary_embedding_no_position_ids"
+        "|test_rotary_embedding_no_position_ids_expanded"
+        "|test_rotary_embedding_no_position_ids_interleaved"
+        "|test_rotary_embedding_no_position_ids_interleaved_expanded"
+        "|test_rotary_embedding_no_position_ids_rotary_dim"
+        "|test_rotary_embedding_no_position_ids_rotary_dim_expanded"
+        "|test_rotary_embedding_with_interleaved_rotary_dim"
+        "|test_rotary_embedding_with_interleaved_rotary_dim_expanded"
+        "|test_rotary_embedding_with_rotary_dim"
+        "|test_rotary_embedding_with_rotary_dim_expanded"
+        ")"
+    )
+
     # The following tests fail due to small discrepancies.
     backend_test.exclude("(cast_FLOAT_to_STRING|castlike_FLOAT_to_STRING|stft)")
 
