@@ -357,7 +357,7 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
 
 
-def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
+def _split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
     return [
         (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
         for i in range(len(ca) * 2)
@@ -800,7 +800,7 @@ def make_tensor(
         tensor.raw_data = vals
     else:
         if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-            vals = split_complex_to_pairs(vals)
+            vals = _split_complex_to_pairs(vals)
         elif data_type == TensorProto.FLOAT16:
             vals = (
                 np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
