@@ -365,7 +365,7 @@ def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Consider using libraries like ml_dtypes for dtype conversion",
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
     category=FutureWarning,
 )
 def float32_to_bfloat16(*args, **kwargs) -> int:
@@ -392,7 +392,7 @@ def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Consider using libraries like ml_dtypes for dtype conversion",
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
     category=FutureWarning,
 )
 def float32_to_float8e4m3(*args, **kwargs) -> int:
@@ -534,7 +534,7 @@ def _float32_to_float8e4m3(  # noqa: PLR0911
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Consider using libraries like ml_dtypes for dtype conversion",
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
     category=FutureWarning,
 )
 def float32_to_float8e5m2(*args: Any, **kwargs: Any) -> int:
@@ -668,7 +668,7 @@ def _float32_to_float8e5m2(  # noqa: PLR0911
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Consider using libraries like ml_dtypes for dtype conversion",
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
     category=FutureWarning,
 )
 def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
@@ -704,7 +704,7 @@ def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndar
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Consider using libraries like ml_dtypes for dtype conversion",
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
     category=FutureWarning,
 )
 def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
