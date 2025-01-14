@@ -684,9 +684,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(ynp.view(np.uint8), expected)
 
-    @unittest.expectedFailure
     def test_make_float4e2m1_tensor(self) -> None:
-        # float4e2m1 can be stored as raw data only according to the proto definition
         y = helper.make_tensor(
             "zero_point",
             TensorProto.FLOAT4E2M1,
