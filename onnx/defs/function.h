@@ -148,6 +148,8 @@ class FunctionBuilder {
     if (nodes_size != 0) {
       auto& node = *funProto.mutable_node(nodes_size - 1);
       *node.add_attribute() = MakeAttribute(attr_name, attr_value);
+    } else {
+       ONNX_THROW_EX(std::logic_error("Error adding attribute to node of a graph with no nodes"));
     }
     return *this;
   }

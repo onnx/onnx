@@ -21180,10 +21180,9 @@ expect(
         ```
         XSquared = Mul(X, X)
         XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
-        RMS = Sqrt(XSquaredMean)
-        RMSEps = Add(RMS, epsilon)
-        SqrtRMS = Sqrt(RMSEps)
-        Normalized = Div(X, SqrtRMS)
+        RMSEps = Add(XSquaredMean, epsilon)
+        RMS = Sqrt(RMSEps)
+        Normalized = Div(X, RMS)
         ```
         where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
         Depending on `stash_type` attribute, the actual computation
@@ -30160,7 +30159,9 @@ skip = np.random.randn(4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
-y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias)
+y, input_skip_bias_sum = _skip_layer_normalization(
+    x, skip, gamma, beta=beta, B=bias
+)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 
@@ -30190,7 +30191,9 @@ skip = np.random.randn(3, 4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
-y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias)
+y, input_skip_bias_sum = _skip_layer_normalization(
+    x, skip, gamma, beta=beta, B=bias
+)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 
@@ -30221,7 +30224,9 @@ gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
 epsilon = 1e-2
-y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias, epsilon=epsilon)
+y, input_skip_bias_sum = _skip_layer_normalization(
+    x, skip, gamma, beta=beta, B=bias, epsilon=epsilon
+)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 
@@ -30253,7 +30258,9 @@ gamma = np.random.randn(2).astype(np.float32)
 beta = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
 scaling_factor = 3
-y, input_skip_bias_sum = _skip_layer_normalization(x, skip, gamma, beta=beta, B=bias, scaling_factor=scaling_factor)
+y, input_skip_bias_sum = _skip_layer_normalization(
+    x, skip, gamma, beta=beta, B=bias, scaling_factor=scaling_factor
+)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 
@@ -30407,7 +30414,9 @@ skip = np.random.randn(3, 4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
 epsilon = 1e-2
-y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, epsilon=epsilon)
+y, input_skip_bias_sum = _skip_rms_normalization(
+    x, skip, gamma, B=bias, epsilon=epsilon
+)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 
@@ -30438,7 +30447,9 @@ skip = np.random.randn(3, 4, 2).astype(np.float32)
 gamma = np.random.randn(2).astype(np.float32)
 bias = np.random.randn(2).astype(np.float32)
 scaling_factor = 3
-y, input_skip_bias_sum = _skip_rms_normalization(x, skip, gamma, B=bias, scaling_factor=scaling_factor)
+y, input_skip_bias_sum = _skip_rms_normalization(
+    x, skip, gamma, B=bias, scaling_factor=scaling_factor
+)
 y.astype(np.float32)
 input_skip_bias_sum.astype(np.float32)
 

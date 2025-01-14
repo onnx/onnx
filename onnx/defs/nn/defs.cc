@@ -2839,10 +2839,9 @@ static const char* RMSNormalization_ver23_doc = R"DOC(
       ```
       XSquared = Mul(X, X)
       XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
-      RMS = Sqrt(XSquaredMean)
-      RMSEps = Add(RMS, epsilon)
-      SqrtRMS = Sqrt(RMSEps)
-      Normalized = Div(X, SqrtRMS)
+      RMSEps = Add(XSquaredMean, epsilon)
+      RMS = Sqrt(RMSEps)
+      Normalized = Div(X, RMS)
       ```
       where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
       Depending on `stash_type` attribute, the actual computation
@@ -2973,10 +2972,9 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("XU = Cast (X)", "to", U);
           builder.Add("XSquared = Mul (XU, XU)")
               .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
-              .Add("RMS = Sqrt (XSquaredMean)")
-              .Add("RMSPlusEpsilon = Add (RMS, Epsilon)")
-              .Add("SqrtRMS = Sqrt (RMSPlusEpsilon)")
-              .Add("Normalized = Div (XU, SqrtRMS)")
+              .Add("RMSPlusEpsilon = Add (XSquaredMean, Epsilon)")
+              .Add("RMS = Sqrt (RMSPlusEpsilon)")
+              .Add("Normalized = Div (XU, RMS)")
               .Add("NormalizedT = Cast (Normalized)", "to", T);
           builder.Add("Y = Mul (NormalizedT, scale)");
 
