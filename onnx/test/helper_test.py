@@ -11,9 +11,9 @@ from typing import Any
 
 import ml_dtypes
 import numpy as np
+import numpy.typing as npt
 import parameterized
 import pytest
-import version_utils
 
 from onnx import (
     AttributeProto,
@@ -29,6 +29,19 @@ from onnx import (
     helper,
     numpy_helper,
 )
+
+
+def _pack_4bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    odd_sized = size % 2 == 1
+    if odd_sized:
+        array_flat.resize([size + 1], refcheck=False)
+    array_flat &= 0x0F
+    array_flat[1::2] <<= 4
+    return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -433,10 +446,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(string_list, list(tensor.string_data))
 
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.26.0"),
-        "The test requires numpy 1.26.0 or later",
-    )
     def test_make_bfloat16_tensor(self) -> None:
         # numpy doesn't support bf16, so we have to compute the correct result manually
         np_array = np.array(
@@ -502,10 +511,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.26.0"),
-        "The test requires numpy 1.26.0 or later",
-    )
     def test_make_bfloat16_tensor_raw(self) -> None:
         array = np.array(
             [
@@ -608,10 +613,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
             ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
         )
     )
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.22.0"),
-        "The test requires numpy 1.22.0 or later",
-    )
     def test_make_4bit_tensor(self, dtype, dims) -> None:
         type_range = {
             TensorProto.UINT4: (0, 15),
@@ -629,16 +630,12 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
         # Check the expected data values.
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(data, ynp)
+        np.testing.assert_equal(ynp, data)
 
     @parameterized.parameterized.expand(
         itertools.product(
             ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
         )
-    )
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.22.0"),
-        "The test requires numpy 1.22.0 or later",
     )
     def test_4bit_tensor_size(self, dims) -> None:
         # A bug caused negative int4 values to inflate tensor size.
@@ -657,10 +654,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
             (TensorProto.UINT4, TensorProto.INT4), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
         )
     )
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.26.0"),
-        "The test requires numpy 1.26.0 or later",
-    )
     def test_make_4bit_raw_tensor(self, dtype, dims) -> None:
         type_range = {
             TensorProto.UINT4: (0, 15),
@@ -668,21 +661,19 @@ class TestHelperTensorFunctions(unittest.TestCase):
         }
         data = np.random.randint(
             type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
-        ).astype(np.float32)
-        packed_data = helper.pack_float32_to_4bit(
-            data, signed=(dtype == TensorProto.INT4)
-        )
+        ).astype(np.uint8)
+        packed_data = _pack_4bit(data)
 
         y = helper.make_tensor(
             "packed_int4", dtype, dims, packed_data.tobytes(), raw=True
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(data, ynp)
+        np.testing.assert_equal(ynp.view(np.uint8), data)
 
     def test_make_float4e2m1_raw_tensor(self) -> None:
-        data = np.array([0, 0.5, 1, 240, 10, -2], dtype=np.float32)
-        packed_data = helper.pack_float32_to_float4e2m1(data)
-        expected = data.astype(ml_dtypes.float4_e2m1fn).view(np.uint8)
+        data = np.array([0, 0.5, 1, 240, 10, -2], dtype=ml_dtypes.float4_e2m1fn)
+        expected = data.view(np.uint8)
+        packed_data = _pack_4bit(expected)
         y = helper.make_tensor(
             "packed_fp4e2m1",
             TensorProto.FLOAT4E2M1,
@@ -691,7 +682,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(ynp, expected)
+        np.testing.assert_equal(ynp.view(np.uint8), expected)
 
     def test_make_float4e2m1_tensor(self) -> None:
         y = helper.make_tensor(
