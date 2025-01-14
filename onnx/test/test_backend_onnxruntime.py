@@ -176,6 +176,29 @@ if ort is not None:
     # TODO: Unwaive tests once onnxruntime supports Opset21/IR10 https://github.com/onnx/onnx/issues/5840
     backend_test.exclude(
         "("
+        "test_rotary_embedding"
+        "|test_rotary_embedding_expanded"
+        "|test_rotary_embedding_3d_input"
+        "|test_rotary_embedding_3d_input_expanded"
+        "|test_rotary_embedding_interleaved"
+        "|test_rotary_embedding_interleaved_expanded"
+        "|test_rotary_embedding_no_position_ids"
+        "|test_rotary_embedding_no_position_ids_expanded"
+        "|test_rotary_embedding_no_position_ids_interleaved"
+        "|test_rotary_embedding_no_position_ids_interleaved_expanded"
+        "|test_rotary_embedding_no_position_ids_rotary_dim"
+        "|test_rotary_embedding_no_position_ids_rotary_dim_expanded"
+        "|test_rotary_embedding_with_interleaved_rotary_dim"
+        "|test_rotary_embedding_with_interleaved_rotary_dim_expanded"
+        "|test_rotary_embedding_with_rotary_dim"
+        "|test_rotary_embedding_with_rotary_dim_expanded"
+        ")"
+    )
+
+    # Exclude all tests that require IR11 until onnxruntime aligns
+    # TODO: Unwaive tests once onnxruntime supports Opset23/IR11
+    backend_test.exclude(
+        "("
         "test_cast_"
         "|test_castlike_"
         "|test_constant"
