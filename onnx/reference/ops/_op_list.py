@@ -188,6 +188,7 @@ from onnx.reference.ops.op_relu import Relu
 from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
 from onnx.reference.ops.op_resize import Resize
 from onnx.reference.ops.op_reverse_sequence import ReverseSequence
+from onnx.reference.ops.op_rms_normalization import RMSNormalization
 from onnx.reference.ops.op_rnn import RNN_7, RNN_14
 from onnx.reference.ops.op_roi_align import RoiAlign
 from onnx.reference.ops.op_round import Round
@@ -209,6 +210,8 @@ from onnx.reference.ops.op_sign import Sign
 from onnx.reference.ops.op_sin import Sin
 from onnx.reference.ops.op_sinh import Sinh
 from onnx.reference.ops.op_size import Size
+from onnx.reference.ops.op_skip_layer_normalization import SkipLayerNormalization
+from onnx.reference.ops.op_skip_rms_normalization import SkipRMSNormalization
 from onnx.reference.ops.op_slice import Slice_1, Slice_10
 from onnx.reference.ops.op_softmax import Softmax
 from onnx.reference.ops.op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss
