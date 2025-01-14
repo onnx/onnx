@@ -27,11 +27,10 @@ def _rms_normalization(
     x_squared_mean = np.mean(
         x_squared, axis=tuple(range(axis, len(shape))), keepdims=True
     )
-    rms = np.sqrt(x_squared_mean)
     # epsilon adjustment to avoid divide-by-zero.
-    rms = rms + epsilon
-    rms_sqrt = np.sqrt(rms)
-    rms_reciprocal = np.reciprocal(rms_sqrt)
+    rmseps = x_squared_mean + epsilon
+    rms = np.sqrt(rmseps)
+    rms_reciprocal = np.reciprocal(rms)
 
     y_mat = X * rms_reciprocal
     # W is linear coefficient.

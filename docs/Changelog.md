@@ -29019,10 +29019,9 @@ This version of the operator has been available since version 23 of the default 
         ```
         XSquared = Mul(X, X)
         XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
-        RMS = Sqrt(XSquaredMean)
-        RMSEps = Add(RMS, epsilon)
-        SqrtRMS = Sqrt(RMSEps)
-        Normalized = Div(X, SqrtRMS)
+        RMSEps = Add(XSquaredMean, epsilon)
+        RMS = Sqrt(RMSEps)
+        Normalized = Div(X, RMS)
         ```
         where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
         Depending on `stash_type` attribute, the actual computation
