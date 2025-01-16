@@ -1,6 +1,6 @@
 build
-jupyter ; platform_system == "Windows" and python_version~="3.13t" 
-nbval ; platform_system == "Windows" and python_version~="3.13t" 
+jupyter ; sys_platform  == "win32" and python_version ~= 3.13t 
+nbval ; sys_platform  == "win32" and python_version ~= 3.13t
 numpy
 parameterized
 protobuf
