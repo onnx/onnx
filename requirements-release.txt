@@ -1,9 +1,9 @@
 build
 ipython 
-ml_dtypes
-nbval ; sys_platform  == "win32" and python_version ~= "3.13t"
+ml_dtypes; sys_platform  == "win32" and python_version~="3.13t"
+nbval; sys_platform  == "win32" and python_version~="3.13t"
 numpy==1.24.3; python_version<"3.9"
-numpy==2.0.0; python_version >= "3.9" and python_version <= "3.12"
+numpy==2.0.0; python_version>="3.9" and python_version<="3.12"
 numpy==2.1.0; python_version>="3.13"
 parameterized
 protobuf==4.25.1
