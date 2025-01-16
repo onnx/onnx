@@ -56,10 +56,12 @@ COVERAGE = os.getenv("COVERAGE", "0") == "1"
 ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
 
 ################################################################################
-# Pre Check
+# Add cmake requirement if no system CMake is available
 ################################################################################
 
-assert CMAKE, "Could not find cmake in PATH"
+SETUP_REQUIRES = []
+if not CMAKE:
+    SETUP_REQUIRES.append("cmake>=3.18")
 
 ################################################################################
 # Version
@@ -171,6 +173,8 @@ class CmakeBuild(setuptools.Command):
             self.jobs = multiprocessing.cpu_count()
 
     def run(self):
+        assert CMAKE, "Could not find cmake in PATH"
+
         os.makedirs(CMAKE_BUILD_DIR, exist_ok=True)
 
         with cd(CMAKE_BUILD_DIR):
@@ -325,6 +329,7 @@ EXT_MODULES = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
 ################################################################################
 
 setuptools.setup(
+    setup_requires=SETUP_REQUIRES,
     ext_modules=EXT_MODULES,
     cmdclass=CMD_CLASS,
     version=VERSION_INFO["version"],
