@@ -1,5 +1,5 @@
 build
-jupyter
+jupyter ; platform_system == "Windows" and python_version~="3.13t" 
 nbval
 numpy
 parameterized
