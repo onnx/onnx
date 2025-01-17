@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=3.20.2", "cmake>=3.18"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=64", "protobuf>=3.20.2"]
+backend-path = ["."]
+build-backend = "backend"
 
 [project]
 name = "onnx"

@@ -56,12 +56,6 @@ COVERAGE = os.getenv("COVERAGE", "0") == "1"
 ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
 
 ################################################################################
-# Pre Check
-################################################################################
-
-assert CMAKE, "Could not find cmake in PATH"
-
-################################################################################
 # Version
 ################################################################################
 
@@ -171,6 +165,8 @@ class CmakeBuild(setuptools.Command):
             self.jobs = multiprocessing.cpu_count()
 
     def run(self):
+        assert CMAKE, "Could not find cmake in PATH"
+
         os.makedirs(CMAKE_BUILD_DIR, exist_ok=True)
 
         with cd(CMAKE_BUILD_DIR):
