@@ -45,7 +45,7 @@ You can submit a pull request (PR) with your code. The [SIG](community/sigs.md) 
 
 ### Development
 
-To build ONNX from source please follow the instructions listed [here](https://github.com/onnx/onnx#build-onnx-from-source).
+To build ONNX from source please follow the instructions listed [here](https://github.com/onnx/onnx/blob/main/INSTALL.md#build-onnx-from-source).
 
 Then, after you have made changes to Python and C++ files:
 
