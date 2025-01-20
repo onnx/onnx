@@ -31,6 +31,9 @@ on:
           - 'yes'
           - 'no'
         default: 'no'
+  issues:
+    types:
+      - labeled 
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
@@ -39,35 +42,35 @@ concurrency:
 jobs:
 
   call-workflow-ubuntu_x86:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.issue.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:
       os: "linux_x86_64"
     secrets: inherit
 
   call-workflow-ubuntu_aarch64:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.issue.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:
       os: "linux_aarch64"
     secrets: inherit
 
   call-workflow-win:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.issue.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win.yml
     with:
       os: "win"
     secrets: inherit
 
   call-workflow-mac:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.issue.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
     secrets: inherit
 
   call-workflow-sdist:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.issue.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
@@ -81,7 +84,7 @@ jobs:
       # https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#example-not-requiring-successful-dependent-jobs
 
       environment:
-        name: testpypi_onnxweekly
+        name: testpypi_onnxweekly # TODO: adapt name to testpypi-weekly
         url: https://test.pypi.org/p/onnx-weekly
 
       permissions:
