@@ -9,16 +9,21 @@ from typing import Any
 
 import numpy as np
 import numpy.typing as npt
+import typing_extensions
 
 import onnx._custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
 
-def combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
+def _combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
 def bfloat16_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
     dims: int | Sequence[int] | None = None,
@@ -89,6 +94,10 @@ _float8e4m3_to_float32 = np.vectorize(
 )
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
 def float8e4m3_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
     dims: int | Sequence[int] | None = None,
@@ -164,6 +173,10 @@ _float8e5m2_to_float32 = np.vectorize(
 )
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
 def float8e5m2_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
     dims: int | Sequence[int] | None = None,
@@ -190,6 +203,10 @@ def float8e5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider implementing your own unpack logic",
+    category=FutureWarning,
+)
 def unpack_int4(
     data: np.int32 | np.ndarray,
     dims: int | Sequence[int],
@@ -207,7 +224,7 @@ def unpack_int4(
     Returns:
         A numpy array of float32 reshaped to dims.
     """
-    single_func = lambda x: subbyte.unpack_single_4bitx2(x, signed)  # noqa: E731
+    single_func = lambda x: subbyte._unpack_single_4bitx2(x, signed)  # noqa: E731
     func = np.frompyfunc(single_func, 1, 2)
 
     res_high, res_low = func(data.ravel())
@@ -445,7 +462,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-        data = combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
+        data = _combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
 
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
@@ -510,7 +527,7 @@ def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
     tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
     if sys.byteorder == "big":
         # Convert endian from big to little
-        convert_endian(tensor)
+        _convert_endian(tensor)
 
     return tensor
 
@@ -818,7 +835,7 @@ def from_optional(
     return optional
 
 
-def convert_endian(tensor: TensorProto) -> None:
+def _convert_endian(tensor: TensorProto) -> None:
     """Call to convert endianness of raw data in tensor.
 
     Args:
