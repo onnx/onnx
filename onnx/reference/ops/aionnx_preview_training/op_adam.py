@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from onnx.reference import apimod
 from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
@@ -18,12 +19,12 @@ def _apply_adam(  # type: ignore
     # Update second-order momentum.
     h_new = beta * h + (1 - beta) * (g_regularized * g_regularized)
     # Compute element-wise square root.
-    h_sqrt = np.sqrt(h_new) + epsilon
+    h_sqrt = apimod(h_new).sqrt(h_new) + epsilon
     # Adjust learning rate.
     r_adjusted = None
     if t > 0:
         # Consider bias correction on momentums.
-        r_adjusted = r * np.sqrt(1 - beta**t) / (1 - alpha**t)
+        r_adjusted = r * apimod(h_new).sqrt(1 - beta**t) / (1 - alpha**t)
     else:
         # No bias correction on momentums.
         r_adjusted = r

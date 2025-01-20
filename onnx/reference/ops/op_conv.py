@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from onnx.reference import astype
 from onnx.reference.op_run import OpRun
 
 
@@ -310,7 +311,10 @@ class Conv(OpRun):
             )
         return (
             # _conv_implementation(
-            _conv_implementation(
-                X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
-            ).astype(X.dtype),
+            astype(
+                _conv_implementation(
+                    X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
+                ),
+                X.dtype
+            ),
         )
