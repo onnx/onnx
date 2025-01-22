@@ -229,7 +229,7 @@ def pool(
                     strides[i] * shape[i + 2] + (1 + (kernel[i] - 1) * dilations[i]),
                     dilations[i],
                 )
-                # if num < x_shape[i + 2] + pads[i] + pads[i + spatial_size]
+                if num < x_shape[i + 2] + pads[i] + pads[i + spatial_size]
             )
             window_vals = np.array(
                 [window[indices] for indices in itertools.product(elements)]
