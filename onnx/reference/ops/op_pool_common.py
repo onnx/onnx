@@ -93,6 +93,7 @@ def get_output_shape_explicit_padding(
 
         if ceil_mode:
             output_spatial_shape[dim] = int(np.ceil(dim_size))
+            # NOTE: ensure that the last pooling starts inside the image
             if (output_spatial_shape[dim] - 1) * strides_spatial[
                 dim
             ] >= input_spatial_shape[dim] + pads[dim]:
@@ -228,7 +229,7 @@ def pool(
                     strides[i] * shape[i + 2] + (1 + (kernel[i] - 1) * dilations[i]),
                     dilations[i],
                 )
-                if num < x_shape[i + 2] + pads[i] * 2
+                # if num < x_shape[i + 2] + pads[i] + pads[i + spatial_size]
             )
             window_vals = np.array(
                 [window[indices] for indices in itertools.product(elements)]
