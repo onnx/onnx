@@ -218,22 +218,29 @@ def pool(
         ],
     ):
         window = padded[shape[0], shape[1]]
-        elements = []
-        for i in range(spatial_size):
-            # NOTE: The if condition is to avoid the case where the window is out of bound
-            # we need to avoid the pixels that are out of bound being included in the window
-            elements.extend(
-                num
-                for num in range(
-                    strides[i] * shape[i + 2],
-                    strides[i] * shape[i + 2] + (1 + (kernel[i] - 1) * dilations[i]),
-                    dilations[i],
+        window_vals = np.array(
+            [
+                window[i]
+                for i in list(
+                    itertools.product(
+                        *[
+                            [
+                                pixel
+                                for pixel in range(
+                                    strides[i] * shape[i + 2],
+                                    strides[i] * shape[i + 2]
+                                    + (1 + (kernel[i] - 1) * dilations[i]),
+                                    dilations[i],
+                                )
+                                if pixel
+                                < x_shape[i + 2] + pads[i] + pads[spatial_size + i]
+                            ]
+                            for i in range(spatial_size)
+                        ]
+                    )
                 )
-                if num < x_shape[i + 2] + pads[i] + pads[i + spatial_size]
-            )
-            window_vals = np.array(
-                [window[indices] for indices in itertools.product(elements)]
-            )
+            ]
+        )
 
         if pooling_type == "AVG":
             f = np.average
