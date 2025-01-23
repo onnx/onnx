@@ -1113,7 +1113,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 36 test cases, listed as following:
+There are 37 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -1828,12 +1828,36 @@ Y, _, _ = _compute_attention(
     V,
     attn_mask=attn_mask,
 )
+```
+
+</details>
+<details>
+<summary>attention_attn_mask_bool</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.bool)
+
+Y, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+)
 
 expect(
     node,
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
-    name="test_attention_4d_attn_mask",
+    name="test_attention_4d_attn_mask_bool",
 )
 ```
 

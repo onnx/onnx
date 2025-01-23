@@ -246,11 +246,31 @@ class Attention(Base):
             attn_mask=attn_mask,
         )
 
+    @staticmethod
+    def export_attention_attn_mask_bool() -> None:
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask"],
+            outputs=["Y"],
+        )
+
+        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        attn_mask = np.random.rand(4, 6).astype(np.bool)
+
+        Y, _, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+        )
+
         expect(
             node,
             inputs=[Q, K, V, attn_mask],
             outputs=[Y],
-            name="test_attention_4d_attn_mask",
+            name="test_attention_4d_attn_mask_bool",
         )
 
     @staticmethod
