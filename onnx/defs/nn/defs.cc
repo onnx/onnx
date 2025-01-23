@@ -3611,6 +3611,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("AttnBiasZeros = ConstantOfShape(AttnBiasShape)");
 
           // If attn_mask is provided
+          float neg_inf = -std::numeric_limits<float>::infinity();
+          builder.Const1D("FloatInf", neg_inf);
           if (ctx.hasInput(3)) {
             auto* up = ctx.getInputType(3);
             if ((up == nullptr) || (!up->has_tensor_type()))
@@ -3628,11 +3630,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             // An error is thrown if both attn_mask and is_causal are set.
             auto* is_causal_attr = ctx.getAttribute("is_causal");
             int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
-            float neg_inf = -std::numeric_limits<float>::infinity();
             if (is_causal == 1) {
               builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mktensor(1))
                 .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
-                .Const1D("FloatInf", neg_inf)
                 .Add("AttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)");
             } else {
                 builder.Add("AttnBias = Identity(AttnBiasZeros)");

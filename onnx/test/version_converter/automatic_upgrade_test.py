@@ -114,6 +114,89 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Atan(self) -> None:
         self._test_op_upgrade("Atan", 7)
 
+    def test_Attention_1(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            23,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8]],
+            [[2, 3, 4, 8]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+        )
+
+    def test_Attention_2(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            23,
+            [[2, 9, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8]],
+            [[2, 9, 4, 8]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+        )
+
+    def test_Attention_3(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            23,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 10]],
+            [[2, 3, 4, 10]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+        )
+
+    def test_Attention_4(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            23,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8]],
+            [[2, 3, 4, 8]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+            attrs={"scale": 2},
+        )
+
+    def test_Attention_5(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            23,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8]],
+            [[2, 3, 4, 8]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+            attrs={"is_causal": 1},
+        )
+
+    def test_Attention_6(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            23,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8], [4, 6]],
+            [[2, 3, 4, 8]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+        )
+
+    def test_Attention_7(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            23,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8], [4, 6]],
+            [[2, 3, 4, 8]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.BOOL],
+            [TensorProto.FLOAT],
+        )
+
+    def test_Attention_8(self) -> None:
+        self._test_op_upgrade(
+            "Attention",
+            23,
+            [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8]],
+            [[2, 3, 4, 8]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT],
+            attrs={"softcap": 2.0},
+        )
+
     def test_AveragePool(self) -> None:
         self._test_op_upgrade(
             "AveragePool",
