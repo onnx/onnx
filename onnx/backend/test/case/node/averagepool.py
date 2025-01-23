@@ -528,6 +528,7 @@ class AveragePool(Base):
             strides=[3, 3],
             pads=[1, 1, 1, 1],
             ceil_mode=True,
+            count_include_pad=1,
         )
         x = np.array(
             [
