@@ -15,7 +15,7 @@ on:
       - labeled  # Trigger when a label is added to a PR, more information: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
   workflow_dispatch:
     inputs:
-      publish_pypi_onnxweekly:
+      publish_pypi_weekly:
         description: 'Publish to pypi-weekly'
         required: true
         type: choice
@@ -23,7 +23,7 @@ on:
           - 'yes'
           - 'no'
         default: 'no'
-      publish_testpypi_onnxweekly:
+      publish_testpypi_weekly:
         description: 'Publish to testpypi-weekly'
         required: true
         type: choice
@@ -105,7 +105,7 @@ jobs:
             merge-multiple: true
 
         - name: Publish dev-build to test.pypi
-          if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_onnxweekly == 'yes') && (github.repository_owner == 'onnx')
+          if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
           
           uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70
           with:
@@ -143,8 +143,8 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish devbuild to pypi
-        if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_onnxweekly  == 'yes') && (github.repository_owner == 'onnx')
+      - name: Publish devbuild to pypi-weekly
+        if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly  == 'yes') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70
         with:   
           repository-url: https://upload.pypi.org/legacy/
