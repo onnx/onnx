@@ -316,6 +316,15 @@ def write_external_data_tensors(model: ModelProto, filepath: str) -> ModelProto:
     Returns:
         ModelProto: The modified model object.
     """
+
+    # Clean up the existing files that store external data.
+    # Otherwise, the data will be appended to the existing files.
+    for tensor in _get_all_tensors(model):
+        info = ExternalDataInfo(tensor)
+        external_data_file_path = os.path.join(filepath, info.location)
+        if os.path.exists(external_data_file_path):
+            os.remove(external_data_file_path)
+
     for tensor in _get_all_tensors(model):
         # Writing to external data happens in 2 passes:
         # 1. Tensors with raw data which pass the necessary conditions (size threshold etc) are marked for serialization
