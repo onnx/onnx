@@ -10,6 +10,7 @@ pytest-xdist
 setuptools
 twine
 wheel
+ml_dtypes
 # Dependencies for linting. Versions match those in setup.py.
 lintrunner>=0.10.7
 lintrunner-adapters>=0.12.3

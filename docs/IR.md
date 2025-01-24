@@ -259,7 +259,7 @@ Graphs SHOULD be populated with documentation strings, which MAY be interpreted 
 
 ### Names Within a Graph
 
-All names MUST adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
+All names SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
 
 Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. Please see below for further clarification in the case where a graph contains nested subgraphs (as attribute values).
 
@@ -474,7 +474,7 @@ Each size in the list MAY be expressed as an integral value or as a "dimension v
 
 For example, a NxM matrix would have the shape list [N,M].
 
-The name of each dimension variable MUST adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
+The name of each dimension variable SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
 
 Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
 

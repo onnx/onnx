@@ -7,6 +7,7 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
+from collections.abc import KeysView, MutableSequence, Sequence
 from typing import (
     Any,
     Callable,
@@ -14,10 +15,10 @@ from typing import (
     Union,
     cast,
 )
-from collections.abc import KeysView, MutableSequence, Sequence
 
 import google.protobuf.message
 import numpy as np
+import typing_extensions
 
 import onnx._custom_element_types as custom_np_types
 from onnx import (
@@ -356,11 +357,19 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
 
 
-def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
+def _split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
     return [
         (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
         for i in range(len(ca) * 2)
     ]
+
+
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
+def float32_to_bfloat16(*args, **kwargs) -> int:
+    return _float32_to_bfloat16(*args, **kwargs)
 
 
 # convert a float32 value to a bfloat16 (as int)
@@ -369,7 +378,7 @@ def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
 # conversion is performed by simply dropping the 2 least significant bytes of
 # the significand. In this mode an error of up to 1 bit may be introduced and
 # preservation of NaN values is not be guaranteed.
-def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
+def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     ival = int.from_bytes(struct.pack("<f", fval), "little")
     if truncate:
         return ival >> 16
@@ -382,7 +391,15 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
-def float32_to_float8e4m3(  # noqa: PLR0911
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
+def float32_to_float8e4m3(*args, **kwargs) -> int:
+    return _float32_to_float8e4m3(*args, **kwargs)
+
+
+def _float32_to_float8e4m3(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = True,
@@ -516,7 +533,15 @@ def float32_to_float8e4m3(  # noqa: PLR0911
         return int(ret)
 
 
-def float32_to_float8e5m2(  # noqa: PLR0911
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
+def float32_to_float8e5m2(*args: Any, **kwargs: Any) -> int:
+    return _float32_to_float8e5m2(*args, **kwargs)
+
+
+def _float32_to_float8e5m2(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = False,
@@ -642,7 +667,15 @@ def float32_to_float8e5m2(  # noqa: PLR0911
         raise NotImplementedError("fn and uz must be both False or True.")
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
 def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
+    return _pack_float32_to_4bit(array, signed)
+
+
+def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
     """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
     See :ref:`onnx-detail-int4` for technical details.
 
@@ -662,7 +695,7 @@ def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarr
         array_flat = np.append(array_flat, np.array([0]))
 
     def single_func(x, y) -> np.ndarray:
-        return subbyte.float32x2_to_4bitx2(x, y, signed)
+        return subbyte._float32x2_to_4bitx2(x, y, signed)
 
     func = np.frompyfunc(single_func, 2, 1)
 
@@ -670,7 +703,15 @@ def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarr
     return arr.astype(np.uint8)
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=FutureWarning,
+)
 def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
+    return _pack_float32_to_float4e2m1(array)
+
+
+def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     """Convert an array of float32 value to float4e2m1 and pack every two concecutive elements in a byte.
     See :ref:`onnx-detail-float4` for technical details.
 
@@ -688,7 +729,7 @@ def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
 
-    arr = subbyte.float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
+    arr = subbyte._float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
     return arr.astype(np.uint8)
 
 
@@ -759,7 +800,7 @@ def make_tensor(
         tensor.raw_data = vals
     else:
         if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-            vals = split_complex_to_pairs(vals)
+            vals = _split_complex_to_pairs(vals)
         elif data_type == TensorProto.FLOAT16:
             vals = (
                 np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
@@ -772,13 +813,13 @@ def make_tensor(
             TensorProto.FLOAT8E5M2FNUZ,
         ):
             fcast = {
-                TensorProto.BFLOAT16: float32_to_bfloat16,
-                TensorProto.FLOAT8E4M3FN: float32_to_float8e4m3,
-                TensorProto.FLOAT8E4M3FNUZ: lambda *args: float32_to_float8e4m3(  # type: ignore[misc]
+                TensorProto.BFLOAT16: _float32_to_bfloat16,
+                TensorProto.FLOAT8E4M3FN: _float32_to_float8e4m3,
+                TensorProto.FLOAT8E4M3FNUZ: lambda *args: _float32_to_float8e4m3(  # type: ignore[misc]
                     *args, uz=True
                 ),
-                TensorProto.FLOAT8E5M2: float32_to_float8e5m2,
-                TensorProto.FLOAT8E5M2FNUZ: lambda *args: float32_to_float8e5m2(  # type: ignore[misc]
+                TensorProto.FLOAT8E5M2: _float32_to_float8e5m2,
+                TensorProto.FLOAT8E5M2FNUZ: lambda *args: _float32_to_float8e5m2(  # type: ignore[misc]
                     *args, fn=True, uz=True
                 ),
             }[
@@ -801,9 +842,9 @@ def make_tensor(
             # to uint8 regardless of the value of 'signed'. Using int8 would cause
             # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
             # the way negative values are serialized by protobuf).
-            vals = pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
+            vals = _pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
         elif data_type == TensorProto.FLOAT4E2M1:
-            vals = pack_float32_to_float4e2m1(vals).flatten().tolist()
+            vals = _pack_float32_to_float4e2m1(vals).flatten().tolist()
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)
         elif data_type == TensorProto.STRING:
