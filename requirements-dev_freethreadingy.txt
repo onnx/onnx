@@ -1,0 +1,19 @@
+build
+jupyter ; sys_platform  == "win32" and python_version < "3.13" 
+nbval ; sys_platform  == "win32" and python_version < "3.13"
+numpy
+parameterized
+protobuf
+pytest
+pytest-cov
+pytest-xdist
+setuptools
+twine
+wheel
+ml_dtypes
+# Dependencies for linting. Versions match those in setup.py.
+lintrunner>=0.10.7
+lintrunner-adapters>=0.12.3
+# Edit additional linter dependencies in requirements-lintrunner.txt
+# Dependencies for the reference implementation.
+-r requirements-reference.txt
