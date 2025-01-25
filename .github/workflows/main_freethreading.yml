@@ -77,7 +77,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements-release.txt
+          python -m pip install -r requirements-dev_freethreading.txt
           python -m pip install protobuf==5.29.2
           git submodule update --init --recursive
 
