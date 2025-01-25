@@ -132,6 +132,7 @@ jobs:
 
       - name: Run Python tests
         run: |
+          pip install nbval
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
