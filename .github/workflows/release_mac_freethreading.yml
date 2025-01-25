@@ -2,7 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: MacRelease
+# could be deleted when # uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b contains 3.13t, used Quansight-Labs/setup-python@v5 instead
+        
+
+name: MacRelease (freethreading)
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
@@ -37,14 +40,14 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      uses: Quansight-Labs/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-release.txt
+        python -m pip install -q -r requirements-dev_freethreading.txt
 
     - name: Build wheel
       env:
