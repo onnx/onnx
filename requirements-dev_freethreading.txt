@@ -8,18 +8,14 @@ pytest
 pytest-cov
 pytest-xdist
 setuptools
-twine
 ml_dtypes
 # Dependencies for linting. Versions match those in setup.py.
 lintrunner>=0.10.7
 lintrunner-adapters>=0.12.3
 # Edit additional linter dependencies in requirements-lintrunner.txt
 # Dependencies for the reference implementation.
-ipython
+ipython; sys_platform  == "win32" and python_version < "3.13"
 ml_dtypes
-nbval
 pytest
 pytest-cov
 pytest-xdist
-setuptools
-twine
