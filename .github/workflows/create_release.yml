@@ -66,6 +66,13 @@ jobs:
       os: "win"
     secrets: inherit
 
+  call-workflow-win-freethreading:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_win_freethreading.yml
+    with:
+      os: "win"
+    secrets: inherit
+
   call-workflow-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
@@ -172,5 +179,4 @@ jobs:
     with:
       os: "macos"
     secrets: inherit
-
 
