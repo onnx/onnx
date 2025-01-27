@@ -33,7 +33,7 @@ jobs:
         
           - python_version: '3.13t'
             onnx_ml: 1
-            debug_build: 1
+            debug_build: 0
             documentation: 1
             protobuf_type: 'Internal'
 
