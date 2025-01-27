@@ -32,6 +32,9 @@ on:
           - 'no'
         default: 'no'
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
   cancel-in-progress: true
@@ -42,8 +45,7 @@ jobs:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:
-      os: "linux_x86_64"
-    secrets: inherit
+      os: "linux_x86_64"    
 
   call-workflow-ubuntu_x86_freethreading:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -57,14 +59,12 @@ jobs:
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:
       os: "linux_aarch64"
-    secrets: inherit
 
   call-workflow-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win.yml
     with:
       os: "win"
-    secrets: inherit
 
   call-workflow-win-freethreading:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -78,7 +78,6 @@ jobs:
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
-    secrets: inherit
 
   call-workflow-mac-freethreading: # experimental
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -92,7 +91,6 @@ jobs:
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
-    secrets: inherit
 
   publish_devbuild_to_testpypi:
       name: Publish devbuild to test.pypi-weekly
@@ -178,5 +176,4 @@ jobs:
     uses: ./.github/workflows/release_test_weekly_sdist.yml
     with:
       os: "macos"
-    secrets: inherit
 
