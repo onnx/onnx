@@ -23,7 +23,7 @@ jobs:
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
-      img: quay.io/pypa/manylinux2014_aarch64
+      img: quay.io/pypa/manylinux2014_aarch64:2025.01.18-1
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
