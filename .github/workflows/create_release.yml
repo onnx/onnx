@@ -44,8 +44,21 @@ concurrency:
 
 jobs:
 
+  get-labels:
+      runs-on: ubuntu-latest
+      steps:
+        - run: |
+            currlabels="$(gh api repos/$OWNER/$REPO_NAME/pulls/$PULL_REQUEST_NUMBER --jq '.labels.[].name')"
+            echo "$currlabels"
+          shell: bash
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            OWNER: ${{ github.repository_owner }}
+            REPO_NAME: ${{ github.event.repository.name }}
+            PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+
   call-workflow-ubuntu_x86:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.issue.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(${{currlabels}}, 'run release CIs')
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:
       os: "linux_x86_64"    
