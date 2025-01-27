@@ -4,7 +4,7 @@
 
 name: LinuxRelease_x86_64
 
-on:  # Specifies the event triggering the workflow
+on:
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:
       os:
@@ -36,7 +36,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2014_x86_64:latest
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }} ${{ inputs.currdate }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
