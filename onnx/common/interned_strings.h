@@ -225,7 +225,13 @@ static inline bool operator==(Symbol lhs, BuiltinSymbol rhs) {
   return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
 }
 
-inline Symbol operator"" _sym(const char* s, size_t) {
+inline Symbol
+#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ < 5
+operator"" _sym // gcc 4.8.5 insists on having a space (hard error).
+#else
+operator""_sym // clang 17 generates a deprecation warning if there is a space.
+#endif
+    (const char* s, size_t) {
   return Symbol(s);
 }
 

@@ -27,6 +27,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        persist-credentials: true
     - name: Checkout submodules
       shell: bash
       run: |
@@ -59,7 +61,7 @@ jobs:
           source .env/bin/activate && \
           yum install -y sudo && \
           sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }}
+          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }}
           deactivate'
 
       # using created virtual environment in new container and testing the wheel
