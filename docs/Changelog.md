@@ -28264,47 +28264,53 @@ This version of the operator has been available since version 23 of the default 
 <dd>Number of heads of key and value. Must use with for 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must use with for 3D inputs of Q, K and V. </dd>
+<dt><tt>qk_matmul_precision</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in q and k matmul compuatation.</dd>
+<dt><tt>qkv_matmul_precision</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in qk and v matmul computation.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)</dd>
-<dt><tt>smooth_softmax</tt> : int (default is 0)</dt>
-<dd>Use a smooth factor in softmax. Default value is 0.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
 <dd>Softcap value for attention weights. Default value is 0.</dd>
+<dt><tt>softmax_precision</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in softmax computation.</dd>
 </dl>
 
 #### Inputs (3 - 6)
 
 <dl>
-<dt><tt>Q</tt> : T</dt>
+<dt><tt>Q</tt> : T1</dt>
 <dd>Query tensor. 4D tensor with shape (batch_size, q_num_heads, q_sequence_length, head_size) or 3D tensor with shape (batch_size, q_sequence_length, q_hidden_size). For cases with a 3D input tensor, q_hidden_size = q_num_heads * head_size</dd>
-<dt><tt>K</tt> : T</dt>
+<dt><tt>K</tt> : T1</dt>
 <dd>Key tensor. 4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, head_size) or 3D tensor with shape (batch_size, kv_sequence_length, k_hidden_size). For cases with a 3D input tensor, k_hidden_size = kv_num_heads * head_size</dd>
-<dt><tt>V</tt> : T</dt>
+<dt><tt>V</tt> : T2</dt>
 <dd>Value tensor. 4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size) or 3D tensor with shape (batch_size, kv_sequence_length, v_hidden_size). For cases with a 3D input tensor, v_hidden_size = kv_num_heads * v_head_size</dd>
 <dt><tt>attn_mask</tt> (optional) : U</dt>
 <dd>Attention mask. Shape must be broadcastable to 4D tensor with shape (batch_size, q_num_heads, q_sequence_length, total_sequence_length). total_sequence_length is past_sequence_length + kv_sequence_length. Two types of masks are supported. A boolean mask where a value of True indicates that the element should take part in attention. Also supports a float mask of the same type as query, key, value that is added to the attention score.</dd>
-<dt><tt>past_key</tt> (optional) : T</dt>
+<dt><tt>past_key</tt> (optional) : T1</dt>
 <dd>past state cache for key with shape (batch_size, kv_num_heads, past_sequence_length, head_size)</dd>
-<dt><tt>past_value</tt> (optional) : T</dt>
+<dt><tt>past_value</tt> (optional) : T2</dt>
 <dd>past state cache for value with shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)</dd>
 </dl>
 
 #### Outputs (1 - 3)
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> : T1</dt>
 <dd>The output tensor . 4D tensor with shape (batch_size, q_num_heads, q_sequence_length, v_head_size) or 3D tensor with shape (batch_size, q_sequence_length, hidden_size). For cases with a 3D input tensor, hidden_size = q_num_heads * v_head_size</dd>
-<dt><tt>present_key</tt> (optional) : T</dt>
+<dt><tt>present_key</tt> (optional) : T1</dt>
 <dd>Updated key cache with shape (batch_size, kv_num_heads, total_sequence_length, head_size). total_sequence_length is past_sequence_length + kv_sequence_length.</dd>
-<dt><tt>present_value</tt> (optional) : T</dt>
+<dt><tt>present_value</tt> (optional) : T2</dt>
 <dd>Updated value cache with shape (batch_size, kv_num_heads, total_sequence_length, v_head_size). total_sequence_length is past_sequence_length + kv_sequence_length.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q and K inputs types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain V input types to float tensors.</dd>
 <dt><tt>U</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
 <dd>Constrain output 'mask' types to boolean tensors and input types.</dd>
 </dl>

@@ -3342,10 +3342,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
-            "smooth_softmax",
-            "Use a smooth factor in softmax. Default value is 0.",
+            "qk_matmul_precision",
+            "The floating-point precision used in q and k matmul compuatation.",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+        .Attr(
+            "softmax_precision",
+            "The floating-point precision used in softmax computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+        .Attr(
+            "qkv_matmul_precision",
+            "The floating-point precision used in qk and v matmul computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
         .Attr(
             "softcap",
             "Softcap value for attention weights. Default value is 0.",
@@ -3357,21 +3367,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Query tensor. "
             "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, head_size) or 3D tensor with shape (batch_size, q_sequence_length, q_hidden_size). "
             "For cases with a 3D input tensor, q_hidden_size = q_num_heads * head_size",
-            "T")
+            "T1")
         .Input(
             1,
             "K",
             "Key tensor. "
             "4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, head_size) or 3D tensor with shape (batch_size, kv_sequence_length, k_hidden_size). "
             "For cases with a 3D input tensor, k_hidden_size = kv_num_heads * head_size",
-            "T")
+            "T1")
         .Input(
             2,
             "V",
             "Value tensor. "
             "4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size) or 3D tensor with shape (batch_size, kv_sequence_length, v_hidden_size). "
             "For cases with a 3D input tensor, v_hidden_size = kv_num_heads * v_head_size",
-            "T")
+            "T2")
         .Input(
             3,
             "attn_mask",
@@ -3387,13 +3397,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             4,
             "past_key",
             "past state cache for key with shape (batch_size, kv_num_heads, past_sequence_length, head_size)",
-            "T",
+            "T1",
             OpSchema::Optional)
         .Input(
             5,
             "past_value",
             "past state cache for value with shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)",
-            "T",
+            "T2",
             OpSchema::Optional)
         .Output(
             0,
@@ -3401,22 +3411,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The output tensor . "
             "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, v_head_size) or 3D tensor with shape (batch_size, q_sequence_length, hidden_size). "
             "For cases with a 3D input tensor, hidden_size = q_num_heads * v_head_size",
-            "T")
+            "T1")
         .Output(
             1,
             "present_key",
             "Updated key cache with shape (batch_size, kv_num_heads, total_sequence_length, head_size). "
             "total_sequence_length is past_sequence_length + kv_sequence_length.",
-            "T",
+            "T1",
             OpSchema::Optional)
         .Output(
             2,
             "present_value",
             "Updated value cache with shape (batch_size, kv_num_heads, total_sequence_length, v_head_size). "
             "total_sequence_length is past_sequence_length + kv_sequence_length.",
-            "T",
+            "T2",
             OpSchema::Optional)
-        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q and K inputs types to float tensors.")
+        .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain V input types to float tensors.")
         .TypeConstraint(
             "U",
             OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
@@ -3532,10 +3543,48 @@ ONNX_OPERATOR_SET_SCHEMA(
           // past_value) => (Y, present_key?, present_value?)
           int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
           int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-          auto* tp = ctx.getInputType(0);
-          if ((tp == nullptr) || (!tp->has_tensor_type()))
+
+          // Get input types
+          auto* t_qk = ctx.getInputType(0);
+          if ((t_qk == nullptr) || (!t_qk->has_tensor_type()))
             return false;
-          int64_t T = tp->tensor_type().elem_type();
+          int64_t T1 = t_qk->tensor_type().elem_type();
+
+          auto* t_v = ctx.getInputType(2);
+          if ((t_v == nullptr) || (!t_v->has_tensor_type()))
+            return false;
+          int64_t T2 = t_v->tensor_type().elem_type();
+
+          // Determine precision types for QK_Matmul, Softmax, QK_V_Matmul
+          auto qk_matmul_precision_attr = ctx.getAttribute("qk_matmul_precision");
+              int64_t qk_matmul_precision = (qk_matmul_precision_attr != nullptr)
+                  ? qk_matmul_precision_attr->i()
+                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+              if ((qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+                  (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+                  (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+                  (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+                return false; // Error
+
+          auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
+              int64_t softmax_precision = (softmax_precision_attr != nullptr)
+                  ? softmax_precision_attr->i()
+                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+              if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+                  (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+                  (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+                  (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+                return false; // Error
+
+          auto qkv_matmul_precision_attr = ctx.getAttribute("qkv_matmul_precision");
+              int64_t qkv_matmul_precision = (qkv_matmul_precision_attr != nullptr)
+                  ? qkv_matmul_precision_attr->i()
+                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+              if ((qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+                  (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+                  (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+                  (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+                return false; // Error
 
           auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
             auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
@@ -3583,7 +3632,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
               .Const("ScaleF", ToTensor<float>(scale))
               .Add(scale_attr != nullptr ? "ScaleFactor = Identity(ScaleF)" : "ScaleFactor = Identity(CalculatedScale)")
-              .Add("ScaleFactorF = Cast (ScaleFactor)", "to", T);
+              .Add("ScaleFactorF = Cast (ScaleFactor)", "to", T1);
 
           // Update key and value caches for past and present states
 
@@ -3638,7 +3687,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 builder.Add("AttnBias = Identity(AttnBiasZeros)");
             }
           }
-          builder.Add("AttnBiasT = Cast (AttnBias)", "to", T);
+          builder.Add("AttnBiasT = Cast (AttnBias)", "to", T1);
 
           // Group Query Attention is applied if the following are satisfied
           // 1) q_num_heads != kv_num_heads
@@ -3675,8 +3724,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           //                    |
           //                    Y
           builder.Add("KTranspose = Transpose <perm = [0, 1 ,3, 2]> (KAttentionInput)")
-              .Add("QKAttnWeight = MatMul(QReshaped, KTranspose)")
-              .Add("QKAttnWeightWithScale = Mul(QKAttnWeight, ScaleFactorF)")
+              .Add("QCast = Cast (QReshaped)", "to", qk_matmul_precision)
+              .Add("KCast = Cast (KTranspose)", "to", qk_matmul_precision)
+              .Add("QKAttnWeight = MatMul(QCast, KCast)")
+              .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1)
+              .Add("QKAttnWeightWithScale = Mul(QKAttnCast, ScaleFactorF)")
               .Add("QKAttnWeightWithBias = Add(QKAttnWeightWithScale, AttnBiasT)");
 
           // Apply softcap if provided
@@ -3684,19 +3736,21 @@ ONNX_OPERATOR_SET_SCHEMA(
           float softcap_val = (softcap_attr != nullptr) ? softcap_attr->f() : static_cast<float>(0);
           if (softcap_val != 0) {
             builder.Const1D("Softcap", softcap_val)
-              .Add("SoftcapF = Cast (Softcap)", "to", T)
+              .Add("SoftcapF = Cast (Softcap)", "to", T1)
               .Add("SoftcapDiv = Div(QKAttnWeightWithBias, SoftcapF)")
               .Add("SoftcapTanh = Tanh(SoftcapDiv)")
               .Add("QKAttnWeightSoftcap = Mul(SoftcapTanh, SoftcapF)");
           } else {
             builder.Add("QKAttnWeightSoftcap = Identity(QKAttnWeightWithBias)");
           }
-          // Decide whether to apply regular softmax or smooth softmax
-          //auto* smooth_softmax_attr = ctx.getAttribute("smooth_softmax");
-          // int64_t smooth_softmax = (smooth_softmax_attr != nullptr) ? smooth_softmax_attr->i() : 0;
-          builder.Add("AttnWeightSoftmax = Softmax (QKAttnWeightSoftcap)")
-              .Add("YExtraDim = MatMul(AttnWeightSoftmax, VAttentionInput)")
-              .Add("Y = Squeeze(YExtraDim)");
+          builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
+              .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
+              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1)
+              .Add("QKCast = Cast (SoftmaxOut)", "to", qkv_matmul_precision)
+              .Add("VCast = Cast (VAttentionInput)", "to", qkv_matmul_precision)
+              .Add("YExtraDim = MatMul(QKCast, VCast)")
+              .Add("YCast = Cast (YExtraDim)", "to", T1)
+              .Add("Y = Squeeze(YCast)");
 
           schema.BuildFunction(functionProto);
           return true;
