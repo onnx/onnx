@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import os
-from typing import IO, Any, Sequence
+from collections.abc import Sequence
+from typing import IO, Any
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
@@ -252,7 +253,9 @@ def gen_model_test_coverage(
 
 
 def gen_overall_test_coverage(
-    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool  # noqa: ARG001
+    schemas: Sequence[defs.OpSchema],  # noqa: ARG001
+    f: IO[Any],
+    ml: bool,  # noqa: ARG001
 ) -> None:
     f.write("# Overall Test Coverage\n")
     f.write("## To be filled.\n")

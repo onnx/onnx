@@ -22,17 +22,18 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.9', '3.10', '3.11', '3.12']
         architecture: ['x64']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
          path: ./onnx
          submodules: 'recursive'
+         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -53,7 +54,7 @@ jobs:
 
         cd onnx
         echo "Build ONNX"
-        cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_DISABLE_EXCEPTIONS=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -S . -B .setuptools-cmake-build\
+        cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_DISABLE_EXCEPTIONS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -S . -B .setuptools-cmake-build\
         cd .setuptools-cmake-build\
         msbuild onnx.sln /m /p:Configuration=Release
 
@@ -67,7 +68,7 @@ jobs:
         git clean -xdf
         set ONNX_BUILD_TESTS=1
         echo "Build ONNX with non-static registration for testing selective ONNX schema loading"
-        cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -DONNX_DISABLE_STATIC_REGISTRATION=ON -S . -B .setuptools-cmake-build\
+        cmake -G "Visual Studio 17 2022" -A ${{ matrix.architecture }} -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DCMAKE_BUILD_TYPE=Release -DONNX_USE_MSVC_STATIC_RUNTIME=OFF -DONNX_ML=1 -DONNX_BUILD_TESTS=ON -DONNX_DISABLE_STATIC_REGISTRATION=ON -S . -B .setuptools-cmake-build\
 
         cd .setuptools-cmake-build\
         msbuild onnx.sln /m /p:Configuration=Release

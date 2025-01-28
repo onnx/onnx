@@ -18,7 +18,7 @@ static bool IsValidIdentifier(const std::string& str) {
   const char* end_ = next_ + str.size();
   if (next_ == end_)
     return false; // empty string is not a valid identifier
-  if (!(isalpha(*next_) || (*next_ == '_')))
+  if (!isalpha(*next_) && (*next_ != '_'))
     return false; // first character must be a letter or '_'
   ++next_;
   while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))

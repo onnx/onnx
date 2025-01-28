@@ -168,6 +168,7 @@ if ort is not None:
         "|test_cast_FLOAT4E2M1_to_"  # No corresponding Numpy type for Tensor Type.
         "|_to_FLOAT4E2M1"  # No corresponding Numpy type for Tensor Type.
         "|test_maxpool_2d_ceil_output_size_reduce_by_one"  # TODO: remove after https://github.com/microsoft/onnxruntime/pull/18377 in Ort release.
+        "|test_top_k_uint64"
         ")"
     )
 
@@ -453,6 +454,10 @@ if ort is not None:
         "|test_instancenorm_epsilon_cpu"
         ")"
     )
+
+    # TODO(titaiwang): Re-enable this tests once ORT is fixed.
+    # https://github.com/microsoft/onnxruntime/pull/16752
+    backend_test.exclude("test_averagepool_2d_ceil_last_window_starts_on_pad")
 
     # The following tests fail due to small discrepancies.
     backend_test.exclude("(cast_FLOAT_to_STRING|castlike_FLOAT_to_STRING|stft)")

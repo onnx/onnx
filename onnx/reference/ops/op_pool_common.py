@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import itertools
 import math
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -93,6 +93,11 @@ def get_output_shape_explicit_padding(
 
         if ceil_mode:
             output_spatial_shape[dim] = int(np.ceil(dim_size))
+            # NOTE: ensure that the last pooling starts inside the image
+            if (output_spatial_shape[dim] - 1) * strides_spatial[
+                dim
+            ] >= input_spatial_shape[dim] + pads[dim]:
+                output_spatial_shape[dim] -= 1
         else:
             output_spatial_shape[dim] = int(np.floor(dim_size))
 
@@ -152,13 +157,6 @@ def get_output_shape_auto_pad(
     return out_shape
 
 
-def lp_pool(x: np.array, p: int) -> float:
-    y = 0
-    for v in np.nditer(x):
-        y += abs(v) ** p
-    return y ** (1.0 / p)
-
-
 def pool(
     padded: np.ndarray,
     x_shape: Sequence[int],
@@ -166,6 +164,7 @@ def pool(
     strides: Sequence[int],
     out_shape: Sequence[int],
     pooling_type: str,
+    pads_required: Sequence[int] | None = None,
     pads: Sequence[int] | None = None,
     dilations: Sequence[int] | None = None,
     count_include_pad: int = 0,
@@ -178,6 +177,7 @@ def pool(
     strides: the strides
     out_shape: the shape of the output tensor
     pooling_type: the pooling type, can be "AVG", "LPPOOL", or "MAX"
+    pads_required: the required padding to make sure the sliding window does not go out-of-bound
     pads: the padding in an order of head_pad_1, head_pad_2, ..., tail_pad_1, tail_pad_2, ...
     dilations: the dilation
     count_include_pad: whether to include the padding in the calculation of average and lp pooling
@@ -187,25 +187,27 @@ def pool(
     y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)], dtype=padded.dtype)
     if dilations is None:
         dilations = np.ones([spatial_size], dtype=np.int64)
+    if pads_required is None:
+        pads_required = np.zeros([spatial_size * 2], dtype=np.int64)
+    elif len(pads_required) == 1:
+        pads_required = pads_required * spatial_size * 2
     if pads is None:
         pads = np.zeros([spatial_size * 2], dtype=np.int64)
     elif len(pads) == 1:
         pads = pads * spatial_size * 2
     strides = strides or [1] * spatial_size
 
-    def lp_pool_p(x):
-        return lp_pool(x, p)
-
+    # Iterate all the possible sliding windows
     for shape in itertools.product(
-        range(x_shape[0]),
-        range(x_shape[1]),
+        range(x_shape[0]),  # e.g. dim=0: [0]
+        range(x_shape[1]),  # e.g. dim=1: [0, 1]
         *[
             range(
                 int(
                     (
                         x_shape[i + 2]
-                        + pads[i]
-                        + pads[i + spatial_size]
+                        + pads_required[i]
+                        + pads_required[i + spatial_size]
                         - (1 + (kernel[i] - 1) * dilations[i])
                     )
                     / strides[i]
@@ -222,24 +224,34 @@ def pool(
                 for i in list(
                     itertools.product(
                         *[
-                            range(
-                                strides[i] * shape[i + 2],
-                                strides[i] * shape[i + 2]
-                                + (1 + (kernel[i] - 1) * dilations[i]),
-                                dilations[i],
-                            )
+                            [
+                                pixel
+                                for pixel in range(
+                                    strides[i] * shape[i + 2],
+                                    strides[i] * shape[i + 2]
+                                    + (1 + (kernel[i] - 1) * dilations[i]),
+                                    dilations[i],
+                                )
+                                if pixel
+                                < x_shape[i + 2] + pads[i] + pads[spatial_size + i]
+                            ]
                             for i in range(spatial_size)
                         ]
                     )
                 )
             ]
         )
+
         if pooling_type == "AVG":
             f = np.average
         elif pooling_type == "MAX":
             f = np.max
         elif pooling_type == "LPPOOL":
-            f = lp_pool_p
+
+            def lp_pool(x: np.array, p: int = p) -> float:
+                return np.sum(np.abs(x) ** p) ** (1.0 / p)
+
+            f = lp_pool
         else:
             raise NotImplementedError(
                 f"Pooling type {pooling_type} does not support. Should be AVG, MAX"
@@ -296,18 +308,19 @@ class CommonPool(OpRun):
                 out_shape,
                 pooling_type,
                 pads,
+                pads,
                 dilations,
                 count_include_pad,
                 p,
             )
             return (y,)
         else:
-            out_shape, pads = get_output_shape_explicit_padding(
+            out_shape, extra_pads = get_output_shape_explicit_padding(
                 pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode
             )
             # convert pads from [x1_begin, x2_begin,...,x1_end, x2_end,...] to [(x1_begin, x1_end), (x2_begin, x2_end),...]
-            n_dims = len(pads) // 2
-            pads_np = [(pads[i], pads[i + n_dims]) for i in range(n_dims)]
+            n_dims = len(extra_pads) // 2
+            pads_np = [(extra_pads[i], extra_pads[i + n_dims]) for i in range(n_dims)]
             padded = np.pad(
                 x,
                 ((0, 0), (0, 0), *pads_np),
@@ -321,6 +334,7 @@ class CommonPool(OpRun):
                 strides,
                 out_shape,
                 pooling_type,
+                extra_pads,
                 pads,
                 dilations,
                 count_include_pad,

@@ -132,7 +132,9 @@ class LpPool(Base):
             constant_values=0,
         )
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+        y = pool(
+            padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, pads, p=p
+        )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
 
@@ -172,7 +174,9 @@ class LpPool(Base):
             constant_values=0,
         )
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+        y = pool(
+            padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, pads, p=p
+        )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
 
@@ -197,16 +201,31 @@ class LpPool(Base):
         strides = (1, 1)
         pad_bottom = pad_top = pad_right = pad_left = 2
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        out_shape, pads = get_output_shape_explicit_padding(
+        out_shape, extra_pads = get_output_shape_explicit_padding(
             pads, x_shape[2:], kernel_shape, strides
         )
         padded = np.pad(
             x,
-            ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+            (
+                (0, 0),
+                (0, 0),
+                (extra_pads[0], extra_pads[2]),
+                (extra_pads[1], extra_pads[3]),
+            ),
             mode="constant",
             constant_values=0,
         )
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+        y = pool(
+            padded,
+            x_shape,
+            kernel_shape,
+            strides,
+            out_shape,
+            "LPPOOL",
+            pads_required=extra_pads,
+            pads=pads,
+            p=p,
+        )
 
         expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
 

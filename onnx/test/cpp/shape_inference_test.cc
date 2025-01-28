@@ -36,7 +36,7 @@ static void CreateDims(Type& proto, int num_dims) {
 template <class Type>
 static void SetDimValues(Type& proto, const std::vector<int>& values) {
   auto* mutable_shape = proto.mutable_shape();
-  EXPECT_TRUE(mutable_shape->dim_size() == values.size());
+  EXPECT_TRUE(static_cast<size_t>(mutable_shape->dim_size()) == values.size());
 
   int idx = 0;
   for (auto value : values) {
@@ -49,7 +49,7 @@ static void SetDimValues(Type& proto, const std::vector<int>& values) {
 template <class Type>
 static void SetDimParams(Type& proto, const std::vector<const std::string*>& values) {
   auto mutable_shape = proto.mutable_shape();
-  EXPECT_TRUE(mutable_shape->dim_size() == values.size());
+  EXPECT_TRUE(static_cast<size_t>(mutable_shape->dim_size()) == values.size());
 
   int idx = 0;
   for (auto value : values) {
@@ -344,7 +344,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
 
 // Check subgraph inferencing via GraphInferencer using a Scan
 static void doInferencingTest(bool use_scan_opset8) {
-  auto* schemaRegistry = OpSchemaRegistry::Instance();
+  OpSchemaRegistry::Instance();
   GraphProto subgraph;
 
   // simple tensor without shape info
