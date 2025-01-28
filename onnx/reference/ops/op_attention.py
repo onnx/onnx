@@ -35,7 +35,6 @@ def _compute_attention(
     is_causal=False,
     q_num_heads=None,
     kv_num_heads=None,
-    smooth_softmax=None,
     softcap=None,
 ) -> np.ndarray:
 
@@ -169,7 +168,9 @@ class Attention(OpRun):
         is_causal=False,
         q_num_heads=None,
         kv_num_heads=None,
-        smooth_softmax=None,
+        qk_matmul_precision=None,
+        softmax_precision=None,
+        qkv_matmul_precision=None,
         softcap=None,
     ) -> np.ndarray:
 
@@ -178,6 +179,6 @@ class Attention(OpRun):
             past_key=past_key, past_value=past_value,
             scale=scale, is_causal=is_causal,
             q_num_heads=q_num_heads, kv_num_heads=kv_num_heads,
-            smooth_softmax=smooth_softmax, softcap=softcap,
+            softcap=softcap,
         )
         return res
