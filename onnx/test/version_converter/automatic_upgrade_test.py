@@ -1229,33 +1229,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"axes": [1, 2], "starts": [0, 1], "ends": [2, 3]},
         )
 
-    def test_SkipLayerNormalization(self) -> None:
-        self._test_op_upgrade(
-            "SkipLayerNormalization",
-            23,
-            [[2, 3, 4, 5], [2, 3, 4, 5], [4, 5], [4, 5]],
-            [[2, 3, 4, 5]],
-            input_types=[
-                TensorProto.FLOAT,
-                TensorProto.FLOAT,
-                TensorProto.FLOAT,
-                TensorProto.FLOAT,
-            ],
-            output_types=[TensorProto.FLOAT],
-            attrs={"axis": 2},
-        )
-
-    def test_SkipRMSNormalization(self) -> None:
-        self._test_op_upgrade(
-            "SkipRMSNormalization",
-            23,
-            [[2, 3, 4, 5], [2, 3, 4, 5], [4, 5]],
-            [[2, 3, 4, 5]],
-            input_types=[TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
-            output_types=[TensorProto.FLOAT],
-            attrs={"axis": 2},
-        )
-
     def test_Softmax_0(self) -> None:
         self._test_op_upgrade("Softmax", 1, attrs={"axis": 0})
 

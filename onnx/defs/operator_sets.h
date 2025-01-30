@@ -1307,8 +1307,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, RMSNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Scan);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Shape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Size);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, SkipLayerNormalization);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, SkipRMSNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Squeeze);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Transpose);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Unsqueeze);
@@ -1333,8 +1331,6 @@ class OpSet_Onnx_ver23 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Scan)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Shape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Size)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, SkipLayerNormalization)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, SkipRMSNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Squeeze)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Transpose)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Unsqueeze)>());

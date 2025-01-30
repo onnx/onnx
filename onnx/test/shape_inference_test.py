@@ -977,6 +977,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @parameterized.expand(all_versions_for("RMSNormalization"))
     def test_rms_normalization(self) -> None:
         graph = self._make_graph(
             [
@@ -984,41 +985,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ("scale", TensorProto.FLOAT, ("H", "W")),
             ],
             [make_node("RMSNormalization", ["X", "scale"], ["y"], axis=2)],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
-        )  # type: ignore
-
-    def test_skip_rms_normalization(self) -> None:
-        graph = self._make_graph(
-            [
-                ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
-                ("S", TensorProto.FLOAT, ("N", "C", "H", "W")),
-                ("gamma", TensorProto.FLOAT, ("H", "W")),
-            ],
-            [make_node("SkipRMSNormalization", ["X", "S", "gamma"], ["y"], axis=2)],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
-        )  # type: ignore
-
-    def test_skip_layer_normalization(self) -> None:
-        graph = self._make_graph(
-            [
-                ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
-                ("S", TensorProto.FLOAT, ("N", "C", "H", "W")),
-                ("gamma", TensorProto.FLOAT, ("H", "W")),
-                ("beta", TensorProto.FLOAT, ("H", "W")),
-            ],
-            [
-                make_node(
-                    "SkipLayerNormalization", ["X", "S", "gamma", "beta"], ["y"], axis=2
-                )
-            ],
             [],
         )
         self._assert_inferred(
