@@ -34,23 +34,23 @@ class Greater(Base):
         z = np.greater(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_greater_int16")
 
-        x = np.random.randn(3, 4, 5).astype(np.uint8)
-        y = np.random.randn(3, 4, 5).astype(np.uint8)
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
         z = np.greater(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint8")
 
-        x = np.random.randn(3, 4, 5).astype(np.uint16)
-        y = np.random.randn(3, 4, 5).astype(np.uint16)
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
         z = np.greater(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint16")
 
-        x = np.random.randn(3, 4, 5).astype(np.uint32)
-        y = np.random.randn(3, 4, 5).astype(np.uint32)
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
         z = np.greater(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint32")
 
-        x = np.random.randn(3, 4, 5).astype(np.uint64)
-        y = np.random.randn(3, 4, 5).astype(np.uint64)
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
         z = np.greater(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint64")
 
