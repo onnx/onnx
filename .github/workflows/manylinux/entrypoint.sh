@@ -18,18 +18,18 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 if [ "$(uname -m)" == "aarch64" ]; then
  PIP_INSTALL_COMMAND="$PY_VERSION -m pip install --only-binary google-re2 --no-cache-dir -q"
  PYTHON_COMMAND="$PY_VERSION"
+ echo $PYTHON_COMMAND
 else
  declare -A python_map=(["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313")
  PY_VER=${python_map[$PY_VERSION]}
  PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --only-binary google-re2 --no-cache-dir -q"
  PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
+ echo $PYTHON_COMMAND
 fi
 
 # Update pip
 $PIP_INSTALL_COMMAND --upgrade pip
 $PIP_INSTALL_COMMAND cmake
-
-/opt/python/${PY_VER}/bin/pip list
 
 # Build protobuf from source
 yum install -y wget
