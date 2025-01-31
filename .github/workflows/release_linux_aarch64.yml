@@ -44,6 +44,7 @@ jobs:
       # and installing the dependencies inside that \
       # so that we can use installed dependencies.
     - name: Install dependencies
+      id: install_dependencies
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
@@ -56,6 +57,7 @@ jobs:
       # using created virtual environment in new container and executing the script
     - name: Build manylinux2014_aarch64
       id: build_manylinux
+      if: steps.install_dependencies.outcome == 'success'
       run: |
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
