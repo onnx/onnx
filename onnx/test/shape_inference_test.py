@@ -990,6 +990,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )  # type: ignore
 
     @parameterized.expand(all_versions_for("Resize"))
