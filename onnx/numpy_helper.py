@@ -22,7 +22,7 @@ def _combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def bfloat16_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
@@ -96,7 +96,7 @@ _float8e4m3_to_float32 = np.vectorize(
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float8e4m3_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
@@ -175,7 +175,7 @@ _float8e5m2_to_float32 = np.vectorize(
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float8e5m2_to_float32(
     data: np.int16 | np.int32 | np.ndarray,
@@ -205,7 +205,7 @@ def float8e5m2_to_float32(
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider implementing your own unpack logic",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def unpack_int4(
     data: np.int32 | np.ndarray,
