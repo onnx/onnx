@@ -29,7 +29,7 @@ fi
 $PIP_INSTALL_COMMAND --upgrade pip
 $PIP_INSTALL_COMMAND cmake
 
-$PIP_INSTALL_COMMAND --list
+opt/python/${PY_VER}/bin/pip --list
 
 # Build protobuf from source
 yum install -y wget
