@@ -29,6 +29,8 @@ fi
 $PIP_INSTALL_COMMAND --upgrade pip
 $PIP_INSTALL_COMMAND cmake
 
+$PIP_INSTALL_COMMAND --list
+
 # Build protobuf from source
 yum install -y wget
 source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$(pwd)"/protobuf/protobuf_install
