@@ -978,7 +978,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             )
 
     @parameterized.expand(all_versions_for("RMSNormalization"))
-    def test_rms_normalization(self) -> None:
+    def test_rms_normalization(self _, version) -> None:
         graph = self._make_graph(
             [
                 ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
