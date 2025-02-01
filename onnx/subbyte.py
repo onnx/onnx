@@ -17,7 +17,7 @@ UINT4_MAX = 15
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float32_to_4bit_unpacked(*args, **kwargs):
     return _float32_to_4bit_unpacked(*args, **kwargs)
@@ -47,7 +47,7 @@ def _float32_to_4bit_unpacked(
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float32x2_to_4bitx2(*args, **kwargs):
     return _float32x2_to_4bitx2(*args, **kwargs)
@@ -73,7 +73,7 @@ def _float32x2_to_4bitx2(
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def unpack_4bitx2(*args, **kwargs):
     return _unpack_4bitx2(*args, **kwargs)
@@ -108,7 +108,7 @@ def _unpack_4bitx2(
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def unpack_single_4bitx2(*args, **kwargs):
     return _unpack_single_4bitx2(*args, **kwargs)
@@ -139,7 +139,7 @@ def _unpack_single_4bitx2(
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float32_to_float4e2m1_unpacked(*args, **kwargs):
     return _float32_to_float4e2m1_unpacked(*args, **kwargs)
@@ -171,7 +171,7 @@ def _float32_to_float4e2m1_unpacked(values: np.ndarray) -> np.ndarray:
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float32x2_to_float4e2m1x2(*args, **kwargs):
     return _float32x2_to_float4e2m1x2(*args, **kwargs)
