@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from onnx.reference import astype
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_conv import _conv_implementation
 
@@ -34,15 +35,18 @@ class ConvInteger(OpRun):
         pads = pads or self.pads  # type: ignore
         strides = strides or self.strides  # type: ignore
 
-        X = X.astype(np.int32)
+        X = astype(X, np.int32)
         if x_zero_point:
             X -= x_zero_point
-        W = W.astype(np.int32)
+        W = astype(W, np.int32)
         if w_zero_point:
             W -= w_zero_point
 
         return (
-            _conv_implementation(
-                X, W, None, auto_pad, dilations, group, kernel_shape, pads, strides
-            ).astype(np.int32),
+            astype(
+                _conv_implementation(
+                    X, W, None, auto_pad, dilations, group, kernel_shape, pads, strides
+                ),
+                np.int32
+            ),
         )

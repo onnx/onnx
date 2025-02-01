@@ -3,8 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
-
+from onnx.reference import apimod, astype
 from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
@@ -16,10 +15,10 @@ def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # t
     # Update squared accumulated gradient.
     h_new = h + g_regularized * g_regularized
     # Compute ADAGRAD's gradient scaling factors
-    h_sqrt = np.sqrt(h_new) + epsilon
+    h_sqrt = apimod(h_new).sqrt(h_new) + epsilon
     # Apply ADAGRAD update rule.
     x_new = x - r_ * g_regularized / h_sqrt
-    return (x_new.astype(x.dtype), h_new.astype(h.dtype))
+    return (astype(x_new, x.dtype), astype(h_new, h.dtype))
 
 
 class Adagrad(OpRunTraining):

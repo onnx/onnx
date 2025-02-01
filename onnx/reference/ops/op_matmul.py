@@ -22,4 +22,6 @@ def numpy_matmul(a, b):  # type: ignore
 
 class MatMul(OpRunBinaryNum):
     def _run(self, a, b):  # type: ignore
-        return (numpy_matmul(a, b),)
+        if hasattr(a, "astype"):
+            return (numpy_matmul(a, b),)
+        return (a @ b,)
