@@ -455,6 +455,10 @@ if ort is not None:
         ")"
     )
 
+    # TODO(titaiwang): Re-enable this tests once ORT is fixed.
+    # https://github.com/microsoft/onnxruntime/pull/16752
+    backend_test.exclude("test_averagepool_2d_ceil_last_window_starts_on_pad")
+
     # The following tests fail due to small discrepancies.
     backend_test.exclude("(cast_FLOAT_to_STRING|castlike_FLOAT_to_STRING|stft)")
 

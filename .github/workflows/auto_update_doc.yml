@@ -24,6 +24,7 @@ jobs:
         # Checkout the branch made in the fork. Will automatically push changes
         # back to this branch.
         ref: ${{ github.head_ref }}
+        persist-credentials: false
     - name: Setup Python
       uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
       with:

@@ -7,9 +7,6 @@
 ```{eval-rst}
 .. autosummary::
 
-    bfloat16_to_float32
-    float8e4m3_to_float32
-    float8e5m2_to_float32
     from_array
     from_dict
     from_list
@@ -64,36 +61,4 @@ these two functions use a custom dtype defined in :mod:`onnx._custom_element_typ
 
 ```{eval-rst}
 .. autofunction:: onnx.numpy_helper.from_optional
-```
-
-## tools
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.convert_endian
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.combine_pairs_to_complex
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.create_random_int
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.unpack_int4
-```
-
-## cast
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.bfloat16_to_float32
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.float8e4m3_to_float32
-```
-
-```{eval-rst}
-.. autofunction:: onnx.numpy_helper.float8e5m2_to_float32
 ```
