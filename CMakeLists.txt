@@ -252,8 +252,8 @@ else()
 
     include(FetchContent)
     message("Loading Dependencies URLs ...")
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240116.2/abseil-cpp-20240116.2.tar.gz)
-    set(AbseilSHA1 bb8a766f3aef8e294a864104b8ff3fc37b393210)
+    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240722.1/abseil-cpp-20240722.1.tar.gz)
+    set(AbseilSHA1 0d6b07c6f3352981d3660978e109f2bc14594a3d)
     FetchContent_Declare(
       Abseil
       URL ${AbseilURL}
