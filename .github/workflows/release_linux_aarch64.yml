@@ -39,6 +39,8 @@ jobs:
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
     - uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3.3.0
+      with:
+        platforms: "arm64"
 
       # Creating a virtual environment on machine with the help of docker container \
       # and installing the dependencies inside that \
