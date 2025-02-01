@@ -24977,13 +24977,13 @@ If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disre
 If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio:
 ```
 scale = Min(sizes[i] / in_size[d])
-out_size[d] = round_int(scale * in_size[i])
+out_size[d] = round_int(scale * in_size[d])
 ```
 
 If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio:
 ```
 scale = Max(sizes[i] / in_size[d])
-out_size[d] = round_int(scale * in_size[i])
+out_size[d] = round_int(scale * in_size[d])
 ```
 
 For non-resizable axes (those not specified in `axes`), the output size will be equal to the input size.
