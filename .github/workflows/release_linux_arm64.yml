@@ -2,8 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: LinuxRelease_x86_64
-
+name: LinuxRelease_arm64
 on:
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:

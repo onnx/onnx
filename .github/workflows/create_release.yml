@@ -49,7 +49,7 @@ jobs:
 
   call-workflow-ubuntu_aarch64:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_linux_aarch64.yml
+    uses: ./.github/workflows/release_linux_arm64.yml
     with:
       os: "linux_aarch64"
 
