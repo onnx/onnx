@@ -126,7 +126,7 @@ jobs:
         - name: Publish dev-build to test.pypi
           if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
           
-          uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70
+          uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
           with:
             repository-url: https://test.pypi.org/legacy/
             verbose: true
@@ -164,7 +164,7 @@ jobs:
 
       - name: Publish devbuild to pypi-weekly
         if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly  == 'yes') && (github.repository_owner == 'onnx')
-        uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
         with:   
           repository-url: https://upload.pypi.org/legacy/
           verbose: true     
