@@ -453,7 +453,8 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   }
 }
 
-TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found, bool xneg) {
+TensorShapeProto
+getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found, bool fail_if_negative_value) {
   TensorShapeProto shape_input;
 
   found = false;
@@ -491,7 +492,7 @@ TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, 
     }
   }
 
-  if (found && xneg) {
+  if (found && fail_if_negative_value) {
     int dims_size = shape_input.dim_size();
     for (int i = 0; i < dims_size; ++i) {
       const auto& dim = shape_input.dim(i);
