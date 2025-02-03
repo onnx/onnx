@@ -8,7 +8,6 @@ pytest
 pytest-cov
 pytest-xdist
 setuptools
-twine
 wheel
 ml_dtypes
 # Dependencies for linting. Versions match those in setup.py.
