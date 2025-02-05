@@ -75,7 +75,7 @@ jobs:
 
     - name: Upload core dump as artifact
       # if: exists('/tmp/core*')
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: core-dumps
         path: /tmp/core*
