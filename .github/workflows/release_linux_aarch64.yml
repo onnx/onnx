@@ -74,7 +74,7 @@ jobs:
           deactivate'
 
     - name: Upload core dump as artifact
-      if: exists('/tmp/core*')
+      # if: exists('/tmp/core*')
       uses: actions/upload-artifact@v3
       with:
         name: core-dumps
