@@ -26,6 +26,11 @@ jobs:
       img: quay.io/pypa/manylinux2014_aarch64:2025.01.18-1
 
     steps:
+
+    - name: Enable core dumps
+      run: |
+        ulimit -c unlimited   # Allow unlimited core dump size
+        echo "/tmp/core.%e.%p" > /proc/sys/kernel/core_pattern   # Set core dump location    
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         persist-credentials: true
@@ -63,6 +68,13 @@ jobs:
           sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
           sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }}
           deactivate'
+
+    - name: Upload core dump as artifact
+      if: exists('/tmp/core*')
+      uses: actions/upload-artifact@v3
+      with:
+        name: core-dumps
+        path: /tmp/core*
 
       # using created virtual environment in new container and testing the wheel
     - name: Test wheel with Python ${{ matrix.python-version }}
