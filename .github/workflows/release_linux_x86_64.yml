@@ -43,7 +43,7 @@ jobs:
 
     - name: Set up Python ${{ matrix.python-version }}
       if: steps.build_manylinux.outcome == 'success'
-      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -65,7 +65,7 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
+    - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
       if: steps.build_manylinux.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}

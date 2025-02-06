@@ -282,9 +282,9 @@ class CommonPool(OpRun):
         pading_value = np.nan if pooling_type == "MAX" or count_include_pad == 0 else 0
 
         if auto_pad in ["SAME_UPPER", "SAME_LOWER", "VALID"]:
-            assert (
-                ceil_mode is None or ceil_mode == 0
-            ), "ceil_mode is not supported with auto_pad"
+            assert ceil_mode is None or ceil_mode == 0, (
+                "ceil_mode is not supported with auto_pad"
+            )
             out_shape = get_output_shape_auto_pad(
                 auto_pad, x.shape[2:], kernel_shape, strides
             )

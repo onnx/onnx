@@ -46,9 +46,9 @@ def construct_original_grid(data_size, align_corners):
 def apply_affine_transform(theta_n, original_grid_homo):
     # theta_n: (N, 2, 3) for 2D, (N, 3, 4) for 3D
     # original_grid_homo: (H, W, 3) for 2D, (D, H, W, 4) for 3D
-    assert (
-        theta_n.ndim == 3
-    ), "theta_n shall have shape of (N, 2, 3) for 2D, (N, 3, 4) for 3D"
+    assert theta_n.ndim == 3, (
+        "theta_n shall have shape of (N, 2, 3) for 2D, (N, 3, 4) for 3D"
+    )
     if original_grid_homo.ndim == 3:
         N, dim_2d, dim_homo = theta_n.shape
         assert dim_2d == 2 and dim_homo == 3

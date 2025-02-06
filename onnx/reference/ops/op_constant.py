@@ -110,7 +110,7 @@ class Constant_12(ConstantCommon):
             self.cst_convert = lambda v: v
         elif hasattr(self, "value") and self.value is not None:  # type: ignore
             self.cst_name = "value"  # type: ignore
-            self.cst = self.value if isinstance(self.value, RefAttrName) else self.value  # type: ignore
+            self.cst = self.value  # type: ignore
             self.cst_convert = lambda v: v
         else:
             for attr, np_dtype in {
