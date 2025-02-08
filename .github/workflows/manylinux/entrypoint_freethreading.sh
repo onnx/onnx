@@ -33,7 +33,7 @@ $PIP_INSTALL_COMMAND cmake
 
 # Build protobuf from source
 yum install -y wget
-source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$(pwd)"/protobuf/protobuf_install
+source workflow_scripts/protobuf/build_protobuf_unix_freethreading.sh "$(nproc)" "$(pwd)"/protobuf/protobuf_install
 
 # set ONNX build environments
 export ONNX_ML=1
