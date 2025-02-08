@@ -1,6 +1,4 @@
 build
-jupyter ; sys_platform  == "win32" and python_version < "3.13" 
-nbval ; sys_platform  == "win32" and python_version < "3.13"
 numpy
 parameterized
 protobuf
@@ -14,7 +12,6 @@ lintrunner>=0.10.7
 lintrunner-adapters>=0.12.3
 # Edit additional linter dependencies in requirements-lintrunner.txt
 # Dependencies for the reference implementation.
-ipython; sys_platform  == "win32" and python_version < "3.13"
 ml_dtypes
 pytest
 pytest-cov
