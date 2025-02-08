@@ -29,13 +29,31 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
         python_version: ['3.13t']
-        include:
-        
+        include:        
+          # - python_version: '3.13t'
+          #   onnx_ml: 1
+          #   debug_build: 0
+          #   documentation: 0
+          #   protobuf_type: 'Internal'
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 0
             documentation: 0
+            os: 'ubuntu-24.04'
             protobuf_type: 'Internal'
+          - python_version: '3.13t'
+            onnx_ml: 1
+            debug_build: 0
+            documentation: 0
+            os: 'macos-latest'
+            protobuf_type: 'Internal'
+          - python_version: '3.13t'
+            onnx_ml: 1
+            debug_build: 0
+            documentation: 0
+            os: 'windows-latest'
+            protobuf_type: 'External'  # Only for Windows
+          
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -81,7 +99,6 @@ jobs:
           python -m pip install protobuf==5.29.2
           git submodule update --init --recursive
 
-
       - name: Build and install ONNX - Linux
         if: startsWith(matrix.os,'ubuntu')
         run: |
@@ -105,8 +122,8 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
-      - name: Build and install ONNX - Windows
-        if: matrix.os == 'windows-latest' && matrix.python_version != '3.9' && matrix.python_version != '3.12'
+      - name: Build and install ONNX - Windows, setup.py build_ext
+        if: matrix.os == 'windows-latest' 
         run: |
           python setup.py build_ext --inplace
           python setup.py install
@@ -116,8 +133,8 @@ jobs:
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
-      - name: Build and install ONNX - Windows
-        if: matrix.os == 'windows-latest' && (matrix.python_version == '3.9' || matrix.python_version == '3.12')
+      - name: Build and install ONNX - Windows, pip install -e .
+        if: matrix.os == 'windows-latest' 
         run: |
           pip install -e . -v
         env:
