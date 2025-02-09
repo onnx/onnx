@@ -23,7 +23,7 @@ fi
 # Build protobuf from source with -fPIC on Unix-like system
 ORIGINAL_PATH=$(pwd)
 cd ..
-wget https://github.com/protocolbuffers/protobuf//v29.3/protobuf-29.3.tar.gz
+wget https://github.com/protocolbuffers/protobuf/releases/download/v29.3/protobuf-29.3.tar.gz
 tar -xvf protobuf-29.3.tar.gz
 cd protobuf-29.3
 mkdir build_source && cd build_source
