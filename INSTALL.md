@@ -62,6 +62,17 @@ The ON/OFF depends on what kind of Protobuf library you have. Shared libraries a
 
 ### Windows
 
+```
+git clone https://github.com/onnx/onnx.git
+cd onnx
+git submodule update --init --recursive
+# prefer lite proto
+set CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
+pip install -e . -v
+```
+
+#### Old instructions
+
 If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building Protobuf locally also lets you control the version of Protobuf. The tested and recommended version is 3.21.12.
 
 The instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building Protobuf as well as ONNX.
@@ -72,8 +83,8 @@ You can get Protobuf by running the following commands:
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
 git checkout v5.29.2
-cd cmake
-cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+git submodule update --init --recursive
+cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF
 cmake --build . --config Release --target install
 ```
 
