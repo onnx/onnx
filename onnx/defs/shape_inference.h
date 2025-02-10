@@ -594,6 +594,8 @@ inline void updateOutputShape(
 // Otherwise, `false` is stored, which means that returned TensorShapeProto does not make sense.
 TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found);
 
+// Argument `fail_if_negative_value` is used to control whether negative values are allowed in the shape. The shape
+// check would fail if not.
 TensorShapeProto
 getShapeInput(const InferenceContext& ctx, size_t input_index, bool fail_if_negative_value, bool& found);
 
