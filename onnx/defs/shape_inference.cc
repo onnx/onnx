@@ -453,8 +453,12 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   }
 }
 
+TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found) {
+  return getShapeInput(ctx, input_index, false, found);
+}
+
 TensorShapeProto
-getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found, bool fail_if_negative_value) {
+getShapeInput(const InferenceContext& ctx, size_t input_index, bool fail_if_negative_value, bool& found) {
   TensorShapeProto shape_input;
 
   found = false;

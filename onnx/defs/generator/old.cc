@@ -744,7 +744,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool found = false;
-          TensorShapeProto output_shape = getShapeInput(ctx, 0, found, true);
+          TensorShapeProto output_shape = getShapeInput(ctx, 0, true, found);
           if (found) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = output_shape;
           }
@@ -804,7 +804,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool found = false;
-          TensorShapeProto output_shape = getShapeInput(ctx, 0, found, true);
+          TensorShapeProto output_shape = getShapeInput(ctx, 0, true, found);
           if (found) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = output_shape;
           }
@@ -863,7 +863,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           bool found = false;
-          TensorShapeProto output_shape = getShapeInput(ctx, 0, found, true);
+          TensorShapeProto output_shape = getShapeInput(ctx, 0, true, found);
           if (found) {
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = output_shape;
           }
