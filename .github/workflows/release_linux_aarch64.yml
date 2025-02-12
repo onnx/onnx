@@ -78,11 +78,10 @@ jobs:
           deactivate'
 
     - name: Upload core dump as artifact
-      # if: exists('/tmp/core*')
       uses: actions/upload-artifact@v4
       with:
         name: core-dumps
-        path: /tmp/core*
+        path: /tmp/core_dumps/
 
       # using created virtual environment in new container and testing the wheel
     - name: Test wheel with Python ${{ matrix.python-version }}
