@@ -51,6 +51,7 @@ jobs:
     - name: Install dependencies
       id: install_dependencies
       run: |
+        docker images --no-trunc
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
@@ -84,6 +85,7 @@ jobs:
     - name: Test wheel with Python ${{ matrix.python-version }}
       if: steps.build_manylinux.outcome == 'success'
       run: |
+        docker images --no-trunc
         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '\
