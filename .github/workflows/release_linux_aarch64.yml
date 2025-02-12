@@ -30,7 +30,10 @@ jobs:
     - name: Enable core dumps
       run: |
         ulimit -c unlimited   # Allow unlimited core dump size
-        echo "/tmp/core.%e.%p" > /proc/sys/kernel/core_pattern   # Set core dump location    
+        mkdir -p /tmp/core_dumps
+        echo "/tmp/core_dumps/core.%e.%p" | sudo tee /proc/sys/kernel/core_pattern
+      shell: bash
+      
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         persist-credentials: true
