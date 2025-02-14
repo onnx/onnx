@@ -49,14 +49,7 @@ jobs:
             debug_build: 0
             documentation: 0
             os: 'macos-latest'
-            protobuf_type: 'Internal'
-          - python_version: '3.13t'
-            onnx_ml: 1
-            debug_build: 0
-            documentation: 0
-            os: 'windows-latest'
-            protobuf_type: 'External'  # Only for Windows
-          
+            protobuf_type: 'Internal'          
 
     runs-on: ${{ matrix.os }}
     steps:
