@@ -148,8 +148,8 @@ of each object of the graph.
             node.name, node.op_type, node.input, node.output))
 ```
 
-The tensor type is a float (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` gives the
-corresponding type with numpy.
+The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` converts
+the integer to its corresponding numpy data type (float32 for 1).
 
 ```{eval-rst}
 .. exec_code::
