@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=3.20.2", "cmake>=3.18"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=64", "protobuf>=3.20.2"]
+backend-path = ["."]
+build-backend = "backend"
 
 [project]
 name = "onnx"
@@ -130,7 +131,7 @@ lint.select = [
     "F", # Pyflakes
     "FA", # flake8-future-annotations
     "G", # flake8-logging-format
-    "I002", # isort: required imports
+    "I", # isort
     "ISC", # flake8-implicit-str-concat
     "LOG", # flake8-logging
     "N", # pep8-naming

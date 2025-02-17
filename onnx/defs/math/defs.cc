@@ -2666,7 +2666,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           std::string equation = getAttribute(ctx, "equation", "");
-          if (equation.compare("") == 0) {
+          if (equation.empty()) {
             return;
           }
 
@@ -2836,7 +2836,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           std::string reduction = getAttribute(ctx, "reduction", "mean");
-          if (reduction.compare("none") == 0) {
+          if (reduction == "none") {
             if (hasInputShape(ctx, 1)) {
               propagateShapeFromInputToOutput(ctx, 1, 0);
             }
@@ -3007,6 +3007,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis = defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
           }
 
+          // NOLINTNEXTLINE(readability-simplify-boolean-expr)
           if (!(-rank <= axis && axis != -1 && axis < rank - 1)) {
             fail_shape_inference(
                 "axis attribute value ",

@@ -209,9 +209,9 @@ class OpRun(abc.ABC):
             else:
                 functions = None
             evaluator_cls = self.run_params.get("evaluator_cls", None)
-            assert (
-                evaluator_cls is not None
-            ), f"evaluator_cls must be specified to evaluate att={att}"
+            assert evaluator_cls is not None, (
+                f"evaluator_cls must be specified to evaluate att={att}"
+            )
             return evaluator_cls(
                 att.g,
                 opsets=self.run_params["opsets"],
@@ -256,7 +256,9 @@ class OpRun(abc.ABC):
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value, attributes=None: OpRun._evaluate_subgraph(
+                    lambda context,
+                    value=value,
+                    attributes=None: OpRun._evaluate_subgraph(
                         context, value, attributes
                     ),
                 )

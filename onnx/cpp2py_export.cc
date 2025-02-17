@@ -639,7 +639,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](const py::bytes& bytes, bool check_type, bool strict_mode, bool data_prop) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        ShapeInferenceOptions options{check_type, strict_mode == true ? 1 : 0, data_prop};
+        ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, data_prop};
         shape_inference::InferShapes(proto, OpSchemaRegistry::Instance(), options);
         std::string out;
         proto.SerializeToString(&out);
@@ -657,7 +657,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
          bool check_type,
          bool strict_mode,
          bool data_prop) -> void {
-        ShapeInferenceOptions options{check_type, strict_mode == true ? 1 : 0, data_prop};
+        ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, data_prop};
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
       });
 

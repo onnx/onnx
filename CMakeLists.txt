@@ -40,7 +40,7 @@ option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 if(WIN32)
-  option(ONNX_USE_MSVC_STATIC_RUNTIME "Buil with MSVC static runtime" OFF)
+  option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime" OFF)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -192,11 +192,11 @@ else()
       set(Protobuf_USE_STATIC_LIBS ON)
     endif()
     find_package(Protobuf)
-    if (Protobuf_FOUND)
+    if(Protobuf_FOUND)
       set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
       set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
       set(Build_Protobuf OFF)
-      if ("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
+      if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
         # There are extra dependencies for protobuf.
         find_package(absl REQUIRED)
         find_package(utf8_range REQUIRED)
@@ -246,14 +246,14 @@ else()
   else()  # Protobuf_PROTOC_EXECUTABLE not found.
     set(Build_Protobuf ON)
   endif()
-  if (Build_Protobuf)
+  if(Build_Protobuf)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
     set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
 
     include(FetchContent)
     message("Loading Dependencies URLs ...")
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240116.2/abseil-cpp-20240116.2.tar.gz)
-    set(AbseilSHA1 bb8a766f3aef8e294a864104b8ff3fc37b393210)
+    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240722.1/abseil-cpp-20240722.1.tar.gz)
+    set(AbseilSHA1 0d6b07c6f3352981d3660978e109f2bc14594a3d)
     FetchContent_Declare(
       Abseil
       URL ${AbseilURL}
@@ -262,16 +262,20 @@ else()
     set(ABSL_PROPAGATE_CXX_STD 1)
     set(abseil_BUILD_TESTING 0)
     set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build thirdparty libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
+    if(CMAKE_COMPILER_IS_GNUCC)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=all")
+    endif()
     message(STATUS "Download and build Abseil from ${AbseilURL}")
     FetchContent_Populate(Abseil)
     FetchContent_GetProperties(Abseil)
     # ABSL_ROOT_DIR is required by Protobuf.
     set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
     message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v28.3/protobuf-28.3.tar.gz)
-    set(ProtobufSHA1 269759bed3ef7fa7f04648bacdcfd3c26e3e50a8)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v29.2/protobuf-29.2.tar.gz)
+    set(ProtobufSHA1 a5639ffb17e3743d696baf16bf377fbe752b6a1f)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -281,11 +285,12 @@ else()
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf Abseil)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "5.28.3")
+    set(Protobuf_VERSION "5.29.2")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
     set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
+    set(CMAKE_CXX_FLAGS ${ONNX_CMAKE_CXX_FLAGS})
   endif()
   message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
   message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
@@ -492,6 +497,7 @@ else()
   set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
+target_compile_features(onnx_proto PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
@@ -526,19 +532,10 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
-  if(NOT PY_EXT_SUFFIX)
-    if(WIN32)
-      set(PY_EXT_SUFFIX ".pyd")
-    else()
-      set(PY_EXT_SUFFIX ".so")
-    endif()
-  endif()
-
-  add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  Python3_add_library(onnx_cpp2py_export MODULE WITH_SOABI "${ONNX_ROOT}/onnx/cpp2py_export.cc")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
   set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
   set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-  set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
   target_include_directories(onnx_cpp2py_export PRIVATE
@@ -585,7 +582,7 @@ if(ONNX_BUILD_PYTHON)
                                   "-Wl,--no-whole-archive")
     # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
     # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
-    if (CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    if(CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
       target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
     endif()
     set_target_properties(onnx_cpp2py_export
@@ -651,7 +648,7 @@ if(MSVC)
                                    "${onnx_static_library_flags}")
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
-  if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
+  if(CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
     target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
     target_compile_options(onnx_proto PRIVATE "-Wno-stringop-overflow")
   endif()
@@ -689,9 +686,9 @@ install(EXPORT ONNXTargets
   DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
   NAMESPACE ONNX::
 )
-if (NOT Build_Protobuf)
+if(NOT Build_Protobuf)
   # If we fetched a Protobuf release (and didn't run its install step), then we
-  # don't have the export sets for protobuf and its dependencies, which
+  # don't have the export sets for Protobuf and its dependencies, which
   # prevents us from creating an export set for ONNXTargets.
   export(EXPORT ONNXTargets
     FILE "${PROJECT_BINARY_DIR}/ONNXTargets.cmake"
@@ -700,7 +697,7 @@ if (NOT Build_Protobuf)
 endif()
 
 if(ONNX_USE_UNITY_BUILD)
-  # If ONNX_USE_UNITY_BUILD is set to ON, set onnx target to use Unity builds.
+  # If ONNX_USE_UNITY_BUILD is set to ON, set ONNX target to use Unity builds.
   #  We set Unity build to use groups, it allows us to set some specific files to be compiled individually
   set_target_properties(onnx
     PROPERTIES
@@ -710,16 +707,16 @@ if(ONNX_USE_UNITY_BUILD)
 
   set(NEW_LIST __unity_src_files)
   list(APPEND __unity_src_files ${ONNX_SRCS})
-  # These files have an issue with template explicit specialization after instanciation:
+  # These files have an issue with template explicit specialization after instantiation:
   #   We take them out of the unity group so they are compiled individually.
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
   set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
 
   # With unity build object file could get big, need this switch in MSVC.
-  if (MSVC)
+  if(MSVC)
     target_compile_options(onnx PRIVATE /bigobj)
-  endif ()
+  endif()
 
 # should be enabled for onnx_proto when protobuf can support Unity builds
 
