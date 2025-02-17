@@ -209,6 +209,8 @@ from onnx.reference.ops.op_sign import Sign
 from onnx.reference.ops.op_sin import Sin
 from onnx.reference.ops.op_sinh import Sinh
 from onnx.reference.ops.op_size import Size
+from onnx.reference.ops.op_skip_layer_normalization import SkipLayerNormalization
+from onnx.reference.ops.op_skip_rms_normalization import SkipRMSNormalization
 from onnx.reference.ops.op_slice import Slice_1, Slice_10
 from onnx.reference.ops.op_softmax import Softmax
 from onnx.reference.ops.op_softmax_cross_entropy_loss import SoftmaxCrossEntropyLoss

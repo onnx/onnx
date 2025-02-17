@@ -455,6 +455,29 @@ if ort is not None:
         ")"
     )
 
+    # Exclude all tests that require IR11 until onnxruntime aligns
+    # TODO: Unwaive tests once onnxruntime supports Opset23/IR11
+    backend_test.exclude(
+        "("
+        "test_skip_layer_normalization_2d_example"
+        "|test_skip_layer_normalization_2d_example_expanded"
+        "|test_skip_layer_normalization_3d_example"
+        "|test_skip_layer_normalization_3d_example_expanded"
+        "|test_skip_layer_normalization_epsilon_example"
+        "|test_skip_layer_normalization_epsilon_example_expanded"
+        "|test_skip_layer_normalization_scaling_factor_example"
+        "|test_skip_layer_normalization_scaling_factor_example_expanded"
+        "|test_skip_rms_normalization_2d_example"
+        "|test_skip_rms_normalization_2d_example_expanded"
+        "|test_skip_rms_normalization_3d_example"
+        "|test_skip_rms_normalization_3d_example_expanded"
+        "|test_skip_rms_normalization_epsilon_example"
+        "|test_skip_rms_normalization_epsilon_example_expanded"
+        "|test_skip_rms_normalization_scaling_factor_example"
+        "|test_skip_rms_normalization_scaling_factor_example_expanded"
+        ")"
+    )
+
     # TODO(titaiwang): Re-enable this tests once ORT is fixed.
     # https://github.com/microsoft/onnxruntime/pull/16752
     backend_test.exclude("test_averagepool_2d_ceil_last_window_starts_on_pad")

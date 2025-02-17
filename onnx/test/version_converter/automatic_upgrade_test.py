@@ -1209,6 +1209,33 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Size", 1, [[3, 4, 5]], [[]], output_types=[TensorProto.INT64]
         )
 
+    def test_SkipLayerNormalization(self) -> None:
+        self._test_op_upgrade(
+            "SkipLayerNormalization",
+            23,
+            [[2, 3, 4, 5], [2, 3, 4, 5], [4, 5], [4, 5]],
+            [[2, 3, 4, 5]],
+            input_types=[
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+            ],
+            output_types=[TensorProto.FLOAT],
+            attrs={"axis": 2},
+        )
+
+    def test_SkipRMSNormalization(self) -> None:
+        self._test_op_upgrade(
+            "SkipRMSNormalization",
+            23,
+            [[2, 3, 4, 5], [2, 3, 4, 5], [4, 5]],
+            [[2, 3, 4, 5]],
+            input_types=[TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            output_types=[TensorProto.FLOAT],
+            attrs={"axis": 2},
+        )
+
     def test_Slice(self) -> None:
         self._test_op_upgrade(
             "Slice",

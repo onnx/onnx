@@ -141,6 +141,37 @@ class FunctionBuilder {
     return Add(node_txt, MakeAttribute(attr_name, attr_value));
   }
 
+  template <typename T>
+  FunctionBuilder& AddAttributeToNode(const std::string& attr_name, const T& attr_value) {
+    auto& nodes = *funProto.mutable_node();
+    int nodes_size = nodes.size();
+    if (nodes_size != 0) {
+      auto& node = *funProto.mutable_node(nodes_size - 1);
+      *node.add_attribute() = MakeAttribute(attr_name, attr_value);
+    } else {
+       ONNX_THROW_EX(std::logic_error("Error adding attribute to node of a graph with no nodes"));
+    }
+    return *this;
+  }
+
+  template <typename T, typename... Args>
+  FunctionBuilder& AddAttributes(const std::string& attr_name, const T& attr_value, Args... args) {
+    AddAttributeToNode(attr_name, attr_value);
+    if constexpr (sizeof...(args) > 0) {
+      AddAttributes(args...);
+    }
+    return *this;
+  }
+
+  // Adds variable number of attributes to a node
+  template <typename... Args>
+  FunctionBuilder& Add(const char* node_txt, Args... args) {
+    Add(node_txt);
+    if constexpr (sizeof...(args) % 2 == 0) {
+      return AddAttributes(args...);
+    }
+  }
+
   FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
     std::string constant_op(name);
     constant_op += " = Constant()";

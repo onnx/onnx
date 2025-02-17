@@ -1381,6 +1381,27 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @parameterized.expand(all_versions_for("SkipLayerNormalization"))
+    def test_skip_layer_normalization(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("S", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("gamma", TensorProto.FLOAT, ("H", "W")),
+                ("beta", TensorProto.FLOAT, ("H", "W")),
+            ],
+            [
+                make_node(
+                    "SkipLayerNormalization", ["X", "S", "gamma", "beta"], ["y"], axis=2
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
+        )  # type: ignore
+
     @parameterized.expand(all_versions_for("Gather"))
     def test_gather(self, _, version) -> None:
         graph = self._make_graph(
