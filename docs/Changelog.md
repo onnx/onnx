@@ -29019,8 +29019,8 @@ This version of the operator has been available since version 23 of the default 
         ```
         XSquared = Mul(X, X)
         XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
-        RMSEps = Add(XSquaredMean, epsilon)
-        RMS = Sqrt(RMSEps)
+        MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+        RMS = Sqrt(MeanSquareEpsilon)
         Normalized = Div(X, RMS)
         ```
         where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
@@ -29037,7 +29037,7 @@ This version of the operator has been available since version 23 of the default 
         If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
         the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
         `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
-        (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
+        (`Scale` should be unidirectional broadcastable to tensor `X`);
         for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -29059,9 +29059,9 @@ This version of the operator has been available since version 23 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input tensor to be normalized. In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
+<dd>The input tensor to be normalized. In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
 <dt><tt>scale</tt> : V</dt>
-<dd>Scale tensor. Scale tensor shape should be broadcastable to the normalized shape ([axis, .., Dn]).</dd>
+<dd>Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.</dd>
 </dl>
 
 #### Outputs

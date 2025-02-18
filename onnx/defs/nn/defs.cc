@@ -2839,8 +2839,8 @@ static const char* RMSNormalization_ver23_doc = R"DOC(
       ```
       XSquared = Mul(X, X)
       XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
-      RMSEps = Add(XSquaredMean, epsilon)
-      RMS = Sqrt(RMSEps)
+      MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+      RMS = Sqrt(MeanSquareEpsilon)
       Normalized = Div(X, RMS)
       ```
       where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
@@ -2857,7 +2857,7 @@ static const char* RMSNormalization_ver23_doc = R"DOC(
       If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
       the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
       `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
-      (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
+      (`Scale` should be unidirectional broadcastable to tensor `X`);
       for more details please check [the doc](Broadcasting.md).
 )DOC";
 
@@ -2877,20 +2877,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The floating-point precision used in stage one of the computation.",
             AttributeProto::INT,
             static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
-        .AllowUncheckedAttributes()
         .Input(
             0,
             "X",
             "The input tensor to be normalized. "
-            "In general, the shape is (N, C, D1, D2, ... , Dn) for n-dimensional data, where "
-            "D1 to Dn are the spatial dimension sizes and N is the batch size, C is the number of channels. "
-            "The root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.",
+            "In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where "
+            "the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.",
             "T")
-        .Input(
-            1,
-            "scale",
-            "Scale tensor. Scale tensor shape should be broadcastable to the normalized shape ([axis, .., Dn]).",
-            "V")
+        .Input(1, "scale", "Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.", "V")
         .Output(0, "Y", "Output data tensor. Same shape as X", "V")
         .TypeConstraint(
             "T",
@@ -2902,10 +2896,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output Y and scale type to float tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-          propagateShapeFromInputToOutput(ctx, 0, 0);
           auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           int64_t input_ndim = input_shape.dim_size();
           int64_t axis = -1;
@@ -2972,8 +2962,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("XU = Cast (X)", "to", U);
           builder.Add("XSquared = Mul (XU, XU)")
               .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
-              .Add("RMSPlusEpsilon = Add (XSquaredMean, Epsilon)")
-              .Add("RMS = Sqrt (RMSPlusEpsilon)")
+              .Add("MeanSquareEpsilon = Add (XSquaredMean, Epsilon)")
+              .Add("RMS = Sqrt (MeanSquareEpsilon)")
               .Add("Normalized = Div (XU, RMS)")
               .Add("NormalizedT = Cast (Normalized)", "to", T);
           builder.Add("Y = Mul (NormalizedT, scale)");
