@@ -28237,13 +28237,11 @@ This version of the operator has been available since version 22 of the default 
   // The following pattern is applied
   //      Q          K          V
   //      |          |          |
-  //     Q*scale    Transpose   |
+  //     Q*scale     K*scale    |
   //      |          |          |
-  //      |         K*scale     |
+  //      |       Transpose     |
   //      |          |          |
   //      ---MatMul---          |
-  //            |               |
-  //   scale---Mul              |
   //            |               |
   // at_bias---Add              |
   //            |               |
