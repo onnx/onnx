@@ -93,10 +93,6 @@ def cd(path):
         os.chdir(orig_path)
 
 
-def get_ext_suffix():
-    return sysconfig.get_config_var("EXT_SUFFIX")
-
-
 def get_python_execute():
     if WINDOWS:
         return sys.executable
@@ -177,7 +173,6 @@ class CmakeBuild(setuptools.Command):
                 f"-DPython3_EXECUTABLE={get_python_execute()}",
                 "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
-                f"-DPY_EXT_SUFFIX={get_ext_suffix() or ''}",
             ]
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
