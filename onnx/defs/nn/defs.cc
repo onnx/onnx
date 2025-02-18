@@ -3300,13 +3300,11 @@ The following pattern is applied to the Q, K and V inputs after appropriate resh
 // The following pattern is applied
 //      Q          K          V
 //      |          |          |
-//     Q*scale    Transpose   |
+//     Q*scale     K*scale    |
 //      |          |          |
-//      |         K*scale     |
+//      |       Transpose     |
 //      |          |          |
 //      ---MatMul---          |
-//            |               |
-//   scale---Mul              |
 //            |               |
 // at_bias---Add              |
 //            |               |
@@ -3553,11 +3551,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return false;
           int64_t T1 = t_qk->tensor_type().elem_type();
 
-          auto* t_v = ctx.getInputType(2);
-          if ((t_v == nullptr) || (!t_v->has_tensor_type()))
-            return false;
-          int64_t T2 = t_v->tensor_type().elem_type();
-
           // Determine precision types for QK_Matmul, Softmax, QK_V_Matmul
           auto qk_matmul_precision_attr = ctx.getAttribute("qk_matmul_precision");
           int64_t qk_matmul_precision = (qk_matmul_precision_attr != nullptr)
@@ -3709,13 +3702,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           // The following pattern is applied
           //      Q          K          V
           //      |          |          |
-          //     Q*scale    Transpose   |
+          //     Q*scale    K*scale     |
           //      |          |          |
-          //      |         K*scale     |
+          //      |       Transpose     |
           //      |          |          |
           //      ---MatMul---          |
-          //            |               |
-          //   scale---Mul              |
           //            |               |
           // at_bias---Add              |
           //            |               |
@@ -3731,8 +3722,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("KCast = Cast (KScaled)", "to", qk_matmul_precision)
               .Add("QKAttnWeight = MatMul(QCast, KCast)")
               .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1)
-              .Add("QKAttnWeightWithScale = Mul(QKAttnCast, ScaleFactorF)")
-              .Add("QKAttnWeightWithBias = Add(QKAttnWeightWithScale, AttnBiasT)");
+              .Add("QKAttnWeightWithBias = Add(QKAttnCast, AttnBiasT)");
 
           // Apply softcap if provided
           auto* softcap_attr = ctx.getAttribute("softcap");

@@ -1653,13 +1653,11 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
   // The following pattern is applied
   //      Q          K          V
   //      |          |          |
-  //     Q*scale    Transpose   |
+  //     Q*scale     K*scale    |
   //      |          |          |
-  //      |         K*scale     |
+  //      |       Transpose     |
   //      |          |          |
   //      ---MatMul---          |
-  //            |               |
-  //   scale---Mul              |
   //            |               |
   // at_bias---Add              |
   //            |               |

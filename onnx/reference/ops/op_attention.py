@@ -128,13 +128,11 @@ def _compute_attention(
     # The following pattern is applied
     #      Q          K          V
     #      |          |          |
-    #     Q*scale    Transpose   |
+    #     Q*scale    K*scale     |
     #      |          |          |
-    #      |         K*scale     |
+    #      |       Transpose     |
     #      |          |          |
     #      ---MatMul---          |
-    #            |               |
-    #   scale---Mul              |
     #            |               |
     # at_bias---Add              |
     #            |               |
@@ -144,7 +142,7 @@ def _compute_attention(
     #                    |
     #                    Y
     k_transpose = np.transpose(K, (0, 1, 3, 2))
-    qk = (np.matmul(Q * scale, k_transpose * scale) * scale) + attn_bias
+    qk = np.matmul(Q * scale, k_transpose * scale) + attn_bias
 
     # Apply softcap
     if softcap is not None:
