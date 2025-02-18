@@ -28224,8 +28224,8 @@ This version of the operator has been available since version 22 of the default 
 
   This operator also covers the 3 following variants based on the number of heads:
   1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, q_num_heads = kv_num_heads.
-  2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, q_num_heads > kv_num_heads.
-  3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, q_num_heads > kv_num_heads, q_num_heads=1.
+  2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, q_num_heads > kv_num_heads, q_num_heads % kv_num_heads == 0
+  3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, q_num_heads > kv_num_heads, kv_num_heads=1.
 
   Attention bias to be added is calculated based on attn_mask input and is_causal attribute, only one of which can be provided.
   1) If is_causal is set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
@@ -28234,21 +28234,24 @@ This version of the operator has been available since version 22 of the default 
   Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
   The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
 
-            Q          K          V
-            |          |          |
-            |      Transpose      |
-            |          |          |
-            ---MatMul---          |
-                  |               |
-         scale---Mul              |
-                  |               |
-       at_bias---Add              |
-                  |               |
-               Softmax            |
-                  |               |
-                  -----MatMul------
-                          |
-                          Y
+  // The following pattern is applied
+  //      Q          K          V
+  //      |          |          |
+  //     Q*scale    Transpose   |
+  //      |          |          |
+  //      |         K*scale     |
+  //      |          |          |
+  //      ---MatMul---          |
+  //            |               |
+  //   scale---Mul              |
+  //            |               |
+  // at_bias---Add              |
+  //            |               |
+  //         Softmax            |
+  //            |               |
+  //            -----MatMul------
+  //                    |
+  //                    Y
 
 
 #### Version
@@ -28261,9 +28264,9 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
 <dd>If set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
-<dd>Number of heads of key and value. Must use with for 3D inputs of Q, K and V. </dd>
+<dd>Number of heads of key and value. Must be used with for 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
-<dd>Number of heads of query. Must use with for 3D inputs of Q, K and V. </dd>
+<dd>Number of heads of query. Must be used with for 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_precision</tt> : int (default is 1)</dt>
 <dd>The floating-point precision used in q and k matmul compuatation.</dd>
 <dt><tt>qkv_matmul_precision</tt> : int (default is 1)</dt>
