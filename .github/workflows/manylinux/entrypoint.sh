@@ -40,6 +40,7 @@ export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 # Install Python dependency
 $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 
+export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 # Build wheels
 if [ "$GITHUB_EVENT_NAME" == "schedule" ] || [ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]; then
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
