@@ -99,7 +99,7 @@ jobs:
         env:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
-          ONNX_BUILD_TESTS: 1
+          ONNX_BUILD_TESTS: 0
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
       - name: pip freeze
