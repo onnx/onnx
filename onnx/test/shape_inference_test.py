@@ -5761,7 +5761,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("B", "seq_len", "num_heads", "head_size"))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ("B", "seq_len", "num_heads", "head_size")
+                )
+            ],
+        )  # type: ignore
 
     def test_rotaryembedding_3d(self) -> None:
         graph = self._make_graph(
@@ -5781,7 +5788,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, ("B", "seq_len", "hidden_size"))])  # type: ignore
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ("B", "seq_len", "hidden_size")
+                )
+            ],
+        )  # type: ignore
 
     @parameterized.expand(
         all_versions_for("LabelEncoder") if ONNX_ML else [], skip_on_empty=True

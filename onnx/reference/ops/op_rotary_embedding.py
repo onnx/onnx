@@ -17,7 +17,6 @@ def rotary_embedding(
     rotary_embedding_dim=None,
     num_heads=None,
 ) -> np.ndarray:
-
     original_input_shape = input.shape
     # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
     batch_size = input.shape[0]
@@ -101,7 +100,6 @@ class RotaryEmbedding(OpRun):
         rotary_embedding_dim=None,
         num_heads=None,
     ) -> np.ndarray:
-
         return (
             rotary_embedding(
                 input,
