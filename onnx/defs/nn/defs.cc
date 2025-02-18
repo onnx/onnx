@@ -3287,8 +3287,8 @@ For cross attention, query and key might have different lengths.
 
 This operator also covers the 3 following variants based on the number of heads:
 1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, q_num_heads = kv_num_heads.
-2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, q_num_heads > kv_num_heads.
-3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, q_num_heads > kv_num_heads, q_num_heads=1.
+2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, q_num_heads > kv_num_heads, q_num_heads % kv_num_heads == 0
+3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, q_num_heads > kv_num_heads, kv_num_heads=1.
 
 Attention bias to be added is calculated based on attn_mask input and is_causal attribute, only one of which can be provided.
 1) If is_causal is set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
@@ -3297,21 +3297,24 @@ Attention bias to be added is calculated based on attn_mask input and is_causal 
 Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
 The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
 
-          Q          K          V
-          |          |          |
-          |      Transpose      |
-          |          |          |
-          ---MatMul---          |
-                |               |
-       scale---Mul              |
-                |               |
-     at_bias---Add              |
-                |               |
-             Softmax            |
-                |               |
-                -----MatMul------
-                        |
-                        Y
+// The following pattern is applied
+//      Q          K          V
+//      |          |          |
+//     Q*scale    Transpose   |
+//      |          |          |
+//      |         K*scale     |
+//      |          |          |
+//      ---MatMul---          |
+//            |               |
+//   scale---Mul              |
+//            |               |
+// at_bias---Add              |
+//            |               |
+//         Softmax            |
+//            |               |
+//            -----MatMul------
+//                    |
+//                    Y
 
 )DOC";
 
@@ -3333,12 +3336,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "q_num_heads",
-            "Number of heads of query. Must use with for 3D inputs of Q, K and V. ",
+            "Number of heads of query. Must be used with for 3D inputs of Q, K and V. ",
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
             "kv_num_heads",
-            "Number of heads of key and value. Must use with for 3D inputs of Q, K and V. ",
+            "Number of heads of key and value. Must be used with for 3D inputs of Q, K and V. ",
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
@@ -3557,34 +3560,34 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Determine precision types for QK_Matmul, Softmax, QK_V_Matmul
           auto qk_matmul_precision_attr = ctx.getAttribute("qk_matmul_precision");
-              int64_t qk_matmul_precision = (qk_matmul_precision_attr != nullptr)
-                  ? qk_matmul_precision_attr->i()
-                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-              if ((qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-                  (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-                  (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-                  (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-                return false; // Error
+          int64_t qk_matmul_precision = (qk_matmul_precision_attr != nullptr)
+              ? qk_matmul_precision_attr->i()
+              : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+              (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
 
           auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
-              int64_t softmax_precision = (softmax_precision_attr != nullptr)
-                  ? softmax_precision_attr->i()
-                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-              if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-                  (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-                  (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-                  (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-                return false; // Error
+          int64_t softmax_precision = (softmax_precision_attr != nullptr)
+              ? softmax_precision_attr->i()
+              : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
 
           auto qkv_matmul_precision_attr = ctx.getAttribute("qkv_matmul_precision");
-              int64_t qkv_matmul_precision = (qkv_matmul_precision_attr != nullptr)
-                  ? qkv_matmul_precision_attr->i()
-                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-              if ((qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-                  (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-                  (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-                  (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-                return false; // Error
+          int64_t qkv_matmul_precision = (qkv_matmul_precision_attr != nullptr)
+              ? qkv_matmul_precision_attr->i()
+              : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+              (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
 
           auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
             auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
@@ -3667,11 +3670,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             if ((up == nullptr) || (!up->has_tensor_type()))
               return false;
             int64_t U = up->tensor_type().elem_type();
-            builder
-                .Add(
-                    U == ONNX_NAMESPACE::TensorProto_DataType_BOOL
-                        ? "AttnBias = Where(attn_mask, AttnBiasZeros, FloatInf)"
-                        : "AttnBias = Add(attn_mask, AttnBiasZeros)");
+            builder.Add(
+                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL ? "AttnBias = Where(attn_mask, AttnBiasZeros, FloatInf)"
+                                                               : "AttnBias = Add(attn_mask, AttnBiasZeros)");
           } else {
             // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
             // is a square matrix. The attention masking has the form of the upper left causal bias due to
@@ -3681,10 +3682,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
             if (is_causal == 1) {
               builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mktensor(1))
-                .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
-                .Add("AttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)");
+                  .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
+                  .Add("AttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)");
             } else {
-                builder.Add("AttnBias = Identity(AttnBiasZeros)");
+              builder.Add("AttnBias = Identity(AttnBiasZeros)");
             }
           }
           builder.Add("AttnBiasT = Cast (AttnBias)", "to", T1);
@@ -3704,13 +3705,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("InterleaveShape = Concat <axis = 0> (One1D, InterleaveDim, One1D, One1D)")
               .Add("KAttentionInput = Tile(PresentKey, InterleaveShape)")
               .Add("VAttentionInput = Tile(PresentValue, InterleaveShape)");
-              //.Add("KAttentionInput = Where(GQACond, KInterleaved, PresentKey)")
-              //.Add("VAttentionInput = Where(GQACond, VInterleaved, PresentValue)");
 
           // The following pattern is applied
           //      Q          K          V
           //      |          |          |
-          //      |      Transpose      |
+          //     Q*scale    Transpose   |
+          //      |          |          |
+          //      |         K*scale     |
           //      |          |          |
           //      ---MatMul---          |
           //            |               |
@@ -3724,8 +3725,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           //                    |
           //                    Y
           builder.Add("KTranspose = Transpose <perm = [0, 1 ,3, 2]> (KAttentionInput)")
-              .Add("QCast = Cast (QReshaped)", "to", qk_matmul_precision)
-              .Add("KCast = Cast (KTranspose)", "to", qk_matmul_precision)
+              .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
+              .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
+              .Add("QCast = Cast (QScaled)", "to", qk_matmul_precision)
+              .Add("KCast = Cast (KScaled)", "to", qk_matmul_precision)
               .Add("QKAttnWeight = MatMul(QCast, KCast)")
               .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1)
               .Add("QKAttnWeightWithScale = Mul(QKAttnCast, ScaleFactorF)")
@@ -3736,10 +3739,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           float softcap_val = (softcap_attr != nullptr) ? softcap_attr->f() : static_cast<float>(0);
           if (softcap_val != 0) {
             builder.Const1D("Softcap", softcap_val)
-              .Add("SoftcapF = Cast (Softcap)", "to", T1)
-              .Add("SoftcapDiv = Div(QKAttnWeightWithBias, SoftcapF)")
-              .Add("SoftcapTanh = Tanh(SoftcapDiv)")
-              .Add("QKAttnWeightSoftcap = Mul(SoftcapTanh, SoftcapF)");
+                .Add("SoftcapF = Cast (Softcap)", "to", T1)
+                .Add("SoftcapDiv = Div(QKAttnWeightWithBias, SoftcapF)")
+                .Add("SoftcapTanh = Tanh(SoftcapDiv)")
+                .Add("QKAttnWeightSoftcap = Mul(SoftcapTanh, SoftcapF)");
           } else {
             builder.Add("QKAttnWeightSoftcap = Identity(QKAttnWeightWithBias)");
           }

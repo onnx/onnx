@@ -37,13 +37,11 @@ def _compute_attention(
     kv_num_heads=None,
     softcap=None,
 ) -> np.ndarray:
-
     assert len(Q.shape) == len(K.shape) == len(V.shape)
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
     # NewShapeK  (batch_size, kv_num_heads, kv_sequence_length, head_size)
     # NewShapeV (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
-    input_shape = Q.shape
     batch_size = Q.shape[0]
     if len(Q.shape) == 3:
         hidden_size_q = Q.shape[2]
@@ -128,32 +126,35 @@ def _compute_attention(
         V = np.tile(V, reps)
 
     # The following pattern is applied
-    #       Q          K          V
-    #       |          |          |
-    #       |      Transpose      |
-    #       |          |          |
-    #       ---MatMul---          |
-    #             |               |
-    #    scale---Mul              |
-    #             |               |
-    #  at_bias---Add              |
-    #             |               |
-    #          Softmax            |
-    #             |               |
-    #             -----MatMul------
-    #                     |
-    #                     Y
+    #      Q          K          V
+    #      |          |          |
+    #     Q*scale    Transpose   |
+    #      |          |          |
+    #      |         K*scale     |
+    #      |          |          |
+    #      ---MatMul---          |
+    #            |               |
+    #   scale---Mul              |
+    #            |               |
+    # at_bias---Add              |
+    #            |               |
+    #         Softmax            |
+    #            |               |
+    #            -----MatMul------
+    #                    |
+    #                    Y
     k_transpose = np.transpose(K, (0, 1, 3, 2))
-    qk = (np.matmul(Q, k_transpose) * scale) + attn_bias
+    qk = (np.matmul(Q * scale, k_transpose * scale) * scale) + attn_bias
 
     # Apply softcap
     if softcap is not None:
         qk = _softcap(qk, softcap)
     qk_softmax = _softmax(qk)
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
-    #if len(input_shape) == 3:
+    # if len(input_shape) == 3:
     #    output = np.reshape(output, input_shape)
     return output, present_key, present_value
+
 
 class Attention(OpRun):
     def _run(
@@ -173,12 +174,17 @@ class Attention(OpRun):
         qkv_matmul_precision=None,
         softcap=None,
     ) -> np.ndarray:
-
         res = _compute_attention(
-            Q, K, V, attn_mask=attn_mask,
-            past_key=past_key, past_value=past_value,
-            scale=scale, is_causal=is_causal,
-            q_num_heads=q_num_heads, kv_num_heads=kv_num_heads,
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
+            scale=scale,
+            is_causal=is_causal,
+            q_num_heads=q_num_heads,
+            kv_num_heads=kv_num_heads,
             softcap=softcap,
         )
         return res

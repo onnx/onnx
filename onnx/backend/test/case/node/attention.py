@@ -14,17 +14,13 @@ from onnx.reference.ops.op_attention import _compute_attention
 class Attention(Base):
     @staticmethod
     def export_attention() -> None:
-        node = onnx.helper.make_node(
-            "Attention", inputs=["Q", "K", "V"], outputs=["Y"]
-        )
+        node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V
-        )
+        Y, _, _ = _compute_attention(Q, K, V)
 
         expect(
             node,
@@ -33,20 +29,15 @@ class Attention(Base):
             name="test_attention_4d",
         )
 
-
     @staticmethod
     def export_attention_gqa() -> None:
-        node = onnx.helper.make_node(
-            "Attention", inputs=["Q", "K", "V"], outputs=["Y"]
-        )
+        node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
 
         Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V
-        )
+        Y, _, _ = _compute_attention(Q, K, V)
 
         expect(
             node,
@@ -57,17 +48,13 @@ class Attention(Base):
 
     @staticmethod
     def export_attention_diff_head_sizes() -> None:
-        node = onnx.helper.make_node(
-            "Attention", inputs=["Q", "K", "V"], outputs=["Y"]
-        )
+        node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 10).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V
-        )
+        Y, _, _ = _compute_attention(Q, K, V)
 
         expect(
             node,
@@ -90,9 +77,7 @@ class Attention(Base):
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V, scale=scale
-        )
+        Y, _, _ = _compute_attention(Q, K, V, scale=scale)
 
         expect(
             node,
@@ -115,9 +100,7 @@ class Attention(Base):
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V, scale=scale
-        )
+        Y, _, _ = _compute_attention(Q, K, V, scale=scale)
 
         expect(
             node,
@@ -140,9 +123,7 @@ class Attention(Base):
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 10).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V, scale=scale
-        )
+        Y, _, _ = _compute_attention(Q, K, V, scale=scale)
 
         expect(
             node,
@@ -164,9 +145,7 @@ class Attention(Base):
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V, is_causal=1
-        )
+        Y, _, _ = _compute_attention(Q, K, V, is_causal=1)
 
         expect(
             node,
@@ -188,9 +167,7 @@ class Attention(Base):
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V, is_causal=1
-        )
+        Y, _, _ = _compute_attention(Q, K, V, is_causal=1)
 
         expect(
             node,
@@ -244,6 +221,13 @@ class Attention(Base):
             K,
             V,
             attn_mask=attn_mask,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask],
+            outputs=[Y],
+            name="test_attention_4d_attn_mask",
         )
 
     @staticmethod
@@ -343,15 +327,13 @@ class Attention(Base):
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
-        Y, present_key, present_value = (
-            _compute_attention(
-                Q,
-                K,
-                V,
-                attn_mask=attn_mask,
-                past_key=past_key,
-                past_value=past_value,
-            )
+        Y, present_key, present_value = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
         )
 
         expect(
@@ -377,15 +359,13 @@ class Attention(Base):
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
-        Y, present_key, present_value = (
-            _compute_attention(
-                Q,
-                K,
-                V,
-                attn_mask=attn_mask,
-                past_key=past_key,
-                past_value=past_value,
-            )
+        Y, present_key, present_value = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
         )
 
         expect(
@@ -396,9 +376,7 @@ class Attention(Base):
         )
 
     @staticmethod
-    def export_attention_diff_head_sizes_with_past_and_present() -> (
-        None
-    ):
+    def export_attention_diff_head_sizes_with_past_and_present() -> None:
         node = onnx.helper.make_node(
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
@@ -413,15 +391,13 @@ class Attention(Base):
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
 
-        Y, present_key, present_value = (
-            _compute_attention(
-                Q,
-                K,
-                V,
-                attn_mask=attn_mask,
-                past_key=past_key,
-                past_value=past_value,
-            )
+        Y, present_key, present_value = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
         )
 
         expect(
@@ -444,9 +420,7 @@ class Attention(Base):
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V, softcap=2.0
-        )
+        Y, _, _ = _compute_attention(Q, K, V, softcap=2.0)
 
         expect(
             node,
@@ -468,9 +442,7 @@ class Attention(Base):
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-        Y, _, _ = _compute_attention(
-            Q, K, V, softcap=2.0
-        )
+        Y, _, _ = _compute_attention(Q, K, V, softcap=2.0)
 
         expect(
             node,
@@ -1002,17 +974,15 @@ class Attention(Base):
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
-        Y, present_key, present_value = (
-            _compute_attention(
-                Q,
-                K,
-                V,
-                attn_mask=attn_mask,
-                past_key=past_key,
-                past_value=past_value,
-                q_num_heads=q_num_heads,
-                kv_num_heads=kv_num_heads,
-            )
+        Y, present_key, present_value = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
+            q_num_heads=q_num_heads,
+            kv_num_heads=kv_num_heads,
         )
 
         expect(
@@ -1041,17 +1011,15 @@ class Attention(Base):
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
-        Y, present_key, present_value = (
-            _compute_attention(
-                Q,
-                K,
-                V,
-                attn_mask=attn_mask,
-                past_key=past_key,
-                past_value=past_value,
-                q_num_heads=q_num_heads,
-                kv_num_heads=kv_num_heads,
-            )
+        Y, present_key, present_value = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
+            q_num_heads=q_num_heads,
+            kv_num_heads=kv_num_heads,
         )
 
         expect(
@@ -1062,9 +1030,7 @@ class Attention(Base):
         )
 
     @staticmethod
-    def export_attention_3d_diff_head_sizes_with_past_and_present() -> (
-        None
-    ):
+    def export_attention_3d_diff_head_sizes_with_past_and_present() -> None:
         q_num_heads, kv_num_heads = 3, 3
         node = onnx.helper.make_node(
             "Attention",
@@ -1082,17 +1048,15 @@ class Attention(Base):
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
 
-        Y, present_key, present_value = (
-            _compute_attention(
-                Q,
-                K,
-                V,
-                attn_mask=attn_mask,
-                past_key=past_key,
-                past_value=past_value,
-                q_num_heads=q_num_heads,
-                kv_num_heads=kv_num_heads,
-            )
+        Y, present_key, present_value = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
+            q_num_heads=q_num_heads,
+            kv_num_heads=kv_num_heads,
         )
 
         expect(

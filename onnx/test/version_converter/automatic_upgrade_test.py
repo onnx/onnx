@@ -172,7 +172,12 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             23,
             [[2, 3, 4, 8], [2, 3, 6, 8], [2, 3, 6, 8], [4, 6]],
             [[2, 3, 4, 8]],
-            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+            ],
             [TensorProto.FLOAT],
         )
 
