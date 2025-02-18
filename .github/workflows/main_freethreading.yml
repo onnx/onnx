@@ -62,16 +62,6 @@ jobs:
           python --version
           cmake --version
 
-      - name: Install external protobuf - Linux
-        if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'ubuntu')
-        run: |
-          sudo apt-get install libprotobuf-dev protobuf-compiler
-
-      - name: Install external protobuf - MacOS
-        if: matrix.protobuf_type == 'External' && matrix.os == 'macos-latest'
-        run: |
-          source workflow_scripts/protobuf/build_protobuf_unix_freethreading.sh 3 $(pwd)/protobuf/protobuf_install
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
