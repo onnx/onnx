@@ -44,7 +44,7 @@ jobs:
             debug_build: 0
             documentation: 0
             os: 'macos-latest'
-            protobuf_type: 'Internal'          
+            protobuf_type: 'Internal'
 
     runs-on: ${{ matrix.os }}
     steps:
