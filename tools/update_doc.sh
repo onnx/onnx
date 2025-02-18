@@ -24,10 +24,10 @@ echo -e "===> recompile onnx"
 python setup.py develop --user
 
 echo -e "\n===> regenerate test data from node test"
-python onnx/backend/test/cmd_tools.py generate-data --clean
+python onnx/backend/test/cmd_tools.py generate-data
 
 echo -e "\n===> regenerate stats of test data"
-python onnx/backend/test/stat_coverage.py --clean
+python onnx/backend/test/stat_coverage.py
 
 echo -e "\n===> regenerate the docs"
 python onnx/defs/gen_doc.py

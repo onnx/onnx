@@ -27942,9 +27942,7 @@ input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
 sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
-expected_output = rotary_embedding(
-    input_data, cos_cache_data, sin_cache_data
-)
+expected_output = rotary_embedding(input_data, cos_cache_data, sin_cache_data)
 
 expect(
     node,
@@ -27973,7 +27971,10 @@ sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
 expected_output = rotary_embedding(
-    input_data, cos_cache_data, sin_cache_data, interleaved=1,
+    input_data,
+    cos_cache_data,
+    sin_cache_data,
+    interleaved=1,
 )
 
 expect(
@@ -28003,7 +28004,10 @@ sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
 expected_output = rotary_embedding(
-    input_data, cos_cache_data, sin_cache_data, rotary_embedding_dim=4,
+    input_data,
+    cos_cache_data,
+    sin_cache_data,
+    rotary_embedding_dim=4,
 )
 
 expect(
