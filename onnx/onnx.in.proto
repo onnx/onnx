@@ -273,7 +273,7 @@ message ShardingSpecProto {
 // ShardedDimProto: This describes the sharding spec for a single
 // axis of a sharded tensor.
 message ShardedDimProto {
-  int32 axis = 1;  // the axis this sharding corresponds to
+  optional int32 axis = 1;  // the axis this sharding corresponds to
   // The common-case is described by a single instance of SimpleShardedDimProto
   // We use multiple instances to handle cases produced when a sharded
   // tensor is reshaped, fusing multiple axes into one.
@@ -282,7 +282,7 @@ message ShardedDimProto {
 
 // SimpleShardedDimProto: Indicates that N blocks are divided into M shards.
 // Here, N is allowed to be symbolic, which M is required to be a constant.
-message SimpledShardedDimProto {
+message SimpleShardedDimProto {
     oneof dim {
         int64 dim_value = 1;
         string dim_param = 2;
@@ -490,17 +490,17 @@ message ModelProto {
 
   // Describes different target configurations for a multi-device use case.
   // A model can describe multiple multi-device configurations for execution.
-  repeated ConfigurationProto configuration = 26;
+  repeated DeviceConfigurationProto configuration = 26;
 };
 
-// ConfigurationProto describes a multi-device configuration for a model.
-message ConfigurationProto {
+// DeviceConfigurationProto describes a multi-device configuration for a model.
+message DeviceConfigurationProto {
     // Name of the configuration.
-    string name = 1;
+    optional string name = 1;
     // Name of the device.
-    string device = 2;
+    optional string device = 2;
     // Number of devices inside this configuration.
-    int32 num_devices = 3;
+    optional int32 num_devices = 3;
 }
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
