@@ -127,46 +127,40 @@ Runnable IPython notebooks:
 ## Creating an ONNX Model Using Helper Functions
 ```python
 import onnx
-from onnx import helper
-from onnx import AttributeProto, TensorProto, GraphProto
+from onnx import helper, AttributeProto, TensorProto, GraphProto
 
-
-# The protobuf definition can be found here:
-# https://github.com/onnx/onnx/blob/main/onnx/onnx.proto
-
-
-# Create one input (ValueInfoProto)
+# Create inputs and output value info
 X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 2])
-pads = helper.make_tensor_value_info("pads", TensorProto.FLOAT, [1, 4])
+pads = helper.make_tensor_value_info("pads", TensorProto.INT64, [8])  # pads is INT64
+Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [5, 4])
 
-value = helper.make_tensor_value_info("value", AttributeProto.FLOAT, [1])
-
-
-# Create one output (ValueInfoProto)
-Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [3, 4])
-
-# Create a node (NodeProto) - This is based on Pad-11
+# Create Pad node with 'value' attribute (not input)
 node_def = helper.make_node(
-    "Pad",                  # name
-    ["X", "pads", "value"], # inputs
-    ["Y"],                  # outputs
-    mode="constant",        # attributes
+    "Pad",
+    inputs=["X", "pads"],  # Inputs: X and pads (INT64)
+    outputs=["Y"],
+    mode="constant",       # Attribute for padding mode
+    value=0.0              # Attribute for fill value
 )
 
-# Create the graph (GraphProto)
+# Build graph and model
 graph_def = helper.make_graph(
-    [node_def],        # nodes
-    "test-model",      # name
-    [X, pads, value],  # inputs
-    [Y],               # outputs
+    [node_def],
+    "test-model",
+    [X, pads],
+    [Y],
+)
+model_def = helper.make_model(
+    graph_def,
+    producer_name="onnx-example",
+    opset_imports=[helper.make_opsetid("", 11)]  # OPSET 11 required
 )
 
-# Create the model (ModelProto)
-model_def = helper.make_model(graph_def, producer_name="onnx-example")
-
-print(f"The model is:\n{model_def}")
+# Validate the model
 onnx.checker.check_model(model_def)
-print("The model is checked!")
+print("Model is valid!")
+
+
 ```
 Runnable IPython notebooks:
 - [make_model.ipynb](/onnx/examples/make_model.ipynb)

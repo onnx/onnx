@@ -189,13 +189,13 @@ class TestShapeInferenceHelper(unittest.TestCase):
                     inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
                     # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
                     if dim.dim_param:
-                        assert (
-                            dim.dim_param == inferred_dim.dim_param
-                        ), f"\n{vi_type}\n{inferred_vi_type}\n"
+                        assert dim.dim_param == inferred_dim.dim_param, (
+                            f"\n{vi_type}\n{inferred_vi_type}\n"
+                        )
                     else:
-                        assert (
-                            dim.dim_value == inferred_dim.dim_value
-                        ), f"\n{vi_type}\n{inferred_vi_type}\n"
+                        assert dim.dim_value == inferred_dim.dim_value, (
+                            f"\n{vi_type}\n{inferred_vi_type}\n"
+                        )
         elif vi_type.HasField("sequence_type"):
             assert inferred_vi_type.HasField("sequence_type")
             vi = vi_type.sequence_type.elem_type
@@ -10529,6 +10529,28 @@ class TestShapeInference(TestShapeInferenceHelper):
         with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
+
+    @parameterized.expand(all_versions_for("ConstantOfShape"))
+    def test_issue_constantofshape_6135(self, _, version):
+        graph = self._make_graph(
+            [("std.constant", TensorProto.INT64, (1,)), "output"],
+            [
+                make_node(
+                    "ConstantOfShape",
+                    inputs=["std.constant"],
+                    outputs=["output"],
+                    name="invalid_node",
+                )
+            ],
+            [],
+            initializer=[make_tensor("std.constant", TensorProto.FLOAT, (1,), (-10,))],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
 
 if __name__ == "__main__":

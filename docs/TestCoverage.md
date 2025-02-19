@@ -293,7 +293,7 @@ expect(
 
 
 ### Add
-There are 3 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>add</summary>
 
@@ -307,6 +307,30 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_int8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint64")
 ```
 
 </details>
@@ -323,22 +347,6 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_bcast")
-```
-
-</details>
-<details>
-<summary>add_uint8</summary>
-
-```python
-node = onnx.helper.make_node(
-    "Add",
-    inputs=["x", "y"],
-    outputs=["sum"],
-)
-
-x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
-y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
-expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
 ```
 
 </details>
@@ -1105,7 +1113,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### AveragePool
-There are 16 test cases, listed as following:
+There are 17 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -1164,6 +1172,43 @@ x = np.array(
 y = np.array([[[[6, 7.5], [12, 13.5]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_ceil")
+```
+
+</details>
+<details>
+<summary>averagepool_2d_ceil_last_window_starts_on_pad</summary>
+
+```python
+"""input_shape: [1, 3, 2, 2]
+output_shape: [1, 3, 1, 1]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3, 3],
+    strides=[3, 3],
+    pads=[1, 1, 1, 1],
+    ceil_mode=True,
+    count_include_pad=1,
+)
+x = np.array(
+    [
+        [
+            [[0.8580, 0.0786], [0.2692, 0.1537]],
+            [[0.8816, 0.4353], [0.5772, 0.6623]],
+            [[0.9067, 0.9483], [0.5970, 0.7630]],
+        ]
+    ]
+).astype(np.float32)
+y = np.array([[[[0.1511]], [[0.2841]], [[0.3572]]]]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_averagepool_2d_ceil_last_window_starts_on_pad",
+)
 ```
 
 </details>
@@ -1256,16 +1301,30 @@ pad_top = 2
 pad_right = 2
 pad_left = 2
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-out_shape, pads = get_output_shape_explicit_padding(
+out_shape, extra_pads = get_output_shape_explicit_padding(
     pads, x_shape[2:], kernel_shape, strides, ceil_mode=False
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
+    (
+        (0, 0),
+        (0, 0),
+        (extra_pads[0], extra_pads[2]),
+        (extra_pads[1], extra_pads[3]),
+    ),
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "AVG",
+    pads_required=extra_pads,
+    pads=pads,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_pads")
 ```
@@ -1297,12 +1356,17 @@ pad_top = 2
 pad_right = 2
 pad_left = 2
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-out_shape, pads = get_output_shape_explicit_padding(
+out_shape, extra_pads = get_output_shape_explicit_padding(
     pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode=False
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
+    (
+        (0, 0),
+        (0, 0),
+        (extra_pads[0], extra_pads[2]),
+        (extra_pads[1], extra_pads[3]),
+    ),
     mode="constant",
     constant_values=0,
 )
@@ -1313,7 +1377,8 @@ y = pool(
     strides,
     out_shape,
     "AVG",
-    pads,
+    pads_required=extra_pads,
+    pads=pads,
     count_include_pad=1,
 )
 
@@ -1542,7 +1607,16 @@ padded = np.pad(
     constant_values=np.nan,
 )
 pads = (pad_top, pad_left, pad_bottom, pad_right)
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "AVG",
+    pads_required=pads,
+    pads=pads,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_lower")
 ```
@@ -1584,7 +1658,16 @@ padded = np.pad(
     constant_values=np.nan,
 )
 pads = (pad_top, pad_left, pad_bottom, pad_right)
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "AVG",
+    pads_required=pads,
+    pads=pads,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_upper")
 ```
@@ -1612,7 +1695,16 @@ out_shape, pads = get_output_shape_explicit_padding(
     None, x_shape[2:], kernel_shape, strides, ceil_mode=False
 )
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "AVG",
+    pads_required=pads,
+    pads=None,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_strides")
 ```
@@ -1729,7 +1821,7 @@ for count_include_pad in (0, 1):
         )
 
         x = np.random.randn(1, 1, *x_shape).astype(np.float32)
-        out_shape, pads = get_output_shape_explicit_padding(
+        out_shape, extra_pads = get_output_shape_explicit_padding(
             None,
             x_shape,
             kernel_shape,
@@ -1742,9 +1834,9 @@ for count_include_pad in (0, 1):
             (
                 (0, 0),
                 (0, 0),
-                (pads[0], pads[3]),
-                (pads[1], pads[4]),
-                (pads[2], pads[5]),
+                (extra_pads[0], extra_pads[3]),
+                (extra_pads[1], extra_pads[4]),
+                (extra_pads[2], extra_pads[5]),
             ),
             mode="constant",
             constant_values=0 if count_include_pad == 1 else np.nan,
@@ -1756,7 +1848,8 @@ for count_include_pad in (0, 1):
             strides,
             out_shape,
             "AVG",
-            pads=pads,
+            pads_required=extra_pads,
+            pads=None,
             dilations=dilations,
             count_include_pad=count_include_pad,
         )
@@ -5840,10 +5933,35 @@ y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z], name="test_div")
 
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_int8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_int16")
+
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
 z = x // y
 expect(node, inputs=[x, y], outputs=[z], name="test_div_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint64")
 ```
 
 </details>
@@ -6300,6 +6418,36 @@ x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 y = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_equal")
+
+x = (np.random.randn(3, 4, 5) * 10).astype(np.int8)
+y = (np.random.randn(3, 4, 5) * 10).astype(np.int8)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_int8")
+
+x = (np.random.randn(3, 4, 5) * 10).astype(np.int16)
+y = (np.random.randn(3, 4, 5) * 10).astype(np.int16)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint64")
 ```
 
 </details>
@@ -7489,6 +7637,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_greater")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint64")
 ```
 
 </details>
@@ -7506,6 +7684,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.greater_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint64")
 ```
 
 </details>
@@ -9546,6 +9754,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.less(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint64")
 ```
 
 </details>
@@ -9563,6 +9801,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.less_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less_equal")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 ```
 
 </details>
@@ -10295,16 +10563,31 @@ kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-out_shape, pads = get_output_shape_explicit_padding(
+out_shape, extra_pads = get_output_shape_explicit_padding(
     pads, x_shape[2:], kernel_shape, strides
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    (
+        (0, 0),
+        (0, 0),
+        (extra_pads[0], extra_pads[2]),
+        (extra_pads[1], extra_pads[3]),
+    ),
     mode="constant",
     constant_values=0,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "LPPOOL",
+    pads_required=extra_pads,
+    pads=pads,
+    p=p,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
 ```
@@ -10348,7 +10631,9 @@ padded = np.pad(
     constant_values=0,
 )
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, pads, p=p
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
 ```
@@ -10392,7 +10677,9 @@ padded = np.pad(
     constant_values=0,
 )
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, pads, p=p
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
 ```
@@ -10788,7 +11075,7 @@ kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-out_shape, pads = get_output_shape_explicit_padding(
+out_shape, extra_pads = get_output_shape_explicit_padding(
     pads, x_shape[2:], kernel_shape, strides
 )
 padded = np.pad(
@@ -10798,7 +11085,16 @@ padded = np.pad(
     constant_values=np.nan,
 )
 
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "MAX",
+    pads_required=extra_pads,
+    pads=pads,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 ```
@@ -10954,7 +11250,7 @@ padded = np.pad(
     constant_values=np.nan,
 )
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads, pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 ```
@@ -10996,7 +11292,7 @@ padded = np.pad(
     constant_values=np.nan,
 )
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads, pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 ```
@@ -11220,7 +11516,8 @@ y = pool(
     strides,
     out_shape,
     "MAX",
-    pads,
+    pads_required=pads,
+    pads=None,
     dilations=dilations,
 )
 
@@ -11273,7 +11570,8 @@ y = pool(
     strides,
     out_shape,
     "MAX",
-    pads,
+    pads_required=pads,
+    pads=None,
     dilations=dilations,
 )
 
@@ -12101,10 +12399,35 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z], name="test_mul")
 
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_int8")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_int16")
+
 x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint8")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint16")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint32")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint64")
 ```
 
 </details>
@@ -23140,10 +23463,35 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z], name="test_sub")
 
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.int8)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_int8")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.int16)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_int16")
+
 x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint8")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint16)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint16")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint32)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint32")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint64)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint64")
 ```
 
 </details>

@@ -24,8 +24,9 @@ jobs:
         # Checkout the branch made in the fork. Will automatically push changes
         # back to this branch.
         ref: ${{ github.head_ref }}
+        persist-credentials: false
     - name: Setup Python
-      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
       with:
         python-version: "3.11"
     - name: Install ONNX from source and update documentation
@@ -47,7 +48,7 @@ jobs:
 
 
     - name: Commit changes with updated files
-      uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1
+      uses: stefanzweifel/git-auto-commit-action@e348103e9026cc0eee72ae06630dbe30c8bf7a79 # v5.1.0
       with:
         commit_message: CI:apply auto updated documentation/backend test data
         commit_options: "--signoff"

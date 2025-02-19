@@ -27,7 +27,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
+      with:
+        persist-credentials: true
     - name: Checkout submodules
       shell: bash
       run: |
@@ -36,7 +37,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -59,7 +60,7 @@ jobs:
         python -m build --sdist
 
     - name: Upload sdist
-      uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
+      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
       with:
         name: sdist
         path: |

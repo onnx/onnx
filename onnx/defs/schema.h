@@ -1267,7 +1267,7 @@ OpSchema GetOpSchema();
   OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {                      \
     return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
   }                                                                                                     \
-  size_t dbg_count_check_##name##_##domain##_ver##ver =                                                 \
+  static size_t dbg_count_check_##name##_##domain##_ver##ver [[maybe_unused]] =                         \
       (dbg_included_in_static_opset) ? ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() : 0;
 #ifdef NDEBUG
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0
