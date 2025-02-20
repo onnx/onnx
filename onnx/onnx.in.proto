@@ -497,10 +497,10 @@ message ModelProto {
 message DeviceConfigurationProto {
     // Name of the configuration.
     optional string name = 1;
-    // Name of the device.
-    optional string device = 2;
     // Number of devices inside this configuration.
-    optional int32 num_devices = 3;
+    optional int32 num_devices = 2;
+    // Optional names of the devices. Should be lenght of num_devices.
+    repeated string device = 2;
 }
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
