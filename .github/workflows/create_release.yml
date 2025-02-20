@@ -92,7 +92,7 @@ jobs:
           echo "Workflow context:"
           echo "${{ toJson(context) }}"
 
-  publish_previewbuild_to_testpypi_weekly:
+  publish_preview_build_to_testpypi_weekly:
     name: Publish preview build to test.pypi-weekly
     runs-on: ubuntu-latest
     needs: [check_for_publish_to_testpypi_weekly]
@@ -121,7 +121,7 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish dev-build to test.pypi
+      - name: Publish preview build to test.pypi
         if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
         
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
@@ -130,7 +130,7 @@ jobs:
           verbose: true
           print-hash: true
 
-  check_for_publish_previewbuild_to_pypi_weekly:
+  check_for_publish_preview_build_to_pypi_weekly:
     name: Check for Publish preview build to pypi-weekly
     runs-on: ubuntu-latest
     needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win, call-workflow-sdist]
@@ -152,10 +152,10 @@ jobs:
           echo "${{ toJson(context) }}"         
         
 
-  publish_previewbuild_to_pypi_weekly:
+  publish_preview_build_to_pypi_weekly:
     name: Publish preview build to pypi-weekly
     runs-on: ubuntu-latest
-    needs: [check_for_publish_previewbuild_to_pypi_weekly]
+    needs: [check_for_publish_preview_build_to_pypi_weekly]
 
     environment:
       name: pypi-weekly
@@ -180,7 +180,7 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish previewbuild to pypi-weekly
+      - name: Publish preview_build to pypi-weekly
         if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly  == 'yes') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
         with:   
@@ -189,7 +189,7 @@ jobs:
           print-hash: true  
 
   test_sdist:
-    needs: [publish_previewbuild_to_pypi_weekly]
+    needs: [publish_preview_build_to_pypi_weekly]
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_test_weekly_sdist.yml
     with:
