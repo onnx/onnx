@@ -46,7 +46,7 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release.txt
 
-    - name: Build source distribution (devbuild / weekly)
+    - name: Build source distribution (preview build / weekly)
       if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
       run: |
         git clean -xdf
