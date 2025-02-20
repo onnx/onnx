@@ -46,6 +46,7 @@
 #include "onnx/version_converter/adapters/scatter_10_11.h"
 #include "onnx/version_converter/adapters/slice_9_10.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
+#include "onnx/version_converter/adapters/softmax_13_12.h"
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
 #include "onnx/version_converter/adapters/split_17_18.h"
@@ -494,6 +495,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<Split_13_12>());
+    registerAdapter(std::make_unique<Softmax_13_12>("Softmax"));
+    registerAdapter(std::make_unique<Softmax_13_12>("LogSoftmax"));
 
     /******** 13 -> 14 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Add", OpSetID(13), OpSetID(14)));

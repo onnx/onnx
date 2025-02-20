@@ -191,6 +191,7 @@ from onnx.reference.ops.op_reverse_sequence import ReverseSequence
 from onnx.reference.ops.op_rms_normalization import RMSNormalization
 from onnx.reference.ops.op_rnn import RNN_7, RNN_14
 from onnx.reference.ops.op_roi_align import RoiAlign
+from onnx.reference.ops.op_rotary_embedding import RotaryEmbedding
 from onnx.reference.ops.op_round import Round
 from onnx.reference.ops.op_scan import Scan
 from onnx.reference.ops.op_scatter_elements import ScatterElements
@@ -297,9 +298,9 @@ def load_op(
             ) from None
         if schema.has_function:  # type: ignore
             body = schema.function_body  # type: ignore
-            assert (
-                evaluator_cls is not None
-            ), f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
+            assert evaluator_cls is not None, (
+                f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
+            )
             sess = evaluator_cls(body)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         if schema.has_context_dependent_function:  # type: ignore
@@ -314,9 +315,9 @@ def load_op(
             )
             proto = FunctionProto()
             proto.ParseFromString(body)
-            assert (
-                evaluator_cls is not None
-            ), f"evaluator_cls must be specified to evaluate function {proto.name!r}"
+            assert evaluator_cls is not None, (
+                f"evaluator_cls must be specified to evaluate function {proto.name!r}"
+            )
             sess = evaluator_cls(proto)
             return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
         found = False
