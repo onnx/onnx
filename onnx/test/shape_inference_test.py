@@ -5744,6 +5744,59 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (15, "C", 1, 1))]
         )  # type: ignore
 
+    def test_rotaryembedding_4d(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("B", "seq_len", "num_heads", "head_size")),
+                ("cos_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
+                ("sin_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
+                ("position_ids", TensorProto.INT64, ("B", "seq_len")),
+            ],
+            [
+                make_node(
+                    "RotaryEmbedding",
+                    ["X", "cos_cache", "sin_cache", "position_ids"],
+                    ["Y"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ("B", "seq_len", "num_heads", "head_size")
+                )
+            ],
+        )  # type: ignore
+
+    def test_rotaryembedding_3d(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("B", "seq_len", "hidden_size")),
+                ("cos_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
+                ("sin_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
+                ("position_ids", TensorProto.INT64, ("B", "seq_len")),
+            ],
+            [
+                make_node(
+                    "RotaryEmbedding",
+                    ["X", "cos_cache", "sin_cache", "position_ids"],
+                    ["Y"],
+                    num_heads=4,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ("B", "seq_len", "hidden_size")
+                )
+            ],
+        )  # type: ignore
+
     @parameterized.expand(
         all_versions_for("LabelEncoder") if ONNX_ML else [], skip_on_empty=True
     )
