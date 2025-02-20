@@ -104,7 +104,7 @@ jobs:
     steps:
 
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        if: (github.event_name == 'workflow_dispatch' ) && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success'))
+        if: (github.event_name == 'workflow_dispatch' ) && ((needs.check_for_publish_to_testpypi_weekly.result == 'success')
         with:
           pattern: wheels*
           path: dist
@@ -158,7 +158,7 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && ((needs.call-workflow-mac.result == 'success') || (needs.call-workflow-ubuntu_x86.result == 'success') || (needs.call-workflow-ubuntu_aarch64.result == 'success') || (needs.call-workflow-win.result == 'success'))
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (needs.check_for_publish_preview_build_to_pypi_weekly.result == 'success')
         with:
           pattern: wheels*
           path: dist
@@ -185,5 +185,4 @@ jobs:
     uses: ./.github/workflows/release_test_weekly_sdist.yml
     with:
       os: "macos"
-
 
