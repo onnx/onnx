@@ -1,4 +1,4 @@
-# Copyright (c) ONNX Project Contributors
+in# Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -104,7 +104,7 @@ jobs:
     steps:
 
       - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        if: (github.event_name == 'workflow_dispatch' ) && ((needs.check_for_publish_preview_build_to_testpypi_weekly.result == 'success')
+        if: (github.event_name == 'workflow_dispatch' ) && (needs.check_for_publish_preview_build_to_testpypi_weekly.result == 'success')
         with:
           pattern: wheels*
           path: dist
