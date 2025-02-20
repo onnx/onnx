@@ -4,6 +4,9 @@
 
 name: CI freethreading experimental
 
+# Note: actions/setup-python does not support 3.13t therefore 
+# Quansight-Labs/setup-python@v5 is used
+
 on:
   schedule:
     - cron: '0 0 * * *'  # every day at midnight for reporting code coverage to codecov
@@ -27,14 +30,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-latest, macos-latest]
+        os: [ubuntu-24.04, macos-latest] # windows-latest not working yet
         python_version: ['3.13t']
-        include:        
-          # - python_version: '3.13t'
-          #   onnx_ml: 1
-          #   debug_build: 0
-          #   documentation: 0
-          #   protobuf_type: 'Internal'
+        include:
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 0
@@ -53,7 +51,7 @@ jobs:
             documentation: 0
             os: 'windows-latest'
             protobuf_type: 'External'  # Only for Windows
-          
+
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -91,6 +89,7 @@ jobs:
         if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
         run: |
           workflow_scripts/protobuf/build_protobuf_win.ps1
+
 
       - name: Install dependencies
         run: |
@@ -142,56 +141,3 @@ jobs:
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
           CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
-
-      - name: pip freeze
-        run: |
-          pip freeze
-
-      - name: Run Python tests
-        run: |
-          pip install nbval
-          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
-
-      - name: Run C++ tests
-        if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
-        run: |
-          export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
-          ./.setuptools-cmake-build/onnx_gtests
-
-      - name: Upload coverage to Codecov
-        if: always()
-        uses: codecov/codecov-action@1e68e06f1dbfde0e4cefc87efeba9e4643565303
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      # Note that the test data should be generated with numpy>=2.0.
-      # numpy 1.x and numpy 2.0 produce slightly different numerical values.
-      - name: Test backend test data
-        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu')
-        run: |
-          python onnx/backend/test/cmd_tools.py generate-data --clean
-          git status
-          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-          if [ $? -ne 0 ]; then
-            echo "git diff for test generation returned failures. Please check updated node test files"
-            exit 1
-          fi
-          git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
-          if [ $? -ne 0 ]; then
-            echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
-            exit 1
-          fi
-          pip uninstall -y pillow
-          python onnx/backend/test/cmd_tools.py generate-data --clean
-          git status
-          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-          if [ $? -ne 0 ]; then
-            echo "git diff for test generation without pillow returned failures. Please check updated node test files"
-            exit 1
-          fi

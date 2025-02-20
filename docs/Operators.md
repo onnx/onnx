@@ -455,6 +455,30 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_int8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint64")
 ```
 
 </details>
@@ -473,24 +497,6 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_bcast")
-```
-
-</details>
-
-
-<details>
-<summary>add_uint8</summary>
-
-```python
-node = onnx.helper.make_node(
-    "Add",
-    inputs=["x", "y"],
-    outputs=["sum"],
-)
-
-x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
-y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
-expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
 ```
 
 </details>
@@ -8282,10 +8288,35 @@ y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z], name="test_div")
 
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_int8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_int16")
+
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
 z = x // y
 expect(node, inputs=[x, y], outputs=[z], name="test_div_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint64")
 ```
 
 </details>
@@ -9040,6 +9071,36 @@ x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 y = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_equal")
+
+x = (np.random.randn(3, 4, 5) * 10).astype(np.int8)
+y = (np.random.randn(3, 4, 5) * 10).astype(np.int8)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_int8")
+
+x = (np.random.randn(3, 4, 5) * 10).astype(np.int16)
+y = (np.random.randn(3, 4, 5) * 10).astype(np.int16)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint64")
 ```
 
 </details>
@@ -11097,6 +11158,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_greater")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint64")
 ```
 
 </details>
@@ -11116,6 +11207,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.greater_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint64")
 ```
 
 </details>
@@ -14208,6 +14329,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.less(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint64")
 ```
 
 </details>
@@ -14227,6 +14378,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.less_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less_equal")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 ```
 
 </details>
@@ -17758,10 +17939,35 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z], name="test_mul")
 
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_int8")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_int16")
+
 x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint8")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint16")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint32")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint64")
 ```
 
 </details>
@@ -33376,10 +33582,35 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z], name="test_sub")
 
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.int8)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_int8")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.int16)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_int16")
+
 x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint8")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint16)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint16")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint32)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint32")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint64)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint64")
 ```
 
 </details>
