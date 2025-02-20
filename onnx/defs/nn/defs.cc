@@ -2971,7 +2971,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
-        .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors")
+        .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           propagateShapeFromInputToOutput(ctx, 0, 0);
