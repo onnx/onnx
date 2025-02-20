@@ -87,8 +87,6 @@ jobs:
           echo "call-workflow-win result: ${{ needs.call-workflow-win.result }}"
           echo "call-workflow-ubuntu_x86 result: ${{ needs.call-workflow-ubuntu_x86.result }}"
           echo "call-workflow-ubuntu_aarch64 result: ${{ needs.call-workflow-ubuntu_aarch64.result }}"
-          echo "GitHub context:"
-          echo "${{ toJson(github) }}"
 
   publish_preview_build_to_testpypi_weekly:
     name: Publish preview build to test.pypi-weekly
@@ -144,9 +142,6 @@ jobs:
           echo "call-workflow-win result: ${{ needs.call-workflow-win.result }}"
           echo "call-workflow-ubuntu_x86 result: ${{ needs.call-workflow-ubuntu_x86.result }}"
           echo "call-workflow-ubuntu_aarch64 result: ${{ needs.call-workflow-ubuntu_aarch64.result }}"
-          echo "GitHub context:"
-          echo "${{ toJson(github) }}"    
-        
 
   publish_preview_build_to_pypi_weekly:
     name: Publish preview build to pypi-weekly
