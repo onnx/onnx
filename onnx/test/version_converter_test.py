@@ -2005,6 +2005,22 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[3].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 13
 
+    def test_softmax_13_12(self) -> None:
+        axis = -1
+        nodes = [helper.make_node("Softmax", ["X"], ["Y"], axis=axis)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2, 3))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Softmax"
+        assert converted_model.graph.node[0].attribute[0].name == "axis"
+        assert converted_model.graph.node[0].attribute[0].i == 2
+        assert converted_model.opset_import[0].version == 12
+
     @parameterized.parameterized.expand(
         [
             ("per_tensor", (16, 3), (1,), None, None, None, TensorProto.INT8, True),
