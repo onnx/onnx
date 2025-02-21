@@ -2896,6 +2896,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output Y and scale type to float tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
           auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           int64_t input_ndim = input_shape.dim_size();
           int64_t axis = -1;
