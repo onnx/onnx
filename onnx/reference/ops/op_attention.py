@@ -66,6 +66,7 @@ def _compute_attention(
     if scale is None:
         q_head_size = Q.shape[3]
         scale = 1 / np.sqrt(q_head_size)
+    scale = np.sqrt(scale)
 
     # Update key and value cache
     if past_key is not None:
