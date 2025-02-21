@@ -2235,7 +2235,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info(
                     "Y",
                     TensorProto.FLOAT,
-                    ("B", "q_num_heads", "q_seq_len", "v_head_size"),
+                    ("B", "q_num_heads", "q_seq_length", "v_head_size"),
                 )
             ],
         )  # type: ignore

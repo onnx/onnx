@@ -3582,8 +3582,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
             return false; // Error
 
-          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
-            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+          auto mkbooltensor = [](bool val) -> ONNX_NAMESPACE::TensorProto {
+            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<bool>{val});
             tp.add_dims(1);
             return tp;
           };
@@ -3628,7 +3628,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
               .Const("ScaleF", ToTensor<float>(scale))
               .Add(scale_attr != nullptr ? "ScaleFactor = Identity(ScaleF)" : "ScaleFactor = Identity(CalculatedScale)")
-              .Add("ScaleFactorF = Cast (ScaleFactor)", "to", T1);
+              .Add("ScaleFactorSqrt = Sqrt(ScaleFactor)")
+              .Add("ScaleFactorF = Cast (ScaleFactorSqrt)", "to", T1);
 
           // Update key and value caches for past and present states
 
@@ -3674,7 +3675,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto* is_causal_attr = ctx.getAttribute("is_causal");
             int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
             if (is_causal == 1) {
-              builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mktensor(1))
+              builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
                   .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
                   .Add("AttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)");
             } else {

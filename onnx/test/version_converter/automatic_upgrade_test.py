@@ -152,7 +152,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [[2, 3, 4, 8]],
             [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
             [TensorProto.FLOAT],
-            attrs={"scale": 2},
+            attrs={"scale": 2.0},
         )
 
     def test_Attention_5(self) -> None:
