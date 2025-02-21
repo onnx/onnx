@@ -33,4 +33,11 @@ jobs:
           export ONNX_ML=1
           pip install -e .
 
+          python onnx/defs/gen_doc.py
+          python onnx/gen_proto.py -l
+          python onnx/gen_proto.py -l --ml
+          python onnx/backend/test/stat_coverage.py
+  
+          python onnx/backend/test/cmd_tools.py generate-data --diff
+
           
