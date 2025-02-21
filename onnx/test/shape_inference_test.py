@@ -977,6 +977,22 @@ class TestShapeInference(TestShapeInferenceHelper):
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
 
+    @parameterized.expand(all_versions_for("RMSNormalization"))
+    def test_rms_normalization(self, _, version) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("scale", TensorProto.FLOAT, ("H", "W")),
+            ],
+            [make_node("RMSNormalization", ["X", "scale"], ["y"], axis=2)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )  # type: ignore
+
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_size_axes_2_3(self, _, version) -> None:
         self.skipIf(version < 18, "axes is from Version 18")

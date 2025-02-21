@@ -29009,6 +29009,77 @@ This version of the operator has been available since version 23 of the default 
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
+### <a name="RMSNormalization-23"></a>**RMSNormalization-23**</a>
+
+  This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+        The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+        where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+        the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+        described by the following equations.
+        ```
+        XSquared = Mul(X, X)
+        XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+        MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+        RMS = Sqrt(MeanSquareEpsilon)
+        Normalized = Div(X, RMS)
+        ```
+        where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+        Depending on `stash_type` attribute, the actual computation
+        must happen in different floating-point precision.
+        For example, if `stash_type` is 1, this operator casts
+        all input variables to 32-bit float, perform the computation, and
+        finally cast `Normalized` back to the original type of `X`.
+        The second stage then scales the outcome of the first stage using:
+        ```
+        Y= Mul(Normalized, Scale)
+        ```
+        Let `d[i]` indicate the i-th dimension of `X`.
+        If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+        the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+        `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+        (`Scale` should be unidirectional broadcastable to tensor `X`);
+        for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in stage one of the computation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input tensor to be normalized. In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
+<dt><tt>scale</tt> : V</dt>
+<dd>Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : V</dt>
+<dd>Output data tensor. Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input X type to float tensors.</dd>
+<dt><tt>V</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output Y and scale type to float tensors.</dd>
+</dl>
+
 ### <a name="Reshape-23"></a>**Reshape-23**</a>
 
   Reshape the input tensor similar to numpy.reshape.

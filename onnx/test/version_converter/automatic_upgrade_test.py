@@ -1172,6 +1172,17 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Round(self) -> None:
         self._test_op_upgrade("Round", 11)
 
+    def test_RMSNormalization(self) -> None:
+        self._test_op_upgrade(
+            "RMSNormalization",
+            23,
+            [[2, 3, 4, 5], [4, 5]],
+            [[2, 3, 4, 5]],
+            input_types=[TensorProto.FLOAT, TensorProto.FLOAT],
+            output_types=[TensorProto.FLOAT],
+            attrs={"axis": 2},
+        )
+
     def test_Scatter(self) -> None:
         self._test_op_upgrade(
             "Scatter",
