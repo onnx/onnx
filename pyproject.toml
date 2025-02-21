@@ -4,8 +4,9 @@
 requires = ["setuptools>=64",
             "protobuf>=3.20.2; python_version < '3.11'",
             "protobuf>=4.0.0"; python_version > '3.12'"]
-backend-path = ["."]
-build-backend = "backend"
+build-backend = "setuptools.build_meta"
+# backend-path = ["."]
+# build-backend = "backend"
 
 [project]
 name = "onnx"
