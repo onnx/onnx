@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Auto update documentation/backend test data
 on:
   pull_request_target:
@@ -31,8 +35,10 @@ jobs:
         python-version: "3.11"
     - name: Install ONNX from source and update documentation
       run: |
-        python -m pip install -q --upgrade pip
+        python -m pip install -q --upgrade pip        
         python -m pip install -r requirements-release.txt
+        apt-get install libprotobuf-dev
+
         git submodule update --init --recursive
         export ONNX_ML=1
         pip install -e .
