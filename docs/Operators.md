@@ -190,6 +190,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
+|<a href="#RMSNormalization">RMSNormalization</a>|<a href="Changelog.md#RMSNormalization-23">23</a>|23|
 |<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|11|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
 |<a href="#ReduceL2">ReduceL2</a>|<a href="Changelog.md#ReduceL2-18">18</a>, <a href="Changelog.md#ReduceL2-13">13</a>, <a href="Changelog.md#ReduceL2-11">11</a>, <a href="Changelog.md#ReduceL2-1">1</a>|18|
@@ -21486,6 +21487,210 @@ expect(
     outputs=[y],
     name="test_quantizelinear_uint4",
 )
+```
+
+</details>
+
+
+### <a name="RMSNormalization"></a><a name="rmsnormalization">**RMSNormalization**</a>
+
+  This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+        The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+        where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+        the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+        described by the following equations.
+        ```
+        XSquared = Mul(X, X)
+        XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+        MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+        RMS = Sqrt(MeanSquareEpsilon)
+        Normalized = Div(X, RMS)
+        ```
+        where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+        Depending on `stash_type` attribute, the actual computation
+        must happen in different floating-point precision.
+        For example, if `stash_type` is 1, this operator casts
+        all input variables to 32-bit float, perform the computation, and
+        finally cast `Normalized` back to the original type of `X`.
+        The second stage then scales the outcome of the first stage using:
+        ```
+        Y= Mul(Normalized, Scale)
+        ```
+        Let `d[i]` indicate the i-th dimension of `X`.
+        If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+        the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+        `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+        (`Scale` should be unidirectional broadcastable to tensor `X`);
+        for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in stage one of the computation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input tensor to be normalized. In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
+<dt><tt>scale</tt> : V</dt>
+<dd>Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : V</dt>
+<dd>Output data tensor. Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input X type to float tensors.</dd>
+<dt><tt>V</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output Y and scale type to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>d</summary>
+
+```python
+X = np.random.randn(3, 4).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis)
+
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_2d_axis_negative_{-axis}"
+    else:
+        name = f"test_rms_normalization_2d_axis{axis}"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+
+
+<details>
+<summary>d_epsilon</summary>
+
+```python
+epsilon = 1e-1
+X = np.random.randn(2, 3, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis, epsilon=epsilon)
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+        epsilon=epsilon,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_3d_axis_negative_{-axis}_epsilon"
+    else:
+        name = f"test_rms_normalization_3d_axis{axis}_epsilon"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+
+
+<details>
+<summary>default_axis</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+# Default axis in RMSNormalization is -1.
+normalized_shape = calculate_normalized_shape(X.shape, -1)
+W = np.random.randn(*normalized_shape).astype(np.float32)
+# Axis is default to -1 in the reference implementation.
+Y = _rms_normalization(X, W)
+
+# Not specifying axis attribute means -1.
+node = onnx.helper.make_node(
+    "RMSNormalization",
+    inputs=["X", "W"],
+    outputs=["Y"],
+)
+
+expect(
+    node,
+    inputs=[X, W],
+    outputs=[Y],
+    name="test_rms_normalization_default_axis",
+)
+```
+
+</details>
+
+
+<details>
+<summary>rmsnormalization</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis)
+
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_4d_axis_negative_{-axis}"
+    else:
+        name = f"test_rms_normalization_4d_axis{axis}"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
 ```
 
 </details>
