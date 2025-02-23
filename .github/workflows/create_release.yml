@@ -179,11 +179,11 @@ jobs:
           verbose: true     
           print-hash: true  
 
-  test_sdist:
-    name: test sdist
+  test_source_dist:
+    name: test source distribution
     needs: [publish_preview_build_to_pypi_weekly]
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_test_weekly_sdist.yml
+    uses: ./.github/workflows/preview_source_dist_test.yml
     with:
       os: "macos"
 
