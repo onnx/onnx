@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Test_sdist_weekly
+name: Test source dist of preview build at onnx-weekly
 
 on:  # Specifies the event triggering the workflow
   schedule:
@@ -50,5 +50,3 @@ jobs:
             python -m pip install -i https://test.pypi.org/pypi/ --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
             python -m pip install pytest
             pytest
-
-            -i https://test.pypi.org/pypi/
