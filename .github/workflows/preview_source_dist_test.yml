@@ -14,6 +14,10 @@ on:  # Specifies the event triggering the workflow
         required: true
         type: string
   workflow_dispatch:
+    inputs:
+      os:
+        required: true
+        type: string
 
 env:
   MACOSX_DEPLOYMENT_TARGET: "12.0"
@@ -28,13 +32,13 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version: ['3.10','3.12']
         target-architecture: ['arm64']
 
     steps:
 
         - name: Test preview build source distribution from PyPI
-          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
           run: |
             python -m pip uninstall -y onnx-weekly
             python -m pip install setuptools
@@ -43,7 +47,7 @@ jobs:
             pytest
             
         - name: Test preview build source distribution from test.PyPI
-          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
           run: |
             python -m pip uninstall -y onnx-weekly
             python -m pip install setuptools
