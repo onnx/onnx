@@ -5,6 +5,9 @@
 name: Test_sdist_weekly
 
 on:  # Specifies the event triggering the workflow
+  schedule:
+    # Run weekly on Tuesday 00:00 UTC
+    - cron:  '00 00 * * 2'
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:
       os:
@@ -19,7 +22,7 @@ permissions:
 
 jobs:
 
-  test_sdist_weekly:
+  test_sdist_preview:
 
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
@@ -29,7 +32,7 @@ jobs:
 
     steps:
 
-        - name: Test weekly source distribution from PyPI
+        - name: Test preview build source distribution from PyPI
           if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
           run: |
             python -m pip uninstall -y onnx-weekly
@@ -37,3 +40,14 @@ jobs:
             python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
             python -m pip install pytest
             pytest
+            
+        - name: Test preview build source distribution from test.PyPI
+          if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+          run: |
+            python -m pip uninstall -y onnx-weekly
+            python -m pip install setuptools
+            python -m pip install -i https://test.pypi.org/pypi/ --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
+            python -m pip install pytest
+            pytest
+
+            -i https://test.pypi.org/pypi/
