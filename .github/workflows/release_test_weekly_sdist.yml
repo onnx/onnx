@@ -34,7 +34,7 @@ jobs:
     steps:
 
         - name: Test preview build source distribution from PyPI
-          if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
           run: |
             python -m pip uninstall -y onnx-weekly
             python -m pip install setuptools
@@ -43,7 +43,7 @@ jobs:
             pytest
             
         - name: Test preview build source distribution from test.PyPI
-          if: github.event_name == 'schedule' && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
+          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && matrix.python-version == '3.10' && matrix.target-architecture == 'arm64'
           run: |
             python -m pip uninstall -y onnx-weekly
             python -m pip install setuptools
