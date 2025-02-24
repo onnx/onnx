@@ -37,7 +37,13 @@ jobs:
       run: |
         python -m pip install -q --upgrade pip
         python -m pip install -r requirements-release.txt
-        apt-get install libprotobuf-dev protobuf-compiler
+        #apt-get install libprotobuf-dev protobuf-compiler
+
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip 
+        unzip protoc-4.25.1-linux-x86_64.zip -d protoc
+        # Move binaries to /usr/local:
+        mv protoc/bin/protoc /usr/local/bin/
+        mv protoc/include/* /usr/local/include/
 
         git submodule update --init --recursive
         export ONNX_ML=1
