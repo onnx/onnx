@@ -35,7 +35,7 @@ jobs:
         python-version: "3.11"
     - name: Install ONNX from source and update documentation
       run: |
-        python -m pip install -q --upgrade pip        
+        python -m pip install -q --upgrade pip
         python -m pip install -r requirements-release.txt
         apt-get install libprotobuf-dev protobuf-compiler
 
