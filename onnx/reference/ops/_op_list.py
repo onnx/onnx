@@ -188,6 +188,7 @@ from onnx.reference.ops.op_relu import Relu
 from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
 from onnx.reference.ops.op_resize import Resize
 from onnx.reference.ops.op_reverse_sequence import ReverseSequence
+from onnx.reference.ops.op_rms_normalization import RMSNormalization
 from onnx.reference.ops.op_rnn import RNN_7, RNN_14
 from onnx.reference.ops.op_roi_align import RoiAlign
 from onnx.reference.ops.op_rotary_embedding import RotaryEmbedding
