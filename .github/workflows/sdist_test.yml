@@ -36,8 +36,8 @@ jobs:
           wget https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip 
           unzip protoc-25.1-linux-x86_64.zip -d protoc
           # Move binaries to /usr/local:
-          mv protoc/bin/protoc /usr/local/bin/
-          mv protoc/include/* /usr/local/include/
+          sudo mv protoc/bin/protoc /usr/local/bin/
+          sudo mv protoc/include/* /usr/local/include/
           
           pip install -e .
 
