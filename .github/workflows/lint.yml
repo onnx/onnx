@@ -72,7 +72,7 @@ jobs:
           source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
           python -m pip install --quiet --upgrade pip setuptools wheel
-          python -m pip install --quiet -r requirements-release.txt
+          python -m pip install --quiet -r requirements.txt
 
           git submodule update --init --recursive
           export ONNX_BUILD_TESTS=0
