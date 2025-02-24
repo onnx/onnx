@@ -38,6 +38,7 @@ jobs:
           # Move binaries to /usr/local:
           sudo mv protoc/bin/protoc /usr/local/bin/
           sudo mv protoc/include/* /usr/local/include/
+          export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
           
           pip install -e .
 
