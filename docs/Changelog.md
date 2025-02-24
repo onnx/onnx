@@ -29009,6 +29009,77 @@ This version of the operator has been available since version 23 of the default 
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
 </dl>
 
+### <a name="RMSNormalization-23"></a>**RMSNormalization-23**</a>
+
+  This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+        The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+        where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+        the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+        described by the following equations.
+        ```
+        XSquared = Mul(X, X)
+        XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+        MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+        RMS = Sqrt(MeanSquareEpsilon)
+        Normalized = Div(X, RMS)
+        ```
+        where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+        Depending on `stash_type` attribute, the actual computation
+        must happen in different floating-point precision.
+        For example, if `stash_type` is 1, this operator casts
+        all input variables to 32-bit float, perform the computation, and
+        finally cast `Normalized` back to the original type of `X`.
+        The second stage then scales the outcome of the first stage using:
+        ```
+        Y= Mul(Normalized, Scale)
+        ```
+        Let `d[i]` indicate the i-th dimension of `X`.
+        If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+        the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+        `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+        (`Scale` should be unidirectional broadcastable to tensor `X`);
+        for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in stage one of the computation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input tensor to be normalized. In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
+<dt><tt>scale</tt> : V</dt>
+<dd>Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : V</dt>
+<dd>Output data tensor. Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input X type to float tensors.</dd>
+<dt><tt>V</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output Y and scale type to float tensors.</dd>
+</dl>
+
 ### <a name="Reshape-23"></a>**Reshape-23**</a>
 
   Reshape the input tensor similar to numpy.reshape.
@@ -29074,67 +29145,74 @@ This version of the operator has been available since version 23 of the default 
 
   Rotary embeddings are defined using the following algorithm:
 
-      ```python
-      def compute_rotary_embedding(input, position_ids, sin_cache, cos_cache, interleaved=0, rotary_embedding_dim=0 ,num_heads=0)
+  ```python
+  def compute_rotary_embedding(
+      input,
+      position_ids,
+      sin_cache,
+      cos_cache,
+      interleaved=0,
+      rotary_embedding_dim=0,
+      num_heads=0,
+  ):
+      # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
+      batch_size = input.shape[0]
+      sequence_length = input.shape[1]
+      if len(input.shape) == 3:
+          hidden_size = input.shape[2]
+          assert num_heads != 0
+          head_size = int(hidden_size / num_heads)
+          new_shape = [batch_size, sequence_length, num_heads, head_size]
+          input = np.reshape(input, new_shape)
+      assert len(input.shape) == 4
+      head_size = input.shape[3]
 
-        # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
-        batch_size = input.shape[0]
-        sequence_length = input.shape[1]
-        if len(input.shape) == 3:
-            hidden_size = input.shape[2]
-            assert num_heads != 0
-            head_size = int(hidden_size / num_heads)
-            new_shape = [batch_size, sequence_length, num_heads, head_size]
-            input = np.reshape(input, new_shape)
-        assert len(input.shape) == 4
-        head_size = input.shape[3]
+      # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
+      if rotary_embedding_dim == 0:
+          # If rotary_embedding_dim not provided, perform full rotation by using head_size
+          rotary_embedding_dim = head_size
+      x_rotate = input[:, :, :, :rotary_embedding_dim]
+      x_not_rotate = input[:, :, :, rotary_embedding_dim:]
+      rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
 
-        # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-        if rotary_embedding_dim == 0:
-            # If rotary_embedding_dim not provided, perform full rotation by using head_size
-            rotary_embedding_dim = head_size
-        x_rotate = input[:, :, :, :rotary_embedding_dim]
-        x_not_rotate = input[:, :, :, rotary_embedding_dim:]
-        rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
+      # Retrieve sin and cos caches using position ids
+      if position_ids is not None:
+          cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+          sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+      else:
+          cos = cos_cache
+          sin = sin_cache
+      cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+      sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
 
-        # Retrieve sin and cos caches using position ids
-        if position_ids is not None:
-            cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-            sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-        else:
-            cos = cos_cache
-            sin = sin_cache
-        cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-        sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-        cos = np.expand_dims(cos, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-        sin = np.expand_dims(sin, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+      # Either divide the input in halves or interleave (based on interleaved attribute)
+      if interleaved:
+          x1 = x_rotate[:, :, :, 0::2]
+          x2 = x_rotate[:, :, :, 1::2]
+      else:
+          x1, x2 = np.split(x_rotate, 2, axis=-1)
 
-        # Either divide the input in halves or interleave (based on interleaved attribute)
-        if interleaved:
-            x1 = x_rotate[:, :, :, 0::2]
-            x2 = x_rotate[:, :, :, 1::2]
-        else:
-            x1, x2 = np.split(x_rotate, 2, axis=-1)
+      # Calculate real and imaginary values
+      real = cos * x1 - sin * x2
+      imag = sin * x1 + cos * x2
 
-        # Calculate real and imaginary values
-        real = cos * x1 - sin * x2
-        imag = sin * x1 + cos * x2
-
-        # Inserted rotated embeddings back to the original input
-        if interleaved:
-            # x_rotate[:, :, :, 0::2] = real
-            # x_rotate[:, :, :, 1::2] = imag
-            real = np.expand_dims(real, axis=-1)
-            imag = np.expand_dims(imag, axis=-1)
-            x_rotate_concat = np.concatenate((real, imag), axis=-1)
-            x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
-        else:
-            x_rotate = np.concatenate((real, imag), axis=-1)
-        output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
-        if len(input.shape) == 3:
-            output = np.reshape(output, input.shape)
-        return output
-      ```
+      # Inserted rotated embeddings back to the original input
+      if interleaved:
+          # x_rotate[:, :, :, 0::2] = real
+          # x_rotate[:, :, :, 1::2] = imag
+          real = np.expand_dims(real, axis=-1)
+          imag = np.expand_dims(imag, axis=-1)
+          x_rotate_concat = np.concatenate((real, imag), axis=-1)
+          x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
+      else:
+          x_rotate = np.concatenate((real, imag), axis=-1)
+      output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+      if len(input.shape) == 3:
+          output = np.reshape(output, input.shape)
+      return output
+  ```
 
 #### Version
 
@@ -29155,13 +29233,13 @@ This version of the operator has been available since version 23 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input tensor representing the token embeddings. 4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and hidden_size must be an even multiple of num_heads where `hidden_size = num_heads * head_size`</dd>
+<dd>The input tensor representing the token embeddings. 4D tensor with shape `(batch_size, sequence_length, num_heads, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and `hidden_size` must be an even multiple of `num_heads` where `hidden_size = num_heads * head_size`</dd>
 <dt><tt>cos_cache</tt> : T</dt>
-<dd>The cosine values for the rotation. 2D tensor with shape (max_position_id_plus_1, head_size / 2) for full rotation or (max_position_id_plus_1, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
+<dd>The cosine values for the rotation. 2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
 <dt><tt>sin_cache</tt> : T</dt>
-<dd>The sine values for the rotation. 2D tensor with shape (max_position_id_plus_1, head_size / 2) for full rotation or (max_position_id_plus_1, rotary_embedding_dim / 2) for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
+<dd>The sine values for the rotation. 2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
 <dt><tt>position_ids</tt> (optional) : M</dt>
-<dd>The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)</dd>
+<dd>The position indices for the tokens. 2D tensor with shape `(batch_size, sequence_length)`</dd>
 </dl>
 
 #### Outputs
@@ -29177,7 +29255,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>M</tt> : tensor(int64)</dt>
-<dd>Constrain input and output types to integer tensors</dd>
+<dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
 ### <a name="Scan-23"></a>**Scan-23**</a>

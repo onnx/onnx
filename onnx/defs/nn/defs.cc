@@ -2830,6 +2830,151 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
+static const char* RMSNormalization_ver23_doc = R"DOC(
+      This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+      The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+      where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+      the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+      described by the following equations.
+      ```
+      XSquared = Mul(X, X)
+      XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+      MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+      RMS = Sqrt(MeanSquareEpsilon)
+      Normalized = Div(X, RMS)
+      ```
+      where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+      Depending on `stash_type` attribute, the actual computation
+      must happen in different floating-point precision.
+      For example, if `stash_type` is 1, this operator casts
+      all input variables to 32-bit float, perform the computation, and
+      finally cast `Normalized` back to the original type of `X`.
+      The second stage then scales the outcome of the first stage using:
+      ```
+      Y= Mul(Normalized, Scale)
+      ```
+      Let `d[i]` indicate the i-th dimension of `X`.
+      If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+      the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+      `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+      (`Scale` should be unidirectional broadcastable to tensor `X`);
+      for more details please check [the doc](Broadcasting.md).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    RMSNormalization,
+    23,
+    OpSchema()
+        .SetDoc(RMSNormalization_ver23_doc)
+        .Attr(
+            "axis",
+            "The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
+        .Attr(
+            "stash_type",
+            "The floating-point precision used in stage one of the computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+        .Input(
+            0,
+            "X",
+            "The input tensor to be normalized. "
+            "In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where "
+            "the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.",
+            "T")
+        .Input(1, "scale", "Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.", "V")
+        .Output(0, "Y", "Output data tensor. Same shape as X", "V")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input X type to float tensors.")
+        .TypeConstraint(
+            "V",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain output Y and scale type to float tensors.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          int64_t input_ndim = input_shape.dim_size();
+          int64_t axis = -1;
+          auto axis_proto = ctx.getAttribute("axis");
+          if (axis_proto) {
+            axis = axis_proto->i();
+          }
+          if (axis < 0) {
+            // Convert negative axis value to equivalent
+            // positive value.
+            axis += input_ndim;
+          }
+          if (axis < 0) {
+            fail_shape_inference(
+                "Unexpected axis value (",
+                axis,
+                ") rank of first input is ",
+                input_ndim,
+                " in ",
+                ctx.getDisplayName(),
+                ".");
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // RMSNormalization <axis, epsilon, stash_type> (X, Scale) => (Y)
+          auto* tp = ctx.getInputType(0);
+          if ((tp == nullptr) || (!tp->has_tensor_type()))
+            return false;
+          int64_t T = tp->tensor_type().elem_type();
+
+          auto type_attr = ctx.getAttribute("stash_type");
+          int64_t U = (type_attr != nullptr) ? type_attr->i()
+                                             : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) && (U != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
+
+          auto* axis_attr = ctx.getAttribute("axis");
+          int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
+          auto* epsilon_attr = ctx.getAttribute("epsilon");
+          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+
+          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+            tp.add_dims(1);
+            return tp;
+          };
+
+          FunctionBuilder builder(functionProto);
+          builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
+              .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+              .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+              .Add("Rank = Size (XShape)") // rank of input tensor: scalar
+              .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
+              .Add(
+                  axis >= 0 // number of axes that are reduced =
+                      ? "PosAxis1D = Identity (Axis1D)" // [axis]: 1D tensor
+                      : "PosAxis1D = Add (Rank, Axis1D)") // [rank + axis] : 1D tensor
+              .Const1D("One1D", (int64_t)1)
+              .Add("ReduceAxes = Range(PosAxis1D, Rank, One1D)")
+              .Add("XU = Cast (X)", "to", U);
+          builder.Add("XSquared = Mul (XU, XU)")
+              .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
+              .Add("MeanSquareEpsilon = Add (XSquaredMean, Epsilon)")
+              .Add("RMS = Sqrt (MeanSquareEpsilon)")
+              .Add("Normalized = Div (XU, RMS)")
+              .Add("NormalizedT = Cast (Normalized)", "to", T);
+          builder.Add("Y = Mul (NormalizedT, scale)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
+
 static const char* RotaryEmbedding_ver23_doc = R"DOC(
 RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
 The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
@@ -2844,67 +2989,74 @@ The rotation ensures that the model captures both absolute and relative position
 
 Rotary embeddings are defined using the following algorithm:
 
-    ```python
-    def compute_rotary_embedding(input, position_ids, sin_cache, cos_cache, interleaved=0, rotary_embedding_dim=0 ,num_heads=0)
+```python
+def compute_rotary_embedding(
+    input,
+    position_ids,
+    sin_cache,
+    cos_cache,
+    interleaved=0,
+    rotary_embedding_dim=0,
+    num_heads=0,
+):
+    # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
+    batch_size = input.shape[0]
+    sequence_length = input.shape[1]
+    if len(input.shape) == 3:
+        hidden_size = input.shape[2]
+        assert num_heads != 0
+        head_size = int(hidden_size / num_heads)
+        new_shape = [batch_size, sequence_length, num_heads, head_size]
+        input = np.reshape(input, new_shape)
+    assert len(input.shape) == 4
+    head_size = input.shape[3]
 
-      # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
-      batch_size = input.shape[0]
-      sequence_length = input.shape[1]
-      if len(input.shape) == 3:
-          hidden_size = input.shape[2]
-          assert num_heads != 0
-          head_size = int(hidden_size / num_heads)
-          new_shape = [batch_size, sequence_length, num_heads, head_size]
-          input = np.reshape(input, new_shape)
-      assert len(input.shape) == 4
-      head_size = input.shape[3]
+    # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
+    if rotary_embedding_dim == 0:
+        # If rotary_embedding_dim not provided, perform full rotation by using head_size
+        rotary_embedding_dim = head_size
+    x_rotate = input[:, :, :, :rotary_embedding_dim]
+    x_not_rotate = input[:, :, :, rotary_embedding_dim:]
+    rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
 
-      # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-      if rotary_embedding_dim == 0:
-          # If rotary_embedding_dim not provided, perform full rotation by using head_size
-          rotary_embedding_dim = head_size
-      x_rotate = input[:, :, :, :rotary_embedding_dim]
-      x_not_rotate = input[:, :, :, rotary_embedding_dim:]
-      rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
+    # Retrieve sin and cos caches using position ids
+    if position_ids is not None:
+        cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+        sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+    else:
+        cos = cos_cache
+        sin = sin_cache
+    cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+    sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
 
-      # Retrieve sin and cos caches using position ids
-      if position_ids is not None:
-          cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-          sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-      else:
-          cos = cos_cache
-          sin = sin_cache
-      cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-      sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-      cos = np.expand_dims(cos, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-      sin = np.expand_dims(sin, axis=2) # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+    # Either divide the input in halves or interleave (based on interleaved attribute)
+    if interleaved:
+        x1 = x_rotate[:, :, :, 0::2]
+        x2 = x_rotate[:, :, :, 1::2]
+    else:
+        x1, x2 = np.split(x_rotate, 2, axis=-1)
 
-      # Either divide the input in halves or interleave (based on interleaved attribute)
-      if interleaved:
-          x1 = x_rotate[:, :, :, 0::2]
-          x2 = x_rotate[:, :, :, 1::2]
-      else:
-          x1, x2 = np.split(x_rotate, 2, axis=-1)
+    # Calculate real and imaginary values
+    real = cos * x1 - sin * x2
+    imag = sin * x1 + cos * x2
 
-      # Calculate real and imaginary values
-      real = cos * x1 - sin * x2
-      imag = sin * x1 + cos * x2
-
-      # Inserted rotated embeddings back to the original input
-      if interleaved:
-          # x_rotate[:, :, :, 0::2] = real
-          # x_rotate[:, :, :, 1::2] = imag
-          real = np.expand_dims(real, axis=-1)
-          imag = np.expand_dims(imag, axis=-1)
-          x_rotate_concat = np.concatenate((real, imag), axis=-1)
-          x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
-      else:
-          x_rotate = np.concatenate((real, imag), axis=-1)
-      output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
-      if len(input.shape) == 3:
-          output = np.reshape(output, input.shape)
-      return output
-    ```
+    # Inserted rotated embeddings back to the original input
+    if interleaved:
+        # x_rotate[:, :, :, 0::2] = real
+        # x_rotate[:, :, :, 1::2] = imag
+        real = np.expand_dims(real, axis=-1)
+        imag = np.expand_dims(imag, axis=-1)
+        x_rotate_concat = np.concatenate((real, imag), axis=-1)
+        x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
+    else:
+        x_rotate = np.concatenate((real, imag), axis=-1)
+    output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+    if len(input.shape) == 3:
+        output = np.reshape(output, input.shape)
+    return output
+```
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2931,32 +3083,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "X",
             "The input tensor representing the token embeddings. "
-            "4D tensor with shape (batch_size, sequence_length, num_heads, head_size) or 3D tensor with shape (batch_size, sequence_length, hidden_size). "
+            "4D tensor with shape `(batch_size, sequence_length, num_heads, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. "
             "For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and "
-            "hidden_size must be an even multiple of num_heads where `hidden_size = num_heads * head_size`",
+            "`hidden_size` must be an even multiple of `num_heads` where `hidden_size = num_heads * head_size`",
             "T")
         .Input(
             1,
             "cos_cache",
             "The cosine values for the rotation. "
-            "2D tensor with shape (max_position_id_plus_1, head_size / 2) for full rotation or (max_position_id_plus_1, rotary_embedding_dim / 2) "
-            "for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) "
-            "for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. "
+            "2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` "
+            "for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` "
+            "for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. "
             "`max_position_id_plus_1` is a parameter to the model.",
             "T")
         .Input(
             2,
             "sin_cache",
             "The sine values for the rotation. "
-            "2D tensor with shape (max_position_id_plus_1, head_size / 2) for full rotation or (max_position_id_plus_1, rotary_embedding_dim / 2) "
-            "for partial rotation when position_ids are provided. 3D tensor with shape (batch_size, sequence_length, head_size / 2) "
-            "for full rotation or (batch_size, sequence_length, rotary_embedding_dim / 2) for partial rotation when position_ids are not provided. "
+            "2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` "
+            "for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` "
+            "for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. "
             "`max_position_id_plus_1` is a parameter to the model.",
             "T")
         .Input(
             3,
             "position_ids",
-            "The position indices for the tokens. 2D tensor with shape (batch_size, sequence_length)",
+            "The position indices for the tokens. 2D tensor with shape `(batch_size, sequence_length)`",
             "M",
             OpSchema::Optional)
         .Output(0, "Y", "Tensor with same shape as input.", "T")
@@ -2964,7 +3116,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
-        .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors")
+        .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           propagateShapeFromInputToOutput(ctx, 0, 0);
