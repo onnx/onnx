@@ -17,7 +17,7 @@ import onnx
 onnx_model = onnx.load("path/to/the/model.onnx")
 ```
 Runnable IPython notebooks:
-- [load_model.ipynb](/onnx/examples/load_model.ipynb)
+- [load_model.ipynb](/examples/load_model.ipynb)
 
 ## Loading an ONNX Model with External Data
 
@@ -62,7 +62,7 @@ onnx_model = ...
 onnx.save(onnx_model, "path/to/the/model.onnx")
 ```
 Runnable IPython notebooks:
-- [save_model.ipynb](/onnx/examples/save_model.ipynb)
+- [save_model.ipynb](/examples/save_model.ipynb)
 
 
 ## Converting and Saving an ONNX Model to External Data
@@ -122,7 +122,7 @@ for tensor_dtype in helper.get_all_tensor_dtypes():
 
 ```
 Runnable IPython notebooks:
-- [np_array_tensorproto.ipynb](/onnx/examples/np_array_tensorproto.ipynb)
+- [np_array_tensorproto.ipynb](/examples/np_array_tensorproto.ipynb)
 
 ## Creating an ONNX Model Using Helper Functions
 ```python
@@ -163,8 +163,8 @@ print("Model is valid!")
 
 ```
 Runnable IPython notebooks:
-- [make_model.ipynb](/onnx/examples/make_model.ipynb)
-- [Protobufs.ipynb](/onnx/examples/Protobufs.ipynb)
+- [make_model.ipynb](/examples/make_model.ipynb)
+- [Protobufs.ipynb](/examples/Protobufs.ipynb)
 
 ## Conversion utilities for mapping attributes in ONNX IR
 ```python
@@ -198,7 +198,7 @@ else:
     print("The model is valid!")
 ```
 Runnable IPython notebooks:
-- [check_model.ipynb](/onnx/examples/check_model.ipynb)
+- [check_model.ipynb](/examples/check_model.ipynb)
 
 ### Checking a Large ONNX Model >2GB
 Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory.
@@ -242,7 +242,7 @@ onnx.checker.check_model(inferred_model)
 print(f"After shape inference, the shape info of Y is:\n{inferred_model.graph.value_info}")
 ```
 Runnable IPython notebooks:
-- [shape_inference.ipynb](/onnx/examples/shape_inference.ipynb)
+- [shape_inference.ipynb](/examples/shape_inference.ipynb)
 
 ### Shape inference a Large ONNX Model >2GB
 Current shape_inference supports models with external data, but for those models larger than 2GB, please use the model path for onnx.shape_inference.infer_shapes_path and the external data needs to be under the same directory. You can specify the output path for saving the inferred model; otherwise, the default output path is same as the original model path.
