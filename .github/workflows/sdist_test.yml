@@ -33,14 +33,15 @@ jobs:
           git submodule update --init --recursive
           export ONNX_ML=1
 
-          wget https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip 
-          unzip protoc-25.1-linux-x86_64.zip -d protoc
-          # Move binaries to /usr/local:
-          sudo mv protoc/bin/protoc /usr/local/bin/
-          sudo mv protoc/include/* /usr/local/include/
-          protoc --version
-          export CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON
-          
+          # TODO: maybe use protobuf v4
+          git clone https://github.com/protocolbuffers/protobuf.git
+          cd protobuf
+          git checkout v5.29.2
+          git submodule update --init --recursive
+          mkdir build_source && cd build_source
+          cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
+          cmake --build . --target install
+                  
           pip install -e .
 
           python onnx/defs/gen_doc.py
