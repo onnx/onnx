@@ -32,19 +32,7 @@ jobs:
           python -m pip install -r requirements-release.txt
           git submodule update --init --recursive          
 
-          # TODO: maybe use protobuf v4
-          export ONNX_ML=1          
-          export ONNX_BUILD_TESTS=1
-          export CMAKE_ARGS="-DONNX_WERROR=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
-          export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
-          
-          # git clone https://github.com/protocolbuffers/protobuf.git
-          # cd protobuf
-          # git checkout v5.29.2
-          # git submodule update --init --recursive
-          # mkdir build_source && cd build_source
-          # sudo cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
-          # sudo cmake --build . --target install
+          source workflow_scripts/protobuf/build_protobuf_unix.sh "4" "$(pwd)"/protobuf/protobuf_install
                   
           pip install -e .
 
