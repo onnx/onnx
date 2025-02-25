@@ -29,20 +29,22 @@ jobs:
         # back to this branch.
         ref: ${{ github.head_ref }}
         persist-credentials: false
+        
     - name: Setup Python
       uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
       with:
         python-version: "3.11"
+        
     - name: Install ONNX from source and update documentation
       run: |
         python -m pip install -q --upgrade pip
-        python -m pip install -r requirements.txt
+        python -m pip install -r requirements-release.txt
         git submodule update --init --recursive
         
         source workflow_scripts/protobuf/build_protobuf_unix.sh "4" "$(pwd)"/protobuf/protobuf_install
 
-        export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
-        export ONNX_ML=1
+        # export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
+        # export ONNX_ML=1
         pip install -e .
 
         python onnx/defs/gen_doc.py
