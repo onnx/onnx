@@ -28214,6 +28214,108 @@ This version of the operator has been available since version 22 of the default 
 </dl>
 
 ## Version 23 of the default ONNX operator set
+### <a name="Attention-23"></a>**Attention-23**</a>
+
+  Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
+
+  This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
+  For self attention, kv_sequence_length equals to q_sequence_length.
+  For cross attention, query and key might have different lengths.
+
+  This operator also covers the 3 following variants based on the number of heads:
+  1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, q_num_heads = kv_num_heads.
+  2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, q_num_heads > kv_num_heads, q_num_heads % kv_num_heads == 0
+  3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, q_num_heads > kv_num_heads, kv_num_heads=1.
+
+  Attention bias to be added is calculated based on attn_mask input and is_causal attribute, only one of which can be provided.
+  1) If is_causal is set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
+  2) attn_mask: A boolean mask where a value of True indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+
+  Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+  The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
+
+  // The following pattern is applied
+  //      Q          K          V
+  //      |          |          |
+  //     Q*scale     K*scale    |
+  //      |          |          |
+  //      |       Transpose     |
+  //      |          |          |
+  //      ---MatMul---          |
+  //            |               |
+  // at_bias---Add              |
+  //            |               |
+  //         Softmax            |
+  //            |               |
+  //            -----MatMul------
+  //                    |
+  //                    Y
+
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>is_causal</tt> : int (default is 0)</dt>
+<dd>If set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dt><tt>kv_num_heads</tt> : int</dt>
+<dd>Number of heads of key and value. Must be used with for 3D inputs of Q, K and V. </dd>
+<dt><tt>q_num_heads</tt> : int</dt>
+<dd>Number of heads of query. Must be used with for 3D inputs of Q, K and V. </dd>
+<dt><tt>qk_matmul_precision</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in q and k matmul compuatation.</dd>
+<dt><tt>qkv_matmul_precision</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in qk and v matmul computation.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)</dd>
+<dt><tt>softcap</tt> : float (default is 0.0)</dt>
+<dd>Softcap value for attention weights. Default value is 0.</dd>
+<dt><tt>softmax_precision</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in softmax computation.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Query tensor. 4D tensor with shape (batch_size, q_num_heads, q_sequence_length, head_size) or 3D tensor with shape (batch_size, q_sequence_length, q_hidden_size). For cases with a 3D input tensor, q_hidden_size = q_num_heads * head_size</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Key tensor. 4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, head_size) or 3D tensor with shape (batch_size, kv_sequence_length, k_hidden_size). For cases with a 3D input tensor, k_hidden_size = kv_num_heads * head_size</dd>
+<dt><tt>V</tt> : T2</dt>
+<dd>Value tensor. 4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size) or 3D tensor with shape (batch_size, kv_sequence_length, v_hidden_size). For cases with a 3D input tensor, v_hidden_size = kv_num_heads * v_head_size</dd>
+<dt><tt>attn_mask</tt> (optional) : U</dt>
+<dd>Attention mask. Shape must be broadcastable to 4D tensor with shape (batch_size, q_num_heads, q_sequence_length, total_sequence_length). total_sequence_length is past_sequence_length + kv_sequence_length. Two types of masks are supported. A boolean mask where a value of True indicates that the element should take part in attention. Also supports a float mask of the same type as query, key, value that is added to the attention score.</dd>
+<dt><tt>past_key</tt> (optional) : T1</dt>
+<dd>past state cache for key with shape (batch_size, kv_num_heads, past_sequence_length, head_size)</dd>
+<dt><tt>past_value</tt> (optional) : T2</dt>
+<dd>past state cache for value with shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)</dd>
+</dl>
+
+#### Outputs (1 - 3)
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>The output tensor . 4D tensor with shape (batch_size, q_num_heads, q_sequence_length, v_head_size) or 3D tensor with shape (batch_size, q_sequence_length, hidden_size). For cases with a 3D input tensor, hidden_size = q_num_heads * v_head_size</dd>
+<dt><tt>present_key</tt> (optional) : T1</dt>
+<dd>Updated key cache with shape (batch_size, kv_num_heads, total_sequence_length, head_size). total_sequence_length is past_sequence_length + kv_sequence_length.</dd>
+<dt><tt>present_value</tt> (optional) : T2</dt>
+<dd>Updated value cache with shape (batch_size, kv_num_heads, total_sequence_length, v_head_size). total_sequence_length is past_sequence_length + kv_sequence_length.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q and K inputs types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain V input types to float tensors.</dd>
+<dt><tt>U</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
+<dd>Constrain output 'mask' types to boolean tensors and input types.</dd>
+</dl>
+
 ### <a name="Cast-23"></a>**Cast-23**</a>
 
   The operator casts the elements of a given input tensor to a data type
