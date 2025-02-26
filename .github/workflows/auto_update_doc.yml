@@ -31,11 +31,15 @@ jobs:
         python-version: "3.11"
     - name: Install ONNX from source and update documentation
       run: |
+        source workflow_scripts/protobuf/build_protobuf_unix.sh 3
         python -m pip install -q --upgrade pip
         python -m pip install -r requirements-release.txt
         git submodule update --init --recursive
         export ONNX_ML=1
-        pip install -e .
+        # Remove protobuf specification from requirements.txt to
+        # prevent pip from installing the latest version.
+        sed -i -e '/protobuf/d' requirements.txt
+        pip install --verbose -e .
 
         python onnx/defs/gen_doc.py
         python onnx/gen_proto.py -l
