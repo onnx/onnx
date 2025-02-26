@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Auto update documentation/backend test data
 on:
   pull_request_target:
@@ -13,7 +17,7 @@ concurrency:
 jobs:
   auto-update-doc:
     if: contains( github.event.pull_request.labels.*.name, 'auto update doc')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
         contents: write
 
@@ -25,17 +29,23 @@ jobs:
         # back to this branch.
         ref: ${{ github.head_ref }}
         persist-credentials: false
+        
     - name: Setup Python
       uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
       with:
         python-version: "3.11"
+        
     - name: Install ONNX from source and update documentation
       run: |
         source workflow_scripts/protobuf/build_protobuf_unix.sh 3
         python -m pip install -q --upgrade pip
         python -m pip install -r requirements-release.txt
         git submodule update --init --recursive
+        
+        source workflow_scripts/protobuf/build_protobuf_unix.sh "4" "$(pwd)"/protobuf/protobuf_install
+        
         export ONNX_ML=1
+
         # Remove protobuf specification from requirements.txt to
         # prevent pip from installing the latest version.
         sed -i -e '/protobuf/d' requirements.txt
@@ -49,7 +59,6 @@ jobs:
         python onnx/backend/test/cmd_tools.py generate-data --diff
 
         git diff -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
-
 
     - name: Commit changes with updated files
       uses: stefanzweifel/git-auto-commit-action@e348103e9026cc0eee72ae06630dbe30c8bf7a79 # v5.1.0
