@@ -42,10 +42,9 @@ jobs:
         git submodule update --init --recursive
         
         source workflow_scripts/protobuf/build_protobuf_unix.sh "4" "$(pwd)"/protobuf/protobuf_install
-
-        # export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
-        # export ONNX_ML=1
-        pip install -e .
+        
+        export ONNX_ML=1
+        pip install -v -e .
 
         python onnx/defs/gen_doc.py
         python onnx/gen_proto.py -l
