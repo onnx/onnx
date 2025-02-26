@@ -2868,7 +2868,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RMSNormalization_ver23_doc)
         .Attr(
             "axis",
-            "The first normalization dimension: normalization will be performed along dimensions axis : rank(inputs).",
+            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). "
+            "Negative value means counting dimensions from the back.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
