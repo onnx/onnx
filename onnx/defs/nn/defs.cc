@@ -3496,10 +3496,14 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
 
               // Update Output Shape for 3D inputs
-              // Input 0 (query) has shape (batch_size, q_sequence_length, q_hidden_size), q_hidden_size = q_num_heads * head_size
-              // Input 1 (key) has shape (batch_size, kv_sequence_length, k_hidden_size), k_hidden_size = kv_num_heads * head_size
-              // Input 2 (value) has shape (batch_size, kv_sequence_length, v_hidden_size), v_hidden_size = kv_num_heads * v_head_size
-              // Output 0 has shape (batch_size, q_sequence_length, hidden_size), hidden_size = q_num_heads * v_head_size
+              // Input 0 (query) has shape (batch_size, q_sequence_length, q_hidden_size),
+              // q_hidden_size = q_num_heads * head_size
+              // Input 1 (key) has shape (batch_size, kv_sequence_length, k_hidden_size),
+              // k_hidden_size = kv_num_heads * head_size
+              // Input 2 (value) has shape (batch_size, kv_sequence_length, v_hidden_size),
+              // v_hidden_size = kv_num_heads * v_head_size
+              // Output 0 has shape (batch_size, q_sequence_length, hidden_size),
+              // hidden_size = q_num_heads * v_head_size
               if (value_dims.size() == 3 && query_dims.size() == 3) {
                 kv_sequence_length = value_dims[1].dim_value();
                 auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
@@ -3562,7 +3566,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                     *present_value_shape.add_dim() = dim;
                   }
 
-                  if(ctx.getNumOutputs() > 3) { // has qk_matmul_output with bias
+                  if (ctx.getNumOutputs() > 3) { // has qk_matmul_output with bias
                     propagateElemTypeFromInputToOutput(ctx, 0, 3);
                     qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
                     updateOutputShape(ctx, 3, qk_matmul_shape);

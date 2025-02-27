@@ -3178,7 +3178,11 @@ expect(
 <summary>attention_with_qk_matmul</summary>
 
 ```python
-node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y", "", "", "qk_matmul_output"])
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+)
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)

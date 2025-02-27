@@ -480,7 +480,11 @@ class Attention(Base):
 
     @staticmethod
     def export_attention_with_qk_matmul() -> None:
-        node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y", "", "", "qk_matmul_output"])
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V"],
+            outputs=["Y", "", "", "qk_matmul_output"],
+        )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
@@ -587,7 +591,6 @@ class Attention(Base):
             outputs=[Y, present_key, present_value, qk_matmul_output],
             name="test_attention_4d_with_past_and_present_qk_matmul",
         )
-
 
     @staticmethod
     def export_attention_3d() -> None:

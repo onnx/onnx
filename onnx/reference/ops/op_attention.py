@@ -35,6 +35,7 @@ def _compute_attention(
     is_causal=False,
     q_num_heads=None,
     kv_num_heads=None,
+    softmax_precision=None,
     softcap=None,
     include_mask_in_qk_matmul_output=None,
 ) -> np.ndarray:
@@ -156,6 +157,8 @@ def _compute_attention(
     # Apply softcap
     if softcap is not None:
         qk_with_bias = _softcap(qk_with_bias, softcap)
+    if softmax_precision is not None:
+        qk_with_bias = qk_with_bias.astype(softmax_precision)
     qk_softmax = _softmax(qk_with_bias)
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
     if input_shape_len == 3:
@@ -179,7 +182,7 @@ class Attention(OpRun):
         kv_num_heads=None,
         softmax_precision=None,
         softcap=None,
-        include_mask_in_qk_matmul_output=None
+        include_mask_in_qk_matmul_output=None,
     ) -> np.ndarray:
         res = _compute_attention(
             Q,
@@ -192,6 +195,7 @@ class Attention(OpRun):
             is_causal=is_causal,
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
+            softmax_precision=softmax_precision,
             softcap=softcap,
             include_mask_in_qk_matmul_output=include_mask_in_qk_matmul_output,
         )
