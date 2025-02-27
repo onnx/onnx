@@ -3437,6 +3437,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           int64_t kv_sequence_length = -1;
+          ONNX_NAMESPACE::TensorShapeProto output_shape;
           if (hasInputShape(ctx, 0)) {
             auto& query_shape = getInputShape(ctx, 0);
             auto& query_dims = query_shape.dim();
@@ -3455,7 +3456,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
             }
 
-            ONNX_NAMESPACE::TensorShapeProto output_shape;
             *output_shape.add_dim() = query_dims[0]; // batch_size
             *output_shape.add_dim() = query_dims[1]; // num_heads for 4D, sequence_length for 3D
 
@@ -3487,20 +3487,25 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
 
               // Update Output Shape for 3D inputs
-              // Input 0 (query) has shape (batch_size, q_sequence_length, q_hidden_size), q_hidden_size = q_num_heads *
-              // head_size Input 1 (key) has shape (batch_size, kv_sequence_length, k_hidden_size), k_hidden_size =
-              // kv_num_heads * head_size Input 2 (value) has shape (batch_size, kv_sequence_length, v_hidden_size),
-              // v_hidden_size = kv_num_heads * v_head_size Output 0 has shape (batch_size, q_sequence_length,
-              // hidden_size), hidden_size = q_num_heads * v_head_size
+              // Input 0 (query) has shape (batch_size, q_sequence_length, q_hidden_size), q_hidden_size = q_num_heads * head_size
+              // Input 1 (key) has shape (batch_size, kv_sequence_length, k_hidden_size), k_hidden_size = kv_num_heads * head_size
+              // Input 2 (value) has shape (batch_size, kv_sequence_length, v_hidden_size), v_hidden_size = kv_num_heads * v_head_size
+              // Output 0 has shape (batch_size, q_sequence_length, hidden_size), hidden_size = q_num_heads * v_head_size
               if (value_dims.size() == 3 && query_dims.size() == 3) {
                 kv_sequence_length = value_dims[1].dim_value();
-                auto* num_heads_attr = ctx.getAttribute("q_num_heads");
-                if (num_heads_attr == nullptr) {
+                auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+                if (q_num_heads_attr == nullptr) {
                   fail_type_inference("3D inputs expected to have q_num_heads attribute.");
                 }
-                int64_t num_heads = num_heads_attr->i();
-                int64_t hidden_size = value_dims[2].dim_value();
-                output_shape.add_dim()->set_dim_value(hidden_size * num_heads);
+                auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+                if (kv_num_heads_attr == nullptr) {
+                  fail_type_inference("3D inputs expected to have kv_num_heads attribute.");
+                }
+                int64_t q_num_heads = q_num_heads_attr->i();
+                int64_t kv_num_heads = kv_num_heads_attr->i();
+                // Calculate v_head_size
+                int64_t v_head_size = value_dims[2].dim_value() / kv_num_heads;
+                output_shape.add_dim()->set_dim_value(v_head_size * q_num_heads);
                 updateOutputShape(ctx, 0, output_shape);
               }
             }
@@ -3508,31 +3513,43 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (ctx.getNumOutputs() > 1) { // has present output
             // copy the type from query to present key and value
-            propagateElemTypeFromInputToOutput(ctx, 0, 1);
-            propagateElemTypeFromInputToOutput(ctx, 0, 2);
+            propagateElemTypeFromInputToOutput(ctx, 4, 1);
+            propagateElemTypeFromInputToOutput(ctx, 5, 2);
 
-            if (hasInputShape(ctx, 4)) {
-              auto& past_shape = getInputShape(ctx, 4);
-              auto& past_dims = past_shape.dim();
+            if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
+              auto& past_key_shape = getInputShape(ctx, 4);
+              auto& past_key_dims = past_key_shape.dim();
+              auto& past_value_shape = getInputShape(ctx, 5);
+              auto& past_value_dims = past_value_shape.dim();
 
               // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
-              if (past_dims.size() != 4) {
+              if (past_key_dims.size() != 4) {
                 fail_shape_inference("The past_key input shall be 4 dimensions");
               }
+              // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
+              if (past_value_dims.size() != 4) {
+                fail_shape_inference("The past_value input shall be 4 dimensions");
+              }
 
-              if (kv_sequence_length > 0 && past_dims[2].has_dim_value()) {
-                int64_t total_sequence_length = kv_sequence_length + past_dims[2].dim_value();
+              if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
+                int64_t total_sequence_length = kv_sequence_length + past_key_dims[2].dim_value();
 
-                ONNX_NAMESPACE::TensorShapeProto present_shape;
-                for (auto& dim : past_dims) {
-                  *present_shape.add_dim() = dim;
+                ONNX_NAMESPACE::TensorShapeProto present_key_shape;
+                for (auto& dim : past_key_dims) {
+                  *present_key_shape.add_dim() = dim;
+                }
+
+                ONNX_NAMESPACE::TensorShapeProto present_value_shape;
+                for (auto& dim : past_value_dims) {
+                  *present_value_shape.add_dim() = dim;
                 }
 
                 // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
-                present_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+                present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+                present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
 
-                updateOutputShape(ctx, 1, present_shape);
-                updateOutputShape(ctx, 2, present_shape);
+                updateOutputShape(ctx, 1, present_key_shape);
+                updateOutputShape(ctx, 2, present_value_shape);
               }
             }
           }
@@ -3605,7 +3622,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
               .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
               .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
-              .Add("KVSeqLen = Shape <start = 2, end = -1> (K)") // kv_sequence_length
+              .Add("KVSeqLen = Shape <start = -2, end = -1> (K)") // kv_sequence_length
               .Const1D("NegOne", static_cast<int64_t>(-1)) // head_size, inferred from other dimensions
               .Add("QNewShape = Concat <axis = 0> (BatchSize, QNumHeadsAttr, QSeqLen, NegOne)")
               .Add("KVNewShape = Concat <axis = 0> (BatchSize, KVNumHeadsAttr, KVSeqLen, NegOne)")
@@ -3744,7 +3761,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("VCast = Cast (VAttentionInput)", "to", qkv_matmul_precision)
               .Add("YExtraDim = MatMul(QKCast, VCast)")
               .Add("YCast = Cast (YExtraDim)", "to", T1)
-              .Add("Y = Squeeze(YCast)");
+              .Add("YPreReshape = Squeeze(YCast)");
+          // Reshape Y to 3D if input is a 3D tensor
+          if (q_num_heads != 0 && kv_num_heads != 0) {
+            builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)")
+                .Add("YNewShape = Concat <axis = 0> (Zero1D, Zero1D, NegOne)")
+                .Add("Y = Reshape(YTranspose, YNewShape)");
+          } else {
+            builder.Add("Y = Identity(YPreReshape)");
+          }
 
           schema.BuildFunction(functionProto);
           return true;

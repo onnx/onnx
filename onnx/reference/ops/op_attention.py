@@ -42,6 +42,8 @@ def _compute_attention(
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
     # NewShapeK  (batch_size, kv_num_heads, kv_sequence_length, head_size)
     # NewShapeV (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
+    input_shape_len = len(Q.shape)
+    print(input_shape_len)
     batch_size = Q.shape[0]
     if len(Q.shape) == 3:
         hidden_size_q = Q.shape[2]
@@ -150,8 +152,14 @@ def _compute_attention(
         qk = _softcap(qk, softcap)
     qk_softmax = _softmax(qk)
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
-    # if len(input_shape) == 3:
-    #    output = np.reshape(output, input_shape)
+    if input_shape_len == 3:
+        print("reach")
+        output = np.transpose(output, (0, 2, 1, 3))
+        output = np.reshape(output, (output.shape[0], output.shape[1], -1))
+    print("K", K.shape)
+    print("qk", qk.shape)
+    print("V", V.shape)
+    print("output", output.shape)
     return output, present_key, present_value
 
 

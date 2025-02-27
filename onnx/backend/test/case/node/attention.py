@@ -489,9 +489,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -519,9 +519,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 72).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -549,9 +549,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 30).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -581,9 +581,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -614,9 +614,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 72).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -647,9 +647,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 30).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -679,9 +679,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -711,9 +711,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 72).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -743,9 +743,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 30).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -774,9 +774,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
         attn_mask = np.random.rand(4, 6).astype(np.float32)
 
         Y, _, _ = _compute_attention(
@@ -806,9 +806,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 72).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
         attn_mask = np.random.rand(4, 6).astype(np.float32)
 
         Y, _, _ = _compute_attention(
@@ -838,9 +838,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 30).astype(np.float32)
         attn_mask = np.random.rand(4, 6).astype(np.float32)
 
         Y, _, _ = _compute_attention(
@@ -871,9 +871,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -903,9 +903,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 72).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -935,9 +935,9 @@ class Attention(Base):
             kv_num_heads=kv_num_heads,
         )
 
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 30).astype(np.float32)
 
         Y, _, _ = _compute_attention(
             Q,
@@ -967,9 +967,9 @@ class Attention(Base):
         )
 
         past_sequence_length = 12
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
         attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
@@ -1004,9 +1004,9 @@ class Attention(Base):
         )
 
         past_sequence_length = 12
-        Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        Q = np.random.rand(2, 4, 72).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 24).astype(np.float32)
         attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
@@ -1041,9 +1041,9 @@ class Attention(Base):
         )
 
         past_sequence_length = 12
-        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
-        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
-        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        Q = np.random.rand(2, 4, 24).astype(np.float32)
+        K = np.random.rand(2, 6, 24).astype(np.float32)
+        V = np.random.rand(2, 6, 30).astype(np.float32)
         attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
         past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
         past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
