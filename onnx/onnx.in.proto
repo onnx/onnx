@@ -233,7 +233,7 @@ message NodeProto {
   repeated StringStringEntryProto metadata_props = 9;
 
   // Configuration of multi-device annotations.
-  repeated NodeConfigurationProto configuration = 10;
+  repeated NodeDeviceConfigurationProto configuration = 10;
 }
 
 // IntIntListEntryProto follows the pattern for cross-proto-version maps.
@@ -244,7 +244,7 @@ message IntIntListEntryProto {
 };
 
 // Multi-device configuration proto for NodeProto.
-message NodeConfigurationProto {
+message NodeDeviceConfigurationProto {
     // ID of the configuration.
     optional string configuration_id = 1;
     // Sharding spec for the node.
