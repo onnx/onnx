@@ -36,6 +36,7 @@ def _compute_attention(
     q_num_heads=None,
     kv_num_heads=None,
     softcap=None,
+    include_mask_in_qk_matmul_output=None,
 ) -> np.ndarray:
     assert len(Q.shape) == len(K.shape) == len(V.shape)
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
@@ -43,7 +44,6 @@ def _compute_attention(
     # NewShapeK  (batch_size, kv_num_heads, kv_sequence_length, head_size)
     # NewShapeV (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
     input_shape_len = len(Q.shape)
-    print(input_shape_len)
     batch_size = Q.shape[0]
     if len(Q.shape) == 3:
         hidden_size_q = Q.shape[2]
@@ -145,17 +145,23 @@ def _compute_attention(
     #                    |
     #                    Y
     k_transpose = np.transpose(K, (0, 1, 3, 2))
-    qk = np.matmul(Q * scale, k_transpose * scale) + attn_bias
+    qk = np.matmul(Q * scale, k_transpose * scale)
+    qk_with_bias = qk + attn_bias
+    if include_mask_in_qk_matmul_output == 1:
+        qk_matmul_output = qk_with_bias
+    else:
+        qk_matmul_output = qk
+    qk_matmul_output = qk_matmul_output.astype(Q.dtype)
 
     # Apply softcap
     if softcap is not None:
-        qk = _softcap(qk, softcap)
-    qk_softmax = _softmax(qk)
+        qk_with_bias = _softcap(qk_with_bias, softcap)
+    qk_softmax = _softmax(qk_with_bias)
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
     if input_shape_len == 3:
         output = np.transpose(output, (0, 2, 1, 3))
         output = np.reshape(output, (output.shape[0], output.shape[1], -1))
-    return output, present_key, present_value
+    return output, present_key, present_value, qk_matmul_output
 
 
 class Attention(OpRun):
@@ -171,10 +177,9 @@ class Attention(OpRun):
         is_causal=False,
         q_num_heads=None,
         kv_num_heads=None,
-        qk_matmul_precision=None,
         softmax_precision=None,
-        qkv_matmul_precision=None,
         softcap=None,
+        include_mask_in_qk_matmul_output=None
     ) -> np.ndarray:
         res = _compute_attention(
             Q,
@@ -188,5 +193,6 @@ class Attention(OpRun):
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
             softcap=softcap,
+            include_mask_in_qk_matmul_output=include_mask_in_qk_matmul_output,
         )
         return res

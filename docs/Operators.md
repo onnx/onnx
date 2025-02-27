@@ -1674,16 +1674,14 @@ This version of the operator has been available since version 23 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>include_mask_in_qk_matmul_output</tt> : int (default is 0)</dt>
+<dd>If set to 1, the attention mask is included in the output of qk matmul. Default value is 0.</dd>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
 <dd>If set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with for 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with for 3D inputs of Q, K and V. </dd>
-<dt><tt>qk_matmul_precision</tt> : int (default is 1)</dt>
-<dd>The floating-point precision used in q and k matmul compuatation.</dd>
-<dt><tt>qkv_matmul_precision</tt> : int (default is 1)</dt>
-<dd>The floating-point precision used in qk and v matmul computation.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -1709,7 +1707,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>past state cache for value with shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)</dd>
 </dl>
 
-#### Outputs (1 - 3)
+#### Outputs (1 - 4)
 
 <dl>
 <dt><tt>Y</tt> : T1</dt>
@@ -1718,6 +1716,8 @@ This version of the operator has been available since version 23 of the default 
 <dd>Updated key cache with shape (batch_size, kv_num_heads, total_sequence_length, head_size). total_sequence_length is past_sequence_length + kv_sequence_length.</dd>
 <dt><tt>present_value</tt> (optional) : T2</dt>
 <dd>Updated value cache with shape (batch_size, kv_num_heads, total_sequence_length, v_head_size). total_sequence_length is past_sequence_length + kv_sequence_length.</dd>
+<dt><tt>qk_matmul_output</tt> (optional) : T1</dt>
+<dd>4D tensor with shape (batch_size, q_num_heads, q_sequence_length, total_sequence_length). The output of QK matmul. </dd>
 </dl>
 
 #### Type Constraints
@@ -1744,7 +1744,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V)
+Y, _, _, _ = _compute_attention(Q, K, V)
 
 expect(
     node,
@@ -1774,7 +1774,7 @@ Q = np.random.rand(2, 4, 24).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -1811,7 +1811,7 @@ K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 attn_mask = np.random.rand(4, 6).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -1849,7 +1849,7 @@ Q = np.random.rand(2, 4, 24).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -1886,7 +1886,7 @@ Q = np.random.rand(2, 4, 24).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 30).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -1923,7 +1923,7 @@ K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 30).astype(np.float32)
 attn_mask = np.random.rand(4, 6).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -1961,7 +1961,7 @@ Q = np.random.rand(2, 4, 24).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 30).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2000,7 +2000,7 @@ Q = np.random.rand(2, 4, 24).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 30).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2038,7 +2038,7 @@ Q = np.random.rand(2, 4, 24).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 30).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2079,7 +2079,7 @@ attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
 
-Y, present_key, present_value = _compute_attention(
+Y, present_key, present_value, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2118,7 +2118,7 @@ Q = np.random.rand(2, 4, 72).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2155,7 +2155,7 @@ K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 attn_mask = np.random.rand(4, 6).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2193,7 +2193,7 @@ Q = np.random.rand(2, 4, 72).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2232,7 +2232,7 @@ Q = np.random.rand(2, 4, 72).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2270,7 +2270,7 @@ Q = np.random.rand(2, 4, 72).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2311,7 +2311,7 @@ attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
-Y, present_key, present_value = _compute_attention(
+Y, present_key, present_value, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2352,7 +2352,7 @@ Q = np.random.rand(2, 4, 24).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2390,7 +2390,7 @@ Q = np.random.rand(2, 4, 24).astype(np.float32)
 K = np.random.rand(2, 6, 24).astype(np.float32)
 V = np.random.rand(2, 6, 24).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2431,7 +2431,7 @@ attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
-Y, present_key, present_value = _compute_attention(
+Y, present_key, present_value, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2454,6 +2454,93 @@ expect(
 
 
 <details>
+<summary>attention_3d_with_past_and_present_qk_matmul</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_3d_with_past_and_present_qk_matmul",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_3d_with_past_and_present_qk_matmul_bias</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+    include_mask_in_qk_matmul_output=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_3d_with_past_and_present_qk_matmul_bias",
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_attn_mask</summary>
 
 ```python
@@ -2468,7 +2555,7 @@ K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 attn_mask = np.random.rand(4, 6).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2501,7 +2588,7 @@ K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 attn_mask = np.random.rand(4, 6).astype(np.bool)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2534,7 +2621,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V, is_causal=1)
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
 
 expect(
     node,
@@ -2557,7 +2644,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 10).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V)
+Y, _, _, _ = _compute_attention(Q, K, V)
 
 expect(
     node,
@@ -2585,7 +2672,7 @@ K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 10).astype(np.float32)
 attn_mask = np.random.rand(4, 6).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2618,7 +2705,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 10).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2652,7 +2739,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 10).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V, scale=scale)
+Y, _, _, _ = _compute_attention(Q, K, V, scale=scale)
 
 expect(
     node,
@@ -2680,7 +2767,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 10).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2716,7 +2803,7 @@ attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
 
-Y, present_key, present_value = _compute_attention(
+Y, present_key, present_value, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2746,7 +2833,7 @@ Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V)
+Y, _, _, _ = _compute_attention(Q, K, V)
 
 expect(
     node,
@@ -2774,7 +2861,7 @@ K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 attn_mask = np.random.rand(4, 6).astype(np.float32)
 
-Y, _, _ = _compute_attention(
+Y, _, _, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2807,7 +2894,7 @@ Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V, is_causal=1)
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
 
 expect(
     node,
@@ -2836,7 +2923,7 @@ Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V, scale=scale)
+Y, _, _, _ = _compute_attention(Q, K, V, scale=scale)
 
 expect(
     node,
@@ -2864,7 +2951,7 @@ Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V, softcap=2.0)
+Y, _, _, _ = _compute_attention(Q, K, V, softcap=2.0)
 
 expect(
     node,
@@ -2895,7 +2982,7 @@ attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
-Y, present_key, present_value = _compute_attention(
+Y, present_key, present_value, _ = _compute_attention(
     Q,
     K,
     V,
@@ -2931,7 +3018,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V, scale=scale)
+Y, _, _, _ = _compute_attention(Q, K, V, scale=scale)
 
 expect(
     node,
@@ -2959,7 +3046,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _ = _compute_attention(Q, K, V, softcap=2.0)
+Y, _, _, _ = _compute_attention(Q, K, V, softcap=2.0)
 
 expect(
     node,
@@ -2990,7 +3077,7 @@ attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
 past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
 
-Y, present_key, present_value = _compute_attention(
+Y, present_key, present_value, _ = _compute_attention(
     Q,
     K,
     V,
@@ -3004,6 +3091,140 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_with_past_and_present",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_with_past_and_present_qk_matmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_4d_with_past_and_present_qk_matmul",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_with_past_and_present_qk_matmul_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    include_mask_in_qk_matmul_output=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_4d_with_past_and_present_qk_matmul_bias",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_with_qk_matmul</summary>
+
+```python
+node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y", "", "", "qk_matmul_output"])
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, qk_matmul_output = _compute_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_4d_with_qk_matmul",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_with_qk_matmul_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    include_mask_in_qk_matmul_output=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_4d_with_qk_matmul_bias",
 )
 ```
 

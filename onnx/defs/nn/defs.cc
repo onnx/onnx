@@ -3343,18 +3343,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
-            "qk_matmul_precision",
-            "The floating-point precision used in q and k matmul compuatation.",
-            AttributeProto::INT,
-            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
-        .Attr(
             "softmax_precision",
             "The floating-point precision used in softmax computation.",
-            AttributeProto::INT,
-            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
-        .Attr(
-            "qkv_matmul_precision",
-            "The floating-point precision used in qk and v matmul computation.",
             AttributeProto::INT,
             static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
         .Attr(
@@ -3362,6 +3352,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Softcap value for attention weights. Default value is 0.",
             AttributeProto::FLOAT,
             static_cast<float>(0))
+        .Attr(
+            "include_mask_in_qk_matmul_output",
+            "If set to 1, the attention mask is included in the output of qk matmul. Default value is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Input(
             0,
             "Q",
@@ -3427,6 +3422,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "total_sequence_length is past_sequence_length + kv_sequence_length.",
             "T2",
             OpSchema::Optional)
+        .Output(
+            3,
+            "qk_matmul_output",
+            "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, total_sequence_length). "
+            "The output of QK matmul. ",
+            "T1",
+            OpSchema::Optional)
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q and K inputs types to float tensors.")
         .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain V input types to float tensors.")
         .TypeConstraint(
@@ -3438,6 +3440,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           int64_t kv_sequence_length = -1;
           ONNX_NAMESPACE::TensorShapeProto output_shape;
+          ONNX_NAMESPACE::TensorShapeProto qk_matmul_shape;
           if (hasInputShape(ctx, 0)) {
             auto& query_shape = getInputShape(ctx, 0);
             auto& query_dims = query_shape.dim();
@@ -3458,6 +3461,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             *output_shape.add_dim() = query_dims[0]; // batch_size
             *output_shape.add_dim() = query_dims[1]; // num_heads for 4D, sequence_length for 3D
+
+            *qk_matmul_shape.add_dim() = query_dims[0]; // batch_size
 
             if (hasInputShape(ctx, 1)) {
               auto& key_shape = getInputShape(ctx, 1);
@@ -3484,6 +3489,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *output_shape.add_dim() = query_dims[2]; // sequence_length
                 *output_shape.add_dim() = value_dims[3]; // head_size
                 updateOutputShape(ctx, 0, output_shape);
+                // Update qk_matmul_shape
+                *qk_matmul_shape.add_dim() = query_dims[1]; // q_num_heads
+                *qk_matmul_shape.add_dim() = query_dims[2]; // q_sequence_length
+                qk_matmul_shape.add_dim()->set_dim_value(kv_sequence_length);
               }
 
               // Update Output Shape for 3D inputs
@@ -3507,49 +3516,65 @@ ONNX_OPERATOR_SET_SCHEMA(
                 int64_t v_head_size = value_dims[2].dim_value() / kv_num_heads;
                 output_shape.add_dim()->set_dim_value(v_head_size * q_num_heads);
                 updateOutputShape(ctx, 0, output_shape);
+                // Update qk_matmul_shape
+                qk_matmul_shape.add_dim()->set_dim_value(q_num_heads);
+                *qk_matmul_shape.add_dim() = query_dims[1];
+                qk_matmul_shape.add_dim()->set_dim_value(kv_sequence_length);
               }
             }
           }
 
           if (ctx.getNumOutputs() > 1) { // has present output
-            // copy the type from query to present key and value
-            propagateElemTypeFromInputToOutput(ctx, 4, 1);
-            propagateElemTypeFromInputToOutput(ctx, 5, 2);
+            if (ctx.getNumOutputs() > 3) { // has qk_matmul_output
+              propagateElemTypeFromInputToOutput(ctx, 0, 3);
+              updateOutputShape(ctx, 3, qk_matmul_shape);
+            }
+            if (ctx.getNumInputs() > 4) { // has past_key
+              // copy the type from query to present key and value
+              propagateElemTypeFromInputToOutput(ctx, 4, 1);
+              propagateElemTypeFromInputToOutput(ctx, 5, 2);
 
-            if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
-              auto& past_key_shape = getInputShape(ctx, 4);
-              auto& past_key_dims = past_key_shape.dim();
-              auto& past_value_shape = getInputShape(ctx, 5);
-              auto& past_value_dims = past_value_shape.dim();
+              if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
+                auto& past_key_shape = getInputShape(ctx, 4);
+                auto& past_key_dims = past_key_shape.dim();
+                auto& past_value_shape = getInputShape(ctx, 5);
+                auto& past_value_dims = past_value_shape.dim();
 
-              // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
-              if (past_key_dims.size() != 4) {
-                fail_shape_inference("The past_key input shall be 4 dimensions");
-              }
-              // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
-              if (past_value_dims.size() != 4) {
-                fail_shape_inference("The past_value input shall be 4 dimensions");
-              }
-
-              if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
-                int64_t total_sequence_length = kv_sequence_length + past_key_dims[2].dim_value();
-
-                ONNX_NAMESPACE::TensorShapeProto present_key_shape;
-                for (auto& dim : past_key_dims) {
-                  *present_key_shape.add_dim() = dim;
+                // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
+                if (past_key_dims.size() != 4) {
+                  fail_shape_inference("The past_key input shall be 4 dimensions");
+                }
+                // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
+                if (past_value_dims.size() != 4) {
+                  fail_shape_inference("The past_value input shall be 4 dimensions");
                 }
 
-                ONNX_NAMESPACE::TensorShapeProto present_value_shape;
-                for (auto& dim : past_value_dims) {
-                  *present_value_shape.add_dim() = dim;
+                if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
+                  int64_t total_sequence_length = kv_sequence_length + past_key_dims[2].dim_value();
+
+                  ONNX_NAMESPACE::TensorShapeProto present_key_shape;
+                  for (auto& dim : past_key_dims) {
+                    *present_key_shape.add_dim() = dim;
+                  }
+
+                  ONNX_NAMESPACE::TensorShapeProto present_value_shape;
+                  for (auto& dim : past_value_dims) {
+                    *present_value_shape.add_dim() = dim;
+                  }
+
+                  if(ctx.getNumOutputs() > 3) { // has qk_matmul_output with bias
+                    propagateElemTypeFromInputToOutput(ctx, 0, 3);
+                    qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
+                    updateOutputShape(ctx, 3, qk_matmul_shape);
+                  }
+
+                  // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
+                  present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+                  present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+
+                  updateOutputShape(ctx, 1, present_key_shape);
+                  updateOutputShape(ctx, 2, present_value_shape);
                 }
-
-                // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
-                present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
-                present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
-
-                updateOutputShape(ctx, 1, present_key_shape);
-                updateOutputShape(ctx, 2, present_value_shape);
               }
             }
           }
@@ -3568,17 +3593,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             return false;
           int64_t T1 = t_qk->tensor_type().elem_type();
 
-          // Determine precision types for QK_Matmul, Softmax, QK_V_Matmul
-          auto qk_matmul_precision_attr = ctx.getAttribute("qk_matmul_precision");
-          int64_t qk_matmul_precision = (qk_matmul_precision_attr != nullptr)
-              ? qk_matmul_precision_attr->i()
-              : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-          if ((qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-              (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-              (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-              (qk_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-            return false; // Error
-
+          // Determine precision types for Softmax
           auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
           int64_t softmax_precision = (softmax_precision_attr != nullptr)
               ? softmax_precision_attr->i()
@@ -3587,16 +3602,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
               (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
               (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-            return false; // Error
-
-          auto qkv_matmul_precision_attr = ctx.getAttribute("qkv_matmul_precision");
-          int64_t qkv_matmul_precision = (qkv_matmul_precision_attr != nullptr)
-              ? qkv_matmul_precision_attr->i()
-              : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-          if ((qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-              (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-              (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-              (qkv_matmul_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
             return false; // Error
 
           auto mkbooltensor = [](bool val) -> ONNX_NAMESPACE::TensorProto {
@@ -3736,11 +3741,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder.Add("KTranspose = Transpose <perm = [0, 1 ,3, 2]> (KAttentionInput)")
               .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
               .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
-              .Add("QCast = Cast (QScaled)", "to", qk_matmul_precision)
-              .Add("KCast = Cast (KScaled)", "to", qk_matmul_precision)
-              .Add("QKAttnWeight = MatMul(QCast, KCast)")
+              .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
               .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1)
               .Add("QKAttnWeightWithBias = Add(QKAttnCast, AttnBiasT)");
+
+          // QK MatMul output if required
+          auto* include_mask_attr = ctx.getAttribute("include_mask_in_qk_matmul_output");
+          int64_t include_mask = (include_mask_attr != nullptr) ? include_mask_attr->i() : 0;
+          if (ctx.hasOutput(3)) {
+            if (include_mask == 1) {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightWithBias)");
+            } else {
+              builder.Add("qk_matmul_output = Identity(QKAttnCast)");
+            }
+          }
 
           // Apply softcap if provided
           auto* softcap_attr = ctx.getAttribute("softcap");
@@ -3757,9 +3771,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
               .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
               .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1)
-              .Add("QKCast = Cast (SoftmaxOut)", "to", qkv_matmul_precision)
-              .Add("VCast = Cast (VAttentionInput)", "to", qkv_matmul_precision)
-              .Add("YExtraDim = MatMul(QKCast, VCast)")
+              .Add("YExtraDim = MatMul(SoftmaxOut, VAttentionInput)")
               .Add("YCast = Cast (YExtraDim)", "to", T1)
               .Add("YPreReshape = Squeeze(YCast)");
           // Reshape Y to 3D if input is a 3D tensor

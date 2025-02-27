@@ -28259,16 +28259,14 @@ This version of the operator has been available since version 23 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>include_mask_in_qk_matmul_output</tt> : int (default is 0)</dt>
+<dd>If set to 1, the attention mask is included in the output of qk matmul. Default value is 0.</dd>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
 <dd>If set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with for 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with for 3D inputs of Q, K and V. </dd>
-<dt><tt>qk_matmul_precision</tt> : int (default is 1)</dt>
-<dd>The floating-point precision used in q and k matmul compuatation.</dd>
-<dt><tt>qkv_matmul_precision</tt> : int (default is 1)</dt>
-<dd>The floating-point precision used in qk and v matmul computation.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -28294,7 +28292,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>past state cache for value with shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)</dd>
 </dl>
 
-#### Outputs (1 - 3)
+#### Outputs (1 - 4)
 
 <dl>
 <dt><tt>Y</tt> : T1</dt>
@@ -28303,6 +28301,8 @@ This version of the operator has been available since version 23 of the default 
 <dd>Updated key cache with shape (batch_size, kv_num_heads, total_sequence_length, head_size). total_sequence_length is past_sequence_length + kv_sequence_length.</dd>
 <dt><tt>present_value</tt> (optional) : T2</dt>
 <dd>Updated value cache with shape (batch_size, kv_num_heads, total_sequence_length, v_head_size). total_sequence_length is past_sequence_length + kv_sequence_length.</dd>
+<dt><tt>qk_matmul_output</tt> (optional) : T1</dt>
+<dd>4D tensor with shape (batch_size, q_num_heads, q_sequence_length, total_sequence_length). The output of QK matmul. </dd>
 </dl>
 
 #### Type Constraints
