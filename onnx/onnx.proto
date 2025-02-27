@@ -246,7 +246,7 @@ message IntIntListEntryProto {
 
 // Multi-device configuration proto for NodeProto.
 message NodeDeviceConfigurationProto {
-    // ID of the configuration.
+    // (Required) ID of the configuration.
     optional string configuration_id = 1;
     // Sharding spec for the node.
     repeated ShardingSpecProto sharding_spec = 2;
@@ -255,9 +255,9 @@ message NodeDeviceConfigurationProto {
 }
 
 // ShardingSpecProto: This describes the sharding spec for a specific
-// input/output of a node.
+// input or output tensor of a node.
 message ShardingSpecProto {
-  // Identifies the input/output of the node that is being sharded.
+  // (Required) Identifies the input or output of the node that is being sharded.
   // It is called `logical tensor` in subsequent descriptions.
   optional string tensor_name = 1;
 
@@ -281,21 +281,29 @@ message ShardingSpecProto {
 // ShardedDimProto: This describes the sharding spec for a single
 // axis of a sharded tensor.
 message ShardedDimProto {
-  optional int32 axis = 1;  // the axis this sharding corresponds to
-  // The common-case is described by a single instance of SimpleShardedDimProto
-  // We use multiple instances to handle cases produced when a sharded
+  // (Required) The axis this sharding corresponds to. Must be in the range of
+  // [-r, r - 1], where r is the rank of the tensor. Negative axis values means
+  // counting from the back.
+  optional int64 axis = 1;
+
+  // Describes how the tensor on the provided axis is sharded.
+  // The common-case is described by a single instance of SimpleShardedDimProto.
+  // Multiple instances can be used to handle cases where a sharded
   // tensor is reshaped, fusing multiple axes into one.
   repeated SimpleShardedDimProto simple_sharding = 2;
 }
 
 // SimpleShardedDimProto: Indicates that N blocks are divided into M shards.
-// Here, N is allowed to be symbolic, which M is required to be a constant.
+// N is allowed to be symbolic where M is required to be a constant.
 message SimpleShardedDimProto {
+    // Dimension value to be sharded.
     oneof dim {
         int64 dim_value = 1;
         string dim_param = 2;
     }
-    optional int32 num_shards = 3;
+
+    // (Required) Number of shards to split dim into.
+    optional int64 num_shards = 3;
 }
 
 // Training information
@@ -503,9 +511,9 @@ message ModelProto {
 
 // DeviceConfigurationProto describes a multi-device configuration for a model.
 message DeviceConfigurationProto {
-    // Name of the configuration.
+    // (Required) Name of the configuration.
     optional string name = 1;
-    // Number of devices inside this configuration.
+    // (Required) Number of devices inside this configuration.
     optional int32 num_devices = 2;
     // Optional names of the devices. Should be length of num_devices.
     repeated string device = 3;
