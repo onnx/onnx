@@ -153,7 +153,6 @@ def _compute_attention(
     qk_softmax = _softmax(qk)
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
     if input_shape_len == 3:
-        print("reach")
         output = np.transpose(output, (0, 2, 1, 3))
         output = np.reshape(output, (output.shape[0], output.shape[1], -1))
     return output, present_key, present_value
