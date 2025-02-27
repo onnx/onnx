@@ -156,10 +156,6 @@ def _compute_attention(
         print("reach")
         output = np.transpose(output, (0, 2, 1, 3))
         output = np.reshape(output, (output.shape[0], output.shape[1], -1))
-    print("K", K.shape)
-    print("qk", qk.shape)
-    print("V", V.shape)
-    print("output", output.shape)
     return output, present_key, present_value
 
 
