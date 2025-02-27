@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import numpy as np
 
+import onnx
 from onnx.reference.op_run import OpRun
 
 
@@ -146,19 +147,17 @@ def _compute_attention(
     #                    |
     #                    Y
     k_transpose = np.transpose(K, (0, 1, 3, 2))
-    qk = np.matmul(Q * scale, k_transpose * scale)
-    qk_with_bias = qk + attn_bias
+    qk_matmul_output = np.matmul(Q * scale, k_transpose * scale)
+    qk_with_bias = qk_matmul_output + attn_bias
     if include_mask_in_qk_matmul_output == 1:
-        qk_matmul_output = qk_with_bias
-    else:
-        qk_matmul_output = qk
+        qk_matmul_output = qk_matmul_output + attn_bias
     qk_matmul_output = qk_matmul_output.astype(Q.dtype)
 
     # Apply softcap
     if softcap is not None:
         qk_with_bias = _softcap(qk_with_bias, softcap)
     if softmax_precision is not None:
-        qk_with_bias = qk_with_bias.astype(softmax_precision)
+        qk_with_bias = qk_with_bias.astype(onnx.helper.tensor_dtype_to_np_dtype(softmax_precision))
     qk_softmax = _softmax(qk_with_bias)
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
     if input_shape_len == 3:

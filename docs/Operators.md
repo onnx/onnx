@@ -2507,6 +2507,7 @@ node = onnx.helper.make_node(
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
+    include_mask_in_qk_matmul_output=1,
 )
 
 past_sequence_length = 12
@@ -3143,6 +3144,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+    include_mask_in_qk_matmul_output=1,
 )
 
 past_sequence_length = 12
@@ -3209,6 +3211,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
+    include_mask_in_qk_matmul_output=1,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
