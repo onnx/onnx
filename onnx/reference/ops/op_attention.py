@@ -94,14 +94,14 @@ def _compute_attention(
     # bias due to the alignment when the mask is a non-square matrix.
     if is_causal == 1:
         assert attn_mask is None
-        temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=np.bool)
+        temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=bool)
         temp_mask = np.tril(temp_mask, k=0)
         temp_mask = np.logical_not(temp_mask)
         attn_bias_ma = np.ma.array(attn_bias, mask=temp_mask)
         attn_bias = attn_bias_ma.filled(fill_value=float("-inf"))
     if attn_mask is not None:
         assert is_causal != 1
-        if attn_mask.dtype == np.bool:
+        if attn_mask.dtype == bool:
             attn_mask = np.logical_not(attn_mask)
             attn_bias_ma = np.ma.array(attn_bias, mask=attn_mask)
             attn_bias = attn_bias_ma.filled(fill_value=float("-inf"))
