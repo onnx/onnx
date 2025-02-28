@@ -38,6 +38,7 @@ from onnx.reference.ops.op_asin import Asin
 from onnx.reference.ops.op_asinh import Asinh
 from onnx.reference.ops.op_atan import Atan
 from onnx.reference.ops.op_atanh import Atanh
+from onnx.reference.ops.op_attention import Attention
 from onnx.reference.ops.op_attribute_has_value import AttributeHasValue
 from onnx.reference.ops.op_average_pool import (
     AveragePool_1,
