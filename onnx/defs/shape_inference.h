@@ -97,12 +97,12 @@ struct InferenceContext {
     // input-types of all inputs are known.
     return ((index < getNumInputs()) && (getInputType(index) != nullptr));
   }
+  virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
   virtual bool hasOutput(size_t index) {
     return (index < getNumOutputs() && (getOutputType(index) != nullptr));
   }
-  virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
   virtual ~InferenceContext() = default;
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
