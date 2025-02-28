@@ -28246,7 +28246,9 @@ This version of the operator has been available since version 22 of the default 
         |          |          |
         ---MatMul---          |
               |               |
-   at_bias---Add              |
+   at_mask---Add              |
+              |               |
+    softcap (if provided)     |
               |               |
            Softmax            |
               |               |
@@ -28263,16 +28265,16 @@ This version of the operator has been available since version 23 of the default 
 #### Attributes
 
 <dl>
-<dt><tt>include_mask_in_qk_matmul_output</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention mask is added to the output of qk matmul. Default value is 0.</dd>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
 <dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
+<dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>Scaling factor applied prior to softmax. Default value is `1/sqrt(head_size)`</dd>
+<dd>Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. Default value is `1/sqrt(head_size)`</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
 <dd>Softcap value for attention weights. Default value is 0.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>

@@ -3309,7 +3309,9 @@ The following pattern is applied to the Q, K and V inputs after appropriate resh
       |          |          |
       ---MatMul---          |
             |               |
- at_bias---Add              |
+ at_mask---Add              |
+            |               |
+  softcap (if provided)     |
             |               |
          Softmax            |
             |               |
@@ -3333,7 +3335,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "scale",
-            "Scaling factor applied prior to softmax. Default value is `1/sqrt(head_size)`",
+            "Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. "
+            "Default value is `1/sqrt(head_size)`",
             AttributeProto::FLOAT,
             OPTIONAL_VALUE)
         .Attr(
@@ -3358,8 +3361,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             static_cast<float>(0))
         .Attr(
-            "include_mask_in_qk_matmul_output",
-            "If set to `1`, the attention mask is added to the output of qk matmul. Default value is 0.",
+            "qk_matmul_output_mode",
+            "If set to `0`, qk_matmul_output is the output of qk matmul. "
+            "If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. "
+            "If set to `2`, qk_matmul_output is the output after the softcap operation. "
+            "If set to `3`, qk_matmul_output is the output after the softmax operation. "
+            "Default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
@@ -3739,7 +3746,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           //      |          |          |
           //      ---MatMul---          |
           //            |               |
-          // at_bias---Add              |
+          // at_mask---Add              |
+          //  softcap (if provided)     |
+          //            |               |
           //            |               |
           //         Softmax            |
           //            |               |
@@ -3752,17 +3761,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
               .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1)
               .Add("QKAttnWeightWithBias = Add(QKAttnCast, AttnBiasT)");
-
-          // QK MatMul output if required
-          auto* include_mask_attr = ctx.getAttribute("include_mask_in_qk_matmul_output");
-          int64_t include_mask = (include_mask_attr != nullptr) ? include_mask_attr->i() : 0;
-          if (ctx.hasOutput(3)) {
-            if (include_mask == 1) {
-              builder.Add("qk_matmul_output = Identity(QKAttnWeightWithBias)");
-            } else {
-              builder.Add("qk_matmul_output = Identity(QKAttnCast)");
-            }
-          }
 
           // Apply softcap if provided
           auto* softcap_attr = ctx.getAttribute("softcap");
@@ -3778,8 +3776,24 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
               .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
-              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1)
-              .Add("YExtraDim = MatMul(SoftmaxOut, VAttentionInput)")
+              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
+
+          // QK MatMul output if required
+          auto* qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
+          int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
+          if (ctx.hasOutput(3)) {
+            if (qk_matmul_output_mode == 1) {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightWithBias)");
+            } else if (qk_matmul_output_mode == 2) {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
+            } else if (qk_matmul_output_mode == 3) {
+              builder.Add("qk_matmul_output = Identity(AttnWeightSoftmax)");
+            } else {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeight)");
+            }
+          }
+
+          builder.Add("YExtraDim = MatMul(SoftmaxOut, VAttentionInput)")
               .Add("YCast = Cast (YExtraDim)", "to", T1)
               .Add("YPreReshape = Squeeze(YCast)");
           // Reshape Y to 3D if input is a 3D tensor
