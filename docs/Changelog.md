@@ -28271,8 +28271,8 @@ This version of the operator has been available since version 23 of the default 
 <dd>Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
 <dd>Softcap value for attention weights. Default value is 0.</dd>
-<dt><tt>softmax_precision</tt> : int (default is 1)</dt>
-<dd>The floating-point precision used in softmax computation.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>The floating-point precision used in softmax computation. If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.</dd>
 </dl>
 
 #### Inputs (3 - 6)

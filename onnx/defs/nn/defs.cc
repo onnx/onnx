@@ -3344,9 +3344,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Attr(
             "softmax_precision",
-            "The floating-point precision used in softmax computation.",
+            "The floating-point precision used in softmax computation. "
+            "If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.",
             AttributeProto::INT,
-            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+            OPTIONAL_VALUE)
         .Attr(
             "softcap",
             "Softcap value for attention weights. Default value is 0.",
@@ -3599,9 +3600,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Determine precision types for Softmax
           auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
-          int64_t softmax_precision = (softmax_precision_attr != nullptr)
-              ? softmax_precision_attr->i()
-              : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          int64_t softmax_precision = (softmax_precision_attr != nullptr) ? softmax_precision_attr->i() : T1;
           if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
               (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
               (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
