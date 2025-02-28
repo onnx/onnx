@@ -3528,12 +3528,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          if (ctx.getNumOutputs() > 1) { // has present output
-            if (ctx.getNumOutputs() > 3) { // has qk_matmul_output
-              propagateElemTypeFromInputToOutput(ctx, 0, 3);
-              updateOutputShape(ctx, 3, qk_matmul_shape);
-            }
-            if (ctx.getNumInputs() > 4) { // has past_key
+          if (ctx.hasOutput(3)) { // has qk_matmul_output
+            propagateElemTypeFromInputToOutput(ctx, 0, 3);
+            updateOutputShape(ctx, 3, qk_matmul_shape);
+          }
+
+          if (ctx.hasOutput(1) && ctx.hasOutput(2)) { // has present outputs
+            if (ctx.hasInput(4) && ctx.hasInput(5)) { // has past_key
               // copy the type from query to present key and value
               propagateElemTypeFromInputToOutput(ctx, 4, 1);
               propagateElemTypeFromInputToOutput(ctx, 5, 2);
@@ -3566,8 +3567,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                     *present_value_shape.add_dim() = dim;
                   }
 
-                  if (ctx.getNumOutputs() > 3) { // has qk_matmul_output with bias
-                    propagateElemTypeFromInputToOutput(ctx, 0, 3);
+                  if (ctx.hasOutput(3)) { // has qk_matmul_output with bias
                     qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
                     updateOutputShape(ctx, 3, qk_matmul_shape);
                   }
