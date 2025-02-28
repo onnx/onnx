@@ -3282,37 +3282,41 @@ static const char* Attention_ver23_doc = R"DOC(
 Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
 
 This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
-For self attention, kv_sequence_length equals to q_sequence_length.
+
+For self attention, `kv_sequence_length` equals to `q_sequence_length`.
+
 For cross attention, query and key might have different lengths.
 
 This operator also covers the 3 following variants based on the number of heads:
-1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, q_num_heads = kv_num_heads.
-2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, q_num_heads > kv_num_heads, q_num_heads % kv_num_heads == 0
-3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, q_num_heads > kv_num_heads, kv_num_heads=1.
+1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
+2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
+3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
-Attention bias to be added is calculated based on attn_mask input and is_causal attribute, only one of which can be provided.
-1) If is_causal is set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
-2) attn_mask: A boolean mask where a value of True indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
+1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
+2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
 
 Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
 The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
 
-// The following pattern is applied
-//      Q          K          V
-//      |          |          |
-//     Q*scale     K*scale    |
-//      |          |          |
-//      |       Transpose     |
-//      |          |          |
-//      ---MatMul---          |
-//            |               |
-// at_bias---Add              |
-//            |               |
-//         Softmax            |
-//            |               |
-//            -----MatMul------
-//                    |
-//                    Y
+```
+  The following pattern is applied by this operator:
+      Q          K          V
+      |          |          |
+     Q*scale     K*scale    |
+      |          |          |
+      |       Transpose     |
+      |          |          |
+      ---MatMul---          |
+            |               |
+ at_bias---Add              |
+            |               |
+         Softmax            |
+            |               |
+            -----MatMul------
+                   |
+                   Y
+```
 
 )DOC";
 
@@ -3323,23 +3327,23 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Attention_ver23_doc)
         .Attr(
             "is_causal",
-            "If set to 1, the attention masking is a lower triangular matrix when the mask is a square matrix. "
+            "If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. "
             "The attention masking has the form of the upper left causal bias due to the alignment.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
             "scale",
-            "Scaling factor applied prior to softmax. Default value is 1/sqrt(head_size)",
+            "Scaling factor applied prior to softmax. Default value is `1/sqrt(head_size)`",
             AttributeProto::FLOAT,
             OPTIONAL_VALUE)
         .Attr(
             "q_num_heads",
-            "Number of heads of query. Must be used with for 3D inputs of Q, K and V. ",
+            "Number of heads of query. Must be used with 3D inputs of Q, K and V. ",
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
             "kv_num_heads",
-            "Number of heads of key and value. Must be used with for 3D inputs of Q, K and V. ",
+            "Number of heads of key and value. Must be used with 3D inputs of Q, K and V. ",
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
@@ -3355,79 +3359,80 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<float>(0))
         .Attr(
             "include_mask_in_qk_matmul_output",
-            "If set to 1, the attention mask is included in the output of qk matmul. Default value is 0.",
+            "If set to `1`, the attention mask is added to the output of qk matmul. Default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
             0,
             "Q",
             "Query tensor. "
-            "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, head_size) or 3D tensor with shape (batch_size, q_sequence_length, q_hidden_size). "
-            "For cases with a 3D input tensor, q_hidden_size = q_num_heads * head_size",
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. "
+            "For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`",
             "T1")
         .Input(
             1,
             "K",
             "Key tensor. "
-            "4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, head_size) or 3D tensor with shape (batch_size, kv_sequence_length, k_hidden_size). "
-            "For cases with a 3D input tensor, k_hidden_size = kv_num_heads * head_size",
+            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. "
+            "For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`",
             "T1")
         .Input(
             2,
             "V",
             "Value tensor. "
-            "4D tensor with shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size) or 3D tensor with shape (batch_size, kv_sequence_length, v_hidden_size). "
-            "For cases with a 3D input tensor, v_hidden_size = kv_num_heads * v_head_size",
+            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. "
+            "For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`",
             "T2")
         .Input(
             3,
             "attn_mask",
             "Attention mask. "
             "Shape must be broadcastable to "
-            "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, total_sequence_length). "
-            "total_sequence_length is past_sequence_length + kv_sequence_length. "
-            "Two types of masks are supported. A boolean mask where a value of True indicates that the element should take part in attention. "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
+            "Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. "
             "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
             OpSchema::Optional)
         .Input(
             4,
             "past_key",
-            "past state cache for key with shape (batch_size, kv_num_heads, past_sequence_length, head_size)",
+            "past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`",
             "T1",
             OpSchema::Optional)
         .Input(
             5,
             "past_value",
-            "past state cache for value with shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)",
+            "past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`",
             "T2",
             OpSchema::Optional)
         .Output(
             0,
             "Y",
             "The output tensor . "
-            "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, v_head_size) or 3D tensor with shape (batch_size, q_sequence_length, hidden_size). "
-            "For cases with a 3D input tensor, hidden_size = q_num_heads * v_head_size",
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
+            "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
             "T1")
         .Output(
             1,
             "present_key",
-            "Updated key cache with shape (batch_size, kv_num_heads, total_sequence_length, head_size). "
-            "total_sequence_length is past_sequence_length + kv_sequence_length.",
+            "Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
             "T1",
             OpSchema::Optional)
         .Output(
             2,
             "present_value",
-            "Updated value cache with shape (batch_size, kv_num_heads, total_sequence_length, v_head_size). "
-            "total_sequence_length is past_sequence_length + kv_sequence_length.",
+            "Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
             "T2",
             OpSchema::Optional)
         .Output(
             3,
             "qk_matmul_output",
-            "4D tensor with shape (batch_size, q_num_heads, q_sequence_length, total_sequence_length). "
-            "The output of QK matmul. ",
+            "The output of QK matmul. "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
             "T1",
             OpSchema::Optional)
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q and K inputs types to float tensors.")
