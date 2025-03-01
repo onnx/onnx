@@ -159,7 +159,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: always()
-        uses: codecov/codecov-action@13ce06bfc6bbe3ecf90edbbf1bc32fe5978ca1d3
+        uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
