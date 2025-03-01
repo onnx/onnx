@@ -103,14 +103,14 @@ jobs:
 
     steps:
 
-      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806
         if: (github.event_name == 'workflow_dispatch' ) && (needs.check_for_publish_preview_build_to_testpypi_weekly.result == 'success')
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806
         if: (github.event_name == 'workflow_dispatch' ) && (needs.check_for_publish_preview_build_to_testpypi_weekly.result == 'success')
         with:
           pattern: sdist
@@ -157,14 +157,14 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (needs.check_for_publish_preview_build_to_pypi_weekly.result == 'success')
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+      - uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && (needs.check_for_publish_preview_build_to_pypi_weekly.result == 'success')
         with:
           pattern: sdist
