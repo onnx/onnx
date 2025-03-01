@@ -12,6 +12,9 @@ on:
     branches:
       - main
 
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
 jobs:
   test-install:
     runs-on: ${{ matrix.os }}
