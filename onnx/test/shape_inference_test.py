@@ -2201,6 +2201,45 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, None)]
         )
 
+    def test_attention_4d(self) -> None:
+        graph = self._make_graph(
+            [
+                (
+                    "Q",
+                    TensorProto.FLOAT,
+                    ("B", "q_num_heads", "q_seq_length", "head_size"),
+                ),
+                (
+                    "K",
+                    TensorProto.FLOAT,
+                    ("B", "kv_num_heads", "kv_seq_len", "head_size"),
+                ),
+                (
+                    "V",
+                    TensorProto.FLOAT,
+                    ("B", "kv_num_heads", "kv_seq_len", "v_head_size"),
+                ),
+            ],
+            [
+                make_node(
+                    "Attention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y",
+                    TensorProto.FLOAT,
+                    ("B", "q_num_heads", "q_seq_length", "v_head_size"),
+                )
+            ],
+        )  # type: ignore
+
     def test_average_pool_auto_pads(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 7, 6, 4))],
