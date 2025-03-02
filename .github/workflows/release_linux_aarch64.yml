@@ -39,7 +39,7 @@ jobs:
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
       # setting up qemu for enabling aarch64 binary execution on x86 machine
-    - uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # v3.3.0
+    - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
       with:
         platforms: arm64
 
@@ -88,7 +88,7 @@ jobs:
           pytest && \
           deactivate'
 
-    - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
       if: steps.build_manylinux.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}

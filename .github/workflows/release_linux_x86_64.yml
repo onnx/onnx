@@ -66,7 +66,7 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
       if: steps.build_manylinux.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
