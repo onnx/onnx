@@ -33,14 +33,14 @@ $PIP_INSTALL_COMMAND cmake
 
 # Build protobuf from source
 yum install -y wget
-source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$(pwd)"/protobuf/protobuf_install
+source workflow_scripts/protobuf/build_protobuf_unix_freethreading.sh "$(nproc)" "$(pwd)"/protobuf/protobuf_install
 
 # set ONNX build environments
 export ONNX_ML=1
 export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 
 # Install Python dependency
-$PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
+$PIP_INSTALL_COMMAND -r requirements-release_freethreading.txt || { echo "Installing Python requirements failed."; exit 1; }
 
 # Build wheels
 if [ "$GITHUB_EVENT_NAME" == "schedule" ] || [ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]; then
