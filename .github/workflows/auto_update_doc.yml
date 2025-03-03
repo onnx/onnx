@@ -46,7 +46,7 @@ jobs:
 
         # Remove protobuf specification from requirements.txt to
         # prevent pip from installing the latest version.
-        sed -i -e '/protobuf/d' requirements.txt
+        # sed -i -e '/protobuf/d' requirements.txt
         pip install --verbose -e .
 
         python onnx/defs/gen_doc.py
