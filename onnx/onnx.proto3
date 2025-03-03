@@ -510,7 +510,7 @@ message ModelProto {
   repeated FunctionProto functions = 25;
 
   // Describes different target configurations for a multi-device use case.
-  // A model can describe multiple multi-device configurations for execution.
+  // A model MAY describe multiple multi-device configurations for execution.
   repeated DeviceConfigurationProto configuration = 26;
 };
 
