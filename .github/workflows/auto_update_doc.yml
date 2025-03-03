@@ -41,7 +41,6 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -r requirements-release.txt
         git submodule update --init --recursive
-              
         export ONNX_ML=1
         pip install --verbose -e .
 
