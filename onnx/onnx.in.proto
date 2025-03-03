@@ -233,7 +233,7 @@ message NodeProto {
   repeated StringStringEntryProto metadata_props = 9;
 
   // Configuration of multi-device annotations.
-  repeated NodeDeviceConfigurationProto configuration = 10;
+  repeated NodeDeviceConfigurationProto device_configurations = 10;
 }
 
 // IntIntListEntryProto follows the pattern for cross-proto-version maps.
