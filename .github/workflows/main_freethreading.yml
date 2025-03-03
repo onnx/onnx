@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-latest] # windows-latest not working yet
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         python_version: ['3.13t']
         include:        
           - python_version: '3.13t'
