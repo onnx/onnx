@@ -248,7 +248,8 @@ message IntIntListEntryProto {
 
 // Multi-device configuration proto for NodeProto.
 message NodeDeviceConfigurationProto {
-    // (Required) ID of the configuration.
+    // This field MUST be present for this version of the IR.
+    // ID of the configuration. MUST match the name of a DeviceConfigurationProto.
     string configuration_id = 1;
     // Sharding spec for the node.
     repeated ShardingSpecProto sharding_spec = 2;
@@ -259,7 +260,9 @@ message NodeDeviceConfigurationProto {
 // ShardingSpecProto: This describes the sharding spec for a specific
 // input or output tensor of a node.
 message ShardingSpecProto {
-  // (Required) Identifies the input or output of the node that is being sharded.
+  // This field MUST be present for this version of the IR.
+  // Identifies the input or output of the node that is being sharded.
+  // Required to match a name specified in the node's input or output list of ValueInfoProtos.
   // It is called `logical tensor` in subsequent descriptions.
   string tensor_name = 1;
 
@@ -283,7 +286,8 @@ message ShardingSpecProto {
 // ShardedDimProto: This describes the sharding spec for a single
 // axis of a sharded tensor.
 message ShardedDimProto {
-  // (Required) The axis this sharding corresponds to. Must be in the range of
+  // This field MUST be present for this version of the IR.
+  // The axis this sharding corresponds to. Must be in the range of
   // [-r, r - 1], where r is the rank of the tensor. Negative axis values means
   // counting from the back.
   int64 axis = 1;
@@ -304,7 +308,8 @@ message SimpleShardedDimProto {
         string dim_param = 2;
     }
 
-    // (Required) Number of shards to split dim into.
+    // This field MUST be present for this version of the IR.
+    // Number of shards to split dim into.
     int64 num_shards = 3;
 }
 
@@ -513,11 +518,13 @@ message ModelProto {
 
 // DeviceConfigurationProto describes a multi-device configuration for a model.
 message DeviceConfigurationProto {
-    // (Required) Name of the configuration.
+    // This field MUST be present for this version of the IR.
+    // Name of the configuration.
     string name = 1;
-    // (Required) Number of devices inside this configuration.
+    // This field MUST be present for this version of the IR.
+    // Number of devices inside this configuration.
     int32 num_devices = 2;
-    // Optional names of the devices. Should be length of num_devices.
+    // Optional names of the devices. MUST be length of num_devices if provided.
     repeated string device = 3;
 }
 
