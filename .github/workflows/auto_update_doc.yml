@@ -43,10 +43,6 @@ jobs:
         git submodule update --init --recursive
               
         export ONNX_ML=1
-
-        # Remove protobuf specification from requirements.txt to
-        # prevent pip from installing the latest version.
-        # sed -i -e '/protobuf/d' requirements.txt
         pip install --verbose -e .
 
         python onnx/defs/gen_doc.py
