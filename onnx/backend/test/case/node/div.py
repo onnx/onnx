@@ -29,10 +29,35 @@ class Div(Base):
         z = x / y
         expect(node, inputs=[x, y], outputs=[z], name="test_div")
 
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8) + 1
+        z = x // y
+        expect(node, inputs=[x, y], outputs=[z], name="test_div_int8")
+
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16) + 1
+        z = x // y
+        expect(node, inputs=[x, y], outputs=[z], name="test_div_int16")
+
         x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
         y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
         z = x // y
         expect(node, inputs=[x, y], outputs=[z], name="test_div_uint8")
+
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16) + 1
+        z = x // y
+        expect(node, inputs=[x, y], outputs=[z], name="test_div_uint16")
+
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32) + 1
+        z = x // y
+        expect(node, inputs=[x, y], outputs=[z], name="test_div_uint32")
+
+        x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+        y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64) + 1
+        z = x // y
+        expect(node, inputs=[x, y], outputs=[z], name="test_div_uint64")
 
     @staticmethod
     def export_div_broadcast() -> None:

@@ -189,13 +189,13 @@ class TestShapeInferenceHelper(unittest.TestCase):
                     inferred_dim = inferred_vi_type.tensor_type.shape.dim[dim_i]
                     # if it is a symbolic shape, make sure the inferred symbol has generated (dim_param)
                     if dim.dim_param:
-                        assert (
-                            dim.dim_param == inferred_dim.dim_param
-                        ), f"\n{vi_type}\n{inferred_vi_type}\n"
+                        assert dim.dim_param == inferred_dim.dim_param, (
+                            f"\n{vi_type}\n{inferred_vi_type}\n"
+                        )
                     else:
-                        assert (
-                            dim.dim_value == inferred_dim.dim_value
-                        ), f"\n{vi_type}\n{inferred_vi_type}\n"
+                        assert dim.dim_value == inferred_dim.dim_value, (
+                            f"\n{vi_type}\n{inferred_vi_type}\n"
+                        )
         elif vi_type.HasField("sequence_type"):
             assert inferred_vi_type.HasField("sequence_type")
             vi = vi_type.sequence_type.elem_type
@@ -976,6 +976,22 @@ class TestShapeInference(TestShapeInferenceHelper):
                 [make_tensor_value_info("y", TensorProto.INT32, (3, 5, 6, 7))],
                 opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
             )
+
+    @parameterized.expand(all_versions_for("RMSNormalization"))
+    def test_rms_normalization(self, _, version) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
+                ("scale", TensorProto.FLOAT, ("H", "W")),
+            ],
+            [make_node("RMSNormalization", ["X", "scale"], ["y"], axis=2)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )  # type: ignore
 
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_size_axes_2_3(self, _, version) -> None:
@@ -2184,6 +2200,45 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, None)]
         )
+
+    def test_attention_4d(self) -> None:
+        graph = self._make_graph(
+            [
+                (
+                    "Q",
+                    TensorProto.FLOAT,
+                    ("B", "q_num_heads", "q_seq_length", "head_size"),
+                ),
+                (
+                    "K",
+                    TensorProto.FLOAT,
+                    ("B", "kv_num_heads", "kv_seq_len", "head_size"),
+                ),
+                (
+                    "V",
+                    TensorProto.FLOAT,
+                    ("B", "kv_num_heads", "kv_seq_len", "v_head_size"),
+                ),
+            ],
+            [
+                make_node(
+                    "Attention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y",
+                    TensorProto.FLOAT,
+                    ("B", "q_num_heads", "q_seq_length", "v_head_size"),
+                )
+            ],
+        )  # type: ignore
 
     def test_average_pool_auto_pads(self) -> None:
         graph = self._make_graph(
@@ -5742,6 +5797,59 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (15, "C", 1, 1))]
+        )  # type: ignore
+
+    def test_rotaryembedding_4d(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("B", "seq_len", "num_heads", "head_size")),
+                ("cos_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
+                ("sin_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
+                ("position_ids", TensorProto.INT64, ("B", "seq_len")),
+            ],
+            [
+                make_node(
+                    "RotaryEmbedding",
+                    ["X", "cos_cache", "sin_cache", "position_ids"],
+                    ["Y"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ("B", "seq_len", "num_heads", "head_size")
+                )
+            ],
+        )  # type: ignore
+
+    def test_rotaryembedding_3d(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, ("B", "seq_len", "hidden_size")),
+                ("cos_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
+                ("sin_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
+                ("position_ids", TensorProto.INT64, ("B", "seq_len")),
+            ],
+            [
+                make_node(
+                    "RotaryEmbedding",
+                    ["X", "cos_cache", "sin_cache", "position_ids"],
+                    ["Y"],
+                    num_heads=4,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ("B", "seq_len", "hidden_size")
+                )
+            ],
         )  # type: ignore
 
     @parameterized.expand(
@@ -10529,6 +10637,28 @@ class TestShapeInference(TestShapeInferenceHelper):
         with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
+
+    @parameterized.expand(all_versions_for("ConstantOfShape"))
+    def test_issue_constantofshape_6135(self, _, version):
+        graph = self._make_graph(
+            [("std.constant", TensorProto.INT64, (1,)), "output"],
+            [
+                make_node(
+                    "ConstantOfShape",
+                    inputs=["std.constant"],
+                    outputs=["output"],
+                    name="invalid_node",
+                )
+            ],
+            [],
+            initializer=[make_tensor("std.constant", TensorProto.FLOAT, (1,), (-10,))],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
 
 if __name__ == "__main__":

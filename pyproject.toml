@@ -1,7 +1,9 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=3.20.2"]
+requires = ["setuptools>=64", "protobuf>=4.25.1"]
 backend-path = ["."]
 build-backend = "backend"
 
