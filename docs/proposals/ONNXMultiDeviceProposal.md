@@ -129,7 +129,7 @@ Note that the above examples assume that the num_shards are evenly divisible int
 
 #### Sharding as a Broadcast
 
-There may be cases where data in a tensor must be duplicated across multiple devices to ensure that operations stay functionaly correct.
+There may be cases where data in a tensor must be duplicated across multiple devices to ensure that operations stay functionally correct.
 
 For example consider replicating the same 2x2 tensor across two devices. We can do so by providing the following ShardingSpecProto:
 
