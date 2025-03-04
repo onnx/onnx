@@ -115,7 +115,7 @@ enum Version {
   IR_VERSION_2024_3_25 = 0x000000000000000A;
 
   // IR VERSION 11 published on TBD
-  // Added FLOAT4E2M1.
+  // Added FLOAT4E2M1, multi-device protobuf classes.
   IR_VERSION = 0x000000000000000B;
 }
 
@@ -236,7 +236,7 @@ message NodeProto {
   repeated StringStringEntryProto metadata_props = 9;
 
   // Configuration of multi-device annotations.
-  repeated NodeDeviceConfigurationProto configuration = 10;
+  repeated NodeDeviceConfigurationProto device_configurations = 10;
 }
 
 // IntIntListEntryProto follows the pattern for cross-proto-version maps.
