@@ -1,5 +1,5 @@
 build
-nbval
+# 2025.03.05 nbval causes => Cannot install ipykernel and jupyter-client because these package versions have conflicting dependencies
 numpy
 parameterized
 protobuf
@@ -8,6 +8,3 @@ pytest-cov
 pytest-xdist
 setuptools
 ml_dtypes
-pytest
-pytest-cov
-pytest-xdist
