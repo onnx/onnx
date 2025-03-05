@@ -90,7 +90,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
-        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
+        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_freethreading.txt
 
     - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
       with:
@@ -119,7 +119,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.9'))
+      if: always() && (matrix.target-architecture == 'x86_64')
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
