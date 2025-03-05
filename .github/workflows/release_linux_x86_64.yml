@@ -27,12 +27,14 @@ jobs:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         persist-credentials: true
-    - name: Checkout submodules
-      shell: bash
-      run: |
-        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-        git submodule sync --recursive
-        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
+        submodules: true
+    
+    # - name: Checkout submodules
+    #   shell: bash
+    #   run: |
+    #     auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+    #     git submodule sync --recursive
+    #     git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
 
     - name: Build manylinux2014_x86_64
       id: build_manylinux
