@@ -1,5 +1,5 @@
 build
-nbval
+nbval @ git+https://github.com/computationalmodelling/nbval@c192837
 numpy
 parameterized
 protobuf
@@ -8,6 +8,3 @@ pytest-cov
 pytest-xdist
 setuptools
 ml_dtypes
-pytest
-pytest-cov
-pytest-xdist
