@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 build
 ipython
 ml_dtypes
@@ -9,7 +13,6 @@ pytest
 pytest-cov
 pytest-xdist
 setuptools
-twine
 wheel
 # Dependencies for the reference implementation.
 -r requirements-reference.txt
