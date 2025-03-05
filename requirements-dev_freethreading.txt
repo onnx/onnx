@@ -11,4 +11,4 @@ pytest-cov
 pytest-xdist
 setuptools
 ml_dtypes
-nbval @ git+https://github.com/computationalmodelling/nbval@c192837 # 2025.03.05 nbval from pypi causes => Cannot install ipykernel and jupyter-client because these package versions have conflicting dependencies
+nbval @ git+https://github.com/computationalmodelling/nbval@master # 2025.03.05 nbval from pypi causes => Cannot install ipykernel and jupyter-client because these package versions have conflicting dependencies
