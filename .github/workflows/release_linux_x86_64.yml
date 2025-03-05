@@ -41,7 +41,6 @@ jobs:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
 
-
     - name: Set up Python ${{ matrix.python-version }}
       if: steps.build_manylinux.outcome == 'success'
       uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
