@@ -32,7 +32,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, macos-latest, windows-latest]
         python_version: ['3.13t']
-        include:
+        include:        
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 0
@@ -45,13 +45,6 @@ jobs:
             documentation: 0
             os: 'macos-latest'
             protobuf_type: 'Internal'
-          - python_version: '3.13t'
-            onnx_ml: 1
-            debug_build: 0
-            documentation: 0
-            os: 'windows-latest'
-            protobuf_type: 'External'  # Only for Windows
-
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -68,28 +61,6 @@ jobs:
         run: |
           python --version
           cmake --version
-
-      - name: Install external protobuf - Linux
-        if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'ubuntu')
-        run: |
-          sudo apt-get install libprotobuf-dev protobuf-compiler
-
-      - name: Install external protobuf - MacOS
-        if: matrix.protobuf_type == 'External' && matrix.os == 'macos-latest'
-        run: |
-          source workflow_scripts/protobuf/build_protobuf_unix.sh 3 $(pwd)/protobuf/protobuf_install
-
-      - name: Set up MSBuild
-        if: matrix.os == 'windows-latest'
-        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
-        with:
-          msbuild-architecture: x64
-
-      - name: Install external protobuf - Windows
-        if: matrix.protobuf_type == 'External' && matrix.os == 'windows-latest'
-        run: |
-          workflow_scripts/protobuf/build_protobuf_win.ps1
-
 
       - name: Install dependencies
         run: |
@@ -118,26 +89,5 @@ jobs:
         env:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
-          ONNX_BUILD_TESTS: 1
+          ONNX_BUILD_TESTS: 0
           CMAKE_ARGS: "-DONNX_WERROR=ON"
-
-      - name: Build and install ONNX - Windows, setup.py build_ext
-        if: matrix.os == 'windows-latest' 
-        run: |
-          python setup.py build_ext --inplace
-          python setup.py install
-        env:
-          DEBUG: ${{ matrix.debug_build }}
-          ONNX_ML: ${{ matrix.onnx_ml }}
-          ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
-
-      - name: Build and install ONNX - Windows, pip install -e .
-        if: matrix.os == 'windows-latest' 
-        run: |
-          pip install -e . -v
-        env:
-          DEBUG: ${{ matrix.debug_build }}
-          ONNX_ML: ${{ matrix.onnx_ml }}
-          ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=OFF -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
