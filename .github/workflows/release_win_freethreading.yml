@@ -71,7 +71,7 @@ jobs:
     - name: Test the installed wheel
       run: |
         cd onnx
-        pytest
+        pytest --no-config # nbval is not installed
 
     - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
       with:
@@ -85,7 +85,7 @@ jobs:
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest
+        pytest --no-config
 
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
@@ -94,7 +94,7 @@ jobs:
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest
+        pytest --no-config
 
     - name: Verify ONNX with the minimumly supported packages
       if: ${{ always() }}
@@ -103,4 +103,4 @@ jobs:
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest
+        pytest --no-config
