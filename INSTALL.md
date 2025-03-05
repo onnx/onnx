@@ -38,15 +38,15 @@ conda install -c conda-forge onnx
 
 ## Build ONNX from Source
 
-Before building from source uninstall any existing versions of ONNX `pip uninstall onnx`.
+Before building from source uninstall any existing versions of ONNX via ``pip uninstall onnx``.
 
 C++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
 
-If you don't have Protobuf installed, ONNX will internally download and build Protobuf for ONNX build.
+Protobuf is required for ONNX. If you don't have Protobuf installed, ONNX will internally download and build Protobuf for ONNX build.
 
 Or, you can manually install [Protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) with specified version before proceeding forward. Then depending on how you installed Protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF". For example, you may need to run the following command:
 
-Linux:
+Linux or Mac:
 
 ```sh
 export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
@@ -115,16 +115,16 @@ pip install -e . -v
 
 ### Linux
 
-First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.20.2. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
+First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 4.25.1. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
-Ubuntu 20.04 (and newer) users may choose to install Protobuf via
+Ubuntu 20.04 (and newer) users may choose to install Protobuf (which is usually lower than 4.25.1) via
 
 ```sh
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
 ```
 In this case, ONNX is able to detect and use the system Profobuf. Users of other Linux distributions can use their system package manager to install Profobuf libraries similarly.
 
-A more general way is to build and install it from source. See the instructions below for more details.
+A better way is to build and install the required Protobuf version from source. See the instructions below for more details.
 
 <details>
   <summary> Installing Protobuf from source </summary>
