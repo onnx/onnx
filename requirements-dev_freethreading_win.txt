@@ -11,6 +11,4 @@ pytest-cov
 pytest-xdist
 setuptools
 ml_dtypes
-#nbval @ git+https://github.com/computationalmodelling/nbval@master
-#ipython @ git+https://github.com/ipython/ipython
-#jupyter_client @ git+https://github.com/jupyter/jupyter_client
+# nbval # 2025.03.06: cannot be installed because of conflicting dependencies: ipython, jupyter_client
