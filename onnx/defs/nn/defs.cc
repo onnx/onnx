@@ -3057,9 +3057,10 @@ def compute_rotary_embedding(
     else:
         x_rotate = np.concatenate((real, imag), axis=-1)
     output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
-    output = np.transpose(output, (0, 2, 1, 3))
     if len(input.shape) == 3:
         output = np.reshape(output, input.shape)
+    elif len(original_input_shape) == 4:
+        output = np.transpose(output, (0, 2, 1, 3))
     return output
 ```
 )DOC";
@@ -3277,8 +3278,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Combine rotated parts with non-rotated parts
-          builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)")
-              .Add("YTransposed = Transpose <perm = [0, 2, 1, 3]> (XConcat)");
+          builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)");
+          if (num_heads > 0) {
+            builder.Add("YTransposed = Identity(XConcat)");
+          } else {
+            builder.Add("YTransposed = Transpose <perm = [0, 2, 1, 3]> (XConcat)");
+          }
           // Reshape back to 3D shape if input is a 3D tensor
           builder.Add("XShape = Shape(X)").Add("Y = Reshape(YTransposed, XShape)");
 

@@ -86,9 +86,10 @@ def rotary_embedding(
     else:
         x_rotate = np.concatenate((real, imag), axis=-1)
     output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
-    output = np.transpose(output, (0, 2, 1, 3))
     if len(original_input_shape) == 3:
         output = np.reshape(output, original_input_shape)
+    elif len(original_input_shape) == 4:
+        output = np.transpose(output, (0, 2, 1, 3))
     return output
 
 
