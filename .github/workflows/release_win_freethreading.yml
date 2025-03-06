@@ -81,8 +81,9 @@ jobs:
         echo "testpaths =" >> pytest.ini
         echo "    onnx/test" >> pytest.ini
         echo "    onnx/examples" >> pytest.ini
+        python -m pip install -v pillow
         pytest
-
+        
         # python -m pip install -v ipython
         # python -m pip install -v jupyter_client --no-deps
         # python -m pip install -v nbval --no-deps
