@@ -44,6 +44,9 @@ jobs:
         python -m pip install -q --upgrade pip
         cd onnx
         python -m pip install -v -r requirements-dev_freethreading_win.txt
+        python -m pip install -v ipython
+        python -m pip install -v jupyter_client --no-deps
+        python -m pip install -v nbval --no-deps
         python -m pip install cmake
 
     - name: Build ONNX wheel

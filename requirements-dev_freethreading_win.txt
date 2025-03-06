@@ -11,6 +11,6 @@ pytest-cov
 pytest-xdist
 setuptools
 ml_dtypes
-nbval @ git+https://github.com/computationalmodelling/nbval@master
-ipython @ git+https://github.com/ipython/ipython
-jupyter_client @ git+https://github.com/jupyter/jupyter_client
+#nbval @ git+https://github.com/computationalmodelling/nbval@master
+#ipython @ git+https://github.com/ipython/ipython
+#jupyter_client @ git+https://github.com/jupyter/jupyter_client
