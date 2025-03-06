@@ -10,6 +10,7 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+        
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
@@ -71,10 +72,10 @@ jobs:
     - name: Test the installed wheel
       run: |
         cd onnx
-        # echo "[pytest]" >> pytest.ini
-        # echo "maxfail = 3" >> pytest.ini
-        # echo "disable_warnings = true" >> pytest.ini
-        # echo "log_cli = true" >> pytest.ini
+        
+        # 2025.03.06 jupyter_client and ipython have conflicting dependencies
+        # therefore [tool.pytest.ini_options] in pyproject.toml is overwritten
+        # because it contains nbval which cannot be installed
 
         echo "[pytest]" > pytest.ini
         echo "addopts = --tb=short --color=yes" >> pytest.ini
@@ -84,13 +85,6 @@ jobs:
         python -m pip install -v pillow
         pytest
         
-        # python -m pip install -v ipython
-        # python -m pip install -v jupyter_client --no-deps
-        # python -m pip install -v nbval --no-deps
-        # python -m pip install -v nbformat
-        # python -m pip install -v pyzmq
-        # pytest
-
     - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
@@ -121,8 +115,4 @@ jobs:
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        echo "[pytest]" >> pytest.ini
-        echo "maxfail = 3" >> pytest.ini
-        echo "disable_warnings = true" >> pytest.ini
-        echo "log_cli = true" >> pytest.ini
         pytest
