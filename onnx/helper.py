@@ -965,6 +965,7 @@ def make_optional(
         raise TypeError("The element type in the input optional is not supported.")
 
     assert value is not None
+    assert attribute is not None
     attribute.CopyFrom(value)  # type: ignore[arg-type]
     return optional
 
@@ -1719,4 +1720,4 @@ def _attr_type_to_str(attr_type: int) -> str:
     """
     if attr_type in AttributeProto.AttributeType.values():
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]
+    return AttributeProto.AttributeType.keys()[0]

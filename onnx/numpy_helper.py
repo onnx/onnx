@@ -803,10 +803,9 @@ def from_optional(
     if name:
         optional.name = name
 
-    if dtype:
+    if dtype is not None:
         # dtype must be a valid OptionalProto.DataType
-        valid_dtypes = list(OptionalProto.DataType.values())
-        if dtype not in valid_dtypes:
+        if dtype not in OptionalProto.DataType.values():
             raise TypeError(f"{dtype} must be a valid OptionalProto.DataType.")
         elem_type = dtype
     elif isinstance(opt, dict):
