@@ -1,0 +1,16 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+build
+numpy
+parameterized
+protobuf
+pytest
+pytest-cov
+pytest-xdist
+setuptools
+ml_dtypes
+#nbval @ git+https://github.com/computationalmodelling/nbval@master
+#ipython @ git+https://github.com/ipython/ipython
+#jupyter_client @ git+https://github.com/jupyter/jupyter_client
