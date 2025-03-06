@@ -26,7 +26,7 @@ jobs:
     - name: Checkout ONNX
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
-         path: ./onnx
+         # path: ./onnx
          submodules: 'recursive'
 
     - name: Set up Python ${{ matrix.python-version }}
@@ -44,8 +44,7 @@ jobs:
       run: |
         python -m pip install -q --upgrade pip
         cd onnx
-        python -m pip install -v -r requirements-dev_freethreading_win.txt
-        python -m pip install cmake
+        python -m pip install -q -r requirements-dev_freethreading_win.txt
 
     - name: Build ONNX wheel
       run: |
