@@ -81,7 +81,7 @@ class ModelContainer:
     No tensor is stored on disk until the user explicitly saves the model.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.model_proto_: onnx.ModelProto | None = None
         self.large_initializers: dict[str, np.ndarray] = {}
 
@@ -128,7 +128,7 @@ class ModelContainer:
                 )
         self.large_initializers = large_initializers
 
-    def check_large_initializers(self):
+    def check_large_initializers(self) -> None:
         for tensor in ext_data._get_all_tensors(self.model_proto):
             if not ext_data.uses_external_data(tensor):
                 continue
