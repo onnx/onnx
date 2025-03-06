@@ -18,7 +18,9 @@ def rotary_embedding(
     num_heads=None,
 ) -> np.ndarray:
     original_input_shape = input.shape
-    # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
+    # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
+    if len(input.shape) == 4:
+        input = np.transpose(input, (0, 2, 1, 3))
     batch_size = input.shape[0]
     sequence_length = input.shape[1]
     if len(input.shape) == 3:
@@ -84,6 +86,7 @@ def rotary_embedding(
     else:
         x_rotate = np.concatenate((real, imag), axis=-1)
     output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+    output = np.transpose(output, (0, 2, 1, 3))
     if len(original_input_shape) == 3:
         output = np.reshape(output, original_input_shape)
     return output

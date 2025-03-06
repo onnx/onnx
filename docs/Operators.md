@@ -29713,7 +29713,9 @@ expect(
       rotary_embedding_dim=0,
       num_heads=0,
   ):
-      # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
+      # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
+      if len(input.shape) == 4:
+          input = np.transpose(input, (0, 2, 1, 3))
       batch_size = input.shape[0]
       sequence_length = input.shape[1]
       if len(input.shape) == 3:
@@ -29767,6 +29769,7 @@ expect(
       else:
           x_rotate = np.concatenate((real, imag), axis=-1)
       output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+      output = np.transpose(output, (0, 2, 1, 3))
       if len(input.shape) == 3:
           output = np.reshape(output, input.shape)
       return output
@@ -29791,7 +29794,7 @@ This version of the operator has been available since version 23 of the default 
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input tensor representing the token embeddings. 4D tensor with shape `(batch_size, sequence_length, num_heads, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and `hidden_size` must be an even multiple of `num_heads` where `hidden_size = num_heads * head_size`</dd>
+<dd>The input tensor representing the token embeddings. 4D tensor with shape `(batch_size, num_heads, sequence_length, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and `hidden_size` must be an even multiple of `num_heads` where `hidden_size = num_heads * head_size`</dd>
 <dt><tt>cos_cache</tt> : T</dt>
 <dd>The cosine values for the rotation. 2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
 <dt><tt>sin_cache</tt> : T</dt>
@@ -29829,7 +29832,7 @@ node = onnx.helper.make_node(
     outputs=["output"],
 )
 
-input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
@@ -29896,7 +29899,7 @@ node = onnx.helper.make_node(
     interleaved=1,
 )
 
-input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
@@ -29930,7 +29933,7 @@ node = onnx.helper.make_node(
     outputs=["output"],
 )
 
-input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
@@ -29958,7 +29961,7 @@ node = onnx.helper.make_node(
     interleaved=1,
 )
 
-input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
@@ -29991,7 +29994,7 @@ node = onnx.helper.make_node(
     rotary_embedding_dim=4,
 )
 
-input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
 
@@ -30025,7 +30028,7 @@ node = onnx.helper.make_node(
     interleaved=1,
 )
 
-input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)
@@ -30061,7 +30064,7 @@ node = onnx.helper.make_node(
     rotary_embedding_dim=4,
 )
 
-input_data = np.random.rand(2, 3, 4, 8).astype(np.float32)
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
 sin_cache_data = np.random.rand(50, 4).astype(np.float32)
 cos_cache_data = np.random.rand(50, 4).astype(np.float32)

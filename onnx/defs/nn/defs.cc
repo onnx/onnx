@@ -3001,7 +3001,9 @@ def compute_rotary_embedding(
     rotary_embedding_dim=0,
     num_heads=0,
 ):
-    # First ensure input has shape [batch_size, num_heads, seq_len, head_size]
+    # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
+    if len(input.shape) == 4:
+        input = np.transpose(input, (0, 2, 1, 3))
     batch_size = input.shape[0]
     sequence_length = input.shape[1]
     if len(input.shape) == 3:
@@ -3055,6 +3057,7 @@ def compute_rotary_embedding(
     else:
         x_rotate = np.concatenate((real, imag), axis=-1)
     output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+    output = np.transpose(output, (0, 2, 1, 3))
     if len(input.shape) == 3:
         output = np.reshape(output, input.shape)
     return output
@@ -3085,7 +3088,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "X",
             "The input tensor representing the token embeddings. "
-            "4D tensor with shape `(batch_size, sequence_length, num_heads, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. "
+            "4D tensor with shape `(batch_size, num_heads, sequence_length, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. "
             "For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and "
             "`hidden_size` must be an even multiple of `num_heads` where `hidden_size = num_heads * head_size`",
             "T")
@@ -3160,6 +3163,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Const1D("NegOne", (int64_t)(-1)) // head_size, inferred from other dimensions
               .Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
               .Add("XReshaped = Reshape (X, NewShape)");
+          if (num_heads > 0) {
+            builder.Add("XTransposed = Identity(XReshaped)");
+          } else {
+            builder.Add("XTransposed = Transpose <perm = [0, 2, 1, 3]> (XReshaped)");
+          }
 
           // Rotary embedding dimension is the value along which the input is to be split
           // There are two cases for the rotary embedding dimension:
@@ -3167,7 +3175,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // * 2 or head_size
           // 2. Partial rotation: rotary embedding dimension is provided, rotary_embedding_dim = rotary_embedding_dim
 
-          builder.Add("HeadSize = Shape <start = 3, end = 4> (XReshaped)");
+          builder.Add("HeadSize = Shape <start = 3, end = 4> (XTransposed)");
           if (rotary_embedding_dim > 0) {
             builder.Const1D("RotaryEmbedDim", rotary_embedding_dim);
           } else {
@@ -3178,7 +3186,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
           // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
           // shape of input not to rotate = input[:,:,:,rotary_embedding_dim:]
-          builder.Add("XToRotate, XNoRotate = Split <axis = -1, num_outputs = 2> (XReshaped, RotateSplitLengths)");
+          builder.Add("XToRotate, XNoRotate = Split <axis = -1, num_outputs = 2> (XTransposed, RotateSplitLengths)");
 
           // Gather the cos and sine matrices from the respective caches using position ids if provided.
           // Otherwise Gather op functions as an Identity op.
@@ -3269,9 +3277,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Combine rotated parts with non-rotated parts
-          builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)");
+          builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)")
+              .Add("YTransposed = Transpose <perm = [0, 2, 1, 3]> (XConcat)");
           // Reshape back to 3D shape if input is a 3D tensor
-          builder.Add("XShape = Shape(X)").Add("Y = Reshape(XConcat, XShape)");
+          builder.Add("XShape = Shape(X)").Add("Y = Reshape(YTransposed, XShape)");
 
           schema.BuildFunction(functionProto);
           return true;
