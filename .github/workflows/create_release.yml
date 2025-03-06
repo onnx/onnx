@@ -108,7 +108,8 @@ jobs:
     name: Publish preview build to test.pypi-weekly
     runs-on: ubuntu-latest
     needs: [check_for_publish_preview_build_to_testpypi_weekly]
-    
+    if: needs.check_for_publish_preview_build_to_testpypi_weekly.result == 'success' 
+
     environment:
       name: testpypi-weekly
       url: https://test.pypi.org/p/onnx-weekly
