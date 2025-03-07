@@ -26,8 +26,8 @@ jobs:
     - name: Checkout ONNX
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
-         path: ./onnx
          submodules: 'recursive'
+         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: Quansight-Labs/setup-python@v5
@@ -43,8 +43,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        cd onnx
-        python -m pip install -q -r requirements-dev_freethreading_win.txt
+        python -m pip install -q -r requirements-release_freethreading_win.txt
 
     - name: Build ONNX wheel
       run: |
@@ -53,15 +52,15 @@ jobs:
           $arch = 'Win32'
         }
 
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
-        cd onnx
+        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
-          echo "Build weekly PyPI package"
+          echo "Build preview build PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }
@@ -70,7 +69,6 @@ jobs:
  
     - name: Test the installed wheel
       run: |
-        cd onnx
         
         # 2025.03.06 jupyter_client and ipython have conflicting dependencies
         # therefore [tool.pytest.ini_options] in pyproject.toml is overwritten
@@ -87,12 +85,11 @@ jobs:
     - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
-        path: ./onnx/dist
+        path: ./dist
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
@@ -101,7 +98,6 @@ jobs:
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
@@ -110,7 +106,6 @@ jobs:
     - name: Verify ONNX with the minimumly supported packages
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
