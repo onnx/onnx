@@ -7,7 +7,7 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
-from collections.abc import KeysView, MutableSequence, Sequence
+from collections.abc import KeysView, Sequence
 from typing import (
     Any,
     Callable,
@@ -888,21 +888,20 @@ def make_sequence(
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
 
-    attribute: MutableSequence | None = None
+    attribute: Sequence | None = None
     if elem_type == SequenceProto.TENSOR:
-        attribute = sequence.tensor_values  # type: ignore[assignment]
+        attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
+        attribute = sequence.sparse_tensor_values
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values  # type: ignore[assignment]
+        attribute = sequence.sequence_values
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values  # type: ignore[assignment]
+        attribute = sequence.map_values
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values  # type: ignore[assignment]
+        attribute = sequence.optional_values
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
-    assert attribute is not None
     attribute.extend(values)
     return sequence
 
@@ -965,7 +964,6 @@ def make_optional(
         raise TypeError("The element type in the input optional is not supported.")
 
     assert value is not None
-    assert attribute is not None
     attribute.CopyFrom(value)  # type: ignore[arg-type]
     return optional
 
