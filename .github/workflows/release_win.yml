@@ -25,7 +25,6 @@ jobs:
     - name: Checkout ONNX
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
-         path: ./onnx
          submodules: 'recursive'
          persist-credentials: false
 
@@ -43,7 +42,6 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        cd onnx
         if ('${{ matrix.architecture }}' -eq 'x86') {
           echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
           sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
@@ -58,9 +56,8 @@ jobs:
           $arch = 'Win32'
         }
 
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
-        cd onnx
-
+        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        
         echo "Install ONNX"
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
@@ -75,18 +72,16 @@ jobs:
  
     - name: Test the installed wheel
       run: |
-        cd onnx
         pytest
 
     - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
-        path: ./onnx/dist
+        path: ./dist
 
     - name: Verify ONNX with the latest numpy
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
@@ -95,7 +90,6 @@ jobs:
     - name: Verify ONNX with the latest protobuf
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
@@ -104,7 +98,6 @@ jobs:
     - name: Verify ONNX with the minimumly supported packages
       if: ${{ always() }}
       run: |
-        cd onnx
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
