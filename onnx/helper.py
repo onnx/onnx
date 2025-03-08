@@ -19,6 +19,7 @@ from typing import (
 import google.protobuf.message
 import numpy as np
 import typing_extensions
+from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
 import onnx._custom_element_types as custom_np_types
 from onnx import (
@@ -888,7 +889,7 @@ def make_sequence(
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
 
-    attribute: Sequence | None = None
+    attribute: RepeatedCompositeFieldContainer | None = None
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
