@@ -7,13 +7,7 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
-from typing import (
-    Any,
-    Callable,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, cast
 
 import google.protobuf.message
 import numpy as np
@@ -42,7 +36,7 @@ from onnx import (
     subbyte,
 )
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from collections.abc import KeysView, Sequence
 
     from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
