@@ -44,7 +44,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-dev_freethreading.txt
+        python -m pip install -q -r requirements-release_freethreading.txt
 
     - name: Build wheel
       env:
