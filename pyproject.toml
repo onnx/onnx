@@ -122,6 +122,7 @@ disable = [
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
 target-version = "py39"
 unsafe-fixes = true
+# "TC", # flake8-type-checking
 lint.select = [
     "A", # flake8-builtins
     "ARG", # flake8-unused-arguments
@@ -146,7 +147,6 @@ lint.select = [
     "SIM", # flake8-simplify
     "SLOT", # flake8-slot
     "T10", # flake8-debugger
-    "TC", # flake8-type-checking
     "TID", # Disallow relative imports
     "TRY", # flake8-try-except-raise
     "UP", # pyupgrade
