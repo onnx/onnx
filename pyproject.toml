@@ -146,6 +146,7 @@ lint.select = [
     "SIM", # flake8-simplify
     "SLOT", # flake8-slot
     "T10", # flake8-debugger
+    "TC", # flake8-type-checking
     "TID", # Disallow relative imports
     "TRY", # flake8-try-except-raise
     "UP", # pyupgrade
