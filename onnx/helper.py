@@ -42,7 +42,7 @@ from onnx import (
     subbyte,
 )
 
-if typing_extensions.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from collections.abc import KeysView, Sequence
 
     from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
