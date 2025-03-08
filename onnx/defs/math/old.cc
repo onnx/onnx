@@ -295,10 +295,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             const int target_rank = static_cast<int>(target_shape.dim_size());
 
             if (input_rank < 2) {
-              fail_shape_inference("Input rank must be >= 2.");
+              fail_shape_inference("Input rank must be >= 2.")
             }
             if (target_rank != input_rank - 1) {
-              fail_shape_inference("Target rank must be 1 less than the input rank.");
+              fail_shape_inference("Target rank must be 1 less than the input rank.")
             }
 
             // match input dimensions (N, C, d1, ..., dk) with target
@@ -308,13 +308,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               const auto target_dim = target_shape.dim(dim);
               if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
                   input_dim.dim_value() != target_dim.dim_value())
-                fail_shape_inference("Input and target dimension value mismatch.");
+                fail_shape_inference("Input and target dimension value mismatch.")
             }
 
             if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
               const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
               if (weight_shape.dim_size() != 1) {
-                fail_shape_inference("Weight rank must be 1.");
+                fail_shape_inference("Weight rank must be 1.")
               }
             }
 
@@ -365,7 +365,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const int rank = static_cast<int>(input_shape.dim_size());
 
             if (rank < 2) {
-              fail_shape_inference("Input rank must be >= 2.");
+              fail_shape_inference("Input rank must be >= 2.")
             }
 
             const auto mat_w = input_shape.dim(rank - 1);
@@ -1125,7 +1125,7 @@ and contains the {name} values of the corresponding input.
       int r = input_shape.dim_size();
       int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
       if (axis < -r || axis >= r) {
-        fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
+        fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis)
       }
 
       // Shape inference
@@ -1690,10 +1690,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
             if (first_input_shape.dim_size() != 2) {
-              fail_shape_inference("First input does not have rank 2");
+              fail_shape_inference("First input does not have rank 2")
             }
             if (second_input_shape.dim_size() != 2) {
-              fail_shape_inference("Second input does not have rank 2");
+              fail_shape_inference("Second input does not have rank 2")
             }
             updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
           }
@@ -1708,7 +1708,7 @@ static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, 
   const auto shape1 = ctx.getInputType(input2Idx)->tensor_type().shape();
 
   if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-    fail_shape_inference("Input tensors of wrong rank (0).");
+    fail_shape_inference("Input tensors of wrong rank (0).")
   }
 
   ONNX_NAMESPACE::TensorShapeProto shapeL, shapeR;
@@ -1735,7 +1735,7 @@ static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, 
     const auto& dimL = shapeL.dim(shapeL.dim_size() - 1);
     const auto& dimR = shapeR.dim(shapeR.dim_size() - 2);
     if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
-      fail_shape_inference("Incompatible dimensions for matrix multiplication");
+      fail_shape_inference("Incompatible dimensions for matrix multiplication")
     }
   }
 
@@ -1828,7 +1828,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasNInputShapes(ctx, 2)) {
             const auto& shape_input_shape = ctx.getInputType(1)->tensor_type().shape();
             if (shape_input_shape.dim_size() != 1) {
-              fail_shape_inference("'shape' input must be 1D tensor");
+              fail_shape_inference("'shape' input must be 1D tensor")
             }
 
             const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -2274,7 +2274,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const int target_rank = static_cast<int>(target_shape.dim_size());
 
             if (input_rank < 2) {
-              fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
+              fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank)
             }
             if (target_rank != input_rank - 1) {
               fail_shape_inference(
@@ -2302,7 +2302,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
               const auto weight_rank = weight_shape.dim_size();
               if (weight_rank != 1) {
-                fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank);
+                fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank)
               }
             }
 
@@ -3385,10 +3385,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
             if (first_input_shape.dim_size() != 2) {
-              fail_shape_inference("First input does not have rank 2");
+              fail_shape_inference("First input does not have rank 2")
             }
             if (second_input_shape.dim_size() != 2) {
-              fail_shape_inference("Second input does not have rank 2");
+              fail_shape_inference("Second input does not have rank 2")
             }
             updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
           }
@@ -3457,10 +3457,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
             if (first_input_shape.dim_size() != 2) {
-              fail_shape_inference("First input does not have rank 2");
+              fail_shape_inference("First input does not have rank 2")
             }
             if (second_input_shape.dim_size() != 2) {
-              fail_shape_inference("Second input does not have rank 2");
+              fail_shape_inference("Second input does not have rank 2")
             }
             updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
           }
@@ -3564,7 +3564,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
 
           if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-            fail_shape_inference("Input tensors of wrong rank (0).");
+            fail_shape_inference("Input tensors of wrong rank (0).")
           }
 
           TensorShapeProto shapeL, shapeR;
@@ -3591,7 +3591,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto const& dimL = shapeL.dim(shapeL.dim_size() - 1);
             auto const& dimR = shapeR.dim(shapeR.dim_size() - 2);
             if (dimL.has_dim_value() && dimR.has_dim_value() && dimL.dim_value() != dimR.dim_value()) {
-              fail_shape_inference("Incompatible dimensions for matrix multiplication");
+              fail_shape_inference("Incompatible dimensions for matrix multiplication")
               ;
             }
           }
@@ -3676,11 +3676,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis < 0)
             axis += rank;
           if (axis < 0 || axis >= rank) {
-            fail_shape_inference("Invalid value for attribute axis");
+            fail_shape_inference("Invalid value for attribute axis")
           }
           int64_t k = getAttribute(ctx, "k", -1);
           if (k <= 0) {
-            fail_shape_inference("Invalid value for attribute k");
+            fail_shape_inference("Invalid value for attribute k")
           }
           // TODO: unclear what results should be if axis has less than k
           // elements.
@@ -3746,7 +3746,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis < 0)
             axis += rank;
           if (axis < 0 || axis >= rank) {
-            fail_shape_inference("Invalid value for attribute axis");
+            fail_shape_inference("Invalid value for attribute axis")
           }
 
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
@@ -3761,18 +3761,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != k && axis_dim.has_dim_value()) {
             int64_t k_value = 0;
             if (k->dims_size() != 1 || k->dims(0) != 1) {
-              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+              fail_shape_inference("K input must be a one-dimensional tensor of size 1.")
             }
 
             if (k->data_type() == TensorProto::INT64) {
               const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
-              fail_shape_inference("K input must be of type int64.");
+              fail_shape_inference("K input must be of type int64.")
             }
 
             if (axis_dim.dim_value() < k_value) {
-              fail_shape_inference("Axis has less than the requested k elements.");
+              fail_shape_inference("Axis has less than the requested k elements.")
             }
 
             TensorShapeProto result_shape = input_shape;
@@ -4025,7 +4025,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool inverse = static_cast<bool>(getAttribute(ctx, "inverse", 0));
 
           if (inverse && is_onesided) {
-            fail_shape_inference("is_onesided and inverse attributes cannot be enabled at the same time");
+            fail_shape_inference("is_onesided and inverse attributes cannot be enabled at the same time")
           }
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -4044,7 +4044,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // The last dimension is the real and imaginary parts of the value.
           const int64_t rank = input_shape.dim_size();
           if (rank < 2) {
-            fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
+            fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.")
           }
           // NOLINTNEXTLINE(readability-simplify-boolean-expr)
           if (!(-rank <= axis && axis != -1 && axis < rank - 1)) {
@@ -4073,7 +4073,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (nullptr != dft_length) {
             if (dft_length->dims_size() != 0) {
-              fail_shape_inference("dft_length input must be a scalar.");
+              fail_shape_inference("dft_length input must be a scalar.")
             }
             auto dft_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
             result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);

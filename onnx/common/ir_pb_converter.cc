@@ -90,7 +90,7 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
-      fail_convert("Unknown tensor data type");
+      fail_convert("Unknown tensor data type")
   }
 
   // The only way to know if we should be using raw_data or
@@ -185,10 +185,10 @@ static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, 
     }
     case ONNX_NAMESPACE::AttributeProto_AttributeType_SPARSE_TENSOR:
     case ONNX_NAMESPACE::AttributeProto_AttributeType_SPARSE_TENSORS:
-      fail_convert("Sparse tensors not supported.");
+      fail_convert("Sparse tensors not supported.")
       break;
     case ONNX_NAMESPACE::AttributeProto_AttributeType_UNDEFINED:
-      fail_convert("Unknown tensor data type");
+      fail_convert("Unknown tensor data type")
       break;
   }
 }
@@ -474,7 +474,7 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
-      fail_convert("Unknown tensor data type");
+      fail_convert("Unknown tensor data type")
   }
   if (tensor.is_raw_data()) {
     p->set_raw_data(tensor.raw());
@@ -580,7 +580,7 @@ static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
 }
 
 void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
-  ONNX_ASSERT(p_g != nullptr);
+  ONNX_ASSERT(p_g != nullptr)
 
   if (g->has_name()) {
     p_g->set_name(g->name());
@@ -716,7 +716,7 @@ void assertNonNull(const std::shared_ptr<Graph>& g) {
   ONNX_ASSERTM(
       g.get() != nullptr,
       "Warning: onnx version converter is unable to parse input model. "
-      "(The IR version of the ONNX model may be too old.)");
+      "(The IR version of the ONNX model may be too old.)")
 }
 
 } // namespace ONNX_NAMESPACE

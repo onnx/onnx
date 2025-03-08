@@ -32,7 +32,7 @@ T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {
     case ONNX_NAMESPACE::TensorProto::INT64:
       return static_cast<T>(ONNX_NAMESPACE::ParseData<int64_t>(t).at(0));
     default:
-      fail_shape_inference("Unsupported input data type of ", data_type);
+      fail_shape_inference("Unsupported input data type of ", data_type)
   }
 }
 

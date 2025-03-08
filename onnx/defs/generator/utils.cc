@@ -31,7 +31,7 @@ void ConstantOpInference(InferenceContext& ctx) {
 
   if (std::count(non_null_attr.begin(), non_null_attr.end(), true) != 1) {
     fail_shape_inference(
-        "One and only one of the attributes 'value', 'value_*' or 'sparse_value' must be specified for a Constant node.");
+        "One and only one of the attributes 'value', 'value_*' or 'sparse_value' must be specified for a Constant node.")
   }
 
   if (nullptr != value) {
@@ -45,7 +45,7 @@ void ConstantOpInference(InferenceContext& ctx) {
   if (nullptr != value_int) {
     // OpSchema::Verify check ensures that the attribute value has_i():
     if (!value_int->has_i()) {
-      fail_shape_inference("Attribute 'value_int' expect an integer.");
+      fail_shape_inference("Attribute 'value_int' expect an integer.")
     }
     updateOutputElemType(ctx, 0, TensorProto::INT64);
     updateOutputShape(ctx, 0, TensorShapeProto());
@@ -61,7 +61,7 @@ void ConstantOpInference(InferenceContext& ctx) {
   if (nullptr != value_float) {
     // OpSchema::Verify check ensures that the attribute value has_i():
     if (!value_float->has_f()) {
-      fail_shape_inference("Attribute 'value_float' expect a float.");
+      fail_shape_inference("Attribute 'value_float' expect a float.")
     }
     updateOutputElemType(ctx, 0, TensorProto::FLOAT);
     updateOutputShape(ctx, 0, TensorShapeProto());
@@ -77,7 +77,7 @@ void ConstantOpInference(InferenceContext& ctx) {
   if (nullptr != value_string) {
     // OpSchema::Verify check ensures that the attribute value has_i():
     if (!value_string->has_s()) {
-      fail_shape_inference("Attribute 'value_string' expect a string.");
+      fail_shape_inference("Attribute 'value_string' expect a string.")
     }
     updateOutputElemType(ctx, 0, TensorProto::STRING);
     updateOutputShape(ctx, 0, TensorShapeProto());
@@ -105,7 +105,7 @@ void ConstantOpInference(InferenceContext& ctx) {
 
   fail_shape_inference(
       "TypeAndShapeInferenceFunction implementation incomplete: "
-      "this line should never be reached.");
+      "this line should never be reached.")
 }
 
 } // namespace ONNX_NAMESPACE

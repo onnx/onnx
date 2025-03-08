@@ -158,12 +158,12 @@ Status OnnxParser::Parse(IdList& idlist) {
   idlist.Clear();
   std::string id;
   bool found = false;
-  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
+  CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found))
   if (!found)
     return Status::OK();
   *idlist.Add() = id;
   while (Matches(',')) {
-    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found));
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(id, found))
     if (!found)
       break;
     *idlist.Add() = id;
@@ -174,8 +174,8 @@ Status OnnxParser::Parse(IdList& idlist) {
 Status OnnxParser::Parse(char open, IdList& idlist, char close) {
   idlist.Clear();
   if (Matches(open)) {
-    PARSE(idlist);
-    MATCH(close);
+    PARSE(idlist)
+    MATCH(close)
   }
   return Status::OK();
 }
@@ -185,7 +185,7 @@ Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
   attrlist.Clear();
   do {
     std::string id;
-    CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(id))
     auto next = NextChar();
     if (next == ':' || next == '=')
       Parse(*attrlist.Add(), id);
@@ -197,8 +197,8 @@ Status OnnxParser::Parse(IdList& idlist, AttrList& attrlist) {
 
 Status OnnxParser::Parse(char open, IdList& idlist, AttrList& attrlist, char close) {
   if (Matches(open)) {
-    PARSE(idlist, attrlist);
-    MATCH(close);
+    PARSE(idlist, attrlist)
+    MATCH(close)
   } else {
     idlist.Clear();
     attrlist.Clear();
@@ -219,7 +219,7 @@ Status OnnxParser::Parse(TensorShapeProto& shape) {
       } else {
         // ...or a integer value
         int64_t dimval = 0;
-        PARSE_TOKEN(dimval);
+        PARSE_TOKEN(dimval)
         shape.add_dim()->set_dim_value(dimval);
       }
     }
@@ -229,7 +229,7 @@ Status OnnxParser::Parse(TensorShapeProto& shape) {
 
 Status OnnxParser::Parse(TypeProto& typeProto) {
   std::string id;
-  CHECK_PARSER_STATUS(ParseIdentifier(id));
+  CHECK_PARSER_STATUS(ParseIdentifier(id))
   int dtype = PrimitiveTypeNameMap::Lookup(id);
   if (dtype != 0) {
     auto* tensortype = typeProto.mutable_tensor_type();
@@ -241,8 +241,8 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
     // float [one-or-more-dimensions] indicates tensor of known rank > 0.
     if (Matches('[')) {
       if (!Matches(']')) {
-        PARSE(*tensortype->mutable_shape());
-        MATCH(']');
+        PARSE(*tensortype->mutable_shape())
+        MATCH(']')
       }
     } else {
       // Create shape with zero dimensions for scalar
@@ -252,39 +252,39 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
     switch (KeyWordMap::Lookup(id)) {
       case KeyWordMap::KeyWord::SEQ_TYPE: {
         // Grammar: seq ( type )
-        MATCH('(');
+        MATCH('(')
         auto* seqtype = typeProto.mutable_sequence_type();
-        PARSE(*seqtype->mutable_elem_type());
-        MATCH(')');
+        PARSE(*seqtype->mutable_elem_type())
+        MATCH(')')
         break;
       }
       case KeyWordMap::KeyWord::MAP_TYPE: {
         // Grammar: map ( prim-type , type )
-        MATCH('(');
+        MATCH('(')
         auto* maptype = typeProto.mutable_map_type();
-        CHECK_PARSER_STATUS(ParseIdentifier(id));
+        CHECK_PARSER_STATUS(ParseIdentifier(id))
         dtype = PrimitiveTypeNameMap::Lookup(id);
         if (dtype == 0) {
           return ParseError("Expecting primitive type as map key type.");
         }
         maptype->set_key_type(dtype);
-        MATCH(',');
-        PARSE(*maptype->mutable_value_type());
-        MATCH(')');
+        MATCH(',')
+        PARSE(*maptype->mutable_value_type())
+        MATCH(')')
         break;
       }
       case KeyWordMap::KeyWord::OPTIONAL_TYPE: {
         // Grammar: optional ( type )
-        MATCH('(');
+        MATCH('(')
         auto* opttype = typeProto.mutable_optional_type();
-        PARSE(*opttype->mutable_elem_type());
-        MATCH(')');
+        PARSE(*opttype->mutable_elem_type())
+        MATCH(')')
         break;
       }
       case KeyWordMap::KeyWord::SPARSE_TENSOR_TYPE: {
         // Grammar: sparse_tensor ( tensor-type )
-        MATCH('(');
-        CHECK_PARSER_STATUS(ParseIdentifier(id));
+        MATCH('(')
+        CHECK_PARSER_STATUS(ParseIdentifier(id))
         dtype = PrimitiveTypeNameMap::Lookup(id);
         if (dtype != 0) {
           auto* sparsetype = typeProto.mutable_sparse_tensor_type();
@@ -296,8 +296,8 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
           // float [one-or-more-dimensions] indicates tensor of known rank > 0.
           if (Matches('[')) {
             if (!Matches(']')) {
-              PARSE(*sparsetype->mutable_shape());
-              MATCH(']');
+              PARSE(*sparsetype->mutable_shape())
+              MATCH(']')
             }
           } else {
             // Create shape with zero dimensions for scalar
@@ -306,7 +306,7 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
         } else {
           return ParseError("Unexpected type in sparse-tensor element type.");
         }
-        MATCH(')');
+        MATCH(')')
         break;
       }
       default:
@@ -318,34 +318,34 @@ Status OnnxParser::Parse(TypeProto& typeProto) {
 
 Status OnnxParser::Parse(ValueInfoProto& valueinfo) {
   if (NextIsType())
-    PARSE(*valueinfo.mutable_type());
+    PARSE(*valueinfo.mutable_type())
   std::string name;
-  CHECK_PARSER_STATUS(ParseQuotableIdentifier(name));
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(name))
   valueinfo.set_name(name);
   return Status::OK();
 }
 
 Status OnnxParser::Parse(char open, ValueInfoList& vilist, char close) {
-  MATCH(open);
+  MATCH(open)
   if (!Matches(close)) {
     do {
-      PARSE(*vilist.Add());
+      PARSE(*vilist.Add())
     } while (Matches(','));
-    MATCH(close);
+    MATCH(close)
   }
   return Status::OK();
 }
 
 Status OnnxParser::ParseGraphInputOutput(ValueInfoList& vilist) {
   vilist.Clear();
-  PARSE('(', vilist, ')');
+  PARSE('(', vilist, ')')
   return Status::OK();
 }
 
 Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist) {
   // Do not clear vilist, as it accumulates values over inputs and outputs.
   idlist.Clear();
-  MATCH('(');
+  MATCH('(')
   if (!Matches(')')) {
     do {
       // Function inputs/outputs can be optionally typed.
@@ -358,13 +358,13 @@ Status OnnxParser::ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilis
 
       if (NextIsType()) {
         vi = vilist.Add();
-        PARSE(*(vi->mutable_type()));
+        PARSE(*(vi->mutable_type()))
       }
-      CHECK_PARSER_STATUS(ParseQuotableIdentifier(*name));
+      CHECK_PARSER_STATUS(ParseQuotableIdentifier(*name))
       if (vi != nullptr)
         vi->set_name(*name);
     } while (Matches(','));
-    MATCH(')');
+    MATCH(')')
   }
   return Status::OK();
 }
@@ -377,16 +377,16 @@ Status OnnxParser::ParseInput(ValueInfoList& inputs, TensorList& initializers) {
     if (!Matches(')')) {
       do {
         ValueInfoProto vi;
-        PARSE(vi);
+        PARSE(vi)
         *inputs.Add() = vi;
         if (Matches('=')) {
           // default value for input
           TensorProto& tp = *initializers.Add();
           tp.set_name(vi.name());
-          CHECK_PARSER_STATUS(Parse(tp, vi.type()));
+          CHECK_PARSER_STATUS(Parse(tp, vi.type()))
         }
       } while (Matches(','));
-      MATCH(')');
+      MATCH(')')
     }
   }
   return Status::OK();
@@ -401,18 +401,18 @@ Status OnnxParser::ParseValueInfo(ValueInfoList& value_infos, TensorList& initia
     if (!Matches('>')) {
       do {
         ValueInfoProto vi;
-        PARSE(vi);
+        PARSE(vi)
         if (Matches('=')) {
           // initializer
           TensorProto& tp = *initializers.Add();
           tp.set_name(vi.name());
-          CHECK_PARSER_STATUS(Parse(tp, vi.type()));
+          CHECK_PARSER_STATUS(Parse(tp, vi.type()))
         } else {
           // valueinfo
           *value_infos.Add() = vi;
         }
       } while (Matches(','));
-      MATCH('>');
+      MATCH('>')
     }
   }
   return Status::OK();
@@ -422,10 +422,10 @@ Status OnnxParser::Parse(StringStringList& stringStringList) {
   std::string strval;
   do {
     auto* metadata = stringStringList.Add();
-    PARSE_TOKEN(strval);
+    PARSE_TOKEN(strval)
     metadata->set_key(strval);
-    MATCH(':');
-    PARSE_TOKEN(strval);
+    MATCH(':')
+    PARSE_TOKEN(strval)
     metadata->set_value(strval);
   } while (Matches(','));
   return Status::OK();
@@ -435,7 +435,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto) {
   tensorProto = TensorProto();
   // Parse the concrete tensor-type with numeric dimensions:
   TypeProto typeProto;
-  PARSE(typeProto);
+  PARSE(typeProto)
   *tensorProto.mutable_name() = ParseOptionalIdentifier();
   (void)Matches('='); // Optional, to unify handling of initializers as well as tensor-protos in other contexts
   return Parse(tensorProto, typeProto);
@@ -483,44 +483,44 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
           case TensorProto::DataType::TensorProto_DataType_BOOL:
           case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
-            PARSE_TOKEN(intval);
+            PARSE_TOKEN(intval)
             // TODO: check values are in the correct range.
             tensorProto.add_int32_data(intval);
             break;
           case TensorProto::DataType::TensorProto_DataType_INT64:
-            PARSE_TOKEN(intval);
+            PARSE_TOKEN(intval)
             tensorProto.add_int64_data(intval);
             break;
           case TensorProto::DataType::TensorProto_DataType_UINT32:
           case TensorProto::DataType::TensorProto_DataType_UINT64:
-            PARSE_TOKEN(uintval);
+            PARSE_TOKEN(uintval)
             tensorProto.add_uint64_data(uintval);
             break;
           case TensorProto::DataType::TensorProto_DataType_COMPLEX64:
           case TensorProto::DataType::TensorProto_DataType_FLOAT:
-            PARSE_TOKEN(floatval);
+            PARSE_TOKEN(floatval)
             tensorProto.add_float_data(floatval);
             break;
           case TensorProto::DataType::TensorProto_DataType_COMPLEX128:
           case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-            PARSE_TOKEN(dblval);
+            PARSE_TOKEN(dblval)
             tensorProto.add_double_data(dblval);
             break;
           case TensorProto::DataType::TensorProto_DataType_STRING:
-            PARSE_TOKEN(strval);
+            PARSE_TOKEN(strval)
             tensorProto.add_string_data(strval);
             break;
           default:
             return ParseError("Unhandled type: %d", elem_type);
         }
       } while (Matches(','));
-      MATCH('}');
+      MATCH('}')
     }
   } else if (Matches('[')) {
     tensorProto.set_data_location(TensorProto::DataLocation::TensorProto_DataLocation_EXTERNAL);
     auto& externalData = *tensorProto.mutable_external_data();
-    PARSE(externalData);
-    MATCH(']');
+    PARSE(externalData)
+    MATCH(']')
   }
   return Status::OK();
 }
@@ -551,14 +551,14 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
   if (isalpha(next) || next == '_') {
     if (NextIsType()) {
       TypeProto typeProto;
-      CHECK_PARSER_STATUS(Parse(typeProto));
+      CHECK_PARSER_STATUS(Parse(typeProto))
       next = NextChar();
       if ((next == '{') || (next == '=') || (NextIsIdentifier())) {
         attr.set_type(AttributeProto_AttributeType_TENSOR);
         auto& tensorProto = *attr.mutable_t();
-        CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()));
+        CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*tensorProto.mutable_name()))
         (void)Matches('='); // Optional, to unify handling of initializers
-        CHECK_PARSER_STATUS(Parse(tensorProto, typeProto));
+        CHECK_PARSER_STATUS(Parse(tensorProto, typeProto))
       } else {
         attr.set_type(AttributeProto_AttributeType_TYPE_PROTO);
         attr.mutable_tp()->CopyFrom(typeProto);
@@ -566,21 +566,21 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
     } else {
       if (NextIsValidFloatString()) {
         Literal literal;
-        PARSE_TOKEN(literal);
+        PARSE_TOKEN(literal)
         attr.set_type(AttributeProto_AttributeType_FLOAT);
         attr.set_f(static_cast<float>(std::stof(literal.value)));
       } else {
         attr.set_type(AttributeProto_AttributeType_GRAPH);
-        PARSE(*attr.mutable_g());
+        PARSE(*attr.mutable_g())
       }
     }
   } else if (Matches('@')) {
     std::string name;
-    CHECK_PARSER_STATUS(ParseQuotableIdentifier(name));
+    CHECK_PARSER_STATUS(ParseQuotableIdentifier(name))
     attr.set_ref_attr_name(name);
   } else {
     Literal literal;
-    PARSE_TOKEN(literal);
+    PARSE_TOKEN(literal)
     switch (literal.type) {
       case LiteralType::UNDEFINED:
         return ParseError("Internal error");
@@ -618,7 +618,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
 Status OnnxParser::Parse(AttributeProto& attr) {
   attr.Clear();
   std::string name;
-  CHECK_PARSER_STATUS(ParseIdentifier(name));
+  CHECK_PARSER_STATUS(ParseIdentifier(name))
   return Parse(attr, name);
 }
 
@@ -661,7 +661,7 @@ static AttributeProto_AttributeType ToSingletonType(AttributeProto_AttributeType
 Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
   attr.set_name(name);
   if (Matches(':')) {
-    CHECK_PARSER_STATUS(ParseIdentifier(name));
+    CHECK_PARSER_STATUS(ParseIdentifier(name))
     int attrtype = AttributeTypeNameMap::Lookup(name);
     if (attrtype != 0) {
       attr.set_type(static_cast<AttributeProto_AttributeType>(attrtype));
@@ -669,16 +669,16 @@ Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
       return ParseError("Unexpected attribute type.");
     }
   }
-  MATCH('=');
+  MATCH('=')
   if (NextChar() == '[') {
     // Parse a list of values. For an empty list, the type MUST be specified
     // using the type-annotation syntax of ": type".
-    MATCH('[');
+    MATCH('[')
     if (NextChar() != ']') {
       do {
         AttributeProto nextval;
         auto expected_type = ToSingletonType(attr.type());
-        CHECK_PARSER_STATUS(ParseSingleAttributeValue(nextval, expected_type));
+        CHECK_PARSER_STATUS(ParseSingleAttributeValue(nextval, expected_type))
         switch (nextval.type()) {
           case AttributeProto_AttributeType_INT:
             attr.set_type(AttributeProto_AttributeType_INTS);
@@ -702,9 +702,9 @@ Status OnnxParser::Parse(AttributeProto& attr, std::string& name) {
       if (IsSingletonAttribute(attr.type()))
         return ParseError("Singleton attribute value cannot be specified as a list.");
     }
-    MATCH(']');
+    MATCH(']')
   } else {
-    CHECK_PARSER_STATUS(ParseSingleAttributeValue(attr, attr.type()));
+    CHECK_PARSER_STATUS(ParseSingleAttributeValue(attr, attr.type()))
   }
   return Status::OK();
 }
@@ -713,70 +713,70 @@ Status OnnxParser::Parse(AttrList& attrlist) {
   attrlist.Clear();
   if (Matches('<')) {
     do {
-      PARSE(*attrlist.Add());
+      PARSE(*attrlist.Add())
     } while (Matches(','));
-    MATCH('>');
+    MATCH('>')
   }
   return Status::OK();
 }
 
 Status OnnxParser::Parse(NodeProto& node) {
   if (Matches('[')) {
-    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*node.mutable_name()));
-    MATCH(']');
+    CHECK_PARSER_STATUS(ParseOptionalQuotableIdentifier(*node.mutable_name()))
+    MATCH(']')
   }
-  PARSE(*node.mutable_output());
-  MATCH('=');
+  PARSE(*node.mutable_output())
+  MATCH('=')
   std::string domain;
   std::string id = ParseOptionalIdentifier();
   while (Matches('.')) {
     if (!domain.empty())
       domain += ".";
     domain += id;
-    CHECK_PARSER_STATUS(ParseIdentifier(id));
+    CHECK_PARSER_STATUS(ParseIdentifier(id))
   }
   node.set_domain(domain);
   node.set_op_type(id);
 
   if (Matches(':')) {
     std::string overload;
-    CHECK_PARSER_STATUS(ParseIdentifier(overload));
+    CHECK_PARSER_STATUS(ParseIdentifier(overload))
     node.set_overload(overload);
   }
-  PARSE(*node.mutable_attribute());
-  MATCH('(');
-  PARSE(*node.mutable_input());
-  MATCH(')');
+  PARSE(*node.mutable_attribute())
+  MATCH('(')
+  PARSE(*node.mutable_input())
+  MATCH(')')
   if (node.attribute_size() == 0) {
     // Permit attributes to be specified before or after parameters.
-    PARSE(*node.mutable_attribute());
+    PARSE(*node.mutable_attribute())
   }
   return Status::OK();
 }
 
 Status OnnxParser::Parse(NodeList& nodelist) {
   nodelist.Clear();
-  MATCH('{');
+  MATCH('{')
   while (!Matches('}')) {
-    PARSE(*nodelist.Add());
+    PARSE(*nodelist.Add())
   }
   return Status::OK();
 }
 
 Status OnnxParser::Parse(GraphProto& graph) {
   std::string id;
-  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id))
   return Parse(id, graph);
 }
 
 Status OnnxParser::Parse(std::string name, GraphProto& graph) {
   graph.set_name(name);
   graph.mutable_initializer()->Clear();
-  CHECK_PARSER_STATUS(ParseInput(*graph.mutable_input(), *graph.mutable_initializer()));
-  MATCH('=');
-  MATCH('>', false);
-  CHECK_PARSER_STATUS(ParseGraphInputOutput(*graph.mutable_output()));
-  CHECK_PARSER_STATUS(ParseValueInfo(*graph.mutable_value_info(), *graph.mutable_initializer()));
+  CHECK_PARSER_STATUS(ParseInput(*graph.mutable_input(), *graph.mutable_initializer()))
+  MATCH('=')
+  MATCH('>', false)
+  CHECK_PARSER_STATUS(ParseGraphInputOutput(*graph.mutable_output()))
+  CHECK_PARSER_STATUS(ParseValueInfo(*graph.mutable_value_info(), *graph.mutable_initializer()))
   return Parse(*graph.mutable_node());
 }
 
@@ -786,42 +786,42 @@ Status OnnxParser::Parse(FunctionProto& fn) {
   if (Matches('<')) {
     do {
       KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;
-      PARSE_TOKEN(keyword);
-      MATCH(':');
+      PARSE_TOKEN(keyword)
+      MATCH(':')
       switch (keyword) {
         case KeyWordMap::KeyWord::OPSET_IMPORT:
-          PARSE(*fn.mutable_opset_import());
+          PARSE(*fn.mutable_opset_import())
           break;
         case KeyWordMap::KeyWord::DOC_STRING:
-          PARSE_TOKEN(strval);
+          PARSE_TOKEN(strval)
           fn.set_doc_string(strval);
           break;
         case KeyWordMap::KeyWord::DOMAIN_KW:
-          PARSE_TOKEN(strval);
+          PARSE_TOKEN(strval)
           fn.set_domain(strval);
           break;
         case KeyWordMap::KeyWord::OVERLOAD_KW:
-          PARSE_TOKEN(strval);
+          PARSE_TOKEN(strval)
           fn.set_overload(strval);
           break;
         default:
           return ParseError("Unhandled keyword.");
       }
     } while (Matches(','));
-    MATCH('>');
+    MATCH('>')
   }
   std::string id;
-  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id));
+  CHECK_PARSER_STATUS(ParseQuotableIdentifier(id))
   fn.set_name(id);
 
-  PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>');
+  PARSE('<', *fn.mutable_attribute(), *fn.mutable_attribute_proto(), '>')
   fn.mutable_value_info()->Clear();
-  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_input(), *fn.mutable_value_info()));
-  MATCH('=');
-  MATCH('>', false);
-  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_output(), *fn.mutable_value_info()));
+  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_input(), *fn.mutable_value_info()))
+  MATCH('=')
+  MATCH('>', false)
+  CHECK_PARSER_STATUS(ParseFunctionInputOutput(*fn.mutable_output(), *fn.mutable_value_info()))
   if (NextChar() == '<') {
-    PARSE('<', *fn.mutable_value_info(), '>');
+    PARSE('<', *fn.mutable_value_info(), '>')
   }
   return Parse(*fn.mutable_node());
 }
@@ -829,17 +829,17 @@ Status OnnxParser::Parse(FunctionProto& fn) {
 Status OnnxParser::Parse(OpsetIdList& opsets) {
   std::string strval;
   int64_t intval = 0;
-  MATCH('[');
+  MATCH('[')
   if (!Matches(']')) {
     do {
       auto* import = opsets.Add();
-      PARSE_TOKEN(strval);
+      PARSE_TOKEN(strval)
       import->set_domain(strval);
-      MATCH(':');
-      PARSE_TOKEN(intval);
+      MATCH(':')
+      PARSE_TOKEN(intval)
       import->set_version(intval);
     } while (Matches(','));
-    MATCH(']');
+    MATCH(']')
   }
   return Status::OK();
 }
@@ -851,42 +851,42 @@ Status OnnxParser::Parse(ModelProto& model) {
   if (Matches('<')) {
     do {
       KeyWordMap::KeyWord keyword = KeyWordMap::KeyWord::NONE;
-      PARSE_TOKEN(keyword);
-      MATCH(':');
+      PARSE_TOKEN(keyword)
+      MATCH(':')
       switch (keyword) {
         case KeyWordMap::KeyWord::IR_VERSION:
-          PARSE_TOKEN(intval);
+          PARSE_TOKEN(intval)
           model.set_ir_version(intval);
           break;
         case KeyWordMap::KeyWord::OPSET_IMPORT:
-          PARSE(*model.mutable_opset_import());
+          PARSE(*model.mutable_opset_import())
           break;
         case KeyWordMap::KeyWord::PRODUCER_NAME:
-          PARSE_TOKEN(strval);
+          PARSE_TOKEN(strval)
           model.set_producer_name(strval);
           break;
         case KeyWordMap::KeyWord::PRODUCER_VERSION:
-          PARSE_TOKEN(strval);
+          PARSE_TOKEN(strval)
           model.set_producer_version(strval);
           break;
         case KeyWordMap::KeyWord::DOMAIN_KW:
-          PARSE_TOKEN(strval);
+          PARSE_TOKEN(strval)
           model.set_domain(strval);
           break;
         case KeyWordMap::KeyWord::MODEL_VERSION:
-          PARSE_TOKEN(intval);
+          PARSE_TOKEN(intval)
           model.set_model_version(intval);
           break;
         case KeyWordMap::KeyWord::DOC_STRING:
-          PARSE_TOKEN(strval);
+          PARSE_TOKEN(strval)
           model.set_doc_string(strval);
           break;
         case KeyWordMap::KeyWord::METADATA_PROPS: {
           auto& metadata_props = *model.mutable_metadata_props();
-          MATCH('[');
+          MATCH('[')
           if (!Matches(']')) {
-            PARSE(metadata_props);
-            MATCH(']');
+            PARSE(metadata_props)
+            MATCH(']')
           }
           break;
         }
@@ -894,13 +894,13 @@ Status OnnxParser::Parse(ModelProto& model) {
           return ParseError("Unhandled keyword.");
       }
     } while (Matches(','));
-    MATCH('>');
+    MATCH('>')
   }
-  PARSE(*model.mutable_graph());
+  PARSE(*model.mutable_graph())
 
   auto* functions = model.mutable_functions();
   while (!EndOfInput()) {
-    PARSE(*functions->Add());
+    PARSE(*functions->Add())
   }
   return Status::OK();
 }

@@ -78,7 +78,7 @@ static void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_
     std::stringstream ss;
     ss << "Inferred elem type differs from existing elem type: (" << GetElemTypeString(inferred_type) << ") vs ("
        << GetElemTypeString(existing_type) << ")";
-    fail_type_inference(ss.str());
+    fail_type_inference(ss.str())
   }
 
   if (!inferred_type.has_shape() || !existing_type.has_shape()) {
@@ -89,7 +89,7 @@ static void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_
     std::stringstream ss;
     ss << "Inferred shape and existing shape differ in rank: (" << inferred_type.shape().dim_size() << ") vs ("
        << existing_type.shape().dim_size() << ")";
-    fail_shape_inference(ss.str());
+    fail_shape_inference(ss.str())
   }
 
   for (int i = 0; i < inferred_type.shape().dim_size(); ++i) {
@@ -100,7 +100,7 @@ static void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_
       std::stringstream ss;
       ss << "Inferred shape and existing shape differ in dimension " << i << ": (" << inferred_dim.dim_value()
          << ") vs (" << existing_dim.dim_value() << ")";
-      fail_shape_inference(ss.str());
+      fail_shape_inference(ss.str())
     }
   }
 }
@@ -245,7 +245,7 @@ void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_tabl
   } else if (inferred_val_case == TypeProto::kMapType) {
     MaterializeSymbolicShape(inferred_type->mutable_map_type()->mutable_value_type(), symbol_table);
   } else {
-    fail_shape_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case);
+    fail_shape_inference("type case unsupported for symbolic shape inference. inferred=", inferred_val_case)
   }
 }
 
@@ -531,8 +531,8 @@ class ShapeInferenceImplBase {
       // TODO: Fix this. Unclear if this should be remapped to a shape inference error.
       // Need to rationalize the different types of exceptions that can be thrown.
       // See: https://github.com/onnx/onnx/pull/5519
-      ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
-    }
+      ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)) });
+    };
   }
 
   // TypeProto_Tensor or TypeProto_SparseTensor
@@ -718,7 +718,7 @@ class ShapeInferenceImplBase {
       for (const std::string& error : inference_errors) {
         full_errors += error + "\n";
       }
-      fail_shape_inference(full_errors);
+      fail_shape_inference(full_errors)
     }
   }
 
@@ -852,7 +852,7 @@ void InferShapes(
     output << model_string;
   }
   ONNX_CATCH(...) {
-    fail_check("Unable to save inferred model to the target path:", save_path);
+    fail_check("Unable to save inferred model to the target path:", save_path)
   }
 }
 
@@ -1026,12 +1026,12 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
   if (context_->ir_version >= 4) {
     if (g_->input_size() != num_inputs) {
-      fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", num_inputs, " were provided");
+      fail_shape_inference("Graph has ", g_->input_size(), " inputs but ", num_inputs, " were provided")
     }
     for (int i = 0; i < g_->input_size(); ++i) {
       if (initializer_name_set.count(g_->input(i).name()) > 0) {
         fail_shape_inference(
-            "Cannot use the same name as both a subgraph initializer and subgraph input: ", g_->input(i).name());
+            "Cannot use the same name as both a subgraph initializer and subgraph input: ", g_->input(i).name())
       }
     }
   } else {
@@ -1044,14 +1044,14 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
           " inputs but ",
           num_inputs,
           " were provided.",
-          "The number of graph input cannot be smaller than the number of node input");
+          "The number of graph input cannot be smaller than the number of node input")
     } else if (num_inputs < g_->input_size()) {
       for (int i = 0; i < g_->input_size(); ++i) {
         if (i < num_inputs && initializer_name_set.count(g_->input(i).name()) > 0) {
-          fail_shape_inference("Graph initializer names must appear after the actual inputs: ", g_->input(i).name());
+          fail_shape_inference("Graph initializer names must appear after the actual inputs: ", g_->input(i).name())
         } else if (i >= num_inputs && initializer_name_set.count(g_->input(i).name()) == 0) {
           // Further check whether the additional input is in initializers
-          fail_shape_inference("Cannot find missing input: ", g_->input(i).name(), "in initializers. ");
+          fail_shape_inference("Cannot find missing input: ", g_->input(i).name(), "in initializers. ")
         }
       }
     }

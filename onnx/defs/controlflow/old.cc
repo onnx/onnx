@@ -830,7 +830,7 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
 
     // Enforce type constraint for inputs
     if (!input_type || !input_type->has_tensor_type()) {
-      fail_type_inference("Scan input ", i, " was not a tensor.");
+      fail_type_inference("Scan input ", i, " was not a tensor.")
     }
 
     if (is_loop_state_var) {
@@ -894,7 +894,7 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           output_types.size(),
           " outputs. Expected ",
-          num_outputs);
+          num_outputs)
     }
 
     // propagate type/shape information for loop state variables and outputs
@@ -904,7 +904,7 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
       auto* scan_output_type = ctx.getOutputType(i);
 
       if (!subgraph_output_type->has_tensor_type()) {
-        fail_type_inference("Scan 'body' subgraph outputs should all be tensors but output ", i, " was not");
+        fail_type_inference("Scan 'body' subgraph outputs should all be tensors but output ", i, " was not")
       }
 
       // propagate output type. loop state vars were done in the above code.
@@ -942,7 +942,7 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
 
 static int handle_negative_axis_validate_opset9(const std::string& attrib, int axis, int rank) {
   if (-rank > axis || axis >= rank) {
-    fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank);
+    fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank)
   }
   return (axis >= 0 ? axis : axis + rank);
 }
@@ -962,7 +962,7 @@ static void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
           axes.size(),
           ") is not equal to number of scan inputs (",
           num_scan_inputs,
-          ").");
+          ").")
     }
   } else {
     axes.insert(axes.end(), num_scan_inputs, 0);
@@ -975,7 +975,7 @@ static void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
           output_axes.size(),
           ") is not equal to number of scan outputs (",
           num_scan_outputs,
-          ").");
+          ").")
     }
   } else {
     output_axes.insert(output_axes.end(), num_scan_outputs, 0);
@@ -995,7 +995,7 @@ static void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
 
     // Enforce type constraint for inputs
     if (!input_type || !input_type->has_tensor_type()) {
-      fail_type_inference("Scan input ", i, " was not a tensor.");
+      fail_type_inference("Scan input ", i, " was not a tensor.")
     }
 
     if (is_loop_state_var) {
@@ -1057,7 +1057,7 @@ static void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           output_types.size(),
           " outputs. Expected ",
-          num_outputs);
+          num_outputs)
     }
 
     // propagate type/shape information for loop state variables and outputs
@@ -1068,7 +1068,7 @@ static void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
       auto* mutable_scan_output_tensor_type = scan_output_type->mutable_tensor_type();
 
       if (!subgraph_output_type->has_tensor_type()) {
-        fail_type_inference("Scan 'body' subgraph outputs should all be tensors but output ", i, " was not");
+        fail_type_inference("Scan 'body' subgraph outputs should all be tensors but output ", i, " was not")
       }
       auto& subgraph_output_tensor_type = subgraph_output_type->tensor_type();
 
@@ -1341,7 +1341,7 @@ static void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           subgraph_output_types.size(),
           " outputs. Expected ",
-          num_outputs + 1);
+          num_outputs + 1)
     }
 
     // check loop state values match. we should already have type/shape info
@@ -1356,7 +1356,7 @@ static void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
             "Loop 'body' subgraph outputs should all be tensors but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case())
       }
 
       // if there's an existing type check it matches. otherwise propagate
@@ -1612,7 +1612,7 @@ static void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           subgraph_output_types.size(),
           " outputs. Expected ",
-          num_outputs + 1);
+          num_outputs + 1)
     }
 
     // check loop state values match. we should already have type/shape info
@@ -1627,7 +1627,7 @@ static void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
             "Loop 'body' subgraph outputs should all be tensors but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case())
       }
 
       // if there's an existing type check it matches. otherwise propagate
@@ -2065,11 +2065,11 @@ static void IfInferenceFunction1(InferenceContext& ctx) {
         "then_branch and else_branch produce different number of outputs. ",
         num_then_outputs,
         " != ",
-        num_else_outputs);
+        num_else_outputs)
   }
 
   if (num_then_outputs != num_outputs) {
-    fail_type_inference("If node has ", num_outputs, " but subgraphs produce ", num_then_outputs);
+    fail_type_inference("If node has ", num_outputs, " but subgraphs produce ", num_then_outputs)
   }
 
   for (size_t i = 0, end = then_output_types.size(); i < end; ++i) {
@@ -2078,7 +2078,7 @@ static void IfInferenceFunction1(InferenceContext& ctx) {
 
     if (then_output->value_case() != else_output->value_case()) {
       fail_type_inference(
-          "Mismatched type for output ", i, " then=", then_output->value_case(), " else=", else_output->value_case());
+          "Mismatched type for output ", i, " then=", then_output->value_case(), " else=", else_output->value_case())
     }
 
     auto* if_output = ctx.getOutputType(i);
@@ -2090,7 +2090,7 @@ static void IfInferenceFunction1(InferenceContext& ctx) {
 
       if (then_elem_type != else_elem_type) {
         fail_type_inference(
-            "Mismatched tensor element type for output ", i, " then=", then_elem_type, " else=", else_elem_type);
+            "Mismatched tensor element type for output ", i, " then=", then_elem_type, " else=", else_elem_type)
       }
 
       // merge the 'else' shape information to check it's consistent and
@@ -2161,11 +2161,11 @@ static void IfInferenceFunction_11(InferenceContext& ctx) {
         "then_branch and else_branch produce different number of outputs. ",
         num_then_outputs,
         " != ",
-        num_else_outputs);
+        num_else_outputs)
   }
 
   if (num_then_outputs != num_outputs) {
-    fail_type_inference("If node has ", num_outputs, " but subgraphs produce ", num_then_outputs);
+    fail_type_inference("If node has ", num_outputs, " but subgraphs produce ", num_then_outputs)
   }
 
   for (size_t i = 0, end = then_output_types.size(); i < end; ++i) {
@@ -2174,7 +2174,7 @@ static void IfInferenceFunction_11(InferenceContext& ctx) {
 
     if (then_output->value_case() != else_output->value_case()) {
       fail_type_inference(
-          "Mismatched type for output ", i, " then=", then_output->value_case(), " else=", else_output->value_case());
+          "Mismatched type for output ", i, " then=", then_output->value_case(), " else=", else_output->value_case())
     }
 
     auto* if_output = ctx.getOutputType(i);
@@ -2186,7 +2186,7 @@ static void IfInferenceFunction_11(InferenceContext& ctx) {
 
       if (then_elem_type != else_elem_type) {
         fail_type_inference(
-            "Mismatched tensor element type for output ", i, " then=", then_elem_type, " else=", else_elem_type);
+            "Mismatched tensor element type for output ", i, " then=", then_elem_type, " else=", else_elem_type)
       }
 
       UnionShapeInfo(else_output->tensor_type().shape(), *if_output->mutable_tensor_type());
@@ -2268,11 +2268,11 @@ static void IfInferenceFunction_13(InferenceContext& ctx) {
         "then_branch and else_branch produce different number of outputs. ",
         num_then_outputs,
         " != ",
-        num_else_outputs);
+        num_else_outputs)
   }
 
   if (num_then_outputs != num_outputs) {
-    fail_type_inference("If node has ", num_outputs, " but subgraphs produce ", num_then_outputs);
+    fail_type_inference("If node has ", num_outputs, " but subgraphs produce ", num_then_outputs)
   }
 
   for (size_t i = 0, end = then_output_types.size(); i < end; ++i) {
@@ -2406,7 +2406,7 @@ static void LoopInferenceFunction_13(InferenceContext& ctx) {
           "Graph attribute inferencing returned type information for ",
           subgraph_output_types.size(),
           " outputs. Expected ",
-          num_outputs + 1);
+          num_outputs + 1)
     }
 
     // check loop state values match. we should already have type/shape info
@@ -2421,7 +2421,7 @@ static void LoopInferenceFunction_13(InferenceContext& ctx) {
             "Loop 'body' subgraph outputs should all be tensors or sequences but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case())
       }
 
       if (!is_loop_state_var && !subgraph_output_type->has_tensor_type()) {
@@ -2429,7 +2429,7 @@ static void LoopInferenceFunction_13(InferenceContext& ctx) {
             "Loop 'body' subgraph scan outputs should all be tensors but output ",
             i,
             " was ",
-            subgraph_output_type->value_case());
+            subgraph_output_type->value_case())
       }
 
       // if there's an existing type check it matches. otherwise propagate

@@ -132,7 +132,7 @@ static void convPoolShapeInference_opset19(
 
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
+    fail_shape_inference("Input tensor must have at least 2 dimensions")
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -144,7 +144,7 @@ static void convPoolShapeInference_opset19(
   std::vector<int64_t> dilations;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
-      fail_shape_inference("Attribute dilations has incorrect size");
+      fail_shape_inference("Attribute dilations has incorrect size")
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -153,7 +153,7 @@ static void convPoolShapeInference_opset19(
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");
+      fail_shape_inference("Attribute strides has incorrect size")
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -162,10 +162,10 @@ static void convPoolShapeInference_opset19(
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute kernel_shape has incorrect size");
+      fail_shape_inference("Attribute kernel_shape has incorrect size")
     }
   } else if (require_kernel_shape) {
-    fail_shape_inference("Attribute kernel_shape must be specified");
+    fail_shape_inference("Attribute kernel_shape must be specified")
   } else {
     auto second_input_shape = ctx.getInputType(input2Idx)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
@@ -185,7 +185,7 @@ static void convPoolShapeInference_opset19(
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");
+      fail_shape_inference("Attribute pads has incorrect size")
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -205,7 +205,7 @@ static void convPoolShapeInference_opset19(
           }
         }
         if (i >= static_cast<int>(effective_kernel_shape.size())) {
-          fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
+          fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".")
         }
         int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
         if (total_pad < 0)
@@ -233,7 +233,7 @@ static void convPoolShapeInference_opset19(
     *output_shape->add_dim() = input_shape.dim(0);
     auto& second_input_shape = getInputShape(ctx, input2Idx);
     if (second_input_shape.dim_size() < 1) {
-      fail_shape_inference("Second input tensor has wrong dimension");
+      fail_shape_inference("Second input tensor has wrong dimension")
     }
     *output_shape->add_dim() = second_input_shape.dim(0);
   }
@@ -341,14 +341,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (ctx.getNumInputs() > 1 && hasInputShape(ctx, 1)) {
             auto& ratio_input_shape = getInputShape(ctx, 1);
             if (static_cast<int>(ratio_input_shape.dim_size()) != 0) {
-              fail_shape_inference("Ratio of Dropout must be a scalar.");
+              fail_shape_inference("Ratio of Dropout must be a scalar.")
             }
           }
 
           if (ctx.getNumInputs() > 2 && hasInputShape(ctx, 2)) {
             auto& training_mode_input_shape = getInputShape(ctx, 2);
             if (static_cast<int>(training_mode_input_shape.dim_size()) != 0) {
-              fail_shape_inference("training_mode of Dropout must be a scalar.");
+              fail_shape_inference("training_mode of Dropout must be a scalar.")
             }
           }
 
@@ -462,7 +462,7 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
   }
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor X must have at least 2 dimensions.");
+    fail_shape_inference("Input tensor X must have at least 2 dimensions.")
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -471,7 +471,7 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size.");
+      fail_shape_inference("Attribute pads has incorrect size.")
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -480,7 +480,7 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size.");
+      fail_shape_inference("Attribute strides has incorrect size.")
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -489,10 +489,10 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute kernel_shape has incorrect size.");
+      fail_shape_inference("Attribute kernel_shape has incorrect size.")
     }
   } else {
-    fail_shape_inference("Attribute kernel_shape must be specified.");
+    fail_shape_inference("Attribute kernel_shape must be specified.")
   }
 
   if (ctx.getNumInputs() == 3) {
@@ -505,7 +505,7 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
       }
       if (output_shape.dim(static_cast<int>(0)).has_dim_value() &&
           static_cast<int>(output_shape.dim(static_cast<int>(0)).dim_value()) != input_shape.dim_size()) {
-        fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
+        fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.")
       }
     }
     return; // 'output_shape' is specified as input. Actual shape will be
@@ -675,11 +675,11 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");
+      fail_shape_inference("Attribute pads has incorrect size")
     }
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if (nullptr != auto_pad_attr && auto_pad_attr->s() != "NOTSET") {
-      fail_shape_inference("The pads attribute cannot be used simultaneously with auto_pad attribute");
+      fail_shape_inference("The pads attribute cannot be used simultaneously with auto_pad attribute")
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -1098,10 +1098,10 @@ static void roiPoolTypeShapeInference_opset1(InferenceContext& ctx) {
   auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
 
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
+    fail_shape_inference("Input tensor must have at least 2 dimensions")
   }
   if (rios_shape.dim_size() != 2) {
-    fail_shape_inference("RoIs tensor must have 2 dimensions");
+    fail_shape_inference("RoIs tensor must have 2 dimensions")
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -1110,10 +1110,10 @@ static void roiPoolTypeShapeInference_opset1(InferenceContext& ctx) {
   std::vector<int64_t> pooled_shape;
   if (getRepeatedAttribute(ctx, "pooled_shape", pooled_shape)) {
     if (pooled_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute pooled_shape has incorrect length");
+      fail_shape_inference("Attribute pooled_shape has incorrect length")
     }
   } else {
-    fail_shape_inference("Attribute pooled_shape must be specified");
+    fail_shape_inference("Attribute pooled_shape must be specified")
   }
 
   // (num_rois, channels, pooled_shape[0], pooled_shape[1])
@@ -1608,14 +1608,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (ctx.getNumInputs() > 1 && hasInputShape(ctx, 1)) {
             auto& ratio_input_shape = getInputShape(ctx, 1);
             if (static_cast<int>(ratio_input_shape.dim_size()) != 0) {
-              fail_shape_inference("Ratio of Dropout must be a scalar.");
+              fail_shape_inference("Ratio of Dropout must be a scalar.")
             }
           }
 
           if (ctx.getNumInputs() > 2 && hasInputShape(ctx, 2)) {
             auto& training_mode_input_shape = getInputShape(ctx, 2);
             if (static_cast<int>(training_mode_input_shape.dim_size()) != 0) {
-              fail_shape_inference("training_mode of Dropout must be a scalar.");
+              fail_shape_inference("training_mode of Dropout must be a scalar.")
             }
           }
 
@@ -1676,7 +1676,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis += rank;
           }
           if (axis > rank || axis < 0) {
-            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
+            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'")
           }
           // TODO: is the operation defined for input-rank < 2?
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
@@ -1722,7 +1722,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis += rank;
           }
           if (axis > rank || axis < 0) {
-            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
+            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'")
           }
           // TODO: is the operation defined for input-rank < 2?
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
@@ -1764,7 +1764,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis += rank;
           }
           if (axis > rank || axis < 0) {
-            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
+            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'")
           }
           // TODO: is the operation defined for input-rank < 2?
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
@@ -1897,7 +1897,7 @@ static void convPoolShapeInference1(
 
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
+    fail_shape_inference("Input tensor must have at least 2 dimensions")
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -1909,7 +1909,7 @@ static void convPoolShapeInference1(
   std::vector<int64_t> dilations;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
-      fail_shape_inference("Attribute dilations has incorrect size");
+      fail_shape_inference("Attribute dilations has incorrect size")
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -1918,7 +1918,7 @@ static void convPoolShapeInference1(
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");
+      fail_shape_inference("Attribute strides has incorrect size")
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -1927,10 +1927,10 @@ static void convPoolShapeInference1(
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute kernel_shape has incorrect size");
+      fail_shape_inference("Attribute kernel_shape has incorrect size")
     }
   } else if (require_kernel_shape) {
-    fail_shape_inference("Attribute kernel_shape must be specified");
+    fail_shape_inference("Attribute kernel_shape must be specified")
   } else {
     auto second_input_shape = ctx.getInputType(input2Idx)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
@@ -1950,7 +1950,7 @@ static void convPoolShapeInference1(
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");
+      fail_shape_inference("Attribute pads has incorrect size")
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -1995,7 +1995,7 @@ static void convPoolShapeInference1(
     *output_shape->add_dim() = input_shape.dim(0);
     auto& second_input_shape = getInputShape(ctx, input2Idx);
     if (second_input_shape.dim_size() < 1) {
-      fail_shape_inference("Second input tensor has wrong dimension");
+      fail_shape_inference("Second input tensor has wrong dimension")
     }
     *output_shape->add_dim() = second_input_shape.dim(0);
   }
@@ -2501,7 +2501,7 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
   }
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor X must have at least 2 dimensions.");
+    fail_shape_inference("Input tensor X must have at least 2 dimensions.")
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -2510,7 +2510,7 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size.");
+      fail_shape_inference("Attribute pads has incorrect size.")
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -2519,7 +2519,7 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size.");
+      fail_shape_inference("Attribute strides has incorrect size.")
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -2528,10 +2528,10 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute kernel_shape has incorrect size.");
+      fail_shape_inference("Attribute kernel_shape has incorrect size.")
     }
   } else {
-    fail_shape_inference("Attribute kernel_shape must be specified.");
+    fail_shape_inference("Attribute kernel_shape must be specified.")
   }
 
   if (ctx.getNumInputs() == 3) {
@@ -2544,7 +2544,7 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
       }
       if (output_shape.dim(static_cast<int>(0)).has_dim_value() &&
           static_cast<int>(output_shape.dim(static_cast<int>(0)).dim_value()) != input_shape.dim_size()) {
-        fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
+        fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.")
       }
     }
     return; // 'output_shape' is specified as input. Actual shape will be
@@ -2957,7 +2957,7 @@ static void convTransposeShapeInference1(InferenceContext& ctx) {
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");
+      fail_shape_inference("Attribute pads has incorrect size")
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -3529,10 +3529,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (ctx.getAttribute("training_mode") && static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
             if (ctx.getNumOutputs() != 3)
-              fail_shape_inference("This number of op outputs should be 3 when Training_mode = True, but it is not.");
+              fail_shape_inference("This number of op outputs should be 3 when Training_mode = True, but it is not.")
           } else {
             if (ctx.getNumOutputs() != 1)
-              fail_shape_inference("This number of op outputs should be 1 when Training_mode = False, but it is not.");
+              fail_shape_inference("This number of op outputs should be 1 when Training_mode = False, but it is not.")
           }
 
           if (ctx.getNumOutputs() > 1) {
@@ -3853,7 +3853,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           int rank = static_cast<int>(input_shape.dim_size());
           int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
           if (axis > rank || axis < 0) {
-            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
+            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'")
           }
           // TODO: is the operation defined for input-rank < 2?
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
@@ -3897,7 +3897,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           int rank = static_cast<int>(input_shape.dim_size());
           int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
           if (axis > rank || axis < 0) {
-            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
+            fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'")
           }
           // TODO: is the operation defined for input-rank < 2?
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});

@@ -86,7 +86,7 @@ void gridSampleShapeInference(InferenceContext& ctx) {
         ". ",
         "Got grid tensor rank: ",
         grid_shape.dim_size(),
-        ". ");
+        ". ")
   }
 
   int const num_dims = input_shape.dim_size();
@@ -96,7 +96,7 @@ void gridSampleShapeInference(InferenceContext& ctx) {
         "The input tensor and grid tensor ranks must be >= 3. ",
         "Got input tensor and grid tensor ranks: ",
         num_dims,
-        ". ");
+        ". ")
   }
   auto const& last_dim = grid_shape.dim(num_dims - 1);
   if (last_dim.has_dim_value() && (last_dim.dim_value() != num_dims - 2)) {
@@ -106,7 +106,7 @@ void gridSampleShapeInference(InferenceContext& ctx) {
         num_dims,
         "Got the last dimension of the grid tensor: ",
         last_dim.dim_value(),
-        ". ");
+        ". ")
   }
 
   auto* output_shape = getOutputShape(ctx, 0);
@@ -146,7 +146,7 @@ void resizeShapeInferenceHelper(
               dim_value,
               ") is not equal to the existing dim value (",
               dim->dim_value(),
-              ").");
+              ").")
         }
       } else {
         dim->set_dim_value(static_cast<int64_t>(dim_value));
@@ -191,7 +191,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
 
   if (opset_version >= 13) {
     if (hasScalesInput + hasSizesInput != 1) {
-      fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them");
+      fail_shape_inference("Either `sizes` or `scales` must be provided, but not both of them")
     }
   }
 
@@ -206,13 +206,13 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
     } else if (str == "not_smaller") {
       keep_aspect_ratio_policy = KeepAspectRatioPolicy::NOT_SMALLER;
     } else {
-      fail_shape_inference("Unknown value for `keep_aspect_ratio_policy`: ", str, ".");
+      fail_shape_inference("Unknown value for `keep_aspect_ratio_policy`: ", str, ".")
     }
   }
 
   if (hasScalesInput && keep_aspect_ratio_policy != KeepAspectRatioPolicy::STRETCH) {
     fail_shape_inference(
-        "Providing `scales` is incompatible with a `keep_aspect_ratio_policy` other than \"stretch\".");
+        "Providing `scales` is incompatible with a `keep_aspect_ratio_policy` other than \"stretch\".")
   }
 
   if (output_shape->dim_size() > 0) {
@@ -222,7 +222,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
           input_shape.dim_size(),
           ") is not equal to the existing rank value (",
           output_shape->dim_size(),
-          ").");
+          ").")
     }
   } else { // Infer the rank of output anyway
     for (int i = 0; i < input_shape.dim_size(); ++i) {
@@ -247,7 +247,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
             sizes_data.size(),
             ") does not match the number of axes (",
             axes.size(),
-            ").");
+            ").")
       }
     } else {
       // sizes_data contains scales for all axes
@@ -257,7 +257,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
             sizes_data.size(),
             ") must be same as rank of input 'X' (",
             rank_x,
-            ").");
+            ").")
       }
     }
 
@@ -291,7 +291,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
               scales_data.size(),
               ") does not match the number of axes (",
               axes.size(),
-              ").");
+              ").")
         }
 
         std::vector<float> tmp(rank_x, 1.0f);
@@ -303,12 +303,12 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
       } else {
         // scales_data contains scales for all axes
         if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
-          fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'");
+          fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'")
         }
       }
       resizeShapeInferenceHelper(input_shape, scales_data, output_shape);
     } else {
-      fail_shape_inference("Input 'scales' must have float element type.");
+      fail_shape_inference("Input 'scales' must have float element type.")
     }
   } // nullptr != scales
 }
@@ -345,7 +345,7 @@ void resizeShapeInferenceHelper_opset7_to_10(
               dim_value,
               ") is not equal to the existing dim value (",
               dim->dim_value(),
-              ").");
+              ").")
         }
       } else {
         dim->set_dim_value(static_cast<int64_t>(dim_value));
@@ -370,7 +370,7 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
           input_shape.dim_size(),
           ") is not equal to the existing rank value (",
           output_shape->dim_size(),
-          ").");
+          ").")
     }
   } else { // Infer the rank of output anyway
     for (int i = 0; i < input_shape.dim_size(); ++i) {
@@ -383,11 +383,11 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
     if (scales->data_type() == TensorProto::FLOAT) {
       const auto scales_data = ParseData<float>(scales);
       if (scales_data.size() != static_cast<size_t>(input_shape.dim_size())) {
-        fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'");
+        fail_shape_inference("Number of elements of input 'scales' must be same as rank of input 'X'")
       }
       resizeShapeInferenceHelper_opset7_to_10(input_shape, scales_data, output_shape);
     } else {
-      fail_shape_inference("Input 'scales' must have float element type.");
+      fail_shape_inference("Input 'scales' must have float element type.")
     } // nullptr != scales
   }
 }
@@ -481,7 +481,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
       const TensorProto* pads_initializer = ctx.getInputData(1);
       if (nullptr != pads_initializer && !axes.empty()) {
         if (pads_initializer->dims_size() != 1 || pads_initializer->data_type() != TensorProto::INT64) {
-          fail_shape_inference("'pads' input must be a 1D (shape: [2 * num_axes]) tensor of type int64");
+          fail_shape_inference("'pads' input must be a 1D (shape: [2 * num_axes]) tensor of type int64")
         }
 
         const auto pads_data = ParseData<int64_t>(pads_initializer);
@@ -491,7 +491,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
               num_axes,
               " values. Got ",
               pads_data.size(),
-              " values.");
+              " values.")
         }
 
         // Set default dim values

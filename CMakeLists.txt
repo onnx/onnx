@@ -647,7 +647,7 @@ if(MSVC)
                         PROPERTIES STATIC_LIBRARY_FLAGS
                                    "${onnx_static_library_flags}")
 else()
-  target_compile_options(onnx PRIVATE -Wall -Wextra)
+  target_compile_options(onnx PRIVATE -Wall -Wextra -Wextra-semi-stmt)
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
     target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
     target_compile_options(onnx_proto PRIVATE "-Wno-stringop-overflow")
