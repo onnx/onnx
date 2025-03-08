@@ -7,7 +7,6 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
-from collections.abc import KeysView, Sequence
 from typing import (
     Any,
     Callable,
@@ -19,7 +18,6 @@ from typing import (
 import google.protobuf.message
 import numpy as np
 import typing_extensions
-from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
 import onnx._custom_element_types as custom_np_types
 from onnx import (
@@ -43,6 +41,11 @@ from onnx import (
     mapping,
     subbyte,
 )
+
+if typing_extensions.TYPE_CHECKING:
+    from collections.abc import KeysView, Sequence
+
+    from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
 VersionRowType = Union[tuple[str, int, int, int], tuple[str, int, int, int, int]]
 VersionTableType = list[VersionRowType]
