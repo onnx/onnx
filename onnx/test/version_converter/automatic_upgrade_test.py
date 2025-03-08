@@ -1188,8 +1188,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             "RotaryEmbedding",
             23,
-            [[2, 3, 4, 8], [2, 3, 4], [2, 3, 4]],
-            [[2, 3, 4, 8]],
+            [[2, 4, 3, 8], [2, 3, 4], [2, 3, 4]],
+            [[2, 4, 3, 8]],
             [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
             [TensorProto.FLOAT],
         )
@@ -1198,8 +1198,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             "RotaryEmbedding",
             23,
-            [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
-            [[2, 3, 4, 8]],
+            [[2, 4, 3, 8], [50, 4], [50, 4], [2, 3]],
+            [[2, 4, 3, 8]],
             [
                 TensorProto.FLOAT,
                 TensorProto.FLOAT,
@@ -1229,8 +1229,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             "RotaryEmbedding",
             23,
-            [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
-            [[2, 3, 4, 8]],
+            [[2, 4, 3, 8], [50, 4], [50, 4], [2, 3]],
+            [[2, 4, 3, 8]],
             [
                 TensorProto.FLOAT,
                 TensorProto.FLOAT,
@@ -1245,8 +1245,8 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             "RotaryEmbedding",
             23,
-            [[2, 3, 4, 8], [50, 4], [50, 4], [2, 3]],
-            [[2, 3, 4, 8]],
+            [[2, 4, 3, 8], [50, 4], [50, 4], [2, 3]],
+            [[2, 4, 3, 8]],
             [
                 TensorProto.FLOAT,
                 TensorProto.FLOAT,

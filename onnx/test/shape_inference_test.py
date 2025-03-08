@@ -5802,7 +5802,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_rotaryembedding_4d(self) -> None:
         graph = self._make_graph(
             [
-                ("X", TensorProto.FLOAT, ("B", "seq_len", "num_heads", "head_size")),
+                ("X", TensorProto.FLOAT, ("B", "num_heads", "seq_len", "head_size")),
                 ("cos_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
                 ("sin_cache", TensorProto.FLOAT, ("max_seq_len", "head_size_div_2")),
                 ("position_ids", TensorProto.INT64, ("B", "seq_len")),
@@ -5820,7 +5820,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info(
-                    "Y", TensorProto.FLOAT, ("B", "seq_len", "num_heads", "head_size")
+                    "Y", TensorProto.FLOAT, ("B", "num_heads", "seq_len", "head_size")
                 )
             ],
         )  # type: ignore
