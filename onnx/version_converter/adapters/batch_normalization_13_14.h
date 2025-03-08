@@ -21,7 +21,7 @@ class BatchNormalization_13_14 final : public Adapter {
     ONNX_ASSERTM(
         node->outputs().size() < 4,
         "BatchNormalization outputs 4 and 5 are not "
-        "supported in Opset 14.");
+        "supported in Opset 14.")
   }
 
   Node* adapt(std::shared_ptr<Graph>, Node* node) const override {

@@ -18,18 +18,18 @@ namespace ONNX_NAMESPACE {
 void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+    fail_type_inference("Input type was null")
   }
 
   const auto input_value_case = input_type->value_case();
   if (input_value_case != TypeProto::kTensorType && input_value_case != TypeProto::kSparseTensorType) {
     fail_type_inference(
-        "Input ", inputIndex, " expected to have tensor or sparse tensor type. Got: ", input_value_case);
+        "Input ", inputIndex, " expected to have tensor or sparse tensor type. Got: ", input_value_case)
   }
 
   const auto input_elem_type = getTensorElementType(*input_type);
   if (input_elem_type == TensorProto::UNDEFINED) {
-    fail_type_inference("Element type of input ", inputIndex, " unknown");
+    fail_type_inference("Element type of input ", inputIndex, " unknown")
   }
   auto output_type = ctx.getOutputType(outputIndex);
   const auto output_value_case = output_type->value_case();
@@ -41,18 +41,18 @@ void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inpu
   } else {
     // This is not expected to happen
     fail_type_inference(
-        "Output ", outputIndex, " expected to have tensor or sparse tensor type. Got: ", output_value_case);
+        "Output ", outputIndex, " expected to have tensor or sparse tensor type. Got: ", output_value_case)
   }
 }
 
 static void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kSequenceType) {
-    fail_type_inference("Input ", inputIndex, " expected to have sequence type");
+    fail_type_inference("Input ", inputIndex, " expected to have sequence type")
   }
   auto input_seq_type = input_type->sequence_type();
   if (!input_seq_type.has_elem_type()) {
-    fail_type_inference("Element type of sequence input ", inputIndex, " unknown");
+    fail_type_inference("Element type of sequence input ", inputIndex, " unknown")
   }
 
   auto output_type = ctx.getOutputType(outputIndex);
@@ -62,11 +62,11 @@ static void propagateElemTypeFromSequenceInputToOutput(InferenceContext& ctx, si
 static void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kOptionalType) {
-    fail_type_inference("Input ", inputIndex, " expected to have optional type");
+    fail_type_inference("Input ", inputIndex, " expected to have optional type")
   }
   auto input_opt_type = input_type->optional_type();
   if (!input_opt_type.has_elem_type()) {
-    fail_type_inference("Element type of optional input ", inputIndex, " unknown");
+    fail_type_inference("Element type of optional input ", inputIndex, " unknown")
   }
 
   auto output_type = ctx.getOutputType(outputIndex);
@@ -76,14 +76,14 @@ static void propagateElemTypeFromOptionalInputToOutput(InferenceContext& ctx, si
 static void propagateElemTypeFromMapInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type || input_type->value_case() != TypeProto::kMapType) {
-    fail_type_inference("Input ", inputIndex, " expected to have map type");
+    fail_type_inference("Input ", inputIndex, " expected to have map type")
   }
   auto input_map_type = input_type->map_type();
   if (!input_map_type.has_key_type()) {
-    fail_type_inference("Key type of map input ", inputIndex, " unknown");
+    fail_type_inference("Key type of map input ", inputIndex, " unknown")
   }
   if (!input_map_type.has_value_type()) {
-    fail_type_inference("Value type of map input ", inputIndex, " unknown");
+    fail_type_inference("Value type of map input ", inputIndex, " unknown")
   }
 
   auto output_type = ctx.getOutputType(outputIndex);
@@ -94,7 +94,7 @@ static void propagateElemTypeFromMapInputToOutput(InferenceContext& ctx, size_t 
 void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type) {
-    fail_type_inference("Input ", inputIndex, " expected to have type but instead is null");
+    fail_type_inference("Input ", inputIndex, " expected to have type but instead is null")
   }
   const auto input_value_case = input_type->value_case();
   if (input_value_case == TypeProto::kTensorType || input_value_case == TypeProto::kSparseTensorType) {
@@ -124,7 +124,7 @@ static void mergeInShapeInfo(const TensorShapeProto& source, TensorShapeProto& t
         "Mismatch between number of inferred and declared dimensions. inferred=",
         num_source_dims,
         " declared=",
-        num_target_dims);
+        num_target_dims)
   }
 
   auto& source_dims = source.dim();
@@ -257,7 +257,7 @@ void UnionShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor
 void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
   if (source_type.value_case() != target_type.value_case()) {
     fail_type_inference(
-        "Mismatched type:", " inferred=", source_type.value_case(), " declared=", target_type.value_case());
+        "Mismatched type:", " inferred=", source_type.value_case(), " declared=", target_type.value_case())
   }
 
   const auto target_case = target_type.value_case();
@@ -271,7 +271,7 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
           " inferred=",
           Utils::DataTypeUtils::ToDataTypeString(source_elem_type),
           " declared=",
-          Utils::DataTypeUtils::ToDataTypeString(target_elem_type));
+          Utils::DataTypeUtils::ToDataTypeString(target_elem_type))
     }
 
     UnionShapeInfo(source_type.tensor_type(), *target_type.mutable_tensor_type());
@@ -284,31 +284,31 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
           " inferred=",
           Utils::DataTypeUtils::ToDataTypeString(source_elem_type),
           " declared=",
-          Utils::DataTypeUtils::ToDataTypeString(target_elem_type));
+          Utils::DataTypeUtils::ToDataTypeString(target_elem_type))
     }
     UnionShapeInfo(source_type.sparse_tensor_type(), *target_type.mutable_sparse_tensor_type());
   } else if (target_case == TypeProto::ValueCase::kSequenceType) {
     if (!source_type.sequence_type().has_elem_type()) {
-      fail_type_inference("source sequence type missing element type.");
+      fail_type_inference("source sequence type missing element type.")
     }
     if (!target_type.sequence_type().has_elem_type()) {
-      fail_type_inference("target sequence type missing element type.");
+      fail_type_inference("target sequence type missing element type.")
     }
     UnionTypeInfo(source_type.sequence_type().elem_type(), *target_type.mutable_sequence_type()->mutable_elem_type());
   } else if (target_case == TypeProto::ValueCase::kOptionalType) {
     if (!source_type.optional_type().has_elem_type()) {
-      fail_type_inference("source optional type missing element type.");
+      fail_type_inference("source optional type missing element type.")
     }
     if (!target_type.optional_type().has_elem_type()) {
-      fail_type_inference("target optional type missing element type.");
+      fail_type_inference("target optional type missing element type.")
     }
     UnionTypeInfo(source_type.optional_type().elem_type(), *target_type.mutable_optional_type()->mutable_elem_type());
   } else if (target_case == TypeProto::ValueCase::kMapType) {
     if (!source_type.map_type().has_key_type()) {
-      fail_type_inference("source map type missing key type.");
+      fail_type_inference("source map type missing key type.")
     }
     if (!target_type.map_type().has_key_type()) {
-      fail_type_inference("target map type missing key type.");
+      fail_type_inference("target map type missing key type.")
     }
     auto source_key_type = source_type.map_type().key_type();
     auto target_key_type = target_type.map_type().key_type();
@@ -318,14 +318,14 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
           " inferred=",
           Utils::DataTypeUtils::ToDataTypeString(source_key_type),
           " declared=",
-          Utils::DataTypeUtils::ToDataTypeString(target_key_type));
+          Utils::DataTypeUtils::ToDataTypeString(target_key_type))
     }
 
     if (!source_type.map_type().has_value_type()) {
-      fail_type_inference("source map type missing value type.");
+      fail_type_inference("source map type missing value type.")
     }
     if (!target_type.map_type().has_value_type()) {
-      fail_type_inference("target map type missing value type.");
+      fail_type_inference("target map type missing value type.")
     }
     UnionTypeInfo(source_type.map_type().value_type(), *target_type.mutable_map_type()->mutable_value_type());
   }
@@ -339,7 +339,7 @@ void UnionTypeInfo(const TypeProto& source_type, TypeProto& target_type) {
 // the input value_case is propagated.
 static void propagateTensorElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+    fail_type_inference("Input type was null")
   }
 
   int32_t input_elem_type = TensorProto::UNDEFINED;
@@ -347,10 +347,10 @@ static void propagateTensorElemTypeWithValidation(const TypeProto* input_type, T
   if (input_value_case == TypeProto::kTensorType || input_value_case == TypeProto::kSparseTensorType) {
     input_elem_type = getTensorElementType(*input_type);
     if (input_elem_type == TensorProto::UNDEFINED) {
-      fail_type_inference("Element type of tensor or sparse tensor input was unknown");
+      fail_type_inference("Element type of tensor or sparse tensor input was unknown")
     }
   } else {
-    fail_type_inference("Input was expected to have tensor or sparse tensor type. Got ", input_value_case);
+    fail_type_inference("Input was expected to have tensor or sparse tensor type. Got ", input_value_case)
   }
 
   const auto output_value_case = output_type->value_case();
@@ -361,24 +361,24 @@ static void propagateTensorElemTypeWithValidation(const TypeProto* input_type, T
     if (output_elem_type != TensorProto::UNDEFINED) {
       if (input_elem_type != output_elem_type) {
         fail_type_inference(
-            "Input element type of ", input_elem_type, " does not match existing output type of ", output_elem_type);
+            "Input element type of ", input_elem_type, " does not match existing output type of ", output_elem_type)
       }
     } else {
       setTensorElementType(input_elem_type, output_value_case, *output_type);
     }
   } else {
     // This is not expected to happen
-    fail_type_inference("Output was expected to have tensor type. Got ", output_value_case);
+    fail_type_inference("Output was expected to have tensor type. Got ", output_value_case)
   }
 }
 
 static void propagateSequenceElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+    fail_type_inference("Input type was null")
   }
 
   if (input_type->value_case() != TypeProto::kSequenceType) {
-    fail_type_inference("Input was expected to have sequence type. Got ", input_type->value_case());
+    fail_type_inference("Input was expected to have sequence type. Got ", input_type->value_case())
   }
 
   const auto& input_seq_type = input_type->sequence_type();
@@ -387,17 +387,17 @@ static void propagateSequenceElemTypeWithValidation(const TypeProto* input_type,
     propagateElemTypeWithValidation(
         &input_seq_type.elem_type(), output_type->mutable_sequence_type()->mutable_elem_type());
   } else {
-    fail_type_inference("Element type of sequence input was unknown");
+    fail_type_inference("Element type of sequence input was unknown")
   }
 }
 
 static void propagateOptionalElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+    fail_type_inference("Input type was null")
   }
 
   if (input_type->value_case() != TypeProto::kOptionalType) {
-    fail_type_inference("Input was expected to have optional type. Got ", input_type->value_case());
+    fail_type_inference("Input was expected to have optional type. Got ", input_type->value_case())
   }
 
   const auto& input_opt_type = input_type->optional_type();
@@ -406,26 +406,26 @@ static void propagateOptionalElemTypeWithValidation(const TypeProto* input_type,
     propagateElemTypeWithValidation(
         &input_opt_type.elem_type(), output_type->mutable_optional_type()->mutable_elem_type());
   } else {
-    fail_type_inference("Element type of optional input was unknown");
+    fail_type_inference("Element type of optional input was unknown")
   }
 }
 
 static void propagateMapElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+    fail_type_inference("Input type was null")
   }
 
   if (input_type->value_case() != TypeProto::kMapType) {
-    fail_type_inference("Input was expected to have map type. Got ", input_type->value_case());
+    fail_type_inference("Input was expected to have map type. Got ", input_type->value_case())
   }
 
   const auto& input_map_type = input_type->map_type();
 
   if (!input_map_type.has_key_type()) {
-    fail_type_inference("Key type of map input was unknown");
+    fail_type_inference("Key type of map input was unknown")
   }
   if (!input_map_type.has_value_type()) {
-    fail_type_inference("Value type of map input was unknown");
+    fail_type_inference("Value type of map input was unknown")
   }
   output_type->mutable_map_type()->set_key_type(input_map_type.key_type());
   propagateElemTypeWithValidation(&input_map_type.value_type(), output_type->mutable_map_type()->mutable_value_type());
@@ -435,7 +435,7 @@ static void propagateMapElemTypeWithValidation(const TypeProto* input_type, Type
 // if an existing output element type exists, validate it matches.
 void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type) {
   if (nullptr == input_type) {
-    fail_type_inference("Input type was null");
+    fail_type_inference("Input type was null")
   }
 
   const auto input_value_case = input_type->value_case();
@@ -449,7 +449,7 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
     propagateMapElemTypeWithValidation(input_type, output_type);
   } else {
     fail_type_inference(
-        "Input was expected to have either tensor, sequence, optional or map type. Got ", input_value_case);
+        "Input was expected to have either tensor, sequence, optional or map type. Got ", input_value_case)
   }
 }
 
@@ -484,7 +484,7 @@ getShapeInput(const InferenceContext& ctx, size_t input_index, bool fail_if_nega
   if (!found && hasInputShape(ctx, input_index)) {
     const TensorShapeProto& shape_input_shape = getInputShape(ctx, input_index);
     if (shape_input_shape.dim_size() != 1) {
-      fail_shape_inference("shape input must be 1D tensor");
+      fail_shape_inference("shape input must be 1D tensor")
     }
     if (shape_input_shape.dim(0).has_dim_value()) {
       // Attempt rank inference using shape of shape input
@@ -501,7 +501,7 @@ getShapeInput(const InferenceContext& ctx, size_t input_index, bool fail_if_nega
     for (int i = 0; i < dims_size; ++i) {
       const auto& dim = shape_input.dim(i);
       if (dim.has_dim_value() && dim.dim_value() < 0) {
-        fail_shape_inference("shape input tensor must have non-negative elements");
+        fail_shape_inference("shape input tensor must have non-negative elements")
       }
     }
   }
@@ -528,7 +528,7 @@ std::pair<int, int> getAttributeProtoElemTypeAndLength(const AttributeProto* att
   } else if (attr_proto->has_t()) {
     if (attr_proto->t().dims_size() != 1) {
       fail_type_inference(
-          "Attribute ", attr_proto->name(), " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
+          "Attribute ", attr_proto->name(), " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D")
     }
     return {attr_proto->t().data_type(), attr_proto->t().dims(0)};
   }
@@ -546,7 +546,7 @@ std::pair<int, int> getAttributeElementTypeAndLength(
     if (attr_proto != nullptr) {
       if (elem_type != TensorProto::UNDEFINED) {
         // Another attribute was already set
-        fail_shape_inference("One and only one attribute must be set out of ", stringify(attribute_names));
+        fail_shape_inference("One and only one attribute must be set out of ", stringify(attribute_names))
       }
       std::tie(elem_type, length) = getAttributeProtoElemTypeAndLength(attr_proto);
     }

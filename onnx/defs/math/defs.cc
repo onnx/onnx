@@ -23,7 +23,7 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
   int size_1 = input_1->dim_size();
   // Fails to broadcast if the ranks are different and no any rank is 1
   if (size_0 != size_1 && size_0 != 1 && size_1 != 1) {
-    fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (", size_0, ") vs (", size_1, ").");
+    fail_shape_inference("Invalid rank for ", op_type, " broadcasting: (", size_0, ") vs (", size_1, ").")
   }
   TensorShapeProto tsp;
   int size_out = size_0 == 1 ? size_1 : size_0;
@@ -1067,7 +1067,7 @@ from the back. Accepted range is [-r, r-1] where r = rank(input).
       int r = input_shape.dim_size();
       int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
       if (axis < -r || axis >= r) {
-        fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
+        fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis)
       }
 
       // Shape inference
@@ -1313,10 +1313,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto& first_input_shape = getInputShape(ctx, 0);
             auto& second_input_shape = getInputShape(ctx, 1);
             if (first_input_shape.dim_size() != 2) {
-              fail_shape_inference("First input does not have rank 2");
+              fail_shape_inference("First input does not have rank 2")
             }
             if (second_input_shape.dim_size() != 2) {
-              fail_shape_inference("Second input does not have rank 2");
+              fail_shape_inference("Second input does not have rank 2")
             }
             updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
           }
@@ -1439,7 +1439,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis < 0)
             axis += rank;
           if (axis < 0 || axis >= rank) {
-            fail_shape_inference("Invalid value for attribute axis");
+            fail_shape_inference("Invalid value for attribute axis")
           }
 
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
@@ -1454,16 +1454,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != k && axis_dim.has_dim_value()) {
             int64_t k_value = 0;
             if (k->dims_size() != 1 || k->dims(0) != 1) {
-              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+              fail_shape_inference("K input must be a one-dimensional tensor of size 1.")
             }
             if (k->data_type() == TensorProto::INT64) {
               const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
-              fail_shape_inference("K input must be of type int64.");
+              fail_shape_inference("K input must be of type int64.")
             }
             if (axis_dim.dim_value() < k_value) {
-              fail_shape_inference("Axis has less than the requested k elements.");
+              fail_shape_inference("Axis has less than the requested k elements.")
             }
 
             TensorShapeProto result_shape = input_shape;
@@ -2115,7 +2115,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const int rank = static_cast<int>(input_shape.dim_size());
 
             if (rank < 2) {
-              fail_shape_inference("Input rank must be >= 2.");
+              fail_shape_inference("Input rank must be >= 2.")
             }
 
             const auto mat_w = input_shape.dim(rank - 1);
@@ -2420,7 +2420,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const int target_rank = static_cast<int>(target_shape.dim_size());
 
             if (input_rank < 2) {
-              fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
+              fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank)
             }
             if (target_rank != input_rank - 1) {
               fail_shape_inference(
@@ -2448,7 +2448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
               const auto weight_rank = weight_shape.dim_size();
               if (weight_rank != 1) {
-                fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank);
+                fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank)
               }
             }
 
@@ -2506,7 +2506,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     std::getline(str, term, ',');
     auto ellipsis_index = term.find("...");
     if (num_inputs <= num_operands) {
-      fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+      fail_shape_inference("Number of input tensors does not match the operands in the equation.")
     }
     const auto& shape = ctx.getInputType(num_operands)->tensor_type().shape();
     size_t rank = shape.dim_size();
@@ -2563,26 +2563,26 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       // must be total dim - letter dimensions
       if (num_ellipsis == 0) {
         if (rank < term_size) {
-          fail_shape_inference("Ellipsis represents incompatible dimensions.");
+          fail_shape_inference("Ellipsis represents incompatible dimensions.")
         }
         num_ellipsis_indices = rank - term_size;
       } else { // ellipsis has been seen before. Check that if dimensions
                // are compatible
         if (num_ellipsis_indices != rank - term_size) {
-          fail_shape_inference("Ellipsis represents incompatible dimensions.");
+          fail_shape_inference("Ellipsis represents incompatible dimensions.")
         }
       }
       num_ellipsis++;
     } else {
       if (rank != term_size) {
-        fail_shape_inference("Rank of input ", num_operands, " does not match the equation indices.");
+        fail_shape_inference("Rank of input ", num_operands, " does not match the equation indices.")
       }
     }
     num_operands++;
   }
 
   if (num_inputs != num_operands) {
-    fail_shape_inference("Number of input tensors does not match the operands in the equation.");
+    fail_shape_inference("Number of input tensors does not match the operands in the equation.")
   }
 
   // Parse the provided right-hand side
@@ -2944,7 +2944,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const size_t output_index = 0;
 
           if (inverse && is_onesided) {
-            fail_shape_inference("is_onesided and inverse attributes cannot be enabled at the same time");
+            fail_shape_inference("is_onesided and inverse attributes cannot be enabled at the same time")
           }
 
           propagateElemTypeFromInputToOutput(ctx, input_arg_index, output_index);
@@ -2958,7 +2958,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // The last dimension is the real and imaginary parts of the value.
           const int64_t rank = input_shape.dim_size();
           if (rank < 2) {
-            fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
+            fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.")
           }
 
           // In general the output shape will match the input shape exactly
@@ -3002,7 +3002,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
             // to abstrct the following logic out.
             if (axis_tensor->dims_size() != 0) {
-              fail_shape_inference("axis input must be a scalar.");
+              fail_shape_inference("axis input must be a scalar.")
             }
             axis = defs::math::utils::GetScalarValueFromTensor<int64_t>(axis_tensor);
           }
@@ -3030,7 +3030,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               result_shape_proto.mutable_dim(axis_idx)->clear_dim_value();
             } else {
               if (dft_length->dims_size() != 0) {
-                fail_shape_inference("dft_length input must be a scalar.");
+                fail_shape_inference("dft_length input must be a scalar.")
               }
               auto dft_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
               result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
@@ -3113,12 +3113,12 @@ Generates a {name} window as described in the paper https://ieeexplore.ieee.org/
       }
 
       if (size->dims_size() != 0) {
-        fail_shape_inference("size input must be a scalar.");
+        fail_shape_inference("size input must be a scalar.")
       }
 
       auto size_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(size);
       if (size_value <= 0) {
-        fail_shape_inference("size input must be greater than 0.");
+        fail_shape_inference("size input must be greater than 0.")
       }
 
       ONNX_NAMESPACE::TensorShapeProto result_shape;
@@ -3344,12 +3344,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t num_mel_bins_value = -1;
           int64_t dft_length_value = -1;
           if (num_mel_bins->dims_size() != 0) {
-            fail_shape_inference("num_mel_bins input must be scalar.");
+            fail_shape_inference("num_mel_bins input must be scalar.")
           }
           num_mel_bins_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(num_mel_bins);
 
           if (dft_length->dims_size() != 0) {
-            fail_shape_inference("dft_length input must be scalar.");
+            fail_shape_inference("dft_length input must be scalar.")
           }
           dft_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
 
@@ -3452,7 +3452,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           auto& input_shape = getInputShape(ctx, 0);
           if (input_shape.dim_size() < 2) {
-            fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
+            fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".")
           }
           auto signal_dim = input_shape.dim(1);
           if (!signal_dim.has_dim_value()) {
@@ -3494,13 +3494,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           } else if (window_shape != nullptr && frame_length != nullptr) {
             if (frame_length->dims_size() != 0) {
-              fail_shape_inference("frame_length input must be scalar.");
+              fail_shape_inference("frame_length input must be scalar.")
             }
             auto frame_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
 
             // Ensure that the window length and the dft_length match.
             if (window_shape->dim_size() != 1) {
-              fail_shape_inference("window input must have rank = 1.");
+              fail_shape_inference("window input must have rank = 1.")
             }
             if (window_shape->dim(0).has_dim_value()) {
               auto window_length = window_shape->dim(0).dim_value();
@@ -3514,7 +3514,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else if (window_shape != nullptr) {
             // Ensure that the window length and the dft_length match.
             if (window_shape->dim_size() != 1) {
-              fail_shape_inference("window input must have rank = 1.");
+              fail_shape_inference("window input must have rank = 1.")
             }
             if (window_shape->dim(0).has_dim_value()) {
               dft_size = window_shape->dim(0).dim_value();
@@ -3525,7 +3525,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           } else if (frame_length != nullptr) {
             if (frame_length->dims_size() != 0) {
-              fail_shape_inference("frame_length input must be scalar.");
+              fail_shape_inference("frame_length input must be scalar.")
             }
             dft_size = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
           }

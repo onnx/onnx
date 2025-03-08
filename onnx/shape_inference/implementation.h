@@ -250,7 +250,7 @@ struct InferenceContextImpl : public InferenceContext {
 
   GraphInferencer* getGraphAttributeInferencer(const std::string& attr_name) override {
     if (!graphInferenceContext_) {
-      fail_type_inference("GraphProto attribute inferencing is not enabled in this InferenceContextImpl instance.");
+      fail_type_inference("GraphProto attribute inferencing is not enabled in this InferenceContextImpl instance.")
     }
 
     GraphInferencer* inferencer = nullptr;
@@ -260,7 +260,7 @@ struct InferenceContextImpl : public InferenceContext {
       // create GraphInferencer instance
       auto attrNameToGraphProto = graphProtoAttributesByName_.find(attr_name);
       if (attrNameToGraphProto == graphProtoAttributesByName_.cend()) {
-        fail_type_inference("Attribute ", attr_name, " does not contain a graph.");
+        fail_type_inference("Attribute ", attr_name, " does not contain a graph.")
       }
 
       auto new_inferencer =
@@ -443,7 +443,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     }
     auto result = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tsp)});
     if (!result.second) {
-      fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
+      fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.")
     }
   }
 
