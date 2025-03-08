@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Iterable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -18,6 +17,9 @@ import onnx
 import onnx.external_data_helper as ext_data
 import onnx.helper
 import onnx.onnx_cpp2py_export.checker as c_checker
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _set_external_data(

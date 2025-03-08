@@ -3,11 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import numpy as np
 import numpy.typing as npt
 import typing_extensions
+
+if typing_extensions.TYPE_CHECKING:
+    from collections.abc import Sequence
 
 INT4_MIN = -8
 INT4_MAX = 7
