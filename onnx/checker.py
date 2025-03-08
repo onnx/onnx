@@ -23,9 +23,7 @@ __all__ = [
 
 import os
 import sys
-from typing import Any, Callable, TypeVar
-
-from google.protobuf.message import Message
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 import onnx.defs
 import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
@@ -41,6 +39,9 @@ from onnx import (
     TensorProto,
     ValueInfoProto,
 )
+
+if TYPE_CHECKING:
+    from google.protobuf.message import Message
 
 # Limitation of single protobuf file is 2GiB
 MAXIMUM_PROTOBUF = 2147483648

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Sequence
 from typing import Any
 
 import numpy as np
@@ -14,6 +13,9 @@ import typing_extensions
 import onnx._custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
+
+if typing_extensions.TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def _combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
