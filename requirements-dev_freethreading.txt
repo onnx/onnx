@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 build
 numpy
 parameterized
@@ -7,6 +11,4 @@ pytest-cov
 pytest-xdist
 setuptools
 ml_dtypes
-pytest
-pytest-cov
-pytest-xdist
+nbval ; sys_platform != 'win32' # @ git+https://github.com/computationalmodelling/nbval@master # 2025.03.05 nbval from pypi causes => Cannot install ipykernel and jupyter-client because these package versions have conflicting dependencies
