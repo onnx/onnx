@@ -54,7 +54,6 @@ jobs:
 
         . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
 
-
         echo "Install ONNX"
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
@@ -70,9 +69,11 @@ jobs:
     - name: Test the installed wheel
       run: |
         
-        # 2025.03.06 jupyter_client and ipython have conflicting dependencies
+        # 2025.03.09 jupyter_client and ipython have conflicting dependencies
         # therefore [tool.pytest.ini_options] in pyproject.toml is overwritten
         # because it contains nbval which cannot be installed
+        # TODO: this section should be revised either a) by direct integration into pyproject, 
+        # or b) by revising the dependencies in the original projects."
 
         echo "[pytest]" > pytest.ini
         echo "addopts = --tb=short --color=yes" >> pytest.ini
