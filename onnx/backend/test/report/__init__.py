@@ -3,13 +3,16 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import _pytest
 import pytest
 
 from onnx.backend.test.report.coverage import Coverage
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import _pytest
 
 _coverage = Coverage()
 _marks: dict[str, Sequence[Any]] = {}
