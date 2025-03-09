@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import typing
+
 import numpy as np
 import numpy.typing as npt
 import typing_extensions
-import typing
 
 if typing.TYPE_CHECKING:
     from collections.abc import Sequence
