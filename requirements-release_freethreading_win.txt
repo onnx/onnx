@@ -12,5 +12,3 @@ pytest-cov
 pytest-xdist
 setuptools
 ml_dtypes
-# nbval # 2025.03.06: cannot be installed because of conflicting dependencies: ipython, jupyter_client
-# ipython# 2025.03.06: cannot be installed because of conflicting dependencies: ipython, jupyter_client
