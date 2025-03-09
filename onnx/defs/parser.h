@@ -275,7 +275,7 @@ class ParserBase {
 
   Status Parse(int64_t& val) {
     Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal));
+    CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
     std::string s = literal.value;
@@ -285,7 +285,7 @@ class ParserBase {
 
   Status Parse(uint64_t& val) {
     Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal));
+    CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
     std::string s = literal.value;
@@ -295,7 +295,7 @@ class ParserBase {
 
   Status Parse(float& val) {
     Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal));
+    CHECK_PARSER_STATUS(Parse(literal))
     switch (literal.type) {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
@@ -309,7 +309,7 @@ class ParserBase {
 
   Status Parse(double& val) {
     Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal));
+    CHECK_PARSER_STATUS(Parse(literal))
     switch (literal.type) {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
@@ -324,7 +324,7 @@ class ParserBase {
   // Parse a string-literal enclosed within double-quotes.
   Status Parse(std::string& val) {
     Literal literal;
-    CHECK_PARSER_STATUS(Parse(literal));
+    CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::STRING_LITERAL)
       return ParseError("String value expected, but not found.");
     val = literal.value;
@@ -398,7 +398,7 @@ class ParserBase {
 
   Status Parse(KeyWordMap::KeyWord& keyword) {
     std::string id;
-    CHECK_PARSER_STATUS(ParseIdentifier(id));
+    CHECK_PARSER_STATUS(ParseIdentifier(id))
     keyword = KeyWordMap::Lookup(id);
     return Status::OK();
   }
