@@ -7,7 +7,7 @@ import itertools
 import os
 import platform
 import unittest
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import onnx.backend.base
 import onnx.backend.test
@@ -16,11 +16,6 @@ import onnx.version_converter
 from onnx import ModelProto, NodeProto, TensorProto
 from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    import numpy
 
 # The following just executes the fake backend through the backend test
 # infrastructure. Since we don't have full reference implementation of all ops
@@ -36,10 +31,8 @@ if TYPE_CHECKING:
 
 class DummyBackend(onnx.backend.base.Backend):
     @classmethod
-    def prepare(
-        cls, model: ModelProto, device: str = "CPU", **kwargs: Any
-    ) -> onnx.backend.base.BackendRep | None:
-        super().prepare(model, device, **kwargs)
+    def prepare(cls, model: ModelProto, *args: Any, **kwargs: Any) -> None:
+        super().prepare(model, *args, **kwargs)
 
         onnx.checker.check_model(model)
 
@@ -71,12 +64,10 @@ class DummyBackend(onnx.backend.base.Backend):
     def run_node(
         cls,
         node: NodeProto,
-        inputs: Any,
-        device: str = "CPU",
-        outputs_info: Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None = None,
-        **kwargs: Any,  # noqa: ARG003
-    ) -> tuple[Any, ...] | None:
-        super().run_node(node, inputs, device=device, outputs_info=outputs_info)
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
+        super().run_node(node, *args, **kwargs)
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker"
         )
@@ -84,7 +75,7 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
+        return d.type == DeviceType.CPU
 
 
 test_coverage_safelist = {

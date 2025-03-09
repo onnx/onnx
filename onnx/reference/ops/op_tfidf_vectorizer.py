@@ -237,7 +237,7 @@ class TfIdfVectorizer(OpRun):
             raise RuntimeError("Unexpected weighting_criteria.")
         return Y.reshape(output_dims)
 
-    def compute_impl(  # type: ignore
+    def compute_impl(
         self,
         X: np.ndarray,
         row_num: int,
@@ -246,12 +246,8 @@ class TfIdfVectorizer(OpRun):
         max_gram_length=None,
         max_skip_count=None,
         min_gram_length=None,
-        mode=None,  # noqa: ARG002
-        ngram_counts=None,  # noqa: ARG002
-        ngram_indexes=None,  # noqa: ARG002
-        pool_int64s=None,  # noqa: ARG002
-        pool_strings=None,  # noqa: ARG002
-        weights=None,  # noqa: ARG002
+        *args,  # noqa: ARG002
+        **kwargs,  # noqa: ARG002
     ) -> None:
         if len(X.shape) > 1:
             X_flat = X[row_num]

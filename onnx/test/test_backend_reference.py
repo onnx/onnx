@@ -61,32 +61,32 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
+        return d.type == DeviceType.CPU
 
     @classmethod
-    def create_inference_session(cls, model):
+    def create_inference_session(cls, model) -> ReferenceEvaluator:
         return ReferenceEvaluator(model)
 
     @classmethod
     def prepare(
-        cls, model: Any, device: str = "CPU", **kwargs: Any
+        cls,
+        model: Any,
+        *args: Any,  # noqa: ARG003
+        **kwargs: Any,  # noqa: ARG003
     ) -> ReferenceEvaluatorBackendRep:
-        # if isinstance(model, ReferenceEvaluatorBackendRep):
-        #    return model
+        if isinstance(model, (str, bytes, ModelProto)):
+            model = cls.create_inference_session(model)
         if isinstance(model, ReferenceEvaluator):
             return ReferenceEvaluatorBackendRep(model)
-        if isinstance(model, (str, bytes, ModelProto)):
-            inf = cls.create_inference_session(model)
-            return cls.prepare(inf, device, **kwargs)
         raise TypeError(f"Unexpected type {type(model)} for model.")
 
     @classmethod
-    def run_model(cls, model, inputs, device=None, **kwargs):
-        rep = cls.prepare(model, device, **kwargs)
-        return rep.run(inputs, **kwargs)
+    def run_model(cls, model, inputs: Any, *args: Any, **kwargs: Any):
+        rep = cls.prepare(model, *args, **kwargs)
+        return rep.run(inputs)
 
     @classmethod
-    def run_node(cls, node, inputs, device=None, outputs_info=None, **kwargs):
+    def run_node(cls, *args, **kwargs):
         raise NotImplementedError("Unable to run the model node by node.")
 
 

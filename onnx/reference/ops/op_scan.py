@@ -96,17 +96,7 @@ class Scan(OpRun):
             states,
         )
 
-    def _run(  # type:ignore
-        self,
-        *args,
-        body=None,  # noqa: ARG002
-        num_scan_inputs=None,  # noqa: ARG002
-        scan_input_axes=None,  # noqa: ARG002
-        scan_input_directions=None,  # noqa: ARG002
-        scan_output_axes=None,  # noqa: ARG002
-        scan_output_directions=None,  # noqa: ARG002
-        attributes=None,  # noqa: ARG002
-    ):
+    def _run(self, *args, **kwargs):  # noqa: ARG002
         # TODO: support overridden attributes.
         (
             num_loop_state_vars,

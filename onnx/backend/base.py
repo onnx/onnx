@@ -13,8 +13,6 @@ from onnx import IR_VERSION, ModelProto, NodeProto
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    import numpy
-
 
 class DeviceType:
     """Describes device type."""
@@ -32,8 +30,8 @@ class Device:
 
     def __init__(self, device: str) -> None:
         options = device.split(":")
-        self.type = getattr(DeviceType, options[0])
-        self.device_id = 0
+        self.type: DeviceType = getattr(DeviceType, options[0])
+        self.device_id: int = 0
         if len(options) > 1:
             self.device_id = int(options[1])
 
@@ -61,7 +59,7 @@ class BackendRep:
     BackendRep to retrieve the corresponding results.
     """
 
-    def run(self, inputs: Any, **kwargs: Any) -> tuple[Any, ...]:  # noqa: ARG002
+    def run(self, *args: Any, **kwargs: Any) -> tuple[Any, ...]:  # noqa: ARG002
         """Abstract function."""
         return (None,)
 
@@ -80,8 +78,7 @@ class Backend:
     @classmethod
     def is_compatible(
         cls,
-        model: ModelProto,  # noqa: ARG003
-        device: str = "CPU",  # noqa: ARG003
+        *args: Any,  # noqa: ARG003
         **kwargs: Any,  # noqa: ARG003
     ) -> bool:
         # Return whether the model is compatible with the backend.
@@ -91,7 +88,7 @@ class Backend:
     def prepare(
         cls,
         model: ModelProto,
-        device: str = "CPU",  # noqa: ARG003
+        *args: Any,  # noqa: ARG003
         **kwargs: Any,  # noqa: ARG003
     ) -> BackendRep | None:
         # TODO Remove Optional from return type
@@ -100,9 +97,9 @@ class Backend:
 
     @classmethod
     def run_model(
-        cls, model: ModelProto, inputs: Any, device: str = "CPU", **kwargs: Any
+        cls, model: ModelProto, inputs: Any, *args, **kwargs: Any
     ) -> tuple[Any, ...]:
-        backend = cls.prepare(model, device, **kwargs)
+        backend = cls.prepare(model, *args, **kwargs)
         assert backend is not None
         return backend.run(inputs)
 
@@ -110,34 +107,24 @@ class Backend:
     def run_node(
         cls,
         node: NodeProto,
-        inputs: Any,  # noqa: ARG003
-        device: str = "CPU",  # noqa: ARG003
-        outputs_info: (  # noqa: ARG003
-            Sequence[tuple[numpy.dtype, tuple[int, ...]]] | None
-        ) = None,
-        **kwargs: dict[str, Any],
+        *args: Any,  # noqa: ARG003
+        **kwargs: Any,
     ) -> tuple[Any, ...] | None:
         """Simple run one operator and return the results.
 
         Args:
             node: The node proto.
-            inputs: Inputs to the node.
-            device: The device to run on.
-            outputs_info: a list of tuples, which contains the element type and
-                shape of each output. First element of the tuple is the dtype, and
-                the second element is the shape. More use case can be found in
-                https://github.com/onnx/onnx/blob/main/onnx/backend/test/runner/__init__.py
+            args: Other arguments.
             kwargs: Other keyword arguments.
         """
         # TODO Remove Optional from return type
         if "opset_version" in kwargs:
             special_context = c_checker.CheckerContext()
             special_context.ir_version = IR_VERSION
-            special_context.opset_imports = {"": kwargs["opset_version"]}  # type: ignore
+            special_context.opset_imports = {"": kwargs["opset_version"]}
             onnx.checker.check_node(node, special_context)
         else:
             onnx.checker.check_node(node)
-
         return None
 
     @classmethod

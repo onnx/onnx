@@ -7,5 +7,5 @@ from onnx.reference.op_run import OpRun
 
 
 class SequenceEmpty(OpRun):
-    def _run(self, dtype=None):  # type: ignore  # noqa: ARG002
+    def _run(self, *args, **kwargs):  # noqa: ARG002
         return ([],)

@@ -9,8 +9,8 @@ from onnx.reference.op_run import OpRun
 
 
 class CommonLSTM(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        OpRun.__init__(self, onnx_node, run_params)
+    def __init__(self, onnx_node, run_params):
+        super().__init__(onnx_node, run_params)
         self.n_outputs = len(onnx_node.output)
         self.n_gates = 3
 
@@ -83,14 +83,8 @@ class CommonLSTM(OpRun):
         initial_h=None,
         initial_c=None,
         P=None,
-        activation_alpha=None,  # noqa: ARG002
-        activation_beta=None,  # noqa: ARG002
-        activations=None,  # noqa: ARG002
-        clip=None,  # noqa: ARG002
-        direction=None,  # noqa: ARG002
-        hidden_size=None,
-        input_forget=None,  # noqa: ARG002
-        layout=None,  # noqa: ARG002
+        *args,  # noqa: ARG002
+        **kwargs,  # noqa: ARG002
     ):
         # TODO: support overridden attributes.
         n_gates = 4
