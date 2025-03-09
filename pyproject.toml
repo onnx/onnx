@@ -122,7 +122,6 @@ disable = [
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
 target-version = "py39"
 unsafe-fixes = true
-# "TC", # flake8-type-checking
 lint.select = [
     "A", # flake8-builtins
     "ARG", # flake8-unused-arguments

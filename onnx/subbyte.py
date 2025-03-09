@@ -6,8 +6,9 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 import typing_extensions
+import typing
 
-if typing_extensions.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from collections.abc import Sequence
 
 INT4_MIN = -8

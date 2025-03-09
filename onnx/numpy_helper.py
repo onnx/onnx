@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -14,7 +14,7 @@ import onnx._custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
-if typing_extensions.TYPE_CHECKING:
+if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
