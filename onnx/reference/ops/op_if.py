@@ -4,9 +4,12 @@
 
 from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
 
 from onnx.reference.op_run import OpRun
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 class If(OpRun):

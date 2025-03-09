@@ -7,7 +7,10 @@ import importlib
 import inspect
 import pkgutil
 import sys
-from types import ModuleType
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
 def collect_sample_implementations() -> dict[str, str]:
