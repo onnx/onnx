@@ -6,8 +6,7 @@ from __future__ import annotations
 
 import itertools
 import unittest
-from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pytest
@@ -45,6 +44,9 @@ from onnx.helper import (
     make_tensor_value_info,
 )
 from onnx.parser import parse_graph
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def get_available_versions(schema: OpSchema) -> set[int]:

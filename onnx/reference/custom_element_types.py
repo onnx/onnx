@@ -3,12 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
-
 try:
     import ml_dtypes
 except ImportError:
     ml_dtypes = None  # type: ignore[assignment]
+
+from typing import TYPE_CHECKING
 
 from onnx._custom_element_types import (
     bfloat16,
@@ -20,6 +20,9 @@ from onnx._custom_element_types import (
     int4,
     uint4,
 )
+
+if TYPE_CHECKING:
+    import numpy as np
 
 _supported_types = [
     (bfloat16, "bfloat16", "bfloat16"),
