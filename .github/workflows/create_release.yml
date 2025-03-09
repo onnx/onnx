@@ -93,6 +93,7 @@ jobs:
 
     needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-mac-freethreading, call-workflow-win, call-workflow-win-freethreading, call-workflow-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_wheel_testpypi == 'yes' ) && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
+
     steps:
       - name: print debug vars
         run: |
@@ -148,6 +149,7 @@ jobs:
 
     needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-mac-freethreading, call-workflow-win, call-workflow-win-freethreading, call-workflow-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+
     steps:
       - name: placeholder for debug vars
         run: |

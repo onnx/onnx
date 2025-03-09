@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -14,6 +13,9 @@ import typing_extensions
 import onnx._custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def _combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
@@ -803,10 +805,9 @@ def from_optional(
     if name:
         optional.name = name
 
-    if dtype:
+    if dtype is not None:
         # dtype must be a valid OptionalProto.DataType
-        valid_dtypes = list(OptionalProto.DataType.values())
-        if dtype not in valid_dtypes:
+        if dtype not in OptionalProto.DataType.values():
             raise TypeError(f"{dtype} must be a valid OptionalProto.DataType.")
         elem_type = dtype
     elif isinstance(opt, dict):

@@ -200,15 +200,15 @@ class ReferenceEvaluator:
             implementation a schema may define.
     """
 
-    def __init__(  # type: ignore
+    def __init__(
         self,
         proto: Any,
         opsets: dict[str, int] | None = None,
         functions: list[ReferenceEvaluator | FunctionProto] | None = None,  # type: ignore
         verbose: int = 0,
-        new_ops: list[OpRun] | None = None,
+        new_ops: list[type[OpRun]] | None = None,
         optimized: bool = True,
-    ):
+    ) -> None:
         if optimized:
             if new_ops is None:
                 new_ops = optimized_operators.copy()
@@ -221,7 +221,7 @@ class ReferenceEvaluator:
         self.input_types_ = None
 
         if isinstance(proto, ModelContainer):
-            self.container_ = proto
+            self.container_: ModelContainer | None = proto
             proto = self.container_.model_proto
         else:
             self.container_ = None
@@ -310,7 +310,7 @@ class ReferenceEvaluator:
                 self.new_ops_[key] = cl
         self._init()
 
-    def retrieve_external_data(self, initializer: TensorProto) -> np.array:
+    def retrieve_external_data(self, initializer: TensorProto) -> np.ndarray:
         """Returns a tensor saved as external."""
         info = ExternalDataInfo(initializer)
         location = info.location
