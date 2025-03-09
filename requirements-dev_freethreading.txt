@@ -10,3 +10,4 @@ ml_dtypes
 pytest
 pytest-cov
 pytest-xdist
+typing_extensions>=4.7.1

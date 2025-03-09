@@ -12,6 +12,7 @@ pytest-cov
 pytest-xdist
 setuptools
 twine
+typing_extensions>=4.7.1
 wheel
 # Dependencies for the reference implementation.
 -r requirements-reference.txt
