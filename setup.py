@@ -157,8 +157,8 @@ if timestamp is not None:
         mtime = TarInfoAttr(timestamp)
         uid = TarInfoAttr(0)
         gid = TarInfoAttr(0)
-        uname = TarInfoAttr('')
-        gname = TarInfoAttr('')
+        uname = TarInfoAttr("")
+        gname = TarInfoAttr("")
 
     def make_tarball(*args, **kwargs):
         tarinfo_orig = tarfile.TarFile.tarinfo
