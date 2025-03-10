@@ -170,8 +170,9 @@ if timestamp is not None:
             tarfile.time = time
             tarfile.TarFile.tarinfo = tarinfo_orig
 
-    archive_util.ARCHIVE_FORMATS['gztar'] = (
-        make_tarball, *archive_util.ARCHIVE_FORMATS['gztar'][1:],
+    archive_util.ARCHIVE_FORMATS["gztar"] = (
+        make_tarball,
+        *archive_util.ARCHIVE_FORMATS["gztar"][1:],
     )
 
 ################################################################################
