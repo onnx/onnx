@@ -128,6 +128,7 @@ if timestamp is not None:
         @staticmethod
         def time():
             return timestamp
+
         @staticmethod
         def localtime(_=None):
             return time.localtime(timestamp)
