@@ -120,6 +120,7 @@ if timestamp is not None:
     import stat
     import tarfile
     import time
+    from distutils import archive_util
 
     timestamp = float(max(int(timestamp), 0))
 
