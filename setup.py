@@ -115,9 +115,8 @@ def get_python_execute():
 # https://reproducible-builds.org/docs/source-date-epoch/
 # https://github.com/pypa/setuptools/issues/2133#issuecomment-1691158410
 
-timestamp = os.environ.get('SOURCE_DATE_EPOCH')
+timestamp = os.environ.get("SOURCE_DATE_EPOCH")
 if timestamp is not None:
-    import distutils.archive_util as archive_util
     import stat
     import tarfile
     import time
