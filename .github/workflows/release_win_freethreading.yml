@@ -48,9 +48,6 @@ jobs:
     - name: Build ONNX wheel
       run: |
         $arch = 'x64'
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          $arch = 'Win32'
-        }
 
         . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
 
