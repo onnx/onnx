@@ -29,7 +29,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
