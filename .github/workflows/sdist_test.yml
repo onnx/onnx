@@ -29,6 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,10 +39,9 @@ jobs:
       - name: Install dependencies and build ONNX
         run: |
           python -m pip install -q --upgrade pip
-          python -m pip install -r requirements-release.txt
-          git submodule update --init --recursive          
+          python -m pip install -r requirements-release.txt          
 
-          source workflow_scripts/protobuf/build_protobuf_unix.sh "4" "$(pwd)"/protobuf/protobuf_install
+          source workflow_scripts/protobuf/build_protobuf_unix.sh 3
                   
           pip install -e .
 
