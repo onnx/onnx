@@ -114,7 +114,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: always() && (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.9'))
+      if: (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.9'))
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
