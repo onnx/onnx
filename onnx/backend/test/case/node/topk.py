@@ -10,7 +10,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
+def topk_sorted_implementation(X, k, axis, largest):
     ind_axis = np.indices(X.shape)[axis]
     if largest:
         ind_axis = -ind_axis

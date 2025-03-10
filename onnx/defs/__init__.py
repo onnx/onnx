@@ -47,18 +47,18 @@ def onnx_ml_opset_version() -> int:
 
 
 @property  # type: ignore
-def _function_proto(self):  # type: ignore
+def _function_proto(self):
     func_proto = FunctionProto()
     func_proto.ParseFromString(self._function_body)
     return func_proto
 
 
-OpSchema = C.OpSchema  # type: ignore
+OpSchema = C.OpSchema
 OpSchema.function_body = _function_proto  # type: ignore
 
 
 @property  # type: ignore
-def _attribute_default_value(self):  # type: ignore
+def _attribute_default_value(self):
     attr = AttributeProto()
     attr.ParseFromString(self._default_value)
     return attr

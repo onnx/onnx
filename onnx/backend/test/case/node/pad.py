@@ -10,7 +10,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ignore
+def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):
     input_rank = data.ndim
     if axes is None:
         axes = list(range(input_rank))
