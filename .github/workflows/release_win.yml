@@ -63,7 +63,7 @@ jobs:
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
-          echo "Build weekly PyPI package"
+          echo "Build preview build PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }

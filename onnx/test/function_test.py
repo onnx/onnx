@@ -10,7 +10,7 @@ from onnx import checker, utils
 
 
 class TestFunction(unittest.TestCase):
-    def _verify_function_set(self, extracted_model, function_set, func_domain):  # type: ignore
+    def _verify_function_set(self, extracted_model, function_set, func_domain):
         checker.check_model(extracted_model)
         self.assertEqual(len(extracted_model.functions), len(function_set))
         for function in function_set:

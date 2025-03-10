@@ -5,12 +5,9 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Callable
-
-import numpy as np
+from typing import TYPE_CHECKING, Any, Callable
 
 import onnx
 from onnx.backend.test.case.test_case import TestCase
@@ -24,6 +21,11 @@ from onnx.onnx_pb import (
     TensorProto,
     TypeProto,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import numpy as np
 
 _NodeTestCases = []
 _TargetOpType = None
@@ -50,7 +52,7 @@ def _rename_edges_helper(
         if attr.HasField("ref_attr_name"):
             if attr.ref_attr_name in attribute_map:
                 new_attr = AttributeProto()
-                new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                new_attr.CopyFrom(attribute_map[attr.ref_attr_name])
                 new_attr.name = attr.name
                 new_node.attribute.extend([new_attr])
         else:

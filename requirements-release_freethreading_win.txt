@@ -1,0 +1,14 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+build
+cmake
+numpy==2.2.0
+parameterized
+protobuf==4.25.1
+pytest
+pytest-cov
+pytest-xdist
+setuptools
+ml_dtypes

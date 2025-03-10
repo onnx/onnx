@@ -73,21 +73,21 @@ jobs:
         TEST_HUB=1 pytest
 
     - name: Verify ONNX with the latest numpy
-      if: (steps.build_manylinux.outcome == 'success') && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: (steps.build_manylinux.outcome == 'success') && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: (steps.build_manylinux.outcome == 'success') && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
         python -m pip install dist/*manylinux2014_x86_64.whl

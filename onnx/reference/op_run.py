@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import abc
-from collections.abc import Iterable
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
@@ -24,6 +23,9 @@ from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_versi
 from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
 from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _split_class_name(name):  # type: ignore

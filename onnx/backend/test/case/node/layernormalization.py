@@ -11,7 +11,7 @@ from onnx.backend.test.case.node import expect
 
 
 # Layer normalization's reference implementation
-def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):  # type: ignore
+def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):
     X_shape = X.shape
     X_rank = len(X_shape)
     if axis < 0:
@@ -59,7 +59,7 @@ def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):  # type: ignore
     return Y, X_mean, X_inv_std_dev
 
 
-def calculate_normalized_shape(X_shape, axis):  # type: ignore
+def calculate_normalized_shape(X_shape, axis):
     X_rank = len(X_shape)
     if axis < 0:
         axis = axis + X_rank

@@ -31,7 +31,7 @@ from onnx.reference.op_run import OpRun
 def reshape_input(
     value: np.ndarray,
     shape: tuple[int, ...],
-    axis: int | None = None,
+    axis: int,
     block_size: int | None = None,
 ) -> np.ndarray:
     """Reshape/Replicate scale/zero-point to be broadcastable to shape.

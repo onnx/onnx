@@ -11,7 +11,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def dropout(X, drop_probability=0.5, seed=0, training_mode=False, return_mask=False):  # type: ignore
+def dropout(X, drop_probability=0.5, seed=0, training_mode=False, return_mask=False):
     if drop_probability == 0 or training_mode is False:
         if return_mask is True:
             return X, np.ones(X.shape, dtype=bool)

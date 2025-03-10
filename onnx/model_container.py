@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Iterable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -18,6 +17,9 @@ import onnx
 import onnx.external_data_helper as ext_data
 import onnx.helper
 import onnx.onnx_cpp2py_export.checker as c_checker
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _set_external_data(
@@ -81,7 +83,7 @@ class ModelContainer:
     No tensor is stored on disk until the user explicitly saves the model.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.model_proto_: onnx.ModelProto | None = None
         self.large_initializers: dict[str, np.ndarray] = {}
 
@@ -128,7 +130,7 @@ class ModelContainer:
                 )
         self.large_initializers = large_initializers
 
-    def check_large_initializers(self):
+    def check_large_initializers(self) -> None:
         for tensor in ext_data._get_all_tensors(self.model_proto):
             if not ext_data.uses_external_data(tensor):
                 continue

@@ -11,7 +11,7 @@ from onnx.backend.test.case.node import expect
 from onnx.reference.ops.op_rms_normalization import _rms_normalization
 
 
-def calculate_normalized_shape(x_shape, axis):  # type: ignore
+def calculate_normalized_shape(x_shape, axis):
     rank = len(x_shape)
     if axis < 0:
         axis = axis + rank

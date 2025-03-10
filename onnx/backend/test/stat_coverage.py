@@ -6,13 +6,15 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Sequence
-from typing import IO, Any
+from typing import IO, TYPE_CHECKING, Any
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.test.loader import load_model_tests
 from onnx.backend.test.runner import Runner
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
