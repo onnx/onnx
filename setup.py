@@ -180,8 +180,6 @@ if timestamp is not None:
 ################################################################################
 
 
-
-
 def create_version(directory: str):
     """Create version.py based on VERSION_INFO."""
     version_file_path = os.path.join(directory, "onnx", "version.py")
