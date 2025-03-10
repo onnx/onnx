@@ -136,6 +136,7 @@ if timestamp is not None:
     class TarInfoMode:
         def __get__(self, obj, objtype=None):
             return obj._mode
+
         def __set__(self, obj, stmd):
             ifmt = stat.S_IFMT(stmd)
             mode = stat.S_IMODE(stmd) & 0o7755
