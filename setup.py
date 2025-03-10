@@ -144,8 +144,10 @@ if timestamp is not None:
     class TarInfoAttr:
         def __init__(self, value):
             self.value = value
+
         def __get__(self, obj, objtype=None):
             return self.value
+
         def __set__(self, obj, value):
             pass
 
