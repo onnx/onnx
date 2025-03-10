@@ -28,16 +28,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 15
+    open-pull-requests-limit: 20
     labels:      
       - "github_actions"
       - "run release CIs"      
 
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 10
-    labels:      
-      - "docker"
-      - "run release CIs"
