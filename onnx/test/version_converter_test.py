@@ -2133,7 +2133,7 @@ class TestVersionConverter(unittest.TestCase):
         context_manager = (
             contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
         )
-        with context_manager:  # type: ignore[attr-defined]
+        with context_manager:
             test(x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype)
 
     @parameterized.parameterized.expand(
@@ -2181,7 +2181,7 @@ class TestVersionConverter(unittest.TestCase):
         context_manager = (
             contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
         )
-        with context_manager:  # type: ignore[attr-defined]
+        with context_manager:
             test(y_shape, scale_shape, axis, block_size)
 
 
