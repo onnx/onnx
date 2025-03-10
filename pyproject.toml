@@ -112,8 +112,11 @@ profile = "black"
 disable = [
     "format",
     "import-error",
+    "invalid-name",
     "line-too-long",
+    "missing-docstring",
     "no-name-in-module",
+    "too-few-public-methods",
     "use-dict-literal",     # Dict literals are sometimes preferable when creating kwargs
     "useless-return",
 ]
