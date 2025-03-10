@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import itertools
 import math
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def get_pad_shape(

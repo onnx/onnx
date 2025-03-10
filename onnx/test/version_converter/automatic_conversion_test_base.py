@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import string
 import unittest
-from collections.abc import Sequence
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import onnx
 from onnx import TensorProto, ValueInfoProto, helper, shape_inference, version_converter
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 LATEST_OPSET = onnx.defs.onnx_opset_version()
 

@@ -4,14 +4,16 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from collections.abc import Sequence
-from typing import Any, NewType
-
-import numpy
+from typing import TYPE_CHECKING, Any, NewType
 
 import onnx.checker
 import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx import IR_VERSION, ModelProto, NodeProto
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import numpy
 
 
 class DeviceType:

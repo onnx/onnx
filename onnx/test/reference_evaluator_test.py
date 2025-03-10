@@ -16,12 +16,12 @@ import importlib
 import itertools
 import math
 import unittest
-from collections.abc import Sequence
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
 from os import getenv
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 import numpy as np
 import parameterized
@@ -73,6 +73,9 @@ from onnx.reference.ops.op_col2im import (
 from onnx.reference.ops.op_conv import Conv, _conv_implementation
 from onnx.reference.ops_optimized import Conv as ConvOptimized
 from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_im2col
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release

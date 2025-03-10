@@ -3,14 +3,16 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class Concat(Base):

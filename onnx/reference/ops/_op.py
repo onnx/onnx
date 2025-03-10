@@ -3,16 +3,18 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from onnx.onnx_pb import NodeProto
 from onnx.reference.custom_element_types import (
     convert_from_ml_dtypes,
     convert_to_ml_dtypes,
 )
 from onnx.reference.op_run import OpRun, RuntimeTypeError
+
+if TYPE_CHECKING:
+    from onnx.onnx_pb import NodeProto
 
 
 class OpRunUnary(OpRun):
