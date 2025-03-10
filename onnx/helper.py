@@ -7,14 +7,7 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
-from collections.abc import KeysView, MutableSequence, Sequence
-from typing import (
-    Any,
-    Callable,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, cast
 
 import google.protobuf.message
 import numpy as np
@@ -42,6 +35,11 @@ from onnx import (
     mapping,
     subbyte,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import KeysView, Sequence
+
+    from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
 VersionRowType = Union[tuple[str, int, int, int], tuple[str, int, int, int, int]]
 VersionTableType = list[VersionRowType]
@@ -888,21 +886,20 @@ def make_sequence(
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
 
-    attribute: MutableSequence | None = None
+    attribute: RepeatedCompositeFieldContainer | None = None
     if elem_type == SequenceProto.TENSOR:
-        attribute = sequence.tensor_values  # type: ignore[assignment]
+        attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
+        attribute = sequence.sparse_tensor_values
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values  # type: ignore[assignment]
+        attribute = sequence.sequence_values
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values  # type: ignore[assignment]
+        attribute = sequence.map_values
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values  # type: ignore[assignment]
+        attribute = sequence.optional_values
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
-    assert attribute is not None
     attribute.extend(values)
     return sequence
 
@@ -1719,4 +1716,4 @@ def _attr_type_to_str(attr_type: int) -> str:
     """
     if attr_type in AttributeProto.AttributeType.values():
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]
+    return AttributeProto.AttributeType.keys()[0]

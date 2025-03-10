@@ -9,8 +9,7 @@ import pathlib
 import tempfile
 import unittest
 import uuid
-from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import parameterized
@@ -33,6 +32,9 @@ from onnx.external_data_helper import (
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
