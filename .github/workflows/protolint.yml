@@ -1,0 +1,34 @@
+name: CI for ONNX Models with Protolint
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go (for Protolint)
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.16'
+
+    - name: Install Protolint
+      run: |
+        # Install Protolint using Go
+        go install github.com/yoheimuta/protolint/cmd/protolint@latest
+        # Ensure Go binaries are in the PATH
+        echo "$GOPATH/bin" >> $GITHUB_PATH
+
+    - name: Lint Protobuf files
+      run: |
+        # Run Protolint on your .proto files
+        protolint lint ./onnx/*.proto*
