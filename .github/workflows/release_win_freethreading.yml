@@ -47,12 +47,8 @@ jobs:
 
     - name: Build ONNX wheel
       run: |
-        $arch = 'x64'
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          $arch = 'Win32'
-        }
 
-        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch x64
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
@@ -83,7 +79,7 @@ jobs:
         python -m pip install -v pillow
         pytest
         
-    - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b
+    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist

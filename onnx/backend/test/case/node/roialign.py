@@ -10,7 +10,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def get_roi_align_input_values():  # type: ignore
+def get_roi_align_input_values():
     X = np.array(
         [
             [
