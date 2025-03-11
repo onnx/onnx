@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# could be integraded in release_win.yml when # uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b contains 3.13t, used Quansight-Labs/setup-python@v5 instead
+
+
 name: WindowsRelease (freethreading)
 
 on:  # Specifies the event triggering the workflow
