@@ -53,7 +53,7 @@ def update_inputs_outputs_dims(
             shape = info.type.tensor_type.shape
             for dim in shape.dim:
                 if dim.HasField("dim_param"):
-                    dim_param_set.add(dim.dim_param)  # type: ignore
+                    dim_param_set.add(dim.dim_param)
 
     init_dim_param_set(dim_param_set, model.graph.input)  # type: ignore
     init_dim_param_set(dim_param_set, model.graph.output)  # type: ignore

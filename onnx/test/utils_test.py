@@ -14,7 +14,7 @@ from onnx import TensorProto, helper
 
 class TestUtilityFunctions(unittest.TestCase):
     def test_extract_model(self) -> None:
-        def create_tensor(name):  # type: ignore
+        def create_tensor(name):
             return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1, 2])
 
         A0 = create_tensor("A0")
