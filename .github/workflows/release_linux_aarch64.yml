@@ -90,19 +90,32 @@ jobs:
             ./dist/*.whl
 
     - name: Verify ONNX with the latest numpy and protobuf
-      if: steps.build_manylinux.outcome == 'success' && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
           bash -exc '\
           source .env/bin/activate && \
-          python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
+          python -m pip uninstall -y numpy onnx protobuf && python -m pip install -vv numpy protobuf && \
+          python -m pip install dist/*manylinux2014_aarch64.whl && \
+          pytest && \
+          deactivate'
+
+
+    - name: Verify ONNX with the latest numpy and protobuf<6
+      if: steps.build_manylinux.outcome == 'success'
+      run: |
+          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
+          ${{ env.img }} \
+          bash -exc '\
+          source .env/bin/activate && \
+          python -m pip uninstall -y numpy onnx protobuf && python -m pip install -vv numpy protobuf<6 && \
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
 
     - name: Verify ONNX with the minimumly supported packages
-      if: steps.build_manylinux.outcome == 'success' && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
