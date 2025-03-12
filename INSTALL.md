@@ -11,7 +11,7 @@ SPDX-License-Identifier: Apache-2.0
 ONNX released packages are published in PyPi.
 
 ```sh
-pip install onnx  # or pip install onnx[reference] for optional reference implementation dependencies
+pip install onnx  # or pip install onnx[reference2] for optional reference implementation dependencies
 ```
 
 [ONNX weekly packages](https://pypi.org/project/onnx-weekly/) are published in PyPI to enable experimentation and early testing.
