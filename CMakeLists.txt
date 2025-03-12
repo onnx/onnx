@@ -251,16 +251,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
 
     include(FetchContent)
-    message("Loading Dependencies URLs ...")
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240722.1/abseil-cpp-20240722.1.tar.gz)
-    set(AbseilSHA1 0d6b07c6f3352981d3660978e109f2bc14594a3d)
-    FetchContent_Declare(
-      Abseil
-      URL ${AbseilURL}
-      URL_HASH SHA1=${AbseilSHA1}
-    )
     set(ABSL_PROPAGATE_CXX_STD 1)
-    set(abseil_BUILD_TESTING 0)
     set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build thirdparty libs.
@@ -268,12 +259,6 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     if(CMAKE_COMPILER_IS_GNUCXX)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=all")
     endif()
-    message(STATUS "Download and build Abseil from ${AbseilURL}")
-    FetchContent_Populate(Abseil)
-    FetchContent_GetProperties(Abseil)
-    # ABSL_ROOT_DIR is required by Protobuf.
-    set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
-    message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
     set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.0/protobuf-30.0.tar.gz)
     set(ProtobufSHA1 58b15ca222585f62c625292a5bfd098e5a102ed6)
     FetchContent_Declare(
@@ -283,7 +268,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
-    FetchContent_MakeAvailable(Protobuf Abseil)
+    FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
     set(Protobuf_VERSION "6.30.0")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
