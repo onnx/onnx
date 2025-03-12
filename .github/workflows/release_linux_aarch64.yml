@@ -38,8 +38,8 @@ jobs:
         platforms: arm64
 
       # Creating a virtual environment on machine with the help of docker container \
-      # and installing the dependencies inside that \
-      # so that we can use installed dependencies.
+      # and installing the dependencies inside that so that we can use installed \
+      # dependencies.
     - name: Install dependencies
       id: install_dependencies
       run: |
@@ -90,7 +90,7 @@ jobs:
             ./dist/*.whl
 
     - name: Verify ONNX with the latest numpy and protobuf
-      if: steps.build_manylinux.outcome == 'success' && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
@@ -102,7 +102,7 @@ jobs:
           deactivate'
 
     - name: Verify ONNX with the minimumly supported packages
-      if: steps.build_manylinux.outcome == 'success' && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
          docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
           ${{ env.img }} \
