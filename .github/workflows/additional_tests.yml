@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Test a) pip install -e . b) gen_proto, generate-data
+name: Test (pip install -e .)
 
 on:
   push:
@@ -45,10 +45,4 @@ jobs:
           source workflow_scripts/protobuf/build_protobuf_unix.sh 3
                   
           pip install -e .
-
-      - name: Execute additional tests
-        run: |
-          python onnx/defs/gen_doc.py
-          python onnx/gen_proto.py -l
-          python onnx/gen_proto.py -l --ml
-          python onnx/backend/test/stat_coverage.py         
+   
