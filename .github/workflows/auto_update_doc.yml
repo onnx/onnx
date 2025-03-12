@@ -23,7 +23,7 @@ jobs:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         # Checkout the branch made in the fork. Will automatically push changes
         # back to this branch.
-        ref: ${{ github.head_ref }}
+        ref: ${{ github.head_sha }}
         persist-credentials: false
     - name: Setup Python
       uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
