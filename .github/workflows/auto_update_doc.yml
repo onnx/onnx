@@ -27,7 +27,7 @@ jobs:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         # Checkout the branch made in the fork. Will automatically push changes
         # back to this branch.
-        ref: ${{ github.head_ref }}
+        ref: ${{ github.event.pull_request.head.sha }}
         persist-credentials: true # cmd_tools contains git commands
         
     - name: Setup Python
