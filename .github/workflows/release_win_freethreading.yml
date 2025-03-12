@@ -2,6 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# could be integraded in release_win.yml when # uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b contains 3.13t, used Quansight-Labs/setup-python@v5 instead
+
+
 name: WindowsRelease (freethreading)
 
 on:  # Specifies the event triggering the workflow
@@ -17,7 +20,7 @@ permissions:  # set top-level default permissions as security best practice
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: windows-latest
+    runs-on: windows-2022
     strategy:
       matrix:
         python-version: ['3.13t']
@@ -30,7 +33,7 @@ jobs:
          persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: Quansight-Labs/setup-python@v5
+      uses: Quansight-Labs/setup-python@550c8a087c8e002b86f428cf42937d4f13861955
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
