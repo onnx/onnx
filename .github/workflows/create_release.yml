@@ -99,11 +99,7 @@ jobs:
         run: |
           echo "All environment variables:"
           printenv
-          echo "call-workflow-sdist result: ${{ needs.call-workflow-sdist.result }}"
-          echo "call-workflow-mac result: ${{ needs.call-workflow-mac.result }}"
-          echo "call-workflow-win result: ${{ needs.call-workflow-win.result }}"
-          echo "call-workflow-ubuntu_x86 result: ${{ needs.call-workflow-ubuntu_x86.result }}"
-          echo "call-workflow-ubuntu_aarch64 result: ${{ needs.call-workflow-ubuntu_aarch64.result }}"
+
 
   publish_preview_build_to_testpypi_weekly:
     name: Publish preview build to test.pypi-weekly
@@ -155,11 +151,6 @@ jobs:
         run: |
           echo "All environment variables:"
           printenv
-          echo "call-workflow-sdist result: ${{ needs.call-workflow-sdist.result }}"
-          echo "call-workflow-mac result: ${{ needs.call-workflow-mac.result }}"
-          echo "call-workflow-win result: ${{ needs.call-workflow-win.result }}"
-          echo "call-workflow-ubuntu_x86 result: ${{ needs.call-workflow-ubuntu_x86.result }}"
-          echo "call-workflow-ubuntu_aarch64 result: ${{ needs.call-workflow-ubuntu_aarch64.result }}"
 
   publish_preview_build_to_pypi_weekly:
     name: Publish preview build to pypi-weekly
