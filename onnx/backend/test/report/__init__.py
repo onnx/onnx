@@ -40,7 +40,7 @@ def pytest_runtest_logreport(report: Any) -> None:
         _add_mark(mark, "passed")
 
 
-@pytest.hookimpl(trylast=True)  # type: ignore
+@pytest.hookimpl(trylast=True)
 def pytest_terminal_summary(
     terminalreporter: _pytest.terminal.TerminalReporter,
     exitstatus: int,  # noqa: ARG001
