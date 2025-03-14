@@ -3156,19 +3156,54 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* num_heads_attr = ctx.getAttribute("num_heads");
           int64_t num_heads = (num_heads_attr != nullptr) ? num_heads_attr->i() : 0;
 
+          auto AddSubgraph = [](const std::string& graph_name,
+                                const std::vector<NodeProto>& branch_nodes,
+                                const std::vector<std::string>& inputs,
+                                const std::vector<std::string>& outputs) -> GraphProto {
+            GraphProto graph;
+            graph.set_name(graph_name);
+            for (const auto& input : inputs) {
+              graph.add_input()->set_name(input);
+            }
+            for (const auto& output : outputs) {
+              graph.add_output()->set_name(output);
+            }
+            for (const auto& node : branch_nodes) {
+              *graph.add_node() = node;
+            }
+            return graph;
+          };
+
           FunctionBuilder builder(functionProto);
           // Set input tensor to the correct shape if input shape is 3D
           // NewShape = [batch_size, sequence_length, num_heads, head_size]
+
+          builder.Add("XIn = Identity (X)")
+              .Add("XShape = Shape (X)") // shape of input tensor
+              .Add("Rank = Size (XShape)"); // rank of input tensor
+
+          // Reshape tensor to 4D if input is 3D
           builder.Const1D("Zero1D", (int64_t)0)
               .Const1D("NumHeads", num_heads) // num_heads
               .Const1D("NegOne", (int64_t)(-1)) // head_size, inferred from other dimensions
-              .Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
-              .Add("XReshaped = Reshape (X, NewShape)");
-          if (num_heads > 0) {
-            builder.Add("XTransposed = Identity(XReshaped)");
-          } else {
-            builder.Add("XTransposed = Transpose <perm = [0, 2, 1, 3]> (XReshaped)");
-          }
+              .Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)");
+
+          // Pick the correct X based on number of dimensions
+          builder.Const1D("Three1D", (int64_t)3).Add("XCond = Equal(Rank, Three1D)");
+
+          // Build nodes for then and else branches
+          std::vector<NodeProto> then_nodes =
+              FunctionBodyHelper::BuildNodes({{{"XReshaped"}, "Reshape", {"XIn", "NewShape"}}});
+
+          std::vector<NodeProto> else_nodes = FunctionBodyHelper::BuildNodes(
+              {{{"XTransposed"}, "Transpose", {"XIn"}, {{"perm", std::vector<int64_t>{0, 2, 1, 3}}}}});
+
+          // Build nodes for then and else branches
+          auto then_branch_graph = AddSubgraph("x_then_branch_graph", then_nodes, {"XIn", "NewShape"}, {"XReshaped"});
+          auto else_branch_graph = AddSubgraph("x_else_branch_graph", else_nodes, {"XIn"}, {"XTransposed"});
+
+          // Build nodes for then and else branches
+          builder.Add("XInput = If (XCond)", "then_branch", then_branch_graph, "else_branch", else_branch_graph);
 
           // Rotary embedding dimension is the value along which the input is to be split
           // There are two cases for the rotary embedding dimension:
@@ -3176,7 +3211,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // * 2 or head_size
           // 2. Partial rotation: rotary embedding dimension is provided, rotary_embedding_dim = rotary_embedding_dim
 
-          builder.Add("HeadSize = Shape <start = 3, end = 4> (XTransposed)");
+          builder.Add("HeadSize = Shape <start = 3, end = 4> (XInput)");
           if (rotary_embedding_dim > 0) {
             builder.Const1D("RotaryEmbedDim", rotary_embedding_dim);
           } else {
@@ -3187,7 +3222,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
           // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
           // shape of input not to rotate = input[:,:,:,rotary_embedding_dim:]
-          builder.Add("XToRotate, XNoRotate = Split <axis = -1, num_outputs = 2> (XTransposed, RotateSplitLengths)");
+          builder.Add("XToRotate, XNoRotate = Split <axis = -1, num_outputs = 2> (XInput, RotateSplitLengths)");
 
           // Gather the cos and sine matrices from the respective caches using position ids if provided.
           // Otherwise Gather op functions as an Identity op.
@@ -3279,13 +3314,26 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Combine rotated parts with non-rotated parts
           builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)");
-          if (num_heads > 0) {
-            builder.Add("YTransposed = Identity(XConcat)");
-          } else {
-            builder.Add("YTransposed = Transpose <perm = [0, 2, 1, 3]> (XConcat)");
-          }
-          // Reshape back to 3D shape if input is a 3D tensor
-          builder.Add("XShape = Shape(X)").Add("Y = Reshape(YTransposed, XShape)");
+
+          // Select the correct output based on number of dimensions
+          // If input is 3D, reshape the output to 3D
+          // If input is 4D, transpose the output to match original shape
+          builder.Add("YCond = Equal(Rank, Three1D)");
+
+          // Build nodes for then and else branches
+          std::vector<NodeProto> y_then_nodes =
+              FunctionBodyHelper::BuildNodes({{{"YReshaped"}, "Reshape", {"XConcat", "XShape"}}});
+
+          std::vector<NodeProto> y_else_nodes = FunctionBodyHelper::BuildNodes(
+              {{{"YTransposed"}, "Transpose", {"XConcat"}, {{"perm", std::vector<int64_t>{0, 2, 1, 3}}}}});
+
+          // Create GraphProto for each branch
+          auto y_then_branch_graph =
+              AddSubgraph("y_then_branch_graph", y_then_nodes, {"XConcat", "XShape"}, {"YReshaped"});
+          auto y_else_branch_graph = AddSubgraph("y_else_branch_graph", y_else_nodes, {"XConcat"}, {"YTransposed"});
+
+          // Add the If node with branches
+          builder.Add("Y = If (YCond)", "then_branch", y_then_branch_graph, "else_branch", y_else_branch_graph);
 
           schema.BuildFunction(functionProto);
           return true;
