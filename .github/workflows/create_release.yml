@@ -7,6 +7,9 @@ on:
   schedule:
     # Run weekly on Monday 00:00 UTC
     - cron:  '00 00 * * MON'
+  release:
+    branches: [rel-*]
+    types: [published]
   push:
     branches: [main, rel-*]
   pull_request:
@@ -66,7 +69,6 @@ jobs:
       os: "win"
     secrets: inherit
 
-
   call-workflow-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
@@ -78,8 +80,7 @@ jobs:
     uses: ./.github/workflows/release_mac_freethreading.yml
     with:
       os: "macos"
-    secrets: inherit
-  
+    secrets: inherit 
 
   call-workflow-sdist:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
