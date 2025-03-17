@@ -3156,18 +3156,37 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* num_heads_attr = ctx.getAttribute("num_heads");
           int64_t num_heads = (num_heads_attr != nullptr) ? num_heads_attr->i() : 0;
 
+          // Ensure that num_heads does not control reshaping of input tensor
+          // when input tensor is 4D
+          int64_t is_input_4d = 1;
+          auto* x_tp = ctx.getInputType(0);
+          if ((x_tp == nullptr) || (!x_tp->has_tensor_type()))
+            return false;
+          if (!(x_tp->tensor_type().has_shape())) {
+            return false;
+          }
+          if (x_tp->tensor_type().shape().dim_size() == 4) {
+            is_input_4d = 1;
+          } else if (x_tp->tensor_type().shape().dim_size() == 3) {
+            is_input_4d = 0;
+          } else {
+            return false;
+          }
+
           FunctionBuilder builder(functionProto);
           // Set input tensor to the correct shape if input shape is 3D
           // NewShape = [batch_size, sequence_length, num_heads, head_size]
+
+          // Reshape tensor to 4D if input is 3D
           builder.Const1D("Zero1D", (int64_t)0)
               .Const1D("NumHeads", num_heads) // num_heads
-              .Const1D("NegOne", (int64_t)(-1)) // head_size, inferred from other dimensions
-              .Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
-              .Add("XReshaped = Reshape (X, NewShape)");
-          if (num_heads > 0) {
-            builder.Add("XTransposed = Identity(XReshaped)");
+              .Const1D("NegOne", (int64_t)(-1)); // head_size, inferred from other dimensions
+
+          if (is_input_4d == 0) {
+            builder.Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
+                .Add("XIn = Reshape (X, NewShape)"); // new shape of input tensor: 4D tensor
           } else {
-            builder.Add("XTransposed = Transpose <perm = [0, 2, 1, 3]> (XReshaped)");
+            builder.Add("XIn = Transpose <perm = [0, 2, 1, 3]> (X)");
           }
 
           // Rotary embedding dimension is the value along which the input is to be split
@@ -3176,7 +3195,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // * 2 or head_size
           // 2. Partial rotation: rotary embedding dimension is provided, rotary_embedding_dim = rotary_embedding_dim
 
-          builder.Add("HeadSize = Shape <start = 3, end = 4> (XTransposed)");
+          builder.Add("HeadSize = Shape <start = 3, end = 4> (XIn)");
           if (rotary_embedding_dim > 0) {
             builder.Const1D("RotaryEmbedDim", rotary_embedding_dim);
           } else {
@@ -3187,7 +3206,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
           // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
           // shape of input not to rotate = input[:,:,:,rotary_embedding_dim:]
-          builder.Add("XToRotate, XNoRotate = Split <axis = -1, num_outputs = 2> (XTransposed, RotateSplitLengths)");
+          builder.Add("XToRotate, XNoRotate = Split <axis = -1> (XIn, RotateSplitLengths)");
 
           // Gather the cos and sine matrices from the respective caches using position ids if provided.
           // Otherwise Gather op functions as an Identity op.
@@ -3279,7 +3298,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Combine rotated parts with non-rotated parts
           builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)");
-          if (num_heads > 0) {
+
+          if (is_input_4d == 0) {
             builder.Add("YTransposed = Identity(XConcat)");
           } else {
             builder.Add("YTransposed = Transpose <perm = [0, 2, 1, 3]> (XConcat)");
