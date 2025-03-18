@@ -18,9 +18,6 @@ from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
 class CastLike(Base):
     @staticmethod
     def export() -> None:
-        expected = None
-        expected_tensor = None
-        like_tensor = None
         shape = (3, 4)
         test_cases = [
             ("FLOAT", "FLOAT16"),
