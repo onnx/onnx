@@ -13143,7 +13143,7 @@ This version of the operator has been available since version 11 of the default 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] = updates[idx]
+          output[tuple(indices[idx])] = updates[idx]
 
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
@@ -17964,7 +17964,7 @@ This version of the operator has been available since version 13 of the default 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] = updates[idx]
+          output[tuple(indices[idx])] = updates[idx]
 
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
@@ -20737,7 +20737,7 @@ This version of the operator has been available since version 16 of the default 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] = updates[idx]
+          output[tuple(indices[idx])] = updates[idx]
   The order of iteration in the above loop is not specified.
   In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
   This ensures that the output value does not depend on the iteration order.
@@ -20750,12 +20750,12 @@ This version of the operator has been available since version 16 of the default 
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] += updates[idx]
+          output[tuple(indices[idx])] += updates[idx]
   When `reduction` is set to "mul", `output` is calculated as follows:
       output = np.copy(data)
       update_indices = indices.shape[:-1]
       for idx in np.ndindex(update_indices):
-          output[indices[idx]] *= updates[idx]
+          output[tuple(indices[idx])] *= updates[idx]
   This operator is the inverse of GatherND.
   Example 1:
   ```
@@ -22470,7 +22470,7 @@ This version of the operator has been available since version 18 of the default 
   output = np.copy(data)
   update_indices = indices.shape[:-1]
   for idx in np.ndindex(update_indices):
-      output[indices[idx]] = updates[idx]
+      output[tuple(indices[idx])] = updates[idx]
   ```
 
   The order of iteration in the above loop is not specified.
@@ -22487,7 +22487,7 @@ This version of the operator has been available since version 18 of the default 
   output = np.copy(data)
   update_indices = indices.shape[:-1]
   for idx in np.ndindex(update_indices):
-      output[indices[idx]] = f(output[indices[idx]], updates[idx])
+      output[tuple(indices[idx])] = f(output[tuple(indices[idx])], updates[idx])
   ```
 
   where the `f` is `+`, `*`, `max` or `min` as specified.
