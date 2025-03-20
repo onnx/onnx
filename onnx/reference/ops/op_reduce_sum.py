@@ -20,9 +20,7 @@ class ReduceSum_1(OpRunReduceNumpy):
 
 class ReduceSum_13(OpRunReduceNumpy):
     def _run(self, x, axes=None, keepdims=None, noop_with_empty_axes=None):  # type: ignore
-        if (axes is None or axes.shape == (0,)) and noop_with_empty_axes:
-            return (x,)
-        axes = self.handle_axes(axes)
+        axes = self.handle_axes(axes, noop_with_empty_axes)
         try:
             res = np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype)
             if keepdims == 0 and not isinstance(res, np.ndarray):

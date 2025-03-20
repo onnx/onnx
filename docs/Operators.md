@@ -2685,7 +2685,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.bool)
+attn_mask = np.random.rand(4, 6).astype(np.bool_)
 
 Y, _, _, _ = _compute_attention(
     Q,
@@ -24135,7 +24135,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24144,7 +24144,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -24394,7 +24394,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24403,7 +24403,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -24671,7 +24671,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24680,7 +24680,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -24839,7 +24839,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24848,7 +24848,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25104,7 +25104,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -25113,7 +25113,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25411,7 +25411,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -25420,7 +25420,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25651,7 +25651,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -25660,7 +25660,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25961,7 +25961,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -25970,7 +25970,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -26218,7 +26218,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -26227,7 +26227,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -26547,7 +26547,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing every input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -26556,7 +26556,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs

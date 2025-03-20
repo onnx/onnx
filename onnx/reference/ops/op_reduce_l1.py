@@ -22,10 +22,7 @@ class ReduceL1_1(OpRunReduceNumpy):
 
 class ReduceL1_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):  # type: ignore
-        if self.is_axes_empty(axes) and noop_with_empty_axes:  # type: ignore
-            return (data,)
-
-        axes = self.handle_axes(axes)
+        axes = self.handle_axes(axes, noop_with_empty_axes)
         keepdims = keepdims != 0  # type: ignore
         res = np.sum(np.abs(data), axis=axes, keepdims=keepdims).astype(
             dtype=data.dtype

@@ -163,13 +163,16 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
     def is_axes_empty(self, axes):
         return axes is None
 
-    def handle_axes(self, axes):  # noqa: PLR0911
+    def handle_axes(self, axes, noop_with_empty_axes = False):  # noqa: PLR0911
         if isinstance(axes, tuple):
-            if len(axes) == 0:
+            if len(axes) == 0 and not noop_with_empty_axes:
                 return None
             return axes
         if axes is None:
-            return None
+            if noop_with_empty_axes:
+                return ()
+            else:
+                return None
         if isinstance(axes, (int, tuple)):
             return axes
         if not isinstance(axes, np.ndarray):
