@@ -296,15 +296,6 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
   message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 endif()
 
-# abseil build would fail if ONNX_WERROR is on.
-if(ONNX_WERROR)
-  if(MSVC)
-    add_compile_options("/WX")
-  else()
-    add_compile_options("-Werror")
-  endif()
-endif()
-
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
 # orflow/contrib/cmake/tf_core_framework.cmake to solve the problem that
@@ -478,13 +469,6 @@ target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
 
 if(MSVC)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(EXTRA_FLAGS
-          "-Wno-microsoft-unqualified-friend"
-          "-Wno-absolute-value"
-          "-Wno-unknown-argument"
-          "-Qunused-arguments")
-  endif()
   if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
   else()
@@ -648,11 +632,19 @@ if(MSVC)
   set_target_properties(onnx
                         PROPERTIES STATIC_LIBRARY_FLAGS
                                    "${onnx_static_library_flags}")
+  if(ONNX_WERROR)
+    target_compile_options(onnx PRIVATE "/WX")
+    target_compile_options(onnx_proto PRIVATE "/WX")
+  endif()
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
     target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
     target_compile_options(onnx_proto PRIVATE "-Wno-stringop-overflow")
+  endif()
+  if(ONNX_WERROR)
+    target_compile_options(onnx PRIVATE "-Werror")
+    target_compile_options(onnx_proto PRIVATE "-Werror")
   endif()
 endif()
 
