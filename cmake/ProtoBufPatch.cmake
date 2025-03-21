@@ -1,4 +1,5 @@
 # CMake file to replace the string contents
+# Copied and modified from https://github.com/pytorch/pytorch/blob/main/cmake/ProtoBufPatch.cmake
 # Usage example:
 #   cmake -DFILENAME=CMakeLists.txt -P ProtoBufPatch.cmake
 
