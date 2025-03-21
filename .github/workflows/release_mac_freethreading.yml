@@ -52,7 +52,7 @@ jobs:
         CXX: "clang++"
         ONNX_ML: 1
         CMAKE_OSX_ARCHITECTURES: "arm64;x86_64"
-        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
