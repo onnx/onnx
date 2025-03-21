@@ -625,6 +625,7 @@ if(MSVC)
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
+                                 /wd4141 # 'inline': used more than once
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
                          PRIVATE /MP
@@ -635,6 +636,7 @@ if(MSVC)
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
+                                 /wd4141 # 'inline': used more than once
                                  ${EXTRA_FLAGS})
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
