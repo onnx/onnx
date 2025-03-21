@@ -14,9 +14,8 @@ import tempfile
 import time
 import unittest
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
 from re import Pattern
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -24,10 +23,14 @@ import numpy as np
 import onnx
 import onnx.reference
 from onnx import ONNX_ML, ModelProto, NodeProto, TypeProto, ValueInfoProto, numpy_helper
-from onnx.backend.base import Backend
-from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.loader import load_model_tests
 from onnx.backend.test.runner.item import TestItem
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from onnx.backend.base import Backend
+    from onnx.backend.test.case.test_case import TestCase
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
@@ -221,7 +224,7 @@ class Runner:
                     ref_outputs[i].shape,
                     err_msg=f"Output {i} has incorrect shape",
                 )
-                if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
+                if ref_outputs[i].dtype == object:
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
                     np.testing.assert_allclose(
@@ -291,7 +294,7 @@ class Runner:
                     f'Duplicated test name "{device_test_name}" in category "{category}"'
                 )
 
-            @unittest.skipIf(  # type: ignore
+            @unittest.skipIf(
                 not self.backend.supports_device(device),
                 f"Backend doesn't support device {device}",
             )

@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
 
 from onnx.reference.ops._op import OpRunUnaryNum
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 def _leaky_relu(x: np.ndarray, alpha: float) -> np.ndarray:

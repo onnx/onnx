@@ -11,7 +11,7 @@ from onnx.backend.test.case.node import expect
 
 
 # The below GatherElements' numpy implementation is from https://stackoverflow.com/a/46204790/11767360
-def gather_elements(data, indices, axis=0):  # type: ignore
+def gather_elements(data, indices, axis=0):
     data_swaped = np.swapaxes(data, 0, axis)
     index_swaped = np.swapaxes(indices, 0, axis)
     gathered = np.choose(index_swaped, data_swaped, mode="wrap")

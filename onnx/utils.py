@@ -6,13 +6,15 @@ from __future__ import annotations
 import os
 import tarfile
 from collections import deque
-
-from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+from typing import TYPE_CHECKING
 
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
 from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoProto
+
+if TYPE_CHECKING:
+    from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
 
 class Extractor:

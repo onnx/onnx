@@ -103,7 +103,7 @@ static std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
     if (proto.IsInitialized()) {
       std::string s;
       proto.SerializeToString(&s);
-      typeProtoBytes[node.output(i)] = py::bytes(s);
+      typeProtoBytes[node.output(static_cast<int>(i))] = py::bytes(s);
     }
   }
 

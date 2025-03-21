@@ -7,14 +7,7 @@ import collections.abc
 import numbers
 import struct
 from cmath import isnan
-from collections.abc import KeysView, MutableSequence, Sequence
-from typing import (
-    Any,
-    Callable,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, cast
 
 import google.protobuf.message
 import numpy as np
@@ -42,6 +35,11 @@ from onnx import (
     mapping,
     subbyte,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import KeysView, Sequence
+
+    from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
 VersionRowType = Union[tuple[str, int, int, int], tuple[str, int, int, int, int]]
 VersionTableType = list[VersionRowType]
@@ -366,7 +364,7 @@ def _split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float32_to_bfloat16(*args, **kwargs) -> int:
     return _float32_to_bfloat16(*args, **kwargs)
@@ -393,7 +391,7 @@ def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float32_to_float8e4m3(*args, **kwargs) -> int:
     return _float32_to_float8e4m3(*args, **kwargs)
@@ -535,7 +533,7 @@ def _float32_to_float8e4m3(  # noqa: PLR0911
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def float32_to_float8e5m2(*args: Any, **kwargs: Any) -> int:
     return _float32_to_float8e5m2(*args, **kwargs)
@@ -669,7 +667,7 @@ def _float32_to_float8e5m2(  # noqa: PLR0911
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
     return _pack_float32_to_4bit(array, signed)
@@ -705,7 +703,7 @@ def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndar
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=FutureWarning,
+    category=DeprecationWarning,
 )
 def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     return _pack_float32_to_float4e2m1(array)
@@ -888,21 +886,20 @@ def make_sequence(
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
 
-    attribute: MutableSequence | None = None
+    attribute: RepeatedCompositeFieldContainer | None = None
     if elem_type == SequenceProto.TENSOR:
-        attribute = sequence.tensor_values  # type: ignore[assignment]
+        attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
+        attribute = sequence.sparse_tensor_values
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values  # type: ignore[assignment]
+        attribute = sequence.sequence_values
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values  # type: ignore[assignment]
+        attribute = sequence.map_values
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values  # type: ignore[assignment]
+        attribute = sequence.optional_values
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
-    assert attribute is not None
     attribute.extend(values)
     return sequence
 
@@ -1719,4 +1716,4 @@ def _attr_type_to_str(attr_type: int) -> str:
     """
     if attr_type in AttributeProto.AttributeType.values():
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]
+    return AttributeProto.AttributeType.keys()[0]

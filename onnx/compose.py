@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from collections.abc import MutableMapping
+from typing import TYPE_CHECKING
 
 from onnx import (
     AttributeProto,
@@ -14,6 +14,9 @@ from onnx import (
     helper,
     utils,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
 
 
 def check_overlapping_names(

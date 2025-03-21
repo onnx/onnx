@@ -454,7 +454,14 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
 }
 
 TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found) {
+  return getShapeInput(ctx, input_index, false, found);
+}
+
+TensorShapeProto
+getShapeInput(const InferenceContext& ctx, size_t input_index, bool fail_if_negative_value, bool& found) {
   TensorShapeProto shape_input;
+
+  found = false;
 
   // First, check initializer.
   const TensorProto* shape_initializer = ctx.getInputData(input_index);
@@ -464,19 +471,17 @@ TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, 
       shape_input.add_dim()->set_dim_value(e);
     }
     found = true;
-    return shape_input;
   }
 
   // Then, check symbolic input.
   const TensorShapeProto* symbolic_input = ctx.getSymbolicInput(input_index);
-  if (symbolic_input) {
+  if (!found && symbolic_input) {
     shape_input.CopyFrom(*symbolic_input);
     found = true;
-    return shape_input;
   }
 
   // Try rank inference.
-  if (hasInputShape(ctx, input_index)) {
+  if (!found && hasInputShape(ctx, input_index)) {
     const TensorShapeProto& shape_input_shape = getInputShape(ctx, input_index);
     if (shape_input_shape.dim_size() != 1) {
       fail_shape_inference("shape input must be 1D tensor");
@@ -488,12 +493,19 @@ TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, 
         shape_input.add_dim();
       }
       found = true;
-      return shape_input;
     }
   }
 
-  // Shape input was not found.
-  found = false;
+  if (found && fail_if_negative_value) {
+    int dims_size = shape_input.dim_size();
+    for (int i = 0; i < dims_size; ++i) {
+      const auto& dim = shape_input.dim(i);
+      if (dim.has_dim_value() && dim.dim_value() < 0) {
+        fail_shape_inference("shape input tensor must have non-negative elements");
+      }
+    }
+  }
+
   return shape_input;
 }
 

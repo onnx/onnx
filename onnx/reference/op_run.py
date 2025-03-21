@@ -4,8 +4,7 @@
 from __future__ import annotations
 
 import abc
-from collections.abc import Iterable
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
@@ -24,6 +23,9 @@ from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_versi
 from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
 from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _split_class_name(name):  # type: ignore
@@ -209,9 +211,9 @@ class OpRun(abc.ABC):
             else:
                 functions = None
             evaluator_cls = self.run_params.get("evaluator_cls", None)
-            assert (
-                evaluator_cls is not None
-            ), f"evaluator_cls must be specified to evaluate att={att}"
+            assert evaluator_cls is not None, (
+                f"evaluator_cls must be specified to evaluate att={att}"
+            )
             return evaluator_cls(
                 att.g,
                 opsets=self.run_params["opsets"],
@@ -649,7 +651,7 @@ class OpFunction(OpRun):
         if len(impl.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(impl.inputs)} "
+                f"and the expected number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         feeds = dict(zip(impl.input_names, inputs))
