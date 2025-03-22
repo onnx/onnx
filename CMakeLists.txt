@@ -248,19 +248,9 @@ endif()
 if(NOT ONNX_PROTOC_EXECUTABLE)
     set(Build_Protobuf ON)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
-    set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
 
     include(FetchContent)
-    message("Loading Dependencies URLs ...")
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240722.1/abseil-cpp-20240722.1.tar.gz)
-    set(AbseilSHA1 0d6b07c6f3352981d3660978e109f2bc14594a3d)
-    FetchContent_Declare(
-      Abseil
-      URL ${AbseilURL}
-      URL_HASH SHA1=${AbseilSHA1}
-    )
     set(ABSL_PROPAGATE_CXX_STD 1)
-    set(abseil_BUILD_TESTING 0)
     set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build thirdparty libs.
@@ -268,24 +258,19 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     if(CMAKE_COMPILER_IS_GNUCXX)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=all")
     endif()
-    message(STATUS "Download and build Abseil from ${AbseilURL}")
-    FetchContent_Populate(Abseil)
-    FetchContent_GetProperties(Abseil)
-    # ABSL_ROOT_DIR is required by Protobuf.
-    set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
-    message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v29.2/protobuf-29.2.tar.gz)
-    set(ProtobufSHA1 a5639ffb17e3743d696baf16bf377fbe752b6a1f)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.1/protobuf-30.1.tar.gz)
+    set(ProtobufSHA1 35ddaca280bc0567005e790cccf4a9f310b91325)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
       URL_HASH SHA1=${ProtobufSHA1}
+      PATCH_COMMAND ${CMAKE_COMMAND} -Dprotobuf_MSVC_STATIC_RUNTIME=${protobuf_MSVC_STATIC_RUNTIME} -DFILENAME=CMakeLists.txt -P ${CMAKE_CURRENT_LIST_DIR}/cmake/ProtoBufPatch.cmake
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
-    FetchContent_MakeAvailable(Protobuf Abseil)
+    FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "5.29.2")
+    set(Protobuf_VERSION "6.30.1")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
