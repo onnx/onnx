@@ -43,6 +43,8 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
     case ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
     case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT4:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT4:
     case ONNX_NAMESPACE::TensorProto_DataType_INT8:
     case ONNX_NAMESPACE::TensorProto_DataType_INT16:
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
@@ -90,6 +92,8 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
+      [[fallthrough]];
+    default:
       fail_convert("Unknown tensor data type");
   }
 
@@ -436,7 +440,14 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
     }
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
     case ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FN:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FNUZ:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1:
     case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT4:
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT4:
     case ONNX_NAMESPACE::TensorProto_DataType_INT8:
     case ONNX_NAMESPACE::TensorProto_DataType_INT16:
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
@@ -474,6 +485,8 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
+      [[fallthrough]];
+    default:
       fail_convert("Unknown tensor data type");
   }
   if (tensor.is_raw_data()) {
