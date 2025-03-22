@@ -44,9 +44,10 @@ jobs:
           if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'pull_request')
           run: |
             python -m pip uninstall -y onnx-weekly
+            python -m pip install --upgrade pip
             python -m pip install setuptools
             python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest
+            python -m pip install pytest nbval
             pytest
             
         - name: Test preview build source distribution from test.PyPI
