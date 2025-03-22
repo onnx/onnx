@@ -21,7 +21,7 @@ class MaxPool_8_7 final : public Adapter {
 
   void adapt_maxpool_8_7(const std::shared_ptr<Graph>&, Node* node) const {
     const ArrayRef<Value*>& outputs = node->outputs();
-    ONNX_ASSERTM(outputs.size() != 2, "Opset version 7 of MaxPool cannot include Indices output");
+    ONNX_ASSERTM(outputs.size() != 2, "Opset version 7 of MaxPool cannot include Indices output")
     if (node->hasAttribute(kstorage_order))
       node->removeAttribute(kstorage_order);
   }
