@@ -19,9 +19,6 @@ on:  # Specifies the event triggering the workflow
         required: true
         type: string
 
-env:
-  MACOSX_DEPLOYMENT_TARGET: "12.0"
-
 permissions:
   contents: read
 
