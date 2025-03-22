@@ -174,17 +174,14 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
                   NAMES protoc
                   PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
                   NO_DEFAULT_PATH)
-      if(ONNX_USE_LITE_PROTO)
-        find_library(Protobuf_LITE_LIBRARY
-          NAMES protobuf-lite
-          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-          NO_DEFAULT_PATH)
-      else()
-        find_library(Protobuf_LIBRARY
-          NAMES protobuf
-          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-          NO_DEFAULT_PATH)
-      endif(ONNX_USE_LITE_PROTO)
+      find_library(Protobuf_LITE_LIBRARY
+        NAMES protobuf-lite
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+        NO_DEFAULT_PATH)
+      find_library(Protobuf_LIBRARY
+        NAMES protobuf
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+        NO_DEFAULT_PATH)
       find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
                 NO_DEFAULT_PATH)
@@ -196,7 +193,6 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       find_package(Protobuf)
       if(Protobuf_FOUND)
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
-        set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
         set(Build_Protobuf OFF)
         if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
           # There are extra dependencies for protobuf.
@@ -275,11 +271,9 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
-    set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
     set(CMAKE_CXX_FLAGS ${ONNX_CMAKE_CXX_FLAGS})
 endif()
 message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
-message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
@@ -450,8 +444,7 @@ add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include>
-  $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
+  $<INSTALL_INTERFACE:include>)
 
 if(MSVC)
   if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
@@ -468,19 +461,18 @@ endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 target_compile_features(onnx_proto PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 
+set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite PRIVATE ${protobuf_ABSL_USED_TARGETS})
-  else()
-    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LITE_LIBRARIES})
-  endif()
-else()
-  if(TARGET protobuf::libprotobuf)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf PRIVATE ${protobuf_ABSL_USED_TARGETS})
-  else()
-    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+    set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
+target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
+foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
+  if(TARGET ${ABSL_USED_TARGET})
+    target_link_libraries(onnx_proto PRIVATE ${ABSL_USED_TARGET})
+  endif()
+endforeach()
 add_onnx_global_defines(onnx_proto)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
