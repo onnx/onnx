@@ -29,7 +29,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-22.04, windows-latest, macos-14, macos-15]
+        os: [ubuntu-24.04, ubuntu-22.04, windows-latest]
         python-version: ['3.10','3.12']
         target-architecture: ['arm64', 'x86_64']
       fail-fast: false
