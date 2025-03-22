@@ -6,13 +6,10 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 include(${ONNX_ROOT}/cmake/Utils.cmake)
 include(CTest)
 
-find_package(Threads)
-
 set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
 
 list(APPEND ${UT_NAME}_libs onnx)
 list(APPEND ${UT_NAME}_libs onnx_proto)
-list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
 
@@ -27,15 +24,10 @@ function(AddTest)
 
   target_include_directories(${_UT_TARGET}
                              PUBLIC ${ONNX_INCLUDE_DIRS}
-                                    ${PROTOBUF_INCLUDE_DIRS}
                                     ${ONNX_ROOT}
                                     ${CMAKE_CURRENT_BINARY_DIR})
   target_link_libraries(${_UT_TARGET} ${_UT_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-  if(TARGET protobuf::libprotobuf)
-    target_link_libraries(${_UT_TARGET} protobuf::libprotobuf)
-  else()
-    target_link_libraries(${_UT_TARGET} ${PROTOBUF_LIBRARIES})
-  endif()
+  target_link_libraries(${_UT_TARGET} ${LINKED_PROTOBUF_TARGET})
 
   if(WIN32)
     target_compile_options(${_UT_TARGET}
