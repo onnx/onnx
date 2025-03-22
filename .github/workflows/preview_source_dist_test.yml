@@ -47,7 +47,7 @@ jobs:
             python -m pip install --upgrade pip
             python -m pip install setuptools
             python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest nbval ml_dtypes pillow parameterized
+            python -m pip install pytest nbval ml_dtypes pillow parameterized google-re2
             pytest
             
         - name: Test preview build source distribution from test.PyPI
@@ -56,5 +56,5 @@ jobs:
             python -m pip uninstall -y onnx-weekly
             python -m pip install setuptools
             python -m pip install -i https://test.pypi.org/pypi/ --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest nbval ml_dtypes pillow parameterized 
+            python -m pip install pytest nbval ml_dtypes pillow parameterized google-re2
             pytest
