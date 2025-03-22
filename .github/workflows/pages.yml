@@ -42,7 +42,7 @@ jobs:
         run: |
           sudo apt-get remove libprotobuf-dev protobuf-compiler
           git submodule update --init --recursive
-          export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_WERROR=ON"
           export ONNX_ML=1
           pip install .
       - name: Build Docs

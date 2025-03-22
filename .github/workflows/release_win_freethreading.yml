@@ -13,7 +13,7 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-        
+
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
@@ -55,7 +55,7 @@ jobs:
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
           echo "Build preview build PyPI package"
@@ -64,14 +64,14 @@ jobs:
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
- 
+
     - name: Test the installed wheel
       run: |
-        
+
         # 2025.03.09 jupyter_client and ipython have conflicting dependencies
         # therefore [tool.pytest.ini_options] in pyproject.toml is overwritten
         # because it contains nbval which cannot be installed
-        # TODO: this section should be revised either a) by direct integration into pyproject, 
+        # TODO: this section should be revised either a) by direct integration into pyproject,
         # or b) by revising the dependencies in the original projects."
 
         echo "[pytest]" > pytest.ini
@@ -81,7 +81,7 @@ jobs:
         echo "    onnx/examples" >> pytest.ini
         python -m pip install -v pillow
         pytest
-        
+
     - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
