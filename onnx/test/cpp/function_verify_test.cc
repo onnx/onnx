@@ -229,7 +229,7 @@ struct FunctionTypeChecker {
   // forTypeVar: This is used to iterate through all possible bindings of type-values
   // to all type-variables used in the op schema, and invoke the type-checker for
   // each possible instantiation.
-  void forTypeVar(int i) {
+  void forTypeVar(size_t i) {
     auto& typeConstraintVector = schema.typeConstraintParams();
     if (i < typeConstraintVector.size()) {
       std::string typeVar = typeConstraintVector[i].type_param_str;

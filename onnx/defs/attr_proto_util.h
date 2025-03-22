@@ -18,11 +18,13 @@ AttributeProto MakeAttribute(const std::string& attr_name, const int64_t& value)
 AttributeProto MakeAttribute(const std::string& attr_name, const std::string& value);
 AttributeProto MakeAttribute(const std::string& attr_name, const TensorProto& value);
 AttributeProto MakeAttribute(const std::string& attr_name, const GraphProto& value);
+AttributeProto MakeAttribute(const std::string& attr_name, const TypeProto& value);
 AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<float>& values);
 AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<int64_t>& values);
 AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<std::string>& values);
 AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<TensorProto>& values);
 AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<GraphProto>& values);
+AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<TypeProto>& values);
 
 // Make a "reference" attribute for a node in a function body.
 // <attr_name> specifies the attribute name of both the function node and its
