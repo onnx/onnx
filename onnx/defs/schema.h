@@ -868,6 +868,7 @@ class ISchemaRegistry {
   virtual ~ISchemaRegistry() = default;
 
   virtual const OpSchema*
+  // NOLINTNEXTLINE(google-default-arguments)
   GetSchema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
@@ -1158,6 +1159,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   static OpSchemaRegistry* Instance();
 
+  // NOLINTNEXTLINE(google-default-arguments)
   const OpSchema* GetSchema(
       const std::string& key,
       const int maxInclusiveVersion,
@@ -1255,26 +1257,11 @@ OpSchema GetOpSchema();
 #define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
 
-// Defines specialization of GetOpSchema for a class whose name is determined
-// based on a convention using name, domain, and version.  Operator schema are
-// normally included in operator sets and registered in OpSchemaRegistry::map().
-// In this case, callers should set dbg_included_in_static_opset to true.  This
-// assists with runtime validation in DEBUG builds ensuring the intended set
-// of operator schema is registered.
-#define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
-  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
-  template <>                                                                                           \
-  OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {                      \
-    return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
-  }                                                                                                     \
-  static size_t dbg_count_check_##name##_##domain##_ver##ver [[maybe_unused]] =                         \
-      (dbg_included_in_static_opset) ? ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() : 0;
 #ifdef NDEBUG
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0
+#define ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(name, domain, ver, dbg_included_in_static_opset) \
+  static size_t dbg_count_check_##name##_##domain##_ver##ver [[maybe_unused]] = 0
 #else
-#define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().IncrementCount()
-#define ONNX_DBG_GET_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().GetCount()
-
 class DbgOperatorSetTracker {
  public:
   static DbgOperatorSetTracker& Instance();
@@ -1290,6 +1277,29 @@ class DbgOperatorSetTracker {
  private:
   size_t count_ = 0;
 };
+#define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().IncrementCount()
+#define ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(name, domain, ver, dbg_included_in_static_opset) \
+  static size_t dbg_count_check_##name##_##domain##_ver##ver [[maybe_unused]] =                  \
+      (dbg_included_in_static_opset) ? ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() : 0;
+#endif
+
+// Defines specialization of GetOpSchema for a class whose name is determined
+// based on a convention using name, domain, and version.  Operator schema are
+// normally included in operator sets and registered in OpSchemaRegistry::map().
+// In this case, callers should set dbg_included_in_static_opset to true.  This
+// assists with runtime validation in DEBUG builds ensuring the intended set
+// of operator schema is registered.
+
+#define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
+  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
+  template <>                                                                                           \
+  OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {                      \
+    return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
+  }                                                                                                     \
+  ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(domain, ver, name, dbg_included_in_static_opset)
+#ifndef NDEBUG
+#define ONNX_DBG_GET_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().GetCount()
+
 #endif
 
 // Naming convention for operator schema classes

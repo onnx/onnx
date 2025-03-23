@@ -124,7 +124,7 @@ class AttributeTypeNameMap : public StringIntMap<AttributeTypeNameMap> {
 
 class KeyWordMap {
  public:
-  enum class KeyWord {
+  enum class KeyWord : std::uint8_t {
     NONE,
     IR_VERSION,
     OPSET_IMPORT,
@@ -264,7 +264,7 @@ class ParserBase {
     return (next_ >= end_);
   }
 
-  enum class LiteralType { UNDEFINED, INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
+  enum class LiteralType : std::uint8_t { UNDEFINED, INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
 
   struct Literal {
     LiteralType type{LiteralType::UNDEFINED};
