@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.13t']
         architecture: ['x64']
 
     steps:
@@ -38,7 +38,7 @@ jobs:
 
     - name: Set up Python ${{ matrix.python-version }}
       if: steps.build_manylinux.outcome == 'success'
-      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+      uses: actions/setup-python@19e4675e06535f6b54e894da5c1f044400bb4996
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
