@@ -384,8 +384,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                       " sum of split values=",
                       splitSizesSum);
                 }
-                if (std::adjacent_find(splitSizes.begin(), splitSizes.end(), std::not_equal_to()) ==
-                    splitSizes.end()) {
+                if (std::adjacent_find(splitSizes.begin(), splitSizes.end(), std::not_equal_to()) == splitSizes.end()) {
                   // all split sizes are the same.
                   return splitSizes[0];
                 }
