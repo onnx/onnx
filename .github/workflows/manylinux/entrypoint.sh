@@ -38,7 +38,7 @@ export ONNX_ML=1
 export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 
 if [ "$PY_VERSION" == "3.13t" ]; then 
- yum install libffi-devel
+ yum install -y libffi-devel
  $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 else
  $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
