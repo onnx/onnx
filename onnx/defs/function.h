@@ -170,6 +170,7 @@ class FunctionBuilder {
     if constexpr (sizeof...(args) % 2 == 0) {
       return AddAttributes(args...);
     }
+    return *this;
   }
 
   FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
