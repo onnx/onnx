@@ -11,33 +11,33 @@
 
 namespace ONNX_NAMESPACE {
 
-#define ADD_BASIC_ATTR_IMPL(type, enumType, field)                                \
-  AttributeProto MakeAttribute(const std::string& attr_name, const type& value) { \
-    AttributeProto a;                                                             \
-    a.set_name(attr_name);                                                        \
-    a.set_type(enumType);                                                         \
-    a.set_##field(value);                                                         \
-    return a;                                                                     \
+#define ADD_BASIC_ATTR_IMPL(type, enumType, field)                  \
+  AttributeProto MakeAttribute(std::string attr_name, type value) { \
+    AttributeProto a;                                               \
+    a.set_name(std::move(attr_name));                               \
+    a.set_type(enumType);                                           \
+    a.set_##field(value);                                           \
+    return a;                                                       \
   }
 
-#define ADD_ATTR_IMPL(type, enumType, field)                                      \
-  AttributeProto MakeAttribute(const std::string& attr_name, const type& value) { \
-    AttributeProto a;                                                             \
-    a.set_name(attr_name);                                                        \
-    a.set_type(enumType);                                                         \
-    *(a.mutable_##field()) = value;                                               \
-    return a;                                                                     \
+#define ADD_ATTR_IMPL(type, enumType, field)                        \
+  AttributeProto MakeAttribute(std::string attr_name, type value) { \
+    AttributeProto a;                                               \
+    a.set_name(std::move(attr_name));                               \
+    a.set_type(enumType);                                           \
+    *(a.mutable_##field()) = std::move(value);                      \
+    return a;                                                       \
   }
 
-#define ADD_LIST_ATTR_IMPL(type, enumType, field)                                               \
-  AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<type>& values) { \
-    AttributeProto a;                                                                           \
-    a.set_name(attr_name);                                                                      \
-    a.set_type(enumType);                                                                       \
-    for (const auto& val : values) {                                                            \
-      *(a.mutable_##field()->Add()) = val;                                                      \
-    }                                                                                           \
-    return a;                                                                                   \
+#define ADD_LIST_ATTR_IMPL(type, enumType, field)                                 \
+  AttributeProto MakeAttribute(std::string attr_name, std::vector<type> values) { \
+    AttributeProto a;                                                             \
+    a.set_name(std::move(attr_name));                                             \
+    a.set_type(enumType);                                                         \
+    for (auto&& val : std::move(values)) {                                        \
+      *(a.mutable_##field()->Add()) = std::move(val);                             \
+    }                                                                             \
+    return a;                                                                     \
   }
 
 ADD_BASIC_ATTR_IMPL(float, AttributeProto_AttributeType_FLOAT, f)
@@ -46,7 +46,9 @@ ADD_BASIC_ATTR_IMPL(std::string, AttributeProto_AttributeType_STRING, s)
 ADD_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSOR, t)
 ADD_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPH, g)
 ADD_ATTR_IMPL(TypeProto, AttributeProto_AttributeType_TYPE_PROTO, tp)
+// NOLINTNEXTLINE(performance-unnecessary-value-param)
 ADD_LIST_ATTR_IMPL(float, AttributeProto_AttributeType_FLOATS, floats)
+// NOLINTNEXTLINE(performance-unnecessary-value-param)
 ADD_LIST_ATTR_IMPL(int64_t, AttributeProto_AttributeType_INTS, ints)
 ADD_LIST_ATTR_IMPL(std::string, AttributeProto_AttributeType_STRINGS, strings)
 ADD_LIST_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSORS, tensors)
