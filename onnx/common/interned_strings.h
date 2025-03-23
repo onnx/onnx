@@ -190,7 +190,7 @@ namespace ONNX_NAMESPACE {
   _(block_size)                     \
   _(output_dtype)
 
-enum BuiltinSymbol {
+enum BuiltinSymbol: std::uint8_t {
 #define DEFINE_SYMBOL(s) k##s,
   FORALL_BUILTIN_SYMBOLS(DEFINE_SYMBOL)
 #undef DEFINE_SYMBOL
