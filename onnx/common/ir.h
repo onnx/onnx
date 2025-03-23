@@ -82,8 +82,8 @@ class ResourceGuard final {
 
 struct Dimension final {
   Dimension() : is_unknown(true), is_int(false), dim(-1) {}
-  Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {} // NOLINT
-  Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {} // NOLINT
+  explicit Dimension(std::string param) : is_unknown(false), is_int(false), dim(-1), param(std::move(param)) {}
+  explicit Dimension(int64_t dim) : is_unknown(false), is_int(true), dim(dim) {}
 
   bool is_unknown;
   bool is_int;
@@ -109,6 +109,7 @@ enum class AttributeKind : uint8_t {
 };
 
 static inline const char* toString(AttributeKind kind) {
+  // NOLINTNEXTLINE(modernize-avoid-c-arrays)
   static constexpr const char* names[] = {"f", "fs", "i", "is", "s", "ss", "t", "ts", "g", "gs", "tp", "tps"};
   ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*));
   return names[int(kind)];
@@ -127,7 +128,7 @@ template <typename T, AttributeKind Kind>
 struct ScalarAttributeValue final : public AttributeValue {
   using ConstructorType = const T&;
   using ValueType = T;
-  ScalarAttributeValue(Symbol name, ConstructorType value_) : AttributeValue(name), value_(value_) {}
+  ScalarAttributeValue(Symbol name, ConstructorType value_) : AttributeValue(name), value_(std::move(value_)) {}
   ValueType& value() {
     return value_;
   }
@@ -180,6 +181,7 @@ using TypeProtosAttr = VectorAttributeValue<TypeProto, AttributeKind::tps>;
 // we return Derived* pointers because Nodes are normally held as pointers.
 template <typename Derived>
 struct Attributes {
+  // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
   Attributes() = default;
 
   void copyAttributes(const Attributes& rhs) {
