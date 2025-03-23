@@ -36,7 +36,7 @@ void resizeShapeInferenceHelper_opset7_to_10(
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape);
 
-enum class KeepAspectRatioPolicy {
+enum class KeepAspectRatioPolicy : std::uint8_t {
   STRETCH,
   NOT_LARGER,
   NOT_SMALLER,

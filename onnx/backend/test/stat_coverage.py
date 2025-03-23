@@ -255,9 +255,7 @@ def gen_model_test_coverage(
 
 
 def gen_overall_test_coverage(
-    schemas: Sequence[defs.OpSchema],  # noqa: ARG001
     f: IO[Any],
-    ml: bool,  # noqa: ARG001
 ) -> None:
     f.write("# Overall Test Coverage\n")
     f.write("## To be filled.\n")
@@ -281,7 +279,7 @@ def main() -> None:
         gen_outlines(f, False)
         gen_node_test_coverage(schemas, f, False)
         gen_model_test_coverage(schemas, f, False)
-        gen_overall_test_coverage(schemas, f, False)
+        gen_overall_test_coverage(f)
 
     if has_ml:
         fname = os.path.join(docs_dir, "TestCoverage-ml.md")
@@ -290,7 +288,7 @@ def main() -> None:
             gen_outlines(f, True)
             gen_node_test_coverage(schemas, f, True)
             gen_model_test_coverage(schemas, f, True)
-            gen_overall_test_coverage(schemas, f, True)
+            gen_overall_test_coverage(f)
 
 
 if __name__ == "__main__":

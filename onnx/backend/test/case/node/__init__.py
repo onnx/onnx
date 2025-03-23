@@ -52,7 +52,7 @@ def _rename_edges_helper(
         if attr.HasField("ref_attr_name"):
             if attr.ref_attr_name in attribute_map:
                 new_attr = AttributeProto()
-                new_attr.CopyFrom(attribute_map[attr.ref_attr_name])  # type: ignore
+                new_attr.CopyFrom(attribute_map[attr.ref_attr_name])
                 new_attr.name = attr.name
                 new_node.attribute.extend([new_attr])
         else:
@@ -100,12 +100,10 @@ def function_expand_helper(
     io_names_map = {}
     attribute_map = {a.name: a for a in node.attribute}
 
-    for idx in range(len(function_proto.input)):
-        io_names_map[function_proto.input[idx]] = (
-            node.input[idx] if idx in range(len(node.input)) else ""
-        )
+    for idx, input in enumerate(function_proto.input):
+        io_names_map[input] = node.input[idx] if idx in range(len(node.input)) else ""
 
-    for idx in range(len(function_proto.output)):
+    for idx, output in enumerate(function_proto.output):
         # Even if the node has been created with optional outputs missing, we
         # can't assume that the function body handles this correctly, such as in
         # the case that output is also an intermediate value.
@@ -113,7 +111,7 @@ def function_expand_helper(
         # name will be generated if the missing output is used, the same as any
         # other internal tensor.
         if idx in range(len(node.output)) and node.output[idx] != "":
-            io_names_map[function_proto.output[idx]] = node.output[idx]
+            io_names_map[output] = node.output[idx]
 
     def rename_helper(internal_name: str) -> Any:
         if internal_name in io_names_map:
@@ -411,19 +409,19 @@ def get_diff_op_types():
         check=True,
     )
     # obtain list of added or modified files in this PR
-    obtain_diff = subprocess.Popen(
+    with subprocess.Popen(
         ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
         cwd=cwd_path,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-    )
-    stdoutput, _ = obtain_diff.communicate()
-    diff_list = stdoutput.split()
-    changed_op_types = []
-    for file in diff_list:
-        file_name = file.decode("utf-8")
-        if file_name.startswith("onnx/backend/test/case/node/") and file_name.endswith(
-            ".py"
-        ):
-            changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
-    return changed_op_types
+    ) as obtain_diff:
+        stdoutput, _ = obtain_diff.communicate()
+        diff_list = stdoutput.split()
+        changed_op_types = []
+        for file in diff_list:
+            file_name = file.decode("utf-8")
+            if file_name.startswith(
+                "onnx/backend/test/case/node/"
+            ) and file_name.endswith(".py"):
+                changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
+        return changed_op_types

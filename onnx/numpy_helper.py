@@ -408,7 +408,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_uint4(data, dims).view(custom_np_types.float4e2m1)
 
-        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)  # type: ignore[no-any-return]
+        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
 
     # float16 is stored as int32 (uint16 type); Need view to get the original value
     if tensor_dtype == TensorProto.FLOAT16:
@@ -551,16 +551,16 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     dt = tensor.dtype
     if dt == custom_np_types.float8e4m3fn and dt.descr[0][0] == "e4m3fn":
         to = TensorProto.FLOAT8E4M3FN
-        dt_to = np.uint8  # type: ignore[assignment]
+        dt_to = np.uint8
     elif dt == custom_np_types.float8e4m3fnuz and dt.descr[0][0] == "e4m3fnuz":
         to = TensorProto.FLOAT8E4M3FNUZ
-        dt_to = np.uint8  # type: ignore[assignment]
+        dt_to = np.uint8
     elif dt == custom_np_types.float8e5m2 and dt.descr[0][0] == "e5m2":
         to = TensorProto.FLOAT8E5M2
-        dt_to = np.uint8  # type: ignore[assignment]
+        dt_to = np.uint8
     elif dt == custom_np_types.float8e5m2fnuz and dt.descr[0][0] == "e5m2fnuz":
         to = TensorProto.FLOAT8E5M2FNUZ
-        dt_to = np.uint8  # type: ignore[assignment]
+        dt_to = np.uint8
     elif dt == custom_np_types.bfloat16 and dt.descr[0][0] == "bfloat16":
         to = TensorProto.BFLOAT16
         dt_to = np.uint16  # type: ignore[assignment]
@@ -569,7 +569,7 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
         dt_to = np.int8  # type: ignore[assignment]
     elif dt == custom_np_types.uint4 and dt.descr[0][0] == "uint4":
         to = TensorProto.UINT4
-        dt_to = np.uint8  # type: ignore[assignment]
+        dt_to = np.uint8
     elif dt == custom_np_types.float4e2m1 and dt.descr[0][0] == "float4e2m1":
         to = TensorProto.FLOAT4E2M1
         dt_to = np.uint8
@@ -609,7 +609,7 @@ def to_list(sequence: SequenceProto) -> list[Any]:
     """
     elem_type = sequence.elem_type
     if elem_type == SequenceProto.TENSOR:
-        return [to_array(v) for v in sequence.tensor_values]  # type: ignore[arg-type]
+        return [to_array(v) for v in sequence.tensor_values]
     if elem_type == SequenceProto.SPARSE_TENSOR:
         return [to_array(v) for v in sequence.sparse_tensor_values]  # type: ignore[arg-type]
     if elem_type == SequenceProto.SEQUENCE:
@@ -730,12 +730,7 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> MapProto:
         TensorProto.UINT64,
     ]
 
-    if not (
-        all(
-            np.result_type(key) == raw_key_type  # type: ignore[arg-type]
-            for key in keys
-        )
-    ):
+    if not (all(np.result_type(key) == raw_key_type for key in keys)):
         raise TypeError(
             "The key type in the input dictionary is not the same "
             "for all keys and therefore is not valid as a map."

@@ -31,7 +31,7 @@ jobs:
 
     - name: Build manylinux2014_x86_64
       id: build_manylinux
-      uses: docker://quay.io/pypa/manylinux2014_x86_64:latest
+      uses: docker://quay.io/pypa/manylinux2014_x86_64:2025.03.22-2
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
@@ -73,21 +73,21 @@ jobs:
         TEST_HUB=1 pytest
 
     - name: Verify ONNX with the latest numpy
-      if: (steps.build_manylinux.outcome == 'success') && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: (steps.build_manylinux.outcome == 'success') && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: (steps.build_manylinux.outcome == 'success') && ${{ always() }}
+      if: steps.build_manylinux.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
         python -m pip install dist/*manylinux2014_x86_64.whl

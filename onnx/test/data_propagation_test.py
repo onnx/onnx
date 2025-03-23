@@ -156,7 +156,7 @@ class TestDataPropagation(TestShapeInferenceHelper):
                 make_tensor_value_info("z", TensorProto.INT32, (4, 6, 8)),
             ],
             data_prop=True,
-        )  # type: ignore
+        )
 
     def test_shape_arithmetic_with_broadcast(self) -> None:
         graph = self._make_graph(
@@ -183,7 +183,7 @@ class TestDataPropagation(TestShapeInferenceHelper):
                 make_tensor_value_info("z", TensorProto.INT32, (6, 7, 8)),
             ],
             data_prop=True,
-        )  # type: ignore
+        )
 
     def test_shape_arithmetic_with_zero_broadcast(self) -> None:
         graph = self._make_graph(
@@ -210,7 +210,7 @@ class TestDataPropagation(TestShapeInferenceHelper):
                 make_tensor_value_info("z", TensorProto.INT32, ()),
             ],
             data_prop=True,
-        )  # type: ignore
+        )
 
     def test_empty_tensor(self) -> None:
         """Test that a Concat with an empty tensor as input is handled correctly by data-propagation."""
