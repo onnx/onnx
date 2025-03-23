@@ -45,13 +45,12 @@ Checks: >-
   readability-non-const-parameter,
   readability-redundant*
   readability-simplify*,
-  readability-string-compare,
-  -readability-redundant-access-specifiers,
   readability-static-accessed-through-instance,
   readability-static-definition-in-anonymous-namespace,
   readability-string-compare,
   readability-suspicious-call-argument,
   readability-uniqueptr-delete-release,
+  -readability-redundant-access-specifiers,
 
 CheckOptions:
   # `cppcoreguidelines-special-member-functions` is enabled, refer to https://en.cppreference.com/w/cpp/language/rule_of_three
