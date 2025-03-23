@@ -34,7 +34,7 @@ yum install -y wget
 source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$(pwd)"/protobuf/protobuf_install
 
 if [ "$PY_VERSION" == "3.13t" ]; then 
- yum install libffi-devel
+ yum install -y libffi-devel
 fi
 
 
