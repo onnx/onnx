@@ -5,7 +5,6 @@
 Checks: >-
   -*,
   bugprone-*,
-  -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
   -bugprone-lambda-function-name,
   -bugprone-macro-parentheses,
@@ -15,7 +14,6 @@ Checks: >-
   clang-analyzer-.*,
   cppcoreguidelines-avoid-goto,
   cppcoreguidelines-interfaces-global-init,
-  cppcoreguidelines-init-variables,
   cppcoreguidelines-no-malloc,
   cppcoreguidelines-prefer-member-initializer,
   cppcoreguidelines-pro-type-member-init,
