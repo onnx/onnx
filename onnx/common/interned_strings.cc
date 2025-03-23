@@ -19,13 +19,14 @@
 namespace ONNX_NAMESPACE {
 
 struct InternedStrings {
-  InternedStrings(){
+  InternedStrings() {
 #define REGISTER_SYMBOL(s)   \
   string_to_sym_[#s] = k##s; \
   sym_to_string_[k##s] = #s;
-      FORALL_BUILTIN_SYMBOLS(REGISTER_SYMBOL)
+    FORALL_BUILTIN_SYMBOLS(REGISTER_SYMBOL)
 #undef REGISTER_SYMBOL
-  } uint32_t symbol(const std::string& s) {
+  }
+  uint32_t symbol(const std::string& s) {
     std::lock_guard<std::mutex> guard(mutex_);
     auto it = string_to_sym_.find(s);
     if (it != string_to_sym_.end())
