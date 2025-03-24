@@ -150,7 +150,9 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       message(STATUS "Using custom protoc executable")
       set(ONNX_PROTOC_EXECUTABLE ${ONNX_CUSTOM_PROTOC_EXECUTABLE})
     else()
-      set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+      if(TARGET protobuf::protoc)
+        set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+      endif()
     endif()
   else()
     # Customized version of find Protobuf. We need to avoid situations mentioned
@@ -517,9 +519,7 @@ if(ONNX_BUILD_PYTHON)
     endif()
   endif()
 
-  target_include_directories(onnx_cpp2py_export PUBLIC
-    "${pybind11_INCLUDE_DIRS}"
-    "${Python3_INCLUDE_DIRS}")
+  target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
