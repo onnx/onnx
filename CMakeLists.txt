@@ -199,7 +199,7 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
         if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
           # There are extra dependencies for protobuf.
           find_package(absl REQUIRED)
-          find_package(utf8_range REQUIRED)
+          find_package(utf8_range)
           message(STATUS "absl_VERSION: ${absl_VERSION}")
           set(protobuf_ABSL_USED_TARGETS
             absl::absl_check
