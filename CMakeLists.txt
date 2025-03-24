@@ -563,7 +563,7 @@ if(ONNX_BUILD_PYTHON)
                                            # loss of data
                                    /wd4267 # Conversion from 'size_t' to 'int',
                                            # possible loss of data
-                                   ${EXTRA_FLAGS})
+                                   )
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -587,7 +587,7 @@ if(MSVC)
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4141 # 'inline': used more than once
-                                 ${EXTRA_FLAGS})
+                                   )
   target_compile_options(onnx
                          PRIVATE /MP
                                  /wd4146 # unary minus operator applied to unsigned type,
@@ -598,7 +598,7 @@ if(MSVC)
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4141 # 'inline': used more than once
-                                 ${EXTRA_FLAGS})
+                                   )
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
