@@ -2,7 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: MacRelease
+# could be integraded in release_mac.yml
+
+
+name: MacRelease (freethreading)
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
@@ -24,13 +27,14 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.13t']
+        target-architecture: ['x86_64']
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
-          persist-credentials: false
-          submodules: true
+        persist-credentials: false
+        submodules: true
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
@@ -70,15 +74,13 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.13t']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      with:
-        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+      uses: Quansight-Labs/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -114,7 +116,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.9'))
+      if: always() && (matrix.target-architecture == 'x86_64')
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt

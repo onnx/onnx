@@ -2,7 +2,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: WindowsRelease
+# could be integraded in release_win.yml when dependency issues are resolved
+
+
+name: WindowsRelease (freethreading)
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
@@ -10,6 +13,7 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
@@ -19,8 +23,8 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
-        architecture: ['x64', 'x86']
+        python-version: ['3.13t']
+        architecture: ['x64']
     steps:
     - name: Checkout ONNX
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -42,21 +46,12 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
-          sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
-        }
-        python -m pip install -q -r requirements-release.txt
-        python -m pip install cmake
+        python -m pip install -q -r requirements-release_freethreading_win.txt
 
     - name: Build ONNX wheel
       run: |
-        $arch = 'x64'
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          $arch = 'Win32'
-        }
 
-        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch x64
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
@@ -72,6 +67,19 @@ jobs:
 
     - name: Test the installed wheel
       run: |
+
+        # 2025.03.09 jupyter_client and ipython have conflicting dependencies
+        # therefore [tool.pytest.ini_options] in pyproject.toml is overwritten
+        # because it contains nbval which cannot be installed
+        # TODO: this section should be revised either a) by direct integration into pyproject,
+        # or b) by revising the dependencies in the original projects."
+
+        echo "[pytest]" > pytest.ini
+        echo "addopts = --tb=short --color=yes" >> pytest.ini
+        echo "testpaths =" >> pytest.ini
+        echo "    onnx/test" >> pytest.ini
+        echo "    onnx/examples" >> pytest.ini
+        python -m pip install -v pillow
         pytest
 
     - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
@@ -95,10 +103,3 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
-    - name: Verify ONNX with the minimumly supported packages
-      if: ${{ always() }}
-      run: |
-        python -m pip uninstall -y protobuf numpy onnx
-        python -m pip install -r requirements-min.txt
-        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest
