@@ -176,14 +176,17 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
                   NAMES protoc
                   PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
                   NO_DEFAULT_PATH)
-      find_library(Protobuf_LITE_LIBRARY
-        NAMES protobuf-lite
-        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-        NO_DEFAULT_PATH)
-      find_library(Protobuf_LIBRARY
-        NAMES protobuf
-        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-        NO_DEFAULT_PATH)
+      if(ONNX_USE_LITE_PROTO)
+        find_library(Protobuf_LITE_LIBRARY
+          NAMES protobuf-lite
+          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+          NO_DEFAULT_PATH)
+      else()
+        find_library(Protobuf_LIBRARY
+          NAMES protobuf
+          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+          NO_DEFAULT_PATH)
+      endif(ONNX_USE_LITE_PROTO)
       find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
                 NO_DEFAULT_PATH)
