@@ -70,7 +70,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             input_elem_types.emplace_back(input_type->tensor_type().elem_type());
           }
-          if (std::adjacent_find(input_elem_types.begin(), input_elem_types.end(), std::not_equal_to<int>()) !=
+          if (std::adjacent_find(input_elem_types.begin(), input_elem_types.end(), std::not_equal_to()) !=
               input_elem_types.end()) {
             // not all input elem types are the same.
             fail_type_inference("Element type of inputs are expected to be the same.");
@@ -384,8 +384,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                       " sum of split values=",
                       splitSizesSum);
                 }
-                if (std::adjacent_find(splitSizes.begin(), splitSizes.end(), std::not_equal_to<int64_t>()) ==
-                    splitSizes.end()) {
+                if (std::adjacent_find(splitSizes.begin(), splitSizes.end(), std::not_equal_to()) == splitSizes.end()) {
                   // all split sizes are the same.
                   return splitSizes[0];
                 }

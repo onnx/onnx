@@ -142,105 +142,107 @@ if(ONNX_BUILD_TESTS)
 endif()
 
 if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
-if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
-  # Sometimes we need to use protoc compiled for host architecture while linking
-  # libprotobuf against target architecture. See https://github.com/caffe2/caffe
-  # 2/blob/96f35ad75480b25c1a23d6e9e97bccae9f7a7f9c/cmake/ProtoBuf.cmake#L92-L99
-  if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
-    message(STATUS "Using custom protoc executable")
-    set(ONNX_PROTOC_EXECUTABLE ${ONNX_CUSTOM_PROTOC_EXECUTABLE})
-  else()
-    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-  endif()
-else()
-  # Customized version of find Protobuf. We need to avoid situations mentioned
-  # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac4
-  # 42761/cmake/ProtoBuf.cmake#L82-L92 The following section is stolen from
-  # cmake/ProtoBuf.cmake in Caffe2
-  find_program(Protobuf_PROTOC_EXECUTABLE
-               NAMES protoc
-               DOC "The Google Protocol Buffers Compiler")
-
-  # Only if protoc was found, seed the include directories and libraries. We
-  # assume that protoc is installed at PREFIX/bin. We use get_filename_component
-  # to resolve PREFIX.
-  if(Protobuf_PROTOC_EXECUTABLE)
-    set(ONNX_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
-    get_filename_component(_PROTOBUF_INSTALL_PREFIX
-                           ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
-    get_filename_component(_PROTOBUF_INSTALL_PREFIX
-                           ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
-    find_library(Protobuf_PROTOC_LIBRARY
-                 NAMES protoc
-                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-                 NO_DEFAULT_PATH)
-    if(ONNX_USE_LITE_PROTO)
-      find_library(Protobuf_LITE_LIBRARY
-        NAMES protobuf-lite
-        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-        NO_DEFAULT_PATH)
+  if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
+    # Sometimes we need to use protoc compiled for host architecture while linking
+    # libprotobuf against target architecture. See https://github.com/caffe2/caffe
+    # 2/blob/96f35ad75480b25c1a23d6e9e97bccae9f7a7f9c/cmake/ProtoBuf.cmake#L92-L99
+    if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+      message(STATUS "Using custom protoc executable")
+      set(ONNX_PROTOC_EXECUTABLE ${ONNX_CUSTOM_PROTOC_EXECUTABLE})
     else()
-      find_library(Protobuf_LIBRARY
-        NAMES protobuf
-        PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
-        NO_DEFAULT_PATH)
-    endif(ONNX_USE_LITE_PROTO)
-    find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
-              PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
-              NO_DEFAULT_PATH)
-    if(ONNX_USE_PROTOBUF_SHARED_LIBS)
-      set(Protobuf_USE_STATIC_LIBS OFF)
-    else()
-      set(Protobuf_USE_STATIC_LIBS ON)
+      if(TARGET protobuf::protoc)
+        set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+      endif()
     endif()
-    find_package(Protobuf)
-    if(Protobuf_FOUND)
-      set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
-      set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
-      set(Build_Protobuf OFF)
-      if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
-        # There are extra dependencies for protobuf.
-        find_package(absl REQUIRED)
-        find_package(utf8_range REQUIRED)
-        message(STATUS "absl_VERSION: ${absl_VERSION}")
-        set(protobuf_ABSL_USED_TARGETS
-          absl::absl_check
-          absl::absl_log
-          absl::algorithm
-          absl::base
-          absl::bind_front
-          absl::bits
-          absl::btree
-          absl::cleanup
-          absl::cord
-          absl::core_headers
-          absl::debugging
-          absl::die_if_null
-          absl::dynamic_annotations
-          absl::flags
-          absl::flat_hash_map
-          absl::flat_hash_set
-          absl::function_ref
-          absl::hash
-          absl::layout
-          absl::log_initialize
-          absl::log_severity
-          absl::memory
-          absl::node_hash_map
-          absl::node_hash_set
-          absl::optional
-          absl::span
-          absl::status
-          absl::statusor
-          absl::strings
-          absl::synchronization
-          absl::time
-          absl::type_traits
-          absl::utility
-          absl::variant
-          utf8_range::utf8_range
-          utf8_range::utf8_validity
-        )
+  else()
+    # Customized version of find Protobuf. We need to avoid situations mentioned
+    # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac4
+    # 42761/cmake/ProtoBuf.cmake#L82-L92 The following section is stolen from
+    # cmake/ProtoBuf.cmake in Caffe2
+    find_program(Protobuf_PROTOC_EXECUTABLE
+                NAMES protoc
+                DOC "The Google Protocol Buffers Compiler")
+
+    # Only if protoc was found, seed the include directories and libraries. We
+    # assume that protoc is installed at PREFIX/bin. We use get_filename_component
+    # to resolve PREFIX.
+    if(Protobuf_PROTOC_EXECUTABLE)
+      set(ONNX_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
+      get_filename_component(_PROTOBUF_INSTALL_PREFIX
+                            ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
+      get_filename_component(_PROTOBUF_INSTALL_PREFIX
+                            ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
+      find_library(Protobuf_PROTOC_LIBRARY
+                  NAMES protoc
+                  PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+                  NO_DEFAULT_PATH)
+      if(ONNX_USE_LITE_PROTO)
+        find_library(Protobuf_LITE_LIBRARY
+          NAMES protobuf-lite
+          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+          NO_DEFAULT_PATH)
+      else()
+        find_library(Protobuf_LIBRARY
+          NAMES protobuf
+          PATHS ${_PROTOBUF_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
+          NO_DEFAULT_PATH)
+      endif(ONNX_USE_LITE_PROTO)
+      find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
+                PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
+                NO_DEFAULT_PATH)
+      if(ONNX_USE_PROTOBUF_SHARED_LIBS)
+        set(Protobuf_USE_STATIC_LIBS OFF)
+      else()
+        set(Protobuf_USE_STATIC_LIBS ON)
+      endif()
+      find_package(Protobuf)
+      if(Protobuf_FOUND)
+        set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
+        set(Build_Protobuf OFF)
+        if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
+          # There are extra dependencies for protobuf.
+          find_package(absl REQUIRED)
+          find_package(utf8_range)
+          message(STATUS "absl_VERSION: ${absl_VERSION}")
+          set(protobuf_ABSL_USED_TARGETS
+            absl::absl_check
+            absl::absl_log
+            absl::algorithm
+            absl::base
+            absl::bind_front
+            absl::bits
+            absl::btree
+            absl::cleanup
+            absl::cord
+            absl::core_headers
+            absl::debugging
+            absl::die_if_null
+            absl::dynamic_annotations
+            absl::flags
+            absl::flat_hash_map
+            absl::flat_hash_set
+            absl::function_ref
+            absl::hash
+            absl::layout
+            absl::log_initialize
+            absl::log_severity
+            absl::memory
+            absl::node_hash_map
+            absl::node_hash_set
+            absl::optional
+            absl::span
+            absl::status
+            absl::statusor
+            absl::strings
+            absl::synchronization
+            absl::time
+            absl::type_traits
+            absl::utility
+            absl::variant
+            utf8_range::utf8_range
+            utf8_range::utf8_validity
+          )
+        endif()
       endif()
     endif()
   endif()
@@ -248,19 +250,9 @@ endif()
 if(NOT ONNX_PROTOC_EXECUTABLE)
     set(Build_Protobuf ON)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
-    set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
 
     include(FetchContent)
-    message("Loading Dependencies URLs ...")
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240722.1/abseil-cpp-20240722.1.tar.gz)
-    set(AbseilSHA1 0d6b07c6f3352981d3660978e109f2bc14594a3d)
-    FetchContent_Declare(
-      Abseil
-      URL ${AbseilURL}
-      URL_HASH SHA1=${AbseilSHA1}
-    )
     set(ABSL_PROPAGATE_CXX_STD 1)
-    set(abseil_BUILD_TESTING 0)
     set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build thirdparty libs.
@@ -268,42 +260,25 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     if(CMAKE_COMPILER_IS_GNUCXX)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=all")
     endif()
-    message(STATUS "Download and build Abseil from ${AbseilURL}")
-    FetchContent_Populate(Abseil)
-    FetchContent_GetProperties(Abseil)
-    # ABSL_ROOT_DIR is required by Protobuf.
-    set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
-    message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v29.2/protobuf-29.2.tar.gz)
-    set(ProtobufSHA1 a5639ffb17e3743d696baf16bf377fbe752b6a1f)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.1/protobuf-30.1.tar.gz)
+    set(ProtobufSHA1 35ddaca280bc0567005e790cccf4a9f310b91325)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
       URL_HASH SHA1=${ProtobufSHA1}
+      PATCH_COMMAND ${CMAKE_COMMAND} -Dprotobuf_MSVC_STATIC_RUNTIME=${protobuf_MSVC_STATIC_RUNTIME} -DFILENAME=CMakeLists.txt -P ${CMAKE_CURRENT_LIST_DIR}/cmake/ProtoBufPatch.cmake
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
-    FetchContent_MakeAvailable(Protobuf Abseil)
+    FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "5.29.2")
+    set(Protobuf_VERSION "6.30.1")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
-    set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
     set(CMAKE_CXX_FLAGS ${ONNX_CMAKE_CXX_FLAGS})
-  endif()
-  message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
-  message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 endif()
-
-# abseil build would fail if ONNX_WERROR is on.
-if(ONNX_WERROR)
-  if(MSVC)
-    add_compile_options("/WX")
-  else()
-    add_compile_options("-Werror")
-  endif()
-endif()
+message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
@@ -474,17 +449,9 @@ add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include>
-  $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
+  $<INSTALL_INTERFACE:include>)
 
 if(MSVC)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(EXTRA_FLAGS
-          "-Wno-microsoft-unqualified-friend"
-          "-Wno-absolute-value"
-          "-Wno-unknown-argument"
-          "-Qunused-arguments")
-  endif()
   if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
   else()
@@ -499,19 +466,18 @@ endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 target_compile_features(onnx_proto PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 
+set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite PRIVATE ${protobuf_ABSL_USED_TARGETS})
-  else()
-    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LITE_LIBRARIES})
-  endif()
-else()
-  if(TARGET protobuf::libprotobuf)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf PRIVATE ${protobuf_ABSL_USED_TARGETS})
-  else()
-    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+    set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
+target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
+foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
+  if(TARGET ${ABSL_USED_TARGET})
+    target_link_libraries(onnx_proto PRIVATE ${ABSL_USED_TARGET})
+  endif()
+endforeach()
 add_onnx_global_defines(onnx_proto)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
@@ -556,9 +522,7 @@ if(ONNX_BUILD_PYTHON)
     endif()
   endif()
 
-  target_include_directories(onnx_cpp2py_export PUBLIC
-    "${pybind11_INCLUDE_DIRS}"
-    "${Python3_INCLUDE_DIRS}")
+  target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
@@ -602,7 +566,7 @@ if(ONNX_BUILD_PYTHON)
                                            # loss of data
                                    /wd4267 # Conversion from 'size_t' to 'int',
                                            # possible loss of data
-                                   ${EXTRA_FLAGS})
+                                   )
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -625,7 +589,8 @@ if(MSVC)
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
-                                 ${EXTRA_FLAGS})
+                                 /wd4141 # 'inline': used more than once
+                                   )
   target_compile_options(onnx
                          PRIVATE /MP
                                  /wd4146 # unary minus operator applied to unsigned type,
@@ -635,7 +600,8 @@ if(MSVC)
                                          # loss of data
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
-                                 ${EXTRA_FLAGS})
+                                 /wd4141 # 'inline': used more than once
+                                   )
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
@@ -646,11 +612,20 @@ if(MSVC)
   set_target_properties(onnx
                         PROPERTIES STATIC_LIBRARY_FLAGS
                                    "${onnx_static_library_flags}")
+  if(ONNX_WERROR)
+    target_compile_options(onnx PRIVATE "/WX")
+    target_compile_options(onnx_proto PRIVATE "/WX")
+  endif()
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
+  target_compile_options(onnx_proto PRIVATE -Wall -Wextra)
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
     target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
     target_compile_options(onnx_proto PRIVATE "-Wno-stringop-overflow")
+  endif()
+  if(ONNX_WERROR)
+    target_compile_options(onnx PRIVATE "-Werror")
+    target_compile_options(onnx_proto PRIVATE "-Werror")
   endif()
 endif()
 

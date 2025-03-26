@@ -18,9 +18,7 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-
-env:
-  MACOSX_DEPLOYMENT_TARGET: "12.0"
+  pull_request:
 
 permissions:
   contents: read
@@ -29,21 +27,28 @@ jobs:
 
   test_sdist_preview:
 
-    runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
+        os: [ubuntu-24.04, ubuntu-22.04, windows-latest]
         python-version: ['3.10','3.12']
-        target-architecture: ['arm64']
-
+        target-architecture: ['arm64', 'x86_64']
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    
     steps:
 
+        - name: Checkout repository
+          uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+        
         - name: Test preview build source distribution from PyPI
-          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
+          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'pull_request')
           run: |
             python -m pip uninstall -y onnx-weekly
+            python -m pip install --upgrade pip
             python -m pip install setuptools
             python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest
+            python -m pip install pytest nbval ml_dtypes pillow parameterized google-re2
             pytest
             
         - name: Test preview build source distribution from test.PyPI
@@ -52,5 +57,5 @@ jobs:
             python -m pip uninstall -y onnx-weekly
             python -m pip install setuptools
             python -m pip install -i https://test.pypi.org/pypi/ --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest
+            python -m pip install pytest nbval ml_dtypes pillow parameterized google-re2
             pytest

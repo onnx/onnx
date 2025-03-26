@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -14,13 +15,13 @@
 namespace ONNX_NAMESPACE {
 namespace Common {
 
-enum class StatusCategory {
+enum class StatusCategory : std::uint8_t {
   NONE = 0,
   CHECKER = 1,
   OPTIMIZER = 2,
 };
 
-enum class StatusCode {
+enum class StatusCode : std::uint8_t {
   OK = 0,
   FAIL = 1,
   INVALID_ARGUMENT = 2,
