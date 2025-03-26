@@ -4,9 +4,6 @@
 
 name: CI freethreading experimental
 
-# Note: actions/setup-python does not support 3.13t therefore
-# Quansight-Labs/setup-python@v5 is used
-
 on:
   schedule:
     - cron: '0 0 * * *'  # every day at midnight for reporting code coverage to codecov
@@ -52,7 +49,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Set up Python
-        uses: Quansight-Labs/setup-python@v5
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # 5.5.0
         # uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b
         with:
           python-version: ${{ matrix.python_version }}
