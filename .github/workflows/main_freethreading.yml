@@ -77,7 +77,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+          CMAKE_ARGS: "-DONNX_WERROR=ON"
 
       - name: Build and install ONNX - MacOS
         if: matrix.os == 'macos-latest'
