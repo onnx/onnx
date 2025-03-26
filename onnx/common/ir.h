@@ -111,7 +111,7 @@ enum class AttributeKind : uint8_t {
 static inline const char* toString(AttributeKind kind) {
   // NOLINTNEXTLINE(modernize-avoid-c-arrays)
   static constexpr const char* names[] = {"f", "fs", "i", "is", "s", "ss", "t", "ts", "g", "gs", "tp", "tps"};
-  ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*));
+  ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*))
   return names[int(kind)];
 }
 
@@ -264,7 +264,7 @@ struct Attributes {
   using iterator = std::vector<AVPtr>::iterator;
   iterator find(Symbol name, bool required) {
     auto it = std::find_if(values_.begin(), values_.end(), [&](const AVPtr& v) { return v->name == name; });
-    ONNX_ASSERT(!required || it != values_.end());
+    ONNX_ASSERT(!required || it != values_.end())
     return it;
   }
   using const_iterator = std::vector<AVPtr>::const_iterator;
@@ -276,7 +276,7 @@ struct Attributes {
         __FILE__,
         __LINE__,
         __func__,
-        name.toString());
+        name.toString())
     return it;
   }
 };
@@ -542,7 +542,7 @@ struct Node : public Attributes<Node> {
     return false;
   }
   void replaceAllUsesWith(Node* n) {
-    ONNX_ASSERT(outputs().size() == n->outputs().size());
+    ONNX_ASSERT(outputs().size() == n->outputs().size())
     size_t nOutputs = outputs().size();
     for (size_t i = 0; i < nOutputs; i++) {
       outputs()[i]->replaceAllUsesWith(n->outputs()[i]);
@@ -551,19 +551,19 @@ struct Node : public Attributes<Node> {
   // lots of things like chunk have a single input or single output, so we have a
   // helper to make accessing it easier
   Value* input() {
-    ONNX_ASSERT(inputs_.size() == 1);
+    ONNX_ASSERT(inputs_.size() == 1)
     return inputs_.at(0);
   }
   Value* output() {
-    ONNX_ASSERT(outputs_.size() == 1);
+    ONNX_ASSERT(outputs_.size() == 1)
     return outputs_.at(0);
   }
   const Value* input() const {
-    ONNX_ASSERT(inputs_.size() == 1);
+    ONNX_ASSERT(inputs_.size() == 1)
     return inputs_.at(0);
   }
   Value* output() const {
-    ONNX_ASSERT(outputs_.size() == 1);
+    ONNX_ASSERT(outputs_.size() == 1)
     return outputs_.at(0);
   }
   // Access a particular input.  This is a checked index.
@@ -595,7 +595,7 @@ struct Node : public Attributes<Node> {
   // Execute: %3.addInput(%4)
   // Result:  %3 = f(%1, %2, %4)
   Value* addInput(Value* node) {
-    ONNX_ASSERT(graph_ == node->owningGraph());
+    ONNX_ASSERT(graph_ == node->owningGraph())
     node->uses_in_current_graph_.emplace_back(this, inputs_.size());
     inputs_.push_back(node);
     return node;
@@ -608,7 +608,7 @@ struct Node : public Attributes<Node> {
   // Execute: %3.replaceInput(1, %4)
   // Result:  %3 = f(%1, %4)
   Value* replaceInput(size_t i, Value* newValue) {
-    ONNX_ASSERT(newValue->owningGraph() == graph_);
+    ONNX_ASSERT(newValue->owningGraph() == graph_)
     Value* old = dropInput(i);
     inputs_[i] = newValue;
     newValue->uses_in_current_graph_.emplace_back(this, i);
@@ -622,8 +622,8 @@ struct Node : public Attributes<Node> {
   // Execute: %3.replaceInputWith(%1, %4)
   // Result:  %3 = f(%4, %2, %4)
   void replaceInputWith(Value* from, Value* to) {
-    ONNX_ASSERT(from->owningGraph() == graph_);
-    ONNX_ASSERT(to->owningGraph() == graph_);
+    ONNX_ASSERT(from->owningGraph() == graph_)
+    ONNX_ASSERT(to->owningGraph() == graph_)
     size_t i = 0;
     for (auto input : inputs()) {
       if (input == from)
@@ -650,7 +650,7 @@ struct Node : public Attributes<Node> {
   //          %5 = h(%1)
   //          %4 = g(%3)
   Node* insertBefore(Node* n) {
-    ONNX_ASSERT(n->inGraphList());
+    ONNX_ASSERT(n->inGraphList())
     insertAfter(n->prev());
     return this;
   }
@@ -666,7 +666,7 @@ struct Node : public Attributes<Node> {
   //          %4 = g(%3)
   //          %5 = h(%1)
   Node* insertAfter(Node* n) {
-    ONNX_ASSERT(!inGraphList() && n->inGraphList());
+    ONNX_ASSERT(!inGraphList() && n->inGraphList())
     Node* next = n->next();
     n->next() = this;
     this->prev() = n;
@@ -764,7 +764,7 @@ struct Node : public Attributes<Node> {
   }
   template <typename T>
   T* expect() {
-    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString());
+    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
     return static_cast<T*>(this);
   }
 
@@ -777,7 +777,7 @@ struct Node : public Attributes<Node> {
     // O(N) on the use list, but unless we get nodes with +100 uses
     // vector traversal still is probably faster than linked list
     auto use_it = std::find(input_uses.begin(), input_uses.end(), Use(this, i));
-    ONNX_ASSERT(use_it != input_uses.end());
+    ONNX_ASSERT(use_it != input_uses.end())
     return use_it;
   }
 
@@ -785,7 +785,7 @@ struct Node : public Attributes<Node> {
   // is only used internally to Node before setting it to a new value
   // or erasing the entry from the list.
   Value* dropInput(size_t i) {
-    ONNX_ASSERT(i < inputs_.size());
+    ONNX_ASSERT(i < inputs_.size())
     auto input_node = inputs_[i];
     auto use_it = findUseForInput(i);
     input_node->uses_in_current_graph_.erase(use_it);
@@ -794,11 +794,11 @@ struct Node : public Attributes<Node> {
   }
 
   bool inGraphList() const {
-    ONNX_ASSERT(next() != nullptr || prev() == nullptr);
+    ONNX_ASSERT(next() != nullptr || prev() == nullptr)
     return next() != nullptr;
   }
   void removeFromList() {
-    ONNX_ASSERT(inGraphList());
+    ONNX_ASSERT(inGraphList())
     Node* next = this->next();
     Node* prev = this->prev();
     prev->next() = next;
@@ -856,7 +856,7 @@ class OpSetID final {
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
-      ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()); });
+      ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()) });
     }
 
     // The control will never reach here.
@@ -1131,13 +1131,13 @@ struct Graph final {
   }
 
   Node* appendNode(Node* n) {
-    ONNX_ASSERT(n->graph_ == this && !n->inGraphList());
+    ONNX_ASSERT(n->graph_ == this && !n->inGraphList())
     n->insertBefore(output_);
     return n;
   }
 
   Node* prependNode(Node* n) {
-    ONNX_ASSERT(n->graph_ == this && !n->inGraphList());
+    ONNX_ASSERT(n->graph_ == this && !n->inGraphList())
     n->insertAfter(output_);
     return n;
   }
@@ -1244,13 +1244,13 @@ struct Graph final {
 
   void freeNode(Node* n) {
     auto it = all_nodes.find(n);
-    ONNX_ASSERT(it != all_nodes.end());
+    ONNX_ASSERT(it != all_nodes.end())
     delete *it;
     all_nodes.erase(it);
   }
   void freeValue(Value* v) {
     auto it = all_values.find(v);
-    ONNX_ASSERT(it != all_values.end());
+    ONNX_ASSERT(it != all_values.end())
     delete *it;
     all_values.erase(it);
   }
@@ -1305,7 +1305,7 @@ inline Value* Value::setUniqueName(const std::string& name, bool update_related_
 
 inline void Value::replaceAllUsesWith(Value* newValue) {
   auto* graph = owningGraph();
-  ONNX_ASSERT(graph == newValue->owningGraph());
+  ONNX_ASSERT(graph == newValue->owningGraph())
   // propagate sizes and elem type
   if (this->has_sizes()) {
     newValue->setSizes(this->sizes());
@@ -1347,8 +1347,8 @@ inline Node::Node(Graph* graph_, NodeKind kind_) : kind_(kind_), graph_(graph_),
 }
 
 inline void Node::eraseOutput(size_t i) {
-  ONNX_ASSERT(i < outputs_.size());
-  ONNX_ASSERT(outputs_[i]->uses().empty());
+  ONNX_ASSERT(i < outputs_.size())
+  ONNX_ASSERT(outputs_[i]->uses().empty())
   Value* n = outputs_[i];
   outputs_.erase(outputs_.begin() + i);
   owningGraph()->freeValue(n);
@@ -1370,7 +1370,7 @@ inline bool Node::isBefore(const Node* n) {
   if (n->kind() == kParam) {
     return false;
   }
-  ONNX_ASSERT(n->inGraphList());
+  ONNX_ASSERT(n->inGraphList())
   for (Node* p = next(); p != *graph_->end(); p = p->next()) {
     if (p == n) {
       return true;
@@ -1380,7 +1380,7 @@ inline bool Node::isBefore(const Node* n) {
 }
 
 inline void Node::destroy() {
-  ONNX_ASSERT(inGraphList());
+  ONNX_ASSERT(inGraphList())
   while (!outputs().empty())
     eraseOutput(outputs().size() - 1);
   removeAllInputs();
