@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# could be integraded in release_mac.yml when # uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b contains 3.13t, used Quansight-Labs/setup-python@v5 instead
+# could be integraded in release_mac.yml
 
 
 name: MacRelease (freethreading)
@@ -37,7 +37,7 @@ jobs:
         submodules: true
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: Quansight-Labs/setup-python@v5
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -52,7 +52,7 @@ jobs:
         CXX: "clang++"
         ONNX_ML: 1
         CMAKE_OSX_ARCHITECTURES: "arm64;x86_64"
-        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON"
+        CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`

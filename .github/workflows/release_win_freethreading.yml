@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# could be integraded in release_win.yml when # uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b contains 3.13t, used Quansight-Labs/setup-python@v5 instead
+# could be integraded in release_win.yml when dependency issues are resolved
 
 
 name: WindowsRelease (freethreading)
@@ -13,7 +13,7 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-        
+
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
@@ -33,7 +33,7 @@ jobs:
          persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: Quansight-Labs/setup-python@550c8a087c8e002b86f428cf42937d4f13861955
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -55,7 +55,7 @@ jobs:
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
         if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
           echo "Build preview build PyPI package"
@@ -64,14 +64,14 @@ jobs:
         }
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
- 
+
     - name: Test the installed wheel
       run: |
-        
+
         # 2025.03.09 jupyter_client and ipython have conflicting dependencies
         # therefore [tool.pytest.ini_options] in pyproject.toml is overwritten
         # because it contains nbval which cannot be installed
-        # TODO: this section should be revised either a) by direct integration into pyproject, 
+        # TODO: this section should be revised either a) by direct integration into pyproject,
         # or b) by revising the dependencies in the original projects."
 
         echo "[pytest]" > pytest.ini
@@ -81,7 +81,7 @@ jobs:
         echo "    onnx/examples" >> pytest.ini
         python -m pip install -v pillow
         pytest
-        
+
     - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
