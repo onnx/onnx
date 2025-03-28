@@ -258,11 +258,8 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build thirdparty libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    if(CMAKE_COMPILER_IS_GNUCXX)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=all")
-    endif()
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.1/protobuf-30.1.tar.gz)
-    set(ProtobufSHA1 35ddaca280bc0567005e790cccf4a9f310b91325)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.2/protobuf-30.2.tar.gz)
+    set(ProtobufSHA1 f846d1f047255d09142361ba6d1985336db5e407)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -273,7 +270,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.30.1")
+    set(Protobuf_VERSION "6.30.2")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
