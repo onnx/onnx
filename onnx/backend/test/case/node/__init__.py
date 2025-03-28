@@ -403,7 +403,7 @@ def get_diff_op_types():
     cwd_path = Path.cwd()
     # git fetch first for git diff on GitHub Action
     subprocess.run(
-        ["git", "fetch", "origin", "main:main"],
+        ["git", "fetch", "origin/main",'-v'],
         cwd=cwd_path,
         capture_output=True,
         check=True,
