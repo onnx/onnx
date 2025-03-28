@@ -93,11 +93,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
   const char* value_field = nullptr;
 
-#define check_data_field(field)             \
-  bool has_##field = tensor.field().size(); \
-  if (has_##field) {                        \
-    ++num_value_fields;                     \
-    value_field = #field;                   \
+#define check_data_field(field)               \
+  bool has_##field = !tensor.field().empty(); \
+  if (has_##field) {                          \
+    ++num_value_fields;                       \
+    value_field = #field;                     \
   }
 
   check_data_field(float_data);
@@ -1038,7 +1038,7 @@ std::string resolve_external_data_location(
   struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
   if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
 #else
-  struct stat64 buffer {}; // All POSIX under glibc except APPLE and wasm have stat64
+  struct stat64 buffer{}; // All POSIX under glibc except APPLE and wasm have stat64
   if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
 #endif
     fail_check(

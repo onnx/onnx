@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import MutableMapping
+from typing import TYPE_CHECKING
 
 from onnx import (
     AttributeProto,
@@ -14,6 +14,9 @@ from onnx import (
     helper,
     utils,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
 
 
 def check_overlapping_names(
@@ -28,10 +31,10 @@ def check_overlapping_names(
     Optionally, it takes an io_map, representing the output/inputs to be connected. It provided, overlapping
     present in the io_map argument will be ignored.
     """
-    if type(g1) is not GraphProto:
-        raise ValueError("g1 argument is not an ONNX graph")
-    if type(g2) is not GraphProto:
-        raise ValueError("g2 argument is not an ONNX graph")
+    if not isinstance(g1, GraphProto):
+        raise TypeError("g1 argument is not an ONNX graph")
+    if not isinstance(g2, GraphProto):
+        raise TypeError("g2 argument is not an ONNX graph")
 
     def _overlapping(c1: list[str], c2: list[str]) -> list[str]:
         return list(set(c1) & set(c2))
@@ -123,10 +126,10 @@ def merge_graphs(
     Returns:
         GraphProto
     """
-    if type(g1) is not GraphProto:
-        raise ValueError("g1 argument is not an ONNX graph")
-    if type(g2) is not GraphProto:
-        raise ValueError("g2 argument is not an ONNX graph")
+    if not isinstance(g1, GraphProto):
+        raise TypeError("g1 argument is not an ONNX graph")
+    if not isinstance(g2, GraphProto):
+        raise TypeError("g2 argument is not an ONNX graph")
 
     # Prefixing names in the graph if requested, adjusting io_map accordingly
     if prefix1 or prefix2:
@@ -329,10 +332,10 @@ def merge_models(
     Returns:
         ModelProto
     """
-    if type(m1) is not ModelProto:
-        raise ValueError("m1 argument is not an ONNX model")
-    if type(m2) is not ModelProto:
-        raise ValueError("m2 argument is not an ONNX model")
+    if not isinstance(m1, ModelProto):
+        raise TypeError("m1 argument is not an ONNX model")
+    if not isinstance(m2, ModelProto):
+        raise TypeError("m2 argument is not an ONNX model")
 
     if m1.ir_version != m2.ir_version:
         raise ValueError(
@@ -460,8 +463,8 @@ def add_prefix_graph(
     Returns:
         GraphProto
     """
-    if type(graph) is not GraphProto:
-        raise ValueError("graph argument is not an ONNX graph")
+    if not isinstance(graph, GraphProto):
+        raise TypeError("graph argument is not an ONNX graph")
 
     if not inplace:
         g = GraphProto()
@@ -577,8 +580,8 @@ def add_prefix(
     Returns:
         ModelProto
     """
-    if type(model) is not ModelProto:
-        raise ValueError("model argument is not an ONNX model")
+    if not isinstance(model, ModelProto):
+        raise TypeError("model argument is not an ONNX model")
 
     if not inplace:
         m = ModelProto()
@@ -637,8 +640,8 @@ def expand_out_dim_graph(
     Returns:
         GraphProto
     """
-    if type(graph) is not GraphProto:
-        raise ValueError("graph argument is not an ONNX graph")
+    if not isinstance(graph, GraphProto):
+        raise TypeError("graph argument is not an ONNX graph")
 
     if not inplace:
         g = GraphProto()
@@ -717,8 +720,8 @@ def expand_out_dim(
     Returns:
         ModelProto
     """
-    if type(model) is not ModelProto:
-        raise ValueError("model argument is not an ONNX model")
+    if not isinstance(model, ModelProto):
+        raise TypeError("model argument is not an ONNX model")
 
     if not inplace:
         m = ModelProto()

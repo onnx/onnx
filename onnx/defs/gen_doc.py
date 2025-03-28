@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import os
 from collections import defaultdict
-from typing import Any, NamedTuple, Sequence
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 import numpy as np
 
@@ -15,6 +15,9 @@ from onnx import defs, helper
 from onnx.backend.sample.ops import collect_sample_implementations
 from onnx.backend.test.case import collect_snippets
 from onnx.defs import ONNX_ML_DOMAIN, OpSchema
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 SNIPPETS = collect_snippets()
 SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()

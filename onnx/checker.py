@@ -23,9 +23,7 @@ __all__ = [
 
 import os
 import sys
-from typing import Any, Callable, TypeVar
-
-from google.protobuf.message import Message
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 import onnx.defs
 import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
@@ -42,8 +40,11 @@ from onnx import (
     ValueInfoProto,
 )
 
-# Limitation of single protobuf file is 2GB
-MAXIMUM_PROTOBUF = 2000000000
+if TYPE_CHECKING:
+    from google.protobuf.message import Message
+
+# Limitation of single protobuf file is 2GiB
+MAXIMUM_PROTOBUF = 2147483648
 
 # TODO: This thing where we reserialize the protobuf back into the
 # string, only to deserialize it at the call site, is really goofy.
@@ -170,11 +171,11 @@ def check_model(
         protobuf_string = (
             model if isinstance(model, bytes) else model.SerializeToString()
         )
-        # If the protobuf is larger than 2GB,
+        # If the protobuf is larger than 2GiB,
         # remind users should use the model path to check
         if sys.getsizeof(protobuf_string) > MAXIMUM_PROTOBUF:
             raise ValueError(
-                "This protobuf of onnx model is too large (>2GB). Call check_model with model path instead."
+                "This protobuf of onnx model is too large (>2GiB). Call check_model with model path instead."
             )
         C.check_model(
             protobuf_string,

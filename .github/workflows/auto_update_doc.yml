@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Auto update documentation/backend test data
 on:
   pull_request_target:
@@ -13,28 +17,32 @@ concurrency:
 jobs:
   auto-update-doc:
     if: contains( github.event.pull_request.labels.*.name, 'auto update doc')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
         contents: write
 
     steps:
-    - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         # Checkout the branch made in the fork. Will automatically push changes
         # back to this branch.
-        ref: ${{ github.head_ref }}
+        ref: ${{ github.event.pull_request.head.sha }}
+        persist-credentials: true # cmd_tools contains git commands
+        
     - name: Setup Python
-      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: "3.11"
+        
     - name: Install ONNX from source and update documentation
       run: |
+        source workflow_scripts/protobuf/build_protobuf_unix.sh 3
         python -m pip install -q --upgrade pip
         python -m pip install -r requirements-release.txt
         git submodule update --init --recursive
         export ONNX_ML=1
-        pip install -e .
+        pip install --verbose -e .
 
         python onnx/defs/gen_doc.py
         python onnx/gen_proto.py -l
@@ -45,9 +53,8 @@ jobs:
 
         git diff -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
 
-
     - name: Commit changes with updated files
-      uses: stefanzweifel/git-auto-commit-action@8621497c8c39c72f3e2a999a26b4ca1b5058a842 # v5.0.1
+      uses: stefanzweifel/git-auto-commit-action@e348103e9026cc0eee72ae06630dbe30c8bf7a79 # v5.1.0
       with:
         commit_message: CI:apply auto updated documentation/backend test data
         commit_options: "--signoff"

@@ -14,7 +14,8 @@ import tempfile
 import time
 import unittest
 from collections import defaultdict
-from typing import Any, Callable, Iterable, Pattern, Sequence
+from re import Pattern
+from typing import TYPE_CHECKING, Any, Callable
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -22,10 +23,14 @@ import numpy as np
 import onnx
 import onnx.reference
 from onnx import ONNX_ML, ModelProto, NodeProto, TypeProto, ValueInfoProto, numpy_helper
-from onnx.backend.base import Backend
-from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.loader import load_model_tests
 from onnx.backend.test.runner.item import TestItem
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from onnx.backend.base import Backend
+    from onnx.backend.test.case.test_case import TestCase
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
@@ -214,7 +219,12 @@ class Runner:
                         raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
                     continue
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
-                if ref_outputs[i].dtype == object:  # type: ignore[attr-defined]
+                np.testing.assert_array_equal(
+                    outputs[i].shape,
+                    ref_outputs[i].shape,
+                    err_msg=f"Output {i} has incorrect shape",
+                )
+                if ref_outputs[i].dtype == object:
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
                     np.testing.assert_allclose(
@@ -226,27 +236,21 @@ class Runner:
     def download_model(
         cls,
         model_test: TestCase,
-        model_dir: str,
         models_dir: str,
     ) -> None:
-        # On Windows, NamedTemporaryFile can not be opened for a
-        # second time
-        del model_dir
-        download_file = tempfile.NamedTemporaryFile(delete=False)
-        try:
-            download_file.close()
-            assert model_test.url
-            print(
-                f"Start downloading model {model_test.model_name} from {model_test.url}"
-            )
-            urlretrieve(model_test.url, download_file.name)
-            print("Done")
-            onnx.utils._extract_model_safe(download_file.name, models_dir)
-        except Exception as e:
-            print(f"Failed to prepare data for model {model_test.model_name}: {e}")
-            raise
-        finally:
-            os.remove(download_file.name)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            try:
+                assert model_test.url
+                print(
+                    f"Start downloading model {model_test.model_name} from {model_test.url}"
+                )
+                filename = os.path.join(tmpdir, "file")
+                urlretrieve(model_test.url, filename)
+                print("Done")
+                onnx.utils._extract_model_safe(filename, models_dir)
+            except Exception as e:
+                print(f"Failed to prepare data for model {model_test.model_name}: {e}")
+                raise
 
     @classmethod
     def prepare_model_data(cls, model_test: TestCase) -> str:
@@ -267,9 +271,7 @@ class Runner:
                     break
             os.makedirs(model_dir)
 
-            cls.download_model(
-                model_test=model_test, model_dir=model_dir, models_dir=models_dir
-            )
+            cls.download_model(model_test=model_test, models_dir=models_dir)
         return model_dir
 
     def _add_test(
@@ -292,7 +294,7 @@ class Runner:
                     f'Duplicated test name "{device_test_name}" in category "{category}"'
                 )
 
-            @unittest.skipIf(  # type: ignore
+            @unittest.skipIf(
                 not self.backend.supports_device(device),
                 f"Backend doesn't support device {device}",
             )

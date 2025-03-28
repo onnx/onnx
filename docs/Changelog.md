@@ -4629,7 +4629,7 @@ This version of the operator has been available since version 2 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -15683,7 +15683,22 @@ This version of the operator has been available since version 13 of the default 
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
 
-  If `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
+  It is an indexing operation that indexes into the input `data` along a single (specified) axis.
+  Each entry in `indices` produces a `r-1` dimensional slice of the input tensor.
+  The entire operation produces, conceptually, a `q`-dimensional tensor of `r-1` dimensional slices,
+  which is arranged into a `q + (r-1)`-dimensional tensor, with the `q` dimensions taking the
+  place of the original `axis` that is being indexed into.
+
+  The following few examples illustrate how `Gather` works for specific shapes of `data`,
+  `indices`, and given value of `axis`:
+  | data shape | indices shape | axis | output shape | output equation |
+  | --- | --- | --- | --- | --- |
+  | (P, Q) | ( )  (a scalar)   | 0 | (Q)       | output[q] = data[indices, q] |
+  | (P, Q, R) | ( )  (a scalar)   | 1 | (P, R)       | output[p, r] = data[p, indices, r] |
+  | (P, Q) | (R, S) | 0 | (R, S, Q) | output[r, s, q] = data[ [indices[r, s], q] |
+  | (P, Q) | (R, S) | 1 | (P, R, S) | output[p, r, s] = data[ p, indices[r, s]] |
+
+  More generally, if `axis = 0`, let `k = indices[i_{0}, ..., i_{q-1}]`
   then `output[i_{0}, ..., i_{q-1}, j_{0}, ..., j_{r-2}] = input[k , j_{0}, ..., j_{r-2}]`:
 
   ```
@@ -21383,12 +21398,18 @@ This version of the operator has been available since version 18 of the default 
 
   Center crop or pad an input to given dimensions.
 
-  The crop/pad dimensions can be specified for a subset of the `axes`. Non-specified dimensions will not be
-  cropped or padded.
+  The crop/pad dimensions can be specified for a subset of the `axes`; unspecified dimensions will remain unchanged.
 
-  If the input dimensions are bigger than the crop shape, a centered cropping window is extracted from the input.
-  If the input dimensions are smaller than the crop shape, the input is padded on each side equally,
-  so that the input is centered in the output.
+  If the input dimensions are larger than the target crop dimensions, a centered cropping window will be extracted
+  from the input. The starting value for the cropping window is rounded down, which means that if the difference
+  between the input shape and the crop shape is odd, the cropping window will be shifted half a pixel to the left
+  of the input center.
+
+  If the input dimensions are smaller than the target crop dimensions, the input will be padded equally on both sides
+  to center it in the output. In cases where the total number of padding pixels is odd, an additional pixel will be
+  added to the right side.
+
+  The padding value used is zero.
 
 #### Version
 
@@ -26721,7 +26742,7 @@ This version of the operator has been available since version 22 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -28193,6 +28214,114 @@ This version of the operator has been available since version 22 of the default 
 </dl>
 
 ## Version 23 of the default ONNX operator set
+### <a name="Attention-23"></a>**Attention-23**</a>
+
+  Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
+
+  This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
+
+  For self attention, `kv_sequence_length` equals to `q_sequence_length`.
+
+  For cross attention, query and key might have different lengths.
+
+  This operator also covers the 3 following variants based on the number of heads:
+  1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
+  2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
+  3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
+
+  Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
+  1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
+  2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+
+  Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+  The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
+
+  ```
+    The following pattern is applied by this operator:
+        Q          K          V
+        |          |          |
+       Q*scale     K*scale    |
+        |          |          |
+        |       Transpose     |
+        |          |          |
+        ---MatMul---          |
+              |               |
+   at_mask---Add              |
+              |               |
+    softcap (if provided)     |
+              |               |
+           Softmax            |
+              |               |
+              -----MatMul------
+                     |
+                     Y
+  ```
+
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>is_causal</tt> : int (default is 0)</dt>
+<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dt><tt>kv_num_heads</tt> : int</dt>
+<dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
+<dt><tt>q_num_heads</tt> : int</dt>
+<dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
+<dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. Default value is `1/sqrt(head_size)`</dd>
+<dt><tt>softcap</tt> : float (default is 0.0)</dt>
+<dd>Softcap value for attention weights. Default value is 0.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>The floating-point precision used in softmax computation. If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Query tensor. 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Key tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`</dd>
+<dt><tt>V</tt> : T2</dt>
+<dd>Value tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`</dd>
+<dt><tt>attn_mask</tt> (optional) : U</dt>
+<dd>Attention mask. Shape must be broadcastable to 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length.` Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. Also supports a float mask of the same type as query, key, value that is added to the attention score.</dd>
+<dt><tt>past_key</tt> (optional) : T1</dt>
+<dd>past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`</dd>
+<dt><tt>past_value</tt> (optional) : T2</dt>
+<dd>past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`</dd>
+</dl>
+
+#### Outputs (1 - 4)
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>The output tensor . 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`</dd>
+<dt><tt>present_key</tt> (optional) : T1</dt>
+<dd>Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
+<dt><tt>present_value</tt> (optional) : T2</dt>
+<dd>Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
+<dt><tt>qk_matmul_output</tt> (optional) : T1</dt>
+<dd>The output of QK matmul. 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q and K inputs types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain V input types to float tensors.</dd>
+<dt><tt>U</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool)</dt>
+<dd>Constrain output 'mask' types to boolean tensors and input types.</dd>
+</dl>
+
 ### <a name="Cast-23"></a>**Cast-23**</a>
 
   The operator casts the elements of a given input tensor to a data type
@@ -28433,8 +28562,10 @@ This version of the operator has been available since version 23 of the default 
 
   `x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
   `int32`, there's no zero point (zero point is supposed to be 0).
-  `zero-point` is usually not used in the case of float8 types quantization, but the dequantization formula remains the same
-  for consistency, and `x_scale` still determines the output type.
+  `zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
+  for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
+  is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
+
 
 #### Version
 
@@ -28447,6 +28578,8 @@ This version of the operator has been available since version 23 of the default 
 <dd>(Optional) The axis of the dequantizing dimension of the input tensor. Used for per-axis and blocked quantization. Negative value means counting dimensions from the back. Accepted range is `[-r, r-1]` where `r = rank(input)`.</dd>
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
+<dt><tt>output_dtype</tt> : int (default is 0)</dt>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `x_scale` data type (`T2`)</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -28463,8 +28596,8 @@ This version of the operator has been available since version 23 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : T2</dt>
-<dd>N-D full precision output tensor. It has same shape as input `x`.</dd>
+<dt><tt>y</tt> : T3</dt>
+<dd>N-D full precision output tensor. It has the same shape as input `x`. The data type is specified by the `output_dtype` attribute or, in its absence, the type of `x_scale`.</dd>
 </dl>
 
 #### Type Constraints
@@ -28473,7 +28606,9 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(int32), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>The type of the inputs 'x_zero_point' and 'x'.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
-<dd>'x_scale' determines the output type.</dd>
+<dd>The type of the input 'x_scale'.</dd>
+<dt><tt>T3</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>The type of the output 'y'.</dd>
 </dl>
 
 ### <a name="Flatten-23"></a>**Flatten-23**</a>
@@ -28920,8 +29055,10 @@ This version of the operator has been available since version 23 of the default 
 
   For `(x / y_scale)`, it rounds to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details.
 
-  `y_zero_point` and `y` must have the same type. `y_zero_point` is usually not used for quantization to float8 types, but the quantization
+  `y_zero_point` and `y` must have the same type. `y_zero_point` is usually not used for quantization to float8 and 4bit types, but the quantization
   formula remains the same for consistency, and the type of the attribute `y_zero_point` still determines the quantization type.
+  `x` and `y_scale` are allowed to have different types. The type of `y_scale` determines the precision of the division operation between `x` and
+  `y_scale`, unless the `precision` attribute is specified.
 
   There are three supported quantization granularities, determined by the shape of `y_scale`.
   In all cases, `y_zero_point` must have the same shape as `y_scale`.
@@ -28944,7 +29081,9 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>block_size</tt> : int (default is 0)</dt>
 <dd>(Optional) The size of the quantization block (number of times every scale is replicated). Used only for blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, `y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is `[ceil(Di/Si), ceil(Di/(Si-1))-1]`</dd>
 <dt><tt>output_dtype</tt> : int (default is 0)</dt>
-<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T2`). If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T2`.</dd>
+<dd>(Optional) The output data type. If not supplied, the output data type is inferred from `y_zero_point` data type (`T3`). If neither `output_dtype` nor `y_zero_point` are supplied, output data type is uint8. If both `output_dtype` and `y_zero_point` are specified, `output_dtype` must be `T3`.</dd>
+<dt><tt>precision</tt> : int (default is 0)</dt>
+<dd>(Optional) The precision of the division operation between `x` and `y_scale`. If not provided, it will be the same as the type of `y_scale`.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 quantization (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 </dl>
@@ -28954,16 +29093,16 @@ This version of the operator has been available since version 23 of the default 
 <dl>
 <dt><tt>x</tt> : T1</dt>
 <dd>N-D full precision Input tensor to be quantized.</dd>
-<dt><tt>y_scale</tt> : T1</dt>
+<dt><tt>y_scale</tt> : T2</dt>
 <dd>Scale for doing quantization to get `y`. For per-tensor/layer quantization the scale is a scalar, for per-axis quantization it is a 1-D Tensor and for blocked quantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
-<dt><tt>y_zero_point</tt> (optional) : T2</dt>
+<dt><tt>y_zero_point</tt> (optional) : T3</dt>
 <dd>Zero point for doing quantization to get `y`. Shape must match `y_scale`.Default is uint8 with zero point of 0 if it's not specified.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : T2</dt>
+<dt><tt>y</tt> : T3</dt>
 <dd>N-D quantized output tensor. It has same shape as input `x`.</dd>
 </dl>
 
@@ -28972,8 +29111,81 @@ This version of the operator has been available since version 23 of the default 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
 <dd>The type of the input 'x'.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dt><tt>T2</tt> : tensor(float), tensor(float16), tensor(bfloat16), tensor(int32)</dt>
+<dd>The type of the input 'y_scale'.</dd>
+<dt><tt>T3</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>The type of the input `y_zero_point` and the output `y`.</dd>
+</dl>
+
+### <a name="RMSNormalization-23"></a>**RMSNormalization-23**</a>
+
+  This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+        The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+        where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+        the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+        described by the following equations.
+        ```
+        XSquared = Mul(X, X)
+        XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+        MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+        RMS = Sqrt(MeanSquareEpsilon)
+        Normalized = Div(X, RMS)
+        ```
+        where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+        Depending on `stash_type` attribute, the actual computation
+        must happen in different floating-point precision.
+        For example, if `stash_type` is 1, this operator casts
+        all input variables to 32-bit float, perform the computation, and
+        finally cast `Normalized` back to the original type of `X`.
+        The second stage then scales the outcome of the first stage using:
+        ```
+        Y= Mul(Normalized, Scale)
+        ```
+        Let `d[i]` indicate the i-th dimension of `X`.
+        If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+        the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+        `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+        (`Scale` should be unidirectional broadcastable to tensor `X`);
+        for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). Negative value means counting dimensions from the back.</dd>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The floating-point precision used in stage one of the computation.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input tensor to be normalized. In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.</dd>
+<dt><tt>scale</tt> : V</dt>
+<dd>Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : V</dt>
+<dd>Output data tensor. Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input X type to float tensors.</dd>
+<dt><tt>V</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output Y and scale type to float tensors.</dd>
 </dl>
 
 ### <a name="Reshape-23"></a>**Reshape-23**</a>
@@ -29024,6 +29236,138 @@ This version of the operator has been available since version 23 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+### <a name="RotaryEmbedding-23"></a>**RotaryEmbedding-23**</a>
+
+  RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
+  The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
+  between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
+
+  The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
+  For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
+  embedding vector either into two halves or interleaving every alternate token and applying the rotation matrix to each half of the embedding vector.
+  The rotation matrix is parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated
+  to form the final positional embedding for each token. The rotated positional embeddings are used in the self-attention mechanism.
+  The rotation ensures that the model captures both absolute and relative positional information.
+
+  Rotary embeddings are defined using the following algorithm:
+
+  ```python
+  def compute_rotary_embedding(
+      input,
+      position_ids,
+      sin_cache,
+      cos_cache,
+      interleaved=0,
+      rotary_embedding_dim=0,
+      num_heads=0,
+  ):
+      # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
+      if len(input.shape) == 4:
+          input = np.transpose(input, (0, 2, 1, 3))
+      batch_size = input.shape[0]
+      sequence_length = input.shape[1]
+      if len(input.shape) == 3:
+          hidden_size = input.shape[2]
+          assert num_heads != 0
+          head_size = int(hidden_size / num_heads)
+          new_shape = [batch_size, sequence_length, num_heads, head_size]
+          input = np.reshape(input, new_shape)
+      assert len(input.shape) == 4
+      head_size = input.shape[3]
+
+      # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
+      if rotary_embedding_dim == 0:
+          # If rotary_embedding_dim not provided, perform full rotation by using head_size
+          rotary_embedding_dim = head_size
+      x_rotate = input[:, :, :, :rotary_embedding_dim]
+      x_not_rotate = input[:, :, :, rotary_embedding_dim:]
+      rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
+
+      # Retrieve sin and cos caches using position ids
+      if position_ids is not None:
+          cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+          sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+      else:
+          cos = cos_cache
+          sin = sin_cache
+      cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+      sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+
+      # Either divide the input in halves or interleave (based on interleaved attribute)
+      if interleaved:
+          x1 = x_rotate[:, :, :, 0::2]
+          x2 = x_rotate[:, :, :, 1::2]
+      else:
+          x1, x2 = np.split(x_rotate, 2, axis=-1)
+
+      # Calculate real and imaginary values
+      real = cos * x1 - sin * x2
+      imag = sin * x1 + cos * x2
+
+      # Inserted rotated embeddings back to the original input
+      if interleaved:
+          # x_rotate[:, :, :, 0::2] = real
+          # x_rotate[:, :, :, 1::2] = imag
+          real = np.expand_dims(real, axis=-1)
+          imag = np.expand_dims(imag, axis=-1)
+          x_rotate_concat = np.concatenate((real, imag), axis=-1)
+          x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
+      else:
+          x_rotate = np.concatenate((real, imag), axis=-1)
+      output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+      if len(original_input_shape) == 3:
+          output = np.reshape(output, input.shape)
+      else:
+          output = np.transpose(output, (0, 2, 1, 3))
+      return output
+  ```
+
+#### Version
+
+This version of the operator has been available since version 23 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>interleaved</tt> : int (default is 0)</dt>
+<dd>Rotate using interleaved pattern. Default value is 0 (False).</dd>
+<dt><tt>num_heads</tt> : int</dt>
+<dd>Number of attention heads. Must be provided when input is a 3D tensor. </dd>
+<dt><tt>rotary_embedding_dim</tt> : int (default is 0)</dt>
+<dd>Rotary embedding dimension used to apply partial rotary embeddings.</dd>
+</dl>
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input tensor representing the token embeddings. 4D tensor with shape `(batch_size, num_heads, sequence_length, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and `hidden_size` must be an even multiple of `num_heads` where `hidden_size = num_heads * head_size`</dd>
+<dt><tt>cos_cache</tt> : T</dt>
+<dd>The cosine values for the rotation. 2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
+<dt><tt>sin_cache</tt> : T</dt>
+<dd>The sine values for the rotation. 2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
+<dt><tt>position_ids</tt> (optional) : M</dt>
+<dd>The position indices for the tokens. 2D tensor with shape `(batch_size, sequence_length)`</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Tensor with same shape as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>M</tt> : tensor(int64)</dt>
+<dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
 ### <a name="Scan-23"></a>**Scan-23**</a>

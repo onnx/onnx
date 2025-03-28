@@ -11,13 +11,16 @@ __all__ = [
 ]
 
 import typing
-from typing import Any, Collection, Optional, Protocol, TypeVar
+from typing import Any, Optional, Protocol, TypeVar
 
 import google.protobuf.json_format
 import google.protobuf.message
 import google.protobuf.text_format
 
 import onnx
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Collection
 
 _Proto = TypeVar("_Proto", bound=google.protobuf.message.Message)
 # Encoding used for serializing and deserializing text files

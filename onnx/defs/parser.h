@@ -124,7 +124,7 @@ class AttributeTypeNameMap : public StringIntMap<AttributeTypeNameMap> {
 
 class KeyWordMap {
  public:
-  enum class KeyWord {
+  enum class KeyWord : std::uint8_t {
     NONE,
     IR_VERSION,
     OPSET_IMPORT,
@@ -157,10 +157,7 @@ class KeyWordMap {
     map_["overload"] = KeyWord::OVERLOAD_KW;
   }
 
-  static const std::unordered_map<std::string, KeyWord>& Instance() {
-    static KeyWordMap instance;
-    return instance.map_;
-  }
+  static const std::unordered_map<std::string, KeyWord>& Instance();
 
   static KeyWord Lookup(const std::string& id) {
     auto it = Instance().find(id);
@@ -169,14 +166,7 @@ class KeyWordMap {
     return KeyWord::NONE;
   }
 
-  static const std::string& ToString(KeyWord kw) {
-    static std::string undefined("undefined");
-    for (const auto& pair : Instance()) {
-      if (pair.second == kw)
-        return pair.first;
-    }
-    return undefined;
-  }
+  static const std::string& ToString(KeyWord kw);
 
  private:
   std::unordered_map<std::string, KeyWord> map_;
@@ -229,8 +219,8 @@ class ParserBase {
   template <typename... Args>
   Status ParseError(const Args&... args) {
     return Status(
-        NONE,
-        FAIL,
+        StatusCategory::NONE,
+        StatusCode::FAIL,
         ONNX_NAMESPACE::MakeString(
             "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...));
   }
@@ -274,7 +264,7 @@ class ParserBase {
     return (next_ >= end_);
   }
 
-  enum class LiteralType { UNDEFINED, INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
+  enum class LiteralType : std::uint8_t { UNDEFINED, INT_LITERAL, FLOAT_LITERAL, STRING_LITERAL };
 
   struct Literal {
     LiteralType type{LiteralType::UNDEFINED};

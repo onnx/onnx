@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, ClassVar, Iterable
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
@@ -23,6 +23,9 @@ from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_versi
 from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
 from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _split_class_name(name):  # type: ignore
@@ -208,9 +211,9 @@ class OpRun(abc.ABC):
             else:
                 functions = None
             evaluator_cls = self.run_params.get("evaluator_cls", None)
-            assert (
-                evaluator_cls is not None
-            ), f"evaluator_cls must be specified to evaluate att={att}"
+            assert evaluator_cls is not None, (
+                f"evaluator_cls must be specified to evaluate att={att}"
+            )
             return evaluator_cls(
                 att.g,
                 opsets=self.run_params["opsets"],
@@ -255,7 +258,9 @@ class OpRun(abc.ABC):
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context, value=value, attributes=None: OpRun._evaluate_subgraph(
+                    lambda context,
+                    value=value,
+                    attributes=None: OpRun._evaluate_subgraph(
                         context, value, attributes
                     ),
                 )
@@ -604,12 +609,7 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(
-        self,
-        onnx_node: NodeProto,  # noqa: ARG002
-        run_params: dict[str, Any],  # noqa: ARG002
-        impl: Any = None,  # noqa: ARG002
-    ):
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
         raise RuntimeError(
             f"The reference implementation must not use this node ({type(self)})."
         )
@@ -629,7 +629,7 @@ class OpFunction(OpRun):
         run_params: dict[str, Any] | None,
         impl: Any = None,
         attributes: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         if impl is None:
             raise RuntimeError(
                 f"impl cannot be None for node type {onnx_node.op_type!r} "
@@ -651,7 +651,7 @@ class OpFunction(OpRun):
         if len(impl.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "
-                f"and the expected number of inputs {len(impl.inputs)} "
+                f"and the expected number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
         feeds = dict(zip(impl.input_names, inputs))

@@ -200,15 +200,15 @@ class ReferenceEvaluator:
             implementation a schema may define.
     """
 
-    def __init__(  # type: ignore
+    def __init__(
         self,
         proto: Any,
         opsets: dict[str, int] | None = None,
         functions: list[ReferenceEvaluator | FunctionProto] | None = None,  # type: ignore
         verbose: int = 0,
-        new_ops: list[OpRun] | None = None,
+        new_ops: list[type[OpRun]] | None = None,
         optimized: bool = True,
-    ):
+    ) -> None:
         if optimized:
             if new_ops is None:
                 new_ops = optimized_operators.copy()
@@ -221,7 +221,7 @@ class ReferenceEvaluator:
         self.input_types_ = None
 
         if isinstance(proto, ModelContainer):
-            self.container_ = proto
+            self.container_: ModelContainer | None = proto
             proto = self.container_.model_proto
         else:
             self.container_ = None
@@ -294,7 +294,7 @@ class ReferenceEvaluator:
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
         self.verbose = verbose
-        self.new_ops_: dict[tuple[str, str], OpRun] = {}
+        self.new_ops_: dict[tuple[str, str], type[OpRun]] = {}
         if new_ops is not None:
             for cl in new_ops:
                 if not hasattr(cl, "op_domain"):
@@ -310,7 +310,7 @@ class ReferenceEvaluator:
                 self.new_ops_[key] = cl
         self._init()
 
-    def retrieve_external_data(self, initializer: TensorProto) -> np.array:
+    def retrieve_external_data(self, initializer: TensorProto) -> np.ndarray:
         """Returns a tensor saved as external."""
         info = ExternalDataInfo(initializer)
         location = info.location
@@ -494,7 +494,7 @@ class ReferenceEvaluator:
                     node.op_type,
                     version,
                     node=node,
-                    input_types=input_types,  # type: ignore[arg-type]
+                    input_types=input_types,
                     expand=expand,
                     evaluator_cls=self.__class__,
                 )
@@ -508,23 +508,17 @@ class ReferenceEvaluator:
         if node.domain == "ai.onnx.preview.training":
             from onnx.reference.ops.aionnx_preview_training import load_op as load_op_pt
 
-            return load_op_pt(
-                node.domain, node.op_type, version, evaluator_cls=self.__class__
-            )
+            return load_op_pt(node.domain, node.op_type, version)
 
         if node.domain == "experimental":
             from onnx.reference.ops.experimental import load_op as load_op_exp
 
-            return load_op_exp(
-                node.domain, node.op_type, version, evaluator_cls=self.__class__
-            )
+            return load_op_exp(node.domain, node.op_type, version)
 
         if node.domain == "ai.onnx.ml":
             from onnx.reference.ops.aionnxml import load_op as load_op_ml
 
-            return load_op_ml(
-                node.domain, node.op_type, version, evaluator_cls=self.__class__
-            )
+            return load_op_ml(node.domain, node.op_type, version)
 
         # It has to be a function.
         if key in self.functions_:

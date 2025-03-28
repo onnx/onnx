@@ -31,7 +31,7 @@ from onnx.reference.op_run import OpRun
 def reshape_input(
     value: np.ndarray,
     shape: tuple[int, ...],
-    axis: int | None = None,
+    axis: int,
     block_size: int | None = None,
 ) -> np.ndarray:
     """Reshape/Replicate scale/zero-point to be broadcastable to shape.
@@ -141,7 +141,8 @@ class _CommonQuantizeLinear(OpRun):
         axis: int = 1,
         saturate: bool = True,
         block_size: int | None = None,
-        output_dtype: np.dtype | None = None,
+        output_dtype: int | None = None,
+        precision: int | None = None,
     ) -> tuple[np.ndarray]:
         y_scale = reshape_input(y_scale, x.shape, axis, block_size)
 
@@ -167,7 +168,11 @@ class _CommonQuantizeLinear(OpRun):
             if zero_point is not None
             else 0
         )
-        x = x / y_scale
+        if precision:
+            precision_np = tensor_dtype_to_np_dtype(precision)
+            x = x.astype(precision_np) / y_scale.astype(precision_np)
+        else:
+            x = x / y_scale
 
         if tensor_type in _CommonQuantizeLinear.quant_integer_ranges:
             xi = np.rint(x).astype(np.int32)
@@ -239,4 +244,25 @@ class QuantizeLinear_21(_CommonQuantizeLinear):
             saturate=saturate,
             block_size=block_size,
             output_dtype=output_dtype,
+        )  # type: ignore
+
+
+class QuantizeLinear_23(_CommonQuantizeLinear):
+    def _run(
+        self,
+        *args,
+        axis=None,
+        saturate=None,
+        block_size=None,
+        output_dtype=None,
+        precision=None,
+    ):  # type: ignore
+        # args: x, y_scale, zero_point
+        return super()._run(
+            *args,
+            axis=axis,
+            saturate=saturate,
+            block_size=block_size,
+            output_dtype=output_dtype,
+            precision=precision,
         )  # type: ignore

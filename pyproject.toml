@@ -1,8 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=3.20.2", "cmake"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=64", "protobuf>=4.25.1"]
+backend-path = ["."]
+build-backend = "backend"
 
 [project]
 name = "onnx"
@@ -16,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 license = {text = "Apache License v2.0"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [project.urls]
 Homepage = "https://onnx.ai/"
@@ -97,7 +100,7 @@ ignore_errors = true
 
 [tool.black]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311"]
 
 [tool.isort]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
@@ -109,15 +112,18 @@ profile = "black"
 disable = [
     "format",
     "import-error",
+    "invalid-name",
     "line-too-long",
+    "missing-docstring",
     "no-name-in-module",
+    "too-few-public-methods",
     "use-dict-literal",     # Dict literals are sometimes preferable when creating kwargs
     "useless-return",
 ]
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py38"
+target-version = "py39"
 unsafe-fixes = true
 lint.select = [
     "A", # flake8-builtins
@@ -130,7 +136,7 @@ lint.select = [
     "F", # Pyflakes
     "FA", # flake8-future-annotations
     "G", # flake8-logging-format
-    "I002", # isort: required imports
+    "I", # isort
     "ISC", # flake8-implicit-str-concat
     "LOG", # flake8-logging
     "N", # pep8-naming
@@ -143,6 +149,7 @@ lint.select = [
     "SIM", # flake8-simplify
     "SLOT", # flake8-slot
     "T10", # flake8-debugger
+    "TC", # flake8-type-checking
     "TID", # Disallow relative imports
     "TRY", # flake8-try-except-raise
     "UP", # pyupgrade
@@ -168,6 +175,7 @@ lint.ignore = [
     "PYI021", # Allow docstrings in pyi files
     "PYI041", # int | float is sometimes more clear than float
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
+    "RUF022", # We may want to keep __all__ unsorted for better readability
     "SIM102", # We don't perfer always combining if branches
     "SIM103", # We don't always prefer combining if branches
     "SIM108", # We don't always encourage ternary operators
@@ -175,7 +183,6 @@ lint.ignore = [
     "SIM116", # Don't use dict lookup to replace if-else
     "TRY003", # Messages can be constructed in the exception
 ]
-lint.ignore-init-module-imports = false
 lint.unfixable = [
     "SIM112", # Envvars should not be modified
 ]

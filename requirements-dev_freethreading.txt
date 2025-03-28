@@ -1,0 +1,12 @@
+build
+numpy
+parameterized
+protobuf
+pytest
+pytest-cov
+pytest-xdist
+setuptools
+ml_dtypes
+pytest
+pytest-cov
+pytest-xdist

@@ -4,11 +4,12 @@
 """Implements function make_large_model to easily create and save models
 bigger than 2 Gb.
 """
+
 from __future__ import annotations
 
 import os
 import sys
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -16,6 +17,9 @@ import onnx
 import onnx.external_data_helper as ext_data
 import onnx.helper
 import onnx.onnx_cpp2py_export.checker as c_checker
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _set_external_data(
@@ -79,7 +83,7 @@ class ModelContainer:
     No tensor is stored on disk until the user explicitly saves the model.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.model_proto_: onnx.ModelProto | None = None
         self.large_initializers: dict[str, np.ndarray] = {}
 
@@ -126,13 +130,13 @@ class ModelContainer:
                 )
         self.large_initializers = large_initializers
 
-    def check_large_initializers(self):
+    def check_large_initializers(self) -> None:
         for tensor in ext_data._get_all_tensors(self.model_proto):
             if not ext_data.uses_external_data(tensor):
                 continue
             prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:  # type: ignore[assignment]
-                if ext.key == "location":  # type: ignore[attr-defined]
+            for ext in tensor.external_data:
+                if ext.key == "location":
                     prop = ext
             if prop is None:
                 raise RuntimeError(
@@ -195,9 +199,9 @@ class ModelContainer:
             if not ext_data.uses_external_data(tensor):
                 continue
             prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:  # type: ignore[assignment]
-                if ext.key == "location":  # type: ignore[attr-defined]
-                    prop = ext  # type: ignore[assignment]
+            for ext in tensor.external_data:
+                if ext.key == "location":
+                    prop = ext
             if prop is None:
                 raise RuntimeError(
                     f"No location found for tensor name {tensor.name!r}."

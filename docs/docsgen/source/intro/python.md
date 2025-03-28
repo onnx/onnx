@@ -12,7 +12,7 @@ The linear regression is the most simple model
 in machine learning described by the following expression
 $Y = XA + B$. We can see it as a function of three
 variables $Y = f(X, A, B)$ decomposed into
-`y = Add(MatMul(X, A), B)`. That what's we need to represent
+`y = Add(MatMul(X, A), B)`. That's what we need to represent
 with ONNX operators. The first thing is to implement a function
 with {ref}`ONNX operators <l-onnx-operators>`.
 ONNX is strongly typed. Shape and type must be defined for both
@@ -148,8 +148,8 @@ of each object of the graph.
             node.name, node.op_type, node.input, node.output))
 ```
 
-The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` gives the
-corresponding type with numpy.
+The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` converts
+the integer to its corresponding numpy data type (float32 for 1).
 
 ```{eval-rst}
 .. exec_code::

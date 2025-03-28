@@ -47,18 +47,18 @@ def onnx_ml_opset_version() -> int:
 
 
 @property  # type: ignore
-def _function_proto(self):  # type: ignore
+def _function_proto(self):
     func_proto = FunctionProto()
     func_proto.ParseFromString(self._function_body)
     return func_proto
 
 
-OpSchema = C.OpSchema  # type: ignore
+OpSchema = C.OpSchema
 OpSchema.function_body = _function_proto  # type: ignore
 
 
 @property  # type: ignore
-def _attribute_default_value(self):  # type: ignore
+def _attribute_default_value(self):
     attr = AttributeProto()
     attr.ParseFromString(self._default_value)
     return attr
@@ -119,7 +119,11 @@ OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore
 def get_function_ops() -> list[OpSchema]:
     """Return operators defined as functions."""
     schemas = C.get_all_schemas()
-    return [schema for schema in schemas if schema.has_function or schema.has_context_dependent_function]  # type: ignore
+    return [
+        schema
+        for schema in schemas
+        if schema.has_function or schema.has_context_dependent_function  # type: ignore[attr-defined]
+    ]
 
 
 SchemaError = C.SchemaError

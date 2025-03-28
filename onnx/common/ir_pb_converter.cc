@@ -43,6 +43,8 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
     case ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
     case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT4:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT4:
     case ONNX_NAMESPACE::TensorProto_DataType_INT8:
     case ONNX_NAMESPACE::TensorProto_DataType_INT16:
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
@@ -90,6 +92,8 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
+      [[fallthrough]];
+    default:
       fail_convert("Unknown tensor data type");
   }
 
@@ -193,7 +197,7 @@ static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node* n, 
   }
 }
 
-static void convertAttributes(ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version = IR_VERSION) {
+static void convertAttributes(const ONNX_NAMESPACE::NodeProto& np, Node* n, const int ir_version = IR_VERSION) {
   for (int i = 0; i < np.attribute_size(); i++) {
     convertAttribute(np.attribute(i), n, ir_version);
   }
@@ -217,7 +221,7 @@ static std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE:
 }
 
 static void createDummyValue(
-    std::unique_ptr<Graph>& g,
+    const std::unique_ptr<Graph>& g,
     const std::string& name,
     std::unordered_map<std::string, Value*>& value_by_name_of) {
   auto* undef = g->create(kCaptured, 1);
@@ -301,7 +305,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   }
 
   for (int i = 0; i < gp.node_size(); i++) {
-    auto np = gp.node(i);
+    const auto& np = gp.node(i);
     auto* n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
     g->appendNode(n);
     for (int j = 0; j < np.output_size(); j++) {
@@ -391,7 +395,8 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   if (!mp.has_ir_version()) {
     return nullptr;
-  } else if (mp.ir_version() <= 1) {
+  }
+  if (mp.ir_version() <= 1) {
     // ir_version=1 is not supported and ir_version=0 is illegal
     return nullptr;
   }
@@ -406,7 +411,7 @@ std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
 }
 
 // Part 2: convert IR to ONNX Protobuf
-static std::string value_name(Value* n) {
+static std::string value_name(const Value* n) {
   return n->uniqueName();
 }
 
@@ -436,7 +441,14 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
     }
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
     case ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FN:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FNUZ:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1:
     case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT4:
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT4:
     case ONNX_NAMESPACE::TensorProto_DataType_INT8:
     case ONNX_NAMESPACE::TensorProto_DataType_INT16:
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
@@ -474,6 +486,8 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
+      [[fallthrough]];
+    default:
       fail_convert("Unknown tensor data type");
   }
   if (tensor.is_raw_data()) {
@@ -551,7 +565,7 @@ static void addAttribute(ONNX_NAMESPACE::NodeProto* n_p, Node* n, Symbol name) {
   }
 }
 
-static void encodeTypeProtoTensorType(ONNX_NAMESPACE::TypeProto_Tensor* tensor_type, Value* n) {
+static void encodeTypeProtoTensorType(ONNX_NAMESPACE::TypeProto_Tensor* tensor_type, const Value* n) {
   if (n->elemType() != 0) {
     tensor_type->set_elem_type(n->elemType());
   }

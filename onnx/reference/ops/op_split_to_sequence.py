@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
 
 from onnx.reference.op_run import OpRun
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 class SplitToSequence(OpRun):
@@ -44,8 +47,8 @@ class SplitToSequence(OpRun):
     ) -> tuple[np.ndarray]:
         res = self.common_run(mat, split, axis=axis)
         if split is None and not keepdims:
-            for i in range(len(res)):
-                shape = list(res[i].shape)
+            for i, res_i in enumerate(res):
+                shape = list(res_i.shape)
                 del shape[axis]
-                res[i] = res[i].reshape(tuple(shape))
+                res[i] = res_i.reshape(tuple(shape))
         return (res,)

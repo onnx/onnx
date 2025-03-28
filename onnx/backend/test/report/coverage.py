@@ -153,12 +153,8 @@ class Coverage:
                 if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
                     experimental.append(schema.name)
         all_ops.sort()
-        nodes_path = os.path.join(
-            str(os.environ.get("CSVDIR")), "nodes.csv"  # type: ignore
-        )  # type: ignore
-        models_path = os.path.join(
-            str(os.environ.get("CSVDIR")), "models.csv"  # type: ignore
-        )  # type: ignore
+        nodes_path = os.path.join(str(os.environ.get("CSVDIR")), "nodes.csv")
+        models_path = os.path.join(str(os.environ.get("CSVDIR")), "models.csv")
         existing_nodes: OrderedDict[str, dict[str, str]] = OrderedDict()
         existing_models: OrderedDict[str, dict[str, str]] = OrderedDict()
         frameworks: list[str] = []
@@ -219,7 +215,7 @@ class Coverage:
             # Consider both buckets
             num_models = 0
             for bucket in self.models:
-                for model in self.models[bucket]:  # type: ignore
+                for model in self.models[bucket]:
                     # Both analyze and run the model on the backend
                     num_covered = 0
                     for node in self.models[bucket][model].node_coverages:
@@ -251,14 +247,14 @@ class Coverage:
                 f"{len(self.models['passed'])}/{num_models} model tests passed"
             )
             summaries["Model"] = "Summary"
-            for model in existing_models:  # type: ignore
+            for model in existing_models:
                 existing_models[model]["Model"] = model
                 model_writer.writerow(existing_models[model])
             model_writer.writerow(summaries)
         with open(
-            os.path.join(str(os.environ.get("CSVDIR")), "metadata.csv"),  # type: ignore
+            os.path.join(str(os.environ.get("CSVDIR")), "metadata.csv"),
             "w",
-        ) as metadata_file:  # type: ignore
+        ) as metadata_file:
             metadata_writer = csv.writer(metadata_file)
             metadata_writer.writerow(
                 ["Latest Update", datetime.datetime.now().isoformat().replace("T", " ")]

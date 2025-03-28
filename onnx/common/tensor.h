@@ -185,30 +185,30 @@ inline const std::string* Tensor::data<std::string>() const {
   return string_data_.data();
 }
 
-#define define_data(type, field)                             \
-  template <>                                                \
-  inline type* Tensor::data<type>() {                        \
-    if (is_raw_data_) {                                      \
-      return (type*)const_cast<char*>(&raw_data_.data()[0]); \
-    } else {                                                 \
-      return field.data();                                   \
-    }                                                        \
-  }                                                          \
-                                                             \
-  template <>                                                \
-  inline const type* Tensor::data<type>() const {            \
-    if (is_raw_data_) {                                      \
-      return (const type*)(raw_data_.data());                \
-    } else {                                                 \
-      return field.data();                                   \
-    }                                                        \
+#define define_data(type, field)                              \
+  template <>                                                 \
+  inline type* Tensor::data<type>() {                         \
+    if (is_raw_data_) {                                       \
+      return reinterpret_cast<type*>(raw_data_.data());       \
+    } else {                                                  \
+      return field.data();                                    \
+    }                                                         \
+  }                                                           \
+                                                              \
+  template <>                                                 \
+  inline const type* Tensor::data<type>() const {             \
+    if (is_raw_data_) {                                       \
+      return reinterpret_cast<const type*>(raw_data_.data()); \
+    } else {                                                  \
+      return field.data();                                    \
+    }                                                         \
   }
 
-define_data(float, float_data_);
-define_data(double, double_data_);
-define_data(int32_t, int32_data_);
-define_data(int64_t, int64_data_);
-define_data(uint64_t, uint64_data_);
+define_data(float, float_data_)
+define_data(double, double_data_)
+define_data(int32_t, int32_data_)
+define_data(int64_t, int64_data_)
+define_data(uint64_t, uint64_data_)
 #undef define_data
 
 } // namespace ONNX_NAMESPACE

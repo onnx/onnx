@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
+#include <stdexcept>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
@@ -13,9 +13,6 @@
 #include "onnx/defs/schema.h"
 
 using namespace ONNX_NAMESPACE::checker;
-
-#pragma warning(push)
-#pragma warning(disable : 4530)
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -219,7 +216,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
-    try {
+    ONNX_TRY {
       bool validate = true;
       const FunctionProto* function = schema2->GetFunction(model_opset_import, validate);
       if (model_opset_import >= 6) { // function body should be updated at opset 6 where Sub is updated
@@ -227,19 +224,23 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
       } else {
         ASSERT_TRUE(function);
       }
-    } catch (std::runtime_error err) {
-      ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8);
+    }
+    ONNX_CATCH(const std::runtime_error&) {
+      ONNX_HANDLE_EXCEPTION(
+          [&]() { ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8); });
     }
   }
 
   const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
-    try {
+    ONNX_TRY {
       const FunctionProto* function = schema9->GetFunction(model_opset_import);
       ASSERT_TRUE(function);
-    } catch (std::runtime_error err) {
-      ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15);
+    }
+    ONNX_CATCH(const std::runtime_error&) {
+      ONNX_HANDLE_EXCEPTION(
+          [&]() { ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15); });
     }
   }
 }
@@ -275,4 +276,3 @@ TEST(FunctionAPITest, TypeContextTest) {
 
 } // namespace Test
 } // namespace ONNX_NAMESPACE
-#pragma warning(pop)

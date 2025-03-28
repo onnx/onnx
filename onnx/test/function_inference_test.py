@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 from shape_inference_test import TestShapeInferenceHelper
 
@@ -13,6 +13,9 @@ import onnx.helper
 import onnx.parser
 import onnx.shape_inference
 from onnx import AttributeProto, TypeProto
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 float_type_ = onnx.helper.make_tensor_type_proto(1, None)
 uint8_type_ = onnx.helper.make_tensor_type_proto(2, None)

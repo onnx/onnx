@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -21,6 +21,9 @@ from onnx import (
     numpy_helper,
     shape_inference,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class TestChecker(unittest.TestCase):

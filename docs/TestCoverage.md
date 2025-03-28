@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 179/192 (93.23%, 5 generators excluded) common operators.
+Node tests have covered 182/195 (93.33%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -28,7 +28,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = abs(x)
+y = np.abs(x)
 
 expect(node, inputs=[x], outputs=[y], name="test_abs")
 ```
@@ -293,7 +293,7 @@ expect(
 
 
 ### Add
-There are 3 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>add</summary>
 
@@ -307,6 +307,30 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_int8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint64")
 ```
 
 </details>
@@ -323,22 +347,6 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y], name="test_add_bcast")
-```
-
-</details>
-<details>
-<summary>add_uint8</summary>
-
-```python
-node = onnx.helper.make_node(
-    "Add",
-    inputs=["x", "y"],
-    outputs=["sum"],
-)
-
-x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
-y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
-expect(node, inputs=[x, y], outputs=[x + y], name="test_add_uint8")
 ```
 
 </details>
@@ -1104,8 +1112,1586 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 </details>
 
 
+### Attention
+There are 47 test cases, listed as following:
+<details>
+<summary>attention</summary>
+
+```python
+node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_attn_mask</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_3d_attn_mask",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_causal</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    is_causal=1,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_causal",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_diff_head_sizes</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 30).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_diff_heads_sizes",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_diff_head_sizes_attn_mask</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 30).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_3d_diff_heads_sizes_attn_mask",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_diff_head_sizes_causal</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 30).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    is_causal=1,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_diff_heads_sizes_causal",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_diff_head_sizes_scaled</summary>
+
+```python
+scale = 1e-2
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 30).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    scale=scale,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_diff_heads_sizes_scaled",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_diff_head_sizes_softcap</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    softcap=3.0,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 30).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    softcap=3.0,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_diff_heads_sizes_softcap",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_diff_head_sizes_with_past_and_present</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 30).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_3d_diff_heads_with_past_and_present",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_gqa</summary>
+
+```python
+q_num_heads, kv_num_heads = 9, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 72).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_gqa",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_gqa_attn_mask</summary>
+
+```python
+q_num_heads, kv_num_heads = 9, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 72).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_3d_gqa_attn_mask",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_gqa_causal</summary>
+
+```python
+q_num_heads, kv_num_heads = 9, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 72).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    is_causal=1,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_gqa_causal",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_gqa_scaled</summary>
+
+```python
+scale = 1e-2
+q_num_heads, kv_num_heads = 9, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 72).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    scale=scale,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_gqa_scaled",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_gqa_softcap</summary>
+
+```python
+q_num_heads, kv_num_heads = 9, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    softcap=3.0,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 72).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    softcap=3.0,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_gqa_softcap",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_gqa_with_past_and_present</summary>
+
+```python
+q_num_heads, kv_num_heads = 9, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 72).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_3d_gqa_with_past_and_present",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_scaled</summary>
+
+```python
+scale = 1e-2
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    scale=scale,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_scaled",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_softcap</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    softcap=3.0,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    softcap=3.0,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_softcap",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_with_past_and_present</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_3d_with_past_and_present",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_with_past_and_present_qk_matmul</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_3d_with_past_and_present_qk_matmul",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_with_past_and_present_qk_matmul_bias</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+    qk_matmul_output_mode=1,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+    qk_matmul_output_mode=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_3d_with_past_and_present_qk_matmul_bias",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_with_past_and_present_qk_matmul_softcap</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+    softcap=2.0,
+    qk_matmul_output_mode=2,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+    softcap=2.0,
+    qk_matmul_output_mode=2,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_3d_with_past_and_present_qk_matmul_softcap",
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_with_past_and_present_qk_matmul_softmax</summary>
+
+```python
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+    qk_matmul_output_mode=3,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+    qk_matmul_output_mode=3,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_3d_with_past_and_present_qk_matmul_softmax",
+)
+```
+
+</details>
+<details>
+<summary>attention_attn_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_attn_mask",
+)
+```
+
+</details>
+<details>
+<summary>attention_attn_mask_bool</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.bool)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_attn_mask_bool",
+)
+```
+
+</details>
+<details>
+<summary>attention_causal</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_causal",
+)
+```
+
+</details>
+<details>
+<summary>attention_diff_head_sizes</summary>
+
+```python
+node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_diff_heads_sizes",
+)
+```
+
+</details>
+<details>
+<summary>attention_diff_head_sizes_attn_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_diff_heads_sizes_attn_mask",
+)
+```
+
+</details>
+<details>
+<summary>attention_diff_head_sizes_causal</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_diff_heads_sizes_causal",
+)
+```
+
+</details>
+<details>
+<summary>attention_diff_head_sizes_scaled</summary>
+
+```python
+scale = 1e-2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V, scale=scale)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_diff_heads_sizes_scaled",
+)
+```
+
+</details>
+<details>
+<summary>attention_diff_head_sizes_softcap</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    softcap=2.0,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    softcap=2.0,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_diff_heads_sizes_softcap",
+)
+```
+
+</details>
+<details>
+<summary>attention_diff_head_sizes_with_past_and_present</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_diff_heads_with_past_and_present",
+)
+```
+
+</details>
+<details>
+<summary>attention_gqa</summary>
+
+```python
+node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
+
+Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_gqa",
+)
+```
+
+</details>
+<details>
+<summary>attention_gqa_attn_mask</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_gqa_attn_mask",
+)
+```
+
+</details>
+<details>
+<summary>attention_gqa_causal</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_gqa_causal",
+)
+```
+
+</details>
+<details>
+<summary>attention_gqa_scaled</summary>
+
+```python
+scale = 1e-2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+)
+
+Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V, scale=scale)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_gqa_scaled",
+)
+```
+
+</details>
+<details>
+<summary>attention_gqa_softcap</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    softcap=2.0,
+)
+
+Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V, softcap=2.0)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_gqa_softcap",
+)
+```
+
+</details>
+<details>
+<summary>attention_gqa_with_past_and_present</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 9, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_gqa_with_past_and_present",
+)
+```
+
+</details>
+<details>
+<summary>attention_scaled</summary>
+
+```python
+scale = 1e-2
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V, scale=scale)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_scaled",
+)
+```
+
+</details>
+<details>
+<summary>attention_softcap</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    softcap=2.0,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(Q, K, V, softcap=2.0)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_softcap",
+)
+```
+
+</details>
+<details>
+<summary>attention_with_past_and_present</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_with_past_and_present",
+)
+```
+
+</details>
+<details>
+<summary>attention_with_past_and_present_qk_matmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_4d_with_past_and_present_qk_matmul",
+)
+```
+
+</details>
+<details>
+<summary>attention_with_past_and_present_qk_matmul_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
+    qk_matmul_output_mode=1,
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+    qk_matmul_output_mode=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value, qk_matmul_output],
+    name="test_attention_4d_with_past_and_present_qk_matmul_bias",
+)
+```
+
+</details>
+<details>
+<summary>attention_with_qk_matmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, qk_matmul_output = _compute_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_4d_with_qk_matmul",
+)
+```
+
+</details>
+<details>
+<summary>attention_with_qk_matmul_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_4d_with_qk_matmul_bias",
+)
+```
+
+</details>
+<details>
+<summary>attention_with_qk_matmul_softcap</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    softcap=2.0,
+    qk_matmul_output_mode=2,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    softcap=2.0,
+    qk_matmul_output_mode=2,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_4d_with_qk_matmul_softcap",
+)
+```
+
+</details>
+<details>
+<summary>attention_with_qk_matmul_softmax</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+attn_mask = np.random.rand(4, 6).astype(np.float32)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_4d_with_qk_matmul_softmax",
+)
+```
+
+</details>
+
+
 ### AveragePool
-There are 16 test cases, listed as following:
+There are 17 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -1164,6 +2750,43 @@ x = np.array(
 y = np.array([[[[6, 7.5], [12, 13.5]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_ceil")
+```
+
+</details>
+<details>
+<summary>averagepool_2d_ceil_last_window_starts_on_pad</summary>
+
+```python
+"""input_shape: [1, 3, 2, 2]
+output_shape: [1, 3, 1, 1]
+"""
+node = onnx.helper.make_node(
+    "AveragePool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[3, 3],
+    strides=[3, 3],
+    pads=[1, 1, 1, 1],
+    ceil_mode=True,
+    count_include_pad=1,
+)
+x = np.array(
+    [
+        [
+            [[0.8580, 0.0786], [0.2692, 0.1537]],
+            [[0.8816, 0.4353], [0.5772, 0.6623]],
+            [[0.9067, 0.9483], [0.5970, 0.7630]],
+        ]
+    ]
+).astype(np.float32)
+y = np.array([[[[0.1511]], [[0.2841]], [[0.3572]]]]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_averagepool_2d_ceil_last_window_starts_on_pad",
+)
 ```
 
 </details>
@@ -1256,16 +2879,30 @@ pad_top = 2
 pad_right = 2
 pad_left = 2
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-out_shape, pads = get_output_shape_explicit_padding(
+out_shape, extra_pads = get_output_shape_explicit_padding(
     pads, x_shape[2:], kernel_shape, strides, ceil_mode=False
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
+    (
+        (0, 0),
+        (0, 0),
+        (extra_pads[0], extra_pads[2]),
+        (extra_pads[1], extra_pads[3]),
+    ),
     mode="constant",
     constant_values=np.nan,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "AVG",
+    pads_required=extra_pads,
+    pads=pads,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_pads")
 ```
@@ -1297,12 +2934,17 @@ pad_top = 2
 pad_right = 2
 pad_left = 2
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-out_shape, pads = get_output_shape_explicit_padding(
+out_shape, extra_pads = get_output_shape_explicit_padding(
     pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode=False
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])),
+    (
+        (0, 0),
+        (0, 0),
+        (extra_pads[0], extra_pads[2]),
+        (extra_pads[1], extra_pads[3]),
+    ),
     mode="constant",
     constant_values=0,
 )
@@ -1313,7 +2955,8 @@ y = pool(
     strides,
     out_shape,
     "AVG",
-    pads,
+    pads_required=extra_pads,
+    pads=pads,
     count_include_pad=1,
 )
 
@@ -1542,7 +3185,16 @@ padded = np.pad(
     constant_values=np.nan,
 )
 pads = (pad_top, pad_left, pad_bottom, pad_right)
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "AVG",
+    pads_required=pads,
+    pads=pads,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_lower")
 ```
@@ -1584,7 +3236,16 @@ padded = np.pad(
     constant_values=np.nan,
 )
 pads = (pad_top, pad_left, pad_bottom, pad_right)
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "AVG",
+    pads_required=pads,
+    pads=pads,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_same_upper")
 ```
@@ -1612,7 +3273,16 @@ out_shape, pads = get_output_shape_explicit_padding(
     None, x_shape[2:], kernel_shape, strides, ceil_mode=False
 )
 padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "AVG", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "AVG",
+    pads_required=pads,
+    pads=None,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_averagepool_2d_strides")
 ```
@@ -1729,7 +3399,7 @@ for count_include_pad in (0, 1):
         )
 
         x = np.random.randn(1, 1, *x_shape).astype(np.float32)
-        out_shape, pads = get_output_shape_explicit_padding(
+        out_shape, extra_pads = get_output_shape_explicit_padding(
             None,
             x_shape,
             kernel_shape,
@@ -1742,9 +3412,9 @@ for count_include_pad in (0, 1):
             (
                 (0, 0),
                 (0, 0),
-                (pads[0], pads[3]),
-                (pads[1], pads[4]),
-                (pads[2], pads[5]),
+                (extra_pads[0], extra_pads[3]),
+                (extra_pads[1], extra_pads[4]),
+                (extra_pads[2], extra_pads[5]),
             ),
             mode="constant",
             constant_values=0 if count_include_pad == 1 else np.nan,
@@ -1756,7 +3426,8 @@ for count_include_pad in (0, 1):
             strides,
             out_shape,
             "AVG",
-            pads=pads,
+            pads_required=extra_pads,
+            pads=None,
             dilations=dilations,
             count_include_pad=count_include_pad,
         )
@@ -4919,7 +6590,7 @@ expect(node, inputs=[x], outputs=[y], name="test_cosh")
 
 
 ### CumSum
-There are 7 test cases, listed as following:
+There are 9 test cases, listed as following:
 <details>
 <summary>cumsum_1d</summary>
 
@@ -4943,6 +6614,22 @@ x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
 axis = np.int32(0)
 y = np.array([0.0, 1.0, 3.0, 6.0, 10.0]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_1d_exclusive")
+```
+
+</details>
+<details>
+<summary>cumsum_1d_int32_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumSum", inputs=["x", "axis"], outputs=["y"], exclusive=1
+)
+x = np.array([1, 2, 3, 4, 5]).astype(np.int32)
+axis = np.int32(0)
+y = np.array([0, 1, 3, 6, 10]).astype(np.int32)
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumsum_1d_int32_exclusive"
+)
 ```
 
 </details>
@@ -5005,6 +6692,22 @@ x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
 axis = np.int32(1)
 y = np.array([1.0, 3.0, 6.0, 4.0, 9.0, 15.0]).astype(np.float64).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_axis_1")
+```
+
+</details>
+<details>
+<summary>cumsum_2d_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumSum",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.int32).reshape((2, 3))
+axis = np.int32(0)
+y = np.array([1, 2, 3, 5, 7, 9]).astype(np.int32).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumsum_2d_int32")
 ```
 
 </details>
@@ -5808,10 +7511,35 @@ y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z], name="test_div")
 
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_int8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_int16")
+
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
 z = x // y
 expect(node, inputs=[x, y], outputs=[z], name="test_div_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64) + 1
+z = x // y
+expect(node, inputs=[x, y], outputs=[z], name="test_div_uint64")
 ```
 
 </details>
@@ -6268,6 +7996,36 @@ x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 y = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_equal")
+
+x = (np.random.randn(3, 4, 5) * 10).astype(np.int8)
+y = (np.random.randn(3, 4, 5) * 10).astype(np.int8)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_int8")
+
+x = (np.random.randn(3, 4, 5) * 10).astype(np.int16)
+y = (np.random.randn(3, 4, 5) * 10).astype(np.int16)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_equal_uint64")
 ```
 
 </details>
@@ -7457,6 +9215,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.greater(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_greater")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_uint64")
 ```
 
 </details>
@@ -7474,6 +9262,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.greater_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.greater_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_greater_equal_uint64")
 ```
 
 </details>
@@ -9514,6 +11332,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.less(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_uint64")
 ```
 
 </details>
@@ -9531,6 +11379,36 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.less_equal(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_less_equal")
+
+x = np.random.randn(3, 4, 5).astype(np.int8)
+y = np.random.randn(3, 4, 5).astype(np.int8)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_int8")
+
+x = np.random.randn(3, 4, 5).astype(np.int16)
+y = np.random.randn(3, 4, 5).astype(np.int16)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_int16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint8")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint16")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint32")
+
+x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = np.less_equal(x, y)
+expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_uint64")
 ```
 
 </details>
@@ -10263,16 +12141,31 @@ kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-out_shape, pads = get_output_shape_explicit_padding(
+out_shape, extra_pads = get_output_shape_explicit_padding(
     pads, x_shape[2:], kernel_shape, strides
 )
 padded = np.pad(
     x,
-    ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)),
+    (
+        (0, 0),
+        (0, 0),
+        (extra_pads[0], extra_pads[2]),
+        (extra_pads[1], extra_pads[3]),
+    ),
     mode="constant",
     constant_values=0,
 )
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "LPPOOL",
+    pads_required=extra_pads,
+    pads=pads,
+    p=p,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_pads")
 ```
@@ -10316,7 +12209,9 @@ padded = np.pad(
     constant_values=0,
 )
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, pads, p=p
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_lower")
 ```
@@ -10360,7 +12255,9 @@ padded = np.pad(
     constant_values=0,
 )
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, p=p)
+y = pool(
+    padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", pads, pads, p=p
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_2d_same_upper")
 ```
@@ -10756,7 +12653,7 @@ kernel_shape = (3, 3)
 strides = (1, 1)
 pad_bottom = pad_top = pad_right = pad_left = 2
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-out_shape, pads = get_output_shape_explicit_padding(
+out_shape, extra_pads = get_output_shape_explicit_padding(
     pads, x_shape[2:], kernel_shape, strides
 )
 padded = np.pad(
@@ -10766,7 +12663,16 @@ padded = np.pad(
     constant_values=np.nan,
 )
 
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "MAX",
+    pads_required=extra_pads,
+    pads=pads,
+)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 ```
@@ -10922,7 +12828,7 @@ padded = np.pad(
     constant_values=np.nan,
 )
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads, pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 ```
@@ -10964,7 +12870,7 @@ padded = np.pad(
     constant_values=np.nan,
 )
 pads = [pad_top, pad_left, pad_bottom, pad_right]
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads, pads)
 
 expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 ```
@@ -11188,7 +13094,8 @@ y = pool(
     strides,
     out_shape,
     "MAX",
-    pads,
+    pads_required=pads,
+    pads=None,
     dilations=dilations,
 )
 
@@ -11241,7 +13148,8 @@ y = pool(
     strides,
     out_shape,
     "MAX",
-    pads,
+    pads_required=pads,
+    pads=None,
     dilations=dilations,
 )
 
@@ -12069,10 +13977,35 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z], name="test_mul")
 
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int8)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_int8")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_int16")
+
 x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint8")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint16)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint16")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint32)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint32")
+
+x = np.random.randint(4, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint64)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z], name="test_mul_uint64")
 ```
 
 </details>
@@ -14494,6 +16427,132 @@ expect(
     outputs=[y],
     name="test_quantizelinear_uint4",
 )
+```
+
+</details>
+
+
+### RMSNormalization
+There are 4 test cases, listed as following:
+<details>
+<summary>d</summary>
+
+```python
+X = np.random.randn(3, 4).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis)
+
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_2d_axis_negative_{-axis}"
+    else:
+        name = f"test_rms_normalization_2d_axis{axis}"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>d_epsilon</summary>
+
+```python
+epsilon = 1e-1
+X = np.random.randn(2, 3, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis, epsilon=epsilon)
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+        epsilon=epsilon,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_3d_axis_negative_{-axis}_epsilon"
+    else:
+        name = f"test_rms_normalization_3d_axis{axis}_epsilon"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
+```
+
+</details>
+<details>
+<summary>default_axis</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+# Default axis in RMSNormalization is -1.
+normalized_shape = calculate_normalized_shape(X.shape, -1)
+W = np.random.randn(*normalized_shape).astype(np.float32)
+# Axis is default to -1 in the reference implementation.
+Y = _rms_normalization(X, W)
+
+# Not specifying axis attribute means -1.
+node = onnx.helper.make_node(
+    "RMSNormalization",
+    inputs=["X", "W"],
+    outputs=["Y"],
+)
+
+expect(
+    node,
+    inputs=[X, W],
+    outputs=[Y],
+    name="test_rms_normalization_default_axis",
+)
+```
+
+</details>
+<details>
+<summary>rmsnormalization</summary>
+
+```python
+X = np.random.randn(2, 3, 4, 5).astype(np.float32)
+
+def case(axis: int) -> None:
+    normalized_shape = calculate_normalized_shape(X.shape, axis)
+    W = np.random.randn(*normalized_shape).astype(np.float32)
+    Y = _rms_normalization(X, W, axis=axis)
+
+    node = onnx.helper.make_node(
+        "RMSNormalization",
+        inputs=["X", "W"],
+        outputs=["Y"],
+        axis=axis,
+    )
+
+    if axis < 0:
+        name = f"test_rms_normalization_4d_axis_negative_{-axis}"
+    else:
+        name = f"test_rms_normalization_4d_axis{axis}"
+
+    expect(node, inputs=[X, W], outputs=[Y], name=name)
+
+for i in range(len(X.shape)):
+    case(i)
+    case(i - len(X.shape))
 ```
 
 </details>
@@ -19224,6 +21283,260 @@ expect(
 </details>
 
 
+### RotaryEmbedding
+There are 8 test cases, listed as following:
+<details>
+<summary>rotary_embedding</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
+    outputs=["output"],
+)
+
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
+sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data, cos_cache_data, sin_cache_data, position_ids=position_ids_data
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding",
+)
+```
+
+</details>
+<details>
+<summary>rotary_embedding_3d_input</summary>
+
+```python
+num_heads = 4
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
+    outputs=["output"],
+    num_heads=num_heads,
+)
+
+input_data = np.random.rand(2, 3, 32).astype(np.float32)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
+sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data,
+    cos_cache_data,
+    sin_cache_data,
+    position_ids=position_ids_data,
+    num_heads=num_heads,
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_3d_input",
+)
+```
+
+</details>
+<details>
+<summary>rotary_embedding_interleaved</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
+    outputs=["output"],
+    interleaved=1,
+)
+
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
+sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data,
+    cos_cache_data,
+    sin_cache_data,
+    position_ids=position_ids_data,
+    interleaved=1,
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_interleaved",
+)
+```
+
+</details>
+<details>
+<summary>rotary_embedding_no_position_ids</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache"],
+    outputs=["output"],
+)
+
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
+sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+
+expected_output = rotary_embedding(input_data, cos_cache_data, sin_cache_data)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_no_position_ids",
+)
+```
+
+</details>
+<details>
+<summary>rotary_embedding_no_position_ids_interleaved</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache"],
+    outputs=["output"],
+    interleaved=1,
+)
+
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
+sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data,
+    cos_cache_data,
+    sin_cache_data,
+    interleaved=1,
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_no_position_ids_interleaved",
+)
+```
+
+</details>
+<details>
+<summary>rotary_embedding_no_position_ids_rotary_dim</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache"],
+    outputs=["output"],
+    rotary_embedding_dim=4,
+)
+
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
+sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data,
+    cos_cache_data,
+    sin_cache_data,
+    rotary_embedding_dim=4,
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_no_position_ids_rotary_dim",
+)
+```
+
+</details>
+<details>
+<summary>rotary_embedding_with_interleaved_rotary_dim</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
+    outputs=["output"],
+    rotary_embedding_dim=4,
+    interleaved=1,
+)
+
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
+sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data,
+    cos_cache_data,
+    sin_cache_data,
+    position_ids=position_ids_data,
+    interleaved=1,
+    rotary_embedding_dim=4,
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_with_interleaved_rotary_dim",
+)
+```
+
+</details>
+<details>
+<summary>rotary_embedding_with_rotary_dim</summary>
+
+```python
+node = onnx.helper.make_node(
+    "RotaryEmbedding",
+    inputs=["input", "cos_cache", "sin_cache", "position_ids"],
+    outputs=["output"],
+    rotary_embedding_dim=4,
+)
+
+input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
+position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
+sin_cache_data = np.random.rand(50, 4).astype(np.float32)
+cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+
+expected_output = rotary_embedding(
+    input_data,
+    cos_cache_data,
+    sin_cache_data,
+    position_ids=position_ids_data,
+    rotary_embedding_dim=4,
+)
+
+expect(
+    node,
+    inputs=[input_data, cos_cache_data, sin_cache_data, position_ids_data],
+    outputs=[expected_output],
+    name="test_rotary_embedding_with_rotary_dim",
+)
+```
+
+</details>
+
+
 ### Round
 There are 1 test cases, listed as following:
 <details>
@@ -23108,10 +25421,35 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z], name="test_sub")
 
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.int8)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.int8)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_int8")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.int16)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.int16)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_int16")
+
 x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
 z = x - y
 expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint8")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint16)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint16)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint16")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint32)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint32)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint32")
+
+x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint64)
+y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint64)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint64")
 ```
 
 </details>
@@ -23539,7 +25877,7 @@ expect(node, inputs=[x, repeats], outputs=[z], name="test_tile_precomputed")
 
 
 ### TopK
-There are 3 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>top_k</summary>
 
@@ -23618,6 +25956,106 @@ expect(
 
 </details>
 <details>
+<summary>top_k_same_values</summary>
+
+```python
+axis = 0
+largest = 0
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [0, 0, 0, 0],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# (Pdb) print(values_ref)
+# [0 0 0]
+# (Pdb) print(indices_ref)
+# [0 1 2]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values",
+)
+```
+
+</details>
+<details>
+<summary>top_k_same_values_2d</summary>
+
+```python
+axis = 1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [[0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 1, 1]],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [[0 0 0]
+# [1 1 1]
+# [1 1 2]]
+# print(indices_ref)
+# [[0 1 2]
+# [0 1 2]
+# [2 3 0]]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values_2d",
+)
+```
+
+</details>
+<details>
+<summary>top_k_same_values_largest</summary>
+
+```python
+axis = 0
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [0, 0, 0, 0],
+    dtype=np.int64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [0 0 0]
+# print(indices_ref)
+# [0 1 2]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_same_values_largest",
+)
+```
+
+</details>
+<details>
 <summary>top_k_smallest</summary>
 
 ```python
@@ -23660,6 +26098,46 @@ expect(
     inputs=[X, K],
     outputs=[values_ref, indices_ref],
     name="test_top_k_smallest",
+)
+```
+
+</details>
+<details>
+<summary>top_k_uint64</summary>
+
+```python
+axis = 1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [
+        [0, 1, 2, 3],
+        [4, 5, 6, 7],
+        [8, 9, 10, 11],
+    ],
+    dtype=np.uint64,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# print(values_ref)
+# [[ 3  2  1]
+# [ 7  6  5]
+# [11 10  9]]
+# print(indices_ref)
+# [[3 2 1]
+# [3 2 1]
+# [3 2 1]]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_uint64",
 )
 ```
 
@@ -24221,7 +26699,43 @@ expect(node, inputs=[x, k], outputs=[y], name="test_triu_zero")
 
 
 ### Unique
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
+<details>
+<summary>length_1</summary>
+
+```python
+node_sorted = onnx.helper.make_node(
+    "Unique",
+    inputs=["X"],
+    outputs=["Y", "indices", "inverse_indices", "counts"],
+    sorted=1,
+)
+
+x = np.array([0], dtype=np.int64)
+y, indices, inverse_indices, counts = np.unique(x, True, True, True)
+indices, inverse_indices, counts = specify_int64(
+    indices, inverse_indices, counts
+)
+# behavior changed with numpy >= 2.0
+inverse_indices = inverse_indices.reshape(-1)
+# print(y)
+# [0]
+# print(indices)
+# [0]
+# print(inverse_indices)
+# [0]
+# print(counts)
+# [1]
+
+expect(
+    node_sorted,
+    inputs=[x],
+    outputs=[y, indices, inverse_indices, counts],
+    name="test_unique_length_1",
+)
+```
+
+</details>
 <details>
 <summary>not_sorted_without_axis</summary>
 
@@ -24289,7 +26803,7 @@ indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
 # behavior changed with numpy >= 2.0
-inverse_indices = inverse_indices.squeeze()
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[1. 0. 0.]
 #  [2. 3. 4.]]
@@ -24333,7 +26847,7 @@ indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
 # behavior changed with numpy >= 2.0
-inverse_indices = inverse_indices.squeeze()
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[[0. 1.]
 #  [1. 1.]
@@ -24374,7 +26888,7 @@ indices, inverse_indices, counts = specify_int64(
     indices, inverse_indices, counts
 )
 # behavior changed with numpy >= 2.0
-inverse_indices = inverse_indices.squeeze()
+inverse_indices = inverse_indices.reshape(-1)
 # print(y)
 # [[0. 1.]
 #  [0. 1.]

@@ -3,10 +3,14 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Sequence
+import typing
 
 import numpy as np
 import numpy.typing as npt
+import typing_extensions
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Sequence
 
 INT4_MIN = -8
 INT4_MAX = 7
@@ -14,7 +18,15 @@ UINT4_MIN = 0
 UINT4_MAX = 15
 
 
-def float32_to_4bit_unpacked(
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=DeprecationWarning,
+)
+def float32_to_4bit_unpacked(*args, **kwargs):
+    return _float32_to_4bit_unpacked(*args, **kwargs)
+
+
+def _float32_to_4bit_unpacked(
     x: np.ndarray | np.dtype | float, signed: bool
 ) -> np.ndarray:
     """Cast to 4bit via rounding and clipping (without packing).
@@ -36,7 +48,15 @@ def float32_to_4bit_unpacked(
     return np.rint(clipped).astype(dtype)  # type: ignore[no-any-return]
 
 
-def float32x2_to_4bitx2(
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=DeprecationWarning,
+)
+def float32x2_to_4bitx2(*args, **kwargs):
+    return _float32x2_to_4bitx2(*args, **kwargs)
+
+
+def _float32x2_to_4bitx2(
     val_low: np.dtype, val_high: np.dtype, signed: bool
 ) -> np.ndarray:
     """Cast two elements to 4bit (via rounding and clipping) and pack
@@ -49,12 +69,20 @@ def float32x2_to_4bitx2(
     Returns:
         An ndarray with a single int8/uint8 element, containing both int4 elements
     """
-    i8_high = float32_to_4bit_unpacked(val_high, signed)
-    i8_low = float32_to_4bit_unpacked(val_low, signed)
-    return i8_high << 4 | i8_low & 0x0F  # type: ignore[operator]
+    i8_high = _float32_to_4bit_unpacked(val_high, signed)
+    i8_low = _float32_to_4bit_unpacked(val_low, signed)
+    return i8_high << 4 | i8_low & 0x0F
 
 
-def unpack_4bitx2(
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=DeprecationWarning,
+)
+def unpack_4bitx2(*args, **kwargs):
+    return _unpack_4bitx2(*args, **kwargs)
+
+
+def _unpack_4bitx2(
     x: npt.NDArray[np.uint8], dims: int | Sequence[int]
 ) -> npt.NDArray[np.uint8]:
     """Unpack an array of packed uint8 elements (4bitx2) into individual elements
@@ -81,10 +109,20 @@ def unpack_4bitx2(
     return res
 
 
-def unpack_single_4bitx2(
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=DeprecationWarning,
+)
+def unpack_single_4bitx2(*args, **kwargs):
+    return _unpack_single_4bitx2(*args, **kwargs)
+
+
+def _unpack_single_4bitx2(
     x: np.ndarray | np.dtype | float, signed: bool
 ) -> tuple[np.ndarray, np.ndarray]:
-    unpack_signed = lambda x: np.where((x >> 3) == 0, x, x | 0xF0)  # noqa: E731
+    def unpack_signed(x):
+        return np.where((x >> 3) == 0, x, x | 0xF0)
+
     """Unpack a single byte 4bitx2 to two 4 bit elements
     Args:
         x: Input data
@@ -102,7 +140,15 @@ def unpack_single_4bitx2(
     return (x_low.astype(dtype), x_high.astype(dtype))
 
 
-def float32_to_float4e2m1_unpacked(values: np.ndarray) -> np.ndarray:
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=DeprecationWarning,
+)
+def float32_to_float4e2m1_unpacked(*args, **kwargs):
+    return _float32_to_float4e2m1_unpacked(*args, **kwargs)
+
+
+def _float32_to_float4e2m1_unpacked(values: np.ndarray) -> np.ndarray:
     """Cast float32 to float4e2m1 (without packing).
 
     Args:
@@ -126,7 +172,15 @@ def float32_to_float4e2m1_unpacked(values: np.ndarray) -> np.ndarray:
     return res
 
 
-def float32x2_to_float4e2m1x2(val_low: np.ndarray, val_high: np.ndarray) -> np.ndarray:
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
+    category=DeprecationWarning,
+)
+def float32x2_to_float4e2m1x2(*args, **kwargs):
+    return _float32x2_to_float4e2m1x2(*args, **kwargs)
+
+
+def _float32x2_to_float4e2m1x2(val_low: np.ndarray, val_high: np.ndarray) -> np.ndarray:
     """Cast two elements to float4e2m1 and pack to a single byte
     Args:
         val_low: element to be packed in the 4 LSB
@@ -135,6 +189,6 @@ def float32x2_to_float4e2m1x2(val_low: np.ndarray, val_high: np.ndarray) -> np.n
     Returns:
         An ndarray with uint8 elements, containing both float4e2m1 elements
     """
-    i8_high = float32_to_float4e2m1_unpacked(val_high)
-    i8_low = float32_to_float4e2m1_unpacked(val_low)
-    return i8_high << 4 | i8_low & 0x0F  # type: ignore[operator]
+    i8_high = _float32_to_float4e2m1_unpacked(val_high)
+    i8_low = _float32_to_float4e2m1_unpacked(val_low)
+    return i8_high << 4 | i8_low & 0x0F

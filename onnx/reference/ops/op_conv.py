@@ -276,15 +276,11 @@ def _conv_implementation(  # type: ignore
                                         )
                                     s = np.dot(
                                         img.reshape((1, -1)), w_.reshape((-1, 1))
-                                    )[
-                                        0, 0
-                                    ]  # (img * w_).sum()
+                                    )[0, 0]  # (img * w_).sum()
                                 else:
                                     s = np.dot(
                                         img.reshape((1, -1)), w.reshape((-1, 1))
-                                    )[
-                                        0, 0
-                                    ]  # (img * w).sum()
+                                    )[0, 0]  # (img * w).sum()
                                 res[n, nw, hr, wr, zr] += s  # type: ignore
 
         return res

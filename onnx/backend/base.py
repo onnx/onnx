@@ -4,13 +4,16 @@
 from __future__ import annotations
 
 from collections import namedtuple
-from typing import Any, NewType, Sequence
-
-import numpy
+from typing import TYPE_CHECKING, Any, NewType
 
 import onnx.checker
 import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx import IR_VERSION, ModelProto, NodeProto
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import numpy
 
 
 class DeviceType:
@@ -76,14 +79,20 @@ class Backend:
 
     @classmethod
     def is_compatible(
-        cls, model: ModelProto, device: str = "CPU", **kwargs: Any  # noqa: ARG003
+        cls,
+        model: ModelProto,  # noqa: ARG003
+        device: str = "CPU",  # noqa: ARG003
+        **kwargs: Any,  # noqa: ARG003
     ) -> bool:
         # Return whether the model is compatible with the backend.
         return True
 
     @classmethod
     def prepare(
-        cls, model: ModelProto, device: str = "CPU", **kwargs: Any  # noqa: ARG003
+        cls,
+        model: ModelProto,
+        device: str = "CPU",  # noqa: ARG003
+        **kwargs: Any,  # noqa: ARG003
     ) -> BackendRep | None:
         # TODO Remove Optional from return type
         onnx.checker.check_model(model)

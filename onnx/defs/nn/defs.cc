@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
@@ -1573,10 +1574,7 @@ static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const cha
         true,
         1,
         OpSchema::Differentiable);
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { globalPoolTypeShapeInference(ctx); });
   };
 }
@@ -2832,4 +2830,1016 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             }));
+
+static const char* RMSNormalization_ver23_doc = R"DOC(
+      This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+      The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+      where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+      the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+      described by the following equations.
+      ```
+      XSquared = Mul(X, X)
+      XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+      MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+      RMS = Sqrt(MeanSquareEpsilon)
+      Normalized = Div(X, RMS)
+      ```
+      where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+      Depending on `stash_type` attribute, the actual computation
+      must happen in different floating-point precision.
+      For example, if `stash_type` is 1, this operator casts
+      all input variables to 32-bit float, perform the computation, and
+      finally cast `Normalized` back to the original type of `X`.
+      The second stage then scales the outcome of the first stage using:
+      ```
+      Y= Mul(Normalized, Scale)
+      ```
+      Let `d[i]` indicate the i-th dimension of `X`.
+      If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+      the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+      `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+      (`Scale` should be unidirectional broadcastable to tensor `X`);
+      for more details please check [the doc](Broadcasting.md).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    RMSNormalization,
+    23,
+    OpSchema()
+        .SetDoc(RMSNormalization_ver23_doc)
+        .Attr(
+            "axis",
+            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). "
+            "Negative value means counting dimensions from the back.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
+        .Attr(
+            "stash_type",
+            "The floating-point precision used in stage one of the computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+        .Input(
+            0,
+            "X",
+            "The input tensor to be normalized. "
+            "In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where "
+            "the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.",
+            "T")
+        .Input(1, "scale", "Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.", "V")
+        .Output(0, "Y", "Output data tensor. Same shape as X", "V")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input X type to float tensors.")
+        .TypeConstraint(
+            "V",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain output Y and scale type to float tensors.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          int64_t input_ndim = input_shape.dim_size();
+          int64_t axis = -1;
+          auto axis_proto = ctx.getAttribute("axis");
+          if (axis_proto) {
+            axis = axis_proto->i();
+          }
+          if (axis < 0) {
+            // Convert negative axis value to equivalent
+            // positive value.
+            axis += input_ndim;
+          }
+          if (axis < 0) {
+            fail_shape_inference(
+                "Unexpected axis value (",
+                axis,
+                ") rank of first input is ",
+                input_ndim,
+                " in ",
+                ctx.getDisplayName(),
+                ".");
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // RMSNormalization <axis, epsilon, stash_type> (X, Scale) => (Y)
+          auto* tp = ctx.getInputType(0);
+          if ((tp == nullptr) || (!tp->has_tensor_type()))
+            return false;
+          int64_t T = tp->tensor_type().elem_type();
+
+          auto type_attr = ctx.getAttribute("stash_type");
+          int64_t U = (type_attr != nullptr) ? type_attr->i()
+                                             : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) && (U != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
+
+          auto* axis_attr = ctx.getAttribute("axis");
+          int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
+          auto* epsilon_attr = ctx.getAttribute("epsilon");
+          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+
+          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
+            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
+            tp.add_dims(1);
+            return tp;
+          };
+
+          FunctionBuilder builder(functionProto);
+          builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
+              .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+              .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+              .Add("Rank = Size (XShape)") // rank of input tensor: scalar
+              .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
+              .Add(
+                  axis >= 0 // number of axes that are reduced =
+                      ? "PosAxis1D = Identity (Axis1D)" // [axis]: 1D tensor
+                      : "PosAxis1D = Add (Rank, Axis1D)") // [rank + axis] : 1D tensor
+              .Const1D("One1D", (int64_t)1)
+              .Add("ReduceAxes = Range(PosAxis1D, Rank, One1D)")
+              .Add("XU = Cast (X)", "to", U);
+          builder.Add("XSquared = Mul (XU, XU)")
+              .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
+              .Add("MeanSquareEpsilon = Add (XSquaredMean, Epsilon)")
+              .Add("RMS = Sqrt (MeanSquareEpsilon)")
+              .Add("Normalized = Div (XU, RMS)")
+              .Add("NormalizedT = Cast (Normalized)", "to", T);
+          builder.Add("Y = Mul (NormalizedT, scale)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
+
+static const char* RotaryEmbedding_ver23_doc = R"DOC(
+RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
+The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
+between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
+
+The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
+For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
+embedding vector either into two halves or interleaving every alternate token and applying the rotation matrix to each half of the embedding vector.
+The rotation matrix is parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated
+to form the final positional embedding for each token. The rotated positional embeddings are used in the self-attention mechanism.
+The rotation ensures that the model captures both absolute and relative positional information.
+
+Rotary embeddings are defined using the following algorithm:
+
+```python
+def compute_rotary_embedding(
+    input,
+    position_ids,
+    sin_cache,
+    cos_cache,
+    interleaved=0,
+    rotary_embedding_dim=0,
+    num_heads=0,
+):
+    # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
+    if len(input.shape) == 4:
+        input = np.transpose(input, (0, 2, 1, 3))
+    batch_size = input.shape[0]
+    sequence_length = input.shape[1]
+    if len(input.shape) == 3:
+        hidden_size = input.shape[2]
+        assert num_heads != 0
+        head_size = int(hidden_size / num_heads)
+        new_shape = [batch_size, sequence_length, num_heads, head_size]
+        input = np.reshape(input, new_shape)
+    assert len(input.shape) == 4
+    head_size = input.shape[3]
+
+    # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
+    if rotary_embedding_dim == 0:
+        # If rotary_embedding_dim not provided, perform full rotation by using head_size
+        rotary_embedding_dim = head_size
+    x_rotate = input[:, :, :, :rotary_embedding_dim]
+    x_not_rotate = input[:, :, :, rotary_embedding_dim:]
+    rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
+
+    # Retrieve sin and cos caches using position ids
+    if position_ids is not None:
+        cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+        sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
+    else:
+        cos = cos_cache
+        sin = sin_cache
+    cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+    sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+
+    # Either divide the input in halves or interleave (based on interleaved attribute)
+    if interleaved:
+        x1 = x_rotate[:, :, :, 0::2]
+        x2 = x_rotate[:, :, :, 1::2]
+    else:
+        x1, x2 = np.split(x_rotate, 2, axis=-1)
+
+    # Calculate real and imaginary values
+    real = cos * x1 - sin * x2
+    imag = sin * x1 + cos * x2
+
+    # Inserted rotated embeddings back to the original input
+    if interleaved:
+        # x_rotate[:, :, :, 0::2] = real
+        # x_rotate[:, :, :, 1::2] = imag
+        real = np.expand_dims(real, axis=-1)
+        imag = np.expand_dims(imag, axis=-1)
+        x_rotate_concat = np.concatenate((real, imag), axis=-1)
+        x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
+    else:
+        x_rotate = np.concatenate((real, imag), axis=-1)
+    output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+    if len(original_input_shape) == 3:
+        output = np.reshape(output, input.shape)
+    else:
+        output = np.transpose(output, (0, 2, 1, 3))
+    return output
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    RotaryEmbedding,
+    23,
+    OpSchema()
+        .SetDoc(RotaryEmbedding_ver23_doc)
+        .Attr(
+            "interleaved",
+            "Rotate using interleaved pattern. Default value is 0 (False).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "rotary_embedding_dim",
+            "Rotary embedding dimension used to apply partial rotary embeddings.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "num_heads",
+            "Number of attention heads. Must be provided when input is a 3D tensor. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Input(
+            0,
+            "X",
+            "The input tensor representing the token embeddings. "
+            "4D tensor with shape `(batch_size, num_heads, sequence_length, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. "
+            "For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and "
+            "`hidden_size` must be an even multiple of `num_heads` where `hidden_size = num_heads * head_size`",
+            "T")
+        .Input(
+            1,
+            "cos_cache",
+            "The cosine values for the rotation. "
+            "2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` "
+            "for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` "
+            "for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. "
+            "`max_position_id_plus_1` is a parameter to the model.",
+            "T")
+        .Input(
+            2,
+            "sin_cache",
+            "The sine values for the rotation. "
+            "2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` "
+            "for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` "
+            "for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. "
+            "`max_position_id_plus_1` is a parameter to the model.",
+            "T")
+        .Input(
+            3,
+            "position_ids",
+            "The position indices for the tokens. 2D tensor with shape `(batch_size, sequence_length)`",
+            "M",
+            OpSchema::Optional)
+        .Output(0, "Y", "Tensor with same shape as input.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+            "Constrain input and output types to float tensors.")
+        .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          // we need at least one input to have a shape for this inference.
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+          if ((input_shape.dim_size() < 3) || (input_shape.dim_size() > 4)) {
+            fail_shape_inference("Input tensor must have at least 3 and at most 4 dimensions");
+          }
+
+          auto* num_heads_attr = ctx.getAttribute("num_heads");
+          if ((input_shape.dim_size() == 3) && (num_heads_attr == nullptr)) {
+            fail_shape_inference("Input shape is 3D, num_heads attribute must be provided");
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // RotaryEmbedding <scale, interleaved, rotary_embedding_dim, num_heads> (X, position_ids, cos_cache,
+          // sin_cache) => Y
+
+          int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
+          auto* interleaved_attr = ctx.getAttribute("interleaved");
+          int64_t interleaved = (interleaved_attr != nullptr) ? interleaved_attr->i() : 0;
+          auto* rotary_embedding_dim_attr = ctx.getAttribute("rotary_embedding_dim");
+          int64_t rotary_embedding_dim = (rotary_embedding_dim_attr != nullptr) ? rotary_embedding_dim_attr->i() : 0;
+          auto* num_heads_attr = ctx.getAttribute("num_heads");
+          int64_t num_heads = (num_heads_attr != nullptr) ? num_heads_attr->i() : 0;
+
+          // Ensure that num_heads does not control reshaping of input tensor
+          // when input tensor is 4D
+          int64_t is_input_4d = 1;
+          auto* x_tp = ctx.getInputType(0);
+          if ((x_tp == nullptr) || (!x_tp->has_tensor_type()))
+            return false;
+          if (!(x_tp->tensor_type().has_shape())) {
+            return false;
+          }
+          if (x_tp->tensor_type().shape().dim_size() == 4) {
+            is_input_4d = 1;
+          } else if (x_tp->tensor_type().shape().dim_size() == 3) {
+            is_input_4d = 0;
+          } else {
+            return false;
+          }
+
+          FunctionBuilder builder(functionProto);
+          // Set input tensor to the correct shape if input shape is 3D
+          // NewShape = [batch_size, sequence_length, num_heads, head_size]
+
+          // Reshape tensor to 4D if input is 3D
+          builder.Const1D("Zero1D", (int64_t)0)
+              .Const1D("NumHeads", num_heads) // num_heads
+              .Const1D("NegOne", (int64_t)(-1)); // head_size, inferred from other dimensions
+
+          if (is_input_4d == 0) {
+            builder.Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
+                .Add("XIn = Reshape (X, NewShape)"); // new shape of input tensor: 4D tensor
+          } else {
+            builder.Add("XIn = Transpose <perm = [0, 2, 1, 3]> (X)");
+          }
+
+          // Rotary embedding dimension is the value along which the input is to be split
+          // There are two cases for the rotary embedding dimension:
+          // 1. Complete rotation: rotary embedding dimension defaults to head_size, rotary_embedding_dim = cos.shape[3]
+          // * 2 or head_size
+          // 2. Partial rotation: rotary embedding dimension is provided, rotary_embedding_dim = rotary_embedding_dim
+
+          builder.Add("HeadSize = Shape <start = 3, end = 4> (XIn)");
+          if (rotary_embedding_dim > 0) {
+            builder.Const1D("RotaryEmbedDim", rotary_embedding_dim);
+          } else {
+            builder.Add("RotaryEmbedDim = Identity(HeadSize)");
+          }
+          builder.Const1D("Two1D", (int64_t)2)
+              .Add("NoRotateLength = Sub(HeadSize, RotaryEmbedDim)")
+              .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
+          // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
+          // shape of input not to rotate = input[:,:,:,rotary_embedding_dim:]
+          builder.Add("XToRotate, XNoRotate = Split <axis = -1> (XIn, RotateSplitLengths)");
+
+          // Gather the cos and sine matrices from the respective caches using position ids if provided.
+          // Otherwise Gather op functions as an Identity op.
+          // Unsqueeze applied to make cos and sin matrices have dimensions that are
+          // valid for multiplication with input when is split. For cases where rotary_embedding_dim is provided,
+          // slice the matrix values until that index only
+          if (ctx.hasInput(3)) {
+            builder
+                .Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos matrix: [batch_size,
+                                                                         // sequence_length, head_size / 2]
+                .Add("SinCacheGather = Gather(sin_cache, position_ids)"); // shape of cos matrix: [batch_size,
+                                                                          // sequence_length, head_size / 2]
+          } else {
+            builder
+                .Add("CosCacheGather = Identity(cos_cache)") // shape of cos matrix: [batch_size, sequence_length,
+                                                             // head_size / 2]
+                .Add("SinCacheGather = Identity(sin_cache)"); // shape of cos matrix: [batch_size, sequence_length,
+                                                              // head_size / 2]
+          }
+
+          builder.Add("RotaryEmbedDimHalf = Div(RotaryEmbedDim, Two1D)")
+              .Add("RotaryEmbedDimHalfInt = Cast (RotaryEmbedDimHalf)", "to", int_type)
+              .Add(
+                  "CosCacheSliced = Slice(CosCacheGather, Zero1D, RotaryEmbedDimHalfInt, Two1D)") // shape of cos
+                                                                                                  // matrix:
+                                                                                                  // [batch_size,
+                                                                                                  // sequence_length,
+                                                                                                  // rotary_embedding_dim
+                                                                                                  // / 2]
+              .Add(
+                  "SinCacheSliced = Slice(SinCacheGather, Zero1D, RotaryEmbedDimHalfInt, Two1D)") // shape of sin
+                                                                                                  // matrix:
+                                                                                                  // [batch_size,
+                                                                                                  // sequence_length,
+                                                                                                  // rotary_embedding_dim
+                                                                                                  // / 2]
+              .Add("CosCacheUnsqueezed = Unsqueeze(CosCacheSliced, Two1D)") // shape of cos matrix: [batch_size,
+                                                                            // sequence_length, 1, rotary_embedding_dim
+                                                                            // / 2]
+              .Add("SinCacheUnsqueezed = Unsqueeze(SinCacheSliced, Two1D)"); // shape of sin matrix: [batch_size,
+                                                                             // sequence_length, 1, rotary_embedding_dim
+                                                                             // / 2]
+
+          // Create slices of inputs to multiply with sin and cos matrices based on interleaved parameter
+          // Choose the correct slices based on interleaved parameter
+          // real = cos_x * x1 - sin_x * x2
+          // imag = sin_x * x1 + cos_x * x2
+          if (interleaved == 0) {
+            // For non-interleaved (basic) rotation, slices are created as follows,
+            builder.Add(
+                "X1, X2 = Split <axis = -1, num_outputs = 2> (XToRotate)"); // shape of X1 =
+                                                                            // input[:,:,:,:rotary_embedding_dim/2],
+                                                                            // X2 =
+                                                                            // input[:,:,:,rotary_embedding_dim/2:rotary_embedding_dim]
+          } else {
+            // For interleaved rotation, slices are created as follows,
+            builder.Const1D("One1D", (int64_t)1)
+                .Const1D("AxesRotaryDim", (int64_t)3)
+                .Add("RotaryEmbedDimInclusive = Add(RotaryEmbedDim, One1D)")
+                .Add(
+                    "X1 = Slice(XToRotate, Zero1D, RotaryEmbedDim, AxesRotaryDim, Two1D)") // shape of X1 =
+                                                                                           // input[:,:,:,0:rotary_embedding_dim:2]
+                .Add(
+                    "X2 = Slice(XToRotate, One1D, RotaryEmbedDimInclusive, AxesRotaryDim, Two1D)"); // shape of
+                                                                                                    // X2 =
+                                                                                                    // input[:,:,:,1:rotary_embedding_dim:2]
+          }
+
+          builder.Add("CosX1 = Mul(CosCacheUnsqueezed, X1)")
+              .Add("SinX2 = Mul(SinCacheUnsqueezed, X2)")
+              .Add("Real = Sub(CosX1, SinX2)")
+              .Add("SinX1 = Mul(SinCacheUnsqueezed, X1)")
+              .Add("CosX2 = Mul(CosCacheUnsqueezed, X2)")
+              .Add("Imaginary = Add(SinX1, CosX2)");
+
+          // Insert the real and imaginary values into the original input to be rotated based on interleaved parameter
+          if (interleaved == 0) {
+            builder.Add("XRotated = Concat <axis = -1> (Real, Imaginary)");
+          } else {
+            builder
+                .Add("RealInterleave = Unsqueeze(Real, NegOne)") // shape of indices =
+                                                                 // input[:,:,:,0:rotary_embedding_dim:2, 1]
+                .Add("ImaginaryInterleave = Unsqueeze(Imaginary, NegOne)") // shape of indices =
+                                                                           // input[:,:,:,1:rotary_embedding_dim+1:2, 1]
+                .Add("XRotatedInterleavedConcat = Concat <axis = -1> (RealInterleave, ImaginaryInterleave)")
+                .Add("XRotatedShape = Shape(XToRotate)")
+                .Add("XRotated = Reshape(XRotatedInterleavedConcat, XRotatedShape)");
+          }
+
+          // Combine rotated parts with non-rotated parts
+          builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)");
+
+          if (is_input_4d == 0) {
+            builder.Add("YTransposed = Identity(XConcat)");
+          } else {
+            builder.Add("YTransposed = Transpose <perm = [0, 2, 1, 3]> (XConcat)");
+          }
+          // Reshape back to 3D shape if input is a 3D tensor
+          builder.Add("XShape = Shape(X)").Add("Y = Reshape(YTransposed, XShape)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
+
+static const char* Attention_ver23_doc = R"DOC(
+
+Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
+
+This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
+
+For self attention, `kv_sequence_length` equals to `q_sequence_length`.
+
+For cross attention, query and key might have different lengths.
+
+This operator also covers the 3 following variants based on the number of heads:
+1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
+2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
+3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
+
+Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
+1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
+2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+
+Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
+
+```
+  The following pattern is applied by this operator:
+      Q          K          V
+      |          |          |
+     Q*scale     K*scale    |
+      |          |          |
+      |       Transpose     |
+      |          |          |
+      ---MatMul---          |
+            |               |
+ at_mask---Add              |
+            |               |
+  softcap (if provided)     |
+            |               |
+         Softmax            |
+            |               |
+            -----MatMul------
+                   |
+                   Y
+```
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Attention,
+    23,
+    OpSchema()
+        .SetDoc(Attention_ver23_doc)
+        .Attr(
+            "is_causal",
+            "If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. "
+            "The attention masking has the form of the upper left causal bias due to the alignment.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "scale",
+            "Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. "
+            "Default value is `1/sqrt(head_size)`",
+            AttributeProto::FLOAT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "q_num_heads",
+            "Number of heads of query. Must be used with 3D inputs of Q, K and V. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "kv_num_heads",
+            "Number of heads of key and value. Must be used with 3D inputs of Q, K and V. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "softmax_precision",
+            "The floating-point precision used in softmax computation. "
+            "If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "softcap",
+            "Softcap value for attention weights. Default value is 0.",
+            AttributeProto::FLOAT,
+            static_cast<float>(0))
+        .Attr(
+            "qk_matmul_output_mode",
+            "If set to `0`, qk_matmul_output is the output of qk matmul. "
+            "If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. "
+            "If set to `2`, qk_matmul_output is the output after the softcap operation. "
+            "If set to `3`, qk_matmul_output is the output after the softmax operation. "
+            "Default value is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "Q",
+            "Query tensor. "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. "
+            "For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`",
+            "T1")
+        .Input(
+            1,
+            "K",
+            "Key tensor. "
+            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. "
+            "For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`",
+            "T1")
+        .Input(
+            2,
+            "V",
+            "Value tensor. "
+            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. "
+            "For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`",
+            "T2")
+        .Input(
+            3,
+            "attn_mask",
+            "Attention mask. "
+            "Shape must be broadcastable to "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
+            "Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. "
+            "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
+            "U",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "past_key",
+            "past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`",
+            "T1",
+            OpSchema::Optional)
+        .Input(
+            5,
+            "past_value",
+            "past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`",
+            "T2",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "Y",
+            "The output tensor . "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
+            "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
+            "T1")
+        .Output(
+            1,
+            "present_key",
+            "Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T1",
+            OpSchema::Optional)
+        .Output(
+            2,
+            "present_value",
+            "Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T2",
+            OpSchema::Optional)
+        .Output(
+            3,
+            "qk_matmul_output",
+            "The output of QK matmul. "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T1",
+            OpSchema::Optional)
+        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q and K inputs types to float tensors.")
+        .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain V input types to float tensors.")
+        .TypeConstraint(
+            "U",
+            OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
+            "Constrain output 'mask' types to boolean tensors and input types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          int64_t kv_sequence_length = -1;
+          ONNX_NAMESPACE::TensorShapeProto output_shape;
+          ONNX_NAMESPACE::TensorShapeProto qk_matmul_shape;
+          if (hasInputShape(ctx, 0)) {
+            auto& query_shape = getInputShape(ctx, 0);
+            auto& query_dims = query_shape.dim();
+            if ((query_dims.size() != 3) && (query_dims.size() != 4)) {
+              fail_shape_inference("Inputs 0 (query) shall be 3 or 4 dimensions");
+            }
+
+            if (query_dims.size() == 3) {
+              auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+              if (q_num_heads_attr == nullptr) {
+                fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+              }
+              auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+              if (kv_num_heads_attr == nullptr) {
+                fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+              }
+            }
+
+            *output_shape.add_dim() = query_dims[0]; // batch_size
+            *output_shape.add_dim() = query_dims[1]; // num_heads for 4D, sequence_length for 3D
+
+            *qk_matmul_shape.add_dim() = query_dims[0]; // batch_size
+
+            if (hasInputShape(ctx, 1)) {
+              auto& key_shape = getInputShape(ctx, 1);
+              auto& key_dims = key_shape.dim();
+              if ((key_dims.size() != 3) && (key_dims.size() != 4)) {
+                fail_shape_inference("Inputs 1 (key) shall be 3 or 4 dimensions");
+              }
+            }
+
+            if (hasInputShape(ctx, 2)) {
+              auto& value_shape = getInputShape(ctx, 2);
+              auto& value_dims = value_shape.dim();
+              if ((value_dims.size() != 3) && (value_dims.size() != 4)) {
+                fail_shape_inference("Inputs 2 (value) shall be 3 or 4 dimensions");
+              }
+
+              // Update Output Shape for 4D inputs
+              // Input 0 (query) has shape (batch_size, q_num_heads, q_sequence_length, head_size)
+              // Input 1 (key) has shape (batch_size, kv_num_heads, kv_sequence_length, head_size)
+              // Input 2 (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
+              // Output 0 has shape (batch_size, q_num_heads, q_sequence_length, v_head_size)
+              if (value_dims.size() == 4 && query_dims.size() == 4) {
+                kv_sequence_length = value_dims[2].dim_value();
+                *output_shape.add_dim() = query_dims[2]; // sequence_length
+                *output_shape.add_dim() = value_dims[3]; // head_size
+                updateOutputShape(ctx, 0, output_shape);
+                // Update qk_matmul_shape
+                *qk_matmul_shape.add_dim() = query_dims[1]; // q_num_heads
+                *qk_matmul_shape.add_dim() = query_dims[2]; // q_sequence_length
+                qk_matmul_shape.add_dim()->set_dim_value(kv_sequence_length);
+              }
+
+              // Update Output Shape for 3D inputs
+              // Input 0 (query) has shape (batch_size, q_sequence_length, q_hidden_size),
+              // q_hidden_size = q_num_heads * head_size
+              // Input 1 (key) has shape (batch_size, kv_sequence_length, k_hidden_size),
+              // k_hidden_size = kv_num_heads * head_size
+              // Input 2 (value) has shape (batch_size, kv_sequence_length, v_hidden_size),
+              // v_hidden_size = kv_num_heads * v_head_size
+              // Output 0 has shape (batch_size, q_sequence_length, hidden_size),
+              // hidden_size = q_num_heads * v_head_size
+              if (value_dims.size() == 3 && query_dims.size() == 3) {
+                kv_sequence_length = value_dims[1].dim_value();
+                auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+                if (q_num_heads_attr == nullptr) {
+                  fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+                }
+                auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+                if (kv_num_heads_attr == nullptr) {
+                  fail_type_inference("3D inputs expected to have kv_num_heads attribute.");
+                }
+                int64_t q_num_heads = q_num_heads_attr->i();
+                int64_t kv_num_heads = kv_num_heads_attr->i();
+                // Calculate v_head_size
+                int64_t v_head_size = value_dims[2].dim_value() / kv_num_heads;
+                output_shape.add_dim()->set_dim_value(v_head_size * q_num_heads);
+                updateOutputShape(ctx, 0, output_shape);
+                // Update qk_matmul_shape
+                qk_matmul_shape.add_dim()->set_dim_value(q_num_heads);
+                *qk_matmul_shape.add_dim() = query_dims[1];
+                qk_matmul_shape.add_dim()->set_dim_value(kv_sequence_length);
+              }
+            }
+          }
+
+          if (ctx.hasOutput(3)) { // has qk_matmul_output
+            propagateElemTypeFromInputToOutput(ctx, 0, 3);
+            updateOutputShape(ctx, 3, qk_matmul_shape);
+          }
+
+          if (ctx.hasOutput(1) && ctx.hasOutput(2)) { // has present outputs
+            if (ctx.hasInput(4) && ctx.hasInput(5)) { // has past_key
+              // copy the type from query to present key and value
+              propagateElemTypeFromInputToOutput(ctx, 4, 1);
+              propagateElemTypeFromInputToOutput(ctx, 5, 2);
+
+              if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
+                auto& past_key_shape = getInputShape(ctx, 4);
+                auto& past_key_dims = past_key_shape.dim();
+                auto& past_value_shape = getInputShape(ctx, 5);
+                auto& past_value_dims = past_value_shape.dim();
+
+                // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
+                if (past_key_dims.size() != 4) {
+                  fail_shape_inference("The past_key input shall be 4 dimensions");
+                }
+                // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
+                if (past_value_dims.size() != 4) {
+                  fail_shape_inference("The past_value input shall be 4 dimensions");
+                }
+
+                if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
+                  int64_t total_sequence_length = kv_sequence_length + past_key_dims[2].dim_value();
+
+                  ONNX_NAMESPACE::TensorShapeProto present_key_shape;
+                  for (auto& dim : past_key_dims) {
+                    *present_key_shape.add_dim() = dim;
+                  }
+
+                  ONNX_NAMESPACE::TensorShapeProto present_value_shape;
+                  for (auto& dim : past_value_dims) {
+                    *present_value_shape.add_dim() = dim;
+                  }
+
+                  if (ctx.hasOutput(3)) { // has qk_matmul_output with bias
+                    qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
+                    updateOutputShape(ctx, 3, qk_matmul_shape);
+                  }
+
+                  // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
+                  present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+                  present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
+
+                  updateOutputShape(ctx, 1, present_key_shape);
+                  updateOutputShape(ctx, 2, present_value_shape);
+                }
+              }
+            }
+          }
+        })
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads> (Q, K, V, attn_mask, past_key,
+          // past_value) => (Y, present_key?, present_value?)
+          int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
+          int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+
+          // Get input types
+          auto* t_qk = ctx.getInputType(0);
+          if ((t_qk == nullptr) || (!t_qk->has_tensor_type()))
+            return false;
+          int64_t T1 = t_qk->tensor_type().elem_type();
+
+          // Determine precision types for Softmax
+          auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
+          int64_t softmax_precision = (softmax_precision_attr != nullptr) ? softmax_precision_attr->i() : T1;
+          if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
+
+          auto mkbooltensor = [](bool val) -> ONNX_NAMESPACE::TensorProto {
+            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<bool>{val});
+            tp.add_dims(1);
+            return tp;
+          };
+
+          // If shape is 3D, q_num_heads and kv_num_heads is provided,
+          // for 4D cases, set num_heads to zero for reshape purposes
+          auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+          int64_t q_num_heads = (q_num_heads_attr != nullptr) ? q_num_heads_attr->i() : 0;
+          auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+          int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
+
+          FunctionBuilder builder(functionProto);
+          // Set input tensors (Q, K, V) to the correct shape if input shape is 3D
+          // NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
+          // NewShapeK  (batch_size, kv_num_heads, kv_sequence_length, head_size)
+          // NewShapeV (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
+          builder
+              .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+              .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
+              .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
+              .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
+              .Add("KVSeqLen = Shape <start = -2, end = -1> (K)") // kv_sequence_length
+              .Const1D("NegOne", static_cast<int64_t>(-1)) // head_size, inferred from other dimensions
+              .Add("QNewShape = Concat <axis = 0> (BatchSize, QNumHeadsAttr, QSeqLen, NegOne)")
+              .Add("KVNewShape = Concat <axis = 0> (BatchSize, KVNumHeadsAttr, KVSeqLen, NegOne)")
+              .Add("QReshaped = Reshape (Q, QNewShape)")
+              .Add("KReshaped = Reshape (K, KVNewShape)")
+              .Add("VReshaped = Reshape (V, KVNewShape)")
+              .Add("QNumHeads = Shape <start = 1, end = 2> (QReshaped)") // q_num_heads
+              .Add("KVNumHeads = Shape <start = 1, end = 2> (KReshaped)"); // kv_num_heads
+
+          // Calculate scaling factor if scale attribute not provided
+          auto scale_attr = ctx.getAttribute("scale");
+          float scale = (scale_attr != nullptr) ? scale_attr->f() : static_cast<float>(1);
+          builder
+              .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
+              .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
+              .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
+              .Const1D("One1D", static_cast<int64_t>(1))
+              .Const1D("One1DF", static_cast<float>(1))
+              .Const1D("Zero1D", static_cast<int64_t>(0))
+              .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
+              .Const("ScaleF", ToTensor<float>(scale))
+              .Add(scale_attr != nullptr ? "ScaleFactor = Identity(ScaleF)" : "ScaleFactor = Identity(CalculatedScale)")
+              .Add("ScaleFactorSqrt = Sqrt(ScaleFactor)")
+              .Add("ScaleFactorF = Cast (ScaleFactorSqrt)", "to", T1);
+
+          // Update key and value caches for past and present states
+
+          if (ctx.hasInput(4)) {
+            builder.Add("PresentKey = Concat <axis = 2> (past_key, KReshaped)");
+          } else {
+            builder.Add("PresentKey = Identity (KReshaped)");
+          }
+          if (ctx.hasOutput(1)) {
+            builder.Add("present_key = Identity (PresentKey)");
+          }
+
+          if (ctx.hasInput(5)) {
+            builder.Add("PresentValue = Concat <axis = 2> (past_value, VReshaped)");
+          } else {
+            builder.Add("PresentValue = Identity (VReshaped)");
+          }
+          if (ctx.hasOutput(2)) {
+            builder.Add("present_value = Identity (PresentValue)");
+          }
+
+          // Create a attn_bias filled with zeros of shape (q_sequence_length, kv_sequence_length)
+          builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
+              .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
+              .Add("AttnBiasZeros = ConstantOfShape(AttnBiasShape)");
+
+          // If attn_mask is provided
+          float neg_inf = -std::numeric_limits<float>::infinity();
+          builder.Const1D("FloatInf", neg_inf);
+          if (ctx.hasInput(3)) {
+            auto* up = ctx.getInputType(3);
+            if ((up == nullptr) || (!up->has_tensor_type()))
+              return false;
+            int64_t U = up->tensor_type().elem_type();
+            builder.Add(
+                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL ? "AttnBias = Where(attn_mask, AttnBiasZeros, FloatInf)"
+                                                               : "AttnBias = Add(attn_mask, AttnBiasZeros)");
+          } else {
+            // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
+            // is a square matrix. The attention masking has the form of the upper left causal bias due to
+            // the alignment when the mask is a non-square matrix.
+            // An error is thrown if both attn_mask and is_causal are set.
+            auto* is_causal_attr = ctx.getAttribute("is_causal");
+            int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+            if (is_causal == 1) {
+              builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
+                  .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
+                  .Add("AttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)");
+            } else {
+              builder.Add("AttnBias = Identity(AttnBiasZeros)");
+            }
+          }
+          builder.Add("AttnBiasT = Cast (AttnBias)", "to", T1);
+
+          // Group Query Attention is applied if the following are satisfied
+          // 1) q_num_heads != kv_num_heads
+          // 2) q_num_heads % kv_num_heads == 0
+          // 3) kv_num_heads == k_num_heads == v_num_heads
+          builder.Add("NGQACond1 = Equal(QNumHeads, KVNumHeads)")
+              .Add("GQACond1 = Not(NGQACond1)")
+              .Add("DivNumHeads = Div(QNumHeads, KVNumHeads)")
+              .Add("IDivNumHeads = Cast(DivNumHeads)", "to", int_type)
+              .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
+              .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
+              .Add("GQACond = And(GQACond1, GQACond2)")
+              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)")
+              .Add("InterleaveShape = Concat <axis = 0> (One1D, InterleaveDim, One1D, One1D)")
+              .Add("KAttentionInput = Tile(PresentKey, InterleaveShape)")
+              .Add("VAttentionInput = Tile(PresentValue, InterleaveShape)");
+
+          // The following pattern is applied
+          //      Q          K          V
+          //      |          |          |
+          //     Q*scale    K*scale     |
+          //      |          |          |
+          //      |       Transpose     |
+          //      |          |          |
+          //      ---MatMul---          |
+          //            |               |
+          // at_mask---Add              |
+          //  softcap (if provided)     |
+          //            |               |
+          //            |               |
+          //         Softmax            |
+          //            |               |
+          //            -----MatMul------
+          //                    |
+          //                    Y
+          builder.Add("KTranspose = Transpose <perm = [0, 1 ,3, 2]> (KAttentionInput)")
+              .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
+              .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
+              .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
+              .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1)
+              .Add("QKAttnWeightWithBias = Add(QKAttnCast, AttnBiasT)");
+
+          // Apply softcap if provided
+          auto* softcap_attr = ctx.getAttribute("softcap");
+          float softcap_val = (softcap_attr != nullptr) ? softcap_attr->f() : static_cast<float>(0);
+          if (softcap_val != 0) {
+            builder.Const1D("Softcap", softcap_val)
+                .Add("SoftcapF = Cast (Softcap)", "to", T1)
+                .Add("SoftcapDiv = Div(QKAttnWeightWithBias, SoftcapF)")
+                .Add("SoftcapTanh = Tanh(SoftcapDiv)")
+                .Add("QKAttnWeightSoftcap = Mul(SoftcapTanh, SoftcapF)");
+          } else {
+            builder.Add("QKAttnWeightSoftcap = Identity(QKAttnWeightWithBias)");
+          }
+          builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
+              .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
+              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
+
+          // QK MatMul output if required
+          auto* qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
+          int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
+          if (ctx.hasOutput(3)) {
+            if (qk_matmul_output_mode == 1) {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightWithBias)");
+            } else if (qk_matmul_output_mode == 2) {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
+            } else if (qk_matmul_output_mode == 3) {
+              builder.Add("qk_matmul_output = Identity(AttnWeightSoftmax)");
+            } else {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeight)");
+            }
+          }
+
+          builder.Add("YExtraDim = MatMul(SoftmaxOut, VAttentionInput)")
+              .Add("YCast = Cast (YExtraDim)", "to", T1)
+              .Add("YPreReshape = Squeeze(YCast)");
+          // Reshape Y to 3D if input is a 3D tensor
+          if (q_num_heads != 0 && kv_num_heads != 0) {
+            builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)")
+                .Add("YNewShape = Concat <axis = 0> (Zero1D, Zero1D, NegOne)")
+                .Add("Y = Reshape(YTranspose, YNewShape)");
+          } else {
+            builder.Add("Y = Identity(YPreReshape)");
+          }
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
 } // namespace ONNX_NAMESPACE

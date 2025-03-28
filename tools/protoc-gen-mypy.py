@@ -6,6 +6,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# NOTE: This is deprecated in favor of protogen's own .pyi generation method.
+#       See: https://github.com/onnx/onnx/pull/6096
+
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
 # (Apache 2.0 License)
 # with own fixes to
@@ -18,12 +21,16 @@
 
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
+
 from __future__ import annotations
 
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import Any, Callable, Generator, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 try:
     import google.protobuf.descriptor_pb2 as d_typed
@@ -131,7 +138,7 @@ class PkgWriter:
 
         raise AssertionError("Could not parse local name " + name)
 
-    @contextmanager  # type: ignore
+    @contextmanager
     def _indent(self) -> Generator[None, None, None]:
         self.indent = self.indent + "    "
         yield
