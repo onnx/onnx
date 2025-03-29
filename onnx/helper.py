@@ -78,7 +78,7 @@ VERSION_TABLE: VersionTableType = [
 VersionMapType = dict[tuple[str, int], int]
 
 
-def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
+def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
 
@@ -95,7 +95,7 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     return result
 
 
-OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
+OP_SET_ID_VERSION_MAP = _create_op_set_id_version_map(VERSION_TABLE)
 
 
 def find_min_ir_version_for(
@@ -363,8 +363,7 @@ def _split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def float32_to_bfloat16(*args, **kwargs) -> int:
     return _float32_to_bfloat16(*args, **kwargs)
@@ -390,8 +389,7 @@ def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def float32_to_float8e4m3(*args, **kwargs) -> int:
     return _float32_to_float8e4m3(*args, **kwargs)
@@ -532,8 +530,7 @@ def _float32_to_float8e4m3(  # noqa: PLR0911
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def float32_to_float8e5m2(*args: Any, **kwargs: Any) -> int:
     return _float32_to_float8e5m2(*args, **kwargs)
@@ -666,8 +663,7 @@ def _float32_to_float8e5m2(  # noqa: PLR0911
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
     return _pack_float32_to_4bit(array, signed)
@@ -702,8 +698,7 @@ def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndar
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     return _pack_float32_to_float4e2m1(array)
@@ -1487,8 +1482,14 @@ def printable_node(
     return prefix + " ".join(content)
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.19. Consider using onnx.printer.to_text() instead."
+)
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """Display a GraphProto as a string.
+
+    .. deprecated:: 1.19
+        Consider using :func:`onnx.printer.to_text` instead.
 
     Args:
         graph (GraphProto): the graph to display
