@@ -1,5 +1,6 @@
 build
-jupyter
+# It doesn't support 3.13t
+jupyter ; python_version<"3.13"
 nbval
 numpy
 parameterized
