@@ -82,7 +82,6 @@ jobs:
         echo "testpaths =" >> pytest.ini
         echo "    onnx/test" >> pytest.ini
         echo "    onnx/examples" >> pytest.ini
-        python -m pip install -v pillow
         pytest
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
