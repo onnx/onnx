@@ -2247,24 +2247,17 @@ class TestVersionConverter(unittest.TestCase):
             self.assertEqual(len(converted_model.graph.initializer), 2)
 
             # Verify the large tensor has external data
-            found_large_tensor = False
-            for i in range(2):
-                if converted_model.graph.initializer[i].name == "initializer_tensor":
-                    found_large_tensor = True
-                    large_tensor = converted_model.graph.initializer[i]
-                    self.assertEqual(large_tensor.data_location, TensorProto.EXTERNAL)
-                    self.assertEqual(len(large_tensor.external_data), 3)
+            tensors = {init.name: init for init in converted_model.graph.initializer}
+            self.assertIn("initializer_tensor", tensors)
+            large_tensor = tensors["initializer_tensor"]
+            self.assertEqual(large_tensor.data_location, TensorProto.EXTERNAL)
+            self.assertEqual(len(large_tensor.external_data), 3)
 
-                    # Convert external_data to dictionary for order-independent checking
-                    external_data_dict = {
-                        entry.key: entry.value for entry in large_tensor.external_data
-                    }
-                    self.assertEqual(external_data_dict["location"], data_filename)
-                    self.assertEqual(external_data_dict["offset"], "0")
-                    self.assertEqual(external_data_dict["length"], "24")
-            self.assertTrue(
-                found_large_tensor, "initializer_tensor not found in initializers"
-            )
+            # Convert external_data to dictionary for order-independent checking
+            external_data_dict = {ed.key: ed.value for ed in large_tensor.external_data}
+            self.assertEqual(external_data_dict["location"], data_filename)
+            self.assertEqual(external_data_dict["offset"], "0")
+            self.assertEqual(external_data_dict["length"], "24")
 
 
 if __name__ == "__main__":
