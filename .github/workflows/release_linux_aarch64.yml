@@ -63,7 +63,7 @@ jobs:
           source .env/bin/activate && \
           yum install -y sudo && \
           sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }}
+          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }} ${{ github.event.inputs.build_type }}
           deactivate'
     
 

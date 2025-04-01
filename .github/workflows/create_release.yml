@@ -66,14 +66,15 @@ jobs:
     uses: ./.github/workflows/release_win.yml
     with:
       os: "win"
+      build_type: ${{ github.event.inputs.build_type || 'preview' }}
 
   call-workflow-win-freethreading: # experimental
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win_freethreading.yml
     with:
       os: "win"
-    secrets: inherit
-
+      build_type: ${{ github.event.inputs.build_type || 'preview' }}
+    
   call-workflow-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
@@ -86,6 +87,7 @@ jobs:
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
+      
 
   check_for_publish_preview_build_to_testpypi_weekly:
     name: Check for Publish preview build to test.pypi-weekly
