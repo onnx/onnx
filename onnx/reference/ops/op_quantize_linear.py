@@ -81,7 +81,7 @@ def reshape_input(
 class _CommonQuantizeLinear(OpRun):
     float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
     float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
-    quant_integer_ranges: ClassVar[dict[TensorProto.DataType, tuple[int]]] = {
+    quant_integer_ranges: ClassVar[dict[TensorProto.DataType, tuple[int, int]]] = {
         TensorProto.UINT8: (0, 255),
         TensorProto.INT8: (-128, 127),
         TensorProto.UINT16: (0, 65535),
@@ -101,7 +101,7 @@ class _CommonQuantizeLinear(OpRun):
         TensorProto.FLOAT4E2M1,
     )
 
-    def get_zero_point_type(self, zero_point: np.ndarray) -> int:
+    def get_zero_point_type(self, zero_point: np.ndarray) -> TensorProto.DataType:
         zero_point_type = None
         if (
             zero_point.dtype == float8e4m3fn
@@ -141,7 +141,7 @@ class _CommonQuantizeLinear(OpRun):
         axis: int = 1,
         saturate: bool = True,
         block_size: int | None = None,
-        output_dtype: int | None = None,
+        output_dtype: TensorProto.DataType | None = None,
         precision: int | None = None,
     ) -> tuple[np.ndarray]:
         y_scale = reshape_input(y_scale, x.shape, axis, block_size)

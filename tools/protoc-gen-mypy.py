@@ -108,7 +108,7 @@ class PkgWriter:
 
     def _import_message(self, type_name: d.FieldDescriptorProto) -> str:
         """Import a referenced message and return a handle"""
-        name = cast(str, type_name)
+        name = cast("str", type_name)
 
         if name[0] == "." and name[1].isupper() and name[2].islower():
             # Message defined in this file
