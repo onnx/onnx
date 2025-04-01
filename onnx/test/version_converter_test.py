@@ -2247,16 +2247,24 @@ class TestVersionConverter(unittest.TestCase):
             self.assertEqual(len(converted_model.graph.initializer), 2)
 
             # Verify the large tensor has external data
+            found_large_tensor = False
             for i in range(2):
                 if converted_model.graph.initializer[i].name == "initializer_tensor":
+                    found_large_tensor = True
                     large_tensor = converted_model.graph.initializer[i]
+                    self.assertEqual(large_tensor.data_location, TensorProto.EXTERNAL)
                     self.assertEqual(len(large_tensor.external_data), 3)
-                    self.assertEqual(large_tensor.external_data[0].key, "location")
-                    self.assertEqual(large_tensor.external_data[0].value, data_filename)
-                    self.assertEqual(large_tensor.external_data[1].key, "offset")
-                    self.assertEqual(large_tensor.external_data[1].value, "0")
-                    self.assertEqual(large_tensor.external_data[2].key, "length")
-                    self.assertEqual(large_tensor.external_data[2].value, "24")
+
+                    # Convert external_data to dictionary for order-independent checking
+                    external_data_dict = {
+                        entry.key: entry.value for entry in large_tensor.external_data
+                    }
+                    self.assertEqual(external_data_dict["location"], data_filename)
+                    self.assertEqual(external_data_dict["offset"], "0")
+                    self.assertEqual(external_data_dict["length"], "24")
+            self.assertTrue(
+                found_large_tensor, "initializer_tensor not found in initializers"
+            )
 
 
 if __name__ == "__main__":
