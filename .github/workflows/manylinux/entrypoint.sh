@@ -11,6 +11,9 @@ PY_VERSION=$1
 PLAT=$2
 BUILD_TYPE=$3  # New argument for build type (release or preview)
 
+echo "Build type: $BUILD_TYPE"
+
+
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 # Compile wheels
