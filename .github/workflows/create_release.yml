@@ -158,7 +158,7 @@ jobs:
       needs: [check_for_publish_release_build_to_testpypi] 
 
       environment:
-        name: testpypi-release # TODO has to be created at github
+        name: testpypi-release 
         url: https://test.pypi.org/p/onnx
 
       permissions:
