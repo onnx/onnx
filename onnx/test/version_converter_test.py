@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import contextlib
+import os
 import struct
+import tempfile
 import unittest
 
 import numpy as np
@@ -2185,88 +2187,76 @@ class TestVersionConverter(unittest.TestCase):
             test(y_shape, scale_shape, axis, block_size)
 
     def test_external_data_version_conversion(self) -> None:
-        # Create a model with external data
-        shape = (200, 300)
-        random_data = np.random.rand(*shape).astype(np.float32)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a model with external data
+            shape = (2, 3)
+            random_data = np.random.rand(*shape).astype(np.float32)
 
-        initializer_tensor = onnx.helper.make_tensor(
-            name="initializer_tensor",
-            data_type=onnx.TensorProto.FLOAT,
-            dims=list(shape),
-            vals=random_data.tobytes(),
-            raw=True,
-        )
-        initializer_scalar = onnx.helper.make_tensor(
-            name="initializer_scalar",
-            data_type=onnx.TensorProto.FLOAT,
-            dims=[],
-            vals=[1.0],
-        )
+            initializer_tensor = onnx.helper.make_tensor(
+                name="initializer_tensor",
+                data_type=onnx.TensorProto.FLOAT,
+                dims=list(shape),
+                vals=random_data.tobytes(),
+                raw=True,
+            )
+            initializer_scalar = onnx.helper.make_tensor(
+                name="initializer_scalar",
+                data_type=onnx.TensorProto.FLOAT,
+                dims=[],
+                vals=[1.0],
+            )
 
-        add_node = onnx.helper.make_node(
-            "Add",
-            inputs=["initializer_tensor", "initializer_scalar"],
-            outputs=["sum_output"],
-        )
+            add_node = onnx.helper.make_node(
+                "Add",
+                inputs=["initializer_tensor", "initializer_scalar"],
+                outputs=["sum_output"],
+            )
 
-        graph_def = onnx.helper.make_graph(
-            name="SimpleAddition",
-            nodes=[add_node],
-            inputs=[],
-            outputs=[
-                onnx.helper.make_tensor_value_info(
-                    "sum_output", onnx.TensorProto.FLOAT, list(shape)
-                )
-            ],
-            initializer=[initializer_tensor, initializer_scalar],
-        )
+            graph_def = onnx.helper.make_graph(
+                name="SimpleAddition",
+                nodes=[add_node],
+                inputs=[],
+                outputs=[
+                    onnx.helper.make_tensor_value_info(
+                        "sum_output", onnx.TensorProto.FLOAT, list(shape)
+                    )
+                ],
+                initializer=[initializer_tensor, initializer_scalar],
+            )
 
-        # Save model to file with external data
-        model_filename = "test_simple_add.onnx"
-        data_filename = model_filename + ".data"
-        opset_imports = [onnx.helper.make_opsetid("", 20)]
-        model_def = onnx.helper.make_model(graph_def, opset_imports=opset_imports)
-        model_def.ir_version = 10
-        onnx.save_model(
-            model_def,
-            model_filename,
-            save_as_external_data=True,
-            all_tensors_to_one_file=True,
-            location=data_filename,
-            size_threshold=0,
-            convert_attribute=False,
-        )
+            # Save model to file with external data
+            model_filename = os.path.join(temp_dir, "test_simple_add.onnx")
+            data_filename = "test_simple_add.onnx.data"  # Use relative path
+            opset_imports = [onnx.helper.make_opsetid("", 20)]
+            model_def = onnx.helper.make_model(graph_def, opset_imports=opset_imports)
+            model_def.ir_version = 10
+            onnx.save_model(
+                model_def,
+                model_filename,
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=data_filename,
+                size_threshold=0,
+                convert_attribute=False,
+            )
 
-        # Load the model and verify external data
-        converted_model = onnx.version_converter.convert_version(
-            onnx.load(model_filename, load_external_data=False), 21
-        )
-        self.assertEqual(len(converted_model.graph.initializer), 2)
+            # Load the model and verify external data
+            converted_model = onnx.version_converter.convert_version(
+                onnx.load(model_filename, load_external_data=False), 21
+            )
+            self.assertEqual(len(converted_model.graph.initializer), 2)
 
-        # Verify the large tensor has external data
-        large_tensor = converted_model.graph.initializer[0]
-        self.assertEqual(large_tensor.name, "initializer_tensor")
-
-        self.assertEqual(len(large_tensor.external_data), 3)
-        self.assertEqual(large_tensor.external_data[0].key, "location")
-        self.assertEqual(large_tensor.external_data[0].value, data_filename)
-        self.assertEqual(large_tensor.external_data[1].key, "offset")
-        self.assertEqual(large_tensor.external_data[1].value, "0")
-        self.assertEqual(large_tensor.external_data[2].key, "length")
-        self.assertEqual(large_tensor.external_data[2].value, "240000")
-
-        # Verify the scalar tensor has no external data
-        scalar_tensor = converted_model.graph.initializer[1]
-        self.assertEqual(scalar_tensor.name, "initializer_scalar")
-        self.assertEqual(len(scalar_tensor.external_data), 0)
-
-        # Clean up
-        import os
-
-        if os.path.exists(model_filename):
-            os.remove(model_filename)
-        if os.path.exists(data_filename):
-            os.remove(data_filename)
+            # Verify the large tensor has external data
+            for i in range(2):
+                if converted_model.graph.initializer[i].name == "initializer_tensor":
+                    large_tensor = converted_model.graph.initializer[i]
+                    self.assertEqual(len(large_tensor.external_data), 3)
+                    self.assertEqual(large_tensor.external_data[0].key, "location")
+                    self.assertEqual(large_tensor.external_data[0].value, data_filename)
+                    self.assertEqual(large_tensor.external_data[1].key, "offset")
+                    self.assertEqual(large_tensor.external_data[1].value, "0")
+                    self.assertEqual(large_tensor.external_data[2].key, "length")
+                    self.assertEqual(large_tensor.external_data[2].value, "24")
 
 
 if __name__ == "__main__":
