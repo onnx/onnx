@@ -57,7 +57,7 @@ jobs:
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        if [ '${{ github.event_name }}' == 'schedule' ] || [ '${{ inputs.build_mode }}' == 'preview' ]; then
+        if [ '${{ inputs.build_mode }}' == 'preview' ]; then
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
         fi
@@ -74,7 +74,7 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
