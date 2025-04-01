@@ -31,7 +31,7 @@ on:
           - 'yes'
           - 'no'
         default: 'no'
-      build_type:
+      build_mode:
         description: 'Specify the build type (release or preview)'
         required: true
         type: choice
@@ -54,35 +54,35 @@ jobs:
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:
       os: "linux_x86_64"
-      build_type: ${{ github.event.inputs.build_type || 'preview' }}
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-ubuntu_aarch64:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:
       os: "linux_aarch64"
-      build_type: ${{ github.event.inputs.build_type || 'preview' }}
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win.yml
     with:
       os: "win"
-      build_type: ${{ github.event.inputs.build_type || 'preview' }}
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-win-freethreading: # experimental
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win_freethreading.yml
     with:
       os: "win"
-      build_type: ${{ github.event.inputs.build_type || 'preview' }}
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
     
   call-workflow-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
-      build_type: ${{ github.event.inputs.build_type || 'preview' }}
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
    
  
   call-workflow-sdist:
@@ -90,7 +90,7 @@ jobs:
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
-      build_type: ${{ github.event.inputs.build_type || 'preview' }}
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
       
 
   check_for_publish_preview_build_to_testpypi_weekly:

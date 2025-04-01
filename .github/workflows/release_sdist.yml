@@ -10,7 +10,7 @@ on:
       os:
         required: true
         type: string
-      build_type: 
+      build_mode:
         required: true
         type: string
 
@@ -46,14 +46,14 @@ jobs:
         python -m pip install -q -r requirements-release.txt
 
     - name: Build source distribution (preview build / weekly)
-      if: ${{ inputs.build_type == 'preview' }}
+      if: ${{ inputs.build_mode == 'preview' }}
       run: |
         git clean -xdf
         sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
 
     - name: Build source distribution (for release)
-      if: ${{ inputs.build_type == 'release' }}
+      if: ${{ inputs.build_mode == 'release' }}
       run: |
         git clean -xdf
         python -m build --sdist

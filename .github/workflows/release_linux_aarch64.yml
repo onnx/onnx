@@ -10,7 +10,7 @@ on:
       os:
         required: true
         type: string
-      build_type: 
+      build_mode:
         required: true
         type: string
 
@@ -67,7 +67,7 @@ jobs:
           source .env/bin/activate && \
           yum install -y sudo && \
           sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ inputs.build_type }}
+          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ inputs.build_mode }}
           deactivate'
     
 
