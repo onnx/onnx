@@ -10,6 +10,10 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+      build_type: 
+        required: true
+        type: string
+
 permissions:
   contents: read
 
@@ -42,7 +46,7 @@ jobs:
         python -m pip install -q -r requirements-release.txt
 
     - name: Build source distribution (preview build / weekly)
-      if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      if: inputs.build_type == 'preview'
       run: |
         git clean -xdf
         sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
