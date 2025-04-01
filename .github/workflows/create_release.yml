@@ -31,6 +31,14 @@ on:
           - 'yes'
           - 'no'
         default: 'no'
+      build_type:
+        description: 'Specify the build type (release or preview)'
+        required: true
+        type: choice
+        options:
+          - 'release'
+          - 'preview'
+        default: 'preview'
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
