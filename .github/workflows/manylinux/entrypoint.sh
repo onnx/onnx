@@ -9,8 +9,7 @@ set -e -x
 # CLI arguments
 PY_VERSION=$1
 PLAT=$2
-GITHUB_EVENT_NAME=$3
-BUILD_TYPE=$4  # New argument for build type (release or preview)
+BUILD_TYPE=$3  # New argument for build type (release or preview)
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
