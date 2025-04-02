@@ -32,7 +32,7 @@ on:
           - 'no'
         default: 'no'
       build_mode:
-        description: 'Specify the build type (release or preview)'
+        description: 'Specify the build mode (release or preview)'
         required: true
         type: choice
         options:
