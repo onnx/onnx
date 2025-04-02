@@ -74,7 +74,7 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         target-architecture: ['x86_64', 'arm64']
 
     steps:
