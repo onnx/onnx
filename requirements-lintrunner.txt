@@ -8,4 +8,4 @@ types-protobuf==5.29.1.20250315
 # CLANG-FORMAT
 clang-format==20.1.0
 # EDITORCONFIG-CHECKER
-editorconfig-checker==3.2.0
+editorconfig-checker==3.2.1
