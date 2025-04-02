@@ -46,7 +46,7 @@ jobs:
         python -m pip install -q -r requirements-release.txt
 
     - name: Build source distribution (preview build / weekly)
-      if: ${{ inputs.build_mode == 'preview' }}
+      if: ${{ inputs.build_mode != 'release' }}
       run: |
         git clean -xdf
         sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
