@@ -9,7 +9,7 @@ set -e -x
 # CLI arguments
 PY_VERSION=$1
 PLAT=$2
-BUILD_MODE=$3  # New argument for build type (release or preview)
+BUILD_MODE=$3  # build type (release or preview)
 
 echo "Build mode: $BUILD_MODE"
 
