@@ -753,9 +753,10 @@ bool OpSchema::BuildContextDependentFunction(
 
   auto it = opset_version_to_function_builder_.upper_bound(requested_opset_version);
   if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
-    ONNX_THROW_EX(std::out_of_range(
-        std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
-        this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
+    ONNX_THROW_EX(
+        std::out_of_range(
+            std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
+            this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
   } else {
     --it;
     const ContextDependentFunctionBodyBuilder& body_builder = it->second;
