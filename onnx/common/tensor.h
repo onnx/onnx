@@ -41,6 +41,9 @@ struct Tensor final {
   bool is_raw_data_{false};
   std::string raw_data_;
 
+  std::vector<std::pair<std::string, std::string>> external_data_;
+  ONNX_NAMESPACE::TensorProto_DataLocation data_location_{ONNX_NAMESPACE::TensorProto_DataLocation_DEFAULT};
+
  public:
   const std::vector<int64_t>& sizes() const {
     return sizes_;
@@ -165,6 +168,26 @@ struct Tensor final {
 
   bool is_raw_data() const {
     return is_raw_data_;
+  }
+
+  const std::vector<std::pair<std::string, std::string>>& external_data() const {
+    return external_data_;
+  }
+
+  std::vector<std::pair<std::string, std::string>>& external_data() {
+    return external_data_;
+  }
+
+  bool has_data_location() const {
+    return data_location_ != ONNX_NAMESPACE::TensorProto_DataLocation_DEFAULT;
+  }
+
+  const ONNX_NAMESPACE::TensorProto_DataLocation& data_location() const {
+    return data_location_;
+  }
+
+  ONNX_NAMESPACE::TensorProto_DataLocation& data_location() {
+    return data_location_;
   }
 };
 
