@@ -66,7 +66,7 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule' -or '${{ inputs.build_mode }}' -eq 'preview') {
+        if ( '${{ inputs.build_mode }}' -eq 'preview') {
           echo "Build preview build whl package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
