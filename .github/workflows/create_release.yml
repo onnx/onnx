@@ -31,6 +31,14 @@ on:
           - 'yes'
           - 'no'
         default: 'no'
+      build_mode:
+        description: 'Specify the build mode (release or preview)'
+        required: true
+        type: choice
+        options:
+          - 'release'
+          - 'preview'
+        default: 'preview'
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -45,32 +53,36 @@ jobs:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_x86_64.yml
     with:
-      os: "linux_x86_64"    
+      os: "linux_x86_64"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-ubuntu_aarch64:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux_aarch64.yml
     with:
       os: "linux_aarch64"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win.yml
     with:
       os: "win"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-win-freethreading: # experimental
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win_freethreading.yml
     with:
       os: "win"
-    secrets: inherit
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
    
  
   call-workflow-sdist:
@@ -78,6 +90,8 @@ jobs:
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      
 
   check_for_publish_preview_build_to_testpypi_weekly:
     name: Check for Publish preview build to test.pypi-weekly
