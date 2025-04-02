@@ -14,7 +14,7 @@ on:
         required: true
         type: string
 
-permissions:  # set top-level default permissions as security best practice
+permissions:  # set top-level default permissions as security good practice
   contents: read
 
 jobs:
