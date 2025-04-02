@@ -9,7 +9,7 @@ set -e -x
 # CLI arguments
 PY_VERSION=$1
 PLAT=$2
-BUILD_MODE=$3  # build type (release or preview)
+BUILD_MODE=$3  # build mode (release or preview)
 
 echo "Build mode: $BUILD_MODE"
 
@@ -44,7 +44,7 @@ export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 
 # Build wheels
-if [ "$BUILD_MODE" == "preview" ]; then
+if [ "$BUILD_MODE" != "release" ]; then
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
     ONNX_PREVIEW_BUILD=1 $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
 else

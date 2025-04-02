@@ -76,7 +76,7 @@ jobs:
     with:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-    
+
   call-workflow-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
