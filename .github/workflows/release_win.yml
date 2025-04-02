@@ -10,6 +10,10 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+      build_mode: 
+        required: true
+        type: string
+
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
@@ -62,8 +66,8 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
-          echo "Build preview build PyPI package"
+        if ( '${{ inputs.build_mode }}' -ne 'release') {
+          echo "Build preview build whl package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }

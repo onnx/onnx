@@ -10,8 +10,11 @@ on:
       os:
         required: true
         type: string
+      build_mode:
+        required: true
+        type: string
 
-permissions:  # set top-level default permissions as security best practice
+permissions:  # set top-level default permissions as security good practice
   contents: read
 
 jobs:
@@ -34,7 +37,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2014_x86_64:2025.03.22-2
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ inputs.build_mode }}
 
     - name: Set up Python ${{ matrix.python-version }}
       if: steps.build_manylinux.outcome == 'success'
