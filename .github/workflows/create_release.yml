@@ -92,6 +92,7 @@ jobs:
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-mac-freethreading: # experimental
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
