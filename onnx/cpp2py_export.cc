@@ -2,8 +2,10 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11_protobuf/native_proto_caster.h>
 
 #include <climits>
 #include <limits>
@@ -17,6 +19,7 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/shape_inference.h"
 #include "onnx/inliner/inliner.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
@@ -111,6 +114,8 @@ static std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
 }
 
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+  pybind11_protobuf::ImportNativeProtoCasters();
+
   onnx_cpp2py_export.doc() = "Python interface to ONNX";
 
   onnx_cpp2py_export.attr("ONNX_ML") = py::bool_(
@@ -120,6 +125,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       false
 #endif // ONNX_ML
   );
+
+  // Avoid Segmentation fault if we not free the python function in Custom Schema
+  onnx_cpp2py_export.add_object("_cleanup", py::capsule([] { OpSchemaRegistry::OpSchemaDeregisterAll(); }));
 
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
@@ -401,7 +409,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               func_proto.SerializeToString(&func_bytes);
             }
             return py::bytes(func_bytes);
-          });
+          })
+      .def(
+          "set_type_and_shape_inference_function",
+          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
+            auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
+            return op.TypeAndShapeInferenceFunction(wrapper);
+          },
+          py::return_value_policy::reference_internal);
 
   defs.def(
           "has_schema",
@@ -633,6 +648,29 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
+
+  py::class_<InferenceContext> inference_ctx(shape_inference, "InferenceContext", "Inference context");
+
+  inference_ctx.def("get_attribute", &InferenceContext::getAttribute);
+  inference_ctx.def("get_num_inputs", &InferenceContext::getNumInputs);
+  inference_ctx.def("has_input", &InferenceContext::hasInput);
+  inference_ctx.def("get_input_type", &InferenceContext::getInputType);
+  inference_ctx.def("get_input_data", &InferenceContext::getInputData);
+  inference_ctx.def("get_input_sparse_data", &InferenceContext::getInputSparseData);
+  inference_ctx.def("get_symbolic_input", &InferenceContext::getSymbolicInput);
+  inference_ctx.def("get_graph_attribute_inferencer", &InferenceContext::getGraphAttributeInferencer);
+  inference_ctx.def("get_num_outputs", &InferenceContext::getNumOutputs);
+  inference_ctx.def("get_output_type", &InferenceContext::getOutputType, py::return_value_policy::reference);
+  inference_ctx.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
+    auto* dst = self.getOutputType(idx);
+    if (dst == nullptr || dst == &src) {
+      return;
+    }
+    dst->CopyFrom(src);
+  });
+
+  py::class_<GraphInferencer> graph_inferencer(shape_inference, "GraphInferencer", "Graph Inferencer");
+  graph_inferencer.def("do_inferencing", &GraphInferencer::doInferencing);
 
   shape_inference.def(
       "infer_shapes",
