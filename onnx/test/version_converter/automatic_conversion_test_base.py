@@ -93,7 +93,7 @@ class TestAutomaticConversion(unittest.TestCase):
         # turn empty strings into [0] to ease type analysis, even though those entries
         # will be ignored
         input_shapes_cast = cast(
-            list[list[int]],
+            "list[list[int]]",
             [[0] if isinstance(shape, str) else shape for shape in input_shapes],
         )
         inputs: list[ValueInfoProto] = []
@@ -121,7 +121,7 @@ class TestAutomaticConversion(unittest.TestCase):
             0 if id not in optional_outputs else 1 for id in range(n_outputs)
         ]
         output_shapes_cast = cast(
-            list[list[int]],
+            "list[list[int]]",
             [[0] if isinstance(shape, str) else shape for shape in output_shapes],
         )
         outputs: list[ValueInfoProto] = []

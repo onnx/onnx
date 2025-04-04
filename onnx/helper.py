@@ -683,7 +683,7 @@ def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndar
     if not isinstance(array, np.ndarray):
         array = np.asarray(array, dtype=np.float32)
 
-    array_flat = array.ravel()
+    array_flat: np.ndarray = array.ravel()
     is_odd_volume = np.prod(array.shape) % 2 == 1
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
@@ -717,7 +717,7 @@ def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     if not isinstance(array, np.ndarray):
         array = np.asarray(array, dtype=np.float32)
 
-    array_flat = array.ravel()
+    array_flat: np.ndarray = array.ravel()
     is_odd_volume = np.prod(array.shape) % 2 == 1
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
@@ -1416,7 +1416,7 @@ def printable_dim(dim: TensorShapeProto.Dimension) -> str:
 
 def printable_type(t: TypeProto) -> str:
     if t.WhichOneof("value") == "tensor_type":
-        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)
+        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)  # type: ignore[attr-defined]
         if t.tensor_type.HasField("shape"):
             if len(t.tensor_type.shape.dim):
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
@@ -1437,7 +1437,7 @@ def printable_value_info(v: ValueInfoProto) -> str:
 
 def printable_tensor_proto(t: TensorProto) -> str:
     s = f"%{t.name}["
-    s += TensorProto.DataType.Name(t.data_type)
+    s += TensorProto.DataType.Name(t.data_type)  # type: ignore[attr-defined]
     if t.dims is not None:
         if len(t.dims):
             s += str(", " + "x".join(map(str, t.dims)))
@@ -1657,7 +1657,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     ]
 
 
-def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
+def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
     Args:
@@ -1668,7 +1668,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     """
     if np_dtype in mapping._NP_TYPE_TO_TENSOR_TYPE:
         return cast(
-            int,
+            "TensorProto.DataType",
             mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
         )
 
@@ -1685,7 +1685,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
         custom_np_types.uint4,
         custom_np_types.float4e2m1,
     }:
-        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]  # type: ignore[no-any-return]
+        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
@@ -1702,7 +1702,8 @@ def get_all_tensor_dtypes() -> KeysView[int]:
 
 
 _ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
-    k: v for v, k in AttributeProto.AttributeType.items()
+    k: v
+    for v, k in AttributeProto.AttributeType.items()  # type: ignore[attr-defined]
 }
 
 
@@ -1715,6 +1716,6 @@ def _attr_type_to_str(attr_type: int) -> str:
     Returns:
         String representing the supplied attr_type.
     """
-    if attr_type in AttributeProto.AttributeType.values():
+    if attr_type in AttributeProto.AttributeType.values():  # type: ignore[attr-defined]
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]
+    return AttributeProto.AttributeType.keys()[0]  # type: ignore

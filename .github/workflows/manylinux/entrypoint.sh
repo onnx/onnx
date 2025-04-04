@@ -9,7 +9,10 @@ set -e -x
 # CLI arguments
 PY_VERSION=$1
 PLAT=$2
-GITHUB_EVENT_NAME=$3
+BUILD_MODE=$3  # build mode (release or preview)
+
+echo "Build mode: $BUILD_MODE"
+
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
@@ -46,7 +49,7 @@ fi
 
 
 # Build wheels
-if [ "$GITHUB_EVENT_NAME" == "schedule" ] || [ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]; then
+if [ "$BUILD_MODE" != "release" ]; then
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
     ONNX_PREVIEW_BUILD=1 $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
 else
