@@ -10,7 +10,11 @@ on:
       os:
         required: true
         type: string
-permissions:  # set top-level default permissions as security best practice
+      build_mode:
+        required: true
+        type: string
+
+permissions:  # set top-level default permissions as security good practice
   contents: read
 
 jobs:
@@ -63,7 +67,7 @@ jobs:
           source .env/bin/activate && \
           yum install -y sudo && \
           sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ github.event_name }}
+          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ inputs.build_mode }}
           deactivate'
     
 
@@ -82,7 +86,7 @@ jobs:
           pytest && \
           deactivate'
 
-    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       if: steps.build_manylinux.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}

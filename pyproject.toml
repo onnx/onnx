@@ -98,14 +98,6 @@ module = [
 ]
 ignore_errors = true
 
-[tool.black]
-# NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = ["py39", "py310", "py311"]
-
-[tool.isort]
-# NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-profile = "black"
-
 [tool.pylint.message_control]
 # This list is for vscode. Add new disables in pyproject_pylint.toml for lintrunner and CI.
 # Exclude patterns should be modified in .lintrunner.toml

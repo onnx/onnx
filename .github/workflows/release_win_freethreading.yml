@@ -13,6 +13,9 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+      build_mode: 
+        required: true
+        type: string
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -57,7 +60,7 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
+        if ( '${{ inputs.build_mode }}' -ne 'release') {
           echo "Build preview build PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
@@ -82,7 +85,7 @@ jobs:
         python -m pip install -v pillow
         pytest
 
-    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist
