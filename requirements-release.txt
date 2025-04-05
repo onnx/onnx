@@ -1,5 +1,4 @@
 build
-ipython
 ml_dtypes
 nbval
 numpy==2.0.0; python_version >= "3.9" and python_version <= "3.12"
