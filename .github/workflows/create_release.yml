@@ -95,14 +95,6 @@ jobs:
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
-       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-
-
-  call-workflow-mac-freethreading: # experimental
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_mac_freethreading.yml
-    with:
-      os: "macos"   
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
   
   call-workflow-sdist:
@@ -111,14 +103,13 @@ jobs:
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-      
-
+     
 
   check_for_publish_release_build_to_pypi:
     name: Check for Publish release build to pypi (including rc-candidates)
     runs-on: ubuntu-latest
 
-    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-mac-freethreading, call-workflow-win, call-workflow-win-freethreading, call-workflow-sdist]
+    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win, call-workflow-win-freethreading, call-workflow-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) &&  (github.repository_owner == 'onnx') && (github.event_name == 'release')
 
     steps:
@@ -287,7 +278,7 @@ jobs:
     needs: [check_for_publish_release_build_to_pypi]
 
     environment:
-      name: pypi-weekly
+      name: pypi-release # TODO: has to be created and configured for rel-1.19.0
       url: https://pypi.org/p/onnx
 
     permissions:
@@ -313,34 +304,5 @@ jobs:
         with:   
           repository-url: https://upload.pypi.org/legacy/
           verbose: true     
-          print-hash: true  
-  
+          print-hash: true        
 
-  test_source_dist:
-    name: test source distribution
-    needs: [publish_preview_build_to_pypi_weekly]
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/preview_source_dist_test.yml
-    with:
-      os: "macos"
-
-
-  github_release:
-    # TODO Add a deployment step for reviewing https://docs.github.com/en/actions/managing-workflow-runs/reviewing-deployments
-    name: Release (Add files to github release)
-    runs-on: ubuntu-latest
-    #needs: [prepare-release]
-    if: startsWith(github.ref, 'refs/tags/') && startsWith(github.base_ref, 'rel-') && (needs.publish_release_build_to_pypi.result  == 'success')
-    steps:
-      - uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        with:
-          pattern: sigstore-files* # TODO change back to python-wheels?
-          path: dist
-          merge-multiple: true
-      # The Release is created by the Github GUI, we only add the files here
-      - name: Upload artifact signatures to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/') # only publish to PyPI on tag pushes # TODO check exact variants
-        env: 
-          GITHUB_TOKEN: ${{ github.token }}
-        run: >-
-          gh release upload '${{ github.ref_name }}' dist/*.sigstore.json
