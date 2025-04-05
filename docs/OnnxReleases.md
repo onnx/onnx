@@ -59,17 +59,13 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 **Push Wheels**
 1. Gather the wheel files from the ONNX Github Actions for the release candidate.
-    * For each ONNX GitHub Action:
-        * ONNX GitHub Action
-            * [LinuxRelease_x86_64](https://github.com/onnx/onnx/actions/workflows/release_linux_x86_64.yml)
-            * [LinuxRelease_aarch64](https://github.com/onnx/onnx/actions/workflows/release_linux_aarch64.yml)
-            * [MacRelease](https://github.com/onnx/onnx/actions/workflows/release_mac.yml)
-            * [WindowsRelease](https://github.com/onnx/onnx/actions/workflows/release_win.yml)
-
-        * Find the run for the release branch
-            * Or start a run by clicking "Run workflow", pick the release branch, Click "Run Workflow"
-        * Click the completed run, scroll to the "Artifacts" section (bottom), and click "wheels" to download the files
-        * Extract the wheels.zip files and combine their contents into a single folder
+   * ONNX GitHub Action
+     * [Create_release](https://github.com/onnx/onnx/blob/main/.github/workflows/create_release.yml)
+      
+   * Find the run for the release branch
+     * Or start a run by clicking "Run workflow", pick the release branch, Click "Run Workflow"
+      * Click the completed run, scroll to the "Artifacts" section (bottom), and click "wheels" to download the files
+      * Extract the wheels.zip files and combine their contents into a single folder
 
 2. Upload the produced wheels manually to TestPyPI: `twine upload --repository testpypi --verbose -u <YOUR_TESTPYPI_USER> <extracted_wheel.zip_folder>/*.whl`.
     * A current owner of the ONNX project will need to give you access to the project before you can push files.
