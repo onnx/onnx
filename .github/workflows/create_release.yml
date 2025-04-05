@@ -40,6 +40,14 @@ on:
           - 'yes'
           - 'no'
         default: 'no'
+      publish_pypi_release:
+        description: 'Caution: Publish to pypi-release'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
       build_mode:
         description: 'Specify the build mode (release or preview)'
         required: true
