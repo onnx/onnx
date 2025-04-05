@@ -58,9 +58,9 @@ struct ExtendSupportedTypes final : public Adapter {
     };
 
     ONNX_ASSERTM(
-        unsupported_version9_types.find(input_type) == unsupported_version9_types.end(), "Unsupported Input Type");
+        unsupported_version9_types.find(input_type) == unsupported_version9_types.end(), "Unsupported Input Type")
     ONNX_ASSERTM(
-        unsupported_version9_types.find(output_type) == unsupported_version9_types.end(), "Unsupported Output Type");
+        unsupported_version9_types.find(output_type) == unsupported_version9_types.end(), "Unsupported Output Type")
 
     bool castInput = (node->kind() != kConstant);
     bool castOutput = (node->kind() != kGreater && node->kind() != kLess);
