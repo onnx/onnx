@@ -30,6 +30,10 @@ jobs:
          submodules: 'true'
          persist-credentials: false
 
+    - name: debug1
+      id: debug1
+      run: |
+        ls -lauh 
 
     - name: Set up MinGW-w64 for ARM64 cross-compilation
       run: |
@@ -39,6 +43,7 @@ jobs:
     
     - name: Install dependencies
       run: |
+        cd onnx
         choco install cmake
         choco install git        
         python -m pip install --upgrade pip
