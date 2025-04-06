@@ -49,7 +49,7 @@ jobs:
         choco install cmake
         choco install git        
         python -m pip install --upgrade pip
-        python -m pip install -q -r D:\\a\onnx\requirements-release.txt
+        python -m pip install -q -r D:\a\onnx\requirements-release.txt
         pip install cmake
    
     - name: Set up environment variables
