@@ -5,14 +5,16 @@
 name: WindowsRelease_ARM64
 
 on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
-    inputs:
-      os:
-        required: true
-        type: string
-      build_mode: 
-        required: true
-        type: string
+  pull_request:
+    branches: [main, rel-*]
+  #workflow_call:  # Indicates that this is a reusable workflow
+    # inputs:
+    #   os:
+    #     required: true
+    #     type: string
+    #   build_mode: 
+    #     required: true
+    #     type: string
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
