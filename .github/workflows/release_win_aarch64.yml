@@ -1,4 +1,4 @@
-# Copyright (c) ONNX Project Contributors
+s# Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -54,7 +54,7 @@ jobs:
    
     - name: Set up environment variables
       run: |
-          setx CMAKE_TOOLCHAIN_FILE D:\\a\onnx\toolchain_win_arm64.cmake
+          setx CMAKE_TOOLCHAIN_FILE D:\a\onnx\toolchain_win_arm64.cmake
    
     - name: Build ONNX
       run: |
@@ -64,7 +64,7 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        cmake -DCMAKE_TOOLCHAIN_FILE=D:\\a\onnx\toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
+        cmake -DCMAKE_TOOLCHAIN_FILE=D:\a\onnx\toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
 
         python -m build --wheel
    
