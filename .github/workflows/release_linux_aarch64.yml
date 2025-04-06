@@ -28,6 +28,7 @@ jobs:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
       img: quay.io/pypa/manylinux2014_aarch64:2025.02.12-1
+      manylinux: manylinux2014_aarch64
 
     steps:
       
@@ -57,7 +58,7 @@ jobs:
           deactivate'
 
       # using created virtual environment in new container and executing the script
-    - name: Build manylinux2014_aarch64
+    - name: Build manylinux
       id: build_manylinux
       if: steps.install_dependencies.outcome == 'success'
       run: |
@@ -67,7 +68,7 @@ jobs:
           source .env/bin/activate && \
           yum install -y sudo && \
           sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ inputs.build_mode }}
+          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} ${{ env.manylinux }} ${{ inputs.build_mode }}
           deactivate'
     
 
