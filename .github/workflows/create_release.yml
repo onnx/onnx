@@ -74,7 +74,7 @@ jobs:
 
   call-workflow-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_win.yml
+    uses: ./.github/workflows/release_win_x86_64.yml
     with:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}

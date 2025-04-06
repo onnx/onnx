@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: WindowsRelease
+name: WindowsRelease_x86_64
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
@@ -54,6 +54,7 @@ jobs:
         python -m pip install cmake
 
     - name: Build ONNX wheel
+      id: build_wheel
       run: |
         $arch = 'x64'
         if ('${{ matrix.architecture }}' -eq 'x86') {
@@ -75,16 +76,18 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
     - name: Test the installed wheel
+      if: steps.build_wheel.outcome == 'success'
       run: |
         pytest
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: steps.build_wheel.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist
 
     - name: Verify ONNX with the latest numpy
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
@@ -92,7 +95,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
@@ -100,7 +103,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
