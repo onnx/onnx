@@ -33,7 +33,9 @@ jobs:
     - name: debug1
       id: debug1
       run: |
-        ls -lauh 
+        pwd
+        Get-ChildItem -Path C:\ -Recurse 
+         
 
     - name: Set up MinGW-w64 for ARM64 cross-compilation
       run: |
