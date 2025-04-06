@@ -4,9 +4,8 @@
 
 name: WindowsRelease_ARM64
 
-on:  # Specifies the event triggering the workflow
-  pull_request:
-    branches: [main, rel-*]
+on: [push, pull_request]
+
   #workflow_call:  # Indicates that this is a reusable workflow
     # inputs:
     #   os:
@@ -21,14 +20,14 @@ permissions:  # set top-level default permissions as security best practice
 
 jobs:
   build:
-    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'currenttest')
+    #if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'currenttest')
     runs-on: windows-latest
 
     steps:
     - name: Checkout ONNX
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
-         submodules: 'recursive'
+         submodules: 'true'
          persist-credentials: false
 
 
