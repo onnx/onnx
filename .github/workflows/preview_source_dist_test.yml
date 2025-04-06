@@ -18,7 +18,6 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-  pull_request:
 
 permissions:
   contents: read
@@ -42,7 +41,7 @@ jobs:
 
         
         - name: Test preview build source distribution from PyPI
-          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'pull_request')
+          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
           run: |
             python -m pip uninstall -y onnx-weekly
             python -m pip install --upgrade pip
