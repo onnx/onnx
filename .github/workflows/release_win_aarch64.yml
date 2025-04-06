@@ -34,7 +34,7 @@ jobs:
       id: debug1
       run: |
         pwd
-        Get-ChildItem -Path C:\  
+        Get-ChildItem -Path C:\onnx\ 
          
 
     - name: Set up MinGW-w64 for ARM64 cross-compilation
@@ -45,7 +45,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        cd onnx
+        cd ..
         choco install cmake
         choco install git        
         python -m pip install --upgrade pip
