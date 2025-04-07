@@ -38,7 +38,7 @@ jobs:
       id: debug1
       run: |
         pwd
-        ls -lauh D:\a\onnx\ 
+        ls -lauh /d/a/onnx/onnx
          
 
     - name: Set up MinGW-w64 for ARM64 cross-compilation
