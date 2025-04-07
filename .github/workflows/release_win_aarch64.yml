@@ -53,7 +53,7 @@ jobs:
         cd ..
         ls -lauh
         python -m pip install --upgrade pip
-        python -m pip install -q -r /d/a/onnx/onnx/onnx/requirements-release.txt
+        python -m pip install -q -r /d/a/onnx/onnx/requirements-release.txt
         pip install cmake
    
     - name: Set up environment variables
