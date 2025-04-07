@@ -20,7 +20,7 @@ jobs:
     # Step 2: Install xmake
     - name: Install xmake
       run: |
-        choco install xmake --version=2.9.8
+        irm https://xmake.io/psget.text | iex
 
     # Step 3: Install MinGW for ARM64 cross-compilation
     - name: Install MinGW
