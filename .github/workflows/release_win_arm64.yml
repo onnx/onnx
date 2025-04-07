@@ -41,7 +41,7 @@ jobs:
 
     # Step 6: Upload the built wheel as an artifact
     - name: Upload ONNX Wheel
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v4
       with:
         name: onnx-arm64-wheel
         path: dist/*.whl
