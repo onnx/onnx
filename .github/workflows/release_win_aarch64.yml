@@ -44,7 +44,7 @@ jobs:
     - name: Set up MinGW-w64 for ARM64 cross-compilation
       run: |
         choco install mingw --version 8.1.0
-        mkdir C:\cross-toolchain
+        mkdir /c/cross-toolchain
         setx CROSS_COMPILE C:\mingw64\bin\arm64-unknown-linux-gnu-
     
     - name: Install dependencies
@@ -53,7 +53,7 @@ jobs:
         cd ..
         ls -lauh
         python -m pip install --upgrade pip
-        python -m pip install -q -r D:\a\onnx\requirements-release.txt
+        python -m pip install -q -r \d\a\onnx\requirements-release.txt
         pip install cmake
    
     - name: Set up environment variables
