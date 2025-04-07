@@ -22,6 +22,10 @@ jobs:
   build:
     #if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'currenttest')
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    
 
     steps:
     - name: Checkout ONNX
@@ -45,9 +49,9 @@ jobs:
     
     - name: Install dependencies
       run: |
+        pwd
         cd ..
-        choco install cmake
-        choco install git        
+        ls -lauh
         python -m pip install --upgrade pip
         python -m pip install -q -r D:\a\onnx\requirements-release.txt
         pip install cmake
