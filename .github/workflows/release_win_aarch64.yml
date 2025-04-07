@@ -38,7 +38,7 @@ jobs:
       id: debug1
       run: |
         pwd
-        Get-ChildItem -Path D:\a\onnx\ 
+        ls -lauh D:\a\onnx\ 
          
 
     - name: Set up MinGW-w64 for ARM64 cross-compilation
