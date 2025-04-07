@@ -40,7 +40,7 @@ jobs:
     # Step 5: Configure and build with xmake
     - name: Build ONNX ARM64 Wheel
       run: |
-        C:\Users\runneradmin\xmake\xmake f -p windows -a arm64 --toolchain=mingw
+        C:\Users\runneradmin\xmake\xmake f -p windows -a arm64 --toolchain=cross
         C:\Users\runneradmin\xmake\xmake
 
     # Step 6: Upload the built wheel as an artifact
