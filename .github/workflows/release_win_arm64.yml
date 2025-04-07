@@ -20,7 +20,7 @@ jobs:
     # Step 2: Install xmake
     - name: Install xmake
       run: |
-        choco install xmake --version=2.7.9
+        choco install xmake --version=2.9.8
 
     # Step 3: Install MinGW for ARM64 cross-compilation
     - name: Install MinGW
