@@ -53,12 +53,12 @@ jobs:
         cd ..
         ls -lauh
         python -m pip install --upgrade pip
-        python -m pip install -q -r \d\a\onnx\requirements-release.txt
+        python -m pip install -q -r /d/a/onnx/requirements-release.txt
         pip install cmake
    
     - name: Set up environment variables
       run: |
-          setx CMAKE_TOOLCHAIN_FILE D:\a\onnx\toolchain_win_arm64.cmake
+          setx CMAKE_TOOLCHAIN_FILE /d/a/onnx/toolchain_win_arm64.cmake
    
     - name: Build ONNX
       run: |
@@ -68,7 +68,7 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        cmake -DCMAKE_TOOLCHAIN_FILE=D:\a\onnx\toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
+        cmake -DCMAKE_TOOLCHAIN_FILE=/d/a/onnx/toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
 
         python -m build --wheel
    
