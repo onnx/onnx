@@ -65,8 +65,8 @@ jobs:
         mkdir build
         cd build
 
-        $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
+        export ONNX_ML=1
+        export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
         cmake -DCMAKE_TOOLCHAIN_FILE=/d/a/onnx/toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
 
