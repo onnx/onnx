@@ -53,12 +53,12 @@ jobs:
         cd ..
         ls -lauh
         python -m pip install --upgrade pip
-        python -m pip install -q -r /d/a/onnx/requirements-release.txt
+        python -m pip install -q -r /d/a/onnx/onnx/requirements-release.txt
         pip install cmake
    
     - name: Set up environment variables
       run: |
-          setx CMAKE_TOOLCHAIN_FILE /d/a/onnx/toolchain_win_arm64.cmake
+          setx CMAKE_TOOLCHAIN_FILE /d/a/onnx/onnx/toolchain_win_arm64.cmake
    
     - name: Build ONNX
       run: |
