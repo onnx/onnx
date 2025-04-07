@@ -68,7 +68,7 @@ jobs:
         export ONNX_ML=1
         export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        cmake -DCMAKE_TOOLCHAIN_FILE=/d/a/onnx/onnx/onnx/toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
+        cmake -DCMAKE_TOOLCHAIN_FILE=/d/a/onnx/onnx/oolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
 
         python -m build --wheel
    
