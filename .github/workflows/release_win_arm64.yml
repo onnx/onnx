@@ -1,0 +1,47 @@
+name: Build ONNX ARM64 Wheel
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-arm64-wheel:
+    runs-on: windows-latest
+
+    steps:
+    # Step 1: Check out the repository
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Step 2: Install xmake
+    - name: Install xmake
+      run: |
+        choco install xmake --version=2.7.9
+
+    # Step 3: Install MinGW for ARM64 cross-compilation
+    - name: Install MinGW
+      run: |
+        choco install mingw --version=8.1.0
+
+    # Step 4: Set up Python environment
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.10
+
+    # Step 5: Configure and build with xmake
+    - name: Build ONNX ARM64 Wheel
+      run: |
+        xmake f -p windows -a arm64 --toolchain=mingw
+        xmake
+
+    # Step 6: Upload the built wheel as an artifact
+    - name: Upload ONNX Wheel
+      uses: actions/upload-artifact@v3
+      with:
+        name: onnx-arm64-wheel
+        path: dist/*.whl
