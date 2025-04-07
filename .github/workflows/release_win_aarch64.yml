@@ -45,15 +45,15 @@ jobs:
       run: |
         choco install mingw --version 8.1.0
         mkdir /c/cross-toolchain
-        setx CROSS_COMPILE C:\mingw64\bin\arm64-unknown-linux-gnu-
-    
+        export CROSS_COMPILE=/c/mingw64/bin/arm64-unknown-linux-gnu-
+
     - name: Install dependencies
       run: |
         pwd
         cd ..
         ls -lauh
         python -m pip install --upgrade pip
-        python -m pip install -q -r /d/a/onnx/onnx/requirements-release.txt
+        python -m pip install -q -r /d/a/onnx/onnx/onnx/requirements-release.txt
         pip install cmake
    
     - name: Set up environment variables
@@ -68,7 +68,7 @@ jobs:
         export ONNX_ML=1
         export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        cmake -DCMAKE_TOOLCHAIN_FILE=/d/a/onnx/toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
+        cmake -DCMAKE_TOOLCHAIN_FILE=/d/a/onnx/onnx/onnx/toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
 
         python -m build --wheel
    
