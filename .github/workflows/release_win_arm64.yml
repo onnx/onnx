@@ -22,6 +22,10 @@ jobs:
       run: |
         irm https://xmake.io/psget.text | iex
 
+    - name: Add xmake to PATH
+      run: |
+        $env:Path += ";$HOME\\.xmake"
+
     # Step 3: Install MinGW for ARM64 cross-compilation
     - name: Install MinGW
       run: |
