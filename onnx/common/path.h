@@ -14,6 +14,7 @@
 #endif
 #include <windows.h>
 
+#include "onnx/checker.h"
 #endif
 
 namespace ONNX_NAMESPACE {
