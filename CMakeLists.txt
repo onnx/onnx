@@ -20,7 +20,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 # Project
-project(onnx LANGUAGES C CXX)
+project(onnx LANGUAGES CXX)
 
 if(DEFINED BUILD_ONNX_PYTHON)
   message(WARNING "'BUILD_ONNX_PYTHON' is deprecated. Please, use 'ONNX_BUILD_PYTHON' instead")
@@ -36,6 +36,7 @@ option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
+option(ONNX_USE_ASAN "Build ONNX with ASAN" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
@@ -132,10 +133,10 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
 if(ONNX_BUILD_TESTS)
   find_package(GTest)
   if(NOT GTest_FOUND)
-    list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
     include(googletest)
   endif()
   set(googletest_STATIC_LIBRARIES GTest::gtest)
@@ -150,7 +151,9 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       message(STATUS "Using custom protoc executable")
       set(ONNX_PROTOC_EXECUTABLE ${ONNX_CUSTOM_PROTOC_EXECUTABLE})
     else()
-      set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+      if(TARGET protobuf::protoc)
+        set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+      endif()
     endif()
   else()
     # Customized version of find Protobuf. We need to avoid situations mentioned
@@ -196,12 +199,11 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       find_package(Protobuf)
       if(Protobuf_FOUND)
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
-        set(PROTOBUF_INCLUDE_DIR "${_PROTOBUF_INSTALL_PREFIX}/include")
         set(Build_Protobuf OFF)
         if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
           # There are extra dependencies for protobuf.
           find_package(absl REQUIRED)
-          find_package(utf8_range REQUIRED)
+          find_package(utf8_range)
           message(STATUS "absl_VERSION: ${absl_VERSION}")
           set(protobuf_ABSL_USED_TARGETS
             absl::absl_check
@@ -249,52 +251,32 @@ endif()
 if(NOT ONNX_PROTOC_EXECUTABLE)
     set(Build_Protobuf ON)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
-    set(ABSL_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
 
     include(FetchContent)
-    message("Loading Dependencies URLs ...")
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20240722.1/abseil-cpp-20240722.1.tar.gz)
-    set(AbseilSHA1 0d6b07c6f3352981d3660978e109f2bc14594a3d)
-    FetchContent_Declare(
-      Abseil
-      URL ${AbseilURL}
-      URL_HASH SHA1=${AbseilSHA1}
-    )
     set(ABSL_PROPAGATE_CXX_STD 1)
-    set(abseil_BUILD_TESTING 0)
     set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build thirdparty libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    if(CMAKE_COMPILER_IS_GNUCXX)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-sanitize=all")
-    endif()
-    message(STATUS "Download and build Abseil from ${AbseilURL}")
-    FetchContent_Populate(Abseil)
-    FetchContent_GetProperties(Abseil)
-    # ABSL_ROOT_DIR is required by Protobuf.
-    set(ABSL_ROOT_DIR ${abseil_SOURCE_DIR})
-    message(STATUS "Abseil source dir:" ${ABSL_ROOT_DIR})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v29.2/protobuf-29.2.tar.gz)
-    set(ProtobufSHA1 a5639ffb17e3743d696baf16bf377fbe752b6a1f)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.2/protobuf-30.2.tar.gz)
+    set(ProtobufSHA1 f846d1f047255d09142361ba6d1985336db5e407)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
       URL_HASH SHA1=${ProtobufSHA1}
+      PATCH_COMMAND ${CMAKE_COMMAND} -Dprotobuf_MSVC_STATIC_RUNTIME=${protobuf_MSVC_STATIC_RUNTIME} -DFILENAME=CMakeLists.txt -P ${CMAKE_CURRENT_LIST_DIR}/cmake/ProtoBufPatch.cmake
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
-    FetchContent_MakeAvailable(Protobuf Abseil)
+    FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "5.29.2")
+    set(Protobuf_VERSION "6.30.2")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
-    set(PROTOBUF_INCLUDE_DIR "${protobuf_SOURCE_DIR}/src")
     set(CMAKE_CXX_FLAGS ${ONNX_CMAKE_CXX_FLAGS})
 endif()
 message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
-message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
@@ -465,8 +447,7 @@ add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include>
-  $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
+  $<INSTALL_INTERFACE:include>)
 
 if(MSVC)
   if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
@@ -483,19 +464,18 @@ endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 target_compile_features(onnx_proto PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
 
+set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite PRIVATE ${protobuf_ABSL_USED_TARGETS})
-  else()
-    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LITE_LIBRARIES})
-  endif()
-else()
-  if(TARGET protobuf::libprotobuf)
-    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf PRIVATE ${protobuf_ABSL_USED_TARGETS})
-  else()
-    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+    set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
+target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
+foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
+  if(TARGET ${ABSL_USED_TARGET})
+    target_link_libraries(onnx_proto PRIVATE ${ABSL_USED_TARGET})
+  endif()
+endforeach()
 add_onnx_global_defines(onnx_proto)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
@@ -540,9 +520,7 @@ if(ONNX_BUILD_PYTHON)
     endif()
   endif()
 
-  target_include_directories(onnx_cpp2py_export PUBLIC
-    "${pybind11_INCLUDE_DIRS}"
-    "${Python3_INCLUDE_DIRS}")
+  target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
 
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
@@ -586,7 +564,7 @@ if(ONNX_BUILD_PYTHON)
                                            # loss of data
                                    /wd4267 # Conversion from 'size_t' to 'int',
                                            # possible loss of data
-                                   ${EXTRA_FLAGS})
+                                   )
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -610,7 +588,7 @@ if(MSVC)
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4141 # 'inline': used more than once
-                                 ${EXTRA_FLAGS})
+                                   )
   target_compile_options(onnx
                          PRIVATE /MP
                                  /wd4146 # unary minus operator applied to unsigned type,
@@ -621,7 +599,7 @@ if(MSVC)
                                  /wd4267 # Conversion from 'size_t' to 'int',
                                          # possible loss of data
                                  /wd4141 # 'inline': used more than once
-                                 ${EXTRA_FLAGS})
+                                   )
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
@@ -646,6 +624,17 @@ else()
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "-Werror")
     target_compile_options(onnx_proto PRIVATE "-Werror")
+  endif()
+endif()
+if(ONNX_USE_ASAN AND NOT MSVC)
+  find_package(Sanitizer REQUIRED)
+  if(TARGET Sanitizer::address)
+    target_link_libraries(onnx PRIVATE Sanitizer::address)
+    message(STATUS "Use ASAN")
+  endif()
+  if(TARGET Sanitizer::undefined)
+    target_link_libraries(onnx PRIVATE Sanitizer::undefined)
+    message(STATUS "Use UBSAN")
   endif()
 endif()
 

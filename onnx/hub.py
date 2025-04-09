@@ -47,19 +47,21 @@ class ModelInfo:
         Args:
             raw_model_info: A JSON dict containing the model info.
         """
-        self.model = cast(str, raw_model_info["model"])
+        self.model = cast("str", raw_model_info["model"])
 
-        self.model_path = cast(str, raw_model_info["model_path"])
-        self.metadata: dict[str, Any] = cast(dict[str, Any], raw_model_info["metadata"])
+        self.model_path = cast("str", raw_model_info["model_path"])
+        self.metadata: dict[str, Any] = cast(
+            "dict[str, Any]", raw_model_info["metadata"]
+        )
         self.model_sha: str | None = None
         if "model_sha" in self.metadata:
-            self.model_sha = cast(str, self.metadata["model_sha"])
+            self.model_sha = cast("str", self.metadata["model_sha"])
 
         self.tags: set[str] = set()
         if "tags" in self.metadata:
-            self.tags = set(cast(list[str], self.metadata["tags"]))
+            self.tags = set(cast("list[str]", self.metadata["tags"]))
 
-        self.opset = cast(int, raw_model_info["opset_version"])
+        self.opset = cast("int", raw_model_info["opset_version"])
         self.raw_model_info: dict[str, Any] = raw_model_info
 
     def __str__(self) -> str:
@@ -167,7 +169,7 @@ def list_models(
     try:
         with urlopen(manifest_url) as response:
             manifest: list[ModelInfo] = [
-                ModelInfo(info) for info in json.load(cast(IO[str], response))
+                ModelInfo(info) for info in json.load(cast("IO[str]", response))
             ]
     except HTTPError as e:
         raise AssertionError(f"Could not find manifest at {manifest_url}") from e
@@ -287,7 +289,7 @@ def load(
                 "download the model from the model hub."
             )
 
-    return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
+    return onnx.load(cast("IO[bytes]", BytesIO(model_bytes)))
 
 
 def download_model_with_test_data(

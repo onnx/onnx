@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# could be integraded in release_win.yml when # uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b contains 3.13t, used Quansight-Labs/setup-python@v5 instead
+# could be integraded in release_win.yml when dependency issues are resolved
 
 
 name: WindowsRelease (freethreading)
@@ -11,6 +11,9 @@ on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:
       os:
+        required: true
+        type: string
+      build_mode: 
         required: true
         type: string
 
@@ -33,7 +36,7 @@ jobs:
          persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: Quansight-Labs/setup-python@550c8a087c8e002b86f428cf42937d4f13861955
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -57,7 +60,7 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
+        if ( '${{ inputs.build_mode }}' -ne 'release') {
           echo "Build preview build PyPI package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
@@ -82,7 +85,7 @@ jobs:
         python -m pip install -v pillow
         pytest
 
-    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist

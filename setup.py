@@ -272,10 +272,10 @@ class CmakeBuild(setuptools.Command):
                 extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
                 # prevent crossfire with downstream scripts
                 del os.environ["CMAKE_ARGS"]
-                logging.info("Extra cmake args: %s", extra_cmake_args)
+                logging.info("Extra cmake args: %s", extra_cmake_args)  # noqa: LOG015
                 cmake_args.extend(extra_cmake_args)
             cmake_args.append(TOP_DIR)
-            logging.info("Using cmake args: %s", cmake_args)
+            logging.info("Using cmake args: %s", cmake_args)  # noqa: LOG015
             if "-DONNX_DISABLE_EXCEPTIONS=ON" in cmake_args:
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."

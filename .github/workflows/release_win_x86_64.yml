@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: WindowsRelease
+name: WindowsRelease_x86_64
 
 on:  # Specifies the event triggering the workflow
   workflow_call:  # Indicates that this is a reusable workflow
@@ -10,6 +10,10 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
+      build_mode: 
+        required: true
+        type: string
+
 permissions:  # set top-level default permissions as security best practice
   contents: read
 
@@ -29,7 +33,7 @@ jobs:
          persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -50,6 +54,7 @@ jobs:
         python -m pip install cmake
 
     - name: Build ONNX wheel
+      id: build_wheel
       run: |
         $arch = 'x64'
         if ('${{ matrix.architecture }}' -eq 'x86') {
@@ -62,8 +67,8 @@ jobs:
         $Env:ONNX_ML=1
         $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule' -or '${{ github.event_name }}' -eq 'workflow_dispatch') {
-          echo "Build preview build PyPI package"
+        if ( '${{ inputs.build_mode }}' -ne 'release') {
+          echo "Build preview build whl package"
           (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
           $Env:ONNX_PREVIEW_BUILD=1
         }
@@ -71,16 +76,18 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
     - name: Test the installed wheel
+      if: steps.build_wheel.outcome == 'success'
       run: |
         pytest
 
-    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: steps.build_wheel.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist
 
     - name: Verify ONNX with the latest numpy
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
@@ -88,7 +95,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
@@ -96,7 +103,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt

@@ -4,12 +4,16 @@
 
 name: sdistRelease
 
-on:  # Specifies the event triggering the workflow
+on: 
   workflow_call:  # Indicates that this is a reusable workflow
     inputs:
       os:
         required: true
         type: string
+      build_mode:
+        required: true
+        type: string
+
 permissions:
   contents: read
 
@@ -32,7 +36,7 @@ jobs:
         submodules: true
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -42,20 +46,20 @@ jobs:
         python -m pip install -q -r requirements-release.txt
 
     - name: Build source distribution (preview build / weekly)
-      if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      if: ${{ inputs.build_mode != 'release' }}
       run: |
         git clean -xdf
         sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
 
     - name: Build source distribution (for release)
-      if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+      if: ${{ inputs.build_mode == 'release' }}
       run: |
         git clean -xdf
         python -m build --sdist
 
     - name: Upload sdist
-      uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: sdist
         path: |
