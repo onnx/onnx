@@ -43,6 +43,8 @@ export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 # Install Python dependency
 $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 
+export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+
 # Build wheels
 if [ "$BUILD_MODE" != "release" ]; then
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
