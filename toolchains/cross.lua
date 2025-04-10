@@ -1,0 +1,8 @@
+toolchain("cross")
+    set_kind("standalone")
+    set_toolset("cc", "C:/mingw64/bin/arm64-unknown-linux-gnu-gcc")
+    set_toolset("cxx", "C:/mingw64/bin/arm64-unknown-linux-gnu-g++")
+    set_toolset("ld", "C:/mingw64/bin/arm64-unknown-linux-gnu-ld")
+    set_toolset("ar", "C:/mingw64/bin/arm64-unknown-linux-gnu-ar")
+    set_toolset("strip", "C:/mingw64/bin/arm64-unknown-linux-gnu-strip")
+toolchain_end()
