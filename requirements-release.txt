@@ -1,5 +1,4 @@
 build
-ipython
 ml_dtypes
 nbval
 numpy==2.0.0; python_version >= "3.9" and python_version <= "3.12"
@@ -10,7 +9,6 @@ pytest
 pytest-cov
 pytest-xdist
 setuptools
-twine
 wheel
 # Dependencies for the reference implementation.
 -r requirements-reference.txt

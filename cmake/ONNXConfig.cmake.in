@@ -6,10 +6,7 @@
 # library version information
 set(ONNX_VERSION "@ONNX_VERSION@")
 
-if(@Protobuf_FOUND@)
-  list(APPEND CMAKE_MODULE_PATH "@PROTOBUF_DIR@")
-endif()
-find_package(Protobuf REQUIRED)
+find_package(Protobuf REQUIRED CONFIG)
 
 # import targets
 include ("${CMAKE_CURRENT_LIST_DIR}/ONNXTargets.cmake")
