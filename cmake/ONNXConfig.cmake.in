@@ -6,7 +6,9 @@
 # library version information
 set(ONNX_VERSION "@ONNX_VERSION@")
 
-find_package(Protobuf REQUIRED CONFIG)
+if((NOT @@ONNX_USE_PROTOBUF_SHARED_LIBS@@) AND @@Build_Protobuf@@)
+  find_package(Protobuf REQUIRED CONFIG)
+endif()
 
 # import targets
 include ("${CMAKE_CURRENT_LIST_DIR}/ONNXTargets.cmake")
