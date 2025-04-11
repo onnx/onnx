@@ -1724,7 +1724,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "axes",
-            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
+            "1D tensor of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(data).",
             "tensor(int64)",
             OpSchema::Optional,
@@ -1825,7 +1825,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "axes",
-            "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
+            "1D tensor of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
             "tensor(int64)",
             OpSchema::Single,
