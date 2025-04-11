@@ -1,0 +1,77 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: WindowsRelease_ARM64
+
+on: [push, pull_request]
+
+  #workflow_call:  # Indicates that this is a reusable workflow
+    # inputs:
+    #   os:
+    #     required: true
+    #     type: string
+    #   build_mode: 
+    #     required: true
+    #     type: string
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+jobs:
+  build:
+    #if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'currenttest')
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    
+
+    steps:
+    - name: Checkout ONNX
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+         submodules: 'true'
+         persist-credentials: false
+
+    - name: debug1
+      id: debug1
+      run: |
+        pwd
+        ls -lauh /d/a/onnx/onnx
+         
+
+    - name: Set up MinGW-w64 for ARM64 cross-compilation
+      run: |
+        choco install mingw --version 8.1.0
+        mkdir /c/cross-toolchain
+        export CROSS_COMPILE=/c/mingw64/bin/arm64-unknown-linux-gnu-
+
+    - name: Install dependencies
+      run: |
+        pwd
+        cd ..
+        ls -lauh
+        python -m pip install --upgrade pip
+        python -m pip install -r /d/a/onnx/onnx/requirements-release.txt
+        pip install cmake
+   
+    - name: Set up environment variables
+      run: |
+        export CMAKE_TOOLCHAIN_FILE=/d/a/onnx/onnx/toolchain_win_arm64.cmake
+        
+    - name: Build ONNX
+      run: |
+        mkdir build
+        cd build
+
+        export ONNX_ML=1
+        export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
+
+        cmake -DCMAKE_TOOLCHAIN_FILE=/d/a/onnx/onnx/toolchain_win_arm64.cmake -DCMAKE_C_COMPILER=/c/mingw64/bin/arm64-unknown-linux-gnu-gcc.exe -DCMAKE_CXX_COMPILER=/c/mingw64/bin/arm64-unknown-linux-gnu-g++.exe -DBUILD_SHARED_LIBS=ON ..
+
+        
+        # cmake -DCMAKE_TOOLCHAIN_FILE=/d/a/onnx/onnx/toolchain_win_arm64.cmake -DBUILD_SHARED_LIBS=ON ..
+        cd ..
+        python -m build --wheel
+   
