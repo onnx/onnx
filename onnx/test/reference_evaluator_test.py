@@ -4179,8 +4179,8 @@ class TestReferenceEvaluator(unittest.TestCase):
                 square_sum[n, c, h, w] = sum(
                     x[
                         n,
-                        max(0, c - int(math.floor((size - 1) / 2))) : min(
-                            5, c + int(math.ceil((size - 1) / 2)) + 1
+                        max(0, c - math.floor((size - 1) / 2)) : min(
+                            5, c + math.ceil((size - 1) / 2) + 1
                         ),
                         h,
                         w,

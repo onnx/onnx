@@ -109,6 +109,13 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   if (tp.has_segment()) {
     ret.set_segment_begin_and_end(tp.segment().begin(), tp.segment().end());
   }
+
+  for (int i = 0; i < tp.external_data_size(); i++) {
+    ret.external_data().push_back(std::make_pair(tp.external_data(i).key(), tp.external_data(i).value()));
+  }
+  if (tp.has_data_location()) {
+    ret.data_location() = tp.data_location();
+  }
   return ret;
 }
 
@@ -492,6 +499,16 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
   }
   if (tensor.is_raw_data()) {
     p->set_raw_data(tensor.raw());
+  }
+  if (!tensor.external_data().empty()) {
+    for (const auto& entry : tensor.external_data()) {
+      auto* external_data = p->add_external_data();
+      external_data->set_key(entry.first);
+      external_data->set_value(entry.second);
+    }
+  }
+  if (tensor.has_data_location()) {
+    p->set_data_location(tensor.data_location());
   }
 }
 

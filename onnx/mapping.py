@@ -174,7 +174,7 @@ _NP_TYPE_TO_TENSOR_TYPE = {
 # Currently native numpy does not support bfloat16 so TensorProto.BFLOAT16 is ignored for now
 # Numpy float32 array is only reversed to TensorProto.FLOAT
 NP_TYPE_TO_TENSOR_TYPE = DeprecatedWarningDict(
-    cast(dict[int, Union[int, str, Any]], _NP_TYPE_TO_TENSOR_TYPE),
+    cast("dict[int, Union[int, str, Any]]", _NP_TYPE_TO_TENSOR_TYPE),
     "NP_TYPE_TO_TENSOR_TYPE",
     "np_dtype_to_tensor_dtype",
 )
@@ -197,7 +197,7 @@ _STORAGE_TENSOR_TYPE_TO_FIELD = {
 }
 
 STORAGE_TENSOR_TYPE_TO_FIELD = DeprecatedWarningDict(
-    cast(dict[int, Union[int, str, Any]], _STORAGE_TENSOR_TYPE_TO_FIELD),
+    cast("dict[int, Union[int, str, Any]]", _STORAGE_TENSOR_TYPE_TO_FIELD),
     "STORAGE_TENSOR_TYPE_TO_FIELD",
 )
 
