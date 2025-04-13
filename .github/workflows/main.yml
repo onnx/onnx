@@ -146,7 +146,7 @@ jobs:
           pip freeze
 
       - name: Setup GCC ASAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu')
+        if: startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
         run: |
           export LD_PRELOAD="$(/usr/bin/c++ -print-file-name=libasan.so):$LD_PRELOAD"
 
