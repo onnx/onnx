@@ -13,7 +13,6 @@ BUILD_MODE=$3  # build mode (release or preview)
 
 echo "Build mode: $BUILD_MODE"
 
-
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 # Compile wheels
@@ -46,7 +45,6 @@ if [ "$PY_VERSION" == "3.13t" ]; then
 else
  $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
 fi
-
 
 # Build wheels
 if [ "$BUILD_MODE" != "release" ]; then
