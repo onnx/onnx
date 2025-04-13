@@ -5,7 +5,7 @@
 name: LinuxRelease_x86_64
 
 on:
-  workflow_call:  # Indicates that this is a reusable workflow
+  workflow_call:
     inputs:
       os:
         required: true
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.13t']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
         architecture: ['x64']
 
     steps:
