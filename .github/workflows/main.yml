@@ -199,7 +199,7 @@ jobs:
           fi
 
       - name: Test documentation
-        if: matrix.documentation == 1
+        if: matrix.documentation == 1 && (matrix.python_version != '3.13t')
         run: |
           pip install -r docs/docsgen/source/requirements.txt
           cd docs/docsgen && make text
@@ -207,7 +207,7 @@ jobs:
 
       - name: Run Python tests with numpy<2.0 (win, mac)
         # Python 3.13 support was added at numpy 2.1.0
-        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') &&  (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
         run: |
           pip install "numpy<2.0" pillow
           pytest -s
@@ -220,5 +220,3 @@ jobs:
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           pip install --prefer-binary "numpy<2.0" pillow
           pytest -s
-
-
