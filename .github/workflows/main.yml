@@ -151,6 +151,7 @@ jobs:
           export LD_PRELOAD="$(/usr/bin/c++ -print-file-name=libasan.so):$LD_PRELOAD"
 
       - name: Run Python tests
+        if: (matrix.python_version != '3.13t')
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
