@@ -1,0 +1,9 @@
+ipython
+ml_dtypes
+nbval
+parameterized
+pytest
+pytest-cov
+pytest-xdist
+# Dependencies for the reference implementation.
+-r requirements-reference.txt

@@ -1,7 +1,3 @@
-# `-allow-enabling-analyzer-alpha-checkers` should be passed to clang-tidy for CSA checkers named `clang-analyzer-alpha.*`
-# `aggressive-binary-operation-simplification` should be enabled (via `-Xclang -analyzer-config -Xclang aggressive-binary-operation-simplification=true` in clang)
-# there is some problem in `clang-analyzer-alpha.clone.*`, so do not enable it
-# `clang-analyzer-alpha.deadcode.*` is just too verbose to enable
 Checks: >-
   -*,
   bugprone-*,
