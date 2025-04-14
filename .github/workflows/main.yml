@@ -4,6 +4,10 @@
 
 name: CI
 
+env:
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
+  UBSAN_OPTIONS: print_stacktrace=1
+
 on:
   schedule:
     - cron: '0 0 * * *'  # every day at midnight for reporting code coverage to codecov
@@ -42,7 +46,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Set up Python
-        uses: actions/setup-python@9e62be81b28222addecf85e47571213eb7680449
+        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55
         with:
           python-version: ${{ matrix.python_version }}
 
@@ -76,7 +80,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements-release.txt
-          python -m pip install protobuf==6.30.1
+          python -m pip install protobuf==6.30.2
           git submodule update --init --recursive
 
 
@@ -91,7 +95,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DCMAKE_CXX_FLAGS='-fsanitize=undefined -fno-sanitize-recover=all '"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_ASAN=${{ matrix.debug_build }}"
 
       - name: Build and install ONNX - MacOS
         if: matrix.os == 'macos-latest'
@@ -117,7 +121,13 @@ jobs:
         run: |
           pip freeze
 
+      - name: Setup GCC ASAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
+        run: |
+          export LD_PRELOAD="$(/usr/bin/c++ -print-file-name=libasan.so):$LD_PRELOAD"
+
       - name: Run Python tests
+        if: (matrix.python_version != '3.13t')
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
@@ -142,7 +152,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu')
+        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
@@ -166,7 +176,7 @@ jobs:
           fi
 
       - name: Test documentation
-        if: matrix.documentation == 1
+        if: matrix.documentation == 1 && (matrix.python_version != '3.13t')
         run: |
           pip install -r docs/docsgen/source/requirements.txt
           cd docs/docsgen && make text
@@ -174,7 +184,7 @@ jobs:
 
       - name: Run Python tests with numpy<2.0 (win, mac)
         # Python 3.13 support was added at numpy 2.1.0
-        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') &&  (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
         run: |
           pip install "numpy<2.0" pillow
           pytest -s
@@ -187,5 +197,3 @@ jobs:
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           pip install --prefer-binary "numpy<2.0" pillow
           pytest -s
-
-

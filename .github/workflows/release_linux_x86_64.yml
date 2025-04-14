@@ -5,13 +5,16 @@
 name: LinuxRelease_x86_64
 
 on:
-  workflow_call:  # Indicates that this is a reusable workflow
+  workflow_call:
     inputs:
       os:
         required: true
         type: string
+      build_mode:
+        required: true
+        type: string
 
-permissions:  # set top-level default permissions as security best practice
+permissions:  # set top-level default permissions as security good practice
   contents: read
 
 jobs:
@@ -20,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
         architecture: ['x64']
 
     steps:
@@ -34,7 +37,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2014_x86_64:2025.03.22-2
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ github.event_name }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ inputs.build_mode }}
 
     - name: Set up Python ${{ matrix.python-version }}
       if: steps.build_manylinux.outcome == 'success'
@@ -60,7 +63,7 @@ jobs:
         python -m pip install dist/*manylinux2014_x86_64.whl
         pytest
 
-    - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       if: steps.build_manylinux.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
