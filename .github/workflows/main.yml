@@ -95,11 +95,17 @@ jobs:
         run: |
           source workflow_scripts/protobuf/build_protobuf_unix.sh 3 $(pwd)/protobuf/protobuf_install
 
-      - name: Set up MSBuild
-        if: startsWith(matrix.os,'windows')
+      - name: Set up MSBuild (arm64)
+        if: startsWith(matrix.os,'windows-11-arm')
         uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
         with:
           msbuild-architecture: arm64
+
+      - name: Set up MSBuild (x64)
+        if: startsWith(matrix.os,'windows-latest')
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+        with:
+          msbuild-architecture: x64
 
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'windows')
