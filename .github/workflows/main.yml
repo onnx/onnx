@@ -64,6 +64,12 @@ jobs:
             debug_build: 0
             documentation: 0
             protobuf_type: 'External'
+        exclude:
+          - os: 'windows-11-arm'
+            python_version: '3.10'
+          - os: 'windows-11-arm'
+            python_version: '3.9'
+            
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
