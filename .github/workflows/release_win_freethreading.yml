@@ -71,12 +71,6 @@ jobs:
     - name: Test the installed wheel
       run: |
 
-        # 2025.03.09 jupyter_client and ipython have conflicting dependencies
-        # therefore [tool.pytest.ini_options] in pyproject.toml is overwritten
-        # because it contains nbval which cannot be installed
-        # TODO: this section should be revised either a) by direct integration into pyproject,
-        # or b) by revising the dependencies in the original projects."
-
         echo "[pytest]" > pytest.ini
         echo "addopts = --tb=short --color=yes" >> pytest.ini
         echo "testpaths =" >> pytest.ini
