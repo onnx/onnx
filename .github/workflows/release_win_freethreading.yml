@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# could be integraded in release_win.yml when dependency issues are resolved
+# could be integrated in release_win.yml when dependency issues are resolved
 
 name: WindowsRelease (freethreading)
 
