@@ -58,7 +58,7 @@ jobs:
           deactivate'
 
       # using created virtual environment in new container and executing the script
-    - name: Build wheel (manylinux)
+    - name: Build ONNX wheel (manylinux)
       id: build_manylinux
       if: steps.install_dependencies.outcome == 'success'
       run: |

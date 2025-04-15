@@ -107,7 +107,6 @@ jobs:
           python -m pip install protobuf==6.30.2
           git submodule update --init --recursive
 
-
       - name: Build and install ONNX - Linux
         if: startsWith(matrix.os,'ubuntu')
         run: |
