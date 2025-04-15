@@ -50,7 +50,7 @@ jobs:
           echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
           sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
         }
-        python -m pip install -q -r requirements-release.txt
+        python -m pip install -q -r requirements-release_build.txt
         python -m pip install cmake
 
     - name: Build ONNX wheel

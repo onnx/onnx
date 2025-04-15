@@ -4,8 +4,8 @@
 
 name: MacRelease
 
-on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
+on:
+  workflow_call:
     inputs:
       os:
         required: true
@@ -44,7 +44,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-release.txt
+        python -m pip install -q -r requirements-release_build.txt
 
     - name: Build wheel
       env:
@@ -90,7 +90,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
-        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
+        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
     - uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e
       with:
