@@ -132,7 +132,7 @@ jobs:
           CMAKE_ARGS: "-DONNX_WERROR=ON"
 
       - name: Build and install ONNX - Windows
-        if: matrix.os == 'windows-latest'
+        if: startsWith(matrix.os,'windows')
         run: |
           pip install -e . -v
         env:
