@@ -52,7 +52,7 @@ onnx = [
 
 [tool.pytest.ini_options]
 
-addopts = "--nbval --nbval-current-env --tb=short --color=yes"
+addopts = "--tb=short --color=yes"
 testpaths = [
     "onnx/test",
     "onnx/examples",

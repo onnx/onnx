@@ -1,6 +1,4 @@
-ipython
 ml_dtypes
-nbval
 parameterized
 pytest
 pytest-cov
