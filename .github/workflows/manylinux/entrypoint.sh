@@ -18,12 +18,12 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 # Compile wheels
 # Need to be updated if there is a new Python Version
 if [ "$(uname -m)" == "aarch64" ]; then
- PIP_INSTALL_COMMAND="$PY_VERSION -m pip install --only-binary google-re2 --no-cache-dir -q"
+ PIP_INSTALL_COMMAND="$PY_VERSION -m pip install --no-cache-dir -q"
  PYTHON_COMMAND="$PY_VERSION"
 else
  declare -A python_map=(["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t")
  PY_VER=${python_map[$PY_VERSION]}
- PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --only-binary google-re2 --no-cache-dir -q"
+ PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
  PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
 fi
 
@@ -41,9 +41,9 @@ export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 
 if [ "$PY_VERSION" == "3.13t" ]; then 
  yum install -y libffi-devel
- $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
+ $PIP_INSTALL_COMMAND -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 else
- $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
+ $PIP_INSTALL_COMMAND -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 fi
 
 # Build wheels
