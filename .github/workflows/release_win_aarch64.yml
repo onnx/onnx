@@ -65,7 +65,7 @@ jobs:
           $Env:ONNX_PREVIEW_BUILD=1
         }
         python -m build --wheel
-        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname --no-deps}
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       if: steps.build_wheel.outcome == 'success'
