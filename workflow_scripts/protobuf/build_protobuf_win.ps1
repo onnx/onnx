@@ -26,10 +26,8 @@ $protobuf_root_dir = Get-Location
 
 # Adjust CMake generator and architecture for ARM64
 if ($arch -ieq "arm64") {
-    $cmake_generator = "Visual Studio 17 2022"
     $cmake_arch = "ARM64"
 } elseif ($arch -ieq "x64") {
-    $cmake_generator = "Visual Studio 17 2022"
     $cmake_arch = "x64"
 } else {
     throw "Unsupported architecture: $arch"
