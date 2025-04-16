@@ -50,6 +50,7 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release_build.txt
 
+
     - name: Build ONNX wheel
       run: |
 
@@ -69,13 +70,7 @@ jobs:
 
     - name: Test the installed wheel
       run: |
-
-        echo "[pytest]" > pytest.ini
-        echo "addopts = --tb=short --color=yes" >> pytest.ini
-        echo "testpaths =" >> pytest.ini
-        echo "    onnx/test" >> pytest.ini
-        echo "    onnx/examples" >> pytest.ini
-        python -m pip install -v pillow
+        python -m pip install -q -r requirements-release_test.txt
         pytest
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
