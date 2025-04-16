@@ -23,11 +23,12 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: [cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312, cp313-cp313]
+        python-version: [cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312, cp313-cp313, cp313-cp313t]
     env:
       # setting up python and docker image
       py: /opt/python/${{ matrix.python-version }}/bin/python
       img: quay.io/pypa/manylinux2014_aarch64:2025.02.12-1
+      manylinux: manylinux2014_aarch64
 
     steps:
       
@@ -57,7 +58,7 @@ jobs:
           deactivate'
 
       # using created virtual environment in new container and executing the script
-    - name: Build manylinux2014_aarch64
+    - name: Build wheel (manylinux)
       id: build_manylinux
       if: steps.install_dependencies.outcome == 'success'
       run: |
@@ -67,9 +68,8 @@ jobs:
           source .env/bin/activate && \
           yum install -y sudo && \
           sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} manylinux2014_aarch64 ${{ inputs.build_mode }}
+          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} ${{ env.manylinux }} ${{ inputs.build_mode }}
           deactivate'
-    
 
       # using created virtual environment in new container and testing the wheel
     - name: Test wheel with Python ${{ matrix.python-version }}
@@ -116,4 +116,3 @@ jobs:
           python -m pip install dist/*manylinux2014_aarch64.whl && \
           pytest && \
           deactivate'
-

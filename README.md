@@ -92,7 +92,7 @@ Detailed install instructions, including Common Build Options and Common Errors 
 ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, you will first need to install `pytest`:
 
 ```sh
-pip install pytest nbval
+pip install pytest
 ```
 
 After installing pytest, use the following command to run tests.
