@@ -29,6 +29,8 @@ if ($arch -ieq "arm64") {
     $cmake_arch = "ARM64"
 } elseif ($arch -ieq "x64") {
     $cmake_arch = "x64"
+} elseif ($arch -ieq "Win32") {
+    $cmake_arch = "Win32"
 } else {
     throw "Unsupported architecture: $arch"
 }
