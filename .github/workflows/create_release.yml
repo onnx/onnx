@@ -79,11 +79,18 @@ jobs:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
+  call-workflow-win_arm64:
+      if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+      uses: ./.github/workflows/release_win_aarch64.yml
+      with:
+        os: "win_arm64"
+        build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+
   call-workflow-win-freethreading: # experimental
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win_freethreading.yml
     with:
-      os: "win"
+      os: "win_free"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-mac:
