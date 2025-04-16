@@ -108,7 +108,6 @@ jobs:
           msbuild-architecture: x64
 
       - name: Install external protobuf - Windows
-        if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'windows')
         run: |
           workflow_scripts/protobuf/build_protobuf_win.ps1
 
