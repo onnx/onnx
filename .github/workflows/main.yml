@@ -71,8 +71,6 @@ jobs:
           - os: windows-11-arm
             python_version: '3.9'
 
-    continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
-            
             
     runs-on: ${{ matrix.os }}
     steps:
