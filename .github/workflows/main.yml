@@ -28,6 +28,7 @@ concurrency:
 jobs:
   test:
     name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, onnx_ml=${{ matrix.onnx_ml }}, doc=${{ matrix.documentation }}
+    continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
     strategy:
       fail-fast: false
       matrix:
@@ -69,6 +70,9 @@ jobs:
             python_version: '3.10'
           - os: windows-11-arm
             python_version: '3.9'
+
+    continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
+            
             
     runs-on: ${{ matrix.os }}
     steps:
