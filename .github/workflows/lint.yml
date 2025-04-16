@@ -65,7 +65,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
         with:
-          python-version: "3.11"
+          python-version: "3.13"
       - name: Install ONNX
         run: |
           source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
@@ -80,6 +80,8 @@ jobs:
           python -m pip install .
       - name: Install dependencies
         run: |
+          # Use release_build to pin package versions
+          python -m pip install -r requirements-release_build.txt
           python -m pip install -r requirements-dev.txt
           lintrunner init
       - name: Run lintrunner on all files
