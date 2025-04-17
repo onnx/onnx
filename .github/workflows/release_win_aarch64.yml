@@ -4,8 +4,8 @@
 
 name: WindowsRelease_aarch64
 
-on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
+on:
+  workflow_call:
     inputs:
       os:
         required: true
@@ -50,10 +50,8 @@ jobs:
 
     - name: Build ONNX wheel
       id: build_wheel
-      run: |
-        $cmake_arch = 'ARM64'
-
-        .\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch $cmake_arch
+      run: |       
+        .\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch 'ARM64'
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
