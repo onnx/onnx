@@ -12,7 +12,7 @@ on:
   pull_request:
     branches: [main, rel-*]
     types:
-      - labeled  # Trigger when a label is added to a PR, more information: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request
+      - labeled
   workflow_dispatch:
     inputs:
       publish_pypi_weekly:
@@ -72,18 +72,25 @@ jobs:
       os: "linux_aarch64"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
-  call-workflow-win:
+  call-workflow-win_x86:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win_x86_64.yml
     with:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
+  call-workflow-win_arm64:
+      if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+      uses: ./.github/workflows/release_win_aarch64.yml
+      with:
+        os: "win_arm64"
+        build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+
   call-workflow-win-freethreading: # experimental
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win_freethreading.yml
     with:
-      os: "win"
+      os: "win_free"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-workflow-mac:
@@ -105,7 +112,7 @@ jobs:
     name: Check for Publish preview build to test.pypi-weekly
     runs-on: ubuntu-latest
 
-    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win, call-workflow-win-freethreading, call-workflow-sdist]
+    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win_x86, call-workflow-win_arm64, call-workflow-win-freethreading, call-workflow-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly   == 'yes' ) && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -157,8 +164,8 @@ jobs:
     name: Check for Publish release build to test.pypi
     runs-on: ubuntu-latest
 
-    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win, call-workflow-win-freethreading, call-workflow-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release  == 'yes' ) && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
+    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win_x86, call-workflow-win_arm64, call-workflow-win-freethreading, call-workflow-sdist]
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes' ) && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
       - name: print debug vars
@@ -209,7 +216,7 @@ jobs:
     name: Check for Publish preview build to pypi-weekly
     runs-on: ubuntu-latest
 
-    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win, call-workflow-win-freethreading, call-workflow-sdist]
+    needs: [call-workflow-ubuntu_x86, call-workflow-ubuntu_aarch64, call-workflow-mac, call-workflow-win_x86, call-workflow-win_arm64, call-workflow-win-freethreading, call-workflow-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
 
     steps:
@@ -247,7 +254,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish preview_build to pypi-weekly
-        if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly  == 'yes') && (github.repository_owner == 'onnx')
+        if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
         with:   
           repository-url: https://upload.pypi.org/legacy/
