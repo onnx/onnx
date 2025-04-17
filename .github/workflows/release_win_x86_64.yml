@@ -56,12 +56,12 @@ jobs:
     - name: Build ONNX wheel
       id: build_wheel
       run: |
-        $arch = 'x64'
+        $cmake_arch = 'x64'
         if ('${{ matrix.architecture }}' -eq 'x86') {
-          $arch = 'Win32'
+          $cmake_arch = 'Win32'
         }
 
-        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
+        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $cmake_arch
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
