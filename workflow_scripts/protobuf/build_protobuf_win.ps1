@@ -4,7 +4,7 @@
 
 param(
     [Parameter()]
-    [String]$arch = "x64",
+    [String]$cmake_arch = "x64",
 
     [Parameter()]
     [String]$build_type = "Release"
@@ -24,16 +24,16 @@ mkdir build
 cd build
 $protobuf_root_dir = Get-Location
 
-# Adjust CMake generator and architecture for ARM64
-if ($arch -ieq "arm64") {
-    $cmake_arch = "ARM64"
-} elseif ($arch -ieq "x64") {
-    $cmake_arch = "x64"
-} elseif ($arch -ieq "Win32") {
-    $cmake_arch = "Win32"
-} else {
-    throw "Unsupported architecture: $arch"
-}
+# # Adjust CMake generator and architecture for ARM64
+# if ($arch -ieq "arm64") {
+#     $cmake_arch = "ARM64"
+# } elseif ($arch -ieq "x64") {
+#     $cmake_arch = "x64"
+# } elseif ($arch -ieq "Win32") {
+#     $cmake_arch = "Win32"
+# } else {
+#     throw "Unsupported architecture: $arch"
+# }
 
 cmake -G "Visual Studio 17 2022" -A $cmake_arch -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -DABSL_MSVC_STATIC_RUNTIME=OFF -DBUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF -DABSL_ROOT_DIR="$protobuf_root_dir/../../abseil-cpp-20230802.2" -DCMAKE_CXX_STANDARD=17 -DABSL_PROPAGATE_CXX_STD=on -DCMAKE_INSTALL_PREFIX="$protobuf_install_dir" ..
 cmake --build . --config $build_type --target install
