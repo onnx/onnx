@@ -54,7 +54,7 @@ jobs:
     - name: Build ONNX wheel
       run: |
 
-        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch x64
+        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch x64
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
