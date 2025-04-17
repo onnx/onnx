@@ -180,13 +180,13 @@ jobs:
           ./.setuptools-cmake-build/onnx_gtests
 
       - name: Upload coverage to Codecov
-        if: always()
+        if: github.repository_owner == 'onnx'
         uses: codecov/codecov-action@0565863a31f2c772f9f0395002a31e3f06189574
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
+        if: github.repository_owner == 'onnx' && !cancelled()
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
