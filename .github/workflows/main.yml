@@ -114,10 +114,10 @@ jobs:
       - name: Install external protobuf - Windows
         if: matrix.protobuf_type == 'External' && startsWith(matrix.os, 'windows')
         run: |
-          if (startsWith("${{ matrix.os }}", "windows-11-arm")) {
-            $cmake_arch = "ARM64"
-          } else {
-            $cmake_arch = "x64"
+          if [[ "${{ matrix.os }}" == "windows-11-arm"* ]]; then
+            cmake_arch="ARM64"
+          else
+            cmake_arch="x64"
           }
 
           workflow_scripts/protobuf/build_protobuf_win.ps1 -cmake_arch $cmake_arch
