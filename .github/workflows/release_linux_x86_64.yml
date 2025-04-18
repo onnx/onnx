@@ -32,7 +32,7 @@ jobs:
         persist-credentials: false
         submodules: true
 
-    - name: Build manylinux2014_x86_64
+    - name: Build wheel (manylinux)
       id: build_wheel
       uses: docker://quay.io/pypa/manylinux2014_x86_64:2025.03.22-2
       with:
