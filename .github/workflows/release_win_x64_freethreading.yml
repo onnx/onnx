@@ -4,11 +4,10 @@
 
 # could be integraded in release_win.yml when dependency issues are resolved
 
-
 name: WindowsRelease (freethreading)
 
-on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
+on:
+  workflow_call:
     inputs:
       os:
         required: true
@@ -17,7 +16,7 @@ on:  # Specifies the event triggering the workflow
         required: true
         type: string
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 jobs:
@@ -52,6 +51,8 @@ jobs:
         python -m pip install -q -r requirements-release.txt
 
     - name: Build ONNX wheel
+      id: build_wheel
+
       run: |
 
         . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch x64
@@ -69,22 +70,18 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
     - name: Test the installed wheel
+      if: steps.build_wheel.outcome == 'success'
       run: |
-
-        echo "[pytest]" > pytest.ini
-        echo "addopts = --tb=short --color=yes" >> pytest.ini
-        echo "testpaths =" >> pytest.ini
-        echo "    onnx/test" >> pytest.ini
-        echo "    onnx/examples" >> pytest.ini
         pytest
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: steps.build_wheel.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist
 
     - name: Verify ONNX with the latest numpy
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
@@ -92,7 +89,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
