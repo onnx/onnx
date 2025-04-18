@@ -24,8 +24,8 @@ permissions:  # set top-level default permissions as security good practice
 
 jobs:
   build:
-    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: ubuntu-22.04-arm  # Public Revi
+    # if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    runs-on: ubuntu-24.04-arm  # Public Revi
     
     strategy:
       matrix:
