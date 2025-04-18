@@ -28,7 +28,7 @@ jobs:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
         architecture: ['arm64']
 
-    env:  # Define the variable for the wheel file
+    env:
       MANYLINUX_WHEEL: "manylinux2014_aarch64.whl
 
     steps:
