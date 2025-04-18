@@ -1,0 +1,19 @@
+{
+    "extends": [
+      "config:base"
+    ],
+    "packageRules": [
+      {
+        "matchDatasources": ["docker"],
+        "matchPackagePatterns": ["quay.io/pypa/manylinux2014_aarch64"],
+        "fileMatch": ["\\.github/workflows/.*\\.yml$"],
+        "groupName": "manylinux2014_aarch64 Docker images"
+      },
+        {
+            "matchDatasources": ["docker"],
+            "matchPackagePatterns": ["quay.io/pypa/manylinux2014_x86_64"],
+            "fileMatch": ["\\.github/workflows/.*\\.yml$"],
+            "groupName": "manylinux2014_x86_64 Docker images"
+        }
+    ]
+  }
