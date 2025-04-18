@@ -151,8 +151,9 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish preview build to test.pypi
+      - name: Upload preview build to test.pypi
         if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
+        id: upload_preview_build_to_testpypi_weekly
         
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
         with:
@@ -202,9 +203,10 @@ jobs:
             path: dist
             merge-multiple: true
 
-        - name: Publish release build to test.pypi
+        - name: Upload release build to test.pypi
           if: (startsWith(github.ref, 'refs/heads/rel')) && (github.event.inputs.publish_testpypi_release == 'yes') && (github.repository_owner == 'onnx')
-          
+          id: upload_release_build_to_testpypi
+
           uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
           with:
             repository-url: https://test.pypi.org/legacy/
@@ -253,7 +255,8 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish preview_build to pypi-weekly
+      - name: Upload preview_build to pypi-weekly
+        id: upload_preview_build_to_pypi_weekly
         if: (github.ref == 'refs/heads/main') && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
         with:   
