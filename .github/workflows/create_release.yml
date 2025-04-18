@@ -58,7 +58,9 @@ on:
         default: 'preview'
 
 
-permissions:  # set top-level default permissions as security good practice
+
+permissions:
+
   contents: read
 
 concurrency:
