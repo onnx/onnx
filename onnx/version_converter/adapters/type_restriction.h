@@ -53,7 +53,7 @@ class TypeRestriction : public Adapter {
         " of operator '%s' is unallowed for Opset Version %d.",
         val->elemType(),
         name().c_str(),
-        target_version().version());
+        target_version().version())
   }
 };
 

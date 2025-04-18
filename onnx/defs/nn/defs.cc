@@ -2503,7 +2503,7 @@ static bool BuildContextDependentFunctionBodyLayerNormalization(
     const OpSchema& schema,
     FunctionProto& functionProto,
     int sinceVersion) {
-  ONNX_ASSERT(sinceVersion == 17 || sinceVersion == 18);
+  ONNX_ASSERT(sinceVersion == 17 || sinceVersion == 18)
   // LayerNormalization <axis, epsilon, stash_type> (X, Scale, B) => (Y, Mean?, InvStdDev?)
   auto* tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
