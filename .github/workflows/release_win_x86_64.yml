@@ -18,7 +18,7 @@ permissions:  # set top-level default permissions as security best practice
   contents: read
 
 jobs:
-  build:
+  build-and-test:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-2022
     strategy:

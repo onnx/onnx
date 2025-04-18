@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-test:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: ubuntu-24.04-arm  # Public Preview
     

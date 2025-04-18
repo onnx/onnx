@@ -18,7 +18,7 @@ permissions:  # set top-level default permissions as security good practice
   contents: read
 
 jobs:
-  build:
+  build-and-test:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: ubuntu-24.04
     strategy:
@@ -63,7 +63,7 @@ jobs:
     - name: Test wheel with Python ${{ matrix.python-version }}
       if: steps.build_wheel.outcome == 'success'
       run: |
-        python -m pip install dist/*manylinux2014_x86_64.whl
+        python -m pip install dist/*${{ env.MANYLINUX_WHEEL }}
         pytest
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -82,19 +82,19 @@ jobs:
       if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
-        python -m pip install dist/*manylinux2014_x86_64.whl
+        python -m pip install dist/*${{ env.MANYLINUX_WHEEL }}
         pytest
 
     - name: Verify ONNX with the latest protobuf
       if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
-        python -m pip install dist/*manylinux2014_x86_64.whl
+        python -m pip install dist/*${{ env.MANYLINUX_WHEEL }}
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
       if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
-        python -m pip install dist/*manylinux2014_x86_64.whl
+        python -m pip install dist/*${{ env.MANYLINUX_WHEEL }}
         pytest
