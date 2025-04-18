@@ -49,7 +49,7 @@ on:
         default: 'preview'
 
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 concurrency:
@@ -88,7 +88,7 @@ jobs:
 
   call-workflow-win-freethreading: # experimental
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_win_freethreading.yml
+    uses: ./.github/workflows/release_win_x64_freethreading.yml
     with:
       os: "win_free"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
