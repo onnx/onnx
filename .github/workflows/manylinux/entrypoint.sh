@@ -11,21 +11,19 @@ PY_VERSION=$1
 PLAT=$2
 BUILD_MODE=$3  # build mode (release or preview)
 
-echo "Build mode: $BUILD_MODE"
+echo "Python version: $PY_VERSION"
+echo "Platform: $PLAT"
+echo "Build mode: $BUILD_MODE"  
+
+ls -lau /opt/python
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
-# Compile wheels
-# Need to be updated if there is a new Python Version
-if [ "$(uname -m)" == "aarch64" ]; then
- PIP_INSTALL_COMMAND="$PY_VERSION -m pip install --only-binary google-re2 --no-cache-dir -q"
- PYTHON_COMMAND="$PY_VERSION"
-else
- declare -A python_map=(["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t")
- PY_VER=${python_map[$PY_VERSION]}
- PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --only-binary google-re2 --no-cache-dir -q"
- PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
-fi
+declare -A python_map=(["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t")
+PY_VER=${python_map[$PY_VERSION]}
+PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --only-binary google-re2 --no-cache-dir -q"
+PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
+
 
 # Update pip
 $PIP_INSTALL_COMMAND --upgrade pip

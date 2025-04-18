@@ -5,114 +5,98 @@
 name: LinuxRelease_aarch64
 
 on:
-  workflow_call:  # Indicates that this is a reusable workflow
+  workflow_call:
     inputs:
       os:
         required: true
         type: string
       build_mode:
         required: true
-        type: string
+        type: string  
+    
 
-permissions:  # set top-level default permissions as security good practice
+permissions: 
   contents: read
 
 jobs:
-  build:
+  build-and-test:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-24.04-arm  # Public Preview
+    
     strategy:
       matrix:
-        python-version: [cp39-cp39, cp310-cp310, cp311-cp311, cp312-cp312, cp313-cp313, cp313-cp313t]
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
+        architecture: ['arm64']
+
     env:
-      # setting up python and docker image
-      py: /opt/python/${{ matrix.python-version }}/bin/python
-      img: quay.io/pypa/manylinux2014_aarch64:2025.02.12-1
-      manylinux: manylinux2014_aarch64
+      MANYLINUX_WHEEL: "manylinux2014_aarch64.whl"
 
     steps:
-      
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         persist-credentials: false
         submodules: true
 
-      # setting up qemu for enabling aarch64 binary execution on x86 machine
-    - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
-      with:
-        platforms: arm64
-
-      # Creating a virtual environment on machine with the help of docker container \
-      # and installing the dependencies inside that so that we can use installed \
-      # dependencies.
-    - name: Install dependencies
-      id: install_dependencies
-      run: |
-        docker images --no-trunc
-        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '${{ env.py }} -m pip install -q virtualenv && ${{ env.py }} -m venv .env && \
-          source .env/bin/activate && \
-          ${{ env.py }} -m pip install -q --only-binary google-re2 -r requirements-release.txt && \
-          yum install -y protobuf-compiler protobuf-devel
-          deactivate'
-
-      # using created virtual environment in new container and executing the script
     - name: Build wheel (manylinux)
-      id: build_manylinux
-      if: steps.install_dependencies.outcome == 'success'
-      run: |
-        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          yum install -y sudo && \
-          sudo chmod +x .github/workflows/manylinux/entrypoint.sh && \
-          sudo bash -x .github/workflows/manylinux/entrypoint.sh ${{ env.py }} ${{ env.manylinux }} ${{ inputs.build_mode }}
-          deactivate'
+      id: build_wheel
+      uses: docker://quay.io/pypa/manylinux2014_aarch64:latest
+      with:
+        entrypoint: bash
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_aarch64 ${{ inputs.build_mode }}
 
-      # using created virtual environment in new container and testing the wheel
-    - name: Test wheel with Python ${{ matrix.python-version }}
-      if: steps.build_manylinux.outcome == 'success'
+    - name: Set up Python ${{ matrix.python-version }}
+      if: steps.build_wheel.outcome == 'success'
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Install Python dependencies
+      if: steps.build_wheel.outcome == 'success'
       run: |
-        docker images --no-trunc
-        docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          python -m pip install -q --upgrade pip && \
-          python -m pip install -q --only-binary google-re2 -r requirements-release.txt && \
-          pip install dist/*manylinux2014_aarch64.whl && \
-          pytest && \
-          deactivate'
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release_test.txt
+
+    - name: Install protobuf in the GitHub Action environment for testing the wheel
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
+
+    - name: Test wheel with Python ${{ matrix.python-version }}
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        python -m pip install dist/*${{ env.MANYLINUX_WHEEL }}
+        pytest
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_manylinux.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
 
-    - name: Verify ONNX with the latest numpy and protobuf
-      if: steps.build_manylinux.outcome == 'success'
+    - name: TEST_HUB=1 pytest
+      if: (github.event_name == 'schedule') && (steps.build_wheel.outcome == 'success') # Only triggered by weekly event
       run: |
-         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          python -m pip uninstall -y numpy onnx protobuf && python -m pip install numpy protobuf && \
-          python -m pip install dist/*manylinux2014_aarch64.whl && \
-          pytest && \
-          deactivate'
+        TEST_HUB=1 pytest
+
+    - name: Verify ONNX with the latest numpy
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        python -m pip uninstall -y numpy onnx && python -m pip install numpy
+        python -m pip install dist/*${{ env.MANYLINUX_WHEEL }}
+        pytest
+
+    - name: Verify ONNX with the latest protobuf
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
+        python -m pip install dist/*${{ env.MANYLINUX_WHEEL }}
+        pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: steps.build_manylinux.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success'
       run: |
-         docker run --rm -v ${{ github.workspace }}:/ws:rw --workdir=/ws \
-          ${{ env.img }} \
-          bash -exc '\
-          source .env/bin/activate && \
-          python -m pip uninstall -y onnx && python -m pip install -r requirements-min.txt && \
-          python -m pip install dist/*manylinux2014_aarch64.whl && \
-          pytest && \
-          deactivate'
+        python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
+        python -m pip install dist/*${{ env.MANYLINUX_WHEEL }}
+        pytest

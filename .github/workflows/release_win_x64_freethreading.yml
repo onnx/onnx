@@ -2,7 +2,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# could be integraded in release_win.yml when dependency issues are resolved
+# could be integrated in release_win.yml when dependency issues are resolved
+
 
 name: WindowsRelease (freethreading)
 
@@ -20,7 +21,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  build-and-test:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-2022
     strategy:
@@ -69,7 +70,7 @@ jobs:
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
-    - name: Test the installed wheel
+    - name: Test the installed wheel      
       if: steps.build_wheel.outcome == 'success'
       run: |
         pytest
