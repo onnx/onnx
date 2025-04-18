@@ -265,8 +265,8 @@ jobs:
 
   test_source_dist:
     name: test source distribution
-    needs: [publish_preview_build_to_pypi_weekly]
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    needs: [publish_preview_build_to_pypi_weekly, publish_release_build_to_testpypi]
+    if: (needs.publish_preview_build_to_pypi_weekly.result == 'success' || needs.publish_release_build_to_testpypi.result == 'success')
     uses: ./.github/workflows/preview_source_dist_test.yml
     with:
       os: "macos"
