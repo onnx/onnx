@@ -4,7 +4,6 @@
 
 # could be integraded in release_win.yml when dependency issues are resolved
 
-
 name: WindowsRelease (freethreading)
 
 on:  # Specifies the event triggering the workflow
