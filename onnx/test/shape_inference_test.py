@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import itertools
 import unittest
 from typing import TYPE_CHECKING, Any
@@ -10661,6 +10662,125 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
+
+
+class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
+    op_type: str = "CustomOp"
+    op_version: int = 1
+    op_domain: str = ""
+
+    def setUp(self) -> None:
+        # Ensure the schema is unregistered
+        self.assertFalse(onnx.defs.has(self.op_type, self.op_domain))
+
+    def tearDown(self) -> None:
+        # Clean up the registered schema
+        with contextlib.suppress(onnx.defs.SchemaError):
+            onnx.defs.deregister_schema(self.op_type, self.op_version, self.op_domain)
+
+    def test_custom_schema_shape_inference(self) -> None:
+        # CustomOp schema:
+        #   attrs:
+        #       out_len: [L0, L1, ...]
+        #   inputs:
+        #       a[N, La]
+        #       b[N, Lb]
+        #   outputs:
+        #       out0[N, La * Lb, L0]
+        #       out1[N, La * Lb, L1]
+        #       ...
+
+        # generate graph
+        N = 3
+        La = 32
+        Lb = 64
+        out_len = [1, 2]
+        outs = [f"out{i}" for i in range(len(out_len))]
+        graph = self._make_graph(
+            [
+                ("a", TensorProto.FLOAT, (N, La)),
+                ("b", TensorProto.FLOAT, (N, Lb)),
+            ],
+            [make_node(self.op_type, ["a", "b"], outs, out_len=out_len)],
+            [],
+        )
+
+        def shape_infer_once():
+            self._assert_inferred(
+                graph,
+                [
+                    make_tensor_value_info(
+                        f"out{i}", TensorProto.FLOAT, (N, La * Lb, Li)
+                    )
+                    for i, Li in enumerate(out_len)
+                ],
+            )
+
+        # shape inference before register
+        with self.assertRaises(onnx.checker.ValidationError):
+            shape_infer_once()
+
+        # register schema
+        schema = OpSchema(
+            self.op_type,
+            self.op_domain,
+            self.op_version,
+            inputs=[
+                defs.OpSchema.FormalParameter("a", "float"),
+                defs.OpSchema.FormalParameter("b", "float"),
+            ],
+            outputs=[
+                defs.OpSchema.FormalParameter(
+                    "out", "float", param_option=OpSchema.FormalParameterOption.Variadic
+                ),
+            ],
+            attributes=[
+                defs.OpSchema.Attribute("out_len", defs.OpSchema.AttrType.INTS)
+            ],
+        )
+
+        def schema_shape_infer_func(ctx: onnx.shape_inference.InferenceContext):
+            def parse_tensor_input(t: TypeProto):
+                self.assertTrue(isinstance(t, TypeProto))
+                return (
+                    t.tensor_type.elem_type,
+                    [
+                        d.dim_value if d.HasField("dim_value") else None
+                        for d in t.tensor_type.shape.dim
+                    ],
+                )
+
+            self.assertEqual(ctx.get_num_inputs(), 2)
+            in0 = ctx.get_input_type(0)
+            in1 = ctx.get_input_type(1)
+            in0_type, in0_shape = parse_tensor_input(in0)
+            in1_type, in1_shape = parse_tensor_input(in1)
+            self.assertEqual(in0_type, TensorProto.FLOAT)
+            self.assertEqual(in1_type, TensorProto.FLOAT)
+            self.assertEqual(len(in0_shape), 2)
+            self.assertEqual(len(in1_shape), 2)
+            self.assertEqual(in0_shape[0], in1_shape[0])
+            N, La = in0_shape
+            _, Lb = in1_shape
+            attr = ctx.get_attribute("out_len")
+            out_len = attr.ints
+            self.assertEqual(len(out_len), ctx.get_num_outputs())
+            for i in range(ctx.get_num_outputs()):
+                out = ctx.get_output_type(i)
+                out.tensor_type.elem_type = in0_type
+                out.tensor_type.shape.dim.add().dim_value = N
+                out.tensor_type.shape.dim.add().dim_value = La * Lb
+                out.tensor_type.shape.dim.add().dim_value = out_len[i]
+                ctx.set_output_type(i, out)
+
+        schema.set_type_and_shape_inference_function(schema_shape_infer_func)
+        onnx.defs.register_schema(schema)
+
+        # shape inference with registed schema
+        shape_infer_once()
+
+        # clean up
+        onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
 
 
 if __name__ == "__main__":
