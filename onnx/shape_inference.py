@@ -19,6 +19,9 @@ from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+GraphInferencer = C.GraphInferencer
+InferenceContext = C.InferenceContext
+
 
 def infer_shapes(
     model: ModelProto | bytes,
