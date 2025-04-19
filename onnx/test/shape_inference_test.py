@@ -10776,7 +10776,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         schema.set_type_and_shape_inference_function(schema_shape_infer_func)
         onnx.defs.register_schema(schema)
 
-        # shape inference with registed schema
+        # shape inference with registered schema
         shape_infer_once()
 
         # clean up
