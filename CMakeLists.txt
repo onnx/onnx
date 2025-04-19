@@ -533,6 +533,61 @@ if(ONNX_BUILD_PYTHON)
 
   target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
 
+  # pybind11_protobuf
+  set(PYBIND11_PROTOBUF_DIR "${ONNX_ROOT}/third_party/pybind11_protobuf")
+  if(NOT EXISTS "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf")
+    message(FATAL_ERROR "cannot find pybind11_protobuf at '${PYBIND11_PROTOBUF_DIR}'")
+  endif()
+  add_library(pybind11_native_proto_caster STATIC
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/native_proto_caster.h"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/enum_type_caster.h"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_cast_util.cc"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_cast_util.h"
+    "${PYBIND11_PROTOBUF_DIR}/pybind11_protobuf/proto_caster_impl.h"
+  )
+  target_include_directories(pybind11_native_proto_caster PUBLIC
+    "${PROTOBUF_INCLUDE_DIR}"
+    "${PYBIND11_PROTOBUF_DIR}"
+  )
+  set(PYBIND11_PROTOBUF_ABSL
+    absl::flat_hash_map
+    absl::flat_hash_set
+    absl::hash
+    absl::strings
+    absl::optional
+  )
+  # `pybind11_protobuf` depends on absl. If it does not exist in local, try fetch and build
+  find_package(absl)
+  set(BUILD_CUSTOM_ABSL OFF)
+  foreach(ABSL_USED_TARGET IN LISTS PYBIND11_PROTOBUF_ABSL)
+    if(NOT TARGET ${ABSL_USED_TARGET})
+      message(STATUS "absl target not exist for pybind11_protobuf: ${ABSL_USED_TARGET}")
+      set(BUILD_CUSTOM_ABSL ON)
+      continue()
+    endif()
+  endforeach()
+  if(${BUILD_CUSTOM_ABSL})
+    message(STATUS "Will build absl")
+    include(FetchContent)
+    set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+    set(ABSL_ENABLE_INSTALL OFF)
+    FetchContent_Declare(
+      absl
+      GIT_REPOSITORY "https://github.com/abseil/abseil-cpp.git"
+      GIT_TAG "20250127.0"
+      GIT_SHALLOW TRUE)
+    FetchContent_MakeAvailable(absl)
+    set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
+  endif()
+  target_link_libraries(pybind11_native_proto_caster PUBLIC
+    ${PYBIND11_PROTOBUF_ABSL}
+    protobuf::libprotobuf
+    pybind11::pybind11
+  )
+
+  target_include_directories(onnx_cpp2py_export PUBLIC "${PYBIND11_PROTOBUF_DIR}")
+  target_link_libraries(onnx_cpp2py_export PUBLIC pybind11_native_proto_caster)
+
   if(APPLE)
     set_target_properties(onnx_cpp2py_export
                           PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
