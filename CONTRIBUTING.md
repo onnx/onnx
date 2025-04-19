@@ -123,7 +123,7 @@ Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examp
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
 
 ```sh
-pip install pytest nbval
+pip install pytest
 ```
 
 After installing pytest, run from the root of the repo:

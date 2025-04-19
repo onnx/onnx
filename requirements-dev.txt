@@ -1,6 +1,4 @@
 build
-jupyter
-nbval
 numpy
 parameterized
 protobuf
