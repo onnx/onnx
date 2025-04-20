@@ -53,7 +53,7 @@ jobs:
       run: |
         $cmake_arch = 'ARM64'
 
-        .\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch $cmake_arch
+        .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $cmake_arch
 
         echo "Install ONNX"
         $Env:ONNX_ML=1
