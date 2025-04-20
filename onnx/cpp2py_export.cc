@@ -5,7 +5,6 @@
 #include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include <pybind11_protobuf/native_proto_caster.h>
 
 #include <climits>
 #include <limits>
@@ -28,6 +27,53 @@
 #if (PYBIND11_VERSION_MAJOR != 2 || PYBIND11_VERSION_MINOR < 12)
 #pragma error "Pybind11 must be >= 2.12 to be compatible with numpy 2.0."
 #endif
+
+template <typename T>
+struct PythonProtoTypeMap {};
+
+#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_MODULE_NAME, PY_TYPE_NAME)           \
+  template <>                                                                     \
+  struct PythonProtoTypeMap<_ProtoType> {                                         \
+    static constexpr auto FullName = pybind11::detail::const_name(PY_MODULE_NAME "." PY_TYPE_NAME); \
+    static constexpr auto TypeName = pybind11::detail::const_name(PY_TYPE_NAME);                    \
+    static constexpr auto ModuleName = pybind11::detail::const_name(PY_MODULE_NAME);                \
+  };
+
+template <typename _ProtoType>
+class ::pybind11::detail::
+    type_caster<_ProtoType, std::enable_if_t<std::is_base_of<::google::protobuf::Message, _ProtoType>::value>> {
+ public:
+  PYBIND11_TYPE_CASTER(_ProtoType, PythonProtoTypeMap<_ProtoType>::FullName);
+  bool load(handle py_proto, bool) {
+    try {
+      if (!pybind11::hasattr(py_proto, "SerializeToString")) {
+        return false;
+      }
+      pybind11::bytes serialized = py_proto.attr("SerializeToString")();
+      std::string serialized_str = serialized;
+      if (!value.ParseFromString(serialized_str)) {
+        return false;
+      }
+      return true;
+    } catch (const pybind11::error_already_set&) {
+      return false;
+    }
+  }
+  static handle cast(const _ProtoType& cpp_proto, return_value_policy /* policy */, handle /* parent */) {
+    auto py_proto = pybind11::module::import(PythonProtoTypeMap<_ProtoType>::ModuleName.text)
+                        .attr(PythonProtoTypeMap<_ProtoType>::TypeName.text)();
+    std::string serialized = cpp_proto.SerializeAsString();
+    py_proto.attr("ParseFromString")(pybind11::bytes(serialized));
+    return py_proto.release();
+  }
+};
+
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::AttributeProto, "onnx", "AttributeProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TypeProto, "onnx", "TypeProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorProto, "onnx", "TensorProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::SparseTensorProto, "onnx", "SparseTensorProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorShapeProto, "onnx", "TensorShapeProto");
+
 
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
@@ -114,8 +160,6 @@ static std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
 }
 
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
-  pybind11_protobuf::ImportNativeProtoCasters();
-
   onnx_cpp2py_export.doc() = "Python interface to ONNX";
 
   onnx_cpp2py_export.attr("ONNX_ML") = py::bool_(
@@ -660,7 +704,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   inference_ctx.def("get_symbolic_input", &InferenceContext::getSymbolicInput);
   inference_ctx.def("get_graph_attribute_inferencer", &InferenceContext::getGraphAttributeInferencer);
   inference_ctx.def("get_num_outputs", &InferenceContext::getNumOutputs);
-  inference_ctx.def("get_output_type", &InferenceContext::getOutputType, py::return_value_policy::reference);
+  inference_ctx.def("get_output_type", &InferenceContext::getOutputType);
   inference_ctx.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
     auto* dst = self.getOutputType(idx);
     if (dst == nullptr || dst == &src) {
