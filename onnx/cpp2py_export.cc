@@ -31,16 +31,16 @@
 template <typename T>
 struct PythonProtoTypeMap {};
 
-#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_MODULE_NAME, PY_TYPE_NAME)           \
-  template <>                                                                     \
-  struct PythonProtoTypeMap<_ProtoType> {                                         \
+#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_MODULE_NAME, PY_TYPE_NAME)                             \
+  template <>                                                                                       \
+  struct PythonProtoTypeMap<_ProtoType> {                                                           \
     static constexpr auto FullName = pybind11::detail::const_name(PY_MODULE_NAME "." PY_TYPE_NAME); \
     static constexpr auto TypeName = pybind11::detail::const_name(PY_TYPE_NAME);                    \
     static constexpr auto ModuleName = pybind11::detail::const_name(PY_MODULE_NAME);                \
   };
 
 template <typename _ProtoType>
-class ::pybind11::detail::
+class pybind11::detail::
     type_caster<_ProtoType, std::enable_if_t<std::is_base_of<::google::protobuf::Message, _ProtoType>::value>> {
  public:
   PYBIND11_TYPE_CASTER(_ProtoType, PythonProtoTypeMap<_ProtoType>::FullName);
@@ -73,7 +73,6 @@ DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TypeProto, "onnx", "TypeProto");
 DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorProto, "onnx", "TensorProto");
 DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::SparseTensorProto, "onnx", "SparseTensorProto");
 DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorShapeProto, "onnx", "TensorShapeProto");
-
 
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
