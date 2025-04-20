@@ -164,9 +164,9 @@ static std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
 }
 
 template <typename T>
-static std::tuple<std::vector<T>, std::vector<T*>> ConvertPyObjToPtr(const std::vector<py::object>& pyObjs) {
+static std::tuple<std::vector<T>, std::vector<const T*>> ConvertPyObjToPtr(const std::vector<py::object>& pyObjs) {
   std::vector<T> objs;
-  std::vector<T*> ptrs;
+  std::vector<const T*> ptrs;
   objs.reserve(pyObjs.size());
   ptrs.reserve(pyObjs.size());
   for (const auto& obj : pyObjs) {
@@ -747,8 +747,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](GraphInferencer& self,
          const std::vector<py::object>& inputTypesObj,
          const std::vector<py::object>& inputDataObj) {
-        auto inputTypesTuple = ConvertPyObjToPtr<const ONNX_NAMESPACE::TypeProto>(inputTypesObj);
-        auto inputDataTuple = ConvertPyObjToPtr<const ONNX_NAMESPACE::TensorProto>(inputDataObj);
+        auto inputTypesTuple = ConvertPyObjToPtr<ONNX_NAMESPACE::TypeProto>(inputTypesObj);
+        auto inputDataTuple = ConvertPyObjToPtr<ONNX_NAMESPACE::TensorProto>(inputDataObj);
         auto ret = self.doInferencing(std::get<1>(inputTypesTuple), std::get<1>(inputDataTuple));
         std::vector<py::object> retObj(ret.size());
         for (size_t i = 0; i < ret.size(); ++i) {
