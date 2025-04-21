@@ -68,6 +68,7 @@ TENSOR_TYPE_MAP = {
         np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
     ),
     # Native numpy does not support float8 types, so now use float32 for these types.
+    # TODO(after #6605): Use ml_dtypes instead.
     int(TensorProto.FLOAT8E4M3FN): TensorDtypeMap(
         np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FN"
     ),
