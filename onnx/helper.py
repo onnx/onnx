@@ -7,6 +7,7 @@ import collections.abc
 import functools
 import numbers
 import struct
+import typing
 from cmath import isnan
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 
@@ -1700,7 +1701,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
         }
     }
     if np_dtype in _np_dtype_to_tensor_dtype:
-        return TensorProto.DataType(_np_dtype_to_tensor_dtype[np_dtype])
+        return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
     if np.issubdtype(np_dtype, np.str_):
         return TensorProto.STRING  # type: ignore[no-any-return]
 
