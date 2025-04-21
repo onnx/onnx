@@ -15,7 +15,6 @@ import numpy as np
 import typing_extensions
 
 import onnx
-import onnx._custom_element_types as custom_np_types
 from onnx import (
     AttributeProto,
     FunctionProto,
@@ -32,6 +31,7 @@ from onnx import (
     TrainingInfoProto,
     TypeProto,
     ValueInfoProto,
+    _custom_element_types,
     defs,
     mapping,
     subbyte,
@@ -1705,16 +1705,16 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
         return TensorProto.STRING  # type: ignore[no-any-return]
 
     if np_dtype in {
-        custom_np_types.bfloat16,
-        custom_np_types.float8e4m3fn,
-        custom_np_types.float8e4m3fnuz,
-        custom_np_types.float8e5m2,
-        custom_np_types.float8e5m2fnuz,
-        custom_np_types.int4,
-        custom_np_types.uint4,
-        custom_np_types.float4e2m1,
+        _custom_element_types.bfloat16,
+        _custom_element_types.float8e4m3fn,
+        _custom_element_types.float8e4m3fnuz,
+        _custom_element_types.float8e5m2,
+        _custom_element_types.float8e5m2fnuz,
+        _custom_element_types.int4,
+        _custom_element_types.uint4,
+        _custom_element_types.float4e2m1,
     }:
-        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
+        return _custom_element_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
