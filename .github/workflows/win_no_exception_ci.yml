@@ -50,7 +50,7 @@ jobs:
 
     - name: Build and test ONNX binaries
       run: |
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch ${{ matrix.architecture }}
+        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch ${{ matrix.architecture }}
 
         cd onnx
         echo "Build ONNX"
