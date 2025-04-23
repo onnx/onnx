@@ -1157,7 +1157,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     return nullptr;
   }
 
-  static OpSchemaRegistry* Instance();
+  ONNX_API static OpSchemaRegistry* Instance();
 
   // NOLINTNEXTLINE(google-default-arguments)
   const OpSchema* GetSchema(
