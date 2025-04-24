@@ -40,7 +40,14 @@ class Extractor:
         return output_to_index
 
     def _collect_new_io(self, io_names_to_extract: list[str]) -> list[ValueInfoProto]:
-        # Same order as io_names_to_extract
+        # Validate that all names exist in self.value_infos
+        missing_names = [
+            name for name in io_names_to_extract if name not in self.value_infos
+        ]
+        if missing_names:
+            raise ValueError(
+                f"The following names were not found in value_infos: {', '.join(missing_names)}"
+            )
         return [self.value_infos[name] for name in io_names_to_extract]
 
     def _dfs_search_reachable_nodes(
