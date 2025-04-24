@@ -18,7 +18,7 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-static void InlineFunctions(ModelProto& model, const char* input, const inliner::FunctionIdSet* to_inline = nullptr) {
+static void InlineFunctions(ModelProto& model, const char* input, const inliner::FunctionIdSet* to_inline = nullptr, const ISchemaRegistry* schema_registry = nullptr) {
   OnnxParser parser(input);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -28,7 +28,9 @@ static void InlineFunctions(ModelProto& model, const char* input, const inliner:
   shape_inference::InferShapes(model);
 
   // std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
-  if (to_inline != nullptr)
+  if (schema_registry != nullptr)
+    inliner::InlineSelectedFunctions(model, *to_inline, schema_registry);
+  else if (to_inline != nullptr)
     inliner::InlineSelectedFunctions(model, *to_inline);
   else
     inliner::InlineLocalFunctions(model, true);
@@ -370,6 +372,24 @@ bar (x) => (y) {
   ASSERT_EQ(node2.op_type(), "ReduceLogSum");
   ASSERT_EQ(node2.input_size(), 2);
   ASSERT_EQ(node2.attribute_size(), 0);
+}
+
+TEST(SchemaFunctionInliner, BasicTest) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: ["" : 18]>
+agraph (float[N, 128] X) => (float[N, 128] Y)
+{
+  Y = Softmax (X)
+}
+)ONNX";
+
+  ModelProto model;
+  inliner::FunctionIdVector to_inline = {{"", "Softmax"}};
+  auto to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline));
+  InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
+  std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
+  auto num_nodes = model.graph().node_size();
+  ASSERT_GT(num_nodes, 1);
 }
 
 } // namespace Test
