@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "onnx/onnx_pb.h"
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 namespace inliner {
@@ -37,6 +38,16 @@ class FunctionIdSet {
   // Otherwise, creates a set representing elements not in the given vector.
   static std::unique_ptr<FunctionIdSet> Create(FunctionIdVector&& function_ids, bool invert = false);
 };
+
+/**
+ * @brief Inlines the schema-defined functions in the given model that are in the given set.
+ * @param model The model in which functions will be inlined.
+ * @param to_inline The set of functions to inline.
+ * @param schema_registry The schema registry used for function lookup. If nullptr,
+ *        the default schema registry is used.
+ * @note Only call-sites in the main graph are inlined.
+ */
+void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry);
 
 // Inlines the model-local functions in the given model that are in the given set.
 // The inlined functions are removed from the model's list of functions as well.
