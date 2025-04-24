@@ -6,23 +6,22 @@ from __future__ import annotations
 import os
 import tarfile
 from collections import deque
-from typing import TYPE_CHECKING
 
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
 from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoProto
 
-if TYPE_CHECKING:
-    from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
-
 
 class Extractor:
     def __init__(self, model: ModelProto) -> None:
         self.model = model
         self.graph = self.model.graph
-        self.wmap = self._build_name2obj_dict(self.graph.initializer)
-        self.vimap = self._build_name2obj_dict(self.graph.value_info)
+        self.initializers = self._build_name2obj_dict(self.graph.initializer)
+        self.value_infos = self._build_name2obj_dict(self.graph.value_info)
+        # Add input and output values (not included in the value_info for intermediate values)
+        self.value_infos.update(self._build_name2obj_dict(self.graph.input))
+        self.value_infos.update(self._build_name2obj_dict(self.graph.output))
         self.outmap = self._build_output_dict(self.graph)
 
     @staticmethod
@@ -40,25 +39,9 @@ class Extractor:
                 output_to_index[output_name] = index
         return output_to_index
 
-    def _collect_new_io_core(
-        self,
-        original_io: RepeatedCompositeFieldContainer[ValueInfoProto],
-        io_names_to_extract: list[str],
-    ) -> list[ValueInfoProto]:
-        original_io_map = self._build_name2obj_dict(original_io)
-        new_io_tensors = []
-        for io_name_to_extract in io_names_to_extract:
-            if io_name_to_extract in original_io_map:
-                new_io_tensors.append(original_io_map[io_name_to_extract])
-            else:
-                new_io_tensors.append(self.vimap[io_name_to_extract])
-        return new_io_tensors  # same order as io_names_to_extract
-
-    def _collect_new_inputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.input, names)
-
-    def _collect_new_outputs(self, names: list[str]) -> list[ValueInfoProto]:
-        return self._collect_new_io_core(self.graph.output, names)
+    def _collect_new_io(self, io_names_to_extract: list[str]) -> list[ValueInfoProto]:
+        # Same order as io_names_to_extract
+        return [self.value_infos[name] for name in io_names_to_extract]
 
     def _dfs_search_reachable_nodes(
         self,
@@ -134,8 +117,12 @@ class Extractor:
         for node in nodes:
             all_tensors_names.update(node.input)
             all_tensors_names.update(node.output)
-        initializer = [self.wmap[t] for t in self.wmap if t in all_tensors_names]
-        value_info = [self.vimap[t] for t in self.vimap if t in all_tensors_names]
+        initializer = [
+            self.initializers[t] for t in self.initializers if t in all_tensors_names
+        ]
+        value_info = [
+            self.value_infos[t] for t in self.value_infos if t in all_tensors_names
+        ]
         len_sparse_initializer = len(self.graph.sparse_initializer)
         if len_sparse_initializer != 0:
             raise ValueError(
@@ -174,8 +161,8 @@ class Extractor:
         input_names: list[str],
         output_names: list[str],
     ) -> ModelProto:
-        inputs = self._collect_new_inputs(input_names)
-        outputs = self._collect_new_outputs(output_names)
+        inputs = self._collect_new_io(input_names)
+        outputs = self._collect_new_io(output_names)
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
         local_functions = self._collect_referred_local_functions(nodes)
