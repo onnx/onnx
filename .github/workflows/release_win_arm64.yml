@@ -1,0 +1,73 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: WindowsRelease_aarch64
+
+on:  # Specifies the event triggering the workflow
+  workflow_call:  # Indicates that this is a reusable workflow
+    inputs:
+      os:
+        required: true
+        type: string
+      build_mode: 
+        required: true
+        type: string
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read
+
+jobs:
+  build-and-test:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    runs-on: windows-11-arm
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+        architecture: ['arm64']
+    steps:
+    - name: Checkout ONNX
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+         submodules: 'recursive'
+         persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+      with:
+        msbuild-architecture: ${{ matrix.architecture }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -r requirements-release_build.txt
+
+    - name: Build ONNX wheel
+      id: build_wheel
+      run: |
+        
+        .\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch 'ARM64'
+
+        echo "Install ONNX"
+        $Env:ONNX_ML=1
+        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
+
+        if ( '${{ inputs.build_mode }}' -ne 'release') {
+          echo "Build preview build whl package"
+          (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
+          $Env:ONNX_PREVIEW_BUILD=1
+        }
+        python -m build --wheel
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname --no-deps}
+
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: steps.build_wheel.outcome == 'success'
+      with:
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
+        path: ./dist
