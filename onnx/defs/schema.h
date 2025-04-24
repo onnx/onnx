@@ -1156,7 +1156,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     return nullptr;
   }
 
-  static OpSchemaRegistry* Instance();
+  ONNX_API static OpSchemaRegistry* Instance();
 
   const OpSchema* GetSchema(
       const std::string& key,
