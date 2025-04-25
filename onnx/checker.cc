@@ -567,9 +567,8 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
           ONNX_NAMESPACE::to_string(domain_version));
     }
   } else if (schema->Deprecated()) {
-    fail_check(
-        "Op registered for " + node.op_type() + " is deprecated in domain_version of " +
-        ONNX_NAMESPACE::to_string(domain_version));
+    std::cerr << "Warning: Op registered for " << node.op_type() << " is deprecated in domain_version of "
+              << ONNX_NAMESPACE::to_string(domain_version) << '\n';
   } else {
     schema->Verify(node);
   }

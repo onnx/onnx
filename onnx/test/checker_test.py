@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import contextlib
+import io
 import os
 import tempfile
 import unittest
@@ -1113,6 +1115,25 @@ class TestChecker(unittest.TestCase):
         """
         )
         self.assertRaises(checker.ValidationError, checker.check_model, model)
+
+    def test_deprecated_op_does_not_fail_checker(self):
+        # It should raise a warning instead
+        model = onnx.parser.parse_model(
+            """\
+                <ir_version: 10, opset_import: [ "" : 18]>
+                agraph (float[N, C, D1] x, float[C] scale, float[C] bias) => (float[N, C, D] y)
+                {
+                    y = GroupNormalization (x, scale, bias) <num_groups: int = 4>
+                }
+            """
+        )
+        f = io.StringIO()
+        with contextlib.redirect_stderr(f):
+            checker.check_model(model)
+        stderr_text = f.getvalue()
+        self.assertIn(
+            "Warning: Op registered for GroupNormalization is deprecated", stderr_text
+        )
 
 
 if __name__ == "__main__":
