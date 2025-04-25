@@ -324,9 +324,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
   set(${SRCS})
   set(${HDRS})
 
-  set(GEN_PROTO_PY ${ROOT_DIR}/onnx/gen_proto.py)
+  set(GEN_PROTO_PY "${ROOT_DIR}/onnx/gen_proto.py")
   foreach(INFILE ${ARGN})
-    set(ABS_FILE ${ROOT_DIR}/${INFILE})
+    set(ABS_FILE "${ROOT_DIR}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
     # "onnx-data" check is because we do not want to create/compile an "onnx-data-ml.proto" file
@@ -343,7 +343,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         set(GENERATED_FILE_WE "${FILE_WE}_${ONNX_NAMESPACE}")
       endif()
     endif()
-    file(RELATIVE_PATH REL_DIR ${ROOT_DIR} ${FILE_DIR})
+    file(RELATIVE_PATH REL_DIR "${ROOT_DIR}" "${FILE_DIR}")
     set(OUTPUT_PROTO_DIR "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}")
 
     set(OUTPUT_PB_HEADER "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.h")
@@ -382,7 +382,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${Python3_EXECUTABLE}" "${GEN_PROTO_PY}"
+                       COMMAND Python3::Interpreter "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -408,7 +408,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     if(ONNX_PROTO_POST_BUILD_SCRIPT)
       add_custom_command(
         OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
-        COMMAND ${ONNX_PROTOC_EXECUTABLE} ARGS ${PROTOC_ARGS}
+        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ARGS ${PROTOC_ARGS}
         COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_HEADER}
                 -DNAMESPACES=${ONNX_NAMESPACE} -P
                 ${ONNX_PROTO_POST_BUILD_SCRIPT}
@@ -421,7 +421,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     else()
       add_custom_command(
         OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
-        COMMAND ${ONNX_PROTOC_EXECUTABLE} ARGS ${PROTOC_ARGS}
+        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ARGS ${PROTOC_ARGS}
         DEPENDS ${GENERATED_PROTO} ${DEPEND}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
         VERBATIM)
