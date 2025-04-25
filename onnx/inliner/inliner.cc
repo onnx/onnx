@@ -93,6 +93,18 @@ class NameGenerator : private Visitor {
     NameGenerator::VisitFunction(function);
   }
 
+  void ResetFor(const GraphProto& graph) {
+    index_ = 0;
+    existing_names_.clear();
+    NameGenerator::VisitGraph(graph);
+  }
+
+  void ResetFor(const FunctionProto& function) {
+    index_ = 0;
+    existing_names_.clear();
+    NameGenerator::VisitFunction(function);
+  }
+
   // Creates a new unique name, based on a suggested name, and adds it to the set
   // of existing names. Returns the newly created name.
   std::string CreateNew(const std::string& suggested) {
@@ -430,13 +442,30 @@ int64_t GetDomainVersion(const ModelProto& model, const std::string& domain) {
   return 0;
 }
 
+class VectorSet : public FunctionIdSet {
+  public:
+   VectorSet(FunctionIdVector&& function_ids, bool invert) : function_ids_(std::move(function_ids)), invert_(invert) {}
+ 
+   bool Contains(const std::string& function_domain, const std::string& function_name) const override {
+     bool found =
+         std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) !=
+         function_ids_.end();
+     return invert_ ? !found : found;
+   }
+ 
+  private:
+   FunctionIdVector function_ids_;
+   bool invert_;
+ };
+
 constexpr int64_t kNoConversion = -1;
 using FunctionMap = std::unordered_map<FunctionImplId, std::pair<const FunctionProto*, int64_t>>;
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
 
 struct InlinerImpl {
-  ModelProto* model = nullptr;
+  ModelProto& model;
+  const FunctionIdSet& to_inline;
   const FunctionMap* function_map;
   const ISchemaRegistry* schema_registry = nullptr;
   NameGenerator name_generator;
@@ -445,17 +474,20 @@ struct InlinerImpl {
   // Construct inliner for inlining call-sites inside main graph of a model.
   InlinerImpl(
       ModelProto& model_,
+      const FunctionIdSet& to_inline_,
       const FunctionMap* function_map_,
       const ISchemaRegistry* schema_registry_)
-      : model(&model_), function_map(function_map_), schema_registry(schema_registry_), name_generator(model_.graph()) {}
-
-  // Construct inliner for inlining call-sites inside a model-local function.
-  InlinerImpl(FunctionProto& function, const FunctionMap& map)
-      : function_map(&map), name_generator(function) {}
+      : model(model_), to_inline(to_inline_), function_map(function_map_), schema_registry(schema_registry_), name_generator(model_.graph()) {}
 
   virtual ~InlinerImpl() = default;
 
   virtual bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
+    const std::string& domain = node.domain();
+    const std::string& function_name = node.op_type();
+    if (!to_inline.Contains(domain, function_name)) {
+      return false;
+    }
+
     if (function_map != nullptr) {
       auto iter = this->function_map->find(GetCalleeId(node));
       if (iter != this->function_map->end()) {
@@ -465,8 +497,8 @@ struct InlinerImpl {
       }
     }
     if (schema_registry != nullptr) {
-      const auto& domain = node.domain();
-      int64_t domain_version = GetDomainVersion(*model, domain);
+      
+      int64_t domain_version = GetDomainVersion(model, domain);
       const auto* op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
 
       if (op_schema == nullptr) {
@@ -485,7 +517,6 @@ struct InlinerImpl {
   
       // Check if this node has a schema defined function proto.
       if (op_schema->HasContextDependentFunction()) {
-        ModelProto& model = *this->model;
         shape_inference::InferShapes(model);  // TODO: do shape inference incrementally
           std::vector<TypeProto> input_types;
           for (const auto& input : node.input()) {
@@ -518,13 +549,7 @@ struct InlinerImpl {
         // Rename variable names in callee
         InliningRenamer::Rename(node, callee, "__" + std::to_string(++(this->inline_count)), this->name_generator);
         if (target_version != kNoConversion) {
-          ONNX_ASSERTM(
-              this->model != nullptr,
-              "Internal Error: Inlining function %s::%s requires version conversion, "
-              "but version conversion is supported only for models, not functions.",
-              callee.domain().c_str(),
-              callee.name().c_str());
-          ConvertVersion(*(this->model), node, callee, target_version);
+          ConvertVersion(model, node, callee, target_version);
         }
         std::unordered_set<std::string> actual_parameters;
         for (const auto& x : node.input())
@@ -575,23 +600,16 @@ struct InlinerImpl {
    * @param function Mutable function
    * @param map Map from function-id to function for functions to be inlined
    */
-  static void ProcessFunction(FunctionProto& function, FunctionMap& map) {
-    InlinerImpl inliner(function, map);
+  void ProcessFunction(ModelProto& model, FunctionProto& function, FunctionMap& map) {
+    name_generator.ResetFor(function);
     auto* nodes = function.mutable_node();
     auto* value_infos = function.mutable_value_info();
-    inliner.Process(*nodes, *value_infos);
-  }
-
-  /** Inline function calls in the main graph of a model.
-   * @param model Mutable model
-   * @param map Map from function-id to function for functions to be inlined
-   */
-  static void ProcessMainGraph(ModelProto& model, FunctionMap& map, const ISchemaRegistry* schema_registry) {
-    InlinerImpl inliner(model, &map, schema_registry);
-    inliner.ProcessGraph(*model.mutable_graph());
+    Process(*nodes, *value_infos);
   }
 
   static void InlineLocalFunctions(ModelProto& model, bool convert_version) {
+    FunctionIdVector empty_set;
+    VectorSet all_functions(std::move(empty_set), true);
     OpsetMap model_imports(model);
     FunctionMap map;
   
@@ -615,7 +633,8 @@ struct InlinerImpl {
       }
     }
   
-    InlinerImpl::ProcessMainGraph(model, map, nullptr);
+    InlinerImpl inliner(model, all_functions, &map, nullptr);
+    inliner.ProcessGraph(*model.mutable_graph());
   
     // Remove all model-local functions. We do not remove functions with a mis-matched
     // opset version. They need to be handled some other way, eg., using a version-adapter.
@@ -647,10 +666,11 @@ struct InlinerImpl {
       }
     }
   
-    InlinerImpl::ProcessMainGraph(model, map, schema_registry);
+    InlinerImpl inliner(model, to_inline, &map, schema_registry);
+    inliner.ProcessGraph(*model.mutable_graph());
   
     for (auto* function_ptr : non_inlined_functions) {
-      InlinerImpl::ProcessFunction(*function_ptr, map);
+      inliner.ProcessFunction(model, *function_ptr, map);
     }
   
     // Remove all inlined model-local functions.
@@ -670,21 +690,7 @@ struct InlinerImpl {
 };
 
 
-class VectorSet : public FunctionIdSet {
- public:
-  VectorSet(FunctionIdVector&& function_ids, bool invert) : function_ids_(std::move(function_ids)), invert_(invert) {}
 
-  bool Contains(const std::string& function_domain, const std::string& function_name) const override {
-    bool found =
-        std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) !=
-        function_ids_.end();
-    return invert_ ? !found : found;
-  }
-
- private:
-  FunctionIdVector function_ids_;
-  bool invert_;
-};
 
 } // namespace
 
