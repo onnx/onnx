@@ -73,7 +73,7 @@ jobs:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux.yml
     with:
-      os: "linux_x86_64_arm64"
+      os: "linux"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-win_x86:
