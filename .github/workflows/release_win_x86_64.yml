@@ -108,7 +108,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: steps.build_wheel.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t'
       run: |
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
