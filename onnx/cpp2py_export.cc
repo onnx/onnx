@@ -715,16 +715,16 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   shape_inference.doc() = "Shape Inference submodule";
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
 
-  py::class_<InferenceContext> inference_ctx(shape_inference, "InferenceContext", "Inference context");
+  py::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
-  inference_ctx.def("get_attribute", &InferenceContext::getAttribute);
-  inference_ctx.def("get_num_inputs", &InferenceContext::getNumInputs);
-  inference_ctx.def("get_input_type", &InferenceContext::getInputType);
-  inference_ctx.def("has_input", &InferenceContext::hasInput);
-  inference_ctx.def("get_input_data", &InferenceContext::getInputData);
-  inference_ctx.def("get_num_outputs", &InferenceContext::getNumOutputs);
-  inference_ctx.def("get_output_type", &InferenceContext::getOutputType);
-  inference_ctx.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
+  inference_context.def("get_attribute", &InferenceContext::getAttribute);
+  inference_context.def("get_num_inputs", &InferenceContext::getNumInputs);
+  inference_context.def("get_input_type", &InferenceContext::getInputType);
+  inference_context.def("has_input", &InferenceContext::hasInput);
+  inference_context.def("get_input_data", &InferenceContext::getInputData);
+  inference_context.def("get_num_outputs", &InferenceContext::getNumOutputs);
+  inference_context.def("get_output_type", &InferenceContext::getOutputType);
+  inference_context.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
     auto* dst = self.getOutputType(idx);
     if (dst == nullptr) {
       return false;
@@ -732,14 +732,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     dst->CopyFrom(src);
     return true;
   });
-  inference_ctx.def("has_output", &InferenceContext::hasOutput);
-  inference_ctx.def(
+  inference_context.def("has_output", &InferenceContext::hasOutput);
+  inference_context.def(
       "get_graph_attribute_inferencer",
       &InferenceContext::getGraphAttributeInferencer,
       py::return_value_policy::reference_internal);
-  inference_ctx.def("get_input_sparse_data", &InferenceContext::getInputSparseData);
-  inference_ctx.def("get_symbolic_input", &InferenceContext::getSymbolicInput);
-  inference_ctx.def("get_display_name", &InferenceContext::getDisplayName);
+  inference_context.def("get_input_sparse_data", &InferenceContext::getInputSparseData);
+  inference_context.def("get_symbolic_input", &InferenceContext::getSymbolicInput);
+  inference_context.def("get_display_name", &InferenceContext::getDisplayName);
 
   py::class_<GraphInferencer> graph_inferencer(shape_inference, "GraphInferencer", "Graph Inferencer");
   graph_inferencer.def(
@@ -750,11 +750,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         auto inputTypesTuple = ConvertPyObjToPtr<ONNX_NAMESPACE::TypeProto>(inputTypesObj);
         auto inputDataTuple = ConvertPyObjToPtr<ONNX_NAMESPACE::TensorProto>(inputDataObj);
         auto ret = self.doInferencing(std::get<1>(inputTypesTuple), std::get<1>(inputDataTuple));
-        std::vector<py::object> retObj(ret.size());
+        std::vector<py::object> ret_obj(ret.size());
         for (size_t i = 0; i < ret.size(); ++i) {
-          retObj[i] = py::cast(ret[i]);
+          ret_obj[i] = py::cast(ret[i]);
         }
-        return retObj;
+        return ret_obj;
       });
 
   shape_inference.def(
