@@ -14,7 +14,7 @@ on:
         required: true
         type: string
 
-permissions:  # set top-level default permissions as security good practice
+permissions:
   contents: read
 
 jobs:
@@ -53,7 +53,7 @@ jobs:
       if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-release.txt
+        python -m pip install -q -r requirements-release_test.txt
 
     - name: Install protobuf in the GitHub Action environment for testing the wheel
       if: steps.build_wheel.outcome == 'success'
