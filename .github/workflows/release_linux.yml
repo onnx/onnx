@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: LinuxRelease_x86_64
+name: LinuxRelease
 
 on:
   workflow_call:
