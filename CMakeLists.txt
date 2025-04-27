@@ -100,6 +100,16 @@ if(MSVC)
     string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
+  # For disabling Protobuf related warnings
+  add_compile_options(/wd4146 # unary minus operator applied to unsigned type,
+                              # result still unsigned
+                      /wd4244 # 'argument': conversion from 'google::
+                              # protobuf::uint64' to 'int', possible
+                              # loss of data
+                      /wd4267 # Conversion from 'size_t' to 'int',
+                              # possible loss of data
+                      /wd4141 # 'inline': used more than once
+  )
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
@@ -534,8 +544,7 @@ if(ONNX_BUILD_PYTHON)
   target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
 
   if(APPLE)
-    set_target_properties(onnx_cpp2py_export
-                          PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+    target_link_options(onnx_cpp2py_export PRIVATE "-undefined dynamic_lookup")
     # Only put double quotes around $<TARGET_FILE:onnx> for Mac
     # Other platforms like Windows and Ubuntu originally work fine without double quotes
     target_link_libraries(onnx_cpp2py_export
@@ -566,16 +575,6 @@ if(ONNX_BUILD_PYTHON)
 
   if(MSVC)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${Python3_LIBRARIES})
-    target_compile_options(onnx_cpp2py_export
-                           PRIVATE /MP
-                                   /wd4146 # unary minus operator applied to unsigned type,
-                                           # result still unsigned
-                                   /wd4244 # 'argument': conversion from 'google::
-                                           # protobuf::uint64' to 'int', possible
-                                           # loss of data
-                                   /wd4267 # Conversion from 'size_t' to 'int',
-                                           # possible loss of data
-                                   )
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -589,28 +588,6 @@ if(hasParent)
 endif()
 
 if(MSVC)
-  target_compile_options(onnx_proto
-                         PRIVATE /MP
-                                 /wd4146 # unary minus operator applied to unsigned type,
-                                         # result still unsigned
-                                 /wd4244 #'argument': conversion from 'google::
-                                         #protobuf::uint64' to 'int', possible
-                                         # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int',
-                                         # possible loss of data
-                                 /wd4141 # 'inline': used more than once
-                                   )
-  target_compile_options(onnx
-                         PRIVATE /MP
-                                 /wd4146 # unary minus operator applied to unsigned type,
-                                         # result still unsigned
-                                 /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible
-                                         # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int',
-                                         # possible loss of data
-                                 /wd4141 # 'inline': used more than once
-                                   )
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
@@ -619,7 +596,7 @@ if(MSVC)
                    # link operation that consumes this library
       )
   set_target_properties(onnx
-                        PROPERTIES STATIC_LIBRARY_FLAGS
+                        PROPERTIES STATIC_LIBRARY_OPTIONS
                                    "${onnx_static_library_flags}")
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "/WX")
@@ -650,7 +627,7 @@ if(ONNX_USE_ASAN AND NOT MSVC)
 endif()
 
 if(APPLE)
-  set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+  target_link_options(onnx PRIVATE "-undefined dynamic_lookup")
 endif()
 
 install(DIRECTORY ${ONNX_ROOT}/onnx
