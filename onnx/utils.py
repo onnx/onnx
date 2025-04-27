@@ -17,12 +17,16 @@ class Extractor:
     def __init__(self, model: ModelProto) -> None:
         self.model = model
         self.graph = self.model.graph
-        self.initializers = self._build_name2obj_dict(self.graph.initializer)
-        self.value_infos = self._build_name2obj_dict(self.graph.value_info)
+        self.initializers: dict[str, TensorProto] = self._build_name2obj_dict(
+            self.graph.initializer
+        )
+        self.value_infos: dict[str, ValueInfoProto] = self._build_name2obj_dict(
+            self.graph.value_info
+        )
         # Add input and output values (not included in the value_info for intermediate values)
         self.value_infos.update(self._build_name2obj_dict(self.graph.input))
         self.value_infos.update(self._build_name2obj_dict(self.graph.output))
-        self.outmap = self._build_output_dict(self.graph)
+        self.outmap: dict[str, int] = self._build_output_dict(self.graph)
 
     @staticmethod
     def _build_name2obj_dict(objs) -> dict:
