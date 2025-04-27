@@ -555,7 +555,7 @@ if(ONNX_BUILD_PYTHON)
                                   "-Wl,--no-whole-archive")
     # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
     # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
-    if(CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
       target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
     endif()
     set_target_properties(onnx_cpp2py_export
