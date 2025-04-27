@@ -23,8 +23,12 @@ jobs:
     runs-on: windows-2022
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
         architecture: ['x64', 'x86']
+        exclude:
+          - python-version: '3.13t'
+            architecture: 'x86'
+
     steps:
     - name: Checkout ONNX
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -48,9 +52,9 @@ jobs:
         python -m pip install -q --upgrade pip
         if ('${{ matrix.architecture }}' -eq 'x86') {
           echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
-          sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
+          sed -i '' '/-r requirements-reference.txt/d' requirements-release_build.txt
         }
-        python -m pip install -q -r requirements-release.txt
+        python -m pip install -q -r requirements-release_build.txt
         python -m pip install cmake
 
     - name: Build ONNX wheel
@@ -78,6 +82,7 @@ jobs:
     - name: Test the installed wheel
       if: steps.build_wheel.outcome == 'success'
       run: |
+        python -m pip install -q -r requirements-release_test.txt
         pytest
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -103,7 +108,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: steps.build_wheel.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t'
       run: |
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt

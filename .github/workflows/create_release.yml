@@ -69,18 +69,11 @@ concurrency:
 
 jobs:
 
-  call-ubuntu_x86:
+  call-ubuntu:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_linux_x86_64.yml
+    uses: ./.github/workflows/release_linux.yml
     with:
-      os: "linux_x86_64"
-      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-
-  call-ubuntu_aarch64:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_linux_aarch64.yml
-    with:
-      os: "linux_aarch64"
+      os: "linux"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-win_x86:
@@ -97,13 +90,7 @@ jobs:
         os: "win_arm64"
         build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
-  call-win_x64_freethreading: # experimental
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_win_x64_freethreading.yml
-    with:
-      os: "win_free"
-      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-
+  
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
@@ -123,7 +110,7 @@ jobs:
     name: Check for Publish release build to pypi
     runs-on: ubuntu-latest
 
-    needs: [call-ubuntu_x86, call-ubuntu_aarch64, call-mac, call-win_x86, call-win_x64_freethreading, call-sdist]
+    needs: [call-ubuntu, call-mac, call-win_x86, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-')
 
     steps:
@@ -151,7 +138,7 @@ jobs:
     name: Check for Publish preview build to test.pypi-weekly
     runs-on: ubuntu-latest
 
-    needs: [call-ubuntu_x86, call-ubuntu_aarch64, call-mac, call-win_x86, call-win_arm64, call-win_x64_freethreading, call-sdist]
+    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly   == 'yes' ) && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -204,7 +191,7 @@ jobs:
     name: Check for Publish release build to test.pypi (rc-candidates)
     runs-on: ubuntu-latest
 
-    needs: [call-ubuntu_x86, call-ubuntu_aarch64, call-mac, call-win_x86, call-win_arm64, call-win_x64_freethreading, call-sdist]
+    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes' ) && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -256,7 +243,7 @@ jobs:
     name: Check for Publish preview build to pypi-weekly
     runs-on: ubuntu-latest
 
-    needs: [call-ubuntu_x86, call-ubuntu_aarch64, call-mac, call-win_x86, call-win_arm64, call-win_x64_freethreading, call-sdist]
+    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
 
     steps:
