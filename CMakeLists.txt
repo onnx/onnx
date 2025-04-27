@@ -100,6 +100,7 @@ if(MSVC)
     string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
+  add_compile_options(/MP /utf-8 /nologo)
   # For disabling Protobuf related warnings
   add_compile_options(/wd4146 # unary minus operator applied to unsigned type,
                               # result still unsigned
