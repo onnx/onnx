@@ -391,6 +391,15 @@ agraph (float[N, 128] X) => (float[N, 128] Y)
   ASSERT_GT(num_nodes, 1);
 }
 
+static bool ContainsOp(const ModelProto& model, const char* op_type) {
+  for (const auto& node : model.graph().node()) {
+    if (node.op_type() == op_type) {
+      return true;
+    }
+  }
+  return false;
+}
+
 TEST(SchemaFunctionInliner, NestedTest) {
   const char* code = R"ONNX(
 <ir_version: 8, opset_import: ["" : 18]>
@@ -407,6 +416,17 @@ agraph (float[N, C] X, int32[N] expected) => (float Y)
   std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
   auto num_nodes = model.graph().node_size();
   ASSERT_GT(num_nodes, 1);
+  // Nested call to LogSoftmax should not be inlined.
+  ASSERT_TRUE(ContainsOp(model, "LogSoftmax"));
+
+  inliner::FunctionIdVector to_inline2 = {{"", "SoftmaxCrossEntropyLoss"}, {"", "LogSoftmax"}};
+  to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline2));
+  InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
+  std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
+  num_nodes = model.graph().node_size();
+  ASSERT_GT(num_nodes, 1);
+  // Nested call to LogSoftmax should be inlined.
+  ASSERT_FALSE(ContainsOp(model, "LogSoftmax"));
 }
 } // namespace Test
 } // namespace ONNX_NAMESPACE
