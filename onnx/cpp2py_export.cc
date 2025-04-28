@@ -28,6 +28,10 @@
 #pragma error "Pybind11 must be >= 2.12 to be compatible with numpy 2.0."
 #endif
 
+#ifndef PYBIND11_DETAILED_ERROR_MESSAGES
+#define PYBIND11_DETAILED_ERROR_MESSAGES
+#endif
+
 template <typename T>
 struct PythonProtoTypeMap {};
 
