@@ -651,7 +651,8 @@ struct InlinerImpl {
     OpsetMap model_imports(model);
     FunctionMap map;
     std::vector<FunctionProto*> non_inlined_functions;
-  
+
+
     // If there is any mismatch between the opset versions required for any of the
     // functions and the model, the inliner will fail.
   
@@ -683,7 +684,7 @@ struct InlinerImpl {
     }
   }
 
-  static void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
+  static void InlineSelectedLocalFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
     InlineSelectedFunctions(model, to_inline, nullptr);
   }
 
@@ -706,11 +707,18 @@ void InlineLocalFunctions(ModelProto& model, bool convert_version) {
   InlinerImpl::InlineLocalFunctions(model, convert_version);
 }
 
+void InlineSelectedLocalFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
+  InlinerImpl::InlineSelectedLocalFunctions(model, to_inline);
+}
+
 void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
-  InlinerImpl::InlineSelectedFunctions(model, to_inline);
+  InlineSelectedLocalFunctions(model, to_inline);
 }
 
 void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry) {
+  if (schema_registry == nullptr) {
+    schema_registry = OpSchemaRegistry::Instance();
+  }
   InlinerImpl::InlineSelectedFunctions(model, to_inline, schema_registry);
 }
 } // namespace inliner

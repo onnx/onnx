@@ -49,9 +49,29 @@ class FunctionIdSet {
  */
 void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry);
 
-// Inlines the model-local functions in the given model that are in the given set.
-// The inlined functions are removed from the model's list of functions as well.
 
+/**
+ * @brief Inlines the model-local functions in the given model that are in the given set.
+ * 
+ * This function processes the model and replaces all call-sites of the specified
+ * model-local functions with their inlined implementations. The inlined functions
+ * are also removed from the model's list of functions.
+ * 
+ * @param model The model in which functions will be inlined.
+ * @param to_inline The set of functions to inline.
+ * 
+ * @note This function does not perform schema-defined function inlining. For schema-defined
+ *       function inlining, use InlineSelectedFunctions instead.
+ */
+void InlineSelectedLocalFunctions(ModelProto& model, const FunctionIdSet& to_inline);
+
+
+/**
+ * @brief Inlines the model-local functions in the given model that are in the given set.
+ * @deprecated This function is deprecated. Use InlineSelectedLocalFunctions instead,
+ * to avoid confusion with the overloaded version of InlineSelectedFunctions that
+ * inlines schema-defined functions as well.
+ */
 void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline);
 
 // Inlines all model-local functions in the given model. This supports version

@@ -413,7 +413,6 @@ agraph (float[N, C] X, int32[N] expected) => (float Y)
   inliner::FunctionIdVector to_inline = {{"", "SoftmaxCrossEntropyLoss"}};
   auto to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline));
   InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
-  std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
   auto num_nodes = model.graph().node_size();
   ASSERT_GT(num_nodes, 1);
   // Nested call to LogSoftmax should not be inlined.
@@ -422,7 +421,6 @@ agraph (float[N, C] X, int32[N] expected) => (float Y)
   inliner::FunctionIdVector to_inline2 = {{"", "SoftmaxCrossEntropyLoss"}, {"", "LogSoftmax"}};
   to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline2));
   InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
-  std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
   num_nodes = model.graph().node_size();
   ASSERT_GT(num_nodes, 1);
   // Nested call to LogSoftmax should be inlined.
