@@ -1402,7 +1402,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     @parameterized.expand(all_versions_for("SkipLayerNormalization"))
-    def test_skip_layer_normalization(self) -> None:
+    def test_skip_layer_normalization(self, _, version) -> None:
         graph = self._make_graph(
             [
                 ("X", TensorProto.FLOAT, ("N", "C", "H", "W")),
@@ -1420,7 +1420,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.FLOAT, ("N", "C", "H", "W"))],
-        )  # type: ignore
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
 
     @parameterized.expand(all_versions_for("Gather"))
     def test_gather(self, _, version) -> None:
