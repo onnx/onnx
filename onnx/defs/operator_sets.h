@@ -1309,8 +1309,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, RotaryEmbedding);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Scan);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Shape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Size);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, SkipLayerNormalization);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, SkipRMSNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Squeeze);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Transpose);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Unsqueeze);
@@ -1337,13 +1335,24 @@ class OpSet_Onnx_ver23 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Scan)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Shape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Size)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, SkipLayerNormalization)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, SkipRMSNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Squeeze)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Transpose)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 23, Unsqueeze)>());
   }
 };
+
+// Forward declarations for ai.onnx version 24
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipLayerNormalization);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipRMSNormalization);
+
+// Iterate over schema from ai.onnx version 24
+class OpSet_Onnx_ver24 {
+  public:
+   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipLayerNormalization)>());
+     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipRMSNormalization)>());
+   }
+ };
 
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
@@ -1369,6 +1378,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver21>();
   RegisterOpSetSchema<OpSet_Onnx_ver22>();
   RegisterOpSetSchema<OpSet_Onnx_ver23>();
+  RegisterOpSetSchema<OpSet_Onnx_ver24>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1378,6 +1388,7 @@ inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicat
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
   // Version-specific registration sees duplicate schema version request as error if fail_duplicate_schema
+  RegisterOpSetSchema<OpSet_Onnx_ver24>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver23>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver22>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver21>(target_version, fail_duplicate_schema);
