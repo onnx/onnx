@@ -3,10 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_layer_normalization import _layer_normalization
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 def _skip_layer_normalization(

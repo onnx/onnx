@@ -1347,12 +1347,12 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipRMSNormalization);
 
 // Iterate over schema from ai.onnx version 24
 class OpSet_Onnx_ver24 {
-  public:
-   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipLayerNormalization)>());
-     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipRMSNormalization)>());
-   }
- };
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipLayerNormalization)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SkipRMSNormalization)>());
+  }
+};
 
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
