@@ -4,18 +4,19 @@
 from __future__ import annotations
 
 import collections.abc
+import functools
 import numbers
 import struct
+import typing
 from cmath import isnan
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 
 import google.protobuf.message
 import numpy as np
 import typing_extensions
 
-import onnx._custom_element_types as custom_np_types
+import onnx
 from onnx import (
-    IR_VERSION,
     AttributeProto,
     FunctionProto,
     GraphProto,
@@ -31,8 +32,9 @@ from onnx import (
     TrainingInfoProto,
     TypeProto,
     ValueInfoProto,
+    _custom_element_types,
+    _mapping,
     defs,
-    mapping,
     subbyte,
 )
 
@@ -73,6 +75,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.15.0", 9, 20, 4, 1),
     ("1.16.0", 10, 21, 5, 1),
     ("1.17.0", 10, 22, 5, 1),
+    ("1.18.0", 11, 23, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -299,7 +302,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
-    model.ir_version = IR_VERSION
+    model.ir_version = onnx.IR_VERSION
     model.graph.CopyFrom(graph)
 
     opset_imports: Sequence[OperatorSetIdProto] | None = kwargs.pop(
@@ -1616,7 +1619,7 @@ def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
     Returns:
         numpy's data_type
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
@@ -1628,7 +1631,7 @@ def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     Returns:
         data_type for storage
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
@@ -1640,9 +1643,10 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     Returns:
         the name of data_type
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
+@functools.lru_cache(None)
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
@@ -1652,11 +1656,26 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     Returns:
         field name
     """
-    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
-        mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    storage_tensor_type_to_field = {
+        int(TensorProto.FLOAT): "float_data",
+        int(TensorProto.INT32): "int32_data",
+        int(TensorProto.INT64): "int64_data",
+        int(TensorProto.UINT8): "int32_data",
+        int(TensorProto.UINT16): "int32_data",
+        int(TensorProto.DOUBLE): "double_data",
+        int(TensorProto.COMPLEX64): "float_data",
+        int(TensorProto.COMPLEX128): "double_data",
+        int(TensorProto.UINT32): "uint64_data",
+        int(TensorProto.UINT64): "uint64_data",
+        int(TensorProto.STRING): "string_data",
+        int(TensorProto.BOOL): "int32_data",
+    }
+    return storage_tensor_type_to_field[
+        _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
 
+@functools.lru_cache(None)
 def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
@@ -1666,26 +1685,37 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     Returns:
         TensorsProto's data_type
     """
-    if np_dtype in mapping._NP_TYPE_TO_TENSOR_TYPE:
-        return cast(
-            "TensorProto.DataType",
-            mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
-        )
-
+    _np_dtype_to_tensor_dtype = {
+        v.np_dtype: k
+        for k, v in _mapping.TENSOR_TYPE_MAP.items()
+        if k
+        not in {
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+        }
+    }
+    if np_dtype in _np_dtype_to_tensor_dtype:
+        return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
     if np.issubdtype(np_dtype, np.str_):
         return TensorProto.STRING  # type: ignore[no-any-return]
 
     if np_dtype in {
-        custom_np_types.bfloat16,
-        custom_np_types.float8e4m3fn,
-        custom_np_types.float8e4m3fnuz,
-        custom_np_types.float8e5m2,
-        custom_np_types.float8e5m2fnuz,
-        custom_np_types.int4,
-        custom_np_types.uint4,
-        custom_np_types.float4e2m1,
+        _custom_element_types.bfloat16,
+        _custom_element_types.float8e4m3fn,
+        _custom_element_types.float8e4m3fnuz,
+        _custom_element_types.float8e5m2,
+        _custom_element_types.float8e5m2fnuz,
+        _custom_element_types.int4,
+        _custom_element_types.uint4,
+        _custom_element_types.float4e2m1,
     }:
-        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
+        return _custom_element_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
@@ -1698,7 +1728,7 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     Returns:
         all tensor types from TensorProto
     """
-    return mapping.TENSOR_TYPE_MAP.keys()
+    return _mapping.TENSOR_TYPE_MAP.keys()
 
 
 _ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
