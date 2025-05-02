@@ -12,6 +12,7 @@ PLAT=$2
 BUILD_MODE=$3  # build mode (release or preview)
 
 export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+echo "SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH"
 
 echo "Python version: $PY_VERSION"
 echo "Platform: $PLAT"
@@ -44,12 +45,18 @@ fi
 
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
-# Build wheels
 if [ "$BUILD_MODE" != "release" ]; then
+    echo "Building preview wheels..."
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-    ONNX_PREVIEW_BUILD=1 $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
+    export ONNX_PREVIEW_BUILD=1
 else
-    $PYTHON_COMMAND -m build --wheel || { echo "Building wheels failed."; exit 1; }
+    echo "Building release wheels..."
+fi
+
+# Build the wheels
+if ! $PYTHON_COMMAND -m build --wheel; then
+    echo "Building wheels failed."
+    exit 1
 fi
 
 # Bundle external shared libraries into the wheels
