@@ -40,6 +40,11 @@ jobs:
         persist-credentials: false
         submodules: true
 
+    - name: Configure Git safe directory
+      run: |
+        git config --global --add safe.directory /github/workspace
+
+
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
       id: build_wheel_x86
