@@ -17,6 +17,8 @@ echo "Build mode: $BUILD_MODE"
 
 ls -lau /opt/python
 
+ls -lauh /github/workspace # todo add check for run in github workflow
+
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 declare -A python_map=(["3.9"]="cp39-cp39" ["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t")
