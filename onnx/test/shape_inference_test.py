@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import itertools
 import unittest
 from typing import TYPE_CHECKING, Any
@@ -37,6 +38,7 @@ from onnx.defs import (
 )
 from onnx.helper import (
     make_empty_tensor_value_info,
+    make_graph,
     make_node,
     make_opsetid,
     make_tensor,
@@ -10661,6 +10663,276 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
+
+
+class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
+    custom_op_type: str = "CustomOp"
+    dummy_graph_op_type: str = "DummyGraph"
+    op_version: int = 1
+    op_domain: str = ""
+
+    def setUp(self) -> None:
+        # Ensure the schema is unregistered
+        self.assertFalse(onnx.defs.has(self.custom_op_type, self.op_domain))
+        self.assertFalse(onnx.defs.has(self.dummy_graph_op_type, self.op_domain))
+
+    def tearDown(self) -> None:
+        # Clean up the registered schema
+        with contextlib.suppress(onnx.defs.SchemaError):
+            onnx.defs.deregister_schema(
+                self.custom_op_type, self.op_version, self.op_domain
+            )
+            onnx.defs.deregister_schema(
+                self.dummy_graph_op_type, self.op_version, self.op_domain
+            )
+
+    def get_custom_op_schema(self):
+        # CustomOp schema:
+        #   attrs:
+        #       out_len: [L0, L1, ...]
+        #   inputs:
+        #       a[N, La]
+        #       b[N, Lb]
+        #   outputs:
+        #       out0[N, La * Lb, L0]
+        #       out1[N, La * Lb, L1]
+        #       ...
+        schema = OpSchema(
+            self.custom_op_type,
+            self.op_domain,
+            self.op_version,
+            inputs=[
+                defs.OpSchema.FormalParameter("a", "float"),
+                defs.OpSchema.FormalParameter("b", "float"),
+            ],
+            outputs=[
+                defs.OpSchema.FormalParameter(
+                    "out", "float", param_option=OpSchema.FormalParameterOption.Variadic
+                ),
+            ],
+            attributes=[
+                defs.OpSchema.Attribute("out_len", defs.OpSchema.AttrType.INTS)
+            ],
+        )
+
+        def schema_shape_infer_func(ctx: onnx.shape_inference.InferenceContext):
+            def parse_tensor_input(t: TypeProto):
+                self.assertTrue(isinstance(t, TypeProto))
+                return (
+                    t.tensor_type.elem_type,
+                    [
+                        d.dim_value if d.HasField("dim_value") else None
+                        for d in t.tensor_type.shape.dim
+                    ],
+                )
+
+            self.assertEqual(ctx.get_num_inputs(), 2)
+            in0 = ctx.get_input_type(0)
+            in1 = ctx.get_input_type(1)
+            in0_type, in0_shape = parse_tensor_input(in0)
+            in1_type, in1_shape = parse_tensor_input(in1)
+            self.assertEqual(in0_type, TensorProto.FLOAT)
+            self.assertEqual(in1_type, TensorProto.FLOAT)
+            self.assertEqual(len(in0_shape), 2)
+            self.assertEqual(len(in1_shape), 2)
+            self.assertEqual(in0_shape[0], in1_shape[0])
+            N, La = in0_shape
+            _, Lb = in1_shape
+            attr = ctx.get_attribute("out_len")
+            out_len = attr.ints
+            self.assertEqual(len(out_len), ctx.get_num_outputs())
+            for i in range(ctx.get_num_outputs()):
+                out = ctx.get_output_type(i)
+                out.tensor_type.elem_type = in0_type
+                out.tensor_type.shape.dim.add().dim_value = N
+                out.tensor_type.shape.dim.add().dim_value = La * Lb
+                out.tensor_type.shape.dim.add().dim_value = out_len[i]
+                ctx.set_output_type(i, out)
+
+        schema.set_type_and_shape_inference_function(schema_shape_infer_func)
+        return schema
+
+    def get_dummy_graph_schema(self):
+        # DummyGraph schema:
+        #   attrs:
+        #       graph: OnnxGraph
+        #   inputs:
+        #       as same as the graph attribute
+        #   outputs:
+        #       as same as the graph attribute
+        schema = OpSchema(
+            self.dummy_graph_op_type,
+            self.op_domain,
+            self.op_version,
+            inputs=[
+                defs.OpSchema.FormalParameter(
+                    "in", "float", param_option=OpSchema.FormalParameterOption.Variadic
+                ),
+            ],
+            outputs=[
+                defs.OpSchema.FormalParameter(
+                    "out", "float", param_option=OpSchema.FormalParameterOption.Variadic
+                ),
+            ],
+            attributes=[defs.OpSchema.Attribute("graph", defs.OpSchema.AttrType.GRAPH)],
+        )
+
+        def schema_shape_infer_func(ctx: onnx.shape_inference.InferenceContext):
+            self.assertEqual(ctx.get_num_inputs(), 2)
+            self.assertIsNotNone(ctx.get_attribute("graph"))
+            gctx = ctx.get_graph_attribute_inferencer("graph")
+            outputs = gctx.do_inferencing(
+                [ctx.get_input_type(i) for i in range(ctx.get_num_inputs())],
+                [ctx.get_input_data(i) for i in range(ctx.get_num_inputs())],
+            )
+            for idx, out in enumerate(outputs):
+                ctx.set_output_type(idx, out)
+
+        schema.set_type_and_shape_inference_function(schema_shape_infer_func)
+        return schema
+
+    def gen_custom_op_graph(self, N, La, Lb, out_len, mark_output=False):
+        a = make_tensor_value_info("a", TensorProto.FLOAT, (N, La))
+        b = make_tensor_value_info("b", TensorProto.FLOAT, (N, Lb))
+        outs = [
+            make_tensor_value_info(f"out{i}", TensorProto.FLOAT, None)
+            for i in range(len(out_len))
+        ]
+        node = make_node(
+            self.custom_op_type, ["a", "b"], [v.name for v in outs], out_len=out_len
+        )
+        graph = make_graph(
+            [node], "test", [a, b], outs if mark_output else [], value_info=outs
+        )
+        return graph
+
+    def gen_dummy_graph_graph(self, N, La, Lb, out_len):
+        subgraph = self.gen_custom_op_graph(N, La, Lb, out_len, True)
+        a = make_tensor_value_info("a", TensorProto.FLOAT, (N, La))
+        b = make_tensor_value_info("b", TensorProto.FLOAT, (N, Lb))
+        outs = [
+            make_tensor_value_info(f"out{i}", TensorProto.FLOAT, None)
+            for i in range(len(out_len))
+        ]
+        node = make_node(
+            self.dummy_graph_op_type, ["a", "b"], [v.name for v in outs], graph=subgraph
+        )
+        graph = make_graph([node], "test", [a, b], [], value_info=outs)
+        return graph
+
+    def shape_infer_once(self, graph, N, La, Lb, out_len):
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(f"out{i}", TensorProto.FLOAT, (N, La * Lb, Li))
+                for i, Li in enumerate(out_len)
+            ],
+        )
+
+    def test_custom_schema_shape_inference(self) -> None:
+        # generate graph
+        N = 3
+        La = 32
+        Lb = 64
+        out_len = [1, 2]
+        graph = self.gen_custom_op_graph(N, La, Lb, out_len)
+
+        # shape inference before register
+        with self.assertRaises(onnx.checker.ValidationError):
+            self.shape_infer_once(graph, N, La, Lb, out_len)
+
+        # register schema
+        schema = self.get_custom_op_schema()
+        onnx.defs.register_schema(schema)
+
+        # shape inference with registered schema
+        self.shape_infer_once(graph, N, La, Lb, out_len)
+
+        # clean up
+        onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
+
+    def test_dummy_graph_schema_shape_inference(self) -> None:
+        # generate graph
+        N = 3
+        La = 32
+        Lb = 64
+        out_len = [1, 2]
+        graph = self.gen_dummy_graph_graph(N, La, Lb, out_len)
+
+        # shape inference before register
+        with self.assertRaises(onnx.checker.ValidationError):
+            self.shape_infer_once(graph, N, La, Lb, out_len)
+
+        # register schema
+        custom_op_schema = self.get_custom_op_schema()
+        dummy_graph_schema = self.get_dummy_graph_schema()
+        onnx.defs.register_schema(custom_op_schema)
+        onnx.defs.register_schema(dummy_graph_schema)
+
+        # shape inference with registered schema
+        self.shape_infer_once(graph, N, La, Lb, out_len)
+
+        # clean up
+        onnx.defs.deregister_schema(
+            custom_op_schema.name,
+            custom_op_schema.since_version,
+            custom_op_schema.domain,
+        )
+        onnx.defs.deregister_schema(
+            dummy_graph_schema.name,
+            dummy_graph_schema.since_version,
+            dummy_graph_schema.domain,
+        )
+
+    def test_invalid_field_in_inference_func(self) -> None:
+        N = 3
+        La = 32
+        Lb = 64
+        out_len = [1]
+        graph = self.gen_custom_op_graph(N, La, Lb, out_len)
+
+        schema = self.get_custom_op_schema()
+        raw_func = schema.get_type_and_shape_inference_function()
+
+        def schema_shape_infer_func(ctx: onnx.shape_inference.InferenceContext):
+            raw_func(ctx)
+            self.assertIsNone(ctx.get_attribute("not-exist-attr"))
+            self.assertTrue(ctx.has_input(0))
+            self.assertFalse(ctx.has_input(2))
+            with self.assertRaises(TypeError):
+                self.assertFalse(ctx.has_input(-1))
+            self.assertTrue(ctx.has_output(0))
+            self.assertFalse(ctx.has_output(1))
+            with self.assertRaises(TypeError):
+                self.assertFalse(ctx.has_output(-1))
+            with self.assertRaises(onnx.shape_inference.InferenceError):
+                ctx.get_graph_attribute_inferencer("not-exist-attr")
+            self.assertIsNone(ctx.get_input_data(0))
+            with self.assertRaises(RuntimeError):
+                self.assertIsNone(ctx.get_input_data(10))
+            self.assertIsNone(ctx.get_input_sparse_data(0))
+            with self.assertRaises(RuntimeError):
+                self.assertIsNone(ctx.get_input_sparse_data(10))
+            self.assertIsNotNone(ctx.get_input_type(0))
+            with self.assertRaises(RuntimeError):
+                ctx.get_input_type(10)
+            self.assertIsNone(ctx.get_symbolic_input(0))
+            with self.assertRaises(RuntimeError):
+                ctx.get_symbolic_input(10)
+            self.assertIsNotNone(ctx.get_output_type(0))
+            with self.assertRaises(RuntimeError):
+                ctx.get_output_type(10)
+            self.assertEqual(ctx.get_num_inputs(), 2)
+            self.assertEqual(ctx.get_num_outputs(), 1)
+
+        schema.set_type_and_shape_inference_function(schema_shape_infer_func)
+        onnx.defs.register_schema(schema)
+
+        # shape inference with registered schema
+        self.shape_infer_once(graph, N, La, Lb, out_len)
+
+        # clean up
+        onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
 
 
 if __name__ == "__main__":

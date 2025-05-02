@@ -24,7 +24,6 @@ PY_VER=${python_map[$PY_VERSION]}
 PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --only-binary google-re2 --no-cache-dir -q"
 PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
 
-
 # Update pip
 $PIP_INSTALL_COMMAND --upgrade pip
 $PIP_INSTALL_COMMAND cmake
@@ -38,11 +37,10 @@ export ONNX_ML=1
 export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 
 if [ "$PY_VERSION" == "3.13t" ]; then 
- yum install -y libffi-devel
- $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
-else
- $PIP_INSTALL_COMMAND -r requirements-release.txt || { echo "Installing Python requirements failed."; exit 1; }
+ yum install -y libffi-devel 
 fi
+
+$PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
 # Build wheels
 if [ "$BUILD_MODE" != "release" ]; then
