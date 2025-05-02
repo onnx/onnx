@@ -10,13 +10,19 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 BUILD_MODE=$3  # build mode (release or preview)
+SOURCE_DATE_EPOCH_ARG=$4  # New argument for SOURCE_DATE_EPOCH
 
-export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+# Set SOURCE_DATE_EPOCH
+if [ -n "$SOURCE_DATE_EPOCH_ARG" ]; then
+    export SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH_ARG
+else
+    export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+fi
 echo "SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH"
 
 echo "Python version: $PY_VERSION"
 echo "Platform: $PLAT"
-echo "Build mode: $BUILD_MODE"  
+echo "Build mode: $BUILD_MODE"
 
 ls -lau /opt/python
 
