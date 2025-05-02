@@ -206,3 +206,9 @@ Conda builds of ONNX are done via [conda-forge/onnx-feedstock](https://github.co
         * This is a separate project than the onnx releases so you may need to request access from an owner
     * Click target package -> Options -> Delete.
 
+**Remove old release-candidate packages on PyPI**
+* Remove [onnx-release-candidate packages](https://test.pypi.org/project/onnx/#history) from PyPI up to at least the time specified by the previous release version to save space.
+* Steps:
+    * Go to [PyPI onnx-weekly/releases](https://test.pypi.org/manage/project/onnx/releases/)
+       * This is a separate project than the onnx releases so you may need to request access from an owner
+   * Click target package -> Options -> Delete.
