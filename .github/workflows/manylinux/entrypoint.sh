@@ -11,6 +11,8 @@ PY_VERSION=$1
 PLAT=$2
 BUILD_MODE=$3  # build mode (release or preview)
 
+export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+
 echo "Python version: $PY_VERSION"
 echo "Platform: $PLAT"
 echo "Build mode: $BUILD_MODE"  
