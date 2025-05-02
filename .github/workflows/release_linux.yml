@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
-        architecture: ['x64','arm64']
+        architecture: ['x64', 'arm64']
 
     env:
       MANYLINUX_WHEEL_X64: "manylinux2014_x86_64.whl"
