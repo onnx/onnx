@@ -16,8 +16,7 @@ echo "Platform: $PLAT"
 echo "Build mode: $BUILD_MODE"  
 
 ls -lau /opt/python
-
-ls -lauh /github/workspace # todo add check for run in github workflow
+ls -lauh /github/workspace
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
