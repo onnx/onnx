@@ -44,7 +44,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-release.txt
+        python -m pip install -q -r requirements-release_build.txt
 
     - name: Build wheel
       env:
@@ -90,7 +90,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
-        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release.txt
+        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
     - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
       with:
