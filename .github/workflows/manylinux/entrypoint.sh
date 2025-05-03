@@ -15,19 +15,15 @@ SOURCE_DATE_EPOCH_ARG=$4  # New argument for SOURCE_DATE_EPOCH
 # Set SOURCE_DATE_EPOCH
 if [ -n "$SOURCE_DATE_EPOCH_ARG" ]; then
     export SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH_ARG
-else
-    export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
 fi
-echo "SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH"
 
+echo "SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH"
 echo "Python version: $PY_VERSION"
 echo "Platform: $PLAT"
 echo "Build mode: $BUILD_MODE"
 
 ls -lau /opt/python
-
 pwd
-
 ls -lau 
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
