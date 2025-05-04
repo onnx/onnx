@@ -140,6 +140,10 @@ jobs:
       - name: Build and install ONNX - Linux
         if: startsWith(matrix.os,'ubuntu')
         run: |
+          if [ "${{ matrix.python_version }}" == "3.14-dev" ]; then
+            sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
+          fi
+        
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
