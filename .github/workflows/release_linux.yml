@@ -29,7 +29,7 @@ jobs:
     env:
       MANYLINUX_WHEEL_X64: "manylinux2014_x86_64.whl"
       MANYLINUX_WHEEL_ARM64: "manylinux2014_aarch64.whl"
-      DOCKER_IMAGE_X64: "docker://quay.io/pypa/manylinux2014_x86_64:2025.03.22-2"
+      DOCKER_IMAGE_X64: "docker://quay.io/pypa/manylinux2014_x86_64:2025.05.03-1"
       DOCKER_IMAGE_ARM64: "docker://quay.io/pypa/manylinux2014_aarch64:2025.03.22-2"
 
     runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
