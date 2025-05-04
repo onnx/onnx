@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-latest, macos-latest]
+        os: [ubuntu-24.04, windows-11-arm, windows-latest, macos-latest]
         python_version: ['3.14-dev', '3.13'] 
         include:
           - python_version: '3.14-dev'
@@ -70,6 +70,7 @@ jobs:
             python_version: '3.10'
           - os: windows-11-arm
             python_version: '3.9'
+
 
     runs-on: ${{ matrix.os }}
     steps:
