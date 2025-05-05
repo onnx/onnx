@@ -40,11 +40,9 @@ jobs:
         persist-credentials: true
         submodules: true
 
-    - name: Configure Git safe directory
-      run: |
-        git config --global --add safe.directory /github/workspace
+    - name: Set source date epoch variable
+      run: |        
         echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
-
 
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
