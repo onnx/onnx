@@ -29661,7 +29661,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>1D tensor of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -29739,7 +29739,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Original tensor</dd>
 <dt><tt>axes</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
+<dd>1D tensor of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Outputs
