@@ -1334,11 +1334,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
     13,
     OpSchema()
-        .Input(0, "A", "N-dimensional matrix A", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(1, "B", "N-dimensional matrix B", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "Matrix multiply results from A * B", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "A", "N-dimensional matrix A", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(1, "B", "N-dimensional matrix B", "T2", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Matrix multiply results from A * B", "T3", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
-            "T",
+            "T1",
             {"tensor(float16)",
              "tensor(float)",
              "tensor(double)",
@@ -1346,7 +1346,35 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint64)",
              "tensor(int32)",
              "tensor(int64)",
-             "tensor(bfloat16)"},
+             "tensor(bfloat16)",
+             "tensor(I2_S)",
+             "tensor(I2_8)"},
+            "Constrain input and output types to float/int tensors.")
+          .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+              "tensor(float)",
+              "tensor(double)",
+              "tensor(uint32)",
+              "tensor(uint64)",
+              "tensor(int32)",
+              "tensor(int64)",
+              "tensor(bfloat16)",
+              "tensor(I2_S)",
+              "tensor(I2_8)"},
+            "Constrain input and output types to float/int tensors.")
+          .TypeConstraint(
+            "T3",
+            {"tensor(float16)",
+              "tensor(float)",
+              "tensor(double)",
+              "tensor(uint32)",
+              "tensor(uint64)",
+              "tensor(int32)",
+              "tensor(int64)",
+              "tensor(bfloat16)",
+              "tensor(I2_S)",
+              "tensor(I2_8)"},
             "Constrain input and output types to float/int tensors.")
         .SetDoc(MatMul_ver13_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {

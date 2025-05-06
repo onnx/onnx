@@ -639,6 +639,9 @@ message TensorProto {
     // 4-bit floating point data types
     FLOAT4E2M1 = 23;
 
+    I2_S = 24;
+    I8_S = 25;
+
     // Future extensions go here.
   }
 
