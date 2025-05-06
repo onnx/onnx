@@ -188,7 +188,7 @@ jobs:
           python -m pip install -r requirements-release_test.txt
 
       - name: Run Python tests
-        if: (matrix.python_version != '3.13t' # && matrix.python_version != '3.14')
+        if: (matrix.python_version != '3.13t' ) # && matrix.python_version != '3.14')
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
