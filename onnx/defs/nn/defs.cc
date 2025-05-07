@@ -3923,8 +3923,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(float16)"},
-            "Constrain input and output types to float or half tensors.")
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input types and output Y type to float tensors.")
         .TypeConstraint("U", {"tensor(float)"}, "Constrain mean and inv_std_var to float tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
@@ -4071,9 +4071,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::Optional)
         .TypeConstraint(
-            "T",
-            {"tensor(float)", "tensor(float16)"},
-            "Constrain input and output types to float or half tensors.")
+          "T",
+          {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+          "Constrain input X, S (skip) and B (bias) types to float tensors.")
+        .TypeConstraint(
+          "V",
+          {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+          "Constrain output Y and input gamma type to float tensors.")
         .TypeConstraint("U", {"tensor(float)"}, "Constrain mean and inv_std_var to float tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);

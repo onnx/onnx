@@ -32646,8 +32646,8 @@ This version of the operator has been available since version 24 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(float16)</dt>
-<dd>Constrain input and output types to float or half tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input types and output Y type to float tensors.</dd>
 <dt><tt>U</tt> : tensor(float)</dt>
 <dd>Constrain mean and inv_std_var to float tensors.</dd>
 </dl>
@@ -32843,8 +32843,10 @@ This version of the operator has been available since version 24 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(float16)</dt>
-<dd>Constrain input and output types to float or half tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input X, S (skip) and B (bias) types to float tensors.</dd>
+<dt><tt>V</tt> : tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain output Y and input gamma type to float tensors.</dd>
 <dt><tt>U</tt> : tensor(float)</dt>
 <dd>Constrain mean and inv_std_var to float tensors.</dd>
 </dl>
