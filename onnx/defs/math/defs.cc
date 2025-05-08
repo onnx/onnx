@@ -3004,7 +3004,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const TensorProto* axis_tensor = ctx.getInputData(axis_arg_index);
             ONNX_ASSERTM(axis_tensor != nullptr, "axis should not be nullptr at this point");
             // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
-            // to abstrct the following logic out.
+            // to abstract the following logic out.
             if (axis_tensor->dims_size() != 0) {
               fail_shape_inference("axis input must be a scalar.");
             }
