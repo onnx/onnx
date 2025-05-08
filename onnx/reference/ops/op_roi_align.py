@@ -99,7 +99,7 @@ class RoiAlign(OpRun):
                         w3 = ly * hx
                         w4 = ly * lx
 
-                        # save weights and indeces
+                        # save weights and indices
                         pc = PreCalc()
                         pc.pos1 = y_low * width + x_low
                         pc.pos2 = y_low * width + x_high

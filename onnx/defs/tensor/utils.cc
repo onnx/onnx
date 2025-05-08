@@ -137,7 +137,7 @@ void resizeShapeInferenceHelper(
     if (input_shape.dim(i).has_dim_value()) {
       int64_t dim_value =
           static_cast<int64_t>(std::floor(static_cast<float>(input_shape.dim(i).dim_value()) * scales_data[i]));
-      // If output_shape has dim_value, we validate the caculated result
+      // If output_shape has dim_value, we validate the calculated result
       // If output_shape doesn's have one, we set it to the scaled result
       if (dim->has_dim_value()) {
         if (static_cast<int64_t>(dim->dim_value()) != dim_value) {
@@ -336,7 +336,7 @@ void resizeShapeInferenceHelper_opset7_to_10(
     if (input_shape.dim(i).has_dim_value()) {
       int64_t dim_value =
           static_cast<int64_t>(std::floor(static_cast<float>(input_shape.dim(i).dim_value()) * scales_data[i]));
-      // If output_shape has dim_value, we validate the caculated result
+      // If output_shape has dim_value, we validate the calculated result
       // If output_shape doesn's have one, we set it to the scaled result
       if (dim->has_dim_value()) {
         if (static_cast<int64_t>(dim->dim_value()) != dim_value) {
