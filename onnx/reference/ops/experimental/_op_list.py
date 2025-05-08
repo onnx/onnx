@@ -25,7 +25,7 @@ def load_op(
 
     Args:
         domain: domain
-        op_type: oprator type
+        op_type: operator type
         version: requested version
         custom: custom implementation (like a function)
 
