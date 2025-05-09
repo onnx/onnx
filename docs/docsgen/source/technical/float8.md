@@ -43,7 +43,7 @@ with float 8.
 - `E5M2FNUZ`: 1 bit for the sign, 5 bits for the exponents, 2 bits for the mantissa,
   only nan values and no infinite values (FN), no negative zero (UZ)
 
-The implementation is usually hardware dependant.
+The implementation is usually hardware dependent.
 NVIDIA, Intel and Arm implement `E4M3FN` and `E5M2` is its latest graphical processor.
 GraphCore does the same only with `E4M3FNUZ` and `E5M2FNUZ`.
 

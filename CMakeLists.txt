@@ -14,6 +14,20 @@ endif()
 cmake_policy(SET CMP0063 NEW)
 cmake_policy(SET CMP0074 NEW)
 
+# https://reproducible-builds.org/docs/source-date-epoch/
+if (DEFINED ENV{SOURCE_DATE_EPOCH})
+  execute_process(
+    COMMAND "date" "-u" "-d" "@$ENV{SOURCE_DATE_EPOCH}" "+%Y-%m-%d"
+    OUTPUT_VARIABLE BUILD_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+else ()
+  execute_process(
+    COMMAND "date" "+%Y-%m-%d"
+    OUTPUT_VARIABLE BUILD_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif ()
+
+
 if(NOT BUILD_SHARED_LIBS)
   # by default, cmake builds static libraries
   set(BUILD_SHARED_LIBS OFF)
@@ -100,6 +114,17 @@ if(MSVC)
     string(APPEND CMAKE_CXX_FLAGS " /EHsc /wd26812")
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
+  add_compile_options(/MP /utf-8 /nologo)
+  # For disabling Protobuf related warnings
+  add_compile_options(/wd4146 # unary minus operator applied to unsigned type,
+                              # result still unsigned
+                      /wd4244 # 'argument': conversion from 'google::
+                              # protobuf::uint64' to 'int', possible
+                              # loss of data
+                      /wd4267 # Conversion from 'size_t' to 'int',
+                              # possible loss of data
+                      /wd4141 # 'inline': used more than once
+  )
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
@@ -260,7 +285,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ABSL_PROPAGATE_CXX_STD 1)
     set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    # Use this setting to build thirdparty libs.
+    # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
     set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.2/protobuf-30.2.tar.gz)
     set(ProtobufSHA1 f846d1f047255d09142361ba6d1985336db5e407)
@@ -268,7 +293,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
       Protobuf
       URL ${ProtobufURL}
       URL_HASH SHA1=${ProtobufSHA1}
-      PATCH_COMMAND ${CMAKE_COMMAND} -Dprotobuf_MSVC_STATIC_RUNTIME=${protobuf_MSVC_STATIC_RUNTIME} -DFILENAME=CMakeLists.txt -P ${CMAKE_CURRENT_LIST_DIR}/cmake/ProtoBufPatch.cmake
+      PATCH_COMMAND "${CMAKE_COMMAND}" -Dprotobuf_MSVC_STATIC_RUNTIME=${protobuf_MSVC_STATIC_RUNTIME} -DFILENAME=CMakeLists.txt -P ${CMAKE_CURRENT_LIST_DIR}/cmake/ProtoBufPatch.cmake
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
@@ -301,9 +326,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
   set(${SRCS})
   set(${HDRS})
 
-  set(GEN_PROTO_PY ${ROOT_DIR}/onnx/gen_proto.py)
+  set(GEN_PROTO_PY "${ROOT_DIR}/onnx/gen_proto.py")
   foreach(INFILE ${ARGN})
-    set(ABS_FILE ${ROOT_DIR}/${INFILE})
+    set(ABS_FILE "${ROOT_DIR}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
     # "onnx-data" check is because we do not want to create/compile an "onnx-data-ml.proto" file
@@ -320,7 +345,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         set(GENERATED_FILE_WE "${FILE_WE}_${ONNX_NAMESPACE}")
       endif()
     endif()
-    file(RELATIVE_PATH REL_DIR ${ROOT_DIR} ${FILE_DIR})
+    file(RELATIVE_PATH REL_DIR "${ROOT_DIR}" "${FILE_DIR}")
     set(OUTPUT_PROTO_DIR "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}")
 
     set(OUTPUT_PB_HEADER "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.h")
@@ -359,7 +384,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     endif()
 
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND "${Python3_EXECUTABLE}" "${GEN_PROTO_PY}"
+                       COMMAND Python3::Interpreter "${GEN_PROTO_PY}"
                                ARGS ${GEN_PROTO_ARGS}
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
@@ -385,7 +410,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     if(ONNX_PROTO_POST_BUILD_SCRIPT)
       add_custom_command(
         OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
-        COMMAND ${ONNX_PROTOC_EXECUTABLE} ARGS ${PROTOC_ARGS}
+        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ARGS ${PROTOC_ARGS}
         COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_HEADER}
                 -DNAMESPACES=${ONNX_NAMESPACE} -P
                 ${ONNX_PROTO_POST_BUILD_SCRIPT}
@@ -398,7 +423,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     else()
       add_custom_command(
         OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
-        COMMAND ${ONNX_PROTOC_EXECUTABLE} ARGS ${PROTOC_ARGS}
+        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ARGS ${PROTOC_ARGS}
         DEPENDS ${GENERATED_PROTO} ${DEPEND}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
         VERBATIM)
@@ -474,7 +499,14 @@ if(ONNX_USE_LITE_PROTO)
     set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
-target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
+if((NOT ONNX_USE_PROTOBUF_SHARED_LIBS) AND Build_Protobuf)
+  target_link_libraries(onnx_proto PRIVATE ${LINKED_PROTOBUF_TARGET})
+  target_include_directories(onnx_proto PUBLIC
+    $<BUILD_INTERFACE:$<TARGET_PROPERTY:${LINKED_PROTOBUF_TARGET},INCLUDE_DIRECTORIES>>
+  )
+else()
+  target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
+endif()
 foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
   if(TARGET ${ABSL_USED_TARGET})
     target_link_libraries(onnx_proto PRIVATE ${ABSL_USED_TARGET})
@@ -527,8 +559,7 @@ if(ONNX_BUILD_PYTHON)
   target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
 
   if(APPLE)
-    set_target_properties(onnx_cpp2py_export
-                          PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+    target_link_options(onnx_cpp2py_export PRIVATE "-undefined dynamic_lookup")
     # Only put double quotes around $<TARGET_FILE:onnx> for Mac
     # Other platforms like Windows and Ubuntu originally work fine without double quotes
     target_link_libraries(onnx_cpp2py_export
@@ -548,7 +579,7 @@ if(ONNX_BUILD_PYTHON)
                                   "-Wl,--no-whole-archive")
     # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
     # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
-    if(CMAKE_CXX_STANDARD EQUAL 17 AND CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
       target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
     endif()
     set_target_properties(onnx_cpp2py_export
@@ -559,16 +590,6 @@ if(ONNX_BUILD_PYTHON)
 
   if(MSVC)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${Python3_LIBRARIES})
-    target_compile_options(onnx_cpp2py_export
-                           PRIVATE /MP
-                                   /wd4146 # unary minus operator applied to unsigned type,
-                                           # result still unsigned
-                                   /wd4244 # 'argument': conversion from 'google::
-                                           # protobuf::uint64' to 'int', possible
-                                           # loss of data
-                                   /wd4267 # Conversion from 'size_t' to 'int',
-                                           # possible loss of data
-                                   )
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
@@ -582,28 +603,6 @@ if(hasParent)
 endif()
 
 if(MSVC)
-  target_compile_options(onnx_proto
-                         PRIVATE /MP
-                                 /wd4146 # unary minus operator applied to unsigned type,
-                                         # result still unsigned
-                                 /wd4244 #'argument': conversion from 'google::
-                                         #protobuf::uint64' to 'int', possible
-                                         # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int',
-                                         # possible loss of data
-                                 /wd4141 # 'inline': used more than once
-                                   )
-  target_compile_options(onnx
-                         PRIVATE /MP
-                                 /wd4146 # unary minus operator applied to unsigned type,
-                                         # result still unsigned
-                                 /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible
-                                         # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int',
-                                         # possible loss of data
-                                 /wd4141 # 'inline': used more than once
-                                   )
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   set(onnx_static_library_flags
@@ -612,7 +611,7 @@ if(MSVC)
                    # link operation that consumes this library
       )
   set_target_properties(onnx
-                        PROPERTIES STATIC_LIBRARY_FLAGS
+                        PROPERTIES STATIC_LIBRARY_OPTIONS
                                    "${onnx_static_library_flags}")
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "/WX")
@@ -643,7 +642,7 @@ if(ONNX_USE_ASAN AND NOT MSVC)
 endif()
 
 if(APPLE)
-  set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+  target_link_options(onnx PRIVATE "-undefined dynamic_lookup")
 endif()
 
 install(DIRECTORY ${ONNX_ROOT}/onnx

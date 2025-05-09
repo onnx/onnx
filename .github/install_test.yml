@@ -13,7 +13,7 @@ on:
       - main
   workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 jobs:
@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies, build ONNX
         run: |
           python -m pip install -q --upgrade pip
-          python -m pip install -r requirements-release.txt
+          python -m pip install -r requirements-release_build.txt
           git submodule update --init --recursive
 
           source workflow_scripts/protobuf/build_protobuf_unix.sh 3

@@ -422,6 +422,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 20)], 9)
         test([("", 21)], 10)
         test([("", 22)], 10)
+        test([("", 23)], 11)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)

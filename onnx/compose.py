@@ -119,7 +119,7 @@ def merge_graphs(
         prefix1 (string): Optional prefix to be added to all names in g1
         prefix2 (string): Optional prefix to be added to all names in g2
         name (string): Optional name for the combined graph
-                       By default, the name is g1.name and g2.name concatenated with an undescore delimiter
+                       By default, the name is g1.name and g2.name concatenated with an underscore delimiter
         doc_string (string): Optional docstring for the combined graph
                              If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
 
@@ -321,7 +321,7 @@ def merge_models(
         prefix1 (string): Optional prefix to be added to all names in m1
         prefix2 (string): Optional prefix to be added to all names in m2
         name (string): Optional name for the combined graph
-                       By default, the name is g1.name and g2.name concatenated with an undescore delimiter
+                       By default, the name is g1.name and g2.name concatenated with an underscore delimiter
         doc_string (string): Optional docstring for the combined graph
                              If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
         producer_name (string): Optional producer name for the combined model. Default: 'onnx.compose'

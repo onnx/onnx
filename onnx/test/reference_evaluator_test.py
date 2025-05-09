@@ -2633,7 +2633,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
 
         # import torch
-        # correspondance with torch
+        # correspondence with torch
         # hop_length = frame_step
         # window = np.ones((frame_length,), dtype=np.float32)
         # ex = torch.stft(

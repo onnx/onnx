@@ -30,7 +30,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
     1. Make sure all tests pass on the new branch.
 
 * After cutting the release branch:
-    1. Create PR to set [VERSION_NUMBER](/VERSION_NUMBER) file in `main` to the next future releas, `X.Y+1.0`.
+    1. Create PR to set [VERSION_NUMBER](/VERSION_NUMBER) file in `main` to the next future release, `X.Y+1.0`.
     1. Create PR to set `VERSION_NUMBER` file in the new release's branch to `X.Y.Zrc1`.
         * For example the first release candidate for 1.16.0 would be `1.16.0rc1`
     1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
@@ -205,3 +205,10 @@ Conda builds of ONNX are done via [conda-forge/onnx-feedstock](https://github.co
     * Go to [PyPI onnx-weekly/releases](https://pypi.org/manage/project/onnx-weekly/releases/)
         * This is a separate project than the onnx releases so you may need to request access from an owner
     * Click target package -> Options -> Delete.
+
+**Remove old release-candidate packages on PyPI**
+* Remove [onnx-release-candidate packages](https://test.pypi.org/project/onnx/#history) from PyPI up to at least the time specified by the previous release version to save space.
+* Steps:
+    * Go to [PyPI onnx-weekly/releases](https://test.pypi.org/manage/project/onnx/releases/)
+       * This is a separate project than the onnx releases so you may need to request access from an owner
+   * Click target package -> Options -> Delete.
