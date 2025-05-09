@@ -14,6 +14,20 @@ endif()
 cmake_policy(SET CMP0063 NEW)
 cmake_policy(SET CMP0074 NEW)
 
+# https://reproducible-builds.org/docs/source-date-epoch/
+if (DEFINED ENV{SOURCE_DATE_EPOCH})
+  execute_process(
+    COMMAND "date" "-u" "-d" "@$ENV{SOURCE_DATE_EPOCH}" "+%Y-%m-%d"
+    OUTPUT_VARIABLE BUILD_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+else ()
+  execute_process(
+    COMMAND "date" "+%Y-%m-%d"
+    OUTPUT_VARIABLE BUILD_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif ()
+
+
 if(NOT BUILD_SHARED_LIBS)
   # by default, cmake builds static libraries
   set(BUILD_SHARED_LIBS OFF)
