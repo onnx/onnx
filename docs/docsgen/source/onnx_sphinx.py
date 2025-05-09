@@ -797,7 +797,7 @@ def onnx_documentation_folder(
 
     if len(all_schemas) < 3:
         raise RuntimeError(
-            f"At leat three domains are expected, found {list(all_schemas)} in all_schemas."
+            f"At least three domains are expected, found {list(all_schemas)} in all_schemas."
         )
 
     if not os.path.exists(folder):
