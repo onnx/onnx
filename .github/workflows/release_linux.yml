@@ -37,8 +37,12 @@ jobs:
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
-        persist-credentials: false
+        persist-credentials: true
         submodules: true
+
+    - name: Configure Git safe directory
+      run: |
+        git config --global --add safe.directory /github/workspace
 
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
