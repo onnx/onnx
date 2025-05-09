@@ -8046,7 +8046,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_infer_initializer_input_consistency_all_none(self) -> None:
         initializer_shape = (8, 7)
-        input_shape = (None, None)  # accepatble
+        input_shape = (None, None)  # acceptable
         original_model = self.prepare_input_initializer_tensors(
             initializer_shape, input_shape
         )
@@ -8055,7 +8055,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_infer_initializer_input_consistency_single_none(self) -> None:
         initializer_shape = (8, 7)
-        input_shape = (None, 7)  # accepatble
+        input_shape = (None, 7)  # acceptable
         original_model = self.prepare_input_initializer_tensors(
             initializer_shape, input_shape
         )
@@ -8064,7 +8064,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_infer_initializer_input_consistency_differnt_rank(self) -> None:
         initializer_shape = (8, 7, 9)
-        input_shape = (None, 7)  # accepatble
+        input_shape = (None, 7)  # acceptable
         original_model = self.prepare_input_initializer_tensors(
             initializer_shape, input_shape
         )
@@ -8080,7 +8080,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         # Reuse test_infer_initializer_input_consistency_all_none test case and check with
         # Serialized model
         initializer_shape = (8, 7)
-        input_shape = (None, None)  # accepatble
+        input_shape = (None, None)  # acceptable
         original_model = self.prepare_input_initializer_tensors(
             initializer_shape, input_shape
         )
