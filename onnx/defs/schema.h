@@ -798,6 +798,11 @@ class OpSchema final {
   // Build function with information stored in opschema
   void BuildFunction(FunctionProto& function_body) const;
 
+  bool BuildFunction(
+    const FunctionBodyBuildContext& ctx,
+    FunctionProto& function_proto,
+    int requested_opset_version) const;
+
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
