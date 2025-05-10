@@ -35,8 +35,12 @@ jobs:
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
-        persist-credentials: false
+        persist-credentials: true
         submodules: true
+
+    - name: Set source date epoch variable
+      run: |        
+        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
@@ -44,7 +48,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2014_x86_64:2025.05.03-1
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ inputs.build_mode }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
 
 
     - name: Build wheel for arm64
@@ -53,7 +57,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2014_aarch64:2025.03.22-2
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_aarch64 ${{ inputs.build_mode }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_aarch64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
 
     - name: Set up Python ${{ matrix.python-version }}
       if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'

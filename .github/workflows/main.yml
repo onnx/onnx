@@ -140,6 +140,7 @@ jobs:
       - name: Build and install ONNX - Linux
         if: startsWith(matrix.os,'ubuntu')
         run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
           if [ "${{ matrix.python_version }}" == "3.14-dev" ]; then
             sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           fi
