@@ -35037,7 +35037,7 @@ expect(
 # 1-dimensional tensor with dimension_size=0
 node_input = np.array([]).astype(np.float32)
 
-# Split emtpy tensor to tensors of size zero
+# Split empty tensor to tensors of size zero
 split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     "Split",
@@ -35069,7 +35069,7 @@ expect(
 # 1-dimensional tensor with dimension_size=0
 node_input = np.array([]).astype(np.float32)
 
-# Split emtpy tensor to tensors of size zero
+# Split empty tensor to tensors of size zero
 split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     "Split",
@@ -35314,7 +35314,7 @@ Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>1D tensor of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -38137,7 +38137,7 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a hr
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Original tensor</dd>
 <dt><tt>axes</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
+<dd>1D tensor of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Outputs

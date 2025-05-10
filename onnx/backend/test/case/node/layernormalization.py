@@ -23,7 +23,7 @@ def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):
     reduction_shape = X_shape[0:axis] + (1,) * unsqueezed_rank
 
     # Parameter used to convert N-D tensor layer
-    # normalization to equivalent 2-D matirx operations.
+    # normalization to equivalent 2-D matrix operations.
     row_number = 1
     col_number = 1
     for i in range(X_rank):

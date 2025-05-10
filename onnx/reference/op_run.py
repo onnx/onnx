@@ -77,7 +77,7 @@ def _build_schemas() -> dict[str, type]:
             if schema.domain != res[schema.name].domain:  # type: ignore
                 raise NotImplementedError(
                     f"This function assumes every operator has a unique name {schema.name!r} "  # type: ignore
-                    f"even accross multiple domains {schema.domain!r} and {res[schema.name].domain!r}."  # type: ignore
+                    f"even across multiple domains {schema.domain!r} and {res[schema.name].domain!r}."  # type: ignore
                 )
             if schema.since_version > res[schema.name].since_version:  # type: ignore
                 # We keep the most recent one.
@@ -288,7 +288,7 @@ class OpRun(abc.ABC):
 
     @staticmethod
     def implicit_inputs(graph: GraphProto) -> list[str]:
-        """Returns all varibles not registered as inputs and not produced by
+        """Returns all variables not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
         existing in the graph calling this one.
         """
@@ -354,7 +354,7 @@ class OpRun(abc.ABC):
 
         Args:
             *args: operator inputs
-            **kwargs: optional inputs and overriden attributes, an
+            **kwargs: optional inputs and overridden attributes, an
                 attribute may be overridden if it belongs to a function,
                 in this case, the same instance of OpRun can be called
                 with different values of the same attribute.
@@ -393,7 +393,7 @@ class OpRun(abc.ABC):
             dtypes = [type(t) for t in res]
             raise TypeError(
                 f"One of the results returned by method '_run' of class {self.__class__.__name__!r} "
-                f"has an unexpected type, this is no ONNX correponding type (Map, List, Tensor, SparseTensor). "
+                f"has an unexpected type, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
                 f"All returned types: {dtypes!r}."
             )
         return res
@@ -670,7 +670,7 @@ class OpFunction(OpRun):
 class OpFunctionContextDependant(OpFunction):
     """The function can be instantiated but only at execution time.
     An instance of OpFunction is created everytime to node is executed.
-    This is needed when the schema of an operator defines a context dependant function.
+    This is needed when the schema of an operator defines a context dependent function.
     """
 
     def __init__(
