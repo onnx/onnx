@@ -189,7 +189,7 @@ jobs:
           python -m pip install -r requirements-release_test.txt
       
       - name: Install Pillow with JPEG 2000 support
-        if: matrix.python_version != '3.14-dev'
+        if: (matrix.python_version == '3.14-dev') && startsWith(matrix.os,'ubuntu')
         run: |
           sudo apt-get install -y libopenjp2-7-dev # TODO: integrate in test reqs
           pip install --upgrade --force-reinstall pillow
