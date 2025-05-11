@@ -261,13 +261,13 @@ def load_op(
 
     Args:
         domain: domain
-        op_type: oprator type
+        op_type: operator type
         version: requested version
         custom: custom implementation (like a function)
         node: used if no implementation was found and the operator
-            defines a function which is context dependant
+            defines a function which is context dependent
         input_types: used if no implementation was found and the
-            operator defines a function which is context dependant
+            operator defines a function which is context dependent
         expand: use the function implemented in the schema instead of
             its reference implementation
         evaluator_cls: evaluator to use

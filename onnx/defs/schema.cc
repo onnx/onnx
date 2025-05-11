@@ -931,7 +931,7 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
 
   // In a typical onnx function where the function and all the
   // ops in function body belong to the same domain we implicitly add
-  // {domain_, since_version_} to funciton opset imports if it is not already added.
+  // {domain_, since_version_} to function opset imports if it is not already added.
   // This is simply for convienince. If any of the function body ops do not belong to same
   // domain as function itself, then the function author needs to explicitly add all the relevant
   // opset imports.

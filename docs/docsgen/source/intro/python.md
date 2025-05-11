@@ -378,7 +378,7 @@ how the initializers look like.
 The type is defined as integer as well with the same meaning.
 In this second example, there is only one input left.
 Input `A` and `B` were removed. They could be kept. In that case,
-they are optional: every initiliazer sharing the same name as input
+they are optional: every initializer sharing the same name as input
 is considered as a default value. It replaces the input if this one
 is not given.
 

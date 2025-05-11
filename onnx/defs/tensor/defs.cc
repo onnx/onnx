@@ -269,7 +269,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto* new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
               // There is a tricky edge case here. It is possible that the value of
-              // symbolic dim can be -1 or 0 at runtime. In that case simply propgating this
+              // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
               // symbol can be erroneous. This should be a very rare scenario and in such a
               // case an option is to turn off data propagation during shape inference.
               new_dim->set_dim_param(targetShapeProto.dim(i).dim_param());
@@ -1724,7 +1724,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "axes",
-            "List of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
+            "1D tensor of integers indicating the dimensions to squeeze. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(data).",
             "tensor(int64)",
             OpSchema::Optional,
@@ -1825,7 +1825,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "axes",
-            "List of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
+            "1D tensor of integers indicating the dimensions to be inserted. Negative value means counting dimensions "
             "from the back. Accepted range is [-r, r-1] where r = rank(expanded).",
             "tensor(int64)",
             OpSchema::Single,
