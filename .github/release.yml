@@ -9,11 +9,12 @@ changelog:
         - "topic: deprecation"
     - title: Spec and Operator
       labels:
-        - "topic: spec"
+        - "module: spec"
         - "topic: spec clarification"
         - "topic: operator"
         - "module: schema"
     - title: Reference Implementation
+      labels:
         - "module: reference implementation"
     - title: Utilities and Tools
       labels:
