@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.24)
 include(cmake/Utils.cmake)
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -560,23 +560,17 @@ if(ONNX_BUILD_PYTHON)
 
   if(APPLE)
     target_link_options(onnx_cpp2py_export PRIVATE "-undefined dynamic_lookup")
-    # Only put double quotes around $<TARGET_FILE:onnx> for Mac
-    # Other platforms like Windows and Ubuntu originally work fine without double quotes
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -Wl,-force_load,"$<TARGET_FILE:onnx>")
+    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
   elseif(MSVC)
     # In MSVC, we will add whole archive in default
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -WHOLEARCHIVE:$<TARGET_FILE:onnx>)
+    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
   elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
     target_sources(onnx_cpp2py_export
                           PRIVATE $<TARGET_OBJECTS:onnx>)
   else()
     # Assume everything else is like gcc
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE "-Wl,--whole-archive" $<TARGET_FILE:onnx>
-                                  "-Wl,--no-whole-archive")
+    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
     # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
     # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
     if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
@@ -585,8 +579,6 @@ if(ONNX_BUILD_PYTHON)
     set_target_properties(onnx_cpp2py_export
                           PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
   endif()
-
-  target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${Python3_LIBRARIES})
