@@ -6,7 +6,7 @@
 
 namespace ONNX_NAMESPACE {
 static void RNNShapeInference(InferenceContext& ctx) {
-  TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
+
 
   auto direction = getAttribute(ctx, "direction", "forward");
   if ((direction == "forward") || (direction == "reverse"))
