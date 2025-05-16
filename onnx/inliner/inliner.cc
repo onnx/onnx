@@ -658,7 +658,6 @@ struct InlinerImpl {
     // functions and the model, the inliner will fail.
 
     for (auto& function : *model.mutable_functions()) {
-      // auto& function = *function_ptr;
       if (!model_imports.Add(function))
         ONNX_THROW("Model has functions with incompatible opset versions.");
       if (to_inline.Contains(function.domain(), function.name())) {
