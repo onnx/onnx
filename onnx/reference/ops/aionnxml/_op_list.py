@@ -2,7 +2,7 @@
 
 # Operator ZipMap is not implemented. Its use should
 # be discouraged. It is just a different way to output
-# probabilites not consumed by any operator.
+# probabilities not consumed by any operator.
 from __future__ import annotations
 
 import textwrap
@@ -45,7 +45,7 @@ def load_op(
 
     Args:
         domain: domain
-        op_type: oprator type
+        op_type: operator type
         version: requested version
         custom: custom implementation (like a function)
 

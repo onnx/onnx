@@ -175,7 +175,7 @@ class OpSchema final {
     NonDifferentiable = 2
   };
 
-  // Formal parameter represenation, including input/output name, typeStr,
+  // Formal parameter representation, including input/output name, typeStr,
   // description, and type constraints.
   class FormalParameter final {
    public:
@@ -264,7 +264,7 @@ class OpSchema final {
     // It should contain at least one element if this formal parameter is good.
     DataTypeSet type_set_;
 
-    // The <parameter type> string specified when registring an op.
+    // The <parameter type> string specified when registering an op.
     // It could be a supported data type or a type constraint key, which
     // maps to a set of supported data types.
     std::string type_str_;
@@ -652,7 +652,7 @@ class OpSchema final {
   static const std::vector<std::string>& all_optional_types_ir11();
 
   // Calls the passed function with `this` as an argument. Useful for
-  // adding docs for temlated/macro ops.
+  // adding docs for templated/macro ops.
   OpSchema& FillUsing(const std::function<void(OpSchema&)>& populator);
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
@@ -747,7 +747,7 @@ class OpSchema final {
   // with a newer since_version_, reflecting the opset version at the time of change.
   // For a function op, operators used to define its function body may change
   // while there is no change to the function op definition itself.
-  // When this happens, mutiple function bodies are provided, each for a specific opset version.
+  // When this happens, multiple function bodies are provided, each for a specific opset version.
   //
   // Take LogSoftmax for example. Its latest opset version is 13.
   // In LogSoftmax's function body, ReduceMax (with since_version_ 1, 11, 12, 18) is used.
@@ -756,7 +756,7 @@ class OpSchema final {
   // When the same model but opset_import version 18 is loaded, function body
   // with opset_version 18 is used for inlining.
   // Clearly function body for opset_import version 13 will not work
-  // in a model with opset_import version 18 because the function body make worng use of ReduceMax(18).
+  // in a model with opset_import version 18 because the function body make wrong use of ReduceMax(18).
   // Inside GetFunction we ensure that ops being used to construct a function body do not endure such
   // issue.
   const FunctionProto* GetFunction(
@@ -889,7 +889,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
-      // versining is not meaningful and that domain should have only one
+      // versioning is not meaningful and that domain should have only one
       // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // Version corresponding last release of ONNX. Update this to match with
@@ -1157,7 +1157,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     return nullptr;
   }
 
-  static OpSchemaRegistry* Instance();
+  ONNX_API static OpSchemaRegistry* Instance();
 
   // NOLINTNEXTLINE(google-default-arguments)
   const OpSchema* GetSchema(

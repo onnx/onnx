@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -17,6 +18,7 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/shape_inference.h"
 #include "onnx/inliner/inliner.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
@@ -25,6 +27,61 @@
 #if (PYBIND11_VERSION_MAJOR != 2 || PYBIND11_VERSION_MINOR < 12)
 #pragma error "Pybind11 must be >= 2.12 to be compatible with numpy 2.0."
 #endif
+
+#ifndef PYBIND11_DETAILED_ERROR_MESSAGES
+#define PYBIND11_DETAILED_ERROR_MESSAGES
+#endif
+
+template <typename T>
+struct PythonProtoTypeMap {};
+
+#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_MODULE_NAME, PY_TYPE_NAME)                             \
+  template <>                                                                                       \
+  struct PythonProtoTypeMap<_ProtoType> {                                                           \
+    static constexpr auto FullName = pybind11::detail::const_name(PY_MODULE_NAME "." PY_TYPE_NAME); \
+    static constexpr auto TypeName = pybind11::detail::const_name(PY_TYPE_NAME);                    \
+    static constexpr auto ModuleName = pybind11::detail::const_name(PY_MODULE_NAME);                \
+  };
+
+#ifdef ONNX_USE_LITE_PROTO
+using BASE_PROTO_TYPE = ::google::protobuf::MessageLite;
+#else
+using BASE_PROTO_TYPE = ::google::protobuf::Message;
+#endif
+
+template <typename _ProtoType>
+class pybind11::detail::type_caster<_ProtoType, std::enable_if_t<std::is_base_of<BASE_PROTO_TYPE, _ProtoType>::value>> {
+ public:
+  PYBIND11_TYPE_CASTER(_ProtoType, PythonProtoTypeMap<_ProtoType>::FullName);
+  bool load(handle py_proto, bool) {
+    try {
+      if (!pybind11::hasattr(py_proto, "SerializeToString")) {
+        return false;
+      }
+      pybind11::bytes serialized = py_proto.attr("SerializeToString")();
+      std::string serialized_str = serialized;
+      if (!value.ParseFromString(serialized_str)) {
+        return false;
+      }
+      return true;
+    } catch (const pybind11::error_already_set&) {
+      return false;
+    }
+  }
+  static handle cast(const _ProtoType& cpp_proto, return_value_policy /* policy */, handle /* parent */) {
+    auto py_proto = pybind11::module::import(PythonProtoTypeMap<_ProtoType>::ModuleName.text)
+                        .attr(PythonProtoTypeMap<_ProtoType>::TypeName.text)();
+    std::string serialized = cpp_proto.SerializeAsString();
+    py_proto.attr("ParseFromString")(pybind11::bytes(serialized));
+    return py_proto.release();
+  }
+};
+
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::AttributeProto, "onnx", "AttributeProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TypeProto, "onnx", "TypeProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorProto, "onnx", "TensorProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::SparseTensorProto, "onnx", "SparseTensorProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorShapeProto, "onnx", "TensorShapeProto");
 
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
@@ -110,6 +167,23 @@ static std::unordered_map<std::string, py::bytes> CallNodeInferenceFunction(
   return typeProtoBytes;
 }
 
+template <typename T>
+static std::tuple<std::vector<T>, std::vector<const T*>> ConvertPyObjToPtr(const std::vector<py::object>& pyObjs) {
+  std::vector<T> objs;
+  std::vector<const T*> ptrs;
+  objs.reserve(pyObjs.size());
+  ptrs.reserve(pyObjs.size());
+  for (const auto& obj : pyObjs) {
+    if (obj.is_none()) {
+      ptrs.push_back(nullptr);
+      continue;
+    }
+    objs.emplace_back(obj.cast<T>());
+    ptrs.push_back(&objs.back());
+  }
+  return std::make_tuple(std::move(objs), std::move(ptrs));
+}
+
 PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   onnx_cpp2py_export.doc() = "Python interface to ONNX";
 
@@ -120,6 +194,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       false
 #endif // ONNX_ML
   );
+
+  // Avoid Segmentation fault if we not free the python function in Custom Schema
+  onnx_cpp2py_export.add_object("_cleanup", py::capsule([] { OpSchemaRegistry::OpSchemaDeregisterAll(); }));
 
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
@@ -401,7 +478,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               func_proto.SerializeToString(&func_bytes);
             }
             return py::bytes(func_bytes);
-          });
+          })
+      .def(
+          "set_type_and_shape_inference_function",
+          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
+            auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
+            return op.TypeAndShapeInferenceFunction(wrapper);
+          },
+          py::return_value_policy::reference_internal)
+      .def("get_type_and_shape_inference_function", &OpSchema::GetTypeAndShapeInferenceFunction);
 
   defs.def(
           "has_schema",
@@ -645,6 +730,48 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
   py::register_exception<InferenceError>(shape_inference, "InferenceError");
+
+  py::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
+
+  inference_context.def("get_attribute", &InferenceContext::getAttribute);
+  inference_context.def("get_num_inputs", &InferenceContext::getNumInputs);
+  inference_context.def("get_input_type", &InferenceContext::getInputType);
+  inference_context.def("has_input", &InferenceContext::hasInput);
+  inference_context.def("get_input_data", &InferenceContext::getInputData);
+  inference_context.def("get_num_outputs", &InferenceContext::getNumOutputs);
+  inference_context.def("get_output_type", &InferenceContext::getOutputType);
+  inference_context.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
+    auto* dst = self.getOutputType(idx);
+    if (dst == nullptr) {
+      return false;
+    }
+    dst->CopyFrom(src);
+    return true;
+  });
+  inference_context.def("has_output", &InferenceContext::hasOutput);
+  inference_context.def(
+      "get_graph_attribute_inferencer",
+      &InferenceContext::getGraphAttributeInferencer,
+      py::return_value_policy::reference_internal);
+  inference_context.def("get_input_sparse_data", &InferenceContext::getInputSparseData);
+  inference_context.def("get_symbolic_input", &InferenceContext::getSymbolicInput);
+  inference_context.def("get_display_name", &InferenceContext::getDisplayName);
+
+  py::class_<GraphInferencer> graph_inferencer(shape_inference, "GraphInferencer", "Graph Inferencer");
+  graph_inferencer.def(
+      "do_inferencing",
+      [](GraphInferencer& self,
+         const std::vector<py::object>& inputTypesObj,
+         const std::vector<py::object>& inputDataObj) {
+        auto inputTypesTuple = ConvertPyObjToPtr<ONNX_NAMESPACE::TypeProto>(inputTypesObj);
+        auto inputDataTuple = ConvertPyObjToPtr<ONNX_NAMESPACE::TensorProto>(inputDataObj);
+        auto ret = self.doInferencing(std::get<1>(inputTypesTuple), std::get<1>(inputDataTuple));
+        std::vector<py::object> ret_obj(ret.size());
+        for (size_t i = 0; i < ret.size(); ++i) {
+          ret_obj[i] = py::cast(ret[i]);
+        }
+        return ret_obj;
+      });
 
   shape_inference.def(
       "infer_shapes",
