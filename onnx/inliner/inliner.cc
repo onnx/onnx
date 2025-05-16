@@ -443,20 +443,20 @@ int64_t GetDomainVersion(const ModelProto& model, const std::string& domain) {
 }
 
 class VectorSet : public FunctionIdSet {
-  public:
-   VectorSet(FunctionIdVector&& function_ids, bool invert) : function_ids_(std::move(function_ids)), invert_(invert) {}
- 
-   bool Contains(const std::string& function_domain, const std::string& function_name) const override {
-     bool found =
-         std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) !=
-         function_ids_.end();
-     return invert_ ? !found : found;
-   }
- 
-  private:
-   FunctionIdVector function_ids_;
-   bool invert_;
- };
+ public:
+  VectorSet(FunctionIdVector&& function_ids, bool invert) : function_ids_(std::move(function_ids)), invert_(invert) {}
+
+  bool Contains(const std::string& function_domain, const std::string& function_name) const override {
+    bool found =
+        std::find(function_ids_.begin(), function_ids_.end(), std::make_pair(function_domain, function_name)) !=
+        function_ids_.end();
+    return invert_ ? !found : found;
+  }
+
+ private:
+  FunctionIdVector function_ids_;
+  bool invert_;
+};
 
 constexpr int64_t kNoConversion = -1;
 using FunctionMap = std::unordered_map<FunctionImplId, std::pair<const FunctionProto*, int64_t>>;
@@ -469,7 +469,7 @@ struct InlinerImpl {
   const FunctionMap* function_map;
   const ISchemaRegistry* schema_registry = nullptr;
   NameGenerator name_generator;
-  int inline_count = 0;  
+  int inline_count = 0;
 
   // Construct inliner for inlining call-sites inside main graph of a model.
   InlinerImpl(
@@ -477,7 +477,11 @@ struct InlinerImpl {
       const FunctionIdSet& to_inline_,
       const FunctionMap* function_map_,
       const ISchemaRegistry* schema_registry_)
-      : model(model_), to_inline(to_inline_), function_map(function_map_), schema_registry(schema_registry_), name_generator(model_.graph()) {}
+      : model(model_),
+        to_inline(to_inline_),
+        function_map(function_map_),
+        schema_registry(schema_registry_),
+        name_generator(model_.graph()) {}
 
   virtual ~InlinerImpl() = default;
 
@@ -497,7 +501,6 @@ struct InlinerImpl {
       }
     }
     if (schema_registry != nullptr) {
-      
       int64_t domain_version = GetDomainVersion(model, domain);
       const auto* op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
 
@@ -507,24 +510,24 @@ struct InlinerImpl {
       }
 
       if (op_schema->HasFunction()) {
-          const FunctionProto* function_ptr = op_schema->GetFunction(domain_version, false);
-          if (function_ptr != nullptr) {
-            callee = *function_ptr;
-            target_version = kNoConversion;
-            return true;
-          }
+        const FunctionProto* function_ptr = op_schema->GetFunction(domain_version, false);
+        if (function_ptr != nullptr) {
+          callee = *function_ptr;
+          target_version = kNoConversion;
+          return true;
+        }
       }
-  
+
       // Check if this node has a schema defined function proto.
       if (op_schema->HasContextDependentFunction()) {
-        shape_inference::InferShapes(model);  // TODO: do shape inference incrementally
-          std::vector<TypeProto> input_types;
-          for (const auto& input : node.input()) {
-              input_types.emplace_back(GetType(model, input));
-          }
-          ONNX_NAMESPACE::FunctionBodyBuildContextImpl function_body_ctx(node, input_types);
-          target_version = kNoConversion;
-          return op_schema->BuildContextDependentFunction(function_body_ctx, callee, domain_version);
+        shape_inference::InferShapes(model); // TODO: do shape inference incrementally
+        std::vector<TypeProto> input_types;
+        for (const auto& input : node.input()) {
+          input_types.emplace_back(GetType(model, input));
+        }
+        ONNX_NAMESPACE::FunctionBodyBuildContextImpl function_body_ctx(node, input_types);
+        target_version = kNoConversion;
+        return op_schema->BuildContextDependentFunction(function_body_ctx, callee, domain_version);
       }
     }
     return false;
@@ -612,14 +615,14 @@ struct InlinerImpl {
     VectorSet all_functions(std::move(empty_set), true);
     OpsetMap model_imports(model);
     FunctionMap map;
-  
+
     // For every function, we check if there is a mismatch between the opset versions
     // required for the function and the model. If there is no mismatch, we can inline
     // this function. If there is a mismatch only for the standard ONNX domain, we
     // can inline after version-conversion (if the version-conversion is successful).
     // Otherwise, we cannot inline, since currently version-conversion supports only
     // standard ONNX domain.
-  
+
     for (auto& function : model.functions()) {
       auto mismatches = model_imports.Mismatches(function);
       auto iter = mismatches.find(ONNX_DOMAIN);
@@ -632,10 +635,10 @@ struct InlinerImpl {
         map[GetFunctionImplId(function)] = std::pair<const FunctionProto*, int64_t>(&function, target_onnx_version);
       }
     }
-  
+
     InlinerImpl inliner(model, all_functions, &map, nullptr);
     inliner.ProcessGraph(*model.mutable_graph());
-  
+
     // Remove all model-local functions. We do not remove functions with a mis-matched
     // opset version. They need to be handled some other way, eg., using a version-adapter.
     auto* local_functions = model.mutable_functions();
@@ -647,15 +650,15 @@ struct InlinerImpl {
     }
   }
 
-  static void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry) {
+  static void
+  InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry) {
     OpsetMap model_imports(model);
     FunctionMap map;
     std::vector<FunctionProto*> non_inlined_functions;
 
-
     // If there is any mismatch between the opset versions required for any of the
     // functions and the model, the inliner will fail.
-  
+
     for (auto& function : *model.mutable_functions()) {
       // auto& function = *function_ptr;
       if (!model_imports.Add(function))
@@ -666,14 +669,14 @@ struct InlinerImpl {
         non_inlined_functions.push_back(&function);
       }
     }
-  
+
     InlinerImpl inliner(model, to_inline, &map, schema_registry);
     inliner.ProcessGraph(*model.mutable_graph());
-  
+
     for (auto* function_ptr : non_inlined_functions) {
       inliner.ProcessFunction(model, *function_ptr, map);
     }
-  
+
     // Remove all inlined model-local functions.
     auto* local_functions = model.mutable_functions();
     for (auto it = local_functions->begin(); it != local_functions->end();) {
@@ -687,11 +690,7 @@ struct InlinerImpl {
   static void InlineSelectedLocalFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
     InlineSelectedFunctions(model, to_inline, nullptr);
   }
-
 };
-
-
-
 
 } // namespace
 
@@ -715,7 +714,10 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) 
   InlineSelectedLocalFunctions(model, to_inline);
 }
 
-void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry) {
+void InlineSelectedFunctions(
+    ModelProto& model,
+    const FunctionIdSet& to_inline,
+    const ISchemaRegistry* schema_registry) {
   if (schema_registry == nullptr) {
     schema_registry = OpSchemaRegistry::Instance();
   }

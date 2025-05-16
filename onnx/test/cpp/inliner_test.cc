@@ -18,7 +18,11 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-static void InlineFunctions(ModelProto& model, const char* input, const inliner::FunctionIdSet* to_inline = nullptr, const ISchemaRegistry* schema_registry = nullptr) {
+static void InlineFunctions(
+    ModelProto& model,
+    const char* input,
+    const inliner::FunctionIdSet* to_inline = nullptr,
+    const ISchemaRegistry* schema_registry = nullptr) {
   OnnxParser parser(input);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
