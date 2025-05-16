@@ -6,7 +6,6 @@ from __future__ import annotations
 import unittest
 
 from onnx import inliner, parser
-import onnx
 
 
 class InlinerTest(unittest.TestCase):
