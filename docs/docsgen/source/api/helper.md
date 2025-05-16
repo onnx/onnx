@@ -144,10 +144,6 @@ All functions used to create an ONNX graph.
 .. autofunction:: onnx.helper.find_min_ir_version_for
 ```
 
-```{eval-rst}
-.. autofunction:: onnx.helper.create_op_set_id_version_map
-```
-
 ## Other functions
 
 ```{eval-rst}

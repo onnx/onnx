@@ -193,7 +193,7 @@ foo (x) => (y)
 
   ModelProto model;
   InlineFunctions(model, code);
-  // Check that valueinfo is propagated fron function to main graph.
+  // Check that valueinfo is propagated from function to main graph.
   auto& graph = model.graph();
   auto& temp_new_name = graph.node(0).output(0);
   auto& valueinfos = graph.value_info();

@@ -252,7 +252,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   // several stages.
   //
   // 1) add all input (to the graph) Values, owned by the sentinel Param node
-  // 2) add all Nodes and their output Values, but don't intialize inputs
+  // 2) add all Nodes and their output Values, but don't initialize inputs
   // 3) initialize inputs of all Nodes
   // 4) initialize inputs of the Return sentinel node
   // 5) fill in type info for graph outputs, and register them as outputs
