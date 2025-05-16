@@ -192,9 +192,8 @@ jobs:
         if: (matrix.python_version == '3.14-dev') && startsWith(matrix.os,'ubuntu')
         run: |
           sudo apt-get install -y libopenjp2-7-dev # TODO: integrate in test reqs
-          pip install --upgrade --force-reinstall pillow
+          python -m pip install --upgrade Pillow --no-binary :all:
           
-
       - name: Run Python tests
         if: (matrix.python_version != '3.13t' ) # && matrix.python_version != '3.14')
         run: |
