@@ -29,9 +29,10 @@ Release Compatibility Matrix
 *Support for a Python version that went eol will be discontinued in the following ONNX release.*
 *Onnx does not follow https://scientific-python.org/specs/spec-0000/ or https://protobuf.dev/support/version-support/*
 
-|ONNX version	| Python	| C++ | Min Cmake Version | Min Protobuf |  
-| --- | --- | --- | --- | --- | --- |
-| 1.18 | --- | --- | --- | --- | --- |
+|ONNX version	| Python	| C++ | Min Cmake Version | Min Protobuf | manylinux |
+| --- | --- | --- | --- | --- | --- | -- | 
+| 1.18 | 3.9-3.13, 3.13t (win, mac) | --- | --- | --- | --- | manylinux2014 |
+| *1.19* | *3.9-3.13, 3.13t (win, mac, linux)* | --- | --- | --- | --- | manylinux2014 |
 
 
 Releases
