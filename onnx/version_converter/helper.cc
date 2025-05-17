@@ -57,13 +57,13 @@ void assert_numpy_multibroadcastable(
         i,
         B,
         axis + i,
-        A);
+        A)
   }
 }
 
 void assertNotParams(const std::vector<Dimension>& sizes) {
   for (const Dimension& dim : sizes) {
-    ONNX_ASSERTM(dim.is_int, "%s Dimension is a param instead of an int.", dim.param.c_str());
+    ONNX_ASSERTM(dim.is_int, "%s Dimension is a param instead of an int.", dim.param.c_str())
   }
 }
 
@@ -73,9 +73,9 @@ void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uin
       "%s in opset version 6 can only broadcast"
       " between %d inputs",
       name,
-      num_inputs);
+      num_inputs)
   for (int i = 0; i < (int)num_inputs; i++) {
-    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs);
+    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs)
     assertNotParams(inputs[i]->sizes());
   }
 }
