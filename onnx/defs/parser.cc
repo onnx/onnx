@@ -20,6 +20,7 @@ namespace ONNX_NAMESPACE {
 
 Status ParserBase::Parse(Literal& result) {
   bool decimal_point = false;
+  bool is_float = false;
   auto nextch = NextChar();
   auto from = next_;
   if (nextch == '"') {
@@ -89,6 +90,7 @@ Status ParserBase::Parse(Literal& result) {
         if (decimal_point)
           break; // Only one decimal point allowed in numeric literal
         decimal_point = true;
+        is_float = true;
       }
       ++next_;
     }
@@ -98,7 +100,7 @@ Status ParserBase::Parse(Literal& result) {
 
     // Optional exponent syntax: (e|E)(+|-)?[0-9]+
     if ((next_ < end_) && ((*next_ == 'e') || (*next_ == 'E'))) {
-      decimal_point = true; // treat as float-literal
+      is_float = true;
       ++next_;
       if ((next_ < end_) && ((*next_ == '+') || (*next_ == '-')))
         ++next_;
@@ -107,7 +109,7 @@ Status ParserBase::Parse(Literal& result) {
     }
 
     result.value = std::string(from, next_ - from);
-    result.type = decimal_point ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
+    result.type = is_float ? LiteralType::FLOAT_LITERAL : LiteralType::INT_LITERAL;
   }
   return Status::OK();
 }
