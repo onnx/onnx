@@ -1,8 +1,15 @@
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.24)
+# Project
+project(onnx LANGUAGES CXX)
+
 include(cmake/Utils.cmake)
+cmake_policy(SET CMP0063 NEW)
+cmake_policy(SET CMP0074 NEW)
+
 # Set default build type
-if(NOT CMAKE_BUILD_TYPE)
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT isMultiConfig AND NOT CMAKE_BUILD_TYPE)
   message(STATUS "Build type not set - defaulting to Release")
   set(
     CMAKE_BUILD_TYPE "Release"
@@ -11,8 +18,6 @@ if(NOT CMAKE_BUILD_TYPE)
       "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage."
     FORCE)
 endif()
-cmake_policy(SET CMP0063 NEW)
-cmake_policy(SET CMP0074 NEW)
 
 # https://reproducible-builds.org/docs/source-date-epoch/
 if (DEFINED ENV{SOURCE_DATE_EPOCH})
@@ -27,14 +32,11 @@ else ()
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif ()
 
-
 if(NOT BUILD_SHARED_LIBS)
   # by default, cmake builds static libraries
   set(BUILD_SHARED_LIBS OFF)
 endif()
 
-# Project
-project(onnx LANGUAGES CXX)
 
 if(DEFINED BUILD_ONNX_PYTHON)
   message(WARNING "'BUILD_ONNX_PYTHON' is deprecated. Please, use 'ONNX_BUILD_PYTHON' instead")
