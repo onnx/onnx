@@ -5490,7 +5490,7 @@ for from_type, to_type in test_cases:
             )
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tested."
+                f"Conversion from {from_type} to {to_type} is not tested."
             )
 
         if to_type == "FLOAT8E4M3FN":
@@ -5517,7 +5517,7 @@ for from_type, to_type in test_cases:
             expected = input_values
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tested."
+                f"Conversion from {from_type} to {to_type} is not tested."
             )
         expected_tensor = make_tensor(
             "x", getattr(TensorProto, to_type), [3, 5], expected.tolist()
@@ -5548,7 +5548,7 @@ for from_type, to_type in test_cases:
             )
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tested."
+                f"Conversion from {from_type} to {to_type} is not tested."
             )
         if to_type == "UINT4":
             expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
@@ -5564,7 +5564,7 @@ for from_type, to_type in test_cases:
             expected = input_values.astype(np.int8)
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tested."
+                f"Conversion from {from_type} to {to_type} is not tested."
             )
         expected_tensor = make_tensor(
             "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
@@ -5741,7 +5741,7 @@ for from_type, to_type in test_cases:
         )
     else:
         raise ValueError(
-            "Conversion from {from_type} to {to_type} is not tested."
+            f"Conversion from {from_type} to {to_type} is not tested."
         )
 
     if to_type == "FLOAT8E4M3FN":
@@ -5758,7 +5758,7 @@ for from_type, to_type in test_cases:
         )
     else:
         raise ValueError(
-            "Conversion from {from_type} to {to_type} is not tested."
+            f"Conversion from {from_type} to {to_type} is not tested."
         )
 
     ivals = bytes([int(i) for i in expected])
