@@ -9,7 +9,6 @@ SPDX-License-Identifier: Apache-2.0
 This describes the process by which versions of ONNX are officially released to the public.
 
 
-
 Release Cadence
 ---------------
 
@@ -27,13 +26,16 @@ Release Compatibility Matrix
 ----------------------------
 
 *Support for a Python version that went eol will be discontinued in the following ONNX release.*
-*ONNX does not follow https://scientific-python.org/specs/spec-0000/ or https://protobuf.dev/support/version-support/*
+*ONNX does NOT follow https://scientific-python.org/specs/spec-0000/ or https://protobuf.dev/support/version-support/*
 
-|ONNX version	| Python	| C++ | Min Cmake Version | Min Protobuf | manylinux |
-| --- | --- | --- | --- | --- | --- | -- | 
-| 1.18 | 3.9-3.13, 3.13t (win, mac) | --- | --- | --- | --- | manylinux2014 |
-| *1.19* | *3.9-3.13, 3.13t (win, mac, linux)* | --- | --- | --- | --- | manylinux2014 |
+Changes are discussed in the community. Please do not hesitate to contact us if you have any requests.
+Planned changes for future releases as listed in the table below are subject to change. 
 
+|ONNX version	| Python wheels | C++ | Min Cmake Version | Min Protobuf | manylinux |
+| --- | --- | --- | --- | --- | --- | 
+| 1.18 | 3.9-3.13, 3.13t (win, mac) | --- | 3.18 | v25.1 | manylinux2014 |
+| *1.19* | *3.9-3.13, 3.13t (win, mac, linux)* | --- | *3.24* | *v25.1* | *manylinux2014* |
+| *1.20* | *3.10-3.13, 3.13t (win, mac, linux), 3.14* | --- | --- | *v25.1* | *manylinux2_28* |
 
 Releases
 --------
