@@ -651,19 +651,6 @@ install(FILES
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
   COMPONENT dev)
-install(EXPORT ONNXTargets
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
-  NAMESPACE ONNX::
-)
-if(NOT Build_Protobuf)
-  # If we fetched a Protobuf release (and didn't run its install step), then we
-  # don't have the export sets for Protobuf and its dependencies, which
-  # prevents us from creating an export set for ONNXTargets.
-  export(EXPORT ONNXTargets
-    FILE "${PROJECT_BINARY_DIR}/ONNXTargets.cmake"
-    NAMESPACE ONNX::
-  )
-endif()
 
 if(ONNX_USE_UNITY_BUILD)
   # If ONNX_USE_UNITY_BUILD is set to ON, set ONNX target to use Unity builds.
@@ -696,6 +683,11 @@ endif()
 install(TARGETS
   onnx onnx_proto
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(EXPORT ONNXTargets
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
+  NAMESPACE ONNX::
+)
 
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
