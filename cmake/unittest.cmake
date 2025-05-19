@@ -16,7 +16,6 @@ function(AddTest)
 
   add_executable(${_UT_TARGET} ${_UT_SOURCES})
 
-  target_include_directories(${_UT_TARGET} PUBLIC ${ONNX_INCLUDE_DIRS})
   target_link_libraries(${_UT_TARGET} gtest_main onnx onnx_proto Threads::Threads)
 
   if(MSVC)
