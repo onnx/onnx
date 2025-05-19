@@ -567,8 +567,6 @@ if(ONNX_BUILD_PYTHON)
     if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
       target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
     endif()
-    set_target_properties(onnx_cpp2py_export
-                          PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
   endif()
 
   if(MSVC)
