@@ -93,6 +93,18 @@ class NameGenerator : private Visitor {
     NameGenerator::VisitFunction(function);
   }
 
+  void ResetFor(const GraphProto& graph) {
+    index_ = 0;
+    existing_names_.clear();
+    NameGenerator::VisitGraph(graph);
+  }
+
+  void ResetFor(const FunctionProto& function) {
+    index_ = 0;
+    existing_names_.clear();
+    NameGenerator::VisitFunction(function);
+  }
+
   // Creates a new unique name, based on a suggested name, and adds it to the set
   // of existing names. Returns the newly created name.
   std::string CreateNew(const std::string& suggested) {
@@ -421,139 +433,13 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
     *model.mutable_graph()->mutable_sparse_initializer()->Add() = added_initializer;
 }
 
-constexpr int64_t kNoConversion = -1;
-using FunctionMap = std::unordered_map<FunctionImplId, std::pair<const FunctionProto*, int64_t>>;
-
-using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
-
-/** Utility function used for inlining into a GraphProto.
- * @param graph Mutable graph
- * @param map Map from function-id to function for functions to be inlined
- * @param name_generator Name generator for generating unique names for inlined variables
- * @param model If non-null, the model being inlined into. Used for version conversion.
- * @param inline_count Mutable counter for number of inlined calls. Used for name generation.
- */
-void InlineFunctions(
-    GraphProto& graph,
-    const FunctionMap& map,
-    NameGenerator& name_generator,
-    ModelProto* model,
-    int& inline_count);
-
-/** Shared utility function used for inlining into either a GraphProto or a FunctionProto.
- * @param nodes Mutable list of nodes (of function or graph)
- * @param value_infos Mutable list of value_infos (of function or graph)
- * @param map Map from function-id to function for functions to be inlined
- * @param name_generator Name generator for generating unique names for inlined variables
- * @param model If non-null, the model being inlined into. Used for version conversion.
- * @param inline_count Mutable counter for number of inlined calls. Used for name generation.
- */
-void InlineFunctions(
-    NodeList& nodes,
-    ValueInfoList& value_infos,
-    const FunctionMap& map,
-    NameGenerator& name_generator,
-    ModelProto* model,
-    int& inline_count) {
-  NodeList original_nodes;
-  // Move all nodes into original_nodes
-  original_nodes.Swap(&nodes);
-
-  std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
-    FunctionProto callee;
-    auto iter = map.find(GetCalleeId(node));
-    if (iter != map.end()) {
-      callee = *iter->second.first;
-      int64_t target_version = iter->second.second;
-      // Bind attribute parameters
-      internal::AttributeBinder::BindAttributes(node, callee);
-
-      // Rename variable names in callee
-      InliningRenamer::Rename(node, callee, "__" + std::to_string(++inline_count), name_generator);
-      if (target_version != kNoConversion) {
-        ONNX_ASSERTM(
-            model != nullptr,
-            "Internal Error: Inlining function %s::%s requires version conversion, "
-            "but version conversion is supported only for models, not functions.",
-            callee.domain().c_str(),
-            callee.name().c_str());
-        ConvertVersion(*model, node, callee, target_version);
-      }
-      std::unordered_set<std::string> actual_parameters;
-      for (const auto& x : node.input())
-        actual_parameters.insert(x);
-      for (const auto& x : node.output())
-        actual_parameters.insert(x);
-      // Append valueinfos of called function
-      for (auto& callee_vi : callee.value_info()) {
-        if (actual_parameters.count(callee_vi.name()) == 0) {
-          *value_infos.Add() = callee_vi;
-        }
-      }
-      // Append nodes of called function
-      for (auto& callee_node : *callee.mutable_node())
-        append_node(callee_node);
-    } else {
-      // Append node without inlining.
-      // TODO: use std::move instead of copying. Use of move doesn't seem to work with
-      // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-
-      for (auto& attr : *node.mutable_attribute()) {
-        if (attr.has_g()) {
-          InlineFunctions(*attr.mutable_g(), map, name_generator, model, inline_count);
-        }
-        for (auto& g : *attr.mutable_graphs()) {
-          InlineFunctions(g, map, name_generator, model, inline_count);
-        }
-      }
-
-      *nodes.Add() = node;
+int64_t GetDomainVersion(const ModelProto& model, const std::string& domain) {
+  for (const auto& opset : model.opset_import()) {
+    if (opset.domain() == domain) {
+      return opset.version();
     }
-  };
-  for (auto& node : original_nodes) {
-    append_node(node);
   }
-}
-
-/** Utility function used for inlining into a GraphProto.
- * @param graph Mutable graph
- * @param map Map from function-id to function for functions to be inlined
- * @param name_generator Name generator for generating unique names for inlined variables
- * @param model If non-null, the model being inlined into. Used for version conversion.
- * @param inline_count Mutable counter for number of inlined calls. Used for name generation.
- */
-void InlineFunctions(
-    GraphProto& graph,
-    const FunctionMap& map,
-    NameGenerator& name_generator,
-    ModelProto* model,
-    int& inline_count) {
-  auto* nodes = graph.mutable_node();
-  auto* value_infos = graph.mutable_value_info();
-  InlineFunctions(*nodes, *value_infos, map, name_generator, model, inline_count);
-}
-
-/** Utility function used for inlining into a ModelProto.
- * @param model Mutable model
- * @param map Map from function-id to function for functions to be inlined
- */
-void InlineFunctions(ModelProto& model, FunctionMap& map) {
-  int inline_count = 0;
-  auto* graph = model.mutable_graph();
-  NameGenerator name_generator(*graph);
-  auto* nodes = graph->mutable_node();
-  auto* value_infos = graph->mutable_value_info();
-  InlineFunctions(*nodes, *value_infos, map, name_generator, &model, inline_count);
-}
-
-/** Utility function used for inlining into a FunctionProto.
- * @param function Mutable function
- * @param map Map from function-id to function for functions to be inlined
- */
-void InlineFunctions(FunctionProto& function, FunctionMap& map) {
-  int inline_count = 0;
-  NameGenerator name_generator(function);
-  InlineFunctions(*function.mutable_node(), *function.mutable_value_info(), map, name_generator, nullptr, inline_count);
+  return 0;
 }
 
 class VectorSet : public FunctionIdSet {
@@ -572,6 +458,237 @@ class VectorSet : public FunctionIdSet {
   bool invert_;
 };
 
+constexpr int64_t kNoConversion = -1;
+using FunctionMap = std::unordered_map<FunctionImplId, std::pair<const FunctionProto*, int64_t>>;
+
+using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
+
+struct InlinerImpl {
+  ModelProto& model;
+  const FunctionIdSet& to_inline;
+  const FunctionMap* function_map;
+  const ISchemaRegistry* schema_registry = nullptr;
+  NameGenerator name_generator;
+  int inline_count = 0;
+
+  // Construct inliner for inlining call-sites inside main graph of a model.
+  InlinerImpl(
+      ModelProto& model_,
+      const FunctionIdSet& to_inline_,
+      const FunctionMap* function_map_,
+      const ISchemaRegistry* schema_registry_)
+      : model(model_),
+        to_inline(to_inline_),
+        function_map(function_map_),
+        schema_registry(schema_registry_),
+        name_generator(model_.graph()) {}
+
+  virtual ~InlinerImpl() = default;
+
+  virtual bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
+    const std::string& domain = node.domain();
+    const std::string& function_name = node.op_type();
+    if (!to_inline.Contains(domain, function_name)) {
+      return false;
+    }
+
+    if (function_map != nullptr) {
+      auto iter = this->function_map->find(GetCalleeId(node));
+      if (iter != this->function_map->end()) {
+        callee = *iter->second.first;
+        target_version = iter->second.second;
+        return true;
+      }
+    }
+    if (schema_registry != nullptr) {
+      int64_t domain_version = GetDomainVersion(model, domain);
+      const auto* op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
+
+      if (op_schema == nullptr) {
+        // If the schema is not found, we cannot inline the function.
+        return false;
+      }
+
+      if (op_schema->HasFunction()) {
+        const FunctionProto* function_ptr = op_schema->GetFunction(domain_version, false);
+        if (function_ptr != nullptr) {
+          callee = *function_ptr;
+          target_version = kNoConversion;
+          return true;
+        }
+      }
+
+      // Check if this node has a schema defined function proto.
+      if (op_schema->HasContextDependentFunction()) {
+        shape_inference::InferShapes(model); // TODO: do shape inference incrementally
+        std::vector<TypeProto> input_types;
+        for (const auto& input : node.input()) {
+          input_types.emplace_back(GetType(model, input));
+        }
+        ONNX_NAMESPACE::FunctionBodyBuildContextImpl function_body_ctx(node, input_types);
+        target_version = kNoConversion;
+        return op_schema->BuildContextDependentFunction(function_body_ctx, callee, domain_version);
+      }
+    }
+    return false;
+  }
+
+  /** Shared utility function used for inlining into either a GraphProto or a FunctionProto.
+   * @param nodes Mutable list of nodes (of function or graph)
+   * @param value_infos Mutable list of value_infos (of function or graph)
+   */
+  void Process(NodeList& nodes, ValueInfoList& value_infos) {
+    NodeList original_nodes;
+    // Move all nodes into original_nodes
+    original_nodes.Swap(&nodes);
+
+    std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
+      FunctionProto callee;
+      int64_t target_version = kNoConversion;
+      if (GetCallee(node, callee, target_version)) {
+        // Bind attribute parameters
+        internal::AttributeBinder::BindAttributes(node, callee);
+
+        // Rename variable names in callee
+        InliningRenamer::Rename(node, callee, "__" + std::to_string(++(this->inline_count)), this->name_generator);
+        if (target_version != kNoConversion) {
+          ConvertVersion(model, node, callee, target_version);
+        }
+        std::unordered_set<std::string> actual_parameters;
+        for (const auto& x : node.input())
+          actual_parameters.insert(x);
+        for (const auto& x : node.output())
+          actual_parameters.insert(x);
+        // Append valueinfos of called function
+        for (auto& callee_vi : callee.value_info()) {
+          if (actual_parameters.count(callee_vi.name()) == 0) {
+            *value_infos.Add() = callee_vi;
+          }
+        }
+        // Append nodes of called function
+        for (auto& callee_node : *callee.mutable_node())
+          append_node(callee_node);
+      } else {
+        // Append node without inlining.
+        // TODO: use std::move instead of copying. Use of move doesn't seem to work with
+        // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
+
+        for (auto& attr : *node.mutable_attribute()) {
+          if (attr.has_g()) {
+            ProcessGraph(*attr.mutable_g());
+          }
+          for (auto& g : *attr.mutable_graphs()) {
+            ProcessGraph(g);
+          }
+        }
+
+        *nodes.Add() = node;
+      }
+    };
+    for (auto& node : original_nodes) {
+      append_node(node);
+    }
+  }
+
+  /** Utility function used for inlining into a GraphProto.
+   * @param graph Mutable graph
+   */
+  void ProcessGraph(GraphProto& graph) {
+    auto* nodes = graph.mutable_node();
+    auto* value_infos = graph.mutable_value_info();
+    Process(*nodes, *value_infos);
+  }
+
+  /** Utility function used for inlining into a FunctionProto.
+   * @param function Mutable function
+   */
+  void ProcessFunction(FunctionProto& function) {
+    auto* nodes = function.mutable_node();
+    auto* value_infos = function.mutable_value_info();
+    Process(*nodes, *value_infos);
+  }
+
+  static void InlineLocalFunctions(ModelProto& model, bool convert_version) {
+    FunctionIdVector empty_set;
+    VectorSet all_functions(std::move(empty_set), true);
+    OpsetMap model_imports(model);
+    FunctionMap map;
+
+    // For every function, we check if there is a mismatch between the opset versions
+    // required for the function and the model. If there is no mismatch, we can inline
+    // this function. If there is a mismatch only for the standard ONNX domain, we
+    // can inline after version-conversion (if the version-conversion is successful).
+    // Otherwise, we cannot inline, since currently version-conversion supports only
+    // standard ONNX domain.
+
+    for (auto& function : model.functions()) {
+      auto mismatches = model_imports.Mismatches(function);
+      auto iter = mismatches.find(ONNX_DOMAIN);
+      int64_t target_onnx_version = kNoConversion;
+      if (convert_version && (iter != mismatches.end())) {
+        target_onnx_version = iter->second;
+        mismatches.erase(iter);
+      }
+      if (mismatches.empty()) {
+        map[GetFunctionImplId(function)] = std::pair<const FunctionProto*, int64_t>(&function, target_onnx_version);
+      }
+    }
+
+    InlinerImpl inliner(model, all_functions, &map, nullptr);
+    inliner.ProcessGraph(*model.mutable_graph());
+
+    // Remove all model-local functions. We do not remove functions with a mis-matched
+    // opset version. They need to be handled some other way, eg., using a version-adapter.
+    auto* local_functions = model.mutable_functions();
+    for (auto it = local_functions->begin(); it != local_functions->end();) {
+      if (map.count(GetFunctionImplId(*it)) > 0)
+        it = local_functions->erase(it);
+      else
+        ++it;
+    }
+  }
+
+  static void
+  InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry) {
+    OpsetMap model_imports(model);
+    FunctionMap map;
+    std::vector<FunctionProto*> non_inlined_functions;
+
+    // If there is any mismatch between the opset versions required for any of the
+    // functions and the model, the inliner will fail.
+
+    for (auto& function : *model.mutable_functions()) {
+      if (!model_imports.Add(function))
+        ONNX_THROW("Model has functions with incompatible opset versions.");
+      if (to_inline.Contains(function.domain(), function.name())) {
+        map[GetFunctionImplId(function)] = std::pair<const FunctionProto*, int64_t>(&function, kNoConversion);
+      } else {
+        non_inlined_functions.push_back(&function);
+      }
+    }
+
+    InlinerImpl inliner(model, to_inline, &map, schema_registry);
+    inliner.ProcessGraph(*model.mutable_graph());
+
+    for (auto* function_ptr : non_inlined_functions) {
+      inliner.ProcessFunction(*function_ptr);
+    }
+
+    // Remove all inlined model-local functions.
+    auto* local_functions = model.mutable_functions();
+    for (auto it = local_functions->begin(); it != local_functions->end();) {
+      if (map.count(GetFunctionImplId(*it)) > 0)
+        it = local_functions->erase(it);
+      else
+        ++it;
+    }
+  }
+
+  static void InlineSelectedLocalFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
+    InlineSelectedFunctions(model, to_inline, nullptr);
+  }
+};
+
 } // namespace
 
 // Public API implementation:
@@ -583,76 +700,25 @@ std::unique_ptr<FunctionIdSet> ONNX_NAMESPACE::inliner::FunctionIdSet::Create(
 }
 
 void InlineLocalFunctions(ModelProto& model, bool convert_version) {
-  OpsetMap model_imports(model);
-  FunctionMap map;
+  InlinerImpl::InlineLocalFunctions(model, convert_version);
+}
 
-  // For every function, we check if there is a mismatch between the opset versions
-  // required for the function and the model. If there is no mismatch, we can inline
-  // this function. If there is a mismatch only for the standard ONNX domain, we
-  // can inline after version-conversion (if the version-conversion is successful).
-  // Otherwise, we cannot inline, since currently version-conversion supports only
-  // standard ONNX domain.
-
-  for (auto& function : model.functions()) {
-    auto mismatches = model_imports.Mismatches(function);
-    auto iter = mismatches.find(ONNX_DOMAIN);
-    int64_t target_onnx_version = kNoConversion;
-    if (convert_version && (iter != mismatches.end())) {
-      target_onnx_version = iter->second;
-      mismatches.erase(iter);
-    }
-    if (mismatches.empty()) {
-      map[GetFunctionImplId(function)] = std::pair<const FunctionProto*, int64_t>(&function, target_onnx_version);
-    }
-  }
-
-  InlineFunctions(model, map);
-
-  // Remove all model-local functions. We do not remove functions with a mis-matched
-  // opset version. They need to be handled some other way, eg., using a version-adapter.
-  auto* local_functions = model.mutable_functions();
-  for (auto it = local_functions->begin(); it != local_functions->end();) {
-    if (map.count(GetFunctionImplId(*it)) > 0)
-      it = local_functions->erase(it);
-    else
-      ++it;
-  }
+void InlineSelectedLocalFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
+  InlinerImpl::InlineSelectedLocalFunctions(model, to_inline);
 }
 
 void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
-  OpsetMap model_imports(model);
-  FunctionMap map;
-  std::vector<FunctionProto*> non_inlined_functions;
-
-  // If there is any mismatch between the opset versions required for any of the
-  // functions and the model, the inliner will fail.
-
-  for (auto& function : *model.mutable_functions()) {
-    // auto& function = *function_ptr;
-    if (!model_imports.Add(function))
-      ONNX_THROW("Model has functions with incompatible opset versions.");
-    if (to_inline.Contains(function.domain(), function.name())) {
-      map[GetFunctionImplId(function)] = std::pair<const FunctionProto*, int64_t>(&function, kNoConversion);
-    } else {
-      non_inlined_functions.push_back(&function);
-    }
-  }
-
-  InlineFunctions(model, map);
-
-  for (auto* function_ptr : non_inlined_functions) {
-    InlineFunctions(*function_ptr, map);
-  }
-
-  // Remove all inlined model-local functions.
-  auto* local_functions = model.mutable_functions();
-  for (auto it = local_functions->begin(); it != local_functions->end();) {
-    if (map.count(GetFunctionImplId(*it)) > 0)
-      it = local_functions->erase(it);
-    else
-      ++it;
-  }
+  InlineSelectedLocalFunctions(model, to_inline);
 }
 
+void InlineSelectedFunctions(
+    ModelProto& model,
+    const FunctionIdSet& to_inline,
+    const ISchemaRegistry* schema_registry) {
+  if (schema_registry == nullptr) {
+    schema_registry = OpSchemaRegistry::Instance();
+  }
+  InlinerImpl::InlineSelectedFunctions(model, to_inline, schema_registry);
+}
 } // namespace inliner
 } // namespace ONNX_NAMESPACE
