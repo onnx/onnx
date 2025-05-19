@@ -16,7 +16,7 @@ function(AddTest)
 
   add_executable(${_UT_TARGET} ${_UT_SOURCES})
 
-  target_link_libraries(${_UT_TARGET} gtest_main onnx onnx_proto Threads::Threads)
+  target_link_libraries(${_UT_TARGET} PRIVATE gtest_main onnx onnx_proto Threads::Threads)
 
   if(MSVC)
     add_msvc_runtime_flag(${_UT_TARGET})
