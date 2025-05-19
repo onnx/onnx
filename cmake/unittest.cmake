@@ -21,18 +21,6 @@ function(AddTest)
 
   if(MSVC)
     add_msvc_runtime_flag(${_UT_TARGET})
-    target_compile_options(${_UT_TARGET}
-                           PRIVATE /wd4146 # unary minus operator applied to
-                                           # unsigned type, result still
-                                           # unsigned from include\google\protob
-                                           # uf\wire_format_lite.h
-                                 /wd4244 # 'argument': conversion from 'google::
-                                         # protobuf::uint64' to 'int', possible
-                                         # loss of data
-                                 /wd4267 # Conversion from 'size_t' to 'int',
-                                         # possible loss of data
-                                 /wd4996 # The second parameter is ignored.
-                           )
   endif()
 
   set(TEST_ARGS)
