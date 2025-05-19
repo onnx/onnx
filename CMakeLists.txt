@@ -571,7 +571,6 @@ if(ONNX_BUILD_PYTHON)
 
   if(MSVC)
     add_msvc_runtime_flag(onnx_cpp2py_export)
-    add_onnx_global_defines(onnx_cpp2py_export)
   endif()
 endif()
 
