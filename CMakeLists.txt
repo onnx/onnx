@@ -574,13 +574,6 @@ if(ONNX_BUILD_PYTHON)
   endif()
 endif()
 
-# Export include directories
-set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
-get_directory_property(hasParent PARENT_DIRECTORY)
-if(hasParent)
-  set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
-endif()
-
 if(MSVC)
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
