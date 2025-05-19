@@ -475,9 +475,6 @@ list(APPEND ONNX_SRCS ${__tmp_srcs})
 
 add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
-target_include_directories(onnx_proto PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include>)
 
 if(MSVC)
   if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
@@ -502,9 +499,6 @@ if(ONNX_USE_LITE_PROTO)
 endif()
 if((NOT ONNX_USE_PROTOBUF_SHARED_LIBS) AND Build_Protobuf)
   target_link_libraries(onnx_proto PRIVATE ${LINKED_PROTOBUF_TARGET})
-  target_include_directories(onnx_proto PUBLIC
-    $<BUILD_INTERFACE:$<TARGET_PROPERTY:${LINKED_PROTOBUF_TARGET},INCLUDE_DIRECTORIES>>
-  )
 else()
   target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
 endif()
@@ -527,8 +521,7 @@ set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include>)
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
@@ -537,12 +530,6 @@ if(ONNX_BUILD_PYTHON)
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
   set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
   set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-  set_target_properties(onnx_cpp2py_export
-                        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-  target_include_directories(onnx_cpp2py_export PRIVATE
-                             $<BUILD_INTERFACE:${ONNX_ROOT}>
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                             $<INSTALL_INTERFACE:include>)
 
   # search for FindPython3.cmake instead of legacy modules
   set(PYBIND11_FINDPYTHON ON)
@@ -550,33 +537,25 @@ if(ONNX_BUILD_PYTHON)
 
   target_link_libraries(onnx_cpp2py_export PRIVATE pybind11::headers)
 
-  if(APPLE)
-    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
-  elseif(MSVC)
-    # In MSVC, we will add whole archive in default
-    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
-  elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+  if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
-    target_sources(onnx_cpp2py_export
-                          PRIVATE $<TARGET_OBJECTS:onnx>)
+    target_sources(onnx_cpp2py_export PRIVATE $<TARGET_OBJECTS:onnx>)
   else()
-    # Assume everything else is like gcc
     target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
-    # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
-    # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
-    if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-      target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
-    endif()
   endif()
-
-  if(MSVC)
-    add_msvc_runtime_flag(onnx_cpp2py_export)
+  # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
+  # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
+  if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
   endif()
 endif()
 
 if(MSVC)
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
+  if(TARGET onnx_cpp2py_export)
+    add_msvc_runtime_flag(onnx_cpp2py_export)
+  endif()
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "/WX")
     target_compile_options(onnx_proto PRIVATE "/WX")
