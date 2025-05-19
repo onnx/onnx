@@ -577,14 +577,6 @@ endif()
 if(MSVC)
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
-  set(onnx_static_library_flags
-      -IGNORE:4221 # LNK4221: This object file does not define any previously
-                   # undefined public symbols, so it will not be used by any
-                   # link operation that consumes this library
-      )
-  set_target_properties(onnx
-                        PROPERTIES STATIC_LIBRARY_OPTIONS
-                                   "${onnx_static_library_flags}")
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "/WX")
     target_compile_options(onnx_proto PRIVATE "/WX")
@@ -611,10 +603,6 @@ if(ONNX_USE_ASAN AND NOT MSVC)
     target_link_libraries(onnx PRIVATE Sanitizer::undefined)
     message(STATUS "Use UBSAN")
   endif()
-endif()
-
-if(APPLE)
-  target_link_options(onnx PRIVATE "-undefined dynamic_lookup")
 endif()
 
 install(DIRECTORY ${ONNX_ROOT}/onnx
