@@ -287,19 +287,18 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.2/protobuf-30.2.tar.gz)
-    set(ProtobufSHA1 f846d1f047255d09142361ba6d1985336db5e407)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.0/protobuf-31.0.tar.gz)
+    set(ProtobufSHA1 c0cecb7cfc881f56a5b09f00a965aae408265fd0)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
       URL_HASH SHA1=${ProtobufSHA1}
-      PATCH_COMMAND "${CMAKE_COMMAND}" -Dprotobuf_MSVC_STATIC_RUNTIME=${protobuf_MSVC_STATIC_RUNTIME} -DFILENAME=CMakeLists.txt -P ${CMAKE_CURRENT_LIST_DIR}/cmake/ProtoBufPatch.cmake
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.30.2")
+    set(Protobuf_VERSION "6.31.0")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -545,18 +544,9 @@ if(ONNX_BUILD_PYTHON)
 
   # search for FindPython3.cmake instead of legacy modules
   set(PYBIND11_FINDPYTHON ON)
+  add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
 
-  # pybind11 is a header only lib
-  find_package(pybind11 2.12 CONFIG)
-  if(NOT pybind11_FOUND)
-    if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
-      add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
-    else()
-      message(FATAL_ERROR "cannot find pybind at '${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h'")
-    endif()
-  endif()
-
-  target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
+  target_link_libraries(onnx_cpp2py_export PRIVATE pybind11::headers)
 
   if(APPLE)
     target_link_options(onnx_cpp2py_export PRIVATE "-undefined dynamic_lookup")
@@ -661,19 +651,6 @@ install(FILES
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
   COMPONENT dev)
-install(EXPORT ONNXTargets
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
-  NAMESPACE ONNX::
-)
-if(NOT Build_Protobuf)
-  # If we fetched a Protobuf release (and didn't run its install step), then we
-  # don't have the export sets for Protobuf and its dependencies, which
-  # prevents us from creating an export set for ONNXTargets.
-  export(EXPORT ONNXTargets
-    FILE "${PROJECT_BINARY_DIR}/ONNXTargets.cmake"
-    NAMESPACE ONNX::
-  )
-endif()
 
 if(ONNX_USE_UNITY_BUILD)
   # If ONNX_USE_UNITY_BUILD is set to ON, set ONNX target to use Unity builds.
@@ -706,6 +683,11 @@ endif()
 install(TARGETS
   onnx onnx_proto
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(EXPORT ONNXTargets
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
+  NAMESPACE ONNX::
+)
 
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
