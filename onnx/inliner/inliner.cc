@@ -602,7 +602,7 @@ struct InlinerImpl {
   /** Utility function used for inlining into a FunctionProto.
    * @param function Mutable function
    */
-  void ProcessFunction(ModelProto& model, FunctionProto& function) {
+  void ProcessFunction(FunctionProto& function) {
     auto* nodes = function.mutable_node();
     auto* value_infos = function.mutable_value_info();
     Process(*nodes, *value_infos);
@@ -671,7 +671,7 @@ struct InlinerImpl {
     inliner.ProcessGraph(*model.mutable_graph());
 
     for (auto* function_ptr : non_inlined_functions) {
-      inliner.ProcessFunction(model, *function_ptr);
+      inliner.ProcessFunction(*function_ptr);
     }
 
     // Remove all inlined model-local functions.
