@@ -12,7 +12,7 @@ This describes the process by which versions of ONNX are officially released to 
 Release Cadence
 ---------------
 
-Branch cuts for a new release are planned every 4 months. However, the times can be changed as required. 
+Branch cuts for a new release are planned every 4 months. However, the times can be changed as required.
 
 | Minor Version | Release branch cut | Release date | First patch release date | Second patch release date|
 | --- | --- | --- | --- | --- |
@@ -32,7 +32,7 @@ Changes are discussed in the community. Please do not hesitate to contact us if 
 Planned changes for future releases as listed in the table below are subject to change. 
 
 |ONNX version	| Python wheels | C++ | Min Cmake Version | Min Protobuf | manylinux |
-| --- | --- | --- | --- | --- | --- | 
+| --- | --- | --- | --- | --- | --- |
 | 1.18 | 3.9-3.13, 3.13t (win, mac) | --- | 3.18 | v25.1 | manylinux2014 |
 | *1.19* | *3.9-3.13, 3.13t (win, mac, linux)* | --- | *3.24* | *v25.1* | *manylinux2014* |
 | *1.20* | *3.10-3.13, 3.13t (win, mac, linux), 3.14* | --- | --- | *v25.1* | *manylinux2_28* |
