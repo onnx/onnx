@@ -476,20 +476,16 @@ list(APPEND ONNX_SRCS ${__tmp_srcs})
 add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 
+set(ONNX_API_DEFINE "-DONNX_API=")
 if(MSVC)
   if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
-  else()
-    set(ONNX_API_DEFINE "-DONNX_API=")
   endif()
-else()
-  # On non-Windows, hide all symbols we don't need
-  set(ONNX_API_DEFINE "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
-  set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
-  set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
-target_compile_features(onnx_proto PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
+# Hide all symbols we don't need
+set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -508,6 +504,9 @@ foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
   endif()
 endforeach()
 add_onnx_global_defines(onnx_proto)
+target_include_directories(onnx_proto PUBLIC
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   # whole-archive linker option not available on AIX.
@@ -519,9 +518,6 @@ endif()
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
-target_include_directories(onnx PUBLIC
-  $<BUILD_INTERFACE:${ONNX_ROOT}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
