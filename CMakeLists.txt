@@ -544,18 +544,9 @@ if(ONNX_BUILD_PYTHON)
 
   # search for FindPython3.cmake instead of legacy modules
   set(PYBIND11_FINDPYTHON ON)
+  add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
 
-  # pybind11 is a header only lib
-  find_package(pybind11 2.12 CONFIG)
-  if(NOT pybind11_FOUND)
-    if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
-      add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
-    else()
-      message(FATAL_ERROR "cannot find pybind at '${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h'")
-    endif()
-  endif()
-
-  target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
+  target_link_libraries(onnx_cpp2py_export PRIVATE pybind11::headers)
 
   if(APPLE)
     target_link_options(onnx_cpp2py_export PRIVATE "-undefined dynamic_lookup")
