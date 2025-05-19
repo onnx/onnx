@@ -6,23 +6,18 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 include(${ONNX_ROOT}/cmake/Utils.cmake)
 include(CTest)
 
-set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
-
-list(APPEND ${UT_NAME}_libs onnx onnx_proto)
-
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
 find_package(Threads REQUIRED)
 
 function(AddTest)
-  cmake_parse_arguments(_UT "" "TARGET" "LIBS;SOURCES" ${ARGN})
+  cmake_parse_arguments(_UT "" "TARGET" "SOURCES" ${ARGN})
 
-  list(REMOVE_DUPLICATES _UT_LIBS)
   list(REMOVE_DUPLICATES _UT_SOURCES)
 
   add_executable(${_UT_TARGET} ${_UT_SOURCES})
 
   target_include_directories(${_UT_TARGET} PUBLIC ${ONNX_INCLUDE_DIRS})
-  target_link_libraries(${_UT_TARGET} ${_UT_LIBS} Threads::Threads)
+  target_link_libraries(${_UT_TARGET} gtest_main onnx onnx_proto Threads::Threads)
 
   if(MSVC)
     add_msvc_runtime_flag(${_UT_TARGET})
@@ -56,4 +51,4 @@ function(AddTest)
 
 endfunction(AddTest)
 
-addtest(TARGET ${UT_NAME} SOURCES ${${UT_NAME}_src} LIBS ${${UT_NAME}_libs})
+addtest(TARGET ${UT_NAME} SOURCES ${${UT_NAME}_src})
