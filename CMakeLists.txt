@@ -20,17 +20,17 @@ if(NOT isMultiConfig AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 # https://reproducible-builds.org/docs/source-date-epoch/
-if (DEFINED ENV{SOURCE_DATE_EPOCH})
+if(DEFINED ENV{SOURCE_DATE_EPOCH})
   execute_process(
     COMMAND "date" "-u" "-d" "@$ENV{SOURCE_DATE_EPOCH}" "+%Y-%m-%d"
     OUTPUT_VARIABLE BUILD_DATE
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-else ()
+else()
   execute_process(
     COMMAND "date" "+%Y-%m-%d"
     OUTPUT_VARIABLE BUILD_DATE
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif ()
+endif()
 
 if(NOT BUILD_SHARED_LIBS)
   # by default, cmake builds static libraries
@@ -675,12 +675,8 @@ if(ONNX_USE_UNITY_BUILD)
   if(MSVC)
     target_compile_options(onnx PRIVATE /bigobj)
   endif()
-
 # should be enabled for onnx_proto when protobuf can support Unity builds
-
 endif()
-
-
 
 install(TARGETS
   onnx onnx_proto
