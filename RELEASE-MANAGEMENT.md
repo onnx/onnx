@@ -29,7 +29,7 @@ Release Compatibility Matrix
 *ONNX does NOT follow https://scientific-python.org/specs/spec-0000/ or https://protobuf.dev/support/version-support/*
 
 Changes are discussed in the community. Please do not hesitate to contact us if you have any requests.
-Planned changes for future releases as listed in the table below are subject to change. 
+Planned changes for future releases as listed in the table below are subject to change.
 
 |ONNX version	| Python wheels | C++ | Min Cmake Version | Min Protobuf | manylinux |
 | --- | --- | --- | --- | --- | --- |
