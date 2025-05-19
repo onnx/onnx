@@ -570,7 +570,6 @@ if(ONNX_BUILD_PYTHON)
   endif()
 
   if(MSVC)
-    target_link_libraries(onnx_cpp2py_export PRIVATE ${Python3_LIBRARIES})
     add_msvc_runtime_flag(onnx_cpp2py_export)
     add_onnx_global_defines(onnx_cpp2py_export)
   endif()
