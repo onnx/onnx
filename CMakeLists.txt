@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.24)
 project(onnx LANGUAGES CXX)
 
 include(cmake/Utils.cmake)
+# Honor visibility properties for all target types.
 cmake_policy(SET CMP0063 NEW)
-cmake_policy(SET CMP0074 NEW)
 
 # Set default build type
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
