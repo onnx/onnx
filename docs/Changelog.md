@@ -16744,7 +16744,7 @@ This version of the operator has been available since version 13 of the default 
   The following special cases apply when `fmod` is set to `1`:
   - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
   - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
-  - If `y` is `±0` and `x` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
   - If `y` is `±∞` and `x` is finite, `x` is returned.
   - If either argument is `NaN`, `NaN` is returned.
 
