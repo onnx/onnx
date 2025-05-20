@@ -165,14 +165,6 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
-if(ONNX_BUILD_TESTS)
-  find_package(GTest)
-  if(NOT GTest_FOUND)
-    include(googletest)
-  endif()
-  set(googletest_STATIC_LIBRARIES GTest::gtest)
-endif()
-
 if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
   if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
     # Sometimes we need to use protoc compiled for host architecture while linking
@@ -623,6 +615,16 @@ if(ONNX_USE_UNITY_BUILD)
     target_compile_options(onnx PRIVATE /bigobj)
   endif()
 # should be enabled for onnx_proto when protobuf can support Unity builds
+endif()
+
+if(ONNX_BUILD_TESTS)
+  if(BUILD_SHARED_LIBS)
+    message(FATAL_ERROR "Tests requires static build")
+  endif()
+  find_package(GTest)
+  if(NOT GTest_FOUND)
+    include(googletest)
+  endif()
 endif()
 
 install(TARGETS
