@@ -164,11 +164,7 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
 if(ONNX_BUILD_TESTS)
-  find_package(GTest)
-  if(NOT GTest_FOUND)
-    include(googletest)
-  endif()
-  set(googletest_STATIC_LIBRARIES GTest::gtest)
+  include(${ONNX_ROOT}/cmake/external/googletest.cmake)
 endif()
 
 if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
