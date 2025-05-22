@@ -1312,11 +1312,7 @@ class DbgOperatorSetTracker {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
-#ifdef __GNUC__
-#define ONNX_UNUSED __attribute__((__unused__))
-#else
-#define ONNX_UNUSED
-#endif
+#define ONNX_UNUSED [[maybe_unused]]
 
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
