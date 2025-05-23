@@ -414,7 +414,7 @@ class TestComposeFunctions(unittest.TestCase):
             prefix=prefix,
             rename_inputs=True,
             rename_outputs=True,
-            rename_nodes=True,
+            rename_edges=True,
         )
 
         checker.check_graph(prefixed_model.graph)
@@ -443,21 +443,51 @@ class TestComposeFunctions(unittest.TestCase):
             prefix=prefix,
             rename_inputs=False,
             rename_outputs=False,
-            rename_nodes=True,
+            rename_edges=True,
         )
 
-        # check if (partially) prefixed graph is valid.
         checker.check_graph(prefixed_model.graph)
-
-        # check if input and output nodes are unchanged.
         self.assertEqual(input_model.graph.input, prefixed_model.graph.input)
         self.assertEqual(input_model.graph.output, prefixed_model.graph.output)
         self.assertEqual(
-            prefixed_model.graph.node[0].name,
             _prefixed(prefix=prefix, s=input_model.graph.node[0].name),
+            prefixed_model.graph.node[0].name,
         )
 
-    # FIXME: This function should be removed, as tests should not contain a copy of the tested logic.
+    def test_add_prefix_with_loose_inputs_outputs(self) -> None:
+        """Tests prefixing of graphs with loose inputs."""
+        input_graph = """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 13 ]
+            >
+            agraph (bool b, float[128] X, float[128] Y, bool unused_input) => (float[128] Z)
+            {
+            Z = If (b) <
+                then_branch = g1 () => (float[128] z_then) { z_then = Add(X, X) },
+                else_branch = g2 () => (float[128] z_else) { z_else = Sub(Y, Y) }
+                >
+            }
+            """
+        input_model = _load_model(input_graph)
+        prefix = "pre_"
+        prefixed_model = compose.add_prefix(
+            model=input_model,
+            prefix=prefix,
+            rename_inputs=True,
+            rename_outputs=True,
+            rename_edges=True,
+        )
+        checker.check_graph(prefixed_model.graph)
+
+        # Check if all inputs are prefixed even if input is not connected to node. e.g., 'unused_input'.
+        # Graph inputs that are not connected to any node will also be prefixed.
+        for i in prefixed_model.graph.input:
+            self.assertTrue(i.name.startswith(prefix))
+
+        for graph_output in prefixed_model.graph.output:
+            self.assertTrue(graph_output.name.startswith(prefix))
+
     def _test_add_prefix(
         self,
         rename_nodes: bool = False,
