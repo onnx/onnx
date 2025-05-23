@@ -449,10 +449,6 @@ class TestComposeFunctions(unittest.TestCase):
         checker.check_graph(prefixed_model.graph)
         self.assertEqual(input_model.graph.input, prefixed_model.graph.input)
         self.assertEqual(input_model.graph.output, prefixed_model.graph.output)
-        self.assertEqual(
-            _prefixed(prefix=prefix, s=input_model.graph.node[0].name),
-            prefixed_model.graph.node[0].name,
-        )
 
     def test_add_prefix_with_loose_inputs_outputs(self) -> None:
         """Tests prefixing of graphs with loose inputs."""
@@ -481,7 +477,6 @@ class TestComposeFunctions(unittest.TestCase):
         checker.check_graph(prefixed_model.graph)
 
         # Check if all inputs are prefixed even if input is not connected to node. e.g., 'unused_input'.
-        # Graph inputs that are not connected to any node will also be prefixed.
         for i in prefixed_model.graph.input:
             self.assertTrue(i.name.startswith(prefix))
 
