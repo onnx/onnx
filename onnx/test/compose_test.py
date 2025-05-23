@@ -424,7 +424,7 @@ class TestComposeFunctions(unittest.TestCase):
         for o in prefixed_model.graph.output:
             self.assertTrue(o.name.startswith(prefix))
 
-    def test_add_prefix_wo_inputs_ouputs(self) -> None:
+    def test_add_prefix_wo_inputs_outputs(self) -> None:
         """Tests prefixing input and output nodes, when renaming of inputs/outputs is deactivated."""
         input_graph = """
             <
