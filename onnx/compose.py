@@ -477,11 +477,16 @@ def add_prefix_graph(
 
     if name_map is None:
         name_map = {}
+
     if rename_edges:
+        # See https://github.com/onnx/onnx/pull/6869#issuecomment-2852719536
+        # Consider only intermediate nodes, that are neither graph inputs nor outputs.
+        # Rename graph inputs or outputs separately based on kwargs.
+        graph_output_names = {o.name for o in g.output}
         for n in g.node:
-            for e in n.input:
-                name_map[e] = _prefixed(prefix, e)
             for e in n.output:
+                if e in graph_output_names:
+                    continue
                 name_map[e] = _prefixed(prefix, e)
 
     if rename_inputs:
