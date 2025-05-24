@@ -24,7 +24,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
-        architecture: ['x64','arm64']
+        architecture: ['x64', 'arm64']
 
     env:
       MANYLINUX_WHEEL_X64: "manylinux2014_x86_64.whl"
@@ -44,13 +44,17 @@ jobs:
       run: |
         git config --global --add safe.directory /github/workspace
 
+    - name: Set source date epoch variable
+      run: |        
+        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
       id: build_wheel_x86
       uses: docker://quay.io/pypa/manylinux2014_x86_64:2025.03.22-2
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ inputs.build_mode }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
 
 
     - name: Build wheel for arm64
@@ -59,7 +63,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux2014_aarch64:2025.03.22-2
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_aarch64 ${{ inputs.build_mode }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_aarch64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
 
     - name: Set up Python ${{ matrix.python-version }}
       if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'

@@ -93,7 +93,7 @@ static void RegisterCustomFuncFloatSchema() {
   (void)unused;
 }
 
-// Test for Context dependant function without type context
+// Test for Context dependent function without type context
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
   RegisterCustomFuncFloatSchema();
 
