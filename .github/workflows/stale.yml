@@ -31,3 +31,8 @@ jobs:
         days-before-stale: 365
         days-before-close: 21
         ascending: true
+        exempt-issue-labels: bug,no-stale
+        exempt-pr-labels: no-stale
+        remove-issue-stale-when-updated: true
+        remove-pr-stale-when-updated: true
+        exempt-all-milestones: true

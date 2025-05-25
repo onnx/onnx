@@ -6,6 +6,6 @@ pytest-xdist
 # Pin dependency versions for testing
 numpy==2.0.0; python_version >= "3.9" and python_version <= "3.12"
 numpy==2.2.0; python_version>="3.13"
-protobuf==6.30.2
+protobuf==6.31.0
 # Dependencies for the reference implementation.
 -r requirements-reference.txt

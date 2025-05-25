@@ -305,7 +305,7 @@ Edges in the computation graph are established by outputs of one node being refe
 
 The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node. A node input in a nested subgraph MAY refer to names introduced in outer graphs (as node outputs, graph inputs, or graph initializers).
 
-The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name MUST be distinct from the names from the outer scopes that are visible in the nested subgraph.
+The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name and names of inputs and initializers of the subgraph MUST be distinct from the names from the outer scopes that are visible in the nested subgraph. That is, variable shadowing is not allowed.
 
 Node dependencies MUST NOT create cycles in the computation graph.
 
