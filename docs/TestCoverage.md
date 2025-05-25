@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 182/195 (93.33%, 5 generators excluded) common operators.
+Node tests have covered 183/195 (93.85%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -12009,143 +12009,92 @@ expect(
 
 </details>
 
+
 ### LpNormalization
 There are 6 test cases, listed as following:
 <details>
-<summary>lpnormalization_default</summary>
+<summary>default</summary>
 
 ```python
-"""
-input_shape: [3, 4, 5]
-output_shape: [3, 4, 5]
-"""
-node = onnx.helper.make_node(
-    'LpNormalization',
-    inputs=['x'],
-    outputs=['y']
-)
+node = onnx.helper.make_node("LpNormalization", inputs=["x"], outputs=["y"])
 x = np.random.rand(3, 4, 5).astype(np.float32)
 lp_norm_default = np.sqrt(np.sum(x**2, axis=-1, keepdims=True))
 y = x / lp_norm_default
-expect(node, inputs=[x], outputs=[y], name='test_lpnormalization_default')
+expect(node, inputs=[x], outputs=[y], name="test_lpnormalization_default")
 ```
 
 </details>
-
-<details>
-<summary>l2normalization_axis_0</summary>
-
-```python
-"""
-input_shape: [3, 4, 5]
-output_shape: [3, 4, 5]
-"""
-node = onnx.helper.make_node(
-    'LpNormalization',
-    inputs=['x'],
-    outputs=['y'],
-    axis=0,
-    p=2
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
-y = x / l2_norm_axis_0
-expect(node, inputs=[x], outputs=[y], name='test_l2normalization_axis_0')
-```
-
-</details>
-
-<details>
-<summary>l2normalization_axis_1</summary>
-
-```python
-"""
-input_shape: [3, 4, 5]
-output_shape: [3, 4, 5]
-"""
-node = onnx.helper.make_node(
-    'LpNormalization',
-    inputs=['x'],
-    outputs=['y'],
-    axis=0,
-    p=2
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=1, keepdims=True))
-y = x / l2_norm_axis_0
-expect(node, inputs=[x], outputs=[y], name='test_l2normalization_axis_1')
-```
-
-</details>
-
 <details>
 <summary>l1normalization_axis_0</summary>
 
 ```python
-"""
-input_shape: [3, 4, 5]
-output_shape: [3, 4, 5]
-"""
 node = onnx.helper.make_node(
-    'LpNormalization',
-    inputs=['x'],
-    outputs=['y'],
-    axis=0,
-    p=1
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=1
 )
 x = np.random.rand(3, 4, 5).astype(np.float32)
 l1_norm_axis_0 = np.sum(abs(x), axis=0, keepdims=True)
 y = x / l1_norm_axis_0
-expect(node, inputs=[x], outputs=[y], name='test_l1normalization_axis_0')
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_0")
 ```
 
 </details>
-
 <details>
 <summary>l1normalization_axis_1</summary>
 
 ```python
-"""
-input_shape: [3, 4, 5]
-output_shape: [3, 4, 5]
-"""
 node = onnx.helper.make_node(
-    'LpNormalization',
-    inputs=['x'],
-    outputs=['y'],
-    axis=0,
-    p=1
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=1
 )
 x = np.random.rand(3, 4, 5).astype(np.float32)
-l1_norm_axis_0 = np.sum(abs(x), axis=1, keepdims=True)
-y = x / l1_norm_axis_0
-expect(node, inputs=[x], outputs=[y], name='test_l1normalization_axis_1')
+l1_norm_axis_1 = np.sum(abs(x), axis=1, keepdims=True)
+y = x / l1_norm_axis_1
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_1")
 ```
 
 </details>
-
 <details>
 <summary>l1normalization_axis_last</summary>
 
 ```python
-"""
-input_shape: [3, 4, 5]
-output_shape: [3, 4, 5]
-"""
 node = onnx.helper.make_node(
-    'LpNormalization',
-    inputs=['x'],
-    outputs=['y'],
-    axis=-1,
-    p=1
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=-1, p=1
 )
 x = np.random.rand(3, 4, 5).astype(np.float32)
 l1_norm_axis_last = np.sum(abs(x), axis=-1, keepdims=True)
 y = x / l1_norm_axis_last
-expect(node, inputs=[x], outputs=[y], name='test_l2normalization_axis_last')
+expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_last")
 ```
 
 </details>
+<details>
+<summary>l2normalization_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=2
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
+y = x / l2_norm_axis_0
+expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
+```
+
+</details>
+<details>
+<summary>l2normalization_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=2
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+l2_norm_axis_1 = np.sqrt(np.sum(x**2, axis=1, keepdims=True))
+y = x / l2_norm_axis_1
+expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_1")
+```
+
+</details>
+
 
 ### LpPool
 There are 8 test cases, listed as following:
