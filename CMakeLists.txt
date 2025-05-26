@@ -313,9 +313,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS DEPEND)
     return()
   endif()
 
-  # Add ONNX_API prefix to protobuf classes and methods in all cases
-  set(ONNX_DLLEXPORT_STR "dllexport_decl=ONNX_API:")
-
   set(${SRCS})
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
@@ -380,7 +377,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS DEPEND)
         -I
         ${CMAKE_CURRENT_BINARY_DIR}
         --cpp_out
-        ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
+        ${CMAKE_CURRENT_BINARY_DIR})
     if(ONNX_BUILD_PYTHON)
       list(APPEND PROTOC_ARGS --python_out)
       if(ONNX_GEN_PB_TYPE_STUBS)
@@ -389,12 +386,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS DEPEND)
         list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
-    if(NOT ONNX_PROTOC_EXECUTABLE)
-      message(FATAL_ERROR "Protobuf compiler not found")
-    endif()
     add_custom_target(${NAME}
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
-        BYPRODUCTS "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
+        BYPRODUCTS "${OUTPUT_PB_SRC}"
         DEPENDS ${GENERATED_FILE_WE}_proto_file ${DEPEND}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
