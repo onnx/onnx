@@ -304,7 +304,7 @@ message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
 # orflow/contrib/cmake/tf_core_framework.cmake to solve the problem that
 # customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
-function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS DEPEND)
+function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   if(NOT ARGN)
     message(
       SEND_ERROR
@@ -317,6 +317,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS DEPEND)
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
   foreach(INFILE ${ARGN})
+    message(WARNING "${INFILE}")
     set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
@@ -337,7 +338,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS DEPEND)
     file(RELATIVE_PATH REL_DIR "${ONNX_ROOT}" "${FILE_DIR}")
     set(OUTPUT_PROTO_DIR "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}")
 
-    set(OUTPUT_PB_HEADER "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.h")
     set(OUTPUT_PB_SRC "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.cc")
     set(GENERATED_PROTO "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.proto")
     if(NOT (ONNX_NAMESPACE STREQUAL "onnx"))
@@ -386,33 +386,21 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS DEPEND)
         list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
-    add_custom_target(${NAME}
+    add_custom_target(${GENERATED_FILE_WE}_src
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
         BYPRODUCTS "${OUTPUT_PB_SRC}"
-        DEPENDS ${GENERATED_FILE_WE}_proto_file ${DEPEND}
+        DEPENDS ${GENERATED_FILE_WE}_proto_file
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
 endfunction()
 
-relative_protobuf_generate_cpp(gen_onnx_proto
-                               __tmp_srcs
-                               ""
-                               onnx/onnx.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-
-relative_protobuf_generate_cpp(gen_onnx_operators_proto
-                               __tmp_srcs
-                               gen_onnx_proto
-                               onnx/onnx-operators.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-
-relative_protobuf_generate_cpp(gen_onnx_data_proto
-                               __tmp_srcs
-                               gen_onnx_proto
+relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
+                               onnx/onnx.in.proto
+                               onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
+
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
@@ -423,8 +411,6 @@ file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
-
-add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 
 set(ONNX_API_DEFINE "-DONNX_API=")
 if(MSVC)
