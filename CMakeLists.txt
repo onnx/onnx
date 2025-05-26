@@ -316,6 +316,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   set(${SRCS})
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
+  set(GENERATED_FILE_TARGETS)
   foreach(INFILE ${ARGN})
     message(WARNING "${INFILE}")
     set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
@@ -386,10 +387,11 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
         list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
+    list(APPEND GENERATED_FILE_TARGETS ${GENERATED_FILE_WE}_proto_file)
     add_custom_target(${GENERATED_FILE_WE}_src
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
         BYPRODUCTS "${OUTPUT_PB_SRC}"
-        DEPENDS ${GENERATED_FILE_WE}_proto_file
+        DEPENDS ${GENERATED_FILE_TARGETS}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
