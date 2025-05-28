@@ -17150,7 +17150,8 @@ Other versions of this operator: <a href="Changelog.md#LpNormalization-1">1</a>
 
 ```python
 node = onnx.helper.make_node("LpNormalization", inputs=["x"], outputs=["y"])
-x = np.random.rand(3, 4, 5).astype(np.float32)
+x = np.array([[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]],
+                  [[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]], dtype=np.float32)
 lp_norm_default = np.sqrt(np.sum(x**2, axis=-1, keepdims=True))
 y = x / lp_norm_default
 expect(node, inputs=[x], outputs=[y], name="test_lpnormalization_default")
@@ -17166,7 +17167,7 @@ expect(node, inputs=[x], outputs=[y], name="test_lpnormalization_default")
 node = onnx.helper.make_node(
     "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=1
 )
-x = np.random.rand(3, 4, 5).astype(np.float32)
+x = np.array([3.0, 4.0], dtype=np.float32)
 l1_norm_axis_0 = np.sum(abs(x), axis=0, keepdims=True)
 y = x / l1_norm_axis_0
 expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_0")
@@ -17182,7 +17183,8 @@ expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_0")
 node = onnx.helper.make_node(
     "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=1
 )
-x = np.random.rand(3, 4, 5).astype(np.float32)
+x = np.array([[3.0, 4.0],
+              [6.0, 8.0]], dtype=np.float32)
 l1_norm_axis_1 = np.sum(abs(x), axis=1, keepdims=True)
 y = x / l1_norm_axis_1
 expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_1")
@@ -17198,10 +17200,12 @@ expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_1")
 node = onnx.helper.make_node(
     "LpNormalization", inputs=["x"], outputs=["y"], axis=-1, p=1
 )
-x = np.random.rand(3, 4, 5).astype(np.float32)
+x = np.array([
+[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]],
+[[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]], dtype=np.float32)
 l1_norm_axis_last = np.sum(abs(x), axis=-1, keepdims=True)
 y = x / l1_norm_axis_last
-expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_last")
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_last")
 ```
 
 </details>
@@ -17214,7 +17218,8 @@ expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_last")
 node = onnx.helper.make_node(
     "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=2
 )
-x = np.random.randn(3, 4, 5).astype(np.float32)
+x = np.array([[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]],
+                  [[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]], dtype=np.float32)
 l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
 y = x / l2_norm_axis_0
 expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
@@ -17230,7 +17235,8 @@ expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
 node = onnx.helper.make_node(
     "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=2
 )
-x = np.random.randn(3, 4, 5).astype(np.float32)
+x = np.array([[3.0, 4.0],
+              [6.0, 8.0]], dtype=np.float32)
 l2_norm_axis_1 = np.sqrt(np.sum(x**2, axis=1, keepdims=True))
 y = x / l2_norm_axis_1
 expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_1")
