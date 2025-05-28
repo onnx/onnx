@@ -8,6 +8,35 @@ SPDX-License-Identifier: Apache-2.0
 
 This describes the process by which versions of ONNX are officially released to the public.
 
+
+Release Cadence
+---------------
+
+Branch cuts for a new release are planned every 4 months. However, the times can be changed as required.
+
+| Minor Version | Release branch cut | Release date | First patch release date | Second patch release date|
+| --- | --- | --- | --- | --- |
+| 1.17.0 | XYZ | XYZ | Not planned | Not planned |
+| 1.18.0 | Mar 2025 | Mai 2025 | Not planned | Not planned |
+| 1.19.0 (tbd) | July 2025 | August 2024 | Not planned |  Not planned |
+| 1.20.0 (tbd) | November 2025 | Dez 2025 | Not planned | Not planned |
+
+
+Release Compatibility Matrix
+----------------------------
+
+*Support for a Python version that went eol will be discontinued in the following ONNX release.*
+*ONNX does NOT follow https://scientific-python.org/specs/spec-0000/ or https://protobuf.dev/support/version-support/*
+
+Changes are discussed in the community. Please do not hesitate to contact us if you have any requests.
+Planned changes for future releases as listed in the table below are subject to change.
+
+|ONNX version	| Python wheels | C++ | Min Cmake Version | Min Protobuf | manylinux |
+| --- | --- | --- | --- | --- | --- |
+| 1.18 | 3.9-3.13, 3.13t (win, mac) | --- | 3.18 | v25.1 | manylinux2014 |
+| *1.19* | *3.9-3.13, 3.13t (win, mac, linux)* | --- | *3.24* | *v25.1* | *manylinux2014* |
+| *1.20* | *3.10-3.13, 3.13t (win, mac, linux), 3.14* | --- | --- | *v25.1* | *manylinux2_28* |
+
 Releases
 --------
 

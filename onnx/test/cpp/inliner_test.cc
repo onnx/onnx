@@ -18,7 +18,11 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-static void InlineFunctions(ModelProto& model, const char* input, const inliner::FunctionIdSet* to_inline = nullptr) {
+static void InlineFunctions(
+    ModelProto& model,
+    const char* input,
+    const inliner::FunctionIdSet* to_inline = nullptr,
+    const ISchemaRegistry* schema_registry = nullptr) {
   OnnxParser parser(input);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -28,7 +32,9 @@ static void InlineFunctions(ModelProto& model, const char* input, const inliner:
   shape_inference::InferShapes(model);
 
   // std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
-  if (to_inline != nullptr)
+  if (schema_registry != nullptr)
+    inliner::InlineSelectedFunctions(model, *to_inline, schema_registry);
+  else if (to_inline != nullptr)
     inliner::InlineSelectedFunctions(model, *to_inline);
   else
     inliner::InlineLocalFunctions(model, true);
@@ -372,5 +378,57 @@ bar (x) => (y) {
   ASSERT_EQ(node2.attribute_size(), 0);
 }
 
+TEST(SchemaFunctionInliner, BasicTest) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: ["" : 18]>
+agraph (float[N, 128] X) => (float[N, 128] Y)
+{
+  Y = Softmax (X)
+}
+)ONNX";
+
+  ModelProto model;
+  inliner::FunctionIdVector to_inline = {{"", "Softmax"}};
+  auto to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline));
+  InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
+  auto num_nodes = model.graph().node_size();
+  ASSERT_GT(num_nodes, 1);
+}
+
+static bool ContainsOp(const ModelProto& model, const char* op_type) {
+  for (const auto& node : model.graph().node()) {
+    if (node.op_type() == op_type) {
+      return true;
+    }
+  }
+  return false;
+}
+
+TEST(SchemaFunctionInliner, NestedTest) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: ["" : 18]>
+agraph (float[N, C] X, int32[N] expected) => (float Y)
+{
+  Y, log_prob = SoftmaxCrossEntropyLoss (X, expected)
+}
+)ONNX";
+
+  ModelProto model;
+  inliner::FunctionIdVector to_inline = {{"", "SoftmaxCrossEntropyLoss"}};
+  auto to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline));
+  InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
+  auto num_nodes = model.graph().node_size();
+  ASSERT_GT(num_nodes, 1);
+  // Nested call to LogSoftmax should not be inlined.
+  ASSERT_TRUE(ContainsOp(model, "LogSoftmax"));
+
+  inliner::FunctionIdVector to_inline2 = {{"", "SoftmaxCrossEntropyLoss"}, {"", "LogSoftmax"}};
+  to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline2));
+  InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
+  num_nodes = model.graph().node_size();
+  ASSERT_GT(num_nodes, 1);
+  // Nested call to LogSoftmax should be inlined.
+  ASSERT_FALSE(ContainsOp(model, "LogSoftmax"));
+}
 } // namespace Test
 } // namespace ONNX_NAMESPACE
