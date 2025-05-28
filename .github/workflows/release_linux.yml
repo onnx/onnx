@@ -27,8 +27,8 @@ jobs:
         architecture: ['x64', 'arm64']
 
     env:
-      MANYLINUX_WHEEL_X64: "manylinux2014_x86_64.whl"
-      MANYLINUX_WHEEL_ARM64: "manylinux2014_aarch64.whl"
+      MANYLINUX_WHEEL_X64: "manylinux2014_x86_64"
+      MANYLINUX_WHEEL_ARM64: "manylinux2014_aarch64"
 
     runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
 
@@ -80,6 +80,7 @@ jobs:
     - name: Test wheel with Python ${{ matrix.python-version }}
       if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
       run: |
+        # ./dist/onnx_weekly-1.19.0.dev20250528-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
         python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}
 
         pytest
