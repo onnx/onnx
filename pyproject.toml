@@ -52,7 +52,7 @@ onnx = [
 
 [tool.pytest.ini_options]
 
-addopts = "--nbval --nbval-current-env --tb=short --color=yes"
+addopts = "--tb=short --color=yes"
 testpaths = [
     "onnx/test",
     "onnx/examples",
@@ -98,17 +98,7 @@ module = [
 ]
 ignore_errors = true
 
-[tool.black]
-# NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = ["py39", "py310", "py311"]
-
-[tool.isort]
-# NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-profile = "black"
-
 [tool.pylint.message_control]
-# This list is for vscode. Add new disables in pyproject_pylint.toml for lintrunner and CI.
-# Exclude patterns should be modified in .lintrunner.toml
 disable = [
     "format",
     "import-error",
@@ -176,7 +166,7 @@ lint.ignore = [
     "PYI041", # int | float is sometimes more clear than float
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "RUF022", # We may want to keep __all__ unsorted for better readability
-    "SIM102", # We don't perfer always combining if branches
+    "SIM102", # We don't prefer always combining if branches
     "SIM103", # We don't always prefer combining if branches
     "SIM108", # We don't always encourage ternary operators
     "SIM114", # Don't always combine if branches for debugability

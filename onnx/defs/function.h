@@ -65,12 +65,12 @@ class FunctionBodyHelper {
   To build a node with attribute:
     {{"Y"}, "Concat", {"X1", "X2", "X3"}, {{"axis", 1}}}
       represents Y = Concat(X1,X2,X3) with axis = 1
-    The attribute type are infered from the attribute value's c++ type
+    The attribute type are inferred from the attribute value's c++ type
     Supported value types are
       int64_t -> int, vector<int64_t> -> ints
       float -> float, vector<float> -> floats
       string -> string, vector<string> ->strings
-    For refering an attribute from parent, use:
+    For referring an attribute from parent, use:
       {MakeRefAttribute("axes", AttributeProto::INTS)}}
 
   To build a node which belongs to a domain other than onnx standard domain:
@@ -170,6 +170,7 @@ class FunctionBuilder {
     if constexpr (sizeof...(args) % 2 == 0) {
       return AddAttributes(args...);
     }
+    return *this;
   }
 
   FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {

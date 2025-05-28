@@ -753,9 +753,10 @@ bool OpSchema::BuildContextDependentFunction(
 
   auto it = opset_version_to_function_builder_.upper_bound(requested_opset_version);
   if (opset_version_to_function_builder_.empty() || it == opset_version_to_function_builder_.begin()) {
-    ONNX_THROW_EX(std::out_of_range(
-        std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
-        this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
+    ONNX_THROW_EX(
+        std::out_of_range(
+            std::string("Cannot find a function builder that satisfies the requested opset version: op_type = ") +
+            this->name_ + ", opset_version = " + std::to_string(requested_opset_version) + "."));
   } else {
     --it;
     const ContextDependentFunctionBodyBuilder& body_builder = it->second;
@@ -930,7 +931,7 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
 
   // In a typical onnx function where the function and all the
   // ops in function body belong to the same domain we implicitly add
-  // {domain_, since_version_} to funciton opset imports if it is not already added.
+  // {domain_, since_version_} to function opset imports if it is not already added.
   // This is simply for convienince. If any of the function body ops do not belong to same
   // domain as function itself, then the function author needs to explicitly add all the relevant
   // opset imports.

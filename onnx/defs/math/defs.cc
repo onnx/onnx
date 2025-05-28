@@ -44,15 +44,16 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
 static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
 (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
@@ -93,19 +94,23 @@ ONNX_OPERATOR_SET_SCHEMA(
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Sub"); }));
 
 static const char* Mod_doc = R"DOC(
-  Performs element-wise binary modulus (with Numpy-style broadcasting support).
-  The sign of the remainder is the same as that of the Divisor.
+Performs an element-wise binary modulo operation.
+The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
 
-  Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-  (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-  This attribute is set to 0 by default causing the behavior to be like integer mod.
-  Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
+The sign of the result is that of the divisor.
 
-  If the input type is floating point, then `fmod` attribute must be set to 1.
+If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
+The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
+The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
+The following special cases apply when `fmod` is set to `1`:
+- If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
+- If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+- If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
+- If `y` is `±∞` and `x` is finite, `x` is returned.
+- If either argument is `NaN`, `NaN` is returned.
 
-  In case of dividend being zero, the results will be platform dependent.
-
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -852,13 +857,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
 {broadcast_doc}
 )DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1017,7 +1023,8 @@ static std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 The operator computes the {description} values for the given input:
 
  {equation}
@@ -1026,16 +1033,17 @@ The "axis" attribute indicates the dimension along which {name}
 will be performed. The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{description}", description);
-                        ReplaceAll(doc, "{equation}", equation););
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{description}", description);
+        ReplaceAll(doc, "{equation}", equation););
     std::string axis_attr;
-    POPULATE_OP_DOC_STR(axis_attr = R"DOC(
+    POPULATE_OP_DOC_STR(
+        axis_attr = R"DOC(
 Describes the dimension {name} will be performed on.
 Negative value means counting dimensions
 from the back. Accepted range is [-r, r-1] where r = rank(input).
 )DOC";
-                        ReplaceAll(axis_attr, "{name}", name););
+        ReplaceAll(axis_attr, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("axis", axis_attr, AttributeProto::INT, static_cast<int64_t>(-1));
     schema.Input(
@@ -3000,7 +3008,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             const TensorProto* axis_tensor = ctx.getInputData(axis_arg_index);
             ONNX_ASSERTM(axis_tensor != nullptr, "axis should not be nullptr at this point");
             // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
-            // to abstrct the following logic out.
+            // to abstract the following logic out.
             if (axis_tensor->dims_size() != 0) {
               fail_shape_inference("axis input must be a scalar.");
             }
@@ -3064,10 +3072,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> CosineSumWindowOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Generates a {name} window as described in the paper https://ieeexplore.ieee.org/document/1455106.
 )DOC";
-                        ReplaceAll(doc, "{name}", name););
+        ReplaceAll(doc, "{name}", name););
 
     schema.SetDoc(doc);
     schema.Attr(

@@ -71,9 +71,10 @@ BuildFloatFunctionBody(const FunctionBodyBuildContext& /*ctx*/, const OpSchema& 
   // Create a scalar-tensor constant 2.0 of float type:
   auto two_as_tensor = ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT);
 
-  std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
-                                                {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-                                                {{"Y"}, "Mul", {"X", "Two"}}};
+  std::vector<FunctionBodyHelper::NodeDef> body{
+      // nodes: {outputs, op, inputs, attributes}
+      {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
+      {{"Y"}, "Mul", {"X", "Two"}}};
 
   return BuildFunctionProto(functionProto, schema, body);
 }
@@ -92,7 +93,7 @@ static void RegisterCustomFuncFloatSchema() {
   (void)unused;
 }
 
-// Test for Context dependant function without type context
+// Test for Context dependent function without type context
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
   RegisterCustomFuncFloatSchema();
 
@@ -130,9 +131,10 @@ BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, F
   auto elem_type = (TensorProto_DataType)tp->tensor_type().elem_type();
   auto two_as_tensor = ToTensor(2.0, elem_type);
 
-  std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
-                                                {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-                                                {{"Y"}, "Mul", {"X", "Two"}}};
+  std::vector<FunctionBodyHelper::NodeDef> body{
+      // nodes: {outputs, op, inputs, attributes}
+      {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
+      {{"Y"}, "Mul", {"X", "Two"}}};
 
   return BuildFunctionProto(functionProto, schema, body);
 }

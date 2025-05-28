@@ -4,18 +4,19 @@
 from __future__ import annotations
 
 import collections.abc
+import functools
 import numbers
 import struct
+import typing
 from cmath import isnan
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 
 import google.protobuf.message
 import numpy as np
 import typing_extensions
 
-import onnx._custom_element_types as custom_np_types
+import onnx
 from onnx import (
-    IR_VERSION,
     AttributeProto,
     FunctionProto,
     GraphProto,
@@ -31,8 +32,9 @@ from onnx import (
     TrainingInfoProto,
     TypeProto,
     ValueInfoProto,
+    _custom_element_types,
+    _mapping,
     defs,
-    mapping,
     subbyte,
 )
 
@@ -73,12 +75,13 @@ VERSION_TABLE: VersionTableType = [
     ("1.15.0", 9, 20, 4, 1),
     ("1.16.0", 10, 21, 5, 1),
     ("1.17.0", 10, 22, 5, 1),
+    ("1.18.0", 11, 23, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
 
 
-def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
+def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
 
@@ -95,7 +98,7 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     return result
 
 
-OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
+OP_SET_ID_VERSION_MAP = _create_op_set_id_version_map(VERSION_TABLE)
 
 
 def find_min_ir_version_for(
@@ -299,7 +302,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
-    model.ir_version = IR_VERSION
+    model.ir_version = onnx.IR_VERSION
     model.graph.CopyFrom(graph)
 
     opset_imports: Sequence[OperatorSetIdProto] | None = kwargs.pop(
@@ -363,8 +366,7 @@ def _split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def float32_to_bfloat16(*args, **kwargs) -> int:
     return _float32_to_bfloat16(*args, **kwargs)
@@ -390,8 +392,7 @@ def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def float32_to_float8e4m3(*args, **kwargs) -> int:
     return _float32_to_float8e4m3(*args, **kwargs)
@@ -532,8 +533,7 @@ def _float32_to_float8e4m3(  # noqa: PLR0911
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def float32_to_float8e5m2(*args: Any, **kwargs: Any) -> int:
     return _float32_to_float8e5m2(*args, **kwargs)
@@ -666,8 +666,7 @@ def _float32_to_float8e5m2(  # noqa: PLR0911
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
     return _pack_float32_to_4bit(array, signed)
@@ -687,7 +686,7 @@ def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndar
     if not isinstance(array, np.ndarray):
         array = np.asarray(array, dtype=np.float32)
 
-    array_flat = array.ravel()
+    array_flat: np.ndarray = array.ravel()
     is_odd_volume = np.prod(array.shape) % 2 == 1
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
@@ -702,8 +701,7 @@ def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndar
 
 
 @typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     return _pack_float32_to_float4e2m1(array)
@@ -722,7 +720,7 @@ def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     if not isinstance(array, np.ndarray):
         array = np.asarray(array, dtype=np.float32)
 
-    array_flat = array.ravel()
+    array_flat: np.ndarray = array.ravel()
     is_odd_volume = np.prod(array.shape) % 2 == 1
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
@@ -1421,7 +1419,7 @@ def printable_dim(dim: TensorShapeProto.Dimension) -> str:
 
 def printable_type(t: TypeProto) -> str:
     if t.WhichOneof("value") == "tensor_type":
-        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)
+        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)  # type: ignore[attr-defined]
         if t.tensor_type.HasField("shape"):
             if len(t.tensor_type.shape.dim):
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
@@ -1442,7 +1440,7 @@ def printable_value_info(v: ValueInfoProto) -> str:
 
 def printable_tensor_proto(t: TensorProto) -> str:
     s = f"%{t.name}["
-    s += TensorProto.DataType.Name(t.data_type)
+    s += TensorProto.DataType.Name(t.data_type)  # type: ignore[attr-defined]
     if t.dims is not None:
         if len(t.dims):
             s += str(", " + "x".join(map(str, t.dims)))
@@ -1487,8 +1485,14 @@ def printable_node(
     return prefix + " ".join(content)
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.19. Consider using onnx.printer.to_text() instead."
+)
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """Display a GraphProto as a string.
+
+    .. deprecated:: 1.19
+        Consider using :func:`onnx.printer.to_text` instead.
 
     Args:
         graph (GraphProto): the graph to display
@@ -1615,7 +1619,7 @@ def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
     Returns:
         numpy's data_type
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
@@ -1627,7 +1631,7 @@ def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     Returns:
         data_type for storage
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
@@ -1639,9 +1643,10 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     Returns:
         the name of data_type
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
+@functools.lru_cache(None)
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
@@ -1651,12 +1656,27 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     Returns:
         field name
     """
-    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
-        mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    storage_tensor_type_to_field = {
+        int(TensorProto.FLOAT): "float_data",
+        int(TensorProto.INT32): "int32_data",
+        int(TensorProto.INT64): "int64_data",
+        int(TensorProto.UINT8): "int32_data",
+        int(TensorProto.UINT16): "int32_data",
+        int(TensorProto.DOUBLE): "double_data",
+        int(TensorProto.COMPLEX64): "float_data",
+        int(TensorProto.COMPLEX128): "double_data",
+        int(TensorProto.UINT32): "uint64_data",
+        int(TensorProto.UINT64): "uint64_data",
+        int(TensorProto.STRING): "string_data",
+        int(TensorProto.BOOL): "int32_data",
+    }
+    return storage_tensor_type_to_field[
+        _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
 
-def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
+@functools.lru_cache(None)
+def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
     Args:
@@ -1665,26 +1685,37 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     Returns:
         TensorsProto's data_type
     """
-    if np_dtype in mapping._NP_TYPE_TO_TENSOR_TYPE:
-        return cast(
-            int,
-            mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
-        )
-
+    _np_dtype_to_tensor_dtype = {
+        v.np_dtype: k
+        for k, v in _mapping.TENSOR_TYPE_MAP.items()
+        if k
+        not in {
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+        }
+    }
+    if np_dtype in _np_dtype_to_tensor_dtype:
+        return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
     if np.issubdtype(np_dtype, np.str_):
         return TensorProto.STRING  # type: ignore[no-any-return]
 
     if np_dtype in {
-        custom_np_types.bfloat16,
-        custom_np_types.float8e4m3fn,
-        custom_np_types.float8e4m3fnuz,
-        custom_np_types.float8e5m2,
-        custom_np_types.float8e5m2fnuz,
-        custom_np_types.int4,
-        custom_np_types.uint4,
-        custom_np_types.float4e2m1,
+        _custom_element_types.bfloat16,
+        _custom_element_types.float8e4m3fn,
+        _custom_element_types.float8e4m3fnuz,
+        _custom_element_types.float8e5m2,
+        _custom_element_types.float8e5m2fnuz,
+        _custom_element_types.int4,
+        _custom_element_types.uint4,
+        _custom_element_types.float4e2m1,
     }:
-        return custom_np_types.mapping_name_to_data_type[np_dtype.descr[0][0]]  # type: ignore[no-any-return]
+        return _custom_element_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
@@ -1697,11 +1728,12 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     Returns:
         all tensor types from TensorProto
     """
-    return mapping.TENSOR_TYPE_MAP.keys()
+    return _mapping.TENSOR_TYPE_MAP.keys()
 
 
 _ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
-    k: v for v, k in AttributeProto.AttributeType.items()
+    k: v
+    for v, k in AttributeProto.AttributeType.items()  # type: ignore[attr-defined]
 }
 
 
@@ -1714,6 +1746,6 @@ def _attr_type_to_str(attr_type: int) -> str:
     Returns:
         String representing the supplied attr_type.
     """
-    if attr_type in AttributeProto.AttributeType.values():
+    if attr_type in AttributeProto.AttributeType.values():  # type: ignore[attr-defined]
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]
+    return AttributeProto.AttributeType.keys()[0]  # type: ignore

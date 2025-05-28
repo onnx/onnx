@@ -37,7 +37,7 @@ class Loop(OpRun):
             raise TypeError(f"M must be empty or an array but its type is {type(M)}.")
         body = self.body  # type: ignore
         loop_inputs = body.input_names
-        inputs = {name: None for name in loop_inputs}
+        inputs = dict.fromkeys(loop_inputs)
         if v_initial is not None:
             inputs[loop_inputs[2]] = v_initial
         cond_name = body.output_names[0]
@@ -45,7 +45,7 @@ class Loop(OpRun):
             begin = len(loop_inputs) - len(args)
             all_inputs = loop_inputs[begin:]
             for name, val in zip(all_inputs, args):
-                inputs[name] = val  # noqa: PERF403
+                inputs[name] = val
         if context is not None:
             for a in context:
                 inputs[a] = context[a]

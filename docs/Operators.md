@@ -5490,7 +5490,7 @@ for from_type, to_type in test_cases:
             )
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tested."
+                f"Conversion from {from_type} to {to_type} is not tested."
             )
 
         if to_type == "FLOAT8E4M3FN":
@@ -5517,7 +5517,7 @@ for from_type, to_type in test_cases:
             expected = input_values
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tested."
+                f"Conversion from {from_type} to {to_type} is not tested."
             )
         expected_tensor = make_tensor(
             "x", getattr(TensorProto, to_type), [3, 5], expected.tolist()
@@ -5548,7 +5548,7 @@ for from_type, to_type in test_cases:
             )
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tested."
+                f"Conversion from {from_type} to {to_type} is not tested."
             )
         if to_type == "UINT4":
             expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
@@ -5564,7 +5564,7 @@ for from_type, to_type in test_cases:
             expected = input_values.astype(np.int8)
         else:
             raise ValueError(
-                "Conversion from {from_type} to {to_type} is not tested."
+                f"Conversion from {from_type} to {to_type} is not tested."
             )
         expected_tensor = make_tensor(
             "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
@@ -5741,7 +5741,7 @@ for from_type, to_type in test_cases:
         )
     else:
         raise ValueError(
-            "Conversion from {from_type} to {to_type} is not tested."
+            f"Conversion from {from_type} to {to_type} is not tested."
         )
 
     if to_type == "FLOAT8E4M3FN":
@@ -5758,7 +5758,7 @@ for from_type, to_type in test_cases:
         )
     else:
         raise ValueError(
-            "Conversion from {from_type} to {to_type} is not tested."
+            f"Conversion from {from_type} to {to_type} is not tested."
         )
 
     ivals = bytes([int(i) for i in expected])
@@ -15396,8 +15396,8 @@ for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(
         x[
             n,
-            max(0, c - int(math.floor((nsize - 1) / 2))) : min(
-                5, c + int(math.ceil((nsize - 1) / 2)) + 1
+            max(0, c - math.floor((nsize - 1) / 2)) : min(
+                5, c + math.ceil((nsize - 1) / 2) + 1
             ),
             h,
             w,
@@ -15434,8 +15434,8 @@ for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(
         x[
             n,
-            max(0, c - int(math.floor((nsize - 1) / 2))) : min(
-                5, c + int(math.ceil((nsize - 1) / 2)) + 1
+            max(0, c - math.floor((nsize - 1) / 2)) : min(
+                5, c + math.ceil((nsize - 1) / 2) + 1
             ),
             h,
             w,
@@ -19365,19 +19365,23 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 
 ### <a name="Mod"></a><a name="mod">**Mod**</a>
 
-  Performs element-wise binary modulus (with Numpy-style broadcasting support).
-    The sign of the remainder is the same as that of the Divisor.
+  Performs an element-wise binary modulo operation.
+  The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
 
-    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-    This attribute is set to 0 by default causing the behavior to be like integer mod.
-    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
+  The sign of the result is that of the divisor.
 
-    If the input type is floating point, then `fmod` attribute must be set to 1.
+  If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
+  The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
+  The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
+  The following special cases apply when `fmod` is set to `1`:
+  - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
+  - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
+  - If `y` is `±∞` and `x` is finite, `x` is returned.
+  - If either argument is `NaN`, `NaN` is returned.
 
-    In case of dividend being zero, the results will be platform dependent.
-
-    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -35037,7 +35041,7 @@ expect(
 # 1-dimensional tensor with dimension_size=0
 node_input = np.array([]).astype(np.float32)
 
-# Split emtpy tensor to tensors of size zero
+# Split empty tensor to tensors of size zero
 split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     "Split",
@@ -35069,7 +35073,7 @@ expect(
 # 1-dimensional tensor with dimension_size=0
 node_input = np.array([]).astype(np.float32)
 
-# Split emtpy tensor to tensors of size zero
+# Split empty tensor to tensors of size zero
 split = np.array([0, 0, 0]).astype(np.int64)
 node = onnx.helper.make_node(
     "Split",
@@ -35314,7 +35318,7 @@ Other versions of this operator: <a href="Changelog.md#Squeeze-1">1</a>, <a href
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>List of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>1D tensor of integers indicating the dimensions to squeeze. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -38137,7 +38141,7 @@ Other versions of this operator: <a href="Changelog.md#Unsqueeze-1">1</a>, <a hr
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>Original tensor</dd>
 <dt><tt>axes</tt> (non-differentiable) : tensor(int64)</dt>
-<dd>List of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
+<dd>1D tensor of integers indicating the dimensions to be inserted. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(expanded).</dd>
 </dl>
 
 #### Outputs

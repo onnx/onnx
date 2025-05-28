@@ -160,7 +160,7 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       return left + "sparse_tensor(" + ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" + right;
     }
     default:
-      ONNX_THROW_EX(std::invalid_argument("Unsuported type proto value case."));
+      ONNX_THROW_EX(std::invalid_argument("Unsupported type proto value case."));
   }
 }
 
@@ -238,8 +238,9 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
 
 int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   if (!IsValidDataTypeString(type_str)) {
-    ONNX_THROW_EX(std::invalid_argument(
-        "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
+    ONNX_THROW_EX(
+        std::invalid_argument(
+            "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
   }
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();

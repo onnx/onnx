@@ -27,7 +27,6 @@ __all__ = [
     "gen_proto",
     "helper",
     "hub",
-    "mapping",
     "numpy_helper",
     "parser",
     "printer",
@@ -136,7 +135,6 @@ from onnx import (
     gen_proto,
     helper,
     hub,
-    mapping,
     numpy_helper,
     parser,
     printer,
@@ -156,20 +154,20 @@ _DEFAULT_FORMAT = "protobuf"
 
 
 def _load_bytes(f: IO[bytes] | str | os.PathLike) -> bytes:
-    if hasattr(f, "read") and callable(typing.cast(IO[bytes], f).read):
-        content = typing.cast(IO[bytes], f).read()
+    if hasattr(f, "read") and callable(typing.cast("IO[bytes]", f).read):
+        content = typing.cast("IO[bytes]", f).read()
     else:
-        f = typing.cast(Union[str, os.PathLike], f)
+        f = typing.cast("Union[str, os.PathLike]", f)
         with open(f, "rb") as readable:
             content = readable.read()
     return content
 
 
 def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
-    if hasattr(f, "write") and callable(typing.cast(IO[bytes], f).write):
-        typing.cast(IO[bytes], f).write(content)
+    if hasattr(f, "write") and callable(typing.cast("IO[bytes]", f).write):
+        typing.cast("IO[bytes]", f).write(content)
     else:
-        f = typing.cast(Union[str, os.PathLike], f)
+        f = typing.cast("Union[str, os.PathLike]", f)
         with open(f, "wb") as writable:
             writable.write(content)
 
