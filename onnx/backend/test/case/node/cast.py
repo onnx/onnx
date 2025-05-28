@@ -200,7 +200,7 @@ class Cast(Base):
                     )
                 else:
                     raise ValueError(
-                        "Conversion from {from_type} to {to_type} is not tested."
+                        f"Conversion from {from_type} to {to_type} is not tested."
                     )
 
                 if to_type == "FLOAT8E4M3FN":
@@ -227,7 +227,7 @@ class Cast(Base):
                     expected = input_values
                 else:
                     raise ValueError(
-                        "Conversion from {from_type} to {to_type} is not tested."
+                        f"Conversion from {from_type} to {to_type} is not tested."
                     )
                 expected_tensor = make_tensor(
                     "x", getattr(TensorProto, to_type), [3, 5], expected.tolist()
@@ -258,7 +258,7 @@ class Cast(Base):
                     )
                 else:
                     raise ValueError(
-                        "Conversion from {from_type} to {to_type} is not tested."
+                        f"Conversion from {from_type} to {to_type} is not tested."
                     )
                 if to_type == "UINT4":
                     expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
@@ -274,7 +274,7 @@ class Cast(Base):
                     expected = input_values.astype(np.int8)
                 else:
                     raise ValueError(
-                        "Conversion from {from_type} to {to_type} is not tested."
+                        f"Conversion from {from_type} to {to_type} is not tested."
                     )
                 expected_tensor = make_tensor(
                     "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
@@ -445,7 +445,7 @@ class Cast(Base):
                 )
             else:
                 raise ValueError(
-                    "Conversion from {from_type} to {to_type} is not tested."
+                    f"Conversion from {from_type} to {to_type} is not tested."
                 )
 
             if to_type == "FLOAT8E4M3FN":
@@ -462,7 +462,7 @@ class Cast(Base):
                 )
             else:
                 raise ValueError(
-                    "Conversion from {from_type} to {to_type} is not tested."
+                    f"Conversion from {from_type} to {to_type} is not tested."
                 )
 
             ivals = bytes([int(i) for i in expected])

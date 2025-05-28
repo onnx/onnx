@@ -52,7 +52,7 @@ function (onnx_print_configuration_summary)
   message(STATUS "  onnx_proto link libraries         : ${tmp}")
 
   message(STATUS "")
-  message(STATUS "  Protobuf verson                   : ${Protobuf_VERSION}")
+  message(STATUS "  Protobuf version                   : ${Protobuf_VERSION}")
   if(EXISTS "${ONNX_PROTOC_EXECUTABLE}")
     message(STATUS "  Protobuf compiler                 : ${ONNX_PROTOC_EXECUTABLE}")
   else()

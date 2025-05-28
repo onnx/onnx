@@ -99,7 +99,7 @@ class RoiAlign(OpRun):
                         w3 = ly * hx
                         w4 = ly * lx
 
-                        # save weights and indeces
+                        # save weights and indices
                         pc = PreCalc()
                         pc.pos1 = y_low * width + x_low
                         pc.pos2 = y_low * width + x_high
@@ -133,7 +133,7 @@ class RoiAlign(OpRun):
         pooled_height = output_shape[2]
         pooled_width = output_shape[3]
 
-        # 100 is a random chosed value, need be tuned
+        # 100 is a random chosen value, need be tuned
         for n in range(n_rois):
             index_n = n * channels * pooled_width * pooled_height
 

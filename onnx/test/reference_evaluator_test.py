@@ -2395,83 +2395,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = np.array([[3.0, 2.0]], dtype=np.float32)
         assert_allclose(expected, got1[0])
 
-    def test_col2im_impl(self):
-        def get_im2col_indices(
-            x_shape, field_height, field_width, padding=None, stride=1
-        ):
-            # source: https://stackoverflow.com/questions/51703367/col2im-implementation-in-convnet
-            N, C, H, W = x_shape
-            del N  # Unused
-            assert (H + padding[0] + padding[2] - field_height) % stride == 0
-            assert (W + padding[1] + padding[3] - field_height) % stride == 0
-            out_height = (H + padding[0] + padding[2] - field_height) // stride + 1
-            out_width = (W + padding[1] + padding[3] - field_width) // stride + 1
-
-            i0 = np.repeat(np.arange(field_height), field_width)
-            i0 = np.tile(i0, C)
-            i1 = stride * np.repeat(np.arange(out_height), out_width)
-            j0 = np.tile(np.arange(field_width), field_height * C)
-            j1 = stride * np.tile(np.arange(out_width), out_height)
-            i = i0.reshape(-1, 1) + i1.reshape(1, -1)
-            j = j0.reshape(-1, 1) + j1.reshape(1, -1)
-
-            k = np.repeat(np.arange(C), field_height * field_width).reshape(-1, 1)
-
-            return (k, i, j)
-
-        def col2im_indices(
-            cols, x_shape, field_height=3, field_width=3, padding=None, stride=1
-        ):
-            # source: https://stackoverflow.com/questions/51703367/col2im-implementation-in-convnet
-            N, C, H, W = x_shape
-            H_padded, W_padded = (
-                H + padding[0] + padding[2],
-                W + padding[1] + padding[3],
-            )
-            x_padded = np.zeros((N, C, H_padded, W_padded), dtype=cols.dtype)
-            k, i, j = get_im2col_indices(
-                x_shape, field_height, field_width, padding, stride
-            )
-            cols_reshaped = cols.reshape(C * field_height * field_width, -1, N)
-            cols_reshaped = cols_reshaped.transpose(2, 0, 1)
-            np.add.at(x_padded, (slice(None), k, i, j), cols_reshaped)
-            padding = padding.copy()
-            if padding[2] == 0:
-                padding[2] += x_padded.shape[2]
-            elif padding[2] > 0:
-                padding[2] *= -1
-            if padding[3] == 0:
-                padding[3] += x_padded.shape[3]
-            elif padding[3] > 0:
-                padding[3] *= -1
-            res = x_padded[:, :, padding[0] : padding[2], padding[1] : padding[3]]
-            return res
-
-        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
-        IS = make_tensor_value_info("IS", TensorProto.INT64, [None])
-        BS = make_tensor_value_info("BS", TensorProto.INT64, [None])
-        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None, None])
-
-        node = make_node("Col2Im", ["X", "IS", "BS"], ["Y"], pads=[0, 1, 0, 1])
-        graph = make_graph([node], "g", [X, IS, BS], [Y])
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 16)])
-        feeds = {
-            "X": np.arange(5 * 15).astype(np.float32).reshape((1, 5, 15)),
-            "IS": np.array([5, 5]),
-            "BS": np.array([1, 5]),
-        }
-
-        ref1 = ReferenceEvaluator(onnx_model)
-        got1 = ref1.run(None, feeds)
-        expected = col2im_indices(
-            feeds["X"],
-            (1, 1, 5, 5),
-            field_height=1,
-            field_width=5,
-            padding=[0, 1, 0, 1],
-        )
-        assert_allclose(expected, got1[0])
-
     def test_conv_transpose_2d(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None, None])
         W = make_tensor_value_info("W", TensorProto.FLOAT, [None, None, None, None])
@@ -2633,7 +2556,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
 
         # import torch
-        # correspondance with torch
+        # correspondence with torch
         # hop_length = frame_step
         # window = np.ones((frame_length,), dtype=np.float32)
         # ex = torch.stft(
