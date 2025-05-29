@@ -244,7 +244,7 @@ jobs:
           fi
 
       - name: Test documentation
-        if: matrix.documentation == 1 && (matrix.python_version != '3.13t') && (matrix.python_version != '3.14-dev')
+        if: matrix.documentation == 1
         run: |
           pip install -r docs/docsgen/source/requirements.txt
           cd docs/docsgen && make text
