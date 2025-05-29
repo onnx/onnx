@@ -50,6 +50,8 @@ if [ "$PY_VERSION" == "3.13t" ]; then
  yum install -y libffi-devel 
 fi
 
+export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
 if [ "$BUILD_MODE" != "release" ]; then
