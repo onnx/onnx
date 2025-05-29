@@ -25,6 +25,10 @@ jobs:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t','3.14-dev']
         architecture: ['x64', 'arm64']
+        
+        exclude:
+        - python-version: '3.14-dev'
+          build_mode: 'release'
 
     env:
       MANYLINUX_WHEEL_X64: "manylinux2014_x86_64"
