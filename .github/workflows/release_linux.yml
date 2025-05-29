@@ -84,7 +84,7 @@ jobs:
     - name: Test wheel with Python ${{ matrix.python-version }}
       if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
       run: |
-        # ./dist/onnx_weekly-1.19.0.dev20250528-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
+        # example file name: ./dist/onnx_weekly-1.19.0.dev20250528-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
         python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl
 
         pytest
