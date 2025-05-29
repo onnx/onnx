@@ -195,7 +195,7 @@ jobs:
           python -m pip install --upgrade Pillow --no-binary :all:
           
       - name: Run Python tests
-        if: (matrix.python_version != '3.13t' ) # && matrix.python_version != '3.14')
+        if: (matrix.python_version != '3.13t' ) && matrix.python_version != '3.14-dev')
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
