@@ -404,11 +404,10 @@ relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
                                onnx/onnx-data.in.proto)
 
 
-file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
-file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
+file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.cc")
+file(GLOB_RECURSE onnx_gtests_src
     "${ONNX_ROOT}/onnx/test/cpp/*.cc"
-    "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
-    "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
+    "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc")
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
