@@ -26,8 +26,8 @@ jobs:
     
     strategy:
       matrix:
-        python-version: ${{ inputs.python_versions.split(',') }}
-        architecture: ['x64', 'arm64']        
+        python-version: ${{ fromJson(inputs.python_versions) }}
+        architecture: ['x64', 'arm64']
 
     env:
       MANYLINUX_WHEEL_X64: "manylinux2014_x86_64"
