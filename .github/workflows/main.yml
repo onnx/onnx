@@ -32,10 +32,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-latest, macos-latest]
-        python_version: ['3.13t', '3.13', '3.12', '3.11', '3.10', '3.9']
+        os: [ubuntu-24.04, windows-11-arm, windows-latest, macos-latest]
+        python_version: ['3.14-dev', '3.13'] 
         include:
-          - python_version: '3.13t'
+          - python_version: '3.14-dev'
             onnx_ml: 1
             debug_build: 1
             documentation: 1
@@ -45,33 +45,7 @@ jobs:
             debug_build: 1
             documentation: 1
             protobuf_type: 'Internal'
-          - python_version: '3.12'
-            onnx_ml: 1
-            debug_build: 1
-            documentation: 1
-            protobuf_type: 'Internal'
-          - python_version: '3.11'
-            onnx_ml: 1
-            debug_build: 0
-            documentation: 0
-            protobuf_type: 'External'
-          - python_version: '3.10'
-            onnx_ml: 0
-            debug_build: 0
-            documentation: 0
-            protobuf_type: 'Internal'
-          - python_version: '3.9'
-            onnx_ml: 1
-            debug_build: 0
-            documentation: 0
-            protobuf_type: 'External'
-        exclude:
-          - os: windows-11-arm
-            python_version: '3.10'
-          - os: windows-11-arm
-            python_version: '3.9'
 
-            
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -171,8 +145,14 @@ jobs:
           python -m pip install -r requirements-release_test.txt
 
       - name: Run Python tests
-        if: (matrix.python_version != '3.13t')
+        if: ( matrix.python_version != '3.13t' || matrix.python_version != '3.14-dev' )
         run: |
+          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
+
+      - name: Run Python tests
+        if: ( matrix.python_version == '3.14-dev' )
+        run: |
+          python3 -m pip install --upgrade Pillow --no-binary :all: -C webp=enable -C jpeg2000=enable
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
