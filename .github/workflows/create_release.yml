@@ -75,7 +75,6 @@ jobs:
     with:
       os: "linux"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-      python_versions: ${{ github.event.inputs.build_mode == 'preview' && '3.9,3.10,3.11,3.12,3.13,3.13t,3.14-dev' || '3.9,3.10,3.11,3.12,3.13,3.13t' }}
 
   call-win_x86:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
