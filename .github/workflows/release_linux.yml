@@ -70,6 +70,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
+    - name: Install libjpeg-dev for Python 3.14-dev
+      if: matrix.python-version == '3.14-dev'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libjpeg-dev
+
     - name: Install Python dependencies
       if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
       run: |
