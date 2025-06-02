@@ -74,9 +74,7 @@ jobs:
           - os: windows-11-arm
             python_version: '3.10'
           - os: windows-11-arm
-            python_version: '3.9'
-          - os: windows-latest # TODO: reevalute for final python 3.14 release: "Numpy built with MINGW-W64 on Windows 64 bits is experimental"
-            python_version: '3.14-dev'           
+            python_version: '3.9'          
 
     runs-on: ${{ matrix.os }}
     steps:
