@@ -108,21 +108,21 @@ jobs:
         TEST_HUB=1 pytest
 
     - name: Verify ONNX with the latest numpy
-      if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version != '3.14-dev')
       run: |
         python -m pip uninstall -y numpy onnx && python -m pip install numpy
         python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version != '3.14-dev')
       run: |
         python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
         python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version != '3.14-dev')
       run: |
         python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
         python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
