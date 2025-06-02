@@ -180,15 +180,16 @@ jobs:
           python -m pip install -r requirements-release_test.txt
       
       - name: Install Pillow with JPEG 2000 support
-        if: (matrix.python_version == '3.14-dev') && startsWith(matrix.os,'ubuntu')
+        if: (matrix.python_version == '3.14-dev') # && startsWith(matrix.os,'ubuntu')
         run: |
           sudo apt-get install -y libopenjp2-7-dev # TODO: integrate in test reqs
-          python -m pip install --upgrade Pillow --no-binary :all:
+          #python -m pip install --upgrade Pillow --no-binary :all:
+          python -m pip install --upgrade Pillow --no-binary :all: -C webp=enable -C jpeg2000=enable
+
           
       - name: Run Python tests
-        if: (matrix.python_version != '3.13t' ) && (matrix.python_version != '3.14-dev')
-        run: |
-          python3 -m pip install --upgrade Pillow --no-binary :all: -C webp=enable -C jpeg2000=enable
+        if: (matrix.python_version != '3.13t' )
+        run: |          
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
