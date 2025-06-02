@@ -88,7 +88,7 @@ jobs:
         source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
     - name: Test wheel with Python ${{ matrix.python-version }}
-      if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success' && matrix.python-version != '3.14-dev'
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version != '3.14-dev')
       run: |
         # example file name: ./dist/onnx_weekly-1.19.0.dev20250528-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
         python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl
