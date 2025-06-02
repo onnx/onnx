@@ -1,8 +1,15 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.24)
+# Project
+project(onnx LANGUAGES CXX)
+
 include(cmake/Utils.cmake)
+# Honor visibility properties for all target types.
+cmake_policy(SET CMP0063 NEW)
+
 # Set default build type
-if(NOT CMAKE_BUILD_TYPE)
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT isMultiConfig AND NOT CMAKE_BUILD_TYPE)
   message(STATUS "Build type not set - defaulting to Release")
   set(
     CMAKE_BUILD_TYPE "Release"
@@ -11,30 +18,25 @@ if(NOT CMAKE_BUILD_TYPE)
       "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage."
     FORCE)
 endif()
-cmake_policy(SET CMP0063 NEW)
-cmake_policy(SET CMP0074 NEW)
 
 # https://reproducible-builds.org/docs/source-date-epoch/
-if (DEFINED ENV{SOURCE_DATE_EPOCH})
+if(DEFINED ENV{SOURCE_DATE_EPOCH})
   execute_process(
     COMMAND "date" "-u" "-d" "@$ENV{SOURCE_DATE_EPOCH}" "+%Y-%m-%d"
     OUTPUT_VARIABLE BUILD_DATE
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-else ()
+else()
   execute_process(
     COMMAND "date" "+%Y-%m-%d"
     OUTPUT_VARIABLE BUILD_DATE
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif ()
-
+endif()
 
 if(NOT BUILD_SHARED_LIBS)
   # by default, cmake builds static libraries
   set(BUILD_SHARED_LIBS OFF)
 endif()
 
-# Project
-project(onnx LANGUAGES CXX)
 
 if(DEFINED BUILD_ONNX_PYTHON)
   message(WARNING "'BUILD_ONNX_PYTHON' is deprecated. Please, use 'ONNX_BUILD_PYTHON' instead")
@@ -163,14 +165,6 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
-if(ONNX_BUILD_TESTS)
-  find_package(GTest)
-  if(NOT GTest_FOUND)
-    include(googletest)
-  endif()
-  set(googletest_STATIC_LIBRARIES GTest::gtest)
-endif()
-
 if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
   if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
     # Sometimes we need to use protoc compiled for host architecture while linking
@@ -287,19 +281,18 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v30.2/protobuf-30.2.tar.gz)
-    set(ProtobufSHA1 f846d1f047255d09142361ba6d1985336db5e407)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.0/protobuf-31.0.tar.gz)
+    set(ProtobufSHA1 c0cecb7cfc881f56a5b09f00a965aae408265fd0)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
       URL_HASH SHA1=${ProtobufSHA1}
-      PATCH_COMMAND "${CMAKE_COMMAND}" -Dprotobuf_MSVC_STATIC_RUNTIME=${protobuf_MSVC_STATIC_RUNTIME} -DFILENAME=CMakeLists.txt -P ${CMAKE_CURRENT_LIST_DIR}/cmake/ProtoBufPatch.cmake
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.30.2")
+    set(Protobuf_VERSION "6.31.0")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -311,7 +304,7 @@ message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
 # orflow/contrib/cmake/tf_core_framework.cmake to solve the problem that
 # customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
-function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
+function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   if(NOT ARGN)
     message(
       SEND_ERROR
@@ -320,15 +313,13 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     return()
   endif()
 
-  # Add ONNX_API prefix to protobuf classes and methods in all cases
-  set(ONNX_DLLEXPORT_STR "dllexport_decl=ONNX_API:")
-
   set(${SRCS})
-  set(${HDRS})
 
-  set(GEN_PROTO_PY "${ROOT_DIR}/onnx/gen_proto.py")
+  set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
+  set(GENERATED_FILE_TARGETS)
   foreach(INFILE ${ARGN})
-    set(ABS_FILE "${ROOT_DIR}/${INFILE}")
+    message(WARNING "${INFILE}")
+    set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
     # "onnx-data" check is because we do not want to create/compile an "onnx-data-ml.proto" file
@@ -345,10 +336,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         set(GENERATED_FILE_WE "${FILE_WE}_${ONNX_NAMESPACE}")
       endif()
     endif()
-    file(RELATIVE_PATH REL_DIR "${ROOT_DIR}" "${FILE_DIR}")
+    file(RELATIVE_PATH REL_DIR "${ONNX_ROOT}" "${FILE_DIR}")
     set(OUTPUT_PROTO_DIR "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}")
 
-    set(OUTPUT_PB_HEADER "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.h")
     set(OUTPUT_PB_SRC "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.cc")
     set(GENERATED_PROTO "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.proto")
     if(NOT (ONNX_NAMESPACE STREQUAL "onnx"))
@@ -357,7 +347,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       list(APPEND ${HDRS} "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.h")
     endif()
     list(APPEND ${SRCS} "${OUTPUT_PB_SRC}")
-    list(APPEND ${HDRS} "${OUTPUT_PB_HEADER}")
 
     if(NOT EXISTS "${OUTPUT_PROTO_DIR}")
       file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
@@ -375,27 +364,21 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     if(ONNX_USE_LITE_PROTO)
       list(APPEND GEN_PROTO_ARGS -l)
     endif()
-    if(ONNX_VERIFY_PROTO3)
-        if(NOT ONNX_PROTOC_EXECUTABLE)
-          message(FATAL_ERROR "Protobuf compiler not found")
-        endif()
-        list(APPEND GEN_PROTO_ARGS --protoc_path)
-        list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
-    endif()
 
-    add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND Python3::Interpreter "${GEN_PROTO_PY}"
-                               ARGS ${GEN_PROTO_ARGS}
+    add_custom_target("${GENERATED_FILE_WE}_proto_file"
+                       COMMAND Python3::Interpreter "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
+                       BYPRODUCTS "${GENERATED_PROTO}"
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
-                       VERBATIM)
+                       )
     message("Generated: ${GENERATED_PROTO}")
+
     set(PROTOC_ARGS
         ${GENERATED_PROTO}
         -I
         ${CMAKE_CURRENT_BINARY_DIR}
         --cpp_out
-        ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
+        ${CMAKE_CURRENT_BINARY_DIR})
     if(ONNX_BUILD_PYTHON)
       list(APPEND PROTOC_ARGS --python_out)
       if(ONNX_GEN_PB_TYPE_STUBS)
@@ -404,64 +387,23 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
-    if(NOT ONNX_PROTOC_EXECUTABLE)
-      message(FATAL_ERROR "Protobuf compiler not found")
-    endif()
-    if(ONNX_PROTO_POST_BUILD_SCRIPT)
-      add_custom_command(
-        OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
-        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ARGS ${PROTOC_ARGS}
-        COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_HEADER}
-                -DNAMESPACES=${ONNX_NAMESPACE} -P
-                ${ONNX_PROTO_POST_BUILD_SCRIPT}
-        COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_SRC}
-                -DNAMESPACES=${ONNX_NAMESPACE} -P
-                ${ONNX_PROTO_POST_BUILD_SCRIPT}
-        DEPENDS ${GENERATED_PROTO} ${DEPEND}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
-        VERBATIM)
-    else()
-      add_custom_command(
-        OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
-        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ARGS ${PROTOC_ARGS}
-        DEPENDS ${GENERATED_PROTO} ${DEPEND}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
-        VERBATIM)
-    endif()
-    add_custom_target(${NAME} DEPENDS ${OUTPUT_PB_SRC} ${OUTPUT_PB_HEADER})
+    list(APPEND GENERATED_FILE_TARGETS ${GENERATED_FILE_WE}_proto_file)
+    add_custom_target(${GENERATED_FILE_WE}_src
+        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
+        BYPRODUCTS "${OUTPUT_PB_SRC}"
+        DEPENDS ${GENERATED_FILE_TARGETS}
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
-  set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
-  set(${HDRS} ${${HDRS}} PARENT_SCOPE)
 endfunction()
 
-relative_protobuf_generate_cpp(gen_onnx_proto
-                               __tmp_srcs
-                               __tmp_hdrs
-                               ${ONNX_ROOT}
-                               ""
-                               onnx/onnx.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
-
-relative_protobuf_generate_cpp(gen_onnx_operators_proto
-                               __tmp_srcs
-                               __tmp_hdrs
-                               ${ONNX_ROOT}
-                               gen_onnx_proto
-                               onnx/onnx-operators.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
-
-relative_protobuf_generate_cpp(gen_onnx_data_proto
-                               __tmp_srcs
-                               __tmp_hdrs
-                               ${ONNX_ROOT}
-                               gen_onnx_proto
+relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
+                               onnx/onnx.in.proto
+                               onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
+
+add_library(onnx_proto ${ONNX_PROTO_SRCS})
 
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
@@ -472,26 +414,16 @@ list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
 
-add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
-add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
-target_include_directories(onnx_proto PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include>)
-
+set(ONNX_API_DEFINE "-DONNX_API=")
 if(MSVC)
   if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
-  else()
-    set(ONNX_API_DEFINE "-DONNX_API=")
   endif()
-else()
-  # On non-Windows, hide all symbols we don't need
-  set(ONNX_API_DEFINE "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
-  set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
-  set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
-target_compile_features(onnx_proto PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
+# Hide all symbols we don't need
+set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -499,20 +431,16 @@ if(ONNX_USE_LITE_PROTO)
     set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
-if((NOT ONNX_USE_PROTOBUF_SHARED_LIBS) AND Build_Protobuf)
-  target_link_libraries(onnx_proto PRIVATE ${LINKED_PROTOBUF_TARGET})
-  target_include_directories(onnx_proto PUBLIC
-    $<BUILD_INTERFACE:$<TARGET_PROPERTY:${LINKED_PROTOBUF_TARGET},INCLUDE_DIRECTORIES>>
-  )
-else()
-  target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
-endif()
+target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
 foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
   if(TARGET ${ABSL_USED_TARGET})
     target_link_libraries(onnx_proto PRIVATE ${ABSL_USED_TARGET})
   endif()
 endforeach()
 add_onnx_global_defines(onnx_proto)
+target_include_directories(onnx_proto PUBLIC
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   # whole-archive linker option not available on AIX.
@@ -524,10 +452,6 @@ endif()
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
-target_include_directories(onnx PUBLIC
-  $<BUILD_INTERFACE:${ONNX_ROOT}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include>)
 target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
@@ -536,83 +460,32 @@ if(ONNX_BUILD_PYTHON)
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
   set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
   set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-  set_target_properties(onnx_cpp2py_export
-                        PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-  target_include_directories(onnx_cpp2py_export PRIVATE
-                             $<BUILD_INTERFACE:${ONNX_ROOT}>
-                             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-                             $<INSTALL_INTERFACE:include>)
 
   # search for FindPython3.cmake instead of legacy modules
   set(PYBIND11_FINDPYTHON ON)
+  add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
 
-  # pybind11 is a header only lib
-  find_package(pybind11 2.12 CONFIG)
-  if(NOT pybind11_FOUND)
-    if(EXISTS "${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h")
-      add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
-    else()
-      message(FATAL_ERROR "cannot find pybind at '${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h'")
-    endif()
-  endif()
+  target_link_libraries(onnx_cpp2py_export PRIVATE pybind11::headers)
 
-  target_include_directories(onnx_cpp2py_export PUBLIC "${pybind11_INCLUDE_DIRS}")
-
-  if(APPLE)
-    target_link_options(onnx_cpp2py_export PRIVATE "-undefined dynamic_lookup")
-    # Only put double quotes around $<TARGET_FILE:onnx> for Mac
-    # Other platforms like Windows and Ubuntu originally work fine without double quotes
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -Wl,-force_load,"$<TARGET_FILE:onnx>")
-  elseif(MSVC)
-    # In MSVC, we will add whole archive in default
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE -WHOLEARCHIVE:$<TARGET_FILE:onnx>)
-  elseif(CMAKE_SYSTEM_NAME STREQUAL "AIX")
+  if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
-    target_sources(onnx_cpp2py_export
-                          PRIVATE $<TARGET_OBJECTS:onnx>)
+    target_sources(onnx_cpp2py_export PRIVATE $<TARGET_OBJECTS:onnx>)
   else()
-    # Assume everything else is like gcc
-    target_link_libraries(onnx_cpp2py_export
-                          PRIVATE "-Wl,--whole-archive" $<TARGET_FILE:onnx>
-                                  "-Wl,--no-whole-archive")
-    # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
-    # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
-    if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-      target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
-    endif()
-    set_target_properties(onnx_cpp2py_export
-                          PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
+    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
   endif()
-
-  target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
-
-  if(MSVC)
-    target_link_libraries(onnx_cpp2py_export PRIVATE ${Python3_LIBRARIES})
-    add_msvc_runtime_flag(onnx_cpp2py_export)
-    add_onnx_global_defines(onnx_cpp2py_export)
+  # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
+  # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
+  if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+    target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
   endif()
-endif()
-
-# Export include directories
-set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
-get_directory_property(hasParent PARENT_DIRECTORY)
-if(hasParent)
-  set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
 endif()
 
 if(MSVC)
   add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
-  set(onnx_static_library_flags
-      -IGNORE:4221 # LNK4221: This object file does not define any previously
-                   # undefined public symbols, so it will not be used by any
-                   # link operation that consumes this library
-      )
-  set_target_properties(onnx
-                        PROPERTIES STATIC_LIBRARY_OPTIONS
-                                   "${onnx_static_library_flags}")
+  if(TARGET onnx_cpp2py_export)
+    add_msvc_runtime_flag(onnx_cpp2py_export)
+  endif()
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "/WX")
     target_compile_options(onnx_proto PRIVATE "/WX")
@@ -641,10 +514,6 @@ if(ONNX_USE_ASAN AND NOT MSVC)
   endif()
 endif()
 
-if(APPLE)
-  target_link_options(onnx PRIVATE "-undefined dynamic_lookup")
-endif()
-
 install(DIRECTORY ${ONNX_ROOT}/onnx
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         FILES_MATCHING
@@ -669,19 +538,6 @@ install(FILES
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
   COMPONENT dev)
-install(EXPORT ONNXTargets
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
-  NAMESPACE ONNX::
-)
-if(NOT Build_Protobuf)
-  # If we fetched a Protobuf release (and didn't run its install step), then we
-  # don't have the export sets for Protobuf and its dependencies, which
-  # prevents us from creating an export set for ONNXTargets.
-  export(EXPORT ONNXTargets
-    FILE "${PROJECT_BINARY_DIR}/ONNXTargets.cmake"
-    NAMESPACE ONNX::
-  )
-endif()
 
 if(ONNX_USE_UNITY_BUILD)
   # If ONNX_USE_UNITY_BUILD is set to ON, set ONNX target to use Unity builds.
@@ -704,16 +560,27 @@ if(ONNX_USE_UNITY_BUILD)
   if(MSVC)
     target_compile_options(onnx PRIVATE /bigobj)
   endif()
-
 # should be enabled for onnx_proto when protobuf can support Unity builds
-
 endif()
 
-
+if(ONNX_BUILD_TESTS)
+  if(BUILD_SHARED_LIBS)
+    message(FATAL_ERROR "Tests requires static build")
+  endif()
+  find_package(GTest)
+  if(NOT GTest_FOUND)
+    include(googletest)
+  endif()
+endif()
 
 install(TARGETS
   onnx onnx_proto
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(EXPORT ONNXTargets
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
+  NAMESPACE ONNX::
+)
 
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
