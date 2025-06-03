@@ -28,7 +28,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t', '3.14-dev']
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -47,6 +47,7 @@ jobs:
         python -m pip install -q -r requirements-release_build.txt
 
     - name: Build wheel
+      id: build_wheel
       env:
         CC: "clang"
         CXX: "clang++"
@@ -65,6 +66,8 @@ jobs:
 
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
+      
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist/*.whl
@@ -74,7 +77,7 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t'] # TODO: add '3.14-dev'
         target-architecture: ['x86_64', 'arm64']
 
     steps:
@@ -125,4 +128,3 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
-
