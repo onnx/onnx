@@ -463,9 +463,21 @@ if(ONNX_BUILD_PYTHON)
 
   # search for FindPython3.cmake instead of legacy modules
   set(PYBIND11_FINDPYTHON ON)
-  add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
+  # find system pybind11
+  find_package(pybind11)
+  if(NOT pybind11_FOUND)
+    include(FetchContent)
+    set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.tar.gz)
+    set(pybind11SHA1  8c7e3e8fec829ced31a495dec281153511f33c63)
+    FetchContent_Declare(
+      pybind11
+      URL ${pybind11URL}
+      URL_HASH SHA1=${pybind11SHA1}
+    )
+    FetchContent_MakeAvailable(pybind11)
+  endif()
 
-  target_link_libraries(onnx_cpp2py_export PRIVATE pybind11::headers)
+  target_include_directories(onnx_cpp2py_export PRIVATE ${pybind11_INCLUDE_DIRS})
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
