@@ -477,7 +477,7 @@ if(ONNX_BUILD_PYTHON)
     FetchContent_MakeAvailable(pybind11)
   endif()
 
-  target_include_directories(onnx_cpp2py_export PRIVATE ${pybind11_INCLUDE_DIRS})
+  target_include_directories(onnx_cpp2py_export PRIVATE "${pybind11_INCLUDE_DIRS}")
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
