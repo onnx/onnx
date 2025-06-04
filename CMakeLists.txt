@@ -403,44 +403,15 @@ relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
                                onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
 
-add_library(onnx_proto ${ONNX_PROTO_SRCS})
 
-file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
-file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
+file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.cc")
+file(GLOB_RECURSE onnx_gtests_src
     "${ONNX_ROOT}/onnx/test/cpp/*.cc"
-    "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
-    "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
+    "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc")
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
-
-set(ONNX_API_DEFINE "-DONNX_API=")
-if(MSVC)
-  if(BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
-    set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
-  endif()
-endif()
-target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
-# Hide all symbols we don't need
-set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
-
-set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
-if(ONNX_USE_LITE_PROTO)
-  if(TARGET protobuf::libprotobuf-lite)
-    set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
-  endif()
-endif()
-target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
-foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
-  if(TARGET ${ABSL_USED_TARGET})
-    target_link_libraries(onnx_proto PRIVATE ${ABSL_USED_TARGET})
-  endif()
-endforeach()
-add_onnx_global_defines(onnx_proto)
-target_include_directories(onnx_proto PUBLIC
-  $<BUILD_INTERFACE:${ONNX_ROOT}>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+list(APPEND ONNX_SRCS ${ONNX_PROTO_SRCS})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   # whole-archive linker option not available on AIX.
@@ -452,8 +423,23 @@ endif()
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
-target_link_libraries(onnx PUBLIC onnx_proto)
+set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
+if(ONNX_USE_LITE_PROTO)
+  if(TARGET protobuf::libprotobuf-lite)
+    set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
+  endif()
+endif()
+target_link_libraries(onnx PUBLIC ${LINKED_PROTOBUF_TARGET})
+foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
+  if(TARGET ${ABSL_USED_TARGET})
+    target_link_libraries(onnx PRIVATE ${ABSL_USED_TARGET})
+  endif()
+endforeach()
+
 add_onnx_global_defines(onnx)
+target_include_directories(onnx PUBLIC
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 
 if(ONNX_BUILD_PYTHON)
   Python3_add_library(onnx_cpp2py_export MODULE WITH_SOABI "${ONNX_ROOT}/onnx/cpp2py_export.cc")
@@ -481,25 +467,20 @@ if(ONNX_BUILD_PYTHON)
 endif()
 
 if(MSVC)
-  add_msvc_runtime_flag(onnx_proto)
   add_msvc_runtime_flag(onnx)
   if(TARGET onnx_cpp2py_export)
     add_msvc_runtime_flag(onnx_cpp2py_export)
   endif()
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "/WX")
-    target_compile_options(onnx_proto PRIVATE "/WX")
   endif()
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
-  target_compile_options(onnx_proto PRIVATE -Wall -Wextra)
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
     target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
-    target_compile_options(onnx_proto PRIVATE "-Wno-stringop-overflow")
   endif()
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "-Werror")
-    target_compile_options(onnx_proto PRIVATE "-Werror")
   endif()
 endif()
 if(ONNX_USE_ASAN AND NOT MSVC)
@@ -555,12 +536,12 @@ if(ONNX_USE_UNITY_BUILD)
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
   set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
+  set_source_files_properties(${ONNX_PROTO_SRCS} PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 
   # With unity build object file could get big, need this switch in MSVC.
   if(MSVC)
     target_compile_options(onnx PRIVATE /bigobj)
   endif()
-# should be enabled for onnx_proto when protobuf can support Unity builds
 endif()
 
 if(ONNX_BUILD_TESTS)
@@ -574,7 +555,7 @@ if(ONNX_BUILD_TESTS)
 endif()
 
 install(TARGETS
-  onnx onnx_proto
+  onnx
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(EXPORT ONNXTargets
