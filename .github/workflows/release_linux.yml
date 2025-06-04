@@ -71,7 +71,7 @@ jobs:
         architecture: ${{ matrix.architecture }}
 
     - name: Install libjpeg-dev for Python 3.14-dev
-      if: matrix.python-version == '3.14-dev'
+      if: matrix.python-version == '3.14-dev' && (matrix.architecture == 'x64')
       run: |
         sudo apt-get update
         sudo apt-get install -y libjpeg-dev libwebp
