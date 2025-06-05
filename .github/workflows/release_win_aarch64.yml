@@ -14,7 +14,7 @@ on:
         required: true
         type: string
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
     runs-on: windows-11-arm
     strategy:
       matrix:
-        python-version: ['3.11', '3.12', '3.13']
+        python-version: ['3.13t', '3.13', '3.12', '3.11']
         architecture: ['arm64']
     steps:
     - name: Checkout ONNX
