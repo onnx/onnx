@@ -28,7 +28,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t', '3.14-dev']
+        python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10', '3.9']
 
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
