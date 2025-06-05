@@ -729,6 +729,61 @@ def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     return arr.astype(np.uint8)
 
 
+def float32_to_float8e8m0(
+    x_f32: np.float32,
+    saturate=True,
+    round_mode="up",
+) -> np.uint8:
+    """Convert a float32 value to a float8e8m0 (as uint8).
+
+    Args:
+        x_fp32: float32 value to convert
+        saturate: whether to saturate to max float8e8m0 value or not
+        round_mode: accepted values are "nearest", "up", "down".
+
+    Returns:
+        converted float8e8m0 value (as uint8)
+    """
+    f_bits = np.float32(x_f32).view(np.uint32)
+    # Extract the exponent (bits 23 to 30)
+    exponent = (f_bits >> 23) & 0b11111111
+
+    # Special case: float32 NaN or +-inf maps directly
+    if exponent == 0b11111111:
+        return exponent.astype(np.uint8)
+    if round_mode == "nearest":
+        # Guard bit: bit 22 (zero-indexed)
+        g = int((f_bits & 0x400000) > 0)
+        # Round bit: bit 21
+        r = int((f_bits & 0x200000) > 0)
+        # Sticky bit: bits 0-20
+        s = int((f_bits & 0x1FFFFF) > 0)
+        # LSB (implied mantissa bit): 1 if normalized float, else 0
+        lsb = int(exponent > 0)
+
+        # Round to nearest, ties to even (RNE)
+        round_up = False
+        if g == 1:
+            if r == 1 or s == 1:
+                round_up = True
+            elif lsb == 1:
+                round_up = True
+
+        if round_up:
+            if not saturate or exponent != 0b11111110:
+                exponent += 1
+    elif round_mode == "up":
+        if int((f_bits & 0x4FFFFF) > 0):
+            if not saturate or exponent != 0b11111110:
+                exponent += 1
+    elif round_mode == "down":
+        pass
+    else:
+        raise ValueError("Unsupported rounding mode")
+
+    return exponent.astype(np.uint8)
+
+
 def make_tensor(
     name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
 ) -> TensorProto:
@@ -769,6 +824,7 @@ def make_tensor(
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.FLOAT8E8M0,
         ):
             expected_size = 1
         # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
@@ -807,6 +863,7 @@ def make_tensor(
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.FLOAT8E8M0,
         ):
             fcast = {
                 TensorProto.BFLOAT16: _float32_to_bfloat16,
@@ -818,6 +875,7 @@ def make_tensor(
                 TensorProto.FLOAT8E5M2FNUZ: lambda *args: _float32_to_float8e5m2(  # type: ignore[misc]
                     *args, fn=True, uz=True
                 ),
+                TensorProto.FLOAT8E8M0: float32_to_float8e8m0,
             }[
                 data_type  # type: ignore[index]
             ]
@@ -1695,6 +1753,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.FLOAT8E8M0,
             TensorProto.UINT4,
             TensorProto.INT4,
             TensorProto.FLOAT4E2M1,
@@ -1711,6 +1770,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
         _custom_element_types.float8e4m3fnuz,
         _custom_element_types.float8e5m2,
         _custom_element_types.float8e5m2fnuz,
+        _custom_element_types.float8e8m0,
         _custom_element_types.int4,
         _custom_element_types.uint4,
         _custom_element_types.float4e2m1,

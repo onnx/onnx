@@ -13,6 +13,7 @@ from onnx._custom_element_types import (
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
+    float8e8m0,
     int4,
     uint4,
 )
@@ -20,19 +21,21 @@ from onnx.helper import (
     float32_to_bfloat16,
     float32_to_float8e4m3,
     float32_to_float8e5m2,
+    float32_to_float8e8m0,
     tensor_dtype_to_np_dtype,
 )
 from onnx.numpy_helper import (
     bfloat16_to_float32,
     float8e4m3_to_float32,
     float8e5m2_to_float32,
+    float8e8m0_to_float32,
     unpacked_float4e2m1_to_float32,
 )
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
 
 
-def cast_to(x, to, saturate):  # noqa: PLR0911
+def cast_to(x, to, saturate, round_mode="up"):  # noqa: PLR0911
     if x.dtype == bfloat16 and x.dtype.descr[0][0] == "bfloat16":
         if to == TensorProto.BFLOAT16:
             return x
@@ -57,6 +60,7 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
             "e5m2fnuz",
             TensorProto.FLOAT8E5M2FNUZ,
         ): lambda *args: float8e5m2_to_float32(*args, fn=True, uz=True),
+        (float8e8m0, "e8m0", TensorProto.FLOAT8E8M0): float8e8m0_to_float32,
     }
 
     for (dt, st, proto_type), cvt in f8.items():
@@ -118,6 +122,12 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
                 *args, fn=True, uz=True, saturate=saturate
             ),
         ),
+        TensorProto.FLOAT8E8M0: (
+            float8e8m0,
+            lambda *args: float32_to_float8e8m0(
+                *args, saturate=saturate, round_mode=round_mode
+            ),
+        ),
     }
     for dt, (npdt, cvt) in f8back.items():
         if to == dt:
@@ -151,9 +161,14 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
 
 class Cast_1(OpRun):
     def _run(self, x, to=None):  # type: ignore
-        return (cast_to(x, to, saturate=True),)
+        return (cast_to(x, to, saturate=True, round_mode="up"),)
 
 
 class Cast_19(OpRun):
     def _run(self, x, to=None, saturate=None):  # type: ignore
-        return (cast_to(x, to, saturate),)
+        return (cast_to(x, to, saturate, round_mode="up"),)
+
+
+class Cast_24(OpRun):
+    def _run(self, x, to=None, saturate=None, round_mode=None):  # type: ignore
+        return (cast_to(x, to, saturate, round_mode),)
