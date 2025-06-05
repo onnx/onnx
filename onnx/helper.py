@@ -698,6 +698,7 @@ def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     return arr.astype(np.uint8)
 
 
+<<<<<<< HEAD
 def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
     """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
     # Create a 1D copy
@@ -709,6 +710,61 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
     array_flat &= 0x0F
     array_flat[1::2] <<= 4
     return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
+=======
+def float32_to_float8e8m0(
+    x_f32: np.float32,
+    saturate=True,
+    round_mode="up",
+) -> np.uint8:
+    """Convert a float32 value to a float8e8m0 (as uint8).
+
+    Args:
+        x_f32: float32 value to convert
+        saturate: whether to saturate to max float8e8m0 value or not
+        round_mode: accepted values are "nearest", "up", "down".
+
+    Returns:
+        converted float8e8m0 value (as uint8)
+    """
+    f_bits = np.float32(x_f32).view(np.uint32)
+    # Extract the exponent (bits 23 to 30)
+    exponent = (f_bits >> 23) & 0b11111111
+
+    # Special case: float32 NaN or +-inf maps directly
+    if exponent == 0b11111111:
+        return exponent.astype(np.uint8)
+    if round_mode == "nearest":
+        # Guard bit: bit 22 (zero-indexed)
+        g = int((f_bits & 0x400000) > 0)
+        # Round bit: bit 21
+        r = int((f_bits & 0x200000) > 0)
+        # Sticky bit: bits 0-20
+        s = int((f_bits & 0x1FFFFF) > 0)
+        # LSB (implied mantissa bit): 1 if normalized float, else 0
+        lsb = int(exponent > 0)
+
+        # Round to nearest, ties to even (RNE)
+        round_up = False
+        if g == 1:
+            if r == 1 or s == 1:
+                round_up = True
+            elif lsb == 1:
+                round_up = True
+
+        if round_up:
+            if not saturate or exponent != 0b11111110:
+                exponent += 1
+    elif round_mode == "up":
+        if int((f_bits & 0x4FFFFF) > 0):
+            if not saturate or exponent != 0b11111110:
+                exponent += 1
+    elif round_mode == "down":
+        pass
+    else:
+        raise ValueError("Unsupported rounding mode")
+
+    return exponent.astype(np.uint8)
+>>>>>>> 33507887 (fix variable name in docstring)
 
 
 def make_tensor(
