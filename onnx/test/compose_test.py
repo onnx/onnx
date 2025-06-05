@@ -393,7 +393,96 @@ class TestComposeFunctions(unittest.TestCase):
         m3 = compose.merge_models(m1, m2, io_map=io_map)
         checker.check_model(m3)
 
-    # FIXME: This function should be removed, as tests should not contain a copy of the tested logic.
+    def test_add_prefix_to_inputs_outputs(self) -> None:
+        """Tests prefixing inputs and outputs nodes."""
+        input_graph = """
+            <
+                ir_version: 6,
+                opset_import: [ "": 13]
+            >
+            agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
+            {
+                T = MatMul(X, W)
+                S = Add(T, B)
+                C = Softmax(S)
+            }
+            """
+        input_model = _load_model(input_graph)
+        prefix = "pre_"
+        prefixed_model = compose.add_prefix(
+            model=input_model,
+            prefix=prefix,
+            rename_inputs=True,
+            rename_outputs=True,
+            rename_edges=True,
+        )
+
+        checker.check_graph(prefixed_model.graph)
+
+        for i in prefixed_model.graph.input:
+            self.assertTrue(i.name.startswith(prefix))
+        for o in prefixed_model.graph.output:
+            self.assertTrue(o.name.startswith(prefix))
+
+    def test_add_prefix_wo_inputs_outputs(self) -> None:
+        """Tests prefixing input and output nodes, when renaming of inputs/outputs is deactivated."""
+        input_graph = """
+            <
+                ir_version: 6,
+                opset_import: [ "": 13]
+            >
+            agraph (float[2,2] A) => (float[2,2] B)
+            {
+            B = Identity(A)
+            }
+            """
+        input_model = _load_model(input_graph)
+        prefix = "pre_"
+        prefixed_model = compose.add_prefix(
+            model=input_model,
+            prefix=prefix,
+            rename_inputs=False,
+            rename_outputs=False,
+            rename_edges=True,
+        )
+
+        checker.check_graph(prefixed_model.graph)
+        self.assertEqual(input_model.graph.input, prefixed_model.graph.input)
+        self.assertEqual(input_model.graph.output, prefixed_model.graph.output)
+
+    def test_add_prefix_with_loose_inputs_outputs(self) -> None:
+        """Tests prefixing of graphs with loose inputs."""
+        input_graph = """
+            <
+                ir_version: 7,
+                opset_import: [ "" : 13 ]
+            >
+            agraph (bool b, float[128] X, float[128] Y, bool unused_input) => (float[128] Z)
+            {
+            Z = If (b) <
+                then_branch = g1 () => (float[128] z_then) { z_then = Add(X, X) },
+                else_branch = g2 () => (float[128] z_else) { z_else = Sub(Y, Y) }
+                >
+            }
+            """
+        input_model = _load_model(input_graph)
+        prefix = "pre_"
+        prefixed_model = compose.add_prefix(
+            model=input_model,
+            prefix=prefix,
+            rename_inputs=True,
+            rename_outputs=True,
+            rename_edges=True,
+        )
+        checker.check_graph(prefixed_model.graph)
+
+        # Check if all inputs are prefixed even if input is not connected to node. e.g., 'unused_input'.
+        for i in prefixed_model.graph.input:
+            self.assertTrue(i.name.startswith(prefix))
+
+        for graph_output in prefixed_model.graph.output:
+            self.assertTrue(graph_output.name.startswith(prefix))
+
     def _test_add_prefix(
         self,
         rename_nodes: bool = False,
@@ -516,7 +605,9 @@ class TestComposeFunctions(unittest.TestCase):
 
     def test_add_prefix_edges(self) -> None:
         """Tests prefixing nodes edges. This will also rename inputs/outputs, since the names are shared"""
-        self._test_add_prefix(rename_edges=True)
+        self._test_add_prefix(
+            rename_edges=True, rename_inputs=True, rename_outputs=True
+        )
 
     def test_add_prefix_inputs(self) -> None:
         """Tests prefixing graph inputs only. Relevant node edges should be renamed as well"""
