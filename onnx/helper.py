@@ -731,7 +731,7 @@ def float32_to_float8e8m0(
     exponent = (f_bits >> 23) & 0b11111111
 
     # Special case: float32 NaN or +-inf maps directly
-    if exponent == 0b11111111:
+    if exponent == 0b11111111:  # noqa: PLR2004
         return exponent.astype(np.uint8)
     if round_mode == "nearest":
         # Guard bit: bit 22 (zero-indexed)
@@ -752,11 +752,11 @@ def float32_to_float8e8m0(
                 round_up = True
 
         if round_up:
-            if not saturate or exponent != 0b11111110:
+            if not saturate or exponent != 0b11111110:  # noqa: PLR2004
                 exponent += 1
     elif round_mode == "up":
         if int((f_bits & 0x4FFFFF) > 0):
-            if not saturate or exponent != 0b11111110:
+            if not saturate or exponent != 0b11111110:  # noqa: PLR2004
                 exponent += 1
     elif round_mode == "down":
         pass
