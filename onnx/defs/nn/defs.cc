@@ -3375,7 +3375,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "scale",
-            "Scaling factor applied to Q*K^T. Default value is 1/sqrt(head_size). For numerical stability, scale q, k by sqrt(scale) before matmul, see https://tinyurl.com/sudb9s96 for math.",
+            "Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent "
+            "[numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.",
             AttributeProto::FLOAT,
             OPTIONAL_VALUE)
         .Attr(
