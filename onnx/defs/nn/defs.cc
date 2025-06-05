@@ -3343,7 +3343,7 @@ The following pattern is applied to the Q, K and V inputs after appropriate resh
   The following pattern is applied by this operator:
       Q          K          V
       |          |          |
-     Q*scale     K*scale    |
+Q*sqrt(scale) K*sqrt(scale) |
       |          |          |
       |       Transpose     |
       |          |          |
@@ -3375,8 +3375,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "scale",
-            "Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. "
-            "Default value is `1/sqrt(head_size)`",
+            "Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent "
+            "[numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.",
             AttributeProto::FLOAT,
             OPTIONAL_VALUE)
         .Attr(
