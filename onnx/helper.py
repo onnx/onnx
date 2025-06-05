@@ -782,6 +782,8 @@ def make_tensor(
     }:
         # Float8 values are by default casted using saturating cast.
         vals = onnx.numpy_helper.saturating_cast(np.asarray(vals), np_dtype).flatten()
+    elif data_type == TensorProto.FLOAT8E8M0:
+        vals = onnx.numpy_helper.float32_to_float8e8m0(vals, saturate=True, round_mode="up").flatten()
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
@@ -796,6 +798,7 @@ def make_tensor(
         TensorProto.FLOAT8E4M3FNUZ,
         TensorProto.FLOAT8E5M2,
         TensorProto.FLOAT8E5M2FNUZ,
+        TensorProto.FLOAT8E8M0,
     }:
         vals = vals.view(np.uint8)  # type: ignore[union-attr]
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:

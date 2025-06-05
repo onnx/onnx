@@ -46,6 +46,7 @@ __all__ = [
     "BlackmanWindow",
     "Cast_1",
     "Cast_19",
+    "Cast_24",
     "CastLike_15",
     "CastLike_19",
     "Ceil",
@@ -294,7 +295,7 @@ from onnx.reference.ops.op_bitwise_not import BitwiseNot
 from onnx.reference.ops.op_bitwise_or import BitwiseOr
 from onnx.reference.ops.op_bitwise_xor import BitwiseXor
 from onnx.reference.ops.op_blackman_window import BlackmanWindow
-from onnx.reference.ops.op_cast import Cast_1, Cast_19
+from onnx.reference.ops.op_cast import Cast_1, Cast_19, Cast_24
 from onnx.reference.ops.op_cast_like import CastLike_15, CastLike_19
 from onnx.reference.ops.op_ceil import Ceil
 from onnx.reference.ops.op_celu import Celu

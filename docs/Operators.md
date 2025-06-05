@@ -29,7 +29,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
 |<a href="#BitwiseOr">BitwiseOr</a>|<a href="Changelog.md#BitwiseOr-18">18</a>|
 |<a href="#BitwiseXor">BitwiseXor</a>|<a href="Changelog.md#BitwiseXor-18">18</a>|
-|<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-23">23</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
+|<a href="#Cast">Cast</a>|<a href="Changelog.md#Cast-24">24</a>, <a href="Changelog.md#Cast-23">23</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-1">1</a>|
 |<a href="#Ceil">Ceil</a>|<a href="Changelog.md#Ceil-13">13</a>, <a href="Changelog.md#Ceil-6">6</a>, <a href="Changelog.md#Ceil-1">1</a>|
 |<a href="#Col2Im">Col2Im</a>|<a href="Changelog.md#Col2Im-18">18</a>|
 |<a href="#Compress">Compress</a>|<a href="Changelog.md#Compress-11">11</a>, <a href="Changelog.md#Compress-9">9</a>|
@@ -5245,7 +5245,7 @@ expect(
     * fixed point: `{1, 0}`.
     * bool: no change.
 
-  Float 8 type were introduced to speed up the training of
+  Float 8 types (E4M3FN, E4M3FNUZ, E5M2, E5M2FNUZ) were introduced to speed up the training of
   deep models. By default the conversion of a float *x* obeys
   to the following rules. `[x]` means the value rounded to
   the target mantissa width.
@@ -5276,17 +5276,23 @@ expect(
   | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
   | else              | RNE    | RNE      | RNE  | RNE      |
 
+  FLOAT8E8M0 type was introduced to enable [Microscaling (MX) formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf).
+  When casting to FLOAT8E8M0, the rounding behavior can be specified using the `rounding_mode` and `saturate` attributes.
+  The current CUDA behavior is to round up and saturate. Casting negative values to FLOAT8E8M0 gives undefined behavior.
+
 #### Version
 
-This version of the operator has been available since version 23 of the default ONNX operator set.
+This version of the operator has been available since version 24 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-21">21</a>
+Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="Changelog.md#Cast-6">6</a>, <a href="Changelog.md#Cast-9">9</a>, <a href="Changelog.md#Cast-13">13</a>, <a href="Changelog.md#Cast-19">19</a>, <a href="Changelog.md#Cast-21">21</a>, <a href="Changelog.md#Cast-23">23</a>
 
 #### Attributes
 
 <dl>
+<dt><tt>round_mode</tt> : string (default is up)</dt>
+<dd>Rounding mode of float8e8m0 conversion. It only applies to float8e8m0 casting and is `up` by default. `up`: round to nearest value away from zero, `down`: round to nearest value towards zero, `nearest`: round to nearest value and ties round up.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
-<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
 <dt><tt>to</tt> : int (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
@@ -5308,9 +5314,9 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
 <dd>Constrain input types. Casting from complex is not supported.</dd>
-<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
 <dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
@@ -5513,6 +5519,92 @@ for from_type, to_type in test_cases:
         inputs=[input],
         outputs=[output],
         name="test_cast_" + from_type + "_to_" + to_type,
+    )
+```
+
+</details>
+
+
+<details>
+<summary>e8m0</summary>
+
+```python
+np_fp32 = np.array(
+    [
+        "0.0",
+        "0.124",
+        "0.25",
+        "0.5",
+        "1.1",
+        "2.0",
+        "4.0",
+        "8.0",
+    ],
+    dtype=np.float32,
+)
+test_cases = [
+    ("FLOAT", "FLOAT8E8M0"),
+    ("FLOAT16", "FLOAT8E8M0"),
+    ("FLOAT8E8M0", "FLOAT"),
+    ("FLOAT8E8M0", "FLOAT16"),
+]
+for from_type, to_type in test_cases:
+    if from_type == "FLOAT":
+        input_np = np_fp32
+        output_np = float32_to_float8e8m0(np_fp32)
+    elif from_type == "FLOAT16":
+        input_np = np_fp32.astype(np.float16)
+        output_np = float32_to_float8e8m0(input_np)
+    elif from_type == "FLOAT8E8M0":
+        input_np = float32_to_float8e8m0(np_fp32)
+        if to_type == "FLOAT":
+            output_np = input_np.astype(np.float32)
+        elif to_type == "FLOAT16":
+            output_np = input_np.astype(np.float16)
+        else:
+            raise ValueError(
+                f"Conversion from {from_type} to {to_type} is not tested."
+            )
+    else:
+        raise ValueError(
+            f"Conversion from {from_type} to {to_type} is not tested."
+        )
+    input = make_tensor(
+        "x",
+        getattr(TensorProto, from_type),
+        [2, 4],
+        input_np.tobytes(),
+        raw=True,
+    )
+    output = make_tensor(
+        "y",
+        getattr(TensorProto, to_type),
+        [2, 4],
+        output_np.tobytes(),
+        raw=True,
+    )
+    if to_type == "FLOAT8E8M0":
+        node = onnx.helper.make_node(
+            "Cast",
+            inputs=["input"],
+            outputs=["output"],
+            to=getattr(TensorProto, to_type),
+            saturate=1,
+            round_mode="up",
+        )
+    else:
+        node = onnx.helper.make_node(
+            "Cast",
+            inputs=["input"],
+            outputs=["output"],
+            to=getattr(TensorProto, to_type),
+        )
+
+    expect(
+        node,
+        inputs=[input],
+        outputs=[output],
+        name="test_cast_e8m0_" + from_type + "_to_" + to_type,
     )
 ```
 

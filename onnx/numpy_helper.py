@@ -204,6 +204,77 @@ def float8e5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
+def float32_to_float8e8m0(
+    x_f32: np.ndarray,
+    saturate=True,
+    round_mode="up",
+) -> np.ndarray:
+    """
+    Convert float32 NumPy array to float8e8m0 representation.
+
+    Args:
+        x_f32 (np.ndarray): Array of float32 values to convert.
+        saturate (bool): Whether to saturate at maximum float8e8m0 value.
+        round_mode (str): "nearest", "up", or "down".
+
+    Returns:
+        np.ndarray: Array of uint8 representing float8e8m0 values.
+    """
+    x_f32 = np.asarray(x_f32, dtype=np.float32)
+    f_bits = x_f32.view(np.uint32)
+
+    # Extract exponent bits
+    exponent = (f_bits >> 23) & 0xFF
+    exponent = exponent.astype(np.uint16)  # use uint16 to prevent overflow during computation
+
+    # Identify NaN or Inf
+    special_mask = exponent == 0xFF
+    output = np.zeros_like(exponent, dtype=np.uint8)
+    output[special_mask] = 0xFF  # Preserve NaN/Inf as max exponent
+
+    # Process normal numbers
+    normal_mask = ~special_mask
+
+    if round_mode == "nearest":
+        g = ((f_bits & 0x400000) > 0).astype(np.uint8)
+        r = ((f_bits & 0x200000) > 0).astype(np.uint8)
+        s = ((f_bits & 0x1FFFFF) > 0).astype(np.uint8)
+        lsb = (exponent > 0).astype(np.uint8)
+
+        round_up = (g == 1) & ((r == 1) | (s == 1) | (lsb == 1))
+
+        increment = np.zeros_like(exponent)
+        increment[round_up & normal_mask] = 1
+
+        if saturate:
+            max_mask = (exponent == 0xFE) & round_up & normal_mask
+            increment[max_mask] = 0  # Don't overflow past max value
+
+        exponent += increment
+
+    elif round_mode == "up":
+        has_fraction = (f_bits & 0x4FFFFF) > 0
+        round_up = has_fraction & normal_mask
+
+        if saturate:
+            max_mask = (exponent == 0xFE) & round_up
+            round_up[max_mask] = False
+
+        exponent += round_up.astype(np.uint16)
+
+    elif round_mode == "down":
+        pass  # No rounding needed
+
+    else:
+        raise ValueError(f"Unsupported rounding mode: {round_mode}")
+
+    # Clip exponent to uint8 range
+    exponent = exponent.astype(np.uint8)
+
+    output[normal_mask] = exponent[normal_mask]
+
+    return output.view(ml_dtypes.float8_e8m0fnu)
+
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider implementing your own unpack logic",
     category=DeprecationWarning,
@@ -374,6 +445,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E4M3FNUZ,
         onnx.TensorProto.FLOAT8E5M2,
         onnx.TensorProto.FLOAT8E5M2FNUZ,
+        onnx.TensorProto.FLOAT8E8M0,
         onnx.TensorProto.BOOL,
     }:
         return (
