@@ -219,7 +219,7 @@ def float8e8m0_to_float32(
     """
     data = np.asarray(data)
     res = np.where(
-        data == 0xFF,
+        data == 0xFF,  # noqa: PLR2004
         np.nan,
         2.0 ** (data.astype(np.int32) - 127),
     )
