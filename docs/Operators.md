@@ -17143,6 +17143,111 @@ Other versions of this operator: <a href="Changelog.md#LpNormalization-1">1</a>
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+node = onnx.helper.make_node("LpNormalization", inputs=["x"], outputs=["y"])
+x = np.array(
+    [[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]], [[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]],
+    dtype=np.float32,
+)
+lp_norm_default = np.sqrt(np.sum(x**2, axis=-1, keepdims=True))
+y = x / lp_norm_default
+expect(node, inputs=[x], outputs=[y], name="test_lpnormalization_default")
+```
+
+</details>
+
+
+<details>
+<summary>l1normalization_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=1
+)
+x = np.array([3.0, 4.0], dtype=np.float32)
+l1_norm_axis_0 = np.sum(abs(x), axis=0, keepdims=True)
+y = x / l1_norm_axis_0
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_0")
+```
+
+</details>
+
+
+<details>
+<summary>l1normalization_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=1
+)
+x = np.array([[3.0, 4.0], [6.0, 8.0]], dtype=np.float32)
+l1_norm_axis_1 = np.sum(abs(x), axis=1, keepdims=True)
+y = x / l1_norm_axis_1
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_1")
+```
+
+</details>
+
+
+<details>
+<summary>l1normalization_axis_last</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=-1, p=1
+)
+x = np.array(
+    [[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]], [[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]],
+    dtype=np.float32,
+)
+l1_norm_axis_last = np.sum(abs(x), axis=-1, keepdims=True)
+y = x / l1_norm_axis_last
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_last")
+```
+
+</details>
+
+
+<details>
+<summary>l2normalization_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=2
+)
+x = np.array(
+    [[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]], [[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]],
+    dtype=np.float32,
+)
+l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
+y = x / l2_norm_axis_0
+expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
+```
+
+</details>
+
+
+<details>
+<summary>l2normalization_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=2
+)
+x = np.array([[3.0, 4.0], [6.0, 8.0]], dtype=np.float32)
+l2_norm_axis_1 = np.sqrt(np.sum(x**2, axis=1, keepdims=True))
+y = x / l2_norm_axis_1
+expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_1")
+```
+
+</details>
+
+
 ### <a name="LpPool"></a><a name="lppool">**LpPool**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across
@@ -19365,19 +19470,23 @@ expect(node, inputs=[input_data], outputs=[expected_output], name="test_mish")
 
 ### <a name="Mod"></a><a name="mod">**Mod**</a>
 
-  Performs element-wise binary modulus (with Numpy-style broadcasting support).
-    The sign of the remainder is the same as that of the Divisor.
+  Performs an element-wise binary modulo operation.
+  The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
 
-    Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-    (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-    This attribute is set to 0 by default causing the behavior to be like integer mod.
-    Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+  If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
+  The sign of the result is that of the divisor.
 
-    If the input type is floating point, then `fmod` attribute must be set to 1.
+  If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
+  The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
+  The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
+  The following special cases apply when `fmod` is set to `1`:
+  - If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
+  - If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+  - If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
+  - If `y` is `±∞` and `x` is finite, `x` is returned.
+  - If either argument is `NaN`, `NaN` is returned.
 
-    In case of dividend being zero, the results will be platform dependent.
-
-    This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
