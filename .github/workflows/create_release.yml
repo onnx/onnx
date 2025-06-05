@@ -69,7 +69,7 @@ concurrency:
 
 jobs:
 
-  call-ubuntu:
+  call-linux:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux.yml
     with:
@@ -108,9 +108,9 @@ jobs:
 
   check_for_publish_release_build_to_pypi:
     name: Check for Publish release build to pypi
-    runs-on: ubuntu-latest
+    runs-on: linux-latest
 
-    needs: [call-ubuntu, call-mac, call-win_x86, call-sdist]
+    needs: [call-linux, call-mac, call-win_x86, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-')
 
     steps:
@@ -136,9 +136,9 @@ jobs:
 
   check_for_publish_preview_build_to_testpypi_weekly:
     name: Check for Publish preview build to test.pypi-weekly
-    runs-on: ubuntu-latest
+    runs-on: linux-latest
 
-    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -150,7 +150,7 @@ jobs:
 
   publish_preview_build_to_testpypi_weekly:
     name: Publish preview build to test.pypi-weekly
-    runs-on: ubuntu-latest
+    runs-on: linux-latest
     needs: [check_for_publish_preview_build_to_testpypi_weekly]
 
     environment:
@@ -189,9 +189,9 @@ jobs:
 
   check_for_publish_release_build_to_testpypi:
     name: Check for Publish release build to test.pypi (rc-candidates)
-    runs-on: ubuntu-latest
+    runs-on: linux-latest
 
-    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes') && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -202,7 +202,7 @@ jobs:
 
   publish_release_build_to_testpypi:
       name: Publish release build to test.pypi
-      runs-on: ubuntu-latest
+      runs-on: linux-latest
       needs: [check_for_publish_release_build_to_testpypi] 
 
       environment:
@@ -241,9 +241,9 @@ jobs:
 
   check_for_publish_preview_build_to_pypi_weekly:
     name: Check for Publish preview build to pypi-weekly
-    runs-on: ubuntu-latest
+    runs-on: linux-latest
 
-    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
 
     steps:
@@ -254,7 +254,7 @@ jobs:
 
   publish_preview_build_to_pypi_weekly:
     name: Publish preview build to pypi-weekly
-    runs-on: ubuntu-latest
+    runs-on: linux-latest
     needs: [check_for_publish_preview_build_to_pypi_weekly]
 
     environment:
@@ -292,7 +292,7 @@ jobs:
 
   publish_release_build_to_pypi:
     name: Publish release build to pypi
-    runs-on: ubuntu-latest
+    runs-on: linux-latest
     needs: [check_for_publish_release_build_to_pypi]
 
     environment:
