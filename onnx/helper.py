@@ -737,7 +737,7 @@ def float32_to_float8e8m0(
     """Convert a float32 value to a float8e8m0 (as uint8).
 
     Args:
-        x_fp32: float32 value to convert
+        x_f32: float32 value to convert
         saturate: whether to saturate to max float8e8m0 value or not
         round_mode: accepted values are "nearest", "up", "down".
 
