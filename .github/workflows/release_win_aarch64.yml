@@ -23,7 +23,7 @@ jobs:
     runs-on: windows-11-arm
     strategy:
       matrix:
-        python-version: ['3.11', '3.12', '3.13']
+        python-version: ['3.11', '3.12', '3.13.3']
         architecture: ['arm64']
     steps:
     - name: Checkout ONNX
