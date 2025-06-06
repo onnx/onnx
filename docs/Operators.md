@@ -11180,7 +11180,7 @@ Other versions of this operator: <a href="Changelog.md#EyeLike-9">9</a>
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+<dd>(Optional) The data type for the elements of the output tensor. If not specified, the data type of the input tensor T1 is used.</dd>
 <dt><tt>k</tt> : int (default is 0)</dt>
 <dd>(Optional) Index of the diagonal to be populated with ones. Default is 0. If T2 is the output, this op sets T2[i, i+k] = 1. k = 0 populates the main diagonal, k > 0 populates an upper diagonal,  and k < 0 populates a lower diagonal.</dd>
 </dl>
