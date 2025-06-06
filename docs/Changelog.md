@@ -28244,7 +28244,7 @@ This version of the operator has been available since version 22 of the default 
     The following pattern is applied by this operator:
         Q          K          V
         |          |          |
-       Q*scale     K*scale    |
+  Q*sqrt(scale) K*sqrt(scale) |
         |          |          |
         |       Transpose     |
         |          |          |
@@ -28278,7 +28278,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
 <dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. Default value is `1/sqrt(head_size)`</dd>
+<dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
 <dd>Softcap value for attention weights. Default value is 0.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>
