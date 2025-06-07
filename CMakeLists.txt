@@ -141,7 +141,7 @@ if(ONNX_DISABLE_EXCEPTIONS)
 endif()
 
 if(ONNX_BUILD_PYTHON)
-  set(python_dev_component Development.Module)
+  set(python_dev_component Development)
 endif()
 
 # explicitly configure FindPython3.cmake to find python3 in virtual environment first
