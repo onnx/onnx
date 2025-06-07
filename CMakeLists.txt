@@ -455,8 +455,6 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
-  # search for FindPython3.cmake instead of legacy modules
-  set(PYBIND11_FINDPYTHON ON)
   # find system pybind11
   find_package(pybind11)
   if(NOT pybind11_FOUND)
