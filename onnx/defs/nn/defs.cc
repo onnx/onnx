@@ -1880,8 +1880,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "ratio",
-            "The ratio of random dropout, with value in [0, 1). If this input was not set, "
-            "or if it was set to 0, the output would be a simple copy of the input. "
+            "The ratio of random dropout, with value in [0, 1). If set to 0, "
+            "the output would be a simple copy of the input. "
             "If it's non-zero, output will be a random dropout of the scaled input, which is typically "
             "the case during training. It is an optional value, if not specified it will default to 0.5.",
             "T1",
