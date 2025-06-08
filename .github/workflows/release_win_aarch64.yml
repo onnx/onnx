@@ -10,7 +10,7 @@ on:
       os:
         required: true
         type: string
-      build_mode: 
+      build_mode:
         required: true
         type: string
 
