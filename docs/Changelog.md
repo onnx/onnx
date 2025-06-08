@@ -26461,7 +26461,7 @@ This version of the operator has been available since version 22 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>The input data as Tensor.</dd>
 <dt><tt>ratio</tt> (optional, non-differentiable) : T1</dt>
-<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
+<dd>The ratio of random dropout, with value in [0, 1). If set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
 <dt><tt>training_mode</tt> (optional, non-differentiable) : T2</dt>
 <dd>If set to true then it indicates dropout is being used for training. It is an optional value hence unless specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where nothing will be dropped from the input data and if mask is requested as output it will contain all ones.</dd>
 </dl>
@@ -28244,7 +28244,7 @@ This version of the operator has been available since version 22 of the default 
     The following pattern is applied by this operator:
         Q          K          V
         |          |          |
-       Q*scale     K*scale    |
+  Q*sqrt(scale) K*sqrt(scale) |
         |          |          |
         |       Transpose     |
         |          |          |
@@ -28278,7 +28278,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
 <dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. Default value is `1/sqrt(head_size)`</dd>
+<dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
 <dd>Softcap value for attention weights. Default value is 0.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>

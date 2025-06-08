@@ -33,12 +33,17 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
-        python_version: ['3.13t', '3.13', '3.12', '3.11', '3.10', '3.9']
+        python_version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10', '3.9']
         include:
+          - python_version: '3.14-dev'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 0
+            protobuf_type: 'Internal'
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 1
-            documentation: 1
+            documentation: 0
             protobuf_type: 'Internal'
           - python_version: '3.13'
             onnx_ml: 1
@@ -70,7 +75,8 @@ jobs:
             python_version: '3.10'
           - os: windows-11-arm
             python_version: '3.9'
-
+          - os: windows-latest # TODO: reevalute for final python 3.14 release: "Numpy built with MINGW-W64 on Windows 64 bits is experimental"
+            python_version: '3.14-dev'
             
     runs-on: ${{ matrix.os }}
     steps:
@@ -126,7 +132,10 @@ jobs:
         if: startsWith(matrix.os,'ubuntu')
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
-
+          if [ "${{ matrix.python_version }}" == "3.14-dev" ]; then
+            sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
+          fi
+        
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
@@ -169,9 +178,15 @@ jobs:
       - name: Install test dependencies
         run: |
           python -m pip install -r requirements-release_test.txt
-
+      
+      - name: Install Pillow with JPEG 2000 support
+        if: (matrix.python_version == '3.14-dev') && startsWith(matrix.os,'ubuntu')
+        run: |
+          sudo apt-get install -y libopenjp2-7-dev # TODO: integrate in test reqs
+          python -m pip install --upgrade Pillow --no-binary :all:
+          
       - name: Run Python tests
-        if: (matrix.python_version != '3.13t')
+        if: (matrix.python_version != '3.13t' ) && (matrix.python_version != '3.14-dev')
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
@@ -183,7 +198,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -196,7 +211,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
+        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t') && (matrix.python_version != '3.14-dev')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
@@ -220,7 +235,7 @@ jobs:
           fi
 
       - name: Test documentation
-        if: matrix.documentation == 1 && (matrix.python_version != '3.13t')
+        if: matrix.documentation == 1
         run: |
           pip install -r docs/docsgen/source/requirements.txt
           cd docs/docsgen && make text
