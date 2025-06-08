@@ -40,6 +40,12 @@ jobs:
             debug_build: 1
             documentation: 0
             protobuf_type: 'Internal'
+          - python_version: '3.13'
+            onnx_ml: 1
+            debug_build: 1
+            unity_build: 1
+            documentation: 1
+            protobuf_type: 'Internal'            
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 1
@@ -76,12 +82,6 @@ jobs:
             unity_build: 0
             documentation: 0
             protobuf_type: 'External'
-          - python_version: '3.13'
-            onnx_ml: 1
-            debug_build: 1
-            unity_build: 1
-            documentation: 1
-            protobuf_type: 'Internal'
         exclude:
           - os: windows-11-arm
             python_version: '3.10'
