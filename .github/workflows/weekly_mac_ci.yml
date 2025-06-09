@@ -42,7 +42,7 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release_build.txt
 
-    - name: Build, install and test ONNX
+    - name: Build and install ONNX
       shell: bash
       run: |
         # Install protobuf from source
