@@ -40,7 +40,7 @@ jobs:
       run: |
         set -e
         python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-release.txt
+        python -m pip install -q -r requirements-release_build.txt
 
     - name: Build, install and test ONNX
       shell: bash
@@ -56,4 +56,5 @@ jobs:
 
     - name: Test all models with onnx.checker, onnx.shape_inference, onnx.version_converter
       run: |
+        python -m pip install -q -r requirements-release_test.txt # necessary?
         python workflow_scripts/test_model_zoo.py
