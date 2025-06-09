@@ -14,7 +14,7 @@ on:
     branches: [main, rel-*]
   workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 concurrency:
