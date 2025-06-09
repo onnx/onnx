@@ -23,6 +23,7 @@ function (onnx_print_configuration_summary)
   message(STATUS "  ONNX_DISABLE_STATIC_REGISTRATION  : ${ONNX_DISABLE_STATIC_REGISTRATION}")
   message(STATUS "  ONNX_WERROR                       : ${ONNX_WERROR}")
   message(STATUS "  ONNX_BUILD_TESTS                  : ${ONNX_BUILD_TESTS}")
+  message(STATUS "  ONNX_USE_UNITY_BUILD              : ${ONNX_USE_UNITY_BUILD}")
   message(STATUS "  BUILD_SHARED_LIBS                 : ${BUILD_SHARED_LIBS}")
   message(STATUS "")
 
