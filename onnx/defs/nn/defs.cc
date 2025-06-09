@@ -1880,8 +1880,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "ratio",
-            "The ratio of random dropout, with value in [0, 1). If this input was not set, "
-            "or if it was set to 0, the output would be a simple copy of the input. "
+            "The ratio of random dropout, with value in [0, 1). If set to 0, "
+            "the output would be a simple copy of the input. "
             "If it's non-zero, output will be a random dropout of the scaled input, which is typically "
             "the case during training. It is an optional value, if not specified it will default to 0.5.",
             "T1",
@@ -3343,7 +3343,7 @@ The following pattern is applied to the Q, K and V inputs after appropriate resh
   The following pattern is applied by this operator:
       Q          K          V
       |          |          |
-     Q*scale     K*scale    |
+Q*sqrt(scale) K*sqrt(scale) |
       |          |          |
       |       Transpose     |
       |          |          |
@@ -3375,8 +3375,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "scale",
-            "Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. "
-            "Default value is `1/sqrt(head_size)`",
+            "Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent "
+            "[numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.",
             AttributeProto::FLOAT,
             OPTIONAL_VALUE)
         .Attr(
