@@ -185,7 +185,7 @@ def convert_model_from_external_data(model: ModelProto) -> None:
 
 def _is_path_traversal(path: str) -> bool:
     """Check if the path contains traversal sequences.
-    
+
     Arguments:
         path: The path to check.
     """
@@ -201,11 +201,11 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
         base_path: System path of a folder where tensor data is to be stored
     """
     info = ExternalDataInfo(tensor)
-    
+
     # Validate the location path to prevent path traversal attacks
     if _is_path_traversal(info.location):
         raise ValueError(f"Path traversal detected in location: {info.location}. Paths containing '..' are not allowed.")
-    
+
     external_data_file_path = os.path.join(base_path, info.location)
 
     # Retrieve the tensor's data from raw_data or load external file
