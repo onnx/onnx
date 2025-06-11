@@ -21,10 +21,13 @@ template <typename T>
 void LoadProtoFromPath(const std::string& proto_path, T& proto) {
 #ifdef _WIN32
   std::filesystem::path proto_u8_path(utf8str_to_wstring(proto_path, true));
+  std::fstream proto_stream(proto_u8_path, std::ios::in | std::ios::binary);
+#elif defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED < 101500
+  std::fstream proto_stream(proto_path, std::ios::in | std::ios::binary);
 #else
   std::filesystem::path proto_u8_path(proto_path);
-#endif
   std::fstream proto_stream(proto_u8_path, std::ios::in | std::ios::binary);
+#endif
   if (!proto_stream.good()) {
     fail_check("Unable to open proto file: ", proto_path, ". Please check if it is a valid proto. ");
   }
