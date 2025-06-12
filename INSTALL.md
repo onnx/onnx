@@ -74,30 +74,27 @@ pip install -e . -v
 ### Conda-forge-based development environment
 
 A conda-forge-based development environment is also provided (currently only on MacOS and Linux).
-After installing the [pixi package manager](https://prefix.dev/), users may execute
+After installing the [pixi package manager](https://prefix.dev/), users may directly execute any of the following commands. Upon doing so pixi will install the required dependencies automatically in isolated environments.
+Running
 
-```
+```sh
 pixi run install
 ```
 
-to build and install the `onnx` package into the default environment.
+builds and installs the `onnx` package into the default environment.
 After the installation has completed one can run the gtest and pytest suites via the pixi-tasks of the same name:
 
-```
+```sh
 pixi run gtest
 ```
 
 and
 
-```
+```sh
 pixi run pytest
 ```
 
-The markdown documentation of all operators may be re-rendered by running
-
-```
-pixi run gen-docs
-```
+Further task for re-generating the operator documentation (`pixi run gen-docs`), setting-up lintrunner (`pixi run lintrunner-init`), and executing lintrunner (`pixi run lintrunner-run`) are also available.
 
 
 #### Old instructions

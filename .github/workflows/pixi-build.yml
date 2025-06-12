@@ -1,4 +1,4 @@
-name: conda-forge CI
+name: Pixi CI
 on:
   push:
   pull_request:
@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build-install-lint:
-    name: Build, install, and lint (${{ matrix.os }}, ${{ matrix.environment }})
+    name: Install and test (${{ matrix.os }}, ${{ matrix.environment }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
@@ -34,13 +34,6 @@ jobs:
           environments: ${{ matrix.environment }}
       - name: Install repository
         run: pixi run -e ${{ matrix.environment }} install
-      - name: lintrunner-init
-        # Linting fails probably due to old NumPy version
-        if: ${{ matrix.environment != 'oldies' }}
-        run: pixi run -e ${{ matrix.environment }} lintrunner-init
-      - name: lintrunner-run
-        if: ${{ matrix.environment != 'oldies' }}
-        run: pixi run -e ${{ matrix.environment }} lintrunner-run
       - name: gtests
         run: pixi run -e ${{ matrix.environment }} gtest
       - name: pytest
