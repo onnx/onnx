@@ -73,7 +73,7 @@ pip install -e . -v
 
 ### Conda-forge-based development environment
 
-A conda-forge-based development environment is also provided (currently only on MacOS and Linux).
+A conda-forge-based development environment is also provided.
 After installing the [pixi package manager](https://prefix.dev/), users may directly execute any of the following commands. Upon doing so pixi will install the required dependencies automatically in isolated environments.
 Running
 

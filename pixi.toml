@@ -7,7 +7,7 @@ authors = ["ONNX Contributors <onnx-technical-discuss@lists.lfaidata.foundation>
 channels = ["conda-forge"]
 description = "Open Neural Network Exchange"
 name = "onnx"
-platforms = ["osx-arm64", "linux-64"]
+platforms = ["osx-arm64", "linux-64", "win-64"]
 
 [tasks.install]
 cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation .'
@@ -21,7 +21,8 @@ depends-on = "build"
 cmd = "python onnx/defs/gen_doc.py"
 
 [tasks.gtest]
-cmd = ".setuptools-cmake-build/onnx_gtests"
+# Windows uses a different path
+cmd = "cp .setuptools-cmake-build/Release/onnx_gtests.exe .setuptools-cmake-build/onnx_gtests |& true && .setuptools-cmake-build/onnx_gtests"
 
 [tasks.pytest]
 cmd = "pytest"
@@ -55,15 +56,20 @@ wheel = ">=0.45.1"
 
 [feature.reference.dependencies]
 # follows requirements-reference.txt
-google-re2 = ">=1.1.20240702,<2"  # Not available for Windows, yet
 pillow = ">=11.2.1,<12"
+[feature.reference.target.win-64.pypi-dependencies]
+# Not available for Windows on conda-forge, yet
+google-re2 = ">=1.1.20240702,<2"
+[feature.reference.target.linux-64.dependencies]
+google-re2 = ">=1.1.20240702,<2"
+[feature.reference.target.osx-arm64.dependencies]
+google-re2 = ">=1.1.20240702,<2"
 
 [feature.oldies.dependencies]
 # follows requirements-min.txt
 protobuf = "==4.25.1"
 python = "3.9.*"
 numpy = "==1.22.0"
-
 
 [feature.lint.tasks]
 lintrunner-init = "lintrunner init"
