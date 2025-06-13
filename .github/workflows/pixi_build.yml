@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-install-lint:
+  install-lint:
     name: Install and test (${{ matrix.os }}, ${{ matrix.environment }})
     runs-on: ${{ matrix.os }}
     strategy:
