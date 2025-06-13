@@ -15,12 +15,14 @@ from onnx.backend.test.case.node import expect
 from onnx.helper import (
     float32_to_float8e4m3,
     float32_to_float8e5m2,
+    float32_to_float8e8m0,
     make_tensor,
     tensor_dtype_to_field,
 )
 from onnx.numpy_helper import (
     float8e4m3_to_float32,
     float8e5m2_to_float32,
+    float8e8m0_to_float32,
     unpacked_float4e2m1_to_float32,
 )
 
@@ -487,4 +489,86 @@ class Cast(Base):
                 inputs=[input],
                 outputs=[output],
                 name="test_cast_no_saturate_" + from_type + "_to_" + to_type,
+            )
+
+    @staticmethod
+    def export_e8m0() -> None:
+        vect_float32_to_float8e8m0 = np.vectorize(float32_to_float8e8m0)
+        vect_float8e8m0_to_float32 = np.vectorize(float8e8m0_to_float32)
+        np_fp32 = np.array(
+            [
+                "0.0",
+                "0.124",
+                "0.25",
+                "0.5",
+                "1.1",
+                "2.0",
+                "4.0",
+                "8.0",
+            ],
+            dtype=np.float32,
+        )
+        test_cases = [
+            ("FLOAT", "FLOAT8E8M0"),
+            ("FLOAT16", "FLOAT8E8M0"),
+            ("FLOAT8E8M0", "FLOAT"),
+            ("FLOAT8E8M0", "FLOAT16"),
+        ]
+        for from_type, to_type in test_cases:
+            if from_type == "FLOAT":
+                input_np = np_fp32
+                output_np = vect_float32_to_float8e8m0(np_fp32)
+            elif from_type == "FLOAT16":
+                input_np = np_fp32.astype(np.float16)
+                output_np = vect_float32_to_float8e8m0(input_np)
+            elif from_type == "FLOAT8E8M0":
+                input_np = vect_float32_to_float8e8m0(np_fp32)
+                if to_type == "FLOAT":
+                    output_np = vect_float8e8m0_to_float32(input_np)
+                elif to_type == "FLOAT16":
+                    output_np = vect_float8e8m0_to_float32(input_np).astype(np.float16)
+                else:
+                    raise ValueError(
+                        f"Conversion from {from_type} to {to_type} is not tested."
+                    )
+            else:
+                raise ValueError(
+                    f"Conversion from {from_type} to {to_type} is not tested."
+                )
+            input = make_tensor(
+                "x",
+                getattr(TensorProto, from_type),
+                [2, 4],
+                input_np.tobytes(),
+                raw=True,
+            )
+            output = make_tensor(
+                "y",
+                getattr(TensorProto, to_type),
+                [2, 4],
+                output_np.tobytes(),
+                raw=True,
+            )
+            if to_type == "FLOAT8E8M0":
+                node = onnx.helper.make_node(
+                    "Cast",
+                    inputs=["input"],
+                    outputs=["output"],
+                    to=getattr(TensorProto, to_type),
+                    saturate=1,
+                    round_mode="up",
+                )
+            else:
+                node = onnx.helper.make_node(
+                    "Cast",
+                    inputs=["input"],
+                    outputs=["output"],
+                    to=getattr(TensorProto, to_type),
+                )
+
+            expect(
+                node,
+                inputs=[input],
+                outputs=[output],
+                name="test_cast_e8m0_" + from_type + "_to_" + to_type,
             )
