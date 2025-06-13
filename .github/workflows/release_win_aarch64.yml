@@ -18,12 +18,12 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+  build:
+    if: github.event_name != 'pull_request' || startsWith(github.base_ref, 'rel-') || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-11-arm
     strategy:
       matrix:
-        python-version: ['3.11', '3.12', '3.13.3']
+        python-version: ['3.14-dev', '3.13', '3.12', '3.11']
         architecture: ['arm64']
     steps:
     - name: Checkout ONNX
@@ -68,7 +68,7 @@ jobs:
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname --no-deps}
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_wheel.outcome == 'success'
+      if: (steps.build_wheel.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist
