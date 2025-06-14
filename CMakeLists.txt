@@ -304,7 +304,7 @@ message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
 # orflow/contrib/cmake/tf_core_framework.cmake to solve the problem that
 # customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
-function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
+function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   if(NOT ARGN)
     message(
       SEND_ERROR
@@ -313,15 +313,12 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     return()
   endif()
 
-  # Add ONNX_API prefix to protobuf classes and methods in all cases
-  set(ONNX_DLLEXPORT_STR "dllexport_decl=ONNX_API:")
-
   set(${SRCS})
-  set(${HDRS})
 
-  set(GEN_PROTO_PY "${ROOT_DIR}/onnx/gen_proto.py")
+  set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
+  set(GENERATED_FILE_TARGETS)
   foreach(INFILE ${ARGN})
-    set(ABS_FILE "${ROOT_DIR}/${INFILE}")
+    set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
     # "onnx-data" check is because we do not want to create/compile an "onnx-data-ml.proto" file
@@ -338,10 +335,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         set(GENERATED_FILE_WE "${FILE_WE}_${ONNX_NAMESPACE}")
       endif()
     endif()
-    file(RELATIVE_PATH REL_DIR "${ROOT_DIR}" "${FILE_DIR}")
+    file(RELATIVE_PATH REL_DIR "${ONNX_ROOT}" "${FILE_DIR}")
     set(OUTPUT_PROTO_DIR "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}")
 
-    set(OUTPUT_PB_HEADER "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.h")
     set(OUTPUT_PB_SRC "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.cc")
     set(GENERATED_PROTO "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.proto")
     if(NOT (ONNX_NAMESPACE STREQUAL "onnx"))
@@ -350,7 +346,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       list(APPEND ${HDRS} "${OUTPUT_PROTO_DIR}/${GENERATED_FILE_WE}.pb.h")
     endif()
     list(APPEND ${SRCS} "${OUTPUT_PB_SRC}")
-    list(APPEND ${HDRS} "${OUTPUT_PB_HEADER}")
 
     if(NOT EXISTS "${OUTPUT_PROTO_DIR}")
       file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
@@ -368,27 +363,21 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     if(ONNX_USE_LITE_PROTO)
       list(APPEND GEN_PROTO_ARGS -l)
     endif()
-    if(ONNX_VERIFY_PROTO3)
-        if(NOT ONNX_PROTOC_EXECUTABLE)
-          message(FATAL_ERROR "Protobuf compiler not found")
-        endif()
-        list(APPEND GEN_PROTO_ARGS --protoc_path)
-        list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
-    endif()
 
-    add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND Python3::Interpreter "${GEN_PROTO_PY}"
-                               ARGS ${GEN_PROTO_ARGS}
+    add_custom_target("${GENERATED_FILE_WE}_proto_file"
+                       COMMAND Python3::Interpreter "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
+                       BYPRODUCTS "${GENERATED_PROTO}"
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
-                       VERBATIM)
+                       )
     message("Generated: ${GENERATED_PROTO}")
+
     set(PROTOC_ARGS
         ${GENERATED_PROTO}
         -I
         ${CMAKE_CURRENT_BINARY_DIR}
         --cpp_out
-        ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
+        ${CMAKE_CURRENT_BINARY_DIR})
     if(ONNX_BUILD_PYTHON)
       list(APPEND PROTOC_ARGS --python_out)
       if(ONNX_GEN_PB_TYPE_STUBS)
@@ -397,64 +386,23 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
-    if(NOT ONNX_PROTOC_EXECUTABLE)
-      message(FATAL_ERROR "Protobuf compiler not found")
-    endif()
-    if(ONNX_PROTO_POST_BUILD_SCRIPT)
-      add_custom_command(
-        OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
-        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ARGS ${PROTOC_ARGS}
-        COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_HEADER}
-                -DNAMESPACES=${ONNX_NAMESPACE} -P
-                ${ONNX_PROTO_POST_BUILD_SCRIPT}
-        COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_SRC}
-                -DNAMESPACES=${ONNX_NAMESPACE} -P
-                ${ONNX_PROTO_POST_BUILD_SCRIPT}
-        DEPENDS ${GENERATED_PROTO} ${DEPEND}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
-        VERBATIM)
-    else()
-      add_custom_command(
-        OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
-        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ARGS ${PROTOC_ARGS}
-        DEPENDS ${GENERATED_PROTO} ${DEPEND}
-        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
-        VERBATIM)
-    endif()
-    add_custom_target(${NAME} DEPENDS ${OUTPUT_PB_SRC} ${OUTPUT_PB_HEADER})
+    list(APPEND GENERATED_FILE_TARGETS ${GENERATED_FILE_WE}_proto_file)
+    add_custom_target(${GENERATED_FILE_WE}_src
+        COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
+        BYPRODUCTS "${OUTPUT_PB_SRC}"
+        DEPENDS ${GENERATED_FILE_TARGETS}
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
-  set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
-  set(${HDRS} ${${HDRS}} PARENT_SCOPE)
 endfunction()
 
-relative_protobuf_generate_cpp(gen_onnx_proto
-                               __tmp_srcs
-                               __tmp_hdrs
-                               ${ONNX_ROOT}
-                               ""
-                               onnx/onnx.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
-
-relative_protobuf_generate_cpp(gen_onnx_operators_proto
-                               __tmp_srcs
-                               __tmp_hdrs
-                               ${ONNX_ROOT}
-                               gen_onnx_proto
-                               onnx/onnx-operators.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
-
-relative_protobuf_generate_cpp(gen_onnx_data_proto
-                               __tmp_srcs
-                               __tmp_hdrs
-                               ${ONNX_ROOT}
-                               gen_onnx_proto
+relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
+                               onnx/onnx.in.proto
+                               onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
-list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
+
+add_library(onnx_proto ${ONNX_PROTO_SRCS})
 
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
@@ -464,9 +412,6 @@ file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
-
-add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
-add_dependencies(onnx_proto gen_onnx_operators_proto gen_onnx_data_proto)
 
 set(ONNX_API_DEFINE "-DONNX_API=")
 if(MSVC)
@@ -510,16 +455,21 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
-  Python3_add_library(onnx_cpp2py_export MODULE WITH_SOABI "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-  set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
-  set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
-  set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+  # find system pybind11
+  find_package(pybind11)
+  if(NOT pybind11_FOUND)
+    include(FetchContent)
+    set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.tar.gz)
+    set(pybind11SHA1  8c7e3e8fec829ced31a495dec281153511f33c63)
+    FetchContent_Declare(
+      pybind11
+      URL ${pybind11URL}
+      URL_HASH SHA1=${pybind11SHA1}
+    )
+    FetchContent_MakeAvailable(pybind11)
+  endif()
 
-  # search for FindPython3.cmake instead of legacy modules
-  set(PYBIND11_FINDPYTHON ON)
-  add_subdirectory("${ONNX_ROOT}/third_party/pybind11")
-
-  target_link_libraries(onnx_cpp2py_export PRIVATE pybind11::headers)
+  pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
