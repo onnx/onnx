@@ -89,7 +89,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         version >= version_range.first && version <= version_range.second,
         "Warning: invalid version (must be between %d and %d)",
         version_range.first,
-        version_range.second);
+        version_range.second)
   }
 
   void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
@@ -97,8 +97,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         (initial_domain.empty() || initial_domain == "ai.onnx") &&
             (target_domain.empty() || target_domain == "ai.onnx"),
         "Warning: default onnx version converter can only convert "
-        " between default domain opset versions ('' or 'ai.onnx')\n");
-    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains");
+        " between default domain opset versions ('' or 'ai.onnx')\n")
+    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains")
   }
 
   void convert_graph(const std::shared_ptr<Graph>& g, const OpSetID& initial_version, const OpSetID& target_version)

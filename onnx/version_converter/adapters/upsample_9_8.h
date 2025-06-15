@@ -26,7 +26,7 @@ struct Upsample_9_8 final : public Adapter {
     const ArrayRef<Value*>& inputs = node->inputs();
     const std::vector<Tensor>& initializers = graph->initializers();
 
-    ONNX_ASSERTM(inputs.size() == 2, "Upsample in opset 9 needs to have 2 inputs.");
+    ONNX_ASSERTM(inputs.size() == 2, "Upsample in opset 9 needs to have 2 inputs.")
     std::string scale_input_name = node->inputs()[1]->uniqueName();
 
     for (const auto& initializer : initializers) {
@@ -66,7 +66,7 @@ struct Upsample_9_8 final : public Adapter {
       }
     }
 
-    ONNX_ASSERTM(false, "Unsuppported conversion due to unavailable input: scale");
+    ONNX_ASSERTM(false, "Unsuppported conversion due to unavailable input: scale")
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
