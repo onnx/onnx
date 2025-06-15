@@ -111,6 +111,120 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(GridSample_ver20_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
+static const char* Cast_ver23_doc = R"DOC(
+The operator casts the elements of a given input tensor to a data type
+specified by the 'to' argument and returns an output tensor of the same size in
+the converted type. The 'to' argument must be one of the data types specified
+in the 'DataType' enum field in the TensorProto message.
+
+Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+(e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+yield result 100. There are some string literals reserved for special floating-point values;
+"+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+to string tensors, plain floating-point representation (such as "314.15926") would be used.
+Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases
+of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+
+Conversion from a numerical type to any numerical type is always allowed.
+User must be aware of precision loss and value change caused by range difference between two types.
+For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
+
+In more detail, the conversion among numerical types should follow these rules
+if the destination type is not a float 8 type.
+
+* Casting from floating point to:
+  * floating point: +/- infinity if OOR (out of range).
+  * fixed point: undefined if OOR.
+  * bool: +/- 0.0 to False; all else to True.
+* Casting from fixed point to:
+  * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
+  * fixed point: when OOR, discard higher bits and reinterpret (with respect to two's complement representation for
+    signed types). For example, 200 (int16) -> -56 (int8).
+  * bool: zero to False; nonzero to True.
+* Casting from bool to:
+  * floating point: `{1.0, 0.0}`.
+  * fixed point: `{1, 0}`.
+  * bool: no change.
+
+Float 8 type were introduced to speed up the training of
+deep models. By default the conversion of a float *x* obeys
+to the following rules. `[x]` means the value rounded to
+the target mantissa width.
+
+| x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
+|------|----|----|----|----|
+| 0 | 0 | 0 | 0 | 0 |
+|-0 | -0 | 0 | -0 | 0 |
+| NaN | NaN | NaN | NaN | NaN |
+| +/- Inf | +/- FLT_MAX | NaN | FLT_MAX | NaN |
+| [x] > FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX |
+| [x] < -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
+| else | RNE | RNE | RNE | RNE |
+
+The behavior changes if the parameter 'saturate' is set to False.
+The rules then become:
+
+| x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
+|------|----|----|----|----|
+| 0 | 0 | 0 | 0 | 0 |
+|-0 | -0 | 0 | -0 | 0 |
+| NaN | NaN | NaN | NaN | NaN |
+| +/- Inf | NaN | NaN | +/- Inf | NaN |
+| [x] > FLT_MAX | NaN | NaN | Inf | NaN |
+| [x] < -FLT_MAX | NaN | NaN | -Inf | NaN |
+| else | RNE | RNE | RNE | RNE |
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Cast,
+    23,
+    OpSchema()
+        .SetDoc(Cast_ver23_doc)
+        .Attr(
+            "to",
+            "The data type to which the elements of the input tensor are cast. "
+            "Strictly must be one of the types from DataType enum in TensorProto",
+            AttributeProto::INT)
+        .Attr(
+            "saturate",
+            "The parameter defines how the conversion behaves if an input value is out of "
+            "range of the destination type. It only applies for float 8 conversion "
+            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. "
+            "All cases are fully described in two tables inserted in the operator description.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor with the same shape as input with type "
+            "specified by the 'to' argument",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_non_complex_tensor_types_ir11(),
+            "Constrain input types. Casting from complex is not supported.")
+        .TypeConstraint(
+            "T2",
+            OpSchema::all_non_complex_tensor_types_ir11(),
+            "Constrain output types. Casting to complex is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          PropagateShapeDataFromInputToOutput(ctx, 0);
+        }));
+
 static const char* Cast_ver19_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
