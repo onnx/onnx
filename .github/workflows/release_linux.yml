@@ -20,7 +20,7 @@ permissions:
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    
+
     strategy:
       matrix:
         python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10', '3.9']
@@ -43,7 +43,7 @@ jobs:
         git config --global --add safe.directory /github/workspace
 
     - name: Set source date epoch variable
-      run: |        
+      run: |
         echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
     - name: Build wheel for x86_64
@@ -69,6 +69,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
+        freethreaded: ${{ endsWith(matrix.python-version, 't') }}
 
     - name: Install libjpeg-dev for Python 3.14-dev
       if: matrix.python-version == '3.14-dev'
