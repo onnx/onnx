@@ -1,0 +1,91 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+[project]
+authors = ["ONNX Contributors <onnx-technical-discuss@lists.lfaidata.foundation>"]
+channels = ["conda-forge"]
+description = "Open Neural Network Exchange"
+name = "onnx"
+platforms = ["osx-arm64", "linux-64", "win-64"]
+
+[tasks.install]
+cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation .'
+[tasks.install.env]
+ONNX_ML="1"
+ONNX_BUILD_TESTS="1"
+CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+
+[tasks.gen-docs]
+depends-on = "build"
+cmd = "python onnx/defs/gen_doc.py"
+
+[tasks.gtest]
+# Windows uses a different path
+cmd = "cp .setuptools-cmake-build/Release/onnx_gtests.exe .setuptools-cmake-build/onnx_gtests |& true && .setuptools-cmake-build/onnx_gtests"
+
+[tasks.pytest]
+cmd = "pytest"
+
+[build-dependencies]
+c-compiler = ">=1.8.0"
+cmake = ">=3.31.5"
+cxx-compiler = ">=1.8.0"
+make = "*"
+ninja = "*"
+[host-dependencies]
+libdate = ">=3.0.1,<4"
+libprotobuf = "*"
+pip = ">=25.0"
+pybind11 = ">=2.13.6"
+[dependencies]
+packaging = ">=24.1"
+python = ">=3.9"
+
+[feature.dev.dependencies]
+# follows requirements-dev.txt
+ml_dtypes = ">=0.5.1"
+numpy = ">=1.22.0"
+parameterized = ">=0.9.0"
+protobuf = ">=4.25.1"
+pytest = ">=8.3.4"
+pytest-cov = ">=6.0.0"
+pytest-xdist = ">=3.6.1"
+setuptools = ">=75.8.0"
+wheel = ">=0.45.1"
+
+[feature.reference.dependencies]
+# follows requirements-reference.txt
+pillow = ">=11.2.1,<12"
+[feature.reference.target.win-64.pypi-dependencies]
+# Not available for Windows on conda-forge, yet
+google-re2 = ">=1.1.20240702,<2"
+[feature.reference.target.linux-64.dependencies]
+google-re2 = ">=1.1.20240702,<2"
+[feature.reference.target.osx-arm64.dependencies]
+google-re2 = ">=1.1.20240702,<2"
+
+[feature.oldies.dependencies]
+# follows requirements-min.txt
+protobuf = "==4.25.1"
+python = "3.9.*"
+numpy = "==1.22.0"
+
+[feature.lint.tasks]
+lintrunner-init = "lintrunner init"
+lintrunner-run = "lintrunner --all-files"
+[feature.lint.dependencies]
+# follows requirements-lintrunner.txt
+ruff = "==0.11.12"  
+mypy = "==1.16.0"
+types-protobuf = ">=5.29.1.20250403"
+clang-format = ">=20.1.5"
+[feature.lint.pypi-dependencies]
+lintrunner = ">=0.10.7"
+lintrunner-adapters = ">=0.12.3"
+editorconfig-checker = "==3.2.1"
+
+
+[environments]
+default = ["dev", "lint", "reference"]
+oldies = ["dev", "lint", "reference", "oldies"]

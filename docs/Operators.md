@@ -1655,7 +1655,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
     The following pattern is applied by this operator:
         Q          K          V
         |          |          |
-       Q*scale     K*scale    |
+  Q*sqrt(scale) K*sqrt(scale) |
         |          |          |
         |       Transpose     |
         |          |          |
@@ -1689,7 +1689,7 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
 <dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. Default value is `1/sqrt(head_size)`</dd>
+<dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
 <dd>Softcap value for attention weights. Default value is 0.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>
@@ -10157,7 +10157,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">1</a>, <a href
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>The input data as Tensor.</dd>
 <dt><tt>ratio</tt> (optional, non-differentiable) : T1</dt>
-<dd>The ratio of random dropout, with value in [0, 1). If this input was not set, or if it was set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
+<dd>The ratio of random dropout, with value in [0, 1). If set to 0, the output would be a simple copy of the input. If it's non-zero, output will be a random dropout of the scaled input, which is typically the case during training. It is an optional value, if not specified it will default to 0.5.</dd>
 <dt><tt>training_mode</tt> (optional, non-differentiable) : T2</dt>
 <dd>If set to true then it indicates dropout is being used for training. It is an optional value hence unless specified explicitly, it is false. If it is false, ratio is ignored and the operation mimics inference mode where nothing will be dropped from the input data and if mask is requested as output it will contain all ones.</dd>
 </dl>
@@ -11180,7 +11180,7 @@ Other versions of this operator: <a href="Changelog.md#EyeLike-9">9</a>
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+<dd>(Optional) The data type for the elements of the output tensor. If not specified, the data type of the input tensor T1 is used.</dd>
 <dt><tt>k</tt> : int (default is 0)</dt>
 <dd>(Optional) Index of the diagonal to be populated with ones. Default is 0. If T2 is the output, this op sets T2[i, i+k] = 1. k = 0 populates the main diagonal, k > 0 populates an upper diagonal,  and k < 0 populates a lower diagonal.</dd>
 </dl>
@@ -17141,6 +17141,111 @@ Other versions of this operator: <a href="Changelog.md#LpNormalization-1">1</a>
 <dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+node = onnx.helper.make_node("LpNormalization", inputs=["x"], outputs=["y"])
+x = np.array(
+    [[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]], [[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]],
+    dtype=np.float32,
+)
+lp_norm_default = np.sqrt(np.sum(x**2, axis=-1, keepdims=True))
+y = x / lp_norm_default
+expect(node, inputs=[x], outputs=[y], name="test_lpnormalization_default")
+```
+
+</details>
+
+
+<details>
+<summary>l1normalization_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=1
+)
+x = np.array([3.0, 4.0], dtype=np.float32)
+l1_norm_axis_0 = np.sum(abs(x), axis=0, keepdims=True)
+y = x / l1_norm_axis_0
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_0")
+```
+
+</details>
+
+
+<details>
+<summary>l1normalization_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=1
+)
+x = np.array([[3.0, 4.0], [6.0, 8.0]], dtype=np.float32)
+l1_norm_axis_1 = np.sum(abs(x), axis=1, keepdims=True)
+y = x / l1_norm_axis_1
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_1")
+```
+
+</details>
+
+
+<details>
+<summary>l1normalization_axis_last</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=-1, p=1
+)
+x = np.array(
+    [[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]], [[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]],
+    dtype=np.float32,
+)
+l1_norm_axis_last = np.sum(abs(x), axis=-1, keepdims=True)
+y = x / l1_norm_axis_last
+expect(node, inputs=[x], outputs=[y], name="test_l1normalization_axis_last")
+```
+
+</details>
+
+
+<details>
+<summary>l2normalization_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=0, p=2
+)
+x = np.array(
+    [[[1.0, 2.0, 2.0], [3.0, 4.0, 0.0]], [[0.0, 5.0, 5.0], [6.0, 8.0, 0.0]]],
+    dtype=np.float32,
+)
+l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
+y = x / l2_norm_axis_0
+expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
+```
+
+</details>
+
+
+<details>
+<summary>l2normalization_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LpNormalization", inputs=["x"], outputs=["y"], axis=1, p=2
+)
+x = np.array([[3.0, 4.0], [6.0, 8.0]], dtype=np.float32)
+l2_norm_axis_1 = np.sqrt(np.sum(x**2, axis=1, keepdims=True))
+y = x / l2_norm_axis_1
+expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_1")
+```
+
+</details>
 
 
 ### <a name="LpPool"></a><a name="lppool">**LpPool**</a>
