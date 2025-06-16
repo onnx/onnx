@@ -404,15 +404,13 @@ list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
 list(APPEND ONNX_SRCS ${ONNX_PROTO_SRCS})
 
-if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-  # whole-archive linker option not available on AIX.
-  # So, create a object library
-  add_library(onnx OBJECT ${ONNX_SRCS})
-else()
-  add_library(onnx ${ONNX_SRCS})
-endif()
-set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+add_library(onnx_object OBJECT ${ONNX_SRCS})
+set_target_properties(onnx_object PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx_object PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+
+file(WRITE ${CMAKE_BINARY_DIR}/onnx_lib_dummy.cc "")
+add_library(onnx ${CMAKE_BINARY_DIR}/onnx_lib_dummy.cc)
+target_link_libraries(onnx PRIVATE onnx_object)
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -420,15 +418,16 @@ if(ONNX_USE_LITE_PROTO)
     set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
-target_link_libraries(onnx PUBLIC ${LINKED_PROTOBUF_TARGET})
+target_link_libraries(onnx_object PUBLIC ${LINKED_PROTOBUF_TARGET})
 foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
   if(TARGET ${ABSL_USED_TARGET})
-    target_link_libraries(onnx PRIVATE ${ABSL_USED_TARGET})
+    target_link_libraries(onnx_object PRIVATE ${ABSL_USED_TARGET})
   endif()
 endforeach()
 
+add_onnx_global_defines(onnx_object)
 add_onnx_global_defines(onnx)
-target_include_directories(onnx PUBLIC
+target_include_directories(onnx_object PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 
@@ -449,12 +448,7 @@ if(ONNX_BUILD_PYTHON)
 
   pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-  if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-    # whole-archive linker option not available on AIX
-    target_sources(onnx_cpp2py_export PRIVATE $<TARGET_OBJECTS:onnx>)
-  else()
-    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
-  endif()
+  target_link_libraries(onnx_cpp2py_export PRIVATE onnx_object)
   # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
   # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
@@ -541,9 +535,6 @@ if(ONNX_USE_UNITY_BUILD)
 endif()
 
 if(ONNX_BUILD_TESTS)
-  if(BUILD_SHARED_LIBS)
-    message(FATAL_ERROR "Tests requires static build")
-  endif()
   find_package(GTest)
   if(NOT GTest_FOUND)
     include(googletest)
@@ -551,7 +542,7 @@ if(ONNX_BUILD_TESTS)
 endif()
 
 install(TARGETS
-  onnx
+  onnx onnx_object
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(EXPORT ONNXTargets
