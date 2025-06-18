@@ -318,7 +318,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
   set(GENERATED_FILE_TARGETS)
   foreach(INFILE ${ARGN})
-    message(WARNING "${INFILE}")
     set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
@@ -456,13 +455,6 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
-  Python3_add_library(onnx_cpp2py_export MODULE WITH_SOABI "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-  set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
-  set_target_properties(onnx_cpp2py_export PROPERTIES CXX_VISIBILITY_PRESET hidden)
-  set_target_properties(onnx_cpp2py_export PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-
-  # search for FindPython3.cmake instead of legacy modules
-  set(PYBIND11_FINDPYTHON ON)
   # find system pybind11
   find_package(pybind11)
   if(NOT pybind11_FOUND)
@@ -477,7 +469,7 @@ if(ONNX_BUILD_PYTHON)
     FetchContent_MakeAvailable(pybind11)
   endif()
 
-  target_include_directories(onnx_cpp2py_export PRIVATE "${pybind11_INCLUDE_DIRS}")
+  pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX

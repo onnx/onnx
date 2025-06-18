@@ -10,9 +10,9 @@ set -e -x
 PY_VERSION=$1
 PLAT=$2
 BUILD_MODE=$3  # build mode (release or preview)
-SOURCE_DATE_EPOCH_ARG=$4  # New argument for SOURCE_DATE_EPOCH
+SOURCE_DATE_EPOCH_ARG=$4 # https://reproducible-builds.org/docs/source-date-epoch/
 
-# Set SOURCE_DATE_EPOCH
+# Set SOURCE_DATE_EPOCH for reproducible builds
 if [ -n "$SOURCE_DATE_EPOCH_ARG" ]; then
     export SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH_ARG
 fi
@@ -21,11 +21,6 @@ echo "SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH"
 echo "Python version: $PY_VERSION"
 echo "Platform: $PLAT"
 echo "Build mode: $BUILD_MODE"
-
-ls -lau /opt/python
-ls -lauh /github/workspace
-pwd
-ls -lau
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
@@ -45,10 +40,6 @@ source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$(pwd)"/prot
 # set ONNX build environments
 export ONNX_ML=1
 export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
-
-if [ "$PY_VERSION" == "3.13t" ]; then 
- yum install -y libffi-devel 
-fi
 
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
