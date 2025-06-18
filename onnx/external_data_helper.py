@@ -189,8 +189,9 @@ def _is_path_traversal(path: str) -> bool:
     Arguments:
         path: The path to check.
     """
-    norm_path = os.path.normpath(path)
-    return ".." in norm_path.split(os.path.sep)
+    parts = path.replace("\\", "/").split("/")
+    count = parts.count("..")
+    return count > 0 and (count > 1 or parts[0] != "..")
 
 
 def save_external_data(tensor: TensorProto, base_path: str) -> None:
