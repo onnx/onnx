@@ -316,7 +316,7 @@ def _interpolate_nd_vectorized(
     **kwargs: Any,
 ) -> np.ndarray:
     """Vectorized implementation of n-dimensional interpolation.
-    
+
     This function is optimized for performance by avoiding the expensive
     coordinate iteration loop in the original implementation. It handles
     all interpolation modes and coordinate transformation modes.
