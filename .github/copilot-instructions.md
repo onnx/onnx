@@ -1,15 +1,8 @@
-We use lintrunner as the linter. To setup:
-
-```
-pip install lintrunner lintrunner-adapters
-lintrunner init
-```
-
-Then
+We use lintrunner as the linter:
 
 ```
 # Display all lints and apply the fixes
-lintrunner -a
+lintrunner -a --output oneline
 # Or apply fixes only (faster)
-lintrunner f
+lintrunner f --output oneline
 ```
