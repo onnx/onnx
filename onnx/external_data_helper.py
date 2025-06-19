@@ -205,7 +205,9 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 
     # Validate the location path to prevent path traversal attacks
     if _is_path_traversal(info.location):
-        raise ValueError(f"Path traversal detected in location: {info.location}. Paths containing '..' are not allowed.")
+        raise ValueError(
+            f"Path traversal detected in location: {info.location}. Paths containing '..' are not allowed."
+        )
 
     external_data_file_path = os.path.join(base_path, info.location)
 
