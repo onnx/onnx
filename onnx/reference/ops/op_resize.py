@@ -344,7 +344,7 @@ def _interpolate_nd_vectorized(
         # Place results back into the result array
         for i, coord in enumerate(batch_coords):
             result[tuple(coord)] = batch_results[i]
-    
+
     return result
 
 
