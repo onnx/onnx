@@ -184,14 +184,19 @@ def convert_model_from_external_data(model: ModelProto) -> None:
 
 
 def _is_path_traversal(path: str) -> bool:
-    """Check if the path contains traversal sequences.
+    """Check if the path contains traversal sequences or is absolute.
 
     Arguments:
         path: The path to check.
     """
+    # Check for absolute paths
+    if os.path.isabs(path):
+        return True
+    
+    # Check for path traversal patterns
     parts = path.replace("\\", "/").split("/")
     count = parts.count("..")
-    return count > 0 and (count > 1 or parts[0] != "..")
+    return count > 1 or (count == 1 and parts[0] != "..")
 
 
 def save_external_data(tensor: TensorProto, base_path: str) -> None:
@@ -206,7 +211,7 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     # Validate the location path to prevent path traversal attacks
     if _is_path_traversal(info.location):
         raise ValueError(
-            f"Path traversal detected in location: {info.location}. Paths containing '..' are not allowed."
+            f"Unsafe path in location: {info.location}. Absolute paths and path traversal are not allowed."
         )
 
     external_data_file_path = os.path.join(base_path, info.location)
