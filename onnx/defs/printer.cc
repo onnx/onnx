@@ -247,7 +247,25 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         printSet(" {", ",", "}", ParseData<double>(&tensor));
         break;
       default:
-        output_ << "..."; // ParseData not instantiated for other types.
+        // For unsupported data types, show raw bytes as hex
+        if (tensor.has_raw_data()) {
+          const std::string& raw = tensor.raw_data();
+          output_ << " {0x";
+          // Save current format state
+          auto saved_flags = output_.flags();
+          auto saved_fill = output_.fill();
+          for (size_t i = 0; i < raw.size(); ++i) {
+            if (i > 0 && i % 16 == 0) output_ << " 0x";  // Add space every 16 bytes for readability
+            output_ << std::hex << std::setfill('0') << std::setw(2) 
+                    << (static_cast<unsigned char>(raw[i]) & 0xFF);
+          }
+          output_ << "}";
+          // Restore original format state
+          output_.flags(saved_flags);
+          output_.fill(saved_fill);
+        } else {
+          output_ << "..."; // No raw data available
+        }
         break;
     }
   } else {
@@ -258,6 +276,15 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
       case TensorProto::DataType::TensorProto_DataType_UINT8:
       case TensorProto::DataType::TensorProto_DataType_UINT16:
       case TensorProto::DataType::TensorProto_DataType_BOOL:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FN:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_UINT4:
+      case TensorProto::DataType::TensorProto_DataType_INT4:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
         printSet(" {", ",", "}", tensor.int32_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
