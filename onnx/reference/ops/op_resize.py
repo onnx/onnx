@@ -321,22 +321,63 @@ def _interpolate_nd_vectorized(
     coordinate iteration loop in the original implementation. It handles
     all interpolation modes and coordinate transformation modes.
     """
-    # Create output coordinate grids
-    coords = np.meshgrid(*[np.arange(s, dtype=np.float64) for s in output_size], indexing='ij')
+    # Initialize result array
+    result = np.zeros(output_size, dtype=data.dtype)
     
-    # Transform coordinates to input space for each dimension
-    input_coords = []
-    for dim, (coord_grid, scale_factor) in enumerate(zip(coords, scale_factors)):
-        input_coord = _transform_coordinates_vectorized(
-            coord_grid, scale_factor, data.shape[dim], output_size[dim],
-            coordinate_transformation_mode, roi, dim if roi is not None else None
+    # Get all output coordinates efficiently
+    output_coords = np.array(np.meshgrid(*[np.arange(s) for s in output_size], indexing='ij'))
+    output_coords = output_coords.reshape(len(output_size), -1).T
+    
+    # Process coordinates in batches for memory efficiency
+    batch_size = min(10000, output_coords.shape[0])
+    
+    for start_idx in range(0, output_coords.shape[0], batch_size):
+        end_idx = min(start_idx + batch_size, output_coords.shape[0])
+        batch_coords = output_coords[start_idx:end_idx]
+        
+        # Vectorize the interpolation for this batch
+        batch_results = _interpolate_batch_vectorized(
+            data, batch_coords, get_coeffs, scale_factors, roi, exclude_outside,
+            coordinate_transformation_mode, **kwargs
         )
-        input_coords.append(input_coord)
+        
+        # Place results back into the result array
+        for i, coord in enumerate(batch_coords):
+            result[tuple(coord)] = batch_results[i]
     
-    # Perform interpolation using the coefficient function
-    return _interpolate_with_coeffs_vectorized(
-        data, input_coords, get_coeffs, scale_factors, exclude_outside, **kwargs
-    )
+    return result
+
+
+def _interpolate_batch_vectorized(
+    data: np.ndarray,
+    batch_coords: np.ndarray,
+    get_coeffs: Callable[[float, float], np.ndarray],
+    scale_factors: list[float],
+    roi: np.ndarray | None = None,
+    exclude_outside: bool = False,
+    coordinate_transformation_mode: str = "half_pixel",
+    **kwargs: Any,
+) -> np.ndarray:
+    """Process a batch of coordinates vectorially."""
+    batch_size = batch_coords.shape[0]
+    results = np.zeros(batch_size, dtype=data.dtype)
+    
+    for i, coord in enumerate(batch_coords):
+        # Use the original interpolation logic but call it once per coordinate
+        results[i] = _interpolate_nd_with_x_vectorized(
+            data,
+            len(data.shape),
+            scale_factors,
+            [int(s) for s in data.shape],  # output_size not used in recursion
+            coord.tolist(),
+            get_coeffs,
+            roi=roi,
+            exclude_outside=exclude_outside,
+            coordinate_transformation_mode=coordinate_transformation_mode,
+            **kwargs,
+        )
+    
+    return results
 
 
 
