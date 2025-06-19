@@ -321,9 +321,13 @@ def _interpolate_nd_vectorized(
     coordinate iteration loop in the original implementation.
     """
     # Only apply vectorization for specific cases that are safe and common
-    # Check if this is linear interpolation
-    test_coeffs = get_coeffs(0.5, 1.0)
-    is_linear = len(test_coeffs) == 2 and np.allclose(test_coeffs, [0.5, 0.5])
+    # Check if this is linear interpolation by testing the coefficient function
+    test_coeffs_1 = get_coeffs(0.3, 1.0)
+    test_coeffs_2 = get_coeffs(0.7, 1.0) 
+    is_linear = (len(test_coeffs_1) == 2 and 
+                 len(test_coeffs_2) == 2 and
+                 np.allclose(test_coeffs_1, [0.7, 0.3]) and
+                 np.allclose(test_coeffs_2, [0.3, 0.7]))
     
     # Only vectorize for simple cases to maintain correctness
     if (not is_linear or 
@@ -345,51 +349,6 @@ def _interpolate_nd_vectorized(
         # If anything goes wrong, fall back to original
         return _interpolate_nd_original(
             data, get_coeffs, output_size, scale_factors, roi, exclude_outside, **kwargs
-        )
-
-
-def _interpolate_nd_vectorized(
-    data: np.ndarray,
-    get_coeffs: Callable[[float, float], np.ndarray],
-    output_size: list[int],
-    scale_factors: list[float],
-    roi: np.ndarray | None = None,
-    exclude_outside: bool = False,
-    coordinate_transformation_mode: str = "half_pixel",
-    **kwargs: Any,
-) -> np.ndarray:
-    """Vectorized implementation of n-dimensional interpolation.
-    
-    This function is optimized for performance by avoiding the expensive
-    coordinate iteration loop in the original implementation.
-    """
-    # Only apply vectorization for specific cases that are safe and common
-    # Check if this is linear interpolation
-    test_coeffs = get_coeffs(0.5, 1.0)
-    is_linear = len(test_coeffs) == 2 and np.allclose(test_coeffs, [0.5, 0.5])
-    
-    # Only vectorize for simple cases to maintain correctness
-    if (not is_linear or 
-        roi is not None or 
-        exclude_outside or
-        coordinate_transformation_mode not in ["half_pixel", "asymmetric"]):
-        # Fall back to original implementation for complex cases
-        return _interpolate_nd_original(
-            data, get_coeffs, output_size, scale_factors, roi, exclude_outside, **kwargs
-        )
-    
-    # For linear interpolation with simple coordinate transformations,
-    # use pure numpy vectorized interpolation
-    try:
-        return _interpolate_nd_numpy_vectorized(
-            data, output_size, scale_factors, coordinate_transformation_mode
-        )
-    except Exception:
-        # If anything goes wrong, fall back to original
-        return _interpolate_nd_original(
-            data, get_coeffs, output_size, scale_factors, roi, exclude_outside, **kwargs
-        )
-
 
 def _interpolate_nd_numpy_vectorized(
     data: np.ndarray,
