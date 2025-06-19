@@ -2536,15 +2536,21 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         if (ellipsis_flag) {
           ellipsis_flag = false;
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            *ellipsis_dims_value.add_dim() = shape.dim(index + i - num_illegal_char);
+            // Only access shape.dim() if rank > 0 to avoid segfault on scalar inputs
+            if (rank > 0) {
+              *ellipsis_dims_value.add_dim() = shape.dim(index + i - num_illegal_char);
+            }
           }
         } else {
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            const auto shape_dim = shape.dim(index + i - num_illegal_char);
-            const auto current_dim = ellipsis_dims_value.mutable_dim(i);
-            if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
-                shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
-              current_dim->set_dim_value(shape_dim.dim_value());
+            // Only access shape.dim() if rank > 0 to avoid segfault on scalar inputs
+            if (rank > 0) {
+              const auto shape_dim = shape.dim(index + i - num_illegal_char);
+              const auto current_dim = ellipsis_dims_value.mutable_dim(i);
+              if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
+                  shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
+                current_dim->set_dim_value(shape_dim.dim_value());
+              }
             }
           }
         }
@@ -2559,7 +2565,14 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
       const auto inserted = label_maps.emplace(term[index], num_labels).second;
       if (inserted) {
-        *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
+        // Only access shape.dim() if rank > 0 to avoid segfault on scalar inputs
+        if (rank > 0) {
+          *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
+        } else {
+          // For scalars (rank == 0), we should not reach here since term_size should be 0
+          // The validation at line 2585-2587 should catch this case
+          fail_shape_inference("Unexpected letter index in term for scalar input ", num_operands);
+        }
         ++num_labels;
       } else {
         repeated_labels.insert(term[index]);
