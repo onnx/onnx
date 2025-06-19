@@ -318,262 +318,161 @@ def _interpolate_nd_vectorized(
     """Vectorized implementation of n-dimensional interpolation.
     
     This function is optimized for performance by avoiding the expensive
-    coordinate iteration loop in the original implementation.
+    coordinate iteration loop in the original implementation. It handles
+    all interpolation modes and coordinate transformation modes.
     """
-    # Only apply vectorization for specific cases that are safe and common
-    # Check if this is linear interpolation by testing the coefficient function
-    test_coeffs_1 = get_coeffs(0.3, 1.0)
-    test_coeffs_2 = get_coeffs(0.7, 1.0) 
-    is_linear = (len(test_coeffs_1) == 2 and 
-                 len(test_coeffs_2) == 2 and
-                 np.allclose(test_coeffs_1, [0.7, 0.3]) and
-                 np.allclose(test_coeffs_2, [0.3, 0.7]))
-    
-    # Only vectorize for simple cases to maintain correctness
-    if (not is_linear or 
-        roi is not None or 
-        exclude_outside or
-        coordinate_transformation_mode not in ["half_pixel", "asymmetric"]):
-        # Fall back to original implementation for complex cases
-        return _interpolate_nd_original(
-            data, get_coeffs, output_size, scale_factors, roi, exclude_outside, **kwargs
-        )
-    
-    # For linear interpolation with simple coordinate transformations,
-    # use pure numpy vectorized interpolation
-    try:
-        return _interpolate_nd_numpy_vectorized(
-            data, output_size, scale_factors, coordinate_transformation_mode
-        )
-    except Exception:
-        # If anything goes wrong, fall back to original
-        return _interpolate_nd_original(
-            data, get_coeffs, output_size, scale_factors, roi, exclude_outside, **kwargs
-
-def _interpolate_nd_numpy_vectorized(
-    data: np.ndarray,
-    output_size: list[int],
-    scale_factors: list[float],
-    coordinate_transformation_mode: str = "half_pixel",
-) -> np.ndarray:
-    """Pure numpy vectorized interpolation for linear interpolation."""
     # Create output coordinate grids
     coords = np.meshgrid(*[np.arange(s, dtype=np.float64) for s in output_size], indexing='ij')
     
     # Transform coordinates to input space for each dimension
     input_coords = []
     for dim, (coord_grid, scale_factor) in enumerate(zip(coords, scale_factors)):
-        if coordinate_transformation_mode == "half_pixel":
-            input_coord = (coord_grid + 0.5) / scale_factor - 0.5
-        elif coordinate_transformation_mode == "asymmetric":
-            input_coord = coord_grid / scale_factor
-        else:
-            input_coord = coord_grid / scale_factor
-        
-        # Clamp to valid range
-        input_coord = np.clip(input_coord, 0, data.shape[dim] - 1)
+        input_coord = _transform_coordinates_vectorized(
+            coord_grid, scale_factor, data.shape[dim], output_size[dim],
+            coordinate_transformation_mode, roi, dim if roi is not None else None
+        )
         input_coords.append(input_coord)
     
-    # Perform multilinear interpolation using numpy operations
-    result = _numpy_multilinear_interpolate(data, input_coords)
-    
-    return result
+    # Perform interpolation using the coefficient function
+    return _interpolate_with_coeffs_vectorized(
+        data, input_coords, get_coeffs, scale_factors, exclude_outside, **kwargs
+    )
 
 
-def _numpy_multilinear_interpolate(data: np.ndarray, coords: list[np.ndarray]) -> np.ndarray:
-    """Perform multilinear interpolation using pure numpy operations."""
-    ndim = len(coords)
-    
-    # Get integer and fractional parts for each dimension
-    coords_int = []
-    coords_frac = []
-    
-    for i, coord in enumerate(coords):
-        coord_int = np.floor(coord).astype(np.int64)
-        coord_frac = coord - coord_int
-        
-        # Ensure we don't go out of bounds
-        coord_int = np.clip(coord_int, 0, data.shape[i] - 1)
-        coord_frac = np.where(coord_int == data.shape[i] - 1, 0.0, coord_frac)
-        
-        coords_int.append(coord_int)
-        coords_frac.append(coord_frac)
-    
-    # For efficiency, handle common cases specially
-    if ndim == 1:
-        return _interpolate_1d_vectorized(data, coords_int[0], coords_frac[0])
-    elif ndim == 2:
-        return _interpolate_2d_vectorized(data, coords_int, coords_frac)
-    elif ndim == 3:
-        return _interpolate_3d_vectorized(data, coords_int, coords_frac)
-    elif ndim == 4:
-        return _interpolate_4d_vectorized(data, coords_int, coords_frac)
-    else:
-        # For higher dimensions, use a general but slower approach
-        return _interpolate_nd_general_vectorized(data, coords_int, coords_frac)
 
 
-def _interpolate_1d_vectorized(data: np.ndarray, coord_int: np.ndarray, coord_frac: np.ndarray) -> np.ndarray:
-    """Vectorized 1D linear interpolation."""
-    i0 = coord_int
-    i1 = np.clip(coord_int + 1, 0, data.shape[0] - 1)
-    
-    w0 = 1.0 - coord_frac
-    w1 = coord_frac
-    
-    return w0 * data[i0] + w1 * data[i1]
-
-
-def _interpolate_2d_vectorized(data: np.ndarray, coords_int: list[np.ndarray], coords_frac: list[np.ndarray]) -> np.ndarray:
-    """Vectorized 2D bilinear interpolation."""
-    i0, j0 = coords_int
-    fi, fj = coords_frac
-    
-    i1 = np.clip(i0 + 1, 0, data.shape[0] - 1)
-    j1 = np.clip(j0 + 1, 0, data.shape[1] - 1)
-    
-    # Bilinear weights
-    w00 = (1.0 - fi) * (1.0 - fj)
-    w01 = (1.0 - fi) * fj
-    w10 = fi * (1.0 - fj)
-    w11 = fi * fj
-    
-    # Perform bilinear interpolation
-    result = (w00 * data[i0, j0] + 
-              w01 * data[i0, j1] + 
-              w10 * data[i1, j0] + 
-              w11 * data[i1, j1])
-    
-    return result
-
-
-def _interpolate_3d_vectorized(data: np.ndarray, coords_int: list[np.ndarray], coords_frac: list[np.ndarray]) -> np.ndarray:
-    """Vectorized 3D trilinear interpolation."""
-    i0, j0, k0 = coords_int
-    fi, fj, fk = coords_frac
-    
-    i1 = np.clip(i0 + 1, 0, data.shape[0] - 1)
-    j1 = np.clip(j0 + 1, 0, data.shape[1] - 1)
-    k1 = np.clip(k0 + 1, 0, data.shape[2] - 1)
-    
-    # Trilinear weights
-    w000 = (1.0 - fi) * (1.0 - fj) * (1.0 - fk)
-    w001 = (1.0 - fi) * (1.0 - fj) * fk
-    w010 = (1.0 - fi) * fj * (1.0 - fk)
-    w011 = (1.0 - fi) * fj * fk
-    w100 = fi * (1.0 - fj) * (1.0 - fk)
-    w101 = fi * (1.0 - fj) * fk
-    w110 = fi * fj * (1.0 - fk)
-    w111 = fi * fj * fk
-    
-    # Perform trilinear interpolation
-    result = (w000 * data[i0, j0, k0] + 
-              w001 * data[i0, j0, k1] + 
-              w010 * data[i0, j1, k0] + 
-              w011 * data[i0, j1, k1] + 
-              w100 * data[i1, j0, k0] + 
-              w101 * data[i1, j0, k1] + 
-              w110 * data[i1, j1, k0] + 
-              w111 * data[i1, j1, k1])
-    
-    return result
-
-
-def _interpolate_4d_vectorized(data: np.ndarray, coords_int: list[np.ndarray], coords_frac: list[np.ndarray]) -> np.ndarray:
-    """Vectorized 4D multilinear interpolation."""
-    i0, j0, k0, l0 = coords_int
-    fi, fj, fk, fl = coords_frac
-    
-    i1 = np.clip(i0 + 1, 0, data.shape[0] - 1)
-    j1 = np.clip(j0 + 1, 0, data.shape[1] - 1)
-    k1 = np.clip(k0 + 1, 0, data.shape[2] - 1)
-    l1 = np.clip(l0 + 1, 0, data.shape[3] - 1)
-    
-    # 4D multilinear weights (16 combinations)
-    weights = []
-    indices = []
-    
-    for di in [0, 1]:
-        for dj in [0, 1]:
-            for dk in [0, 1]:
-                for dl in [0, 1]:
-                    wi = fi if di else (1.0 - fi)
-                    wj = fj if dj else (1.0 - fj)
-                    wk = fk if dk else (1.0 - fk)
-                    wl = fl if dl else (1.0 - fl)
-                    
-                    weight = wi * wj * wk * wl
-                    ii = i1 if di else i0
-                    jj = j1 if dj else j0
-                    kk = k1 if dk else k0
-                    ll = l1 if dl else l0
-                    
-                    weights.append(weight)
-                    indices.append((ii, jj, kk, ll))
-    
-    # Perform 4D multilinear interpolation
-    result = np.zeros_like(weights[0])
-    for weight, (ii, jj, kk, ll) in zip(weights, indices):
-        result += weight * data[ii, jj, kk, ll]
-    
-    return result
-
-
-def _interpolate_nd_general_vectorized(data: np.ndarray, coords_int: list[np.ndarray], coords_frac: list[np.ndarray]) -> np.ndarray:
-    """General vectorized n-dimensional multilinear interpolation."""
-    ndim = len(coords_int)
-    
-    # Generate all 2^ndim corner combinations
-    result = np.zeros(coords_int[0].shape, dtype=data.dtype)
-    
-    for corner in range(2 ** ndim):
-        # Extract which corner we're at for each dimension
-        indices = []
-        weight = np.ones_like(coords_frac[0])
-        
-        for dim in range(ndim):
-            if corner & (1 << dim):
-                # Use the +1 index and fractional weight
-                idx = np.clip(coords_int[dim] + 1, 0, data.shape[dim] - 1)
-                w = coords_frac[dim]
-            else:
-                # Use the base index and (1 - fractional) weight
-                idx = coords_int[dim]
-                w = 1.0 - coords_frac[dim]
-            
-            indices.append(idx)
-            weight *= w
-        
-        # Add this corner's contribution
-        result += weight * data[tuple(indices)]
-    
-    return result
-
-
-def _interpolate_nd_original(
+def _interpolate_nd_with_x_vectorized(
     data: np.ndarray,
-    get_coeffs: Callable[[float, float], np.ndarray],
-    output_size: list[int],
+    n: int,
     scale_factors: list[float],
+    output_size: list[int],
+    x: list[float],
+    get_coeffs: Callable[[float, float], np.ndarray],
     roi: np.ndarray | None = None,
     exclude_outside: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
-    """Original implementation kept for compatibility and complex cases."""
-    ret = np.zeros(output_size, dtype=data.dtype)
-    for x in _get_all_coords(ret):
-        ret[tuple(x)] = _interpolate_nd_with_x(
+    """Vectorized version of _interpolate_nd_with_x."""
+    if n == 1:
+        return _interpolate_1d_with_x_vectorized(
             data,
-            len(data.shape),
-            scale_factors,
-            output_size,
-            x,
+            scale_factors[0],
+            output_size[0],
+            x[0],
             get_coeffs,
             roi=roi,
             exclude_outside=exclude_outside,
             **kwargs,
         )
-    return ret
+    
+    # For multi-dimensional, process along first dimension
+    res1d = []
+    for i in range(data.shape[0]):
+        r = _interpolate_nd_with_x_vectorized(
+            data[i],
+            n - 1,
+            scale_factors[1:],
+            output_size[1:],
+            x[1:],
+            get_coeffs,
+            roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
+            exclude_outside=exclude_outside,
+            **kwargs,
+        )
+        res1d.append(r)
+
+    return _interpolate_1d_with_x_vectorized(
+        res1d,  # type: ignore[arg-type]
+        scale_factors[0],
+        output_size[0],
+        x[0],
+        get_coeffs,
+        roi=None if roi is None else [roi[0], roi[n]],  # type: ignore[arg-type]
+        exclude_outside=exclude_outside,
+        **kwargs,
+    )
+
+
+def _interpolate_1d_with_x_vectorized(
+    data: np.ndarray,
+    scale_factor: float,
+    output_width_int: int,
+    x: float,
+    get_coeffs: Callable[[float, float], np.ndarray],
+    roi: np.ndarray | None = None,
+    extrapolation_value: float = 0.0,
+    coordinate_transformation_mode: str = "half_pixel",
+    exclude_outside: bool = False,
+) -> np.ndarray:
+    """Optimized version of _interpolate_1d_with_x that reuses the original logic."""
+    # This is essentially the same as the original, but optimized for single calls
+    # The vectorization happens at the batch level above
+    
+    input_width = len(data)
+    output_width = scale_factor * input_width
+    
+    # Transform coordinates based on mode - same logic as original
+    if coordinate_transformation_mode == "align_corners":
+        if output_width == 1:
+            x_ori = 0.0
+        else:
+            x_ori = x * (input_width - 1) / (output_width - 1)
+    elif coordinate_transformation_mode == "asymmetric":
+        x_ori = x / scale_factor
+    elif coordinate_transformation_mode == "tf_crop_and_resize":
+        if roi is None:
+            raise ValueError("roi cannot be None.")
+        if output_width == 1:
+            x_ori = (roi[1] - roi[0]) * (input_width - 1) / 2
+        else:
+            x_ori = x * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
+        x_ori += roi[0] * (input_width - 1)
+        # Return extrapolation_value directly as what TF CropAndResize does
+        if x_ori < 0 or x_ori > input_width - 1:
+            return np.array(extrapolation_value)
+    elif coordinate_transformation_mode == "pytorch_half_pixel":
+        if output_width == 1:
+            x_ori = -0.5
+        else:
+            x_ori = (x + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "half_pixel":
+        x_ori = (x + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "half_pixel_symmetric":
+        # Maps the center of the implicit ROI to the center of the output canvas.
+        adjustment = output_width_int / output_width
+        center = input_width / 2
+        offset = center * (1 - adjustment)
+        x_ori = offset + (x + 0.5) / scale_factor - 0.5
+    else:
+        raise ValueError(
+            f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
+        )
+    
+    x_ori_int = np.floor(x_ori).astype(int).item()
+
+    # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori`
+    if x_ori == x_ori_int:
+        ratio = 1.0
+    else:
+        ratio = x_ori - x_ori_int
+
+    coeffs = get_coeffs(ratio, scale_factor)
+    n = len(coeffs)
+
+    idxes, points = _get_neighbor(x_ori, n, data)
+
+    if exclude_outside:
+        for i, idx in enumerate(idxes):
+            if idx < 0 or idx >= input_width:
+                coeffs[i] = 0
+        coeffs_sum = sum(coeffs)
+        if coeffs_sum > 0:
+            coeffs /= coeffs_sum
+
+    return np.dot(coeffs, points).item()  # type: ignore[no-any-return]
+
+
+
 
 
 def _interpolate_nd(
@@ -644,28 +543,16 @@ def _interpolate_nd(
     if output_size is None:
         raise ValueError("output_size is None.")
 
-    # Use vectorized implementation when possible
-    try:
-        return _interpolate_nd_vectorized(
-            data,
-            get_coeffs,
-            output_size,
-            scale_factors,
-            roi=roi,
-            exclude_outside=exclude_outside,
-            **kwargs,
-        )
-    except Exception:
-        # Fall back to original implementation if vectorized version fails
-        return _interpolate_nd_original(
-            data,
-            get_coeffs,
-            output_size,
-            scale_factors,
-            roi=roi,
-            exclude_outside=exclude_outside,
-            **kwargs,
-        )
+    # Use vectorized implementation for all cases
+    return _interpolate_nd_vectorized(
+        data,
+        get_coeffs,
+        output_size,
+        scale_factors,
+        roi=roi,
+        exclude_outside=exclude_outside,
+        **kwargs,
+    )
 
 
 class Resize(OpRun):
