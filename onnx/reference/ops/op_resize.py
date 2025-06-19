@@ -486,7 +486,7 @@ def _interpolate_1d_with_x_vectorized(
         raise ValueError(
             f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
         )
-    
+
     x_ori_int = np.floor(x_ori).astype(int).item()
 
     # ratio must be in (0, 1] since we prefer the pixel on the left of `x_ori`
