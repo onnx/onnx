@@ -376,10 +376,8 @@ def _interpolate_batch_vectorized(
             coordinate_transformation_mode=coordinate_transformation_mode,
             **kwargs,
         )
-    
+
     return results
-
-
 
 
 def _interpolate_nd_with_x_vectorized(
