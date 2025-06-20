@@ -2957,7 +2957,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
               .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
               .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-              .Add("Axis = Constant()", "value", ToTensor(axis)) // axis : scalar
+              .Const("Axis", axis) // axis : scalar
               .Add(
                   axis >= 0 // number of axes that are reduced =
                       ? "PosAxis = Identity (Axis)" // axis: scalar
