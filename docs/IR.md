@@ -516,7 +516,7 @@ Thus, the state variables of the training model consist of a subset of the initi
 
 All state variables are pre-initialized to the value specified in the corresponding initializer. A subsequent call to perform the initialization step (using the appropriate API exposed by a runtime) updates the values of the state variables as described above. If the training model has more than one instance of TrainingInfoProto, the initialization step corresponding to each is performed in order. A TrainingInfoProto.initialization MAY be omitted (only if there are no initialization_bindings). For the training step, a runtime MAY allow users to invoke any one of the TrainingInfoProto.algorithm, allowing the training process to interleave the different algorithms as desired. The order in which the different TrainingProto.algorithms are called affects the training result, and it is the callers responsibility to call them in the correct order.
 
-## Multi-Device Configuration
+## Multi-Device Configuration (IR version >= 11)
 
 ONNX supports multi-device execution through device configuration specifications that enable distributed inference and training. This includes support for tensor parallelism (sharding tensors across multiple devices) and pipeline parallelism (distributing different subgraphs to different devices).
 
