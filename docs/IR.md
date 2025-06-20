@@ -87,7 +87,7 @@ Each model has the following components:
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
 |training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
 |functions|FunctionProto[]|An optional list of functions local to the model.|
-|configuration|DeviceConfigurationProto[]|An optional list of multi-device configurations for distributed execution.|
+|configuration|DeviceConfigurationProto[]|(IR version >= 11) An optional list of multi-device configurations for distributed execution.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
@@ -295,7 +295,7 @@ attribute|Attribute[]|Named attributes, another form of operator parameterizatio
 doc_string|string|Human-readable documentation for this value. Markdown is allowed.
 overload|string|Part of unique id of function (added in IR version 10)
 |metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
-|device_configurations|NodeDeviceConfigurationProto[]|(IR version >= 10) Multi-device execution configurations for this node.
+|device_configurations|NodeDeviceConfigurationProto[]|(IR version >= 11) Multi-device execution configurations for this node.
 
 A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, a graph initializer, or as a node output is said to be a definition and the occurrence of a name as a node input or as a graph output is said to be a use.
 
