@@ -2570,7 +2570,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
           *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
         } else {
           // For scalars (rank == 0), we should not reach here since term_size should be 0
-          // The validation at line 2585-2587 should catch this case
+          // The rank vs term_size validation below should catch this case
           fail_shape_inference("Unexpected letter index in term for scalar input ", num_operands);
         }
         ++num_labels;
