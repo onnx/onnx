@@ -348,6 +348,13 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
     if(ONNX_USE_LITE_PROTO)
       list(APPEND GEN_PROTO_ARGS -l)
     endif()
+    if(ONNX_VERIFY_PROTO3)
+        if(NOT ONNX_PROTOC_EXECUTABLE)
+          message(FATAL_ERROR "Protobuf compiler not found")
+        endif()
+        list(APPEND GEN_PROTO_ARGS --protoc_path)
+        list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
+    endif()
 
     add_custom_target("${GENERATED_FILE_WE}_proto_file"
                        COMMAND Python3::Interpreter "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
