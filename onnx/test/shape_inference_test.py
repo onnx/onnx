@@ -7285,6 +7285,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())]
         )  # type: ignore
 
+    def test_einsum_scalar_invalid_equation(self) -> None:
+        # Test that scalar inputs with incompatible equations fail gracefully
+        # instead of causing segfaults (issue #6981)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ())],
+            [make_node("Einsum", ["x"], ["y"], equation="i->i")],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def test_einsum_outer_prod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 5)), ("y", TensorProto.FLOAT, (7, 9))],
