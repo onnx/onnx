@@ -10682,6 +10682,24 @@ expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_inner_prod")
 
 
 <details>
+<summary>einsum_scalar</summary>
+
+```python
+Eqn = "->"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.array(5.0)  # scalar input
+Z = einsum_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_scalar")
+```
+
+</details>
+
+
+<details>
 <summary>einsum_sum</summary>
 
 ```python
