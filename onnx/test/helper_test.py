@@ -608,6 +608,36 @@ class TestHelperTensorFunctions(unittest.TestCase):
             expected.astype(ml_dtypes.float8_e5m2fnuz).view(np.uint8),
         )
 
+    def test_make_float8e8m0_tensor(self) -> None:
+        y = helper.make_tensor(
+            "scale",
+            TensorProto.FLOAT8E8M0,
+            [7],
+            [0, 0.124, 1.0, 1.5, 2.0, 2.1, np.finfo(np.float32).max],
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array([0, 124, 127, 128, 128, 129, 254], dtype=np.uint8)
+        np.testing.assert_equal(ynp.view(np.uint8), expected)
+
+    def test_make_float8e8m0_tensor_raw(self) -> None:
+        e8m0_raw = np.array([120, 124, 127, 128, 129, 140], dtype=np.uint8)
+        packed_values = e8m0_raw.tobytes()
+        y = helper.make_tensor(
+            name="test",
+            data_type=TensorProto.FLOAT8E8M0,
+            dims=list(e8m0_raw.shape),
+            vals=packed_values,
+            raw=True,
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array(
+            [0.0078125, 0.125, 1.0, 2.0, 4.0, 8192], dtype=ml_dtypes.float8_e8m0fnu
+        )
+        np.testing.assert_equal(
+            ynp.view(np.uint8),
+            expected.view(np.uint8),
+        )
+
     @parameterized.parameterized.expand(
         itertools.product(
             (TensorProto.UINT4, TensorProto.INT4),
@@ -892,6 +922,7 @@ class TestPrintableGraph(unittest.TestCase):
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.FLOAT8E8M0,
             TensorProto.UINT4,
             TensorProto.INT4,
             TensorProto.STRING,
@@ -925,6 +956,7 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
             TensorProto.FLOAT8E4M3FNUZ,
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.FLOAT8E8M0,
             TensorProto.UINT4,
             TensorProto.INT4,
             TensorProto.FLOAT4E2M1,

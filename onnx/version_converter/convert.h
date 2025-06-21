@@ -827,6 +827,13 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
     registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+
+    /******** 23 -> 24 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(23), OpSetID(24)));
+
+    /******** 24 -> 23 ********/
+    const std::vector<TensorProto_DataType> ir12_types_not_in_ir11 = {TensorProto_DataType_FLOAT8E8M0};
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

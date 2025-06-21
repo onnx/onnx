@@ -17,6 +17,7 @@ from onnx._custom_element_types import (
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
+    float8e8m0,
     int4,
     uint4,
 )
@@ -33,6 +34,7 @@ _supported_types = [
     (float8e5m2fnuz, "e5m2fnuz", "float8_e5m2fnuz"),
     (int4, "int4", "int4"),
     (uint4, "uint4", "uint4"),
+    (float8e8m0, "e8m0", "float8_e8m0"),
 ]
 
 
