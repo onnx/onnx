@@ -255,7 +255,6 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
           auto saved_flags = output_.flags();
           auto saved_fill = output_.fill();
           for (size_t i = 0; i < raw.size(); ++i) {
-            if (i > 0 && i % 16 == 0) output_ << " 0x";  // Add space every 16 bytes for readability
             output_ << std::hex << std::setfill('0') << std::setw(2) 
                     << (static_cast<unsigned char>(raw[i]) & 0xFF);
           }
