@@ -68,16 +68,24 @@ TENSOR_TYPE_MAP = {
         np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
     ),
     int(TensorProto.FLOAT8E4M3FN): TensorDtypeMap(
-        np.dtype(ml_dtypes.float8_e4m3fn), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FN"
+        np.dtype(ml_dtypes.float8_e4m3fn),
+        int(TensorProto.UINT8),
+        "TensorProto.FLOAT8E4M3FN",
     ),
     int(TensorProto.FLOAT8E4M3FNUZ): TensorDtypeMap(
-        np.dtype(ml_dtypes.float8_e4m3fnuz), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FNUZ"
+        np.dtype(ml_dtypes.float8_e4m3fnuz),
+        int(TensorProto.UINT8),
+        "TensorProto.FLOAT8E4M3FNUZ",
     ),
     int(TensorProto.FLOAT8E5M2): TensorDtypeMap(
-        np.dtype(ml_dtypes.float8_e5m2), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2"
+        np.dtype(ml_dtypes.float8_e5m2),
+        int(TensorProto.UINT8),
+        "TensorProto.FLOAT8E5M2",
     ),
     int(TensorProto.FLOAT8E5M2FNUZ): TensorDtypeMap(
-        np.dtype(ml_dtypes.float8_e5m2fnuz), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2FNUZ"
+        np.dtype(ml_dtypes.float8_e5m2fnuz),
+        int(TensorProto.UINT8),
+        "TensorProto.FLOAT8E5M2FNUZ",
     ),
     int(TensorProto.UINT4): TensorDtypeMap(
         np.dtype(ml_dtypes.uint4), int(TensorProto.INT32), "TensorProto.UINT4"
@@ -86,6 +94,8 @@ TENSOR_TYPE_MAP = {
         np.dtype(ml_dtypes.int4), int(TensorProto.INT32), "TensorProto.INT4"
     ),
     int(TensorProto.FLOAT4E2M1): TensorDtypeMap(
-        np.dtype(ml_dtypes.float4_e2m1fn), int(TensorProto.UINT8), "TensorProto.FLOAT4E2M1"
+        np.dtype(ml_dtypes.float4_e2m1fn),
+        int(TensorProto.UINT8),
+        "TensorProto.FLOAT4E2M1",
     ),
 }

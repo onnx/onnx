@@ -6,20 +6,16 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING, Any
 
+import ml_dtypes
 import numpy as np
 import numpy.typing as npt
 import typing_extensions
 
-import onnx._custom_element_types as custom_np_types
 from onnx import MapProto, OptionalProto, SequenceProto, TensorProto, helper, subbyte
 from onnx.external_data_helper import load_external_data_for_tensor, uses_external_data
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-
-def _combine_pairs_to_complex(fa: Sequence[int]) -> list[complex]:
-    return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
 @typing_extensions.deprecated(
@@ -265,25 +261,6 @@ def unpacked_float4e2m1_to_float32(x: npt.NDArray[np.uint8]) -> npt.NDArray[np.f
     return val
 
 
-def unpack_float4e2m1(
-    data: npt.NDArray[np.uint8],
-    dims: Sequence[int],
-) -> np.ndarray:
-    """Converts ndarray of float4e2m1 (as packed uint8) to f32
-    See :ref:`onnx-detail-float4` for technical details.
-
-    Args:
-        data: A numpy array, empty dimensions are allowed if dims is
-            None.
-        dims: The dimensions are used to reshape the unpacked buffer
-
-    Returns:
-        A numpy array of float32 reshaped to dims.
-    """
-    res = _unpack_uint4(data, dims)
-    return unpacked_float4e2m1_to_float32(res)
-
-
 def _unpack_uint4(
     data: npt.NDArray[np.uint8], dims: Sequence[int]
 ) -> npt.NDArray[np.uint8]:
@@ -372,99 +349,35 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
             # Convert endian from little to big
             raw_data = np.frombuffer(raw_data, dtype=np_dtype).byteswap().tobytes()
 
-        data: np.ndarray[Any, Any]
-        if tensor_dtype == TensorProto.BFLOAT16:
-            data = np.frombuffer(raw_data, dtype=np.int16).reshape(dims)
-            return data.view(custom_np_types.bfloat16)
-
-        if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
-            return data.view(custom_np_types.float8e4m3fn)
-
-        if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
-            return data.view(custom_np_types.float8e4m3fnuz)
-
-        if tensor_dtype == TensorProto.FLOAT8E5M2:
-            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
-            return data.view(custom_np_types.float8e5m2)
-
-        if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
-            return data.view(custom_np_types.float8e5m2fnuz)
-
-        if tensor_dtype == TensorProto.UINT4:
-            data = np.frombuffer(raw_data, dtype=np.uint8)
-            return _unpack_uint4(
-                data,
-                dims,
-            ).view(custom_np_types.uint4)
-
         if tensor_dtype == TensorProto.INT4:
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            return _unpack_int4(data, dims).view(custom_np_types.int4)
+            return _unpack_int4(data, dims).view(ml_dtypes.int4)
 
-        if tensor_dtype == TensorProto.FLOAT4E2M1:
+        elif tensor_dtype == TensorProto.FLOAT4E2M1:
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            return _unpack_uint4(data, dims).view(custom_np_types.float4e2m1)
+            return _unpack_uint4(data, dims).view(ml_dtypes.float4_e2m1fn)
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
 
     # float16 is stored as int32 (uint16 type); Need view to get the original value
-    if tensor_dtype == TensorProto.FLOAT16:
-        return (
-            np.asarray(tensor.int32_data, dtype=np.uint16)
-            .reshape(dims)
-            .view(np.float16)
-        )
+    if tensor_dtype in {TensorProto.FLOAT16, TensorProto.BFLOAT16}:
+        return np.array(tensor.int32_data, dtype=np.uint16).reshape(dims).view(np_dtype)
 
-    if tensor_dtype == TensorProto.BFLOAT16:
-        data = (
-            np.asarray(tensor.int32_data, dtype=np.int32)
-            .astype(np.uint16)
-            .reshape(dims)
-        )
-        return data.view(custom_np_types.bfloat16)
+    if tensor_dtype in {
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    }:
+        return np.array(tensor.int32_data, dtype=np.uint8).reshape(dims).view(np_dtype)
 
-    if tensor_dtype == TensorProto.FLOAT8E4M3FN:
-        data = (
-            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
-        )
-        return data.view(custom_np_types.float8e4m3fn)
-
-    if tensor_dtype == TensorProto.FLOAT8E4M3FNUZ:
-        data = (
-            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
-        )
-        return data.view(custom_np_types.float8e4m3fnuz)
-
-    if tensor_dtype == TensorProto.FLOAT8E5M2:
-        data = (
-            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
-        )
-        return data.view(custom_np_types.float8e5m2)
-
-    if tensor_dtype == TensorProto.FLOAT8E5M2FNUZ:
-        data = (
-            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
-        )
-        return data.view(custom_np_types.float8e5m2fnuz)
-
-    if tensor_dtype == TensorProto.UINT4:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
-        return _unpack_uint4(data, dims).view(custom_np_types.uint4)
-
-    if tensor_dtype == TensorProto.INT4:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
-        return _unpack_int4(data, dims).view(custom_np_types.int4)
-
-    if tensor_dtype == TensorProto.FLOAT4E2M1:
-        data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
-        return _unpack_uint4(data, dims).view(custom_np_types.float4e2m1)
+    if tensor_dtype in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+        data = np.array(tensor.int32_data, dtype=np.uint32).astype(np.uint8)
+        return _unpack_uint4(data, dims).view(np_dtype)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-        data = _combine_pairs_to_complex(data)  # type: ignore[assignment,arg-type]
+        return np.array(data, dtype=storage_np_dtype).reshape(dims).view(dtype=np_dtype)
 
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
@@ -545,57 +458,8 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     Returns:
         TensorProto: the converted tensor def.
     """
-    if not isinstance(tensor, np.ndarray):
-        return _from_array(tensor, name)
-
-    dt = tensor.dtype
-    if dt == custom_np_types.float8e4m3fn and dt.descr[0][0] == "e4m3fn":
-        to = TensorProto.FLOAT8E4M3FN
-        dt_to = np.uint8
-    elif dt == custom_np_types.float8e4m3fnuz and dt.descr[0][0] == "e4m3fnuz":
-        to = TensorProto.FLOAT8E4M3FNUZ
-        dt_to = np.uint8
-    elif dt == custom_np_types.float8e5m2 and dt.descr[0][0] == "e5m2":
-        to = TensorProto.FLOAT8E5M2
-        dt_to = np.uint8
-    elif dt == custom_np_types.float8e5m2fnuz and dt.descr[0][0] == "e5m2fnuz":
-        to = TensorProto.FLOAT8E5M2FNUZ
-        dt_to = np.uint8
-    elif dt == custom_np_types.bfloat16 and dt.descr[0][0] == "bfloat16":
-        to = TensorProto.BFLOAT16
-        dt_to = np.uint16  # type: ignore[assignment]
-    elif dt == custom_np_types.int4 and dt.descr[0][0] == "int4":
-        to = TensorProto.INT4
-        dt_to = np.int8  # type: ignore[assignment]
-    elif dt == custom_np_types.uint4 and dt.descr[0][0] == "uint4":
-        to = TensorProto.UINT4
-        dt_to = np.uint8
-    elif dt == custom_np_types.float4e2m1 and dt.descr[0][0] == "float4e2m1":
-        to = TensorProto.FLOAT4E2M1
-        dt_to = np.uint8
-    else:
-        return _from_array(tensor, name)
-
-    if to in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
-        value = tensor.astype(dt_to).ravel()
-        if value.size % 2 == 1:
-            raise ValueError(
-                f"The conversion of a tensor of INT4 or UINT4 requires an even size "
-                f"(shape={tensor.shape}). Every byte stores two INT4 or two UINT4."
-            )
-        buffer = (value[::2] & 0x0F) + (value[1::2] << 4)
-
-        pb = TensorProto()
-        pb.dims.extend(tensor.shape)
-        if name:
-            pb.name = name
-        pb.raw_data = buffer.tobytes()
-        pb.data_type = to
-        return pb
-
-    t = _from_array(tensor.astype(dt_to), name)
-    t.data_type = to
-    return t
+    # TODO(justinchuby): Implement me
+    raise NotImplementedError()
 
 
 def to_list(sequence: SequenceProto) -> list[Any]:
