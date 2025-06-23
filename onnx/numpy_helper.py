@@ -238,7 +238,9 @@ def unpack_int4(
     return res
 
 
-def unpacked_float4e2m1_to_float32(x: npt.NDArray[np.uint8]) -> npt.NDArray[np.float32]:
+def _unpacked_float4e2m1_to_float32(
+    x: npt.NDArray[np.uint8],
+) -> npt.NDArray[np.float32]:
     """Evaluate the numerical value of an array of unpacked float4e2m1 values (as uint8)
     See :ref:`onnx-detail-int4` for technical details.
 

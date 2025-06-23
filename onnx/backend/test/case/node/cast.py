@@ -21,8 +21,9 @@ from onnx.helper import (
 from onnx.numpy_helper import (
     _float8e4m3_to_float32,
     _float8e5m2_to_float32,
-    unpacked_float4e2m1_to_float32,
+    _unpacked_float4e2m1_to_float32,
 )
+from onnx.subbyte import _float32_to_float4e2m1_unpacked
 
 
 class Cast(Base):
@@ -331,8 +332,8 @@ class Cast(Base):
                     raise ValueError(
                         f"Conversion from {from_type} to {to_type} is not tested."
                     )
-                expected = unpacked_float4e2m1_to_float32(
-                    subbyte.float32_to_float4e2m1_unpacked(np_fp32)
+                expected = _unpacked_float4e2m1_to_float32(
+                    _float32_to_float4e2m1_unpacked(np_fp32)
                 )
                 output = make_tensor(
                     "y", getattr(TensorProto, to_type), input_shape, expected.tolist()
