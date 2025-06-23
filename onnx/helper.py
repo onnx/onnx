@@ -33,7 +33,6 @@ from onnx import (
     TrainingInfoProto,
     TypeProto,
     ValueInfoProto,
-    _custom_element_types,
     _mapping,
     defs,
     subbyte,
@@ -1693,23 +1692,6 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
         return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
     if np.issubdtype(np_dtype, np.str_):
         return TensorProto.STRING  # type: ignore[no-any-return]
-
-    if np_dtype in {
-        _custom_element_types.bfloat16,
-        _custom_element_types.float8e4m3fn,
-        _custom_element_types.float8e4m3fnuz,
-        _custom_element_types.float8e5m2,
-        _custom_element_types.float8e5m2fnuz,
-        _custom_element_types.int4,
-        _custom_element_types.uint4,
-        _custom_element_types.float4e2m1,
-    }:
-        warnings.warn(
-            "Custom element types are deprecated. Use ml_dtypes instead for non-native dtypes in np arrays.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return _custom_element_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."

@@ -5,48 +5,14 @@ from __future__ import annotations
 
 import numpy as np
 
-from onnx._custom_element_types import (
-    bfloat16,
-    float4e2m1,
-    float8e4m3fn,
-    float8e4m3fnuz,
-    float8e5m2,
-    float8e5m2fnuz,
-    int4,
-    uint4,
-)
 from onnx.reference.op_run import OpRun, RefAttrName
 
 
 def _check_dtype(val):  # type: ignore
-    a = val.dtype
-    if not isinstance(a, np.dtype) and a not in {
-        bfloat16,
-        float8e4m3fn,
-        float8e4m3fnuz,
-        float8e5m2,
-        float8e5m2fnuz,
-        uint4,
-        int4,
-        float4e2m1,
-        np.int8,
-        np.uint8,
-        np.float16,
-        np.float32,
-        np.float64,
-        np.int32,
-        np.int64,
-        np.int16,
-        np.uint16,
-        np.uint32,
-        np.bool_,
-        np.str_,
-        np.uint64,
-        bool,
-        str,
-    }:
+    dtype = val.dtype
+    if not isinstance(dtype, np.dtype):
         raise TypeError(
-            f"Type ({a}, {type(a)}) is not a numpy type (operator 'Constant')"
+            f"Type ({dtype}, {type(dtype)}) is not a numpy type (operator 'Constant')"
         )
 
 

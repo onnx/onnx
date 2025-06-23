@@ -7,10 +7,6 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from onnx.reference.custom_element_types import (
-    convert_from_ml_dtypes,
-    convert_to_ml_dtypes,
-)
 from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 if TYPE_CHECKING:
@@ -29,7 +25,6 @@ class OpRunUnary(OpRun):
         Supports only unary operators.
         """
         self._log("-- begin %s.run(1 input)", self.__class__.__name__)
-        x = convert_to_ml_dtypes(x)
         try:
             res = self._run(x)
         except TypeError as e:
@@ -37,7 +32,6 @@ class OpRunUnary(OpRun):
                 f"Issues with types {', '.join(str(type(_)) for _ in [x])} "
                 f"(unary operator {self.__class__.__name__!r})."
             ) from e
-        res = (convert_from_ml_dtypes(res[0]),)
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
         return self._check_and_fix_outputs(res)
 

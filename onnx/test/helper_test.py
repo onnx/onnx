@@ -23,7 +23,6 @@ from onnx import (
     SequenceProto,
     TensorProto,
     TypeProto,
-    _custom_element_types,
     checker,
     defs,
     helper,
@@ -1012,17 +1011,6 @@ class TestAttrTypeToStr(unittest.TestCase):
         result = helper._attr_type_to_str(9999)
         self.assertEqual(result, "UNDEFINED")
 
-    def test_custom_types(self):
-        def _get(name):
-            if hasattr(_custom_element_types, name):
-                return getattr(_custom_element_types, name)
-            name = f"float8{name}"
-            return getattr(_custom_element_types, name)
-
-        for k, v in _custom_element_types.mapping_name_to_data_type.items():
-            self.assertEqual(helper.np_dtype_to_tensor_dtype(_get(k)), v)
-
 
 if __name__ == "__main__":
     unittest.main()
-    pytest.main([__file__])

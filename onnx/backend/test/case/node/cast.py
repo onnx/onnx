@@ -8,7 +8,7 @@ import sys
 import numpy as np
 
 import onnx
-import onnx._custom_element_types as custom
+import ml_dtypes
 from onnx import TensorProto, helper, subbyte
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
@@ -76,10 +76,10 @@ class Cast(Base):
         vect_float32_to_float8e4m3 = np.vectorize(_float32_to_float8e4m3)
         vect_float32_to_float8e5m2 = np.vectorize(_float32_to_float8e5m2)
         vect_float32_to_uint4 = np.vectorize(
-            lambda x: subbyte.float32_to_4bit_unpacked(x, signed=False)
+            lambda x: subbyte._float32_to_4bit_unpacked(x, signed=False)
         )
         vect_float32_to_int4 = np.vectorize(
-            lambda x: subbyte.float32_to_4bit_unpacked(x, signed=True)
+            lambda x: subbyte._float32_to_4bit_unpacked(x, signed=True)
         )
 
         f8_types = ("FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ")
@@ -262,9 +262,9 @@ class Cast(Base):
                         f"Conversion from {from_type} to {to_type} is not tested."
                     )
                 if to_type == "UINT4":
-                    expected = vect_float32_to_uint4(input_values).astype(custom.uint4)
+                    expected = vect_float32_to_uint4(input_values).astype(ml_dtypes.uint4)
                 elif to_type == "INT4":
-                    expected = vect_float32_to_int4(input_values).astype(custom.int4)
+                    expected = vect_float32_to_int4(input_values).astype(ml_dtypes.int4)
                 elif to_type == "FLOAT16":
                     expected = input_values.astype(np.float16)
                 elif to_type == "FLOAT":

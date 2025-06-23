@@ -313,7 +313,8 @@ def _unpack_int4(
 
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
-    Supports types defined in :mod:`onnx._custom_element_types`.
+
+    This function uses ml_dtypes if the dtype is not a native numpy dtype.
 
     Args:
         tensor: a TensorProto object.
@@ -451,7 +452,6 @@ def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
 
 def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
     """Converts an array into a TensorProto including
-    supported type defined in :mod:`onnx._custom_element_types`.
 
     Args:
         tensor: a numpy array.
