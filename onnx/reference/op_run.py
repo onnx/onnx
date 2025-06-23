@@ -689,28 +689,8 @@ class OpFunctionContextDependant(OpFunction):
         # created the body for this operator.
         types = []
         for t in inputs:
-            try:
-                ttype = np_dtype_to_tensor_dtype(t.dtype)
-            except KeyError:
-                if t.dtype == float8e4m3fn:
-                    ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
-                elif t.dtype == float8e4m3fnuz:
-                    ttype = TensorProto.FLOAT8E4M3FNUZ  # type: ignore[attr-defined]
-                elif t.dtype == float8e5m2:
-                    ttype = TensorProto.FLOAT8E5M2  # type: ignore[attr-defined]
-                elif t.dtype == float8e5m2fnuz:
-                    ttype = TensorProto.FLOAT8E5M2FNUZ  # type: ignore[attr-defined]
-                elif t.dtype == bfloat16:
-                    ttype = TensorProto.BLOFAT16  # type: ignore[attr-defined]
-                elif t.dtype == uint4:
-                    ttype = TensorProto.UINT4  # type: ignore[attr-defined]
-                elif t.dtype == int4:
-                    ttype = TensorProto.INT4  # type: ignore[attr-defined]
-                elif t.dtype == float4e2m1:
-                    ttype = TensorProto.FLOAT4E2M1  # type: ignore[attr-defined]
-                else:
-                    raise
-            types.append(make_tensor_type_proto(ttype, t.shape))
+            dtype = np_dtype_to_tensor_dtype(t.dtype)
+            types.append(make_tensor_type_proto(dtype, t.shape))
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)
