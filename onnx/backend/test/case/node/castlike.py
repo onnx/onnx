@@ -11,7 +11,7 @@ import onnx
 from onnx import TensorProto, helper
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.helper import float32_to_float8e4m3, float32_to_float8e5m2, make_tensor
+from onnx.helper import _float32_to_float8e4m3, float32_to_float8e5m2, make_tensor
 from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32
 
 
@@ -40,7 +40,7 @@ class CastLike(Base):
             ("FLOAT8E5M2FNUZ", "FLOAT"),
         ]
 
-        vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+        vect_float32_to_float8e4m3 = np.vectorize(_float32_to_float8e4m3)
         vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
 
         for from_type, to_type in test_cases:

@@ -536,7 +536,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
     def test_make_float8e4m3fn_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
         f8 = np.array(
-            [helper.float32_to_float8e4m3(x) for x in expected], dtype=np.uint8
+            [helper._float32_to_float8e4m3(x) for x in expected], dtype=np.uint8
         )
         packed_values = f8.tobytes()
         y = helper.make_tensor(
@@ -554,7 +554,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
     def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
         f8 = np.array(
-            [helper.float32_to_float8e4m3(x, uz=True) for x in expected], dtype=np.uint8
+            [helper._float32_to_float8e4m3(x, uz=True) for x in expected], dtype=np.uint8
         )
         packed_values = f8.tobytes()
         y = helper.make_tensor(

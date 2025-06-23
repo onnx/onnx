@@ -20,7 +20,7 @@ from onnx._custom_element_types import (
     uint4,
 )
 from onnx.helper import (
-    float32_to_float8e4m3,
+    _float32_to_float8e4m3,
     float32_to_float8e5m2,
     np_dtype_to_tensor_dtype,
     tensor_dtype_to_np_dtype,
@@ -79,7 +79,7 @@ def reshape_input(
 
 
 class _CommonQuantizeLinear(OpRun):
-    float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
+    float32_to_float8e4m3 = np.vectorize(_float32_to_float8e4m3)
     float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
     quant_integer_ranges: ClassVar[dict[TensorProto.DataType, tuple[int, int]]] = {
         TensorProto.UINT8: (0, 255),

@@ -13,14 +13,14 @@ from onnx import TensorProto, helper, subbyte
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 from onnx.helper import (
-    float32_to_float8e4m3,
-    float32_to_float8e5m2,
+    _float32_to_float8e4m3,
+    _float32_to_float8e5m2,
     make_tensor,
     tensor_dtype_to_field,
 )
 from onnx.numpy_helper import (
-    float8e4m3_to_float32,
-    float8e5m2_to_float32,
+    _float8e4m3_to_float32,
+    _float8e5m2_to_float32,
     unpacked_float4e2m1_to_float32,
 )
 
@@ -72,8 +72,8 @@ class Cast(Base):
             ("FLOAT16", "FLOAT4E2M1"),
         ]
 
-        vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
-        vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+        vect_float32_to_float8e4m3 = np.vectorize(_float32_to_float8e4m3)
+        vect_float32_to_float8e5m2 = np.vectorize(_float32_to_float8e5m2)
         vect_float32_to_uint4 = np.vectorize(
             lambda x: subbyte.float32_to_4bit_unpacked(x, signed=False)
         )
@@ -169,28 +169,28 @@ class Cast(Base):
                         "x", TensorProto.FLOAT16, [3, 5], input_values.tolist()
                     )
                 elif from_type == "FLOAT8E4M3FN":
-                    input_values = float8e4m3_to_float32(
+                    input_values = _float8e4m3_to_float32(
                         vect_float32_to_float8e4m3(np_fp32)
                     )
                     input = make_tensor(
                         "x", TensorProto.FLOAT8E4M3FN, [3, 5], input_values.tolist()
                     )
                 elif from_type == "FLOAT8E4M3FNUZ":
-                    input_values = float8e4m3_to_float32(
+                    input_values = _float8e4m3_to_float32(
                         vect_float32_to_float8e4m3(np_fp32, uz=True), uz=True
                     )
                     input = make_tensor(
                         "x", TensorProto.FLOAT8E4M3FNUZ, [3, 5], input_values.tolist()
                     )
                 elif from_type == "FLOAT8E5M2":
-                    input_values = float8e5m2_to_float32(
+                    input_values = _float8e5m2_to_float32(
                         vect_float32_to_float8e5m2(np_fp32)
                     )
                     input = make_tensor(
                         "x", TensorProto.FLOAT8E5M2, [3, 5], input_values.tolist()
                     )
                 elif from_type == "FLOAT8E5M2FNUZ":
-                    input_values = float8e5m2_to_float32(
+                    input_values = _float8e5m2_to_float32(
                         vect_float32_to_float8e5m2(np_fp32, fn=True, uz=True),
                         fn=True,
                         uz=True,
@@ -204,19 +204,19 @@ class Cast(Base):
                     )
 
                 if to_type == "FLOAT8E4M3FN":
-                    expected = float8e4m3_to_float32(
+                    expected = _float8e4m3_to_float32(
                         vect_float32_to_float8e4m3(input_values)
                     )
                 elif to_type == "FLOAT8E4M3FNUZ":
-                    expected = float8e4m3_to_float32(
+                    expected = _float8e4m3_to_float32(
                         vect_float32_to_float8e4m3(input_values, uz=True), uz=True
                     )
                 elif to_type == "FLOAT8E5M2":
-                    expected = float8e5m2_to_float32(
+                    expected = _float8e5m2_to_float32(
                         vect_float32_to_float8e5m2(input_values)
                     )
                 elif to_type == "FLOAT8E5M2FNUZ":
-                    expected = float8e5m2_to_float32(
+                    expected = _float8e5m2_to_float32(
                         vect_float32_to_float8e5m2(input_values, fn=True, uz=True),
                         fn=True,
                         uz=True,
@@ -410,8 +410,8 @@ class Cast(Base):
             ("FLOAT", "FLOAT8E5M2FNUZ"),
             ("FLOAT16", "FLOAT8E5M2FNUZ"),
         ]
-        vect_float32_to_float8e4m3 = np.vectorize(float32_to_float8e4m3)
-        vect_float32_to_float8e5m2 = np.vectorize(float32_to_float8e5m2)
+        vect_float32_to_float8e4m3 = np.vectorize(_float32_to_float8e4m3)
+        vect_float32_to_float8e5m2 = np.vectorize(_float32_to_float8e5m2)
 
         for from_type, to_type in test_cases:
             np_fp32 = np.array(

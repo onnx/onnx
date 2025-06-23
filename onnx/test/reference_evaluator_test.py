@@ -43,7 +43,7 @@ from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
     float32_to_bfloat16,
-    float32_to_float8e4m3,
+    _float32_to_float8e4m3,
     float32_to_float8e5m2,
     make_function,
     make_graph,
@@ -3404,9 +3404,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        print([float32_to_float8e4m3(x) for x in data])
+        print([_float32_to_float8e4m3(x) for x in data])
         expected1 = np.array(
-            [float8e4m3_to_float32(float32_to_float8e4m3(x)) for x in data]
+            [float8e4m3_to_float32(_float32_to_float8e4m3(x)) for x in data]
         )
         expected2 = np.array(
             [float8e5m2_to_float32(float32_to_float8e5m2(x)) for x in data]
@@ -3436,7 +3436,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected = np.array(
             [
                 float8e4m3_to_float32(
-                    float32_to_float8e4m3(x, uz=True, saturate=False), uz=True
+                    _float32_to_float8e4m3(x, uz=True, saturate=False), uz=True
                 )
                 for x in data
             ]
@@ -3471,7 +3471,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        expected1 = np.array([float32_to_float8e4m3(x) for x in data])
+        expected1 = np.array([_float32_to_float8e4m3(x) for x in data])
         expected2 = np.array([float32_to_float8e5m2(x) for x in data])
         got = ref.run(None, {"X": data})
         self.assertEqual(expected1.tolist(), got[0].tolist())
