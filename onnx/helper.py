@@ -10,6 +10,7 @@ import struct
 import typing
 from cmath import isnan
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
+import warnings
 
 import google.protobuf.message
 import numpy as np
@@ -1686,19 +1687,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
         TensorsProto's data_type
     """
     _np_dtype_to_tensor_dtype = {
-        v.np_dtype: k
-        for k, v in _mapping.TENSOR_TYPE_MAP.items()
-        if k
-        not in {
-            TensorProto.BFLOAT16,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-            TensorProto.UINT4,
-            TensorProto.INT4,
-            TensorProto.FLOAT4E2M1,
-        }
+        v.np_dtype: k for k, v in _mapping.TENSOR_TYPE_MAP.items()
     }
     if np_dtype in _np_dtype_to_tensor_dtype:
         return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
@@ -1715,6 +1704,11 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
         _custom_element_types.uint4,
         _custom_element_types.float4e2m1,
     }:
+        warnings.warn(
+            "Custom element types are deprecated. Use ml_dtypes instead for non-native dtypes in np arrays.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return _custom_element_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
 
     raise ValueError(
