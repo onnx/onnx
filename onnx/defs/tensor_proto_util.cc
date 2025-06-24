@@ -60,7 +60,7 @@ namespace ONNX_NAMESPACE {
       for (int i = 0; i < tensor_proto->dims_size(); ++i) {                                                        \
         expected_size *= static_cast<size_t>(tensor_proto->dims(i));                                               \
       }                                                                                                            \
-      if (tensor_proto->dims_size() != 0 && data.size() != expected_size) {                                        \
+      if (tensor_proto->dims_size() != 0 && static_cast<size_t>(data.size()) != expected_size) {                                        \
         fail_shape_inference(                                                                                      \
             "Data size mismatch. Tensor: ",                                                                        \
             tensor_proto->name(),                                                                                  \
@@ -90,7 +90,7 @@ namespace ONNX_NAMESPACE {
     /* onnx is little endian serialized always-tweak byte order if needed */                                       \
     if (!is_processor_little_endian()) {                                                                           \
       const size_t element_size = sizeof(type);                                                                    \
-      const size_t num_elements = raw_data.size() / element_size;                                                  \
+      const size_t num_elements = static_cast<size_t>(raw_data.size()) / element_size;                                                  \
       for (size_t i = 0; i < num_elements; ++i) {                                                                  \
         char* start_byte = bytes + i * element_size;                                                               \
         char* end_byte = start_byte + (element_size > 0 ? element_size - 1 : 0);                                   \
@@ -109,7 +109,7 @@ namespace ONNX_NAMESPACE {
     /* We need to copy the raw_data.c_str()/bytes as byte instead of  */                                           \
     /* copying as the underlying type, otherwise we may hit memory   */                                            \
     /* misalignment issues on certain platforms, such as arm32-v7a */                                              \
-    const size_t raw_data_size = raw_data.size();                                                                  \
+    const size_t raw_data_size = static_cast<size_t>(raw_data.size());                                                                  \
     res.resize(raw_data_size / sizeof(type));                                                                      \
     memcpy(reinterpret_cast<char*>(res.data()), bytes, raw_data_size);                                             \
     return res;                                                                                                    \
