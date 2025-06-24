@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-from typing import ClassVar
-
 import ml_dtypes
 import numpy as np
 

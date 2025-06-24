@@ -8,7 +8,6 @@ import functools
 import numbers
 import struct
 import typing
-import warnings
 from cmath import isnan
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 

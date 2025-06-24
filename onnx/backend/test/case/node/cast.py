@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import sys
 
+import ml_dtypes
 import numpy as np
 
 import onnx
-import ml_dtypes
 from onnx import TensorProto, helper, subbyte
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
@@ -262,7 +262,9 @@ class Cast(Base):
                         f"Conversion from {from_type} to {to_type} is not tested."
                     )
                 if to_type == "UINT4":
-                    expected = vect_float32_to_uint4(input_values).astype(ml_dtypes.uint4)
+                    expected = vect_float32_to_uint4(input_values).astype(
+                        ml_dtypes.uint4
+                    )
                 elif to_type == "INT4":
                     expected = vect_float32_to_int4(input_values).astype(ml_dtypes.int4)
                 elif to_type == "FLOAT16":

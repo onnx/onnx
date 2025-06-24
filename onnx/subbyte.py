@@ -26,9 +26,7 @@ def float32_to_4bit_unpacked(*args, **kwargs):
     return _float32_to_4bit_unpacked(*args, **kwargs)
 
 
-def _float32_to_4bit_unpacked(
-    x: np.ndarray | np.dtype | float, signed: bool
-) -> np.ndarray:
+def _float32_to_4bit_unpacked(x: np.ndarray | float, signed: bool) -> np.ndarray:
     """Cast to 4bit via rounding and clipping (without packing).
 
     Args:

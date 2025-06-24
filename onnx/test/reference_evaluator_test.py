@@ -28,7 +28,6 @@ import parameterized
 import version_utils
 from numpy.testing import assert_allclose, assert_almost_equal
 
-import onnx._custom_element_types as custom
 from onnx import (
     AttributeProto,
     FunctionProto,
@@ -5751,7 +5750,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         data = np.array([0, 1, 2.4, 2.6, 4, 10], dtype=np.float32)
         signed = cast_to == TensorProto.INT4
         expected1 = np.array(
-            [subbyte.float32_to_4bit_unpacked(x, signed=signed) for x in data]
+            [subbyte._float32_to_4bit_unpacked(x, signed=signed) for x in data]
         )
         got = ref.run(None, {"X": data})
         self.assertEqual(expected1.tolist(), got[0].tolist())
@@ -5777,9 +5776,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array(range(7), dtype=np.float32)
-        cast_from_np = custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
+        signed = cast_from == TensorProto.INT4
         expected1 = np.array(
-            [subbyte.float32_to_4bit_unpacked(x, cast_from_np) for x in data]
+            [subbyte._float32_to_4bit_unpacked(x, signed=signed) for x in data]
         )
         got = ref.run(None, {"X": data})
         self.assertEqual(expected1.tolist(), got[0].tolist())
