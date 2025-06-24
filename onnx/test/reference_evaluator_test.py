@@ -2039,8 +2039,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
                 output = fold(torch.from_numpy(X)).numpy()
                 got = sess.run(None, {"X": X, "B": b_shape, "I": i_shape})
-                # print(output)
-                # print(got)
                 assert_allclose(output, got[0])
 
     @skip_if_no_torch
@@ -2403,12 +2401,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             "W": np.arange(3 * 1 * 3 * 3).reshape((3, 1, 3, 3)).astype(np.float32),
             "B": np.array([0, 0, 0, 0], dtype=np.float32),
         }
-
-        # import torch
-        # ex = torch.nn.functional.conv_transpose2d(
-        #     torch.Tensor(feeds["X"]), torch.Tensor(feeds["W"]),
-        #     bias=None, stride=1, padding=1, output_padding=0, groups=1, dilation=1)
-        # print(ex)
 
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
@@ -3389,7 +3381,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        print([_float32_to_float8e4m3(x) for x in data])
         expected1 = np.array(
             [_float8e4m3_to_float32(_float32_to_float8e4m3(x)) for x in data]
         )
