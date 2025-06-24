@@ -1,9 +1,13 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Pixi CI
+
 on:
-  push:
-  pull_request:
-    branches:
-      - main
+  schedule:
+    # run weekly on Sunday 23:59
+    - cron:  '29 23 * * SUN'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
