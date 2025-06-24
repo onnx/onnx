@@ -67,21 +67,21 @@ concurrency:
 jobs:
 
   call-linux:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all') || contains(github.event.pull_request.labels.*.name, 'run release CIs linux')
     uses: ./.github/workflows/release_linux.yml
     with:
       os: "linux"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-win_x86:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs win x86')
     uses: ./.github/workflows/release_win_x86_64.yml
     with:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-win_arm64:
-      if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+      if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all') || contains(github.event.pull_request.labels.*.name, 'run release CIs win arm64')
       uses: ./.github/workflows/release_win_aarch64.yml
       with:
         os: "win_arm64"
@@ -89,14 +89,14 @@ jobs:
 
   
   call-mac:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs mac')
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
   
   call-sdist:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs sdist')
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
@@ -327,4 +327,4 @@ jobs:
     if: (needs.publish_preview_build_to_pypi_weekly.result == 'success' || needs.publish_release_build_to_testpypi.result == 'success')
     uses: ./.github/workflows/preview_source_dist_test.yml
     with:
-      os: "macos"
+      os: "linux"
