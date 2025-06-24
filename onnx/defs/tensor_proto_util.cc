@@ -56,9 +56,9 @@ namespace ONNX_NAMESPACE {
           tensor_proto->name());                                                                                   \
     } else if (!tensor_proto->has_raw_data()) {                                                                    \
       const auto& data = tensor_proto->typed_data_fetch();                                                         \
-      int expected_size = 1;                                                                                       \
+      size_t expected_size = 1;                                                                                    \
       for (int i = 0; i < tensor_proto->dims_size(); ++i) {                                                        \
-        expected_size *= tensor_proto->dims(i);                                                                    \
+        expected_size *= static_cast<size_t>(tensor_proto->dims(i));                                               \
       }                                                                                                            \
       if (tensor_proto->dims_size() != 0 && data.size() != expected_size) {                                        \
         fail_shape_inference(                                                                                      \
@@ -93,7 +93,7 @@ namespace ONNX_NAMESPACE {
       const size_t num_elements = raw_data.size() / element_size;                                                  \
       for (size_t i = 0; i < num_elements; ++i) {                                                                  \
         char* start_byte = bytes + i * element_size;                                                               \
-        char* end_byte = start_byte + element_size - 1;                                                            \
+        char* end_byte = start_byte + (element_size > 0 ? element_size - 1 : 0);                                   \
         /* keep swapping */                                                                                        \
         for (size_t count = 0; count < element_size / 2; ++count) {                                                \
           char temp = *start_byte;                                                                                 \
