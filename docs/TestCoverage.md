@@ -7858,7 +7858,7 @@ expect(
 
 
 ### Einsum
-There are 5 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>einsum_batch_diagonal</summary>
 
@@ -7906,6 +7906,22 @@ Y = np.random.randn(5)
 Z = einsum_reference_implementation(Eqn, (X, Y))
 
 expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_inner_prod")
+```
+
+</details>
+<details>
+<summary>einsum_scalar</summary>
+
+```python
+Eqn = "->"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.array(5.0)  # scalar input
+Z = einsum_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_scalar")
 ```
 
 </details>
