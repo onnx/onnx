@@ -57,10 +57,7 @@ on:
           - 'preview'
         default: 'preview'
 
-
-
 permissions:
-
   contents: read
 
 concurrency:
