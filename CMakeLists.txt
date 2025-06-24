@@ -425,20 +425,6 @@ add_onnx_global_defines(onnx_proto)
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
-if(MSVC)
-  # For disabling Protobuf related warnings
-  target_compile_options(onnx_proto PUBLIC
-                      /wd4146 # unary minus operator applied to unsigned type,
-                              # result still unsigned
-                      /wd4244 # 'argument': conversion from 'google::
-                              # protobuf::uint64' to 'int', possible
-                              # loss of data
-                      /wd4267 # Conversion from 'size_t' to 'int',
-                              # possible loss of data
-                      /wd4141 # 'inline': used more than once
-  )
-endif()
-
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   # whole-archive linker option not available on AIX.
   # So, create a object library
