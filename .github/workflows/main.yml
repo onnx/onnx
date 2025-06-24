@@ -95,7 +95,7 @@ jobs:
           - os:  macos-latest
             python_version: '3.11'
           - os:  macos-latest
-            python_version: '3.13'            
+            python_version: '3.13'
             
     runs-on: ${{ matrix.os }}
     steps:
