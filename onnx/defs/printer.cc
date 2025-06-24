@@ -247,24 +247,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         printSet(" {", ",", "}", ParseData<double>(&tensor));
         break;
       default:
-        // For unsupported data types, show raw bytes as hex
-        if (tensor.has_raw_data()) {
-          const std::string& raw = tensor.raw_data();
-          output_ << " {0x";
-          // Save current format state
-          auto saved_flags = output_.flags();
-          auto saved_fill = output_.fill();
-          for (size_t i = 0; i < raw.size(); ++i) {
-            output_ << std::hex << std::setfill('0') << std::setw(2) 
-                    << (static_cast<unsigned char>(raw[i]) & 0xFF);
-          }
-          output_ << "}";
-          // Restore original format state
-          output_.flags(saved_flags);
-          output_.fill(saved_fill);
-        } else {
-          output_ << "..."; // No raw data available
-        }
+        output_ << "..."; // ParseData not instantiated for other types.
         break;
     }
   } else {
