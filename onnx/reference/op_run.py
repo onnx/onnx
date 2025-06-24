@@ -16,6 +16,7 @@ from onnx._custom_element_types import (
     float8e4m3fnuz,
     float8e5m2,
     float8e5m2fnuz,
+    float8e8m0,
     int4,
     uint4,
 )
@@ -708,6 +709,8 @@ class OpFunctionContextDependant(OpFunction):
                     ttype = TensorProto.INT4  # type: ignore[attr-defined]
                 elif t.dtype == float4e2m1:
                     ttype = TensorProto.FLOAT4E2M1  # type: ignore[attr-defined]
+                elif t.dtype == float8e8m0:
+                    ttype = TensorProto.FLOAT8E8M0  # type: ignore[attr-defined]
                 else:
                     raise
             types.append(make_tensor_type_proto(ttype, t.shape))

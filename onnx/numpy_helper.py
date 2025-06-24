@@ -205,6 +205,27 @@ def float8e5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
+def float8e8m0_to_float32(
+    data: np.uint8 | np.ndarray,
+) -> np.ndarray:
+    """Converts ndarray of float8, e5m2 (as uint32) to f32 (as uint32).
+
+    Args:
+        data: A numpy array, empty dimensions are allowed if dims is None.
+
+    Returns:
+        A numpy array of float32 with the same dimension if dims is None,
+        or reshaped to dims if specified
+    """
+    data = np.asarray(data)
+    res = np.where(
+        data == 0xFF,  # noqa: PLR2004
+        np.nan,
+        2.0 ** (data.astype(np.int32) - 127),
+    )
+    return res.astype(np.float32)
+
+
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider implementing your own unpack logic",
     category=DeprecationWarning,
@@ -393,6 +414,10 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
             data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
             return data.view(custom_np_types.float8e5m2fnuz)
 
+        if tensor_dtype == TensorProto.FLOAT8E8M0:
+            data = np.frombuffer(raw_data, dtype=np.int8).reshape(dims)
+            return data.view(custom_np_types.float8e8m0)
+
         if tensor_dtype == TensorProto.UINT4:
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_uint4(
@@ -449,6 +474,12 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
             np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
         )
         return data.view(custom_np_types.float8e5m2fnuz)
+
+    if tensor_dtype == TensorProto.FLOAT8E8M0:
+        data = (
+            np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8).reshape(dims)
+        )
+        return data.view(custom_np_types.float8e8m0)
 
     if tensor_dtype == TensorProto.UINT4:
         data = np.asarray(tensor.int32_data, dtype=np.int32).astype(np.uint8)
@@ -560,6 +591,9 @@ def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
         dt_to = np.uint8
     elif dt == custom_np_types.float8e5m2fnuz and dt.descr[0][0] == "e5m2fnuz":
         to = TensorProto.FLOAT8E5M2FNUZ
+        dt_to = np.uint8
+    elif dt == custom_np_types.float8e8m0 and dt.descr[0][0] == "e8m0":
+        to = TensorProto.FLOAT8E8M0
         dt_to = np.uint8
     elif dt == custom_np_types.bfloat16 and dt.descr[0][0] == "bfloat16":
         to = TensorProto.BFLOAT16
