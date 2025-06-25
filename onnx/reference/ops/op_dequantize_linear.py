@@ -69,7 +69,7 @@ class _CommonDequantizeLinear(OpRun):
         axis: int = 1,
         block_size: int = 0,
         output_dtype: int | None = None,
-    ):  # type: ignore
+    ):
         x_type = np_dtype_to_tensor_dtype(x.dtype)
         fp8_type = x_type in {
             TensorProto.FLOAT8E4M3FN,
@@ -119,14 +119,14 @@ class DequantizeLinear_19(_CommonDequantizeLinear):
 
 
 class DequantizeLinear_21(_CommonDequantizeLinear):
-    def _run(self, *args, axis: int = 1, block_size: int = 0):  # type: ignore
+    def _run(self, *args, axis: int = 1, block_size: int = 0):
         # args: x, y_scale, zero_point
-        return super()._run(*args, axis=axis, block_size=block_size)  # type: ignore
+        return super()._run(*args, axis=axis, block_size=block_size)
 
 
 class DequantizeLinear_23(_CommonDequantizeLinear):
-    def _run(self, *args, axis: int = 1, block_size: int = 0, output_dtype=None):  # type: ignore
+    def _run(self, *args, axis: int = 1, block_size: int = 0, output_dtype=None):
         # args: x, y_scale, zero_point
         return super()._run(
             *args, axis=axis, block_size=block_size, output_dtype=output_dtype
-        )  # type: ignore
+        )

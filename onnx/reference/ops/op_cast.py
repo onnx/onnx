@@ -21,10 +21,10 @@ def cast_to(x, to, saturate: bool):
 
 
 class Cast_1(OpRun):
-    def _run(self, x, to=None):  # type: ignore
+    def _run(self, x, to=None):
         return (cast_to(x, to, saturate=True),)
 
 
 class Cast_19(OpRun):
-    def _run(self, x, to=None, saturate: bool = True):  # type: ignore
+    def _run(self, x, to=None, saturate: bool = True):
         return (cast_to(x, to, saturate),)

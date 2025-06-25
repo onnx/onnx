@@ -19,7 +19,7 @@ class OpRunUnary(OpRun):
     Checks that input and output types are the same.
     """
 
-    def run(self, x):  # type: ignore
+    def run(self, x):
         """Calls method ``_run``, catches exceptions, displays a longer error message.
 
         Supports only unary operators.
@@ -42,7 +42,7 @@ class OpRunUnaryNum(OpRunUnary):
     Checks that input and output types are the same.
     """
 
-    def run(self, x):  # type: ignore
+    def run(self, x):
         """Calls method ``OpRunUnary.run``.
 
         Catches exceptions, displays a longer error message.
@@ -65,7 +65,7 @@ class OpRunBinary(OpRun):
     Checks that input and output types are the same.
     """
 
-    def run(self, x, y):  # type: ignore
+    def run(self, x, y):
         """Calls method ``_run``, catches exceptions, displays a longer error message.
 
         Supports only binary operators.
@@ -102,7 +102,7 @@ class OpRunBinaryNum(OpRunBinary):
     Checks that input oud output types are the same.
     """
 
-    def run(self, x, y):  # type: ignore
+    def run(self, x, y):
         """Calls method ``OpRunBinary.run``, catches exceptions, displays a longer error message."""
         res = OpRunBinary.run(self, x, y)
         if res[0].dtype != x.dtype:
@@ -125,12 +125,12 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
         self.numpy_fct = numpy_fct
 
-    def _run(self, a, b):  # type: ignore
+    def _run(self, a, b):
         res = (self.numpy_fct(a, b),)
         return self._check_and_fix_outputs(res)
 
 
-class OpRunReduceNumpy(OpRun):  # type: ignore
+class OpRunReduceNumpy(OpRun):
     """Implements the reduce logic.
     It must have a parameter *axes*.
     """
@@ -138,8 +138,8 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
     def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "axes"):
-            if isinstance(self.axes, np.ndarray):  # type: ignore
-                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore
+            if isinstance(self.axes, np.ndarray):
+                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:
                     self.axes = None
                 else:
                     self.axes = tuple(self.axes)
