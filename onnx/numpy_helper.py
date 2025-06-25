@@ -449,7 +449,9 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> TensorProto:
         array = array.view(array.dtype.newbyteorder("<"))
     if name:
         tensor.name = name
+
     tensor.raw_data = array.tobytes()
+    tensor.data_type = dtype
     return tensor
 
 

@@ -226,9 +226,15 @@ class TestNumpyHelper(unittest.TestCase):
             numpy_helper._float8e5m2_to_float32(int("11", 2)), 0.75 * 2 ** (-14)
         )
         self.assertEqual(numpy_helper._float8e5m2_to_float32(int("1", 2)), 2 ** (-16))
-        self.assertTrue(np.isnan(numpy_helper._float8e5m2_to_float32(int("1111101", 2))))
-        self.assertTrue(np.isnan(numpy_helper._float8e5m2_to_float32(int("1111110", 2))))
-        self.assertTrue(np.isnan(numpy_helper._float8e5m2_to_float32(int("1111111", 2))))
+        self.assertTrue(
+            np.isnan(numpy_helper._float8e5m2_to_float32(int("1111101", 2)))
+        )
+        self.assertTrue(
+            np.isnan(numpy_helper._float8e5m2_to_float32(int("1111110", 2)))
+        )
+        self.assertTrue(
+            np.isnan(numpy_helper._float8e5m2_to_float32(int("1111111", 2)))
+        )
         self.assertTrue(
             np.isnan(numpy_helper._float8e5m2_to_float32(int("11111101", 2)))
         )
