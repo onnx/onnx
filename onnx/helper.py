@@ -17,7 +17,7 @@ import numpy as np
 import typing_extensions
 
 import onnx
-from onnx import _mapping, defs, subbyte
+from onnx import defs, subbyte
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -1561,7 +1561,9 @@ def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
     Returns:
         numpy's data_type
     """
-    return _mapping.tensor_type_map(tensor_dtype).np_dtype
+    from onnx import _mapping
+
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
@@ -1573,7 +1575,9 @@ def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     Returns:
         data_type for storage
     """
-    return _mapping.tensor_type_map(tensor_dtype).storage_dtype
+    from onnx import _mapping
+
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
@@ -1585,7 +1589,9 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     Returns:
         the name of data_type
     """
-    return _mapping.tensor_type_map(tensor_dtype).name
+    from onnx import _mapping
+
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
 @functools.lru_cache(None)
@@ -1598,6 +1604,8 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     Returns:
         field name
     """
+    from onnx import _mapping
+
     storage_tensor_type_to_field = {
         int(TensorProto.FLOAT): "float_data",
         int(TensorProto.INT32): "int32_data",
@@ -1613,7 +1621,7 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
         int(TensorProto.BOOL): "int32_data",
     }
     return storage_tensor_type_to_field[
-        _mapping.tensor_type_map(tensor_dtype).storage_dtype
+        _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
 
@@ -1627,8 +1635,10 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     Returns:
         TensorsProto's data_type
     """
+    from onnx import _mapping
+
     _np_dtype_to_tensor_dtype = {
-        v.np_dtype: k for k, v in _mapping.tensor_type_map(items))
+        v.np_dtype: k for k, v in _mapping.TENSOR_TYPE_MAP.items()
     }
     if np_dtype in _np_dtype_to_tensor_dtype:
         return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
@@ -1646,7 +1656,9 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     Returns:
         all tensor types from TensorProto
     """
-    return _mapping.tensor_type_map(keys))
+    from onnx import _mapping
+
+    return _mapping.TENSOR_TYPE_MAP.keys()
 
 
 _ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
