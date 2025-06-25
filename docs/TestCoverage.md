@@ -6597,7 +6597,7 @@ There are 9 test cases, listed as following:
 ```python
 node = onnx.helper.make_node("CumProd", inputs=["x", "axis"], outputs=["y"])
 x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
-axis = np.int32(0)
+axis = np.array(0, dtype=np.int32)
 y = np.array([1.0, 2.0, 6.0, 24.0, 120.0]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d")
 ```
@@ -6611,7 +6611,7 @@ node = onnx.helper.make_node(
     "CumProd", inputs=["x", "axis"], outputs=["y"], exclusive=1
 )
 x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
-axis = np.int32(0)
+axis = np.array(0, dtype=np.int32)
 y = np.array([1.0, 1.0, 2.0, 6.0, 24.0]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_exclusive")
 ```
@@ -6625,7 +6625,7 @@ node = onnx.helper.make_node(
     "CumProd", inputs=["x", "axis"], outputs=["y"], exclusive=1
 )
 x = np.array([1, 2, 3, 4, 5]).astype(np.int32)
-axis = np.int32(0)
+axis = np.array(0, dtype=np.int32)
 y = np.array([1, 1, 2, 6, 24]).astype(np.int32)
 expect(
     node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_int32_exclusive"
@@ -6641,8 +6641,8 @@ node = onnx.helper.make_node(
     "CumProd", inputs=["x", "axis"], outputs=["y"], reverse=1
 )
 x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
-axis = np.int32(0)
-y = np.array([120.0, 60.0, 20.0, 5.0, 1.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([120.0, 120.0, 60.0, 20.0, 5.0]).astype(np.float64)
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_reverse")
 ```
 
@@ -6655,10 +6655,13 @@ node = onnx.helper.make_node(
     "CumProd", inputs=["x", "axis"], outputs=["y"], reverse=1, exclusive=1
 )
 x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
-axis = np.int32(0)
-y = np.array([60.0, 20.0, 5.0, 1.0, 1.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([120.0, 60.0, 20.0, 5.0, 1.0]).astype(np.float64)
 expect(
-    node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_reverse_exclusive"
+    node,
+    inputs=[x, axis],
+    outputs=[y],
+    name="test_cumprod_1d_reverse_exclusive",
 )
 ```
 
@@ -6673,8 +6676,12 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
-axis = np.int32(0)
-y = np.array([1.0, 2.0, 3.0, 4.0, 10.0, 18.0]).astype(np.float64).reshape((2, 3))
+axis = np.array(0, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 3.0, 4.0, 10.0, 18.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_axis_0")
 ```
 
@@ -6689,8 +6696,12 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
-axis = np.int32(1)
-y = np.array([1.0, 2.0, 6.0, 4.0, 20.0, 120.0]).astype(np.float64).reshape((2, 3))
+axis = np.array(1, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 6.0, 4.0, 20.0, 120.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_axis_1")
 ```
 
@@ -6705,7 +6716,7 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.array([1, 2, 3, 4, 5, 6]).astype(np.int32).reshape((2, 3))
-axis = np.int32(0)
+axis = np.array(0, dtype=np.int32)
 y = np.array([1, 2, 3, 4, 10, 18]).astype(np.int32).reshape((2, 3))
 expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_int32")
 ```
@@ -6721,9 +6732,15 @@ node = onnx.helper.make_node(
     outputs=["y"],
 )
 x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
-axis = np.int32(-1)
-y = np.array([1.0, 2.0, 6.0, 4.0, 20.0, 120.0]).astype(np.float64).reshape((2, 3))
-expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_negative_axis")
+axis = np.array(-1, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 6.0, 4.0, 20.0, 120.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_negative_axis"
+)
 ```
 
 </details>
