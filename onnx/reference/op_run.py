@@ -64,10 +64,7 @@ def _build_schemas() -> dict[str, type]:
     return res
 
 
-@property
-@functools.cache
-def _schemas():
-    return _build_schemas()
+_schemas = _build_schemas()
 
 
 class OnnxType:
@@ -205,22 +202,22 @@ class OpRun(abc.ABC):
                 f"evaluator_cls must be specified to evaluate att={att}"
             )
             return evaluator_cls(
-                att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
                 new_ops=None if new_ops is None else list(new_ops.values()),
                 functions=functions,
             )
+
+        conversion_function = _attribute_conversion_function(att.type)
+        if conversion_function is not None:
+            return conversion_function(att)
+
         if ref_att is None:
             raise AttributeError(
                 f"Unable to convert attribute {att.name!r} type {att.type!r} "
                 f"from node type {self.onnx_node.op_type!r}, "
                 f"domain {self.onnx_node.domain!r}\n{att}."
             )
-
-        conversion_function = _attribute_conversion_function(att.type)
-        if conversion_function is not None:
-            return conversion_function(att)
 
         raise AttributeError(
             f"Unable to convert default value for {ref_att.name!r} type {att.type!r} "
