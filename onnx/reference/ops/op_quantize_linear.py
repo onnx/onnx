@@ -49,7 +49,7 @@ def _reshape_input(
 
     Args:
         value: the array to be reshaped/replicated
-        shape: the rarget shape
+        shape: the target shape
         axis: quantization axis, applicable for per-axis and blocked quantization
         block_size: size of quantization block, applicable only for blocked quantization
 
@@ -75,7 +75,7 @@ def _reshape_input(
     if block_size <= 0:
         raise ValueError("block_size must be a positive integer.")
 
-    # repeat scale to get elementwise scale
+    # repeat scale to get element-wise scale
     value = np.repeat(value, repeats=block_size, axis=axis)
     if (
         shape[axis] != value.shape[axis]
@@ -182,21 +182,28 @@ class _CommonQuantizeLinear(OpRun):
 
 
 class QuantizeLinear_10(_CommonQuantizeLinear):
-    def _run(self, x, y_scale, zero_point=None, axis=None):  # type: ignore
+    def _run(self, x, y_scale, zero_point=None, axis: int = 1):  # type: ignore
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
         return super()._run(x, y_scale, zero_point, axis=axis)  # type: ignore
 
 
 class QuantizeLinear_19(_CommonQuantizeLinear):
-    def _run(self, x, y_scale, zero_point=None, axis=None, saturate=None):  # type: ignore
+    def _run(self, x, y_scale, zero_point=None, axis: int = 1, saturate: bool = True):  # type: ignore
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
         return super()._run(x, y_scale, zero_point, axis=axis, saturate=saturate)  # type: ignore
 
 
 class QuantizeLinear_21(_CommonQuantizeLinear):
-    def _run(self, *args, axis=None, saturate=None, block_size=None, output_dtype=None):  # type: ignore
+    def _run(
+        self,
+        *args,
+        axis: int = 1,
+        saturate: bool = True,
+        block_size: int = 0,
+        output_dtype=None,
+    ):  # type: ignore
         # args: x, y_scale, zero_point
         return super()._run(
             *args,
@@ -211,9 +218,9 @@ class QuantizeLinear_23(_CommonQuantizeLinear):
     def _run(
         self,
         *args,
-        axis=None,
-        saturate=None,
-        block_size=None,
+        axis: int = 1,
+        saturate: bool = True,
+        block_size: int = 0,
         output_dtype=None,
         precision=None,
     ):  # type: ignore
