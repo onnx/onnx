@@ -417,9 +417,8 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> TensorProto:
         # Special care for strings.
         tensor.data_type = TensorProto.STRING
         # TODO: Introduce full string support.
-        # We flatten the array in case there are 2-D arrays are specified
-        # We throw the error below if we have a 3-D array or some kind of other
-        # object. If you want more complex shapes then follow the below instructions.
+        # We flatten the array in case there are n-D arrays are specified
+        # If you want more complex shapes then follow the below instructions.
         # Unlike other types where the shape is automatically inferred from
         # nested arrays of values, the only reliable way now to feed strings
         # is to put them into a flat array then specify type astype(object)
