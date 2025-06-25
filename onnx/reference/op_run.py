@@ -5,13 +5,11 @@ from __future__ import annotations
 
 import abc
 from typing import TYPE_CHECKING, Any, ClassVar
+import functools
 
 import numpy as np
 
-from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
-from onnx.numpy_helper import to_array
-from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
+import onnx
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -49,7 +47,7 @@ class RefAttrName:
 
 def _build_schemas() -> dict[str, type]:
     res: dict[str, type] = {}
-    for schema in get_all_schemas_with_history():
+    for schema in onnx.defs.get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
             if schema.domain != res[schema.name].domain:  # type: ignore
@@ -66,13 +64,18 @@ def _build_schemas() -> dict[str, type]:
     return res
 
 
-_schemas = _build_schemas()
+@property
+@functools.cache
+def _schemas():
+    return _build_schemas()
 
 
 class OnnxType:
-    def __init__(self, type_proto: TypeProto):
-        if not isinstance(type_proto, TypeProto):
-            raise TypeError(f"type_proto {type(type_proto)} must be of type TypeProto.")
+    def __init__(self, type_proto: onnx.TypeProto):
+        if not isinstance(type_proto, onnx.TypeProto):
+            raise TypeError(
+                f"type_proto {type(type_proto)} must be of type onnx.TypeProto."
+            )
         self.type_proto = type_proto
 
     def __repr__(self) -> str:
@@ -96,16 +99,49 @@ class SparseTensor:
         return self.values.dtype
 
 
-def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
+def to_sparse_tensor(att: onnx.AttributeProto) -> SparseTensor:
     """Hosts a sparse tensor."""
     shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
-    return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
+    return SparseTensor(
+        onnx.numpy_helper.to_array(att.values),
+        onnx.numpy_helper.to_array(att.indices),
+        shape,
+    )  # type: ignore
+
+
+def _attribute_conversion_function(attr_type: onnx.AttributeProto.AttributeType):
+    return {
+        onnx.AttributeProto.FLOAT: lambda att: np.float32(att.f),
+        onnx.AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
+        onnx.AttributeProto.GRAPH: lambda att: Graph(att.g),
+        onnx.AttributeProto.GRAPHS: lambda att: [Graph(g) for g in att.graphs],
+        onnx.AttributeProto.INT: lambda att: int(att.i),
+        onnx.AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
+        onnx.AttributeProto.SPARSE_TENSOR: lambda att: to_sparse_tensor(
+            att.sparse_tensor
+        ),
+        onnx.AttributeProto.SPARSE_TENSORS: lambda att: [
+            to_sparse_tensor(t) for t in att.sparse_tensors
+        ],
+        onnx.AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
+        onnx.AttributeProto.STRINGS: lambda att: [
+            s.decode("utf-8") for s in att.strings
+        ],
+        onnx.AttributeProto.TENSOR: lambda att: onnx.numpy_helper.to_array(att.t),
+        onnx.AttributeProto.TENSORS: lambda att: [
+            onnx.numpy_helper.to_array(t) for t in att.tensors
+        ],
+        onnx.AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
+        onnx.AttributeProto.TYPE_PROTOS: lambda att: [
+            OnnxType(t) for t in att.type_protos
+        ],
+    }[attr_type]
 
 
 class Graph:
     __slots__ = ("g",)
 
-    def __init__(self, g: GraphProto) -> None:
+    def __init__(self, g: onnx.GraphProto) -> None:
         self.g = g
 
 
@@ -122,27 +158,8 @@ class OpRun(abc.ABC):
 
     op_domain = ""
 
-    _attribute_conversion_functions: ClassVar[dict[Any, Any]] = {
-        AttributeProto.FLOAT: lambda att: np.float32(att.f),
-        AttributeProto.FLOATS: lambda att: [np.float32(f) for f in att.floats],
-        AttributeProto.GRAPH: lambda att: Graph(att.g),
-        AttributeProto.GRAPHS: lambda att: [Graph(g) for g in att.graphs],
-        AttributeProto.INT: lambda att: int(att.i),
-        AttributeProto.INTS: lambda att: [int(i) for i in att.ints],
-        AttributeProto.SPARSE_TENSOR: lambda att: to_sparse_tensor(att.sparse_tensor),
-        AttributeProto.SPARSE_TENSORS: lambda att: [
-            to_sparse_tensor(t) for t in att.sparse_tensors
-        ],
-        AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
-        AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
-        AttributeProto.TENSOR: lambda att: to_array(att.t),
-        AttributeProto.TENSORS: lambda att: [to_array(t) for t in att.tensors],
-        AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
-        AttributeProto.TYPE_PROTOS: lambda att: [OnnxType(t) for t in att.type_protos],
-    }
-
     def __init__(
-        self, onnx_node: NodeProto, run_params: dict[str, Any], schema: Any = None
+        self, onnx_node: onnx.NodeProto, run_params: dict[str, Any], schema: Any = None
     ):
         if not isinstance(run_params, dict):
             raise TypeError(f"run_params must be a dictionary not {type(run_params)}.")
@@ -174,10 +191,10 @@ class OpRun(abc.ABC):
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(
-        self, att: AttributeProto, ref_att: AttributeProto | None = None
+        self, att: onnx.AttributeProto, ref_att: onnx.AttributeProto | None = None
     ) -> Any:
         """Converts an attribute value into a python value."""
-        if att.type == AttributeProto.GRAPH:
+        if att.type == onnx.AttributeProto.GRAPH:
             new_ops = self.run_params.get("new_ops", None)
             if "existing_functions" in self.run_params:
                 functions = list(self.run_params["existing_functions"].values())
@@ -194,14 +211,17 @@ class OpRun(abc.ABC):
                 new_ops=None if new_ops is None else list(new_ops.values()),
                 functions=functions,
             )
-        if att.type in OpRun._attribute_conversion_functions:
-            return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
         if ref_att is None:
             raise AttributeError(
                 f"Unable to convert attribute {att.name!r} type {att.type!r} "
                 f"from node type {self.onnx_node.op_type!r}, "
                 f"domain {self.onnx_node.domain!r}\n{att}."
             )
+
+        conversion_function = _attribute_conversion_function(att.type)
+        if conversion_function is not None:
+            return conversion_function(att)
+
         raise AttributeError(
             f"Unable to convert default value for {ref_att.name!r} type {att.type!r} "
             f"from node type {self.onnx_node.op_type!r}, "
@@ -225,7 +245,7 @@ class OpRun(abc.ABC):
                 value = self._extract_attribute_value(att)
             setattr(self, name, value)
             added_attributes.append(name)
-            if att.type == AttributeProto.GRAPH:
+            if att.type == onnx.AttributeProto.GRAPH:
                 self.has_subgraph = True
                 self.has_linked_attribute |= value.has_linked_attribute  # type: ignore
                 setattr(
@@ -260,12 +280,12 @@ class OpRun(abc.ABC):
         self.attributes_names_ = set(added_attributes)
 
     @staticmethod
-    def implicit_inputs(graph: GraphProto) -> list[str]:
+    def implicit_inputs(graph: onnx.GraphProto) -> list[str]:
         """Returns all variables not registered as inputs and not produced by
         an node inside the graph. This inputs are part of the context
         existing in the graph calling this one.
         """
-        if not isinstance(graph, GraphProto):
+        if not isinstance(graph, onnx.GraphProto):
             raise TypeError(f"Unexpected type {type(graph)!r}.")
         local = set()
         known = set()
@@ -460,12 +480,12 @@ class OpRun(abc.ABC):
     def infer_name(cls):
         name = cls.__name__
         if "_" not in name:
-            return name, onnx_opset_version()
+            return name, onnx.defs.onnx_opset_version()
         name, vers = name.rsplit("_", 1)
         try:
             i_vers = int(vers)
         except ValueError:
-            return cls.__name__, onnx_opset_version()
+            return cls.__name__, onnx.defs.onnx_opset_version()
         return name, i_vers
 
     @classmethod
@@ -474,7 +494,7 @@ class OpRun(abc.ABC):
         n_inputs: int | None = None,
         n_outputs: int | None = None,
         **kwargs: Any,
-    ) -> NodeProto:  # type: ignore
+    ) -> onnx.NodeProto:  # type: ignore
         """Creates an ONNX node for this class based on the given information.
 
         Args:
@@ -504,16 +524,16 @@ class OpRun(abc.ABC):
         schema = None
         if n_inputs is None:
             if schema is None:
-                schema = get_schema(op_type, opset, domain)
+                schema = onnx.defs.get_schema(op_type, opset, domain)
             n_inputs = schema.min_input
         if n_outputs is None:
             if schema is None:
-                schema = get_schema(op_type, opset, domain)
+                schema = onnx.defs.get_schema(op_type, opset, domain)
             n_outputs = schema.min_output
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = make_node(op_type, names_in, names_out, **kwargs)
+        node = onnx.helper.make_node(op_type, names_in, names_out, **kwargs)
         return node
 
     @classmethod
@@ -547,7 +567,7 @@ class OpRun(abc.ABC):
             "verbose": verbose,
             "log": log_function,
             "new_ops": None,
-            "opsets": {"": onnx_opset_version()},
+            "opsets": {"": onnx.defs.onnx_opset_version()},
         }
         cl = cls(node, run_params)
         return cl
@@ -598,7 +618,7 @@ class OpFunction(OpRun):
 
     def __init__(
         self,
-        onnx_node: NodeProto,
+        onnx_node: onnx.onnx.NodeProto,
         run_params: dict[str, Any] | None,
         impl: Any = None,
         attributes: dict[str, Any] | None = None,
@@ -648,22 +668,24 @@ class OpFunctionContextDependant(OpFunction):
 
     def __init__(
         self,
-        onnx_node: NodeProto,
+        onnx_node: onnx.NodeProto,
         run_params: dict[str, Any] | None,
         parent: Any = None,
     ):
         OpFunction.__init__(self, onnx_node, run_params, impl=self, attributes={})
         self.parent = parent
         version = parent.opsets[onnx_node.domain]
-        self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)
+        self.schema_ = onnx.defs.get_schema(
+            onnx_node.op_type, version, onnx_node.domain
+        )
 
     def _run(self, *inputs, **kwargs):
         # Input types are known. They are used to properly
         # created the body for this operator.
         types = []
         for t in inputs:
-            dtype = np_dtype_to_tensor_dtype(t.dtype)
-            types.append(make_tensor_type_proto(dtype, t.shape))
+            dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
+            types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)

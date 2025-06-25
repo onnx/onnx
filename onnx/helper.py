@@ -17,25 +17,20 @@ import numpy as np
 import typing_extensions
 
 import onnx
-from onnx import (
+from onnx import _mapping, defs, subbyte
+from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
+from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
     GraphProto,
-    MapProto,
     ModelProto,
     NodeProto,
     OperatorSetIdProto,
-    OptionalProto,
-    SequenceProto,
-    SparseTensorProto,
     TensorProto,
     TensorShapeProto,
     TrainingInfoProto,
     TypeProto,
     ValueInfoProto,
-    _mapping,
-    defs,
-    subbyte,
 )
 
 if TYPE_CHECKING:

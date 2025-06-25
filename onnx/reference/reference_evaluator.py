@@ -9,7 +9,6 @@ from typing import Any
 import numpy as np
 
 import onnx
-from onnx.model_container import ModelContainer
 from onnx.onnx_pb import (
     FunctionProto,
     GraphProto,
@@ -18,12 +17,7 @@ from onnx.onnx_pb import (
     TensorProto,
     TypeProto,
 )
-from onnx.reference.op_run import (
-    OpFunctionContextDependant,
-    OpRun,
-    OpRunExpand,
-    RuntimeContextError,
-)
+from onnx.reference import op_run
 from onnx.reference.ops_optimized import optimized_operators
 
 
@@ -203,7 +197,7 @@ class ReferenceEvaluator:
         opsets: dict[str, int] | None = None,
         functions: list[ReferenceEvaluator | FunctionProto] | None = None,  # type: ignore
         verbose: int = 0,
-        new_ops: list[type[OpRun]] | None = None,
+        new_ops: list[type[op_run.OpRun]] | None = None,
         optimized: bool = True,
     ) -> None:
         if optimized:
@@ -217,8 +211,10 @@ class ReferenceEvaluator:
         self.output_types_ = None
         self.input_types_ = None
 
-        if isinstance(proto, ModelContainer):
-            self.container_: ModelContainer | None = proto
+        from onnx import model_container  # Avoid circular import.
+
+        if isinstance(proto, model_container.ModelContainer):
+            self.container_: model_container.ModelContainer | None = proto
             proto = self.container_.model_proto
         else:
             self.container_ = None
@@ -293,14 +289,14 @@ class ReferenceEvaluator:
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
         self.verbose = verbose
-        self.new_ops_: dict[tuple[str, str], type[OpRun]] = {}
+        self.new_ops_: dict[tuple[str, str], type[op_run.OpRun]] = {}
         if new_ops is not None:
             for cl in new_ops:
                 if not hasattr(cl, "op_domain"):
                     raise AttributeError(
                         f"Class {cl} must define attribute 'op_domain'."
                     )
-                if not issubclass(cl, OpRun):  # type: ignore
+                if not issubclass(cl, op_run.OpRun):  # type: ignore
                     raise TypeError(f"Class {cl} must inherit from OpRun (in new_ops).")
                 key = cl.op_domain, cl.__name__  # type: ignore
                 if key in self.new_ops_:
@@ -425,20 +421,21 @@ class ReferenceEvaluator:
         for node in self.nodes_:
             try:
                 cl = self._load_impl(node)
-            except RuntimeContextError as e:
+            except op_run.RuntimeContextError as e:
                 # A node has a context dependent implementation.
                 # Shape inference must be run to get the input types.
                 if self.all_types_:
                     it = [self.get_result_types(i, exc=False) for i in node.input]
                     if None in it:
                         # One input does not exist. It must be done while executing the graph.
-                        cl = lambda *args, parent=self: OpFunctionContextDependant(  # noqa: E731
-                            *args, parent=parent
-                        )
+                        def cl(*args, parent=self):
+                            return op_run.OpFunctionContextDependant(
+                                *args, parent=parent
+                            )
                     else:
                         cl = self._load_impl(node, it)  # type: ignore
                 else:
-                    raise RuntimeContextError(
+                    raise op_run.RuntimeContextError(
                         f"No implementation was found for node type {node.op_type!r} from domain {node.domain!r}. "
                         f"If this node has a context dependent implementation, you should run function infer_shapes "
                         f"before calling ReferenceEvaluator."
@@ -469,7 +466,7 @@ class ReferenceEvaluator:
             # This mechanism can be used to implement a custom onnx node
             # or to overwrite an existing one.
             cl = self.new_ops_[key]
-            if not issubclass(cl, OpRunExpand):
+            if not issubclass(cl, op_run.OpRunExpand):
                 return cl
             # It must be replaced by its implementation defined in its schema.
             expand = True
@@ -485,7 +482,7 @@ class ReferenceEvaluator:
                     expand=expand,
                     evaluator_cls=self.__class__,
                 )
-            except RuntimeContextError:
+            except op_run.RuntimeContextError:
                 if input_types is None:
                     raise
                 return load_op(
