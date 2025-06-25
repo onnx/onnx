@@ -696,7 +696,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         expected = np.array(
             [0, 0.5, 1, 6, -0.5, -6, -4], dtype=ml_dtypes.float4_e2m1fn
         ).view(np.uint8)
-        np.testing.assert_equal(ynp, expected)
+        np.testing.assert_equal(ynp.view(np.uint8), expected)
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]

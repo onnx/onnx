@@ -342,7 +342,7 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
     if tensor.HasField("segment"):
         raise ValueError("Currently not supporting loading segments.")
     if tensor.data_type == TensorProto.UNDEFINED:
-        raise TypeError("The element type in the input tensor is not defined.")
+        raise TypeError("The element type in the input tensor is UNDEFINED.")
 
     tensor_dtype = tensor.data_type
     np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)

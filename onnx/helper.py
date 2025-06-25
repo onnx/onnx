@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import collections.abc
 import functools
+import math
 import numbers
 import struct
 import typing
@@ -729,7 +730,11 @@ def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
 
 
 def make_tensor(
-    name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
+    name: str,
+    data_type: int,
+    dims: Sequence[int],
+    vals: Sequence[int | float] | bytes | np.ndarray,
+    raw: bool = False,
 ) -> TensorProto:
     """Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
@@ -738,12 +743,12 @@ def make_tensor(
     this case.
 
     Args:
-        name (string): tensor name
-        data_type (int): a value such as onnx.TensorProto.FLOAT
-        dims (List[int]): shape
+        name: tensor name
+        data_type: a value such as onnx.TensorProto.FLOAT
+        dims: shape
         vals: values
-        raw (bool): if True, vals contains the serialized content of the tensor,
-            otherwise, vals should be a list of values of the type defined by *data_type*
+        raw: if True, vals contains the serialized content of the tensor,
+            otherwise, vals should be a list of values of the type defined by ``data_type``.
 
     Returns:
         TensorProto
@@ -751,102 +756,45 @@ def make_tensor(
     tensor = TensorProto()
     tensor.data_type = data_type
     tensor.name = name
+    tensor.dims.extend(dims)
 
     if data_type == TensorProto.STRING and raw:
         raise TypeError("Can not use raw_data to store string type.")
 
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
-    # Check number of vals specified equals tensor size
-    expected_size: float = 1
     if raw:
-        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_MAP maps it to float32, which has the wrong itemsize.
-        if data_type == TensorProto.BFLOAT16:
-            expected_size = 2
-        elif data_type in (
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-        ):
-            expected_size = 1
         # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
-        elif data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
-            expected_size = 0.5
+        if data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
+            expected_size_bytes = 0.5
         else:
-            expected_size = np_dtype.itemsize
-
-    if isinstance(vals, np.ndarray) and len(vals.shape) > 1:
-        vals = vals.flatten()
-    for d in dims:
-        expected_size *= d
-
-    if len(vals) != expected_size:
-        # padding of half a byte is acceptable for 4bit types
-        if not (
-            data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1)
-            and len(vals) == expected_size + 0.5
-        ):
+            expected_size_bytes = np_dtype.itemsize
+        expected_size_bytes *= math.prod(dims)
+        expected_size_bytes = math.ceil(expected_size_bytes)
+        if isinstance(vals, np.ndarray):
+            raw_data = vals.tobytes()
+        elif isinstance(vals, bytes):
+            raw_data = vals
+        else:
+            raise TypeError(
+                f"Raw data must be bytes or numpy.ndarray, but got {type(vals)}."
+            )
+        if len(raw_data) != expected_size_bytes:
             raise ValueError(
-                f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
+                f"Raw data size does not match tensor's size. Expected {expected_size_bytes} bytes, but got {len(raw_data)} bytes."
             )
+        tensor.raw_data = raw_data
+        return tensor
 
-    if raw:
-        tensor.raw_data = vals
+    assert not raw, "Bug: raw should be False at this point."
+
+    if data_type == TensorProto.STRING:
+        vals = np.array(vals).flatten()
     else:
-        if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-            vals = _split_complex_to_pairs(vals)
-        elif data_type == TensorProto.FLOAT16:
-            vals = (
-                np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
-            )
-        elif data_type in (
-            TensorProto.BFLOAT16,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-        ):
-            fcast = {
-                TensorProto.BFLOAT16: _float32_to_bfloat16,
-                TensorProto.FLOAT8E4M3FN: _float32_to_float8e4m3,
-                TensorProto.FLOAT8E4M3FNUZ: lambda *args: _float32_to_float8e4m3(  # type: ignore[misc]
-                    *args, uz=True
-                ),
-                TensorProto.FLOAT8E5M2: _float32_to_float8e5m2,
-                TensorProto.FLOAT8E5M2FNUZ: lambda *args: _float32_to_float8e5m2(  # type: ignore[misc]
-                    *args, fn=True, uz=True
-                ),
-            }[
-                data_type  # type: ignore[index]
-            ]
-            vals = list(
-                map(  # type: ignore[call-overload]
-                    fcast,
-                    np.array(vals).astype(np_dtype).flatten().tolist(),
-                )
-            )
-        elif data_type in (
-            TensorProto.UINT4,
-            TensorProto.INT4,
-        ):
-            signed = data_type == TensorProto.INT4
+        vals = np.asarray(vals, dtype=np_dtype).flatten()
 
-            # Two packed 4-bit values must be represented as a single uint8 value.
-            # Therefore, pack_float32_to_4bit() sets the dtype of the output vals
-            # to uint8 regardless of the value of 'signed'. Using int8 would cause
-            # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
-            # the way negative values are serialized by protobuf).
-            vals = _pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
-        elif data_type == TensorProto.FLOAT4E2M1:
-            vals = _pack_float32_to_float4e2m1(vals).flatten().tolist()
-        elif data_type == TensorProto.BOOL:
-            vals = np.array(vals).astype(int)
-        elif data_type == TensorProto.STRING:
-            vals = np.array(vals).astype(bytes)
-        field = tensor_dtype_to_field(data_type)
-        getattr(tensor, field).extend(vals)
-    tensor.dims.extend(dims)
+    field = tensor_dtype_to_field(data_type)
+    getattr(tensor, field).extend(vals)
     return tensor
 
 
