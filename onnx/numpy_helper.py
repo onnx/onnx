@@ -17,6 +17,9 @@ from onnx.external_data_helper import load_external_data_for_tensor, uses_extern
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+# System is little endian
+_IS_LITTLE_ENDIAN = sys.byteorder == "little"
+
 
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
@@ -311,6 +314,19 @@ def _unpack_int4(
     return _extend_int4_sign_bits(unpacked)
 
 
+def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    odd_sized = size % 2 == 1
+    if odd_sized:
+        array_flat.resize([size + 1], refcheck=False)
+    array_flat &= 0x0F
+    array_flat[1::2] <<= 4
+    return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
+
+
 def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
@@ -385,29 +401,21 @@ def to_array(tensor: TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PL
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
-def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
-    """Converts a numpy array to a tensor def.
+def from_array(array: np.ndarray, /, name: str | None = None) -> TensorProto:
+    """Converts an array into a TensorProto including
 
     Args:
-        arr: a numpy array.
+        array: a numpy array.
         name: (optional) the name of the tensor.
 
     Returns:
         TensorProto: the converted tensor def.
     """
-    if not isinstance(arr, (np.ndarray, np.generic)):
-        raise TypeError(
-            f"arr must be of type np.generic or np.ndarray, got {type(arr)}"
-        )
-
     tensor = TensorProto()
-    tensor.dims.extend(arr.shape)
-    if name:
-        tensor.name = name
-
-    if arr.dtype == object or np.issubdtype(arr.dtype, np.str_):
+    tensor.dims.extend(array.shape)
+    if array.dtype == object or np.issubdtype(array.dtype, np.str_):
         # Special care for strings.
-        tensor.data_type = helper.np_dtype_to_tensor_dtype(arr.dtype)
+        tensor.data_type = TensorProto.STRING
         # TODO: Introduce full string support.
         # We flatten the array in case there are 2-D arrays are specified
         # We throw the error below if we have a 3-D array or some kind of other
@@ -417,16 +425,10 @@ def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
         # is to put them into a flat array then specify type astype(object)
         # (otherwise all strings may have different types depending on their length)
         # and then specify shape .reshape([x, y, z])
-        flat_array = arr.flatten()
+        flat_array = array.flatten()
         for e in flat_array:
             if isinstance(e, str):
                 tensor.string_data.append(e.encode("utf-8"))
-            elif isinstance(e, np.ndarray):
-                for s in e:
-                    if isinstance(s, str):
-                        tensor.string_data.append(s.encode("utf-8"))
-                    elif isinstance(s, bytes):
-                        tensor.string_data.append(s)
             elif isinstance(e, bytes):
                 tensor.string_data.append(e)
             else:
@@ -436,32 +438,20 @@ def _from_array(arr: np.ndarray, name: str | None = None) -> TensorProto:
                 )
         return tensor
 
-    # For numerical types, directly use numpy raw bytes.
-    try:
-        dtype = helper.np_dtype_to_tensor_dtype(arr.dtype)
-    except KeyError as e:
-        raise RuntimeError(f"Numpy data type not understood yet: {arr.dtype!r}") from e
-    tensor.data_type = dtype
-    tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
-    if sys.byteorder == "big":
-        # Convert endian from big to little
-        _convert_endian(tensor)
-
+    dtype = helper.np_dtype_to_tensor_dtype(array.dtype)
+    if dtype in {
+        TensorProto.INT4,
+        TensorProto.UINT4,
+        TensorProto.FLOAT4E2M1,
+    }:
+        # Pack the array into int4
+        array = _pack_4bitx2(array)
+    if not _IS_LITTLE_ENDIAN:
+        array = array.view(array.dtype.newbyteorder("<"))
+    if name:
+        tensor.name = name
+    tensor.raw_data = array.tobytes()
     return tensor
-
-
-def from_array(tensor: np.ndarray, name: str | None = None) -> TensorProto:
-    """Converts an array into a TensorProto including
-
-    Args:
-        tensor: a numpy array.
-        name: (optional) the name of the tensor.
-
-    Returns:
-        TensorProto: the converted tensor def.
-    """
-    # TODO(justinchuby): Implement me
-    raise NotImplementedError()
 
 
 def to_list(sequence: SequenceProto) -> list[Any]:
@@ -695,19 +685,6 @@ def from_optional(
                 "sequence, or map and is not supported."
             )
     return optional
-
-
-def _convert_endian(tensor: TensorProto) -> None:
-    """Call to convert endianness of raw data in tensor.
-
-    Args:
-        tensor: TensorProto to be converted.
-    """
-    tensor_dtype = tensor.data_type
-    np_dtype = helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    tensor.raw_data = (
-        np.frombuffer(tensor.raw_data, dtype=np_dtype).byteswap().tobytes()
-    )
 
 
 def create_random_int(
