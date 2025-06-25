@@ -18,8 +18,7 @@ class TensorDtypeMap(NamedTuple):
 
 
 # tensor_dtype: (numpy type, storage type, string name)
-@property
-def TENSOR_TYPE_MAP() -> dict[int, TensorDtypeMap]:
+def tensor_type_map(dtype: onnx.TensorProto.DataType) -> TensorDtypeMap:
     return {
         int(onnx.TensorProto.FLOAT): TensorDtypeMap(
             np.dtype("float32"), int(onnx.TensorProto.FLOAT), "TensorProto.FLOAT"
@@ -104,4 +103,4 @@ def TENSOR_TYPE_MAP() -> dict[int, TensorDtypeMap]:
             int(onnx.TensorProto.UINT8),
             "TensorProto.FLOAT4E2M1",
         ),
-    }
+    }[dtype]
