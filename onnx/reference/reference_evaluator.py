@@ -8,9 +8,7 @@ from typing import Any
 
 import numpy as np
 
-from onnx import load
-from onnx.defs import onnx_opset_version
-from onnx.external_data_helper import ExternalDataInfo, uses_external_data
+import onnx
 from onnx.model_container import ModelContainer
 from onnx.onnx_pb import (
     FunctionProto,
@@ -25,7 +23,6 @@ from onnx.reference.op_run import (
     OpRun,
     OpRunExpand,
     RuntimeContextError,
-    to_array_extended,
 )
 from onnx.reference.ops_optimized import optimized_operators
 
@@ -228,9 +225,9 @@ class ReferenceEvaluator:
 
         if isinstance(proto, str):
             with open(proto, "rb") as f:
-                proto = load(f)
+                proto = onnx.load(f)
         elif isinstance(proto, bytes):
-            proto = load(BytesIO(proto))
+            proto = onnx.load(BytesIO(proto))
         self.proto_ = proto
         self.functions_: dict[tuple[str, str], ReferenceEvaluator] = {}
         self.attributes_: list[str] = []
@@ -256,7 +253,9 @@ class ReferenceEvaluator:
         elif isinstance(proto, NodeProto):
             self.onnx_graph_ = None  # type: ignore
             self.opsets_ = {
-                proto.domain: 1 if proto.domain != "" else onnx_opset_version()
+                proto.domain: 1
+                if proto.domain != ""
+                else onnx.defs.onnx_opset_version()
             }
         else:
             raise TypeError(f"Unexpected type {type(proto)} for proto.")
@@ -312,7 +311,7 @@ class ReferenceEvaluator:
 
     def retrieve_external_data(self, initializer: TensorProto) -> np.ndarray:
         """Returns a tensor saved as external."""
-        info = ExternalDataInfo(initializer)
+        info = onnx.external_data_helper.ExternalDataInfo(initializer)
         location = info.location
         if self.container_ and self.container_.is_in_memory_external_initializer(
             location
@@ -403,8 +402,8 @@ class ReferenceEvaluator:
         for init in self.inits_:
             self.rt_inits_[init.name] = (
                 self.retrieve_external_data(init)
-                if uses_external_data(init)
-                else to_array_extended(init)
+                if onnx.external_data_helper.uses_external_data(init)
+                else onnx.numpy_helper.to_array(init)
             )
         run_params = {
             "log": lambda pattern, *args: self._log(10, pattern, *args),

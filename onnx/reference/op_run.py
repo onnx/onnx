@@ -16,19 +16,6 @@ from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from onnx import TensorProto
-
-
-def _split_class_name(name):  # type: ignore
-    if "_" in name:
-        prefix, vers = name.rsplit("_", maxsplit=1)
-        try:
-            v = int(vers)
-        except ValueError:
-            return name, None
-        return prefix, v
-    return name, None
-
 
 class RuntimeTypeError(RuntimeError):
     """Raised when a type of a variable is unexpected."""
@@ -115,11 +102,6 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
 
 
-def to_array_extended(tensor: TensorProto) -> np.ndarray:
-    """Alias for :func:`to_array`."""
-    return to_array(tensor)
-
-
 class Graph:
     __slots__ = ("g",)
 
@@ -153,8 +135,8 @@ class OpRun(abc.ABC):
         ],
         AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
         AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
-        AttributeProto.TENSOR: lambda att: to_array_extended(att.t),
-        AttributeProto.TENSORS: lambda att: [to_array_extended(t) for t in att.tensors],
+        AttributeProto.TENSOR: lambda att: to_array(att.t),
+        AttributeProto.TENSORS: lambda att: [to_array(t) for t in att.tensors],
         AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
         AttributeProto.TYPE_PROTOS: lambda att: [OnnxType(t) for t in att.type_protos],
     }
