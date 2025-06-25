@@ -231,6 +231,188 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
+static const char* BitCast_ver24_doc = R"DOC(
+This operator outputs a tensor with the same underlying bits as a given input tensor,
+but reinterpretted as a different data type. Unlike the Cast operator, it doesn't try to
+transform the data - instead the output data has the same binary representation as the
+input just as a new data type. It supports all non-complex types.
+
+When converting from a larger data type `T1` (with size M) to a smaller one `T2` (with size N),
+for an input tensor with some shape `[...]`, the output tensor will have shape `[..., M / N]`.
+This is because each value of type `T1` will be reinterpreted as `M / N` values of type `T2`.
+For example, some `int16` values `[x1, x2, x3, ...]`, which are to be reinterpreted as `int8`,
+would become `[[y1_2, y1_1], [y2_2, y2_1], [y3_2, y3_1], ...]` on little endian systems where
+`ym_n` represents the `n`th byte of `xm`.
+
+When `T1` is smaller than `T2`, the rightmost dimension of `T1` must
+be `N / M`. For example, since two `int8`s can be reinterpreted as a single `int16`,
+a valid input tensor might then be something like `[[x1, x2], [x3, x4]]` where `xn` is
+an `int8` value. This will then be reinterpreted as `[y1, y2]` where, on a little endian
+system, `y1` is an `int16` containing the bits of `x2` as its first byte and the bits of
+`x1` as its second. The same is done for `y2` using `x4` and `x3`.
+
+Strings are also supported by viewing each character as a byte so that this operator supports the
+same types as supported by `Cast`. In the same way that an `int64` is 8 bytes in size, a string of
+8 characters is also treated as being 8 bytes in size and bitcasting ultimately would follow the
+same steps when reinterpreting data both to and from the string type. This does not mean that lengths
+are necessarily restricted to be powers of 2, however.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BitCast,
+    24,
+    OpSchema()
+        .SetDoc(BitCast_ver24_doc)
+        .Attr(
+            "to",
+            "The data type to which the elements of the input tensor are cast. "
+            "Strictly must be one of the types from DataType enum in TensorProto",
+            AttributeProto::INT)
+        .Input(0, "input", "Input tensor to be cast", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor with the data of 'input'"
+            "reinterpreted as the type specified by the 'to' attribute",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_non_complex_tensor_types_ir11(),
+            "Constrain input types. Casting from complex is not supported.")
+        .TypeConstraint(
+            "T2",
+            OpSchema::all_non_complex_tensor_types_ir11(),
+            "Constrain output types. Casting to complex is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          const TypeProto* input_proto = ctx.getInputType(0);
+
+          if (!input_proto->has_tensor_type() || !input_proto->tensor_type().has_elem_type()) {
+            return;
+          }
+
+          if (input_proto->tensor_type().elem_type() == TensorProto_DataType_STRING) {
+            // When we are casting from a string we cannot infer the rank nor the shape
+            // of the output tensor as we do not know the string's length.
+            // A string of length greater than the output type will have a rank greater than
+            // that of a string with a length smaller than the output type, for example.
+            return;
+          }
+
+          const TensorShapeProto input_shape = getInputShape(ctx, 0);
+          int last_dim_value;
+
+          if (input_shape.dim_size() == 0) {
+            last_dim_value = 1;
+          } else {
+            if (!input_shape.dim(input_shape.dim_size() - 1).has_dim_value()) {
+              // Unknown size
+              return;
+            }
+
+            last_dim_value = input_shape.dim(input_shape.dim_size() - 1).dim_value();
+          }
+
+          TensorShapeProto* output_shape = getOutputShape(ctx, 0);
+          const AttributeProto* attr = ctx.getAttribute("to");
+
+          if (!attr || !attr->has_i()) {
+            fail_shape_inference("Attribute 'to' is required.");
+          }
+
+          int32_t types[] = {input_proto->tensor_type().elem_type(), (int32_t)attr->i()};
+          float sizes[2];
+
+          for (int i = 0; i < 2; i++) {
+            int type = types[i];
+
+            switch (type) {
+              case TensorProto_DataType_INT64:
+              case TensorProto_DataType_UINT64:
+              case TensorProto_DataType_DOUBLE:
+                sizes[i] = 8.0f;
+                break;
+              case TensorProto_DataType_INT32:
+              case TensorProto_DataType_UINT32:
+              case TensorProto_DataType_FLOAT:
+                sizes[i] = 4.0f;
+                break;
+              case TensorProto_DataType_INT16:
+              case TensorProto_DataType_UINT16:
+              case TensorProto_DataType_FLOAT16:
+              case TensorProto_DataType_BFLOAT16:
+                sizes[i] = 2.0f;
+                break;
+              case TensorProto_DataType_INT8:
+              case TensorProto_DataType_UINT8:
+              case TensorProto_DataType_FLOAT8E4M3FN:
+              case TensorProto_DataType_FLOAT8E4M3FNUZ:
+              case TensorProto_DataType_FLOAT8E5M2:
+              case TensorProto_DataType_FLOAT8E5M2FNUZ:
+                sizes[i] = 1.0f;
+                break;
+              case TensorProto_DataType_INT4:
+              case TensorProto_DataType_UINT4:
+              case TensorProto_DataType_FLOAT4E2M1:
+                sizes[i] = 0.5f;
+                break;
+              case TensorProto_DataType_BOOL:
+                sizes[i] = 1.0f;
+                break;
+              case TensorProto_DataType_STRING:
+                if (i != 0) {
+                  sizes[i] = last_dim_value * sizes[0];
+                  break;
+                }
+
+                // fall through
+              default:
+                fail_shape_inference(
+                    "Tried to infer from unknown or unsupported data type " + TensorProto_DataType_Name(type) + ".");
+            }
+          }
+
+          if (sizes[0] < sizes[1] && (float)last_dim_value != sizes[1] / sizes[0]) {
+            fail_shape_inference(
+                "When converting from a smaller type (" + TensorProto_DataType_Name(types[0]) + ") to a larger type (" +
+                TensorProto_DataType_Name(types[1]) + "), the rightmost dimension is expected to be " +
+                std::to_string(sizes[1] / sizes[0]) + " but got " + std::to_string(last_dim_value) + " instead.");
+          }
+
+          for (int i = 0; i < input_shape.dim_size(); i++) {
+            TensorShapeProto_Dimension* new_dim;
+
+            if (i == input_shape.dim_size() - 1 && sizes[0] < sizes[1]) {
+              // Going to a larger type, so remove the rightmost dimension
+              break;
+            }
+
+            new_dim = output_shape->add_dim();
+
+            if (input_shape.dim(i).has_dim_value()) {
+              new_dim->set_dim_value(input_shape.dim(i).dim_value());
+            }
+          }
+
+          if (sizes[0] > sizes[1]) {
+            if (fmod(sizes[0], sizes[1]) != 0) {
+              fail_shape_inference(
+                  "When converting from a larger type T1 to a smaller type T2, T1 must be divisible by T2");
+            }
+
+            output_shape->add_dim()->set_dim_value(sizes[0] / sizes[1]);
+          }
+        }));
+
 static const char* Reshape_ver24_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.

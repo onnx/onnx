@@ -289,6 +289,7 @@ from onnx.reference.ops.op_batch_normalization import (
     BatchNormalization_14,
 )
 from onnx.reference.ops.op_bernoulli import Bernoulli
+from onnx.reference.ops.op_bitcast import BitCast
 from onnx.reference.ops.op_bitshift import BitShift
 from onnx.reference.ops.op_bitwise_and import BitwiseAnd
 from onnx.reference.ops.op_bitwise_not import BitwiseNot
