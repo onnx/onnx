@@ -162,11 +162,11 @@ class TestNumpyHelper(unittest.TestCase):
             self.assertEqual(f32, f32_2)
 
     def test_float8e4m3_to_float32(self):
-        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1111110", 2)), 448)
-        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1000", 2)), 2 ** (-6))
-        self.assertEqual(numpy_helper.float8e4m3_to_float32(int("1", 2)), 2 ** (-9))
+        self.assertEqual(numpy_helper._float8e4m3_to_float32(int("1111110", 2)), 448)
+        self.assertEqual(numpy_helper._float8e4m3_to_float32(int("1000", 2)), 2 ** (-6))
+        self.assertEqual(numpy_helper._float8e4m3_to_float32(int("1", 2)), 2 ** (-9))
         self.assertEqual(
-            numpy_helper.float8e4m3_to_float32(int("111", 2)), 0.875 * 2 ** (-6)
+            numpy_helper._float8e4m3_to_float32(int("111", 2)), 0.875 * 2 ** (-6)
         )
         for f in [
             0,
@@ -190,7 +190,7 @@ class TestNumpyHelper(unittest.TestCase):
                 f32 = np.float32(f)
                 f8 = helper._float32_to_float8e4m3(f32)
                 assert isinstance(f8, int)
-                f32_1 = numpy_helper.float8e4m3_to_float32(np.array([f8]))[0]
+                f32_1 = numpy_helper._float8e4m3_to_float32(np.array([f8]))[0]
                 f32_2 = float8e4m3_to_float32(f8)
                 if np.isnan(f32):
                     assert np.isnan(f32_1)
@@ -216,7 +216,7 @@ class TestNumpyHelper(unittest.TestCase):
     )
     def test_float8e4m3_to_float32_round(self, val, expected):
         f8 = helper._float32_to_float8e4m3(val)
-        f32 = numpy_helper.float8e4m3_to_float32(f8)
+        f32 = numpy_helper._float8e4m3_to_float32(f8)
         self.assertEqual(f32, expected)
 
     def test_float8e5m2_to_float32(self):
@@ -266,45 +266,45 @@ class TestNumpyHelper(unittest.TestCase):
     def test_float8_e4m3fn_inf(self):
         x = np.float32(np.inf)
         to = helper._float32_to_float8e4m3(x)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertEqual(back, 448)
 
         x = np.float32(np.inf)
         to = helper._float32_to_float8e4m3(x, saturate=False)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertTrue(np.isnan(back))
 
         x = np.float32(-np.inf)
         to = helper._float32_to_float8e4m3(x)
         self.assertEqual(to & 0x80, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertEqual(back, -448)
 
         x = np.float32(-np.inf)
         to = helper._float32_to_float8e4m3(x, saturate=False)
         self.assertEqual(to & 0x80, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertTrue(np.isnan(back))
 
     def test_float8_e4m3fnuz_inf(self):
         x = np.float32(np.inf)
         to = helper._float32_to_float8e4m3(x, uz=True)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertEqual(back, 240)
 
         x = np.float32(np.inf)
         to = helper._float32_to_float8e4m3(x, uz=True, saturate=False)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertTrue(np.isnan(back))
 
         x = np.float32(-np.inf)
         to = helper._float32_to_float8e4m3(x, uz=True)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertEqual(back, -240)
 
         x = np.float32(-np.inf)
         to = helper._float32_to_float8e4m3(x, uz=True, saturate=False)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertTrue(np.isnan(back))
 
     def test_float8_e5m2_inf(self):
@@ -355,43 +355,43 @@ class TestNumpyHelper(unittest.TestCase):
     def test_float8_e4m3fn_out_of_range(self):
         x = np.float32(1000000)
         to = helper._float32_to_float8e4m3(x)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertEqual(back, 448)
 
         x = np.float32(1000000)
         to = helper._float32_to_float8e4m3(x, saturate=False)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertTrue(np.isnan(back))
 
         x = np.float32(-1000000)
         to = helper._float32_to_float8e4m3(x)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertEqual(back, -448)
 
         x = np.float32(-1000000)
         to = helper._float32_to_float8e4m3(x, saturate=False)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertTrue(np.isnan(back))
 
     def test_float8_e4m3fnuz_out_of_range(self):
         x = np.float32(1000000)
         to = helper._float32_to_float8e4m3(x, uz=True)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertEqual(back, 240)
 
         x = np.float32(1000000)
         to = helper._float32_to_float8e4m3(x, uz=True, saturate=False)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertTrue(np.isnan(back))
 
         x = np.float32(-1000000)
         to = helper._float32_to_float8e4m3(x, uz=True)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertEqual(back, -240)
 
         x = np.float32(-1000000)
         to = helper._float32_to_float8e4m3(x, uz=True, saturate=False)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertTrue(np.isnan(back))
 
     def test_float8_e5m2_out_of_range(self):
@@ -440,25 +440,25 @@ class TestNumpyHelper(unittest.TestCase):
         x = numpy_helper.float8e5m2_to_float32(0x80)  # -0
         to = helper._float32_to_float8e4m3(x)
         self.assertEqual(to, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertEqual(back, 0)
 
         x = numpy_helper.float8e5m2_to_float32(0x80)  # -0
         to = helper._float32_to_float8e4m3(x, saturate=False)
         self.assertEqual(to, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertEqual(back, 0)
 
     def test_float8_e4m3fnuz_negative_zero(self):
         x = numpy_helper.float8e5m2_to_float32(0x80)  # -0
         to = helper._float32_to_float8e4m3(x, uz=True)
         self.assertEqual(to, 0)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertEqual(back, 0)
 
         x = numpy_helper.float8e5m2_to_float32(0x80)  # -0
         to = helper._float32_to_float8e4m3(x, uz=True, saturate=False)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertEqual(back, 0)
         self.assertEqual(to, 0)
 
@@ -466,78 +466,78 @@ class TestNumpyHelper(unittest.TestCase):
         x = numpy_helper.float8e5m2_to_float32(0x80)  # -0
         to = helper.float32_to_float8e5m2(x)
         self.assertEqual(to, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertEqual(back, 0)
 
         x = numpy_helper.float8e5m2_to_float32(0x80)  # -0
         to = helper.float32_to_float8e5m2(x, saturate=False)
         self.assertEqual(to, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertEqual(back, 0)
 
     def test_float8_e5m2fnuz_negative_zero(self):
         x = numpy_helper.float8e5m2_to_float32(0x80)  # -0
         to = helper.float32_to_float8e5m2(x, fn=True, uz=True)
         self.assertEqual(to, 0)
-        back = numpy_helper.float8e4m3_to_float32(to, fn=True, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, fn=True, uz=True)
         self.assertEqual(back, 0)
 
         x = numpy_helper.float8e5m2_to_float32(0x80)  # -0
         to = helper.float32_to_float8e5m2(x, fn=True, uz=True, saturate=False)
         self.assertEqual(to, 0)
-        back = numpy_helper.float8e4m3_to_float32(to, fn=True, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, fn=True, uz=True)
         self.assertEqual(back, 0)
 
     def test_float8_e4m3fn_negative_nan(self):
         x = numpy_helper.float8e5m2_to_float32(255)  # -nan
         to = helper._float32_to_float8e4m3(x)
         self.assertEqual(to, 255)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertTrue(np.isnan(back))
 
         x = numpy_helper.float8e5m2_to_float32(255)  # -nan
         to = helper._float32_to_float8e4m3(x, saturate=False)
         self.assertEqual(to, 255)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertTrue(np.isnan(back))
 
     def test_float8_e4m3fnuz_negative_nan(self):
         x = numpy_helper.float8e5m2_to_float32(255)  # -nan
         to = helper._float32_to_float8e4m3(x, uz=True)
         self.assertEqual(to, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertTrue(np.isnan(back))
 
         x = numpy_helper.float8e5m2_to_float32(255)  # -nan
         to = helper._float32_to_float8e4m3(x, uz=True, saturate=False)
         self.assertEqual(to, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, uz=True)
         self.assertTrue(np.isnan(back))
 
     def test_float8_e5m2_negative_nan(self):
         x = numpy_helper.float8e5m2_to_float32(255)  # -nan
         to = helper.float32_to_float8e5m2(x)
         self.assertEqual(to, 255)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertTrue(np.isnan(back))
 
         x = numpy_helper.float8e5m2_to_float32(255)  # -nan
         to = helper.float32_to_float8e5m2(x, saturate=False)
         self.assertEqual(to, 255)
-        back = numpy_helper.float8e4m3_to_float32(to)
+        back = numpy_helper._float8e4m3_to_float32(to)
         self.assertTrue(np.isnan(back))
 
     def test_float8_e5m2fnuz_negative_nan(self):
         x = numpy_helper.float8e5m2_to_float32(255)  # -nan
         to = helper.float32_to_float8e5m2(x, fn=True, uz=True)
         self.assertEqual(to, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to, fn=True, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, fn=True, uz=True)
         self.assertTrue(np.isnan(back))
 
         x = numpy_helper.float8e5m2_to_float32(255)  # -nan
         to = helper.float32_to_float8e5m2(x, fn=True, uz=True, saturate=False)
         self.assertEqual(to, 0x80)
-        back = numpy_helper.float8e4m3_to_float32(to, fn=True, uz=True)
+        back = numpy_helper._float8e4m3_to_float32(to, fn=True, uz=True)
         self.assertTrue(np.isnan(back))
 
     def test_from_dict_values_are_np_arrays_of_float(self):
