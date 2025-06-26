@@ -788,6 +788,8 @@ def make_tensor(
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
+    # TODO(justinchuby): Pack 4bit types and update complex values to pairs.
+
     field = tensor_dtype_to_field(data_type)
     getattr(tensor, field).extend(vals)
     return tensor
