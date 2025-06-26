@@ -498,7 +498,7 @@ def from_list(
 
     if elem_type == onnx.SequenceProto.TENSOR:
         for tensor in lst:
-            sequence.tensor_values.extend([from_array(tensor)])
+            sequence.tensor_values.extend([from_array(np.asarray(tensor))])
     elif elem_type == onnx.SequenceProto.SEQUENCE:
         for seq in lst:
             sequence.sequence_values.extend([from_list(seq)])
