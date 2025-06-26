@@ -4833,7 +4833,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_from_scalar",
+    "test_bitcast_from_scalar",
 )
 ```
 
@@ -4844,7 +4844,6 @@ expect(
 <summary>bitcast_from_scalar_string</summary>
 
 ```python
-shape = ()
 from_data = np.array("AB")
 
 node = onnx.helper.make_node(
@@ -4862,7 +4861,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_from_scalar_string",
+    "test_bitcast_from_scalar_string",
 )
 ```
 
@@ -4891,7 +4890,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_higher_dimensionality_to_larger_type",
+    "test_bitcast_higher_dimensionality_to_larger_type",
 )
 ```
 
@@ -4927,7 +4926,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_higher_dimensionality_to_larger_type_string",
+    "test_bitcast_higher_dimensionality_to_larger_type_string",
 )
 ```
 
@@ -4956,7 +4955,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_higher_dimensionality_to_smaller_type",
+    "test_bitcast_higher_dimensionality_to_smaller_type",
 )
 ```
 
@@ -4992,7 +4991,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_higher_dimensionality_to_smaller_type_string",
+    "test_bitcast_higher_dimensionality_to_smaller_type_string",
 )
 ```
 
@@ -5021,7 +5020,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_to_scalar",
+    "test_bitcast_to_scalar",
 )
 ```
 
@@ -5049,7 +5048,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_to_scalar_string",
+    "test_bitcast_to_scalar_string",
 )
 ```
 

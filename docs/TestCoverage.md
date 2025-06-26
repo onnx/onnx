@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 183/196 (93.37%, 5 generators excluded) common operators.
+Node tests have covered 184/196 (93.88%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -3785,7 +3785,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_from_scalar",
+    "test_bitcast_from_scalar",
 )
 ```
 
@@ -3794,7 +3794,6 @@ expect(
 <summary>bitcast_from_scalar_string</summary>
 
 ```python
-shape = ()
 from_data = np.array("AB")
 
 node = onnx.helper.make_node(
@@ -3812,7 +3811,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_from_scalar_string",
+    "test_bitcast_from_scalar_string",
 )
 ```
 
@@ -3839,7 +3838,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_higher_dimensionality_to_larger_type",
+    "test_bitcast_higher_dimensionality_to_larger_type",
 )
 ```
 
@@ -3873,7 +3872,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_higher_dimensionality_to_larger_type_string",
+    "test_bitcast_higher_dimensionality_to_larger_type_string",
 )
 ```
 
@@ -3900,7 +3899,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_higher_dimensionality_to_smaller_type",
+    "test_bitcast_higher_dimensionality_to_smaller_type",
 )
 ```
 
@@ -3934,7 +3933,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_higher_dimensionality_to_smaller_type_string",
+    "test_bitcast_higher_dimensionality_to_smaller_type_string",
 )
 ```
 
@@ -3961,7 +3960,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_to_scalar",
+    "test_bitcast_to_scalar",
 )
 ```
 
@@ -3987,7 +3986,7 @@ expect(
     node,
     [input_tensor],
     [output_tensor],
-    f"test_bitcast_to_scalar_string",
+    "test_bitcast_to_scalar_string",
 )
 ```
 
