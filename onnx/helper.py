@@ -199,7 +199,7 @@ def make_graph(
     initializer: Sequence[TensorProto] | None = None,
     doc_string: str | None = None,
     value_info: Sequence[ValueInfoProto] | None = None,
-    sparse_initializer: Sequence[SparseTensorProto] | None = None,
+    sparse_initializer: Sequence[onnx.SparseTensorProto] | None = None,
 ) -> GraphProto:
     """Construct a GraphProto
 
@@ -211,7 +211,7 @@ def make_graph(
         initializer: list of TensorProto
         doc_string (string): graph documentation
         value_info: list of ValueInfoProto
-        sparse_initializer: list of SparseTensorProto
+        sparse_initializer: list of onnx.SparseTensorProto
     Returns:
         GraphProto
     """
@@ -795,7 +795,7 @@ def make_tensor(
 
 def make_sparse_tensor(
     values: TensorProto, indices: TensorProto, dims: Sequence[int]
-) -> SparseTensorProto:
+) -> onnx.SparseTensorProto:
     """Construct a SparseTensorProto
 
     Args:
@@ -806,7 +806,7 @@ def make_sparse_tensor(
     Returns:
         SparseTensorProto
     """
-    sparse = SparseTensorProto()
+    sparse = onnx.SparseTensorProto()
     sparse.values.CopyFrom(values)
     sparse.indices.CopyFrom(indices)
     sparse.dims.extend(dims)
@@ -939,7 +939,7 @@ def make_attribute(
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
         attr.type = AttributeProto.TENSOR
-    elif isinstance(value, SparseTensorProto):
+    elif isinstance(value, onnx.SparseTensorProto):
         attr.sparse_tensor.CopyFrom(value)
         attr.type = AttributeProto.SPARSE_TENSOR
     elif isinstance(value, GraphProto):
@@ -962,7 +962,7 @@ def make_attribute(
                 (numbers.Real, AttributeProto.FLOATS),
                 ((str, bytes), AttributeProto.STRINGS),
                 (TensorProto, AttributeProto.TENSORS),
-                (SparseTensorProto, AttributeProto.SPARSE_TENSORS),
+                (onnx.SparseTensorProto, AttributeProto.SPARSE_TENSORS),
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):

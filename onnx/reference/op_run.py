@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import abc
-import functools
 from typing import TYPE_CHECKING, Any
 
 import numpy as np

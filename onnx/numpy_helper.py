@@ -6,7 +6,6 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING, Any
 
-import ml_dtypes
 import numpy as np
 import numpy.typing as npt
 import typing_extensions
