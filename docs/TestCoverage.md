@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 183/195 (93.85%, 5 generators excluded) common operators.
+Node tests have covered 184/196 (93.88%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4108,6 +4108,388 @@ node = onnx.helper.make_node(
 x = np.random.uniform(0.0, 1.0, 10).astype(float)
 y = bernoulli_reference_implementation(x, float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
+```
+
+</details>
+
+
+### BitCast
+There are 9 test cases, listed as following:
+<details>
+<summary>bitcast</summary>
+
+```python
+# Test that bitcasting some sample data
+# from one data type to another gives
+# expected results.
+
+shape = np.array([32], dtype=np.int32)
+
+# Random combinations of bits for each size
+from_data_4 = np.random.randint(15, size=shape, dtype=np.uint8)
+from_data_8 = np.random.randint(255, size=shape, dtype=np.uint8)
+from_data_16 = np.random.randint(65535, size=shape, dtype=np.uint16)
+from_data_32 = np.random.randint(4294967295, size=shape, dtype=np.uint32)
+from_data_64 = np.random.randint(
+    18446744073709551615, size=shape, dtype=np.uint64
+)
+
+# Random string of characters
+string_data = np.array(
+    [
+        "".join(np.random.choice(list(string.ascii_letters), size=(8)))
+        for _ in range(32)
+    ]
+)
+
+# Random true/false values
+bool_data = np.random.choice([True, False], size=shape)
+
+# Test data to use for each data type
+data_map = {
+    TensorProto.FLOAT: from_data_32,
+    TensorProto.UINT8: from_data_8,
+    TensorProto.INT8: from_data_8,
+    TensorProto.UINT16: from_data_16,
+    TensorProto.INT16: from_data_16,
+    TensorProto.INT32: from_data_32,
+    TensorProto.INT64: from_data_64,
+    TensorProto.FLOAT16: from_data_16,
+    TensorProto.DOUBLE: from_data_64,
+    TensorProto.UINT32: from_data_32,
+    TensorProto.UINT64: from_data_64,
+    TensorProto.BFLOAT16: from_data_16,
+    TensorProto.FLOAT8E4M3FN: from_data_8,
+    TensorProto.FLOAT8E4M3FNUZ: from_data_8,
+    TensorProto.FLOAT8E5M2: from_data_8,
+    TensorProto.FLOAT8E5M2FNUZ: from_data_8,
+    TensorProto.UINT4: from_data_4,
+    TensorProto.INT4: from_data_4,
+    TensorProto.FLOAT4E2M1: from_data_4,
+    TensorProto.STRING: string_data,
+    TensorProto.BOOL: bool_data,
+}
+
+# Same as the Cast test cases
+test_cases = [
+    (TensorProto.FLOAT, TensorProto.FLOAT16),
+    (TensorProto.FLOAT, TensorProto.DOUBLE),
+    (TensorProto.FLOAT16, TensorProto.FLOAT),
+    (TensorProto.FLOAT16, TensorProto.DOUBLE),
+    (TensorProto.DOUBLE, TensorProto.FLOAT),
+    (TensorProto.DOUBLE, TensorProto.FLOAT16),
+    (TensorProto.FLOAT, TensorProto.STRING),
+    (TensorProto.STRING, TensorProto.FLOAT),
+    (TensorProto.FLOAT, TensorProto.BFLOAT16),
+    (TensorProto.BFLOAT16, TensorProto.FLOAT),
+    (TensorProto.FLOAT, TensorProto.FLOAT8E4M3FN),
+    (TensorProto.FLOAT16, TensorProto.FLOAT8E4M3FN),
+    (TensorProto.FLOAT, TensorProto.FLOAT8E4M3FNUZ),
+    (TensorProto.FLOAT16, TensorProto.FLOAT8E4M3FNUZ),
+    (TensorProto.FLOAT8E4M3FN, TensorProto.FLOAT),
+    (TensorProto.FLOAT8E4M3FN, TensorProto.FLOAT16),
+    (TensorProto.FLOAT8E4M3FNUZ, TensorProto.FLOAT),
+    (TensorProto.FLOAT8E4M3FNUZ, TensorProto.FLOAT16),
+    (TensorProto.FLOAT, TensorProto.FLOAT8E5M2),
+    (TensorProto.FLOAT16, TensorProto.FLOAT8E5M2),
+    (TensorProto.FLOAT, TensorProto.FLOAT8E5M2FNUZ),
+    (TensorProto.FLOAT16, TensorProto.FLOAT8E5M2FNUZ),
+    (TensorProto.FLOAT8E5M2, TensorProto.FLOAT),
+    (TensorProto.FLOAT8E5M2, TensorProto.FLOAT16),
+    (TensorProto.FLOAT8E5M2FNUZ, TensorProto.FLOAT),
+    (TensorProto.FLOAT8E5M2FNUZ, TensorProto.FLOAT16),
+    (TensorProto.FLOAT, TensorProto.UINT4),
+    (TensorProto.FLOAT16, TensorProto.UINT4),
+    (TensorProto.FLOAT, TensorProto.INT4),
+    (TensorProto.FLOAT16, TensorProto.INT4),
+    (TensorProto.UINT4, TensorProto.FLOAT),
+    (TensorProto.UINT4, TensorProto.FLOAT16),
+    (TensorProto.UINT4, TensorProto.UINT8),
+    (TensorProto.INT4, TensorProto.FLOAT),
+    (TensorProto.INT4, TensorProto.FLOAT16),
+    (TensorProto.INT4, TensorProto.INT8),
+    (TensorProto.FLOAT4E2M1, TensorProto.FLOAT),
+    (TensorProto.FLOAT4E2M1, TensorProto.FLOAT16),
+    (TensorProto.FLOAT, TensorProto.FLOAT4E2M1),
+    (TensorProto.FLOAT16, TensorProto.FLOAT4E2M1),
+]
+
+for from_type, to_type in test_cases:
+    from_data = data_map[from_type]
+
+    # If we are converting to string then make sure
+    # we are only using values in the ASCII character
+    # range.
+    if to_type == TensorProto.STRING:
+        from_data = from_data.clip(33, 126)
+
+    node = onnx.helper.make_node(
+        "BitCast",
+        inputs=["input"],
+        outputs=["output"],
+        to=to_type,
+    )
+
+    four_bit_types = [
+        TensorProto.INT4,
+        TensorProto.UINT4,
+        TensorProto.FLOAT4E2M1,
+    ]
+    from_size = (
+        typeof(from_type).itemsize if from_type not in four_bit_types else 0.5
+    )
+    to_size = typeof(to_type).itemsize if to_type not in four_bit_types else 0.5
+
+    if to_size > from_size:
+        from_data = from_data.reshape(-1, int(to_size // from_size))
+
+    if to_type == TensorProto.STRING:
+        from_data = from_data.reshape(-1, 4)
+
+    if from_type not in [TensorProto.STRING, TensorProto.BOOL]:
+        from_data = from_data.view(typeof(from_type))
+
+    input_tensor = onnx.helper.make_tensor(
+        "input", from_type, from_data.shape, from_data
+    )
+    output_tensor = expected_bitcast(input_tensor, to_type)
+
+    from_str = onnx.helper.tensor_dtype_to_string(from_type).split(".")[-1]
+    to_str = onnx.helper.tensor_dtype_to_string(to_type).split(".")[-1]
+    expect(
+        node,
+        [input_tensor],
+        [output_tensor],
+        f"test_bitcast_{from_str}_to_{to_str}",
+    )
+```
+
+</details>
+<details>
+<summary>bitcast_from_scalar</summary>
+
+```python
+shape = ()
+from_data = np.random.randint(65535, size=shape, dtype=np.uint16)
+
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["input"],
+    outputs=["output"],
+    to=TensorProto.UINT8,
+)
+
+input_tensor = onnx.helper.make_tensor(
+    "input", TensorProto.UINT16, from_data.shape, from_data.reshape(1)
+)
+output_tensor = expected_bitcast(input_tensor, TensorProto.UINT8)
+expect(
+    node,
+    [input_tensor],
+    [output_tensor],
+    "test_bitcast_from_scalar",
+)
+```
+
+</details>
+<details>
+<summary>bitcast_from_scalar_string</summary>
+
+```python
+from_data = np.array("AB")
+
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["input"],
+    outputs=["output"],
+    to=TensorProto.UINT8,
+)
+
+input_tensor = onnx.helper.make_tensor(
+    "input", TensorProto.STRING, from_data.shape, from_data.reshape(1)
+)
+output_tensor = expected_bitcast(input_tensor, TensorProto.UINT8)
+expect(
+    node,
+    [input_tensor],
+    [output_tensor],
+    "test_bitcast_from_scalar_string",
+)
+```
+
+</details>
+<details>
+<summary>bitcast_higher_dimensionality_to_larger_type</summary>
+
+```python
+shape = (32, 32, 2)
+from_data = np.random.randint(255, size=shape, dtype=np.uint8)
+
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["input"],
+    outputs=["output"],
+    to=TensorProto.UINT16,
+)
+
+input_tensor = onnx.helper.make_tensor(
+    "input", TensorProto.UINT8, from_data.shape, from_data
+)
+output_tensor = expected_bitcast(input_tensor, TensorProto.UINT16)
+expect(
+    node,
+    [input_tensor],
+    [output_tensor],
+    "test_bitcast_higher_dimensionality_to_larger_type",
+)
+```
+
+</details>
+<details>
+<summary>bitcast_higher_dimensionality_to_larger_type_string</summary>
+
+```python
+from_data = np.array(
+    [
+        [
+            "".join(np.random.choice(list(string.ascii_letters), size=(8)))
+            for _ in range(32)
+        ]
+    ]
+    * 32
+)
+
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["input"],
+    outputs=["output"],
+    to=TensorProto.UINT16,
+)
+
+input_tensor = onnx.helper.make_tensor(
+    "input", TensorProto.STRING, from_data.shape, from_data
+)
+output_tensor = expected_bitcast(input_tensor, TensorProto.UINT16)
+expect(
+    node,
+    [input_tensor],
+    [output_tensor],
+    "test_bitcast_higher_dimensionality_to_larger_type_string",
+)
+```
+
+</details>
+<details>
+<summary>bitcast_higher_dimensionality_to_smaller_type</summary>
+
+```python
+shape = (32, 32, 2)
+from_data = np.random.randint(65535, size=shape, dtype=np.uint16)
+
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["input"],
+    outputs=["output"],
+    to=TensorProto.UINT8,
+)
+
+input_tensor = onnx.helper.make_tensor(
+    "input", TensorProto.UINT16, from_data.shape, from_data
+)
+output_tensor = expected_bitcast(input_tensor, TensorProto.UINT8)
+expect(
+    node,
+    [input_tensor],
+    [output_tensor],
+    "test_bitcast_higher_dimensionality_to_smaller_type",
+)
+```
+
+</details>
+<details>
+<summary>bitcast_higher_dimensionality_to_smaller_type_string</summary>
+
+```python
+from_data = np.array(
+    [
+        [
+            "".join(np.random.choice(list(string.ascii_letters), size=(8)))
+            for _ in range(32)
+        ]
+    ]
+    * 32
+)
+
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["input"],
+    outputs=["output"],
+    to=TensorProto.UINT8,
+)
+
+input_tensor = onnx.helper.make_tensor(
+    "input", TensorProto.STRING, from_data.shape, from_data
+)
+output_tensor = expected_bitcast(input_tensor, TensorProto.UINT8)
+expect(
+    node,
+    [input_tensor],
+    [output_tensor],
+    "test_bitcast_higher_dimensionality_to_smaller_type_string",
+)
+```
+
+</details>
+<details>
+<summary>bitcast_to_scalar</summary>
+
+```python
+shape = 2
+from_data = np.random.randint(255, size=shape, dtype=np.uint8)
+
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["input"],
+    outputs=["output"],
+    to=TensorProto.UINT16,
+)
+
+input_tensor = onnx.helper.make_tensor(
+    "input", TensorProto.UINT8, from_data.shape, from_data
+)
+output_tensor = expected_bitcast(input_tensor, TensorProto.UINT16)
+expect(
+    node,
+    [input_tensor],
+    [output_tensor],
+    "test_bitcast_to_scalar",
+)
+```
+
+</details>
+<details>
+<summary>bitcast_to_scalar_string</summary>
+
+```python
+from_data = np.array([65, 66])
+
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["input"],
+    outputs=["output"],
+    to=TensorProto.STRING,
+)
+
+input_tensor = onnx.helper.make_tensor(
+    "input", TensorProto.UINT8, from_data.shape, from_data
+)
+output_tensor = expected_bitcast(input_tensor, TensorProto.STRING)
+expect(
+    node,
+    [input_tensor],
+    [output_tensor],
+    "test_bitcast_to_scalar_string",
+)
 ```
 
 </details>
