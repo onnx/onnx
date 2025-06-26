@@ -15,10 +15,10 @@ _acceptable_str_dtypes = ("U", "O")
 class RegexFullMatch(OpRun):
     def _run(self, x, pattern=None):
         # Note: The ONNX specification states that the pattern MUST
-        # to follow re2 syntax. Python's own re package appears to
+        # follow the re2 syntax. Python's own re package appears to
         # cover a superset of re2's functionality, albeit definitive
         # sources are difficult to find. Since the Python bindings to
-        # re2 appear unmaintained this operator is implemented using
+        # re2 appear unmaintained, this operator is implemented using
         # the re module for the time being. This may change if
         # discrepancies surface in the future.
 
