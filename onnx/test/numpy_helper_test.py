@@ -305,6 +305,7 @@ class TestNumpyHelper(unittest.TestCase):
             np.nan,
         ]:
             with self.subTest(f=f):
+                f32 = np.float32(f)
                 f8 = np.array(f, dtype=ml_dtypes.float8_e5m2)
                 f32_1 = f8.astype(np.float32).item()
                 f32_2 = float8e5m2_to_float32(f8.view(np.uint8).item())
@@ -312,8 +313,8 @@ class TestNumpyHelper(unittest.TestCase):
                     assert np.isnan(f32_1)
                     assert np.isnan(f32_2)
                 else:
-                    self.assertEqual(f, f32_1)
-                    self.assertEqual(f, f32_2)
+                    self.assertEqual(f32, f32_1)
+                    self.assertEqual(f32, f32_2)
 
     def test_float8_e4m3fn_inf(self):
         x = np.float32(np.inf)
