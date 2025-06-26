@@ -17,14 +17,8 @@ def _saturating_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
     of the target dtype are clamped to the maximum or minimum representable
     value of that dtype.
     """
-    max_val = ml_dtypes.finfo(dtype).max
-    min_val = ml_dtypes.finfo(dtype).min
-    max_mask = x > max_val
-    min_mask = x < min_val
-    x = x.astype(dtype)
-    x[max_mask] = max_val
-    x[min_mask] = min_val
-    return x
+    finfo = ml_dtypes.finfo(dtype)
+    return np.clip(x, finfo.min, finfo.max).astype(dtype)
 
 
 def cast_to(x: np.ndarray, to: onnx.TensorProto.DataType, saturate: bool):
