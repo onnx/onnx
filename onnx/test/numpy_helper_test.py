@@ -150,10 +150,9 @@ class TestNumpyHelper(unittest.TestCase):
     )
     def test_bfloat16_to_float32(self, f):
         f32 = np.float32(f)
-        bf16 = helper._float32_to_bfloat16(f32)
-        assert isinstance(bf16, int)
-        f32_1 = numpy_helper.bfloat16_to_float32(np.array([bf16]))[0]
-        f32_2 = bfloat16_to_float32(bf16)
+        bf16 = f32.astype(ml_dtypes.bfloat16)
+        f32_1 = bf16.astype(np.float32)
+        f32_2 = bfloat16_to_float32(bf16.view(np.uint16).item())
         if np.isnan(f32):
             assert np.isnan(f32_1)
             assert np.isnan(f32_2)
@@ -163,19 +162,19 @@ class TestNumpyHelper(unittest.TestCase):
 
     def test_float8e4m3_to_float32(self):
         self.assertEqual(
-            numpy_helper._float8e4m3_to_float32(int("1111110", 2), fn=True, uz=False),
+            np.array(int("1111110", 2), dtype=np.uint8).view(ml_dtypes.float8_e4m3fn).astype(np.float32),
             448,
         )
         self.assertEqual(
-            numpy_helper._float8e4m3_to_float32(int("1000", 2), fn=True, uz=False),
+            np.array(int("1000", 2), dtype=np.uint8).view(ml_dtypes.float8_e4m3fn).astype(np.float32),
             2 ** (-6),
         )
         self.assertEqual(
-            numpy_helper._float8e4m3_to_float32(int("1", 2), fn=True, uz=False),
+            np.array(int("1", 2), dtype=np.uint8).view(ml_dtypes.float8_e4m3fn).astype(np.float32),
             2 ** (-9),
         )
         self.assertEqual(
-            numpy_helper._float8e4m3_to_float32(int("111", 2), fn=True, uz=False),
+            np.array(int("111", 2), dtype=np.uint8).view(ml_dtypes.float8_e4m3fn).astype(np.float32),
             0.875 * 2 ** (-6),
         )
         for f in [
@@ -226,76 +225,75 @@ class TestNumpyHelper(unittest.TestCase):
             (1.8131605, 1.875),
         ]
     )
-    def test_float8e4m3_to_float32_round(self, val, expected):
-        f8 = helper._float32_to_float8e4m3(val)
-        f32 = numpy_helper._float8e4m3_to_float32(f8, fn=True, uz=False)
-        self.assertEqual(f32, expected)
+    def test_float8e4m3_to_float32_round(self, val: float, expected: float):
+        rounded = np.array(val).astype(ml_dtypes.float8_e4m3fn).astype(np.float32).item()
+        self.assertEqual(rounded, expected)
 
     def test_float8e5m2_to_float32(self):
         self.assertEqual(
-            numpy_helper._float8e5m2_to_float32(int("1111011", 2), fn=False, uz=False),
+            np.array(int("1111011", 2), dtype=np.uint8).view(ml_dtypes.float8_e5m2).item(),
             57344,
         )
         self.assertEqual(
-            numpy_helper._float8e5m2_to_float32(int("100", 2), fn=False, uz=False),
+            np.array(int("100", 2), dtype=np.uint8).view(ml_dtypes.float8_e5m2).item(),
             2 ** (-14),
         )
         self.assertEqual(
-            numpy_helper._float8e5m2_to_float32(int("11", 2), fn=False, uz=False),
+            np.array(int("11", 2), dtype=np.uint8).view(ml_dtypes.float8_e5m2).item(),
             0.75 * 2 ** (-14),
         )
         self.assertEqual(
-            numpy_helper._float8e5m2_to_float32(int("1", 2), fn=False, uz=False),
+            np.array(int("1", 2), dtype=np.uint8).view(ml_dtypes.float8_e5m2).item(),
             2 ** (-16),
         )
         self.assertTrue(
             np.isnan(
-                numpy_helper._float8e5m2_to_float32(
-                    int("1111101", 2), fn=False, uz=False
-                )
+                np.array(
+                    int("1111101", 2), dtype=np.uint8
+                ).view(ml_dtypes.float8_e5m2).item()
             )
         )
         self.assertTrue(
             np.isnan(
-                numpy_helper._float8e5m2_to_float32(
-                    int("1111110", 2), fn=False, uz=False
-                )
+                np.array(
+                    int("1111110", 2), dtype=np.uint8
+                ).view(ml_dtypes.float8_e5m2).item()
             )
         )
         self.assertTrue(
             np.isnan(
-                numpy_helper._float8e5m2_to_float32(
-                    int("1111111", 2), fn=False, uz=False
-                )
+                np.array(
+                    int("1111111", 2), dtype=np.uint8
+                ).view(ml_dtypes.float8_e5m2).item()
             )
         )
         self.assertTrue(
             np.isnan(
-                numpy_helper._float8e5m2_to_float32(
-                    int("11111101", 2), fn=False, uz=False
-                )
+                np.array(
+                    int("11111101", 2), dtype=np.uint8
+                ).view(ml_dtypes.float8_e5m2).item()
             )
         )
         self.assertTrue(
             np.isnan(
-                numpy_helper._float8e5m2_to_float32(
-                    int("11111110", 2), fn=False, uz=False
-                )
+                np.array(
+                    int("11111110", 2), dtype=np.uint8
+                ).view(ml_dtypes.float8_e5m2).item()
             )
         )
         self.assertTrue(
             np.isnan(
-                numpy_helper._float8e5m2_to_float32(
-                    int("11111111", 2), fn=False, uz=False
-                )
+                np.array(
+                    int("11111111", 2), dtype=np.uint8
+                ).view(ml_dtypes.float8_e5m2).item()
             )
         )
         self.assertEqual(
-            numpy_helper._float8e5m2_to_float32(int("1111100", 2), fn=False, uz=False),
+            np.array(int("1111100", 2), dtype=np.uint8).view(ml_dtypes.float8_e5m2),
             np.inf,
         )
         self.assertEqual(
-            numpy_helper._float8e5m2_to_float32(int("11111100", 2), fn=False, uz=False),
+            np.array(int("11111100", 2), dtype=np.uint8).view(ml_dtypes.float8_e5m2),
             -np.inf,
         )
         for f in [
@@ -307,19 +305,15 @@ class TestNumpyHelper(unittest.TestCase):
             np.nan,
         ]:
             with self.subTest(f=f):
-                f32 = np.float32(f)
-                f8 = helper._float32_to_float8e5m2(f32)
-                assert isinstance(f8, int)
-                f32_1 = numpy_helper._float8e5m2_to_float32(
-                    np.array([f8]), fn=False, uz=False
-                )[0]
-                f32_2 = float8e5m2_to_float32(f8)
-                if np.isnan(f32):
+                f8 = np.array(f, dtype=ml_dtypes.float8_e5m2)
+                f32_1 = f8.astype(np.float32).item()
+                f32_2 = float8e5m2_to_float32(f8.view(np.uint8).item())
+                if np.isnan(f):
                     assert np.isnan(f32_1)
                     assert np.isnan(f32_2)
                 else:
-                    self.assertEqual(f32, f32_1)
-                    self.assertEqual(f32, f32_2)
+                    self.assertEqual(f, f32_1)
+                    self.assertEqual(f, f32_2)
 
     def test_float8_e4m3fn_inf(self):
         x = np.float32(np.inf)

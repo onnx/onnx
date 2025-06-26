@@ -533,11 +533,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
         np.testing.assert_allclose(numpy_helper.to_array(tensor).view(np.uint16), array)
 
     def test_make_float8e4m3fn_tensor_raw(self) -> None:
-        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
-        f8 = np.array(
-            [helper._float32_to_float8e4m3(x) for x in expected], dtype=np.uint8
-        )
-        packed_values = f8.tobytes()
+        expected = np.array([0, 0.5, 1, 448, 10], dtype=ml_dtypes.float8_e4m3fn)
+        packed_values = expected.tobytes()
         y = helper.make_tensor(
             name="test",
             data_type=TensorProto.FLOAT8E4M3FN,
@@ -547,7 +544,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(
-            ynp.view(np.uint8), expected.astype(ml_dtypes.float8_e4m3fn).view(np.uint8)
+            ynp.view(np.uint8), expected.view(np.uint8)
         )
 
     def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
@@ -571,11 +568,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
 
     def test_make_float8e5m2_tensor_raw(self) -> None:
-        expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
-        f8 = np.array(
-            [helper.float32_to_float8e5m2(x) for x in expected], dtype=np.uint8
-        )
-        packed_values = f8.tobytes()
+        expected = np.array([0, 0.5, 1, 49152, 10], dtype=ml_dtypes.float8_e5m2)
+        packed_values = expected.tobytes()
         y = helper.make_tensor(
             name="test",
             data_type=TensorProto.FLOAT8E5M2,
@@ -585,16 +579,12 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(
-            ynp.view(np.uint8), expected.astype(ml_dtypes.float8_e5m2).view(np.uint8)
+            ynp.view(np.uint8), expected.view(np.uint8)
         )
 
     def test_make_float8e5m2fnuz_tensor_raw(self) -> None:
-        expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
-        f8 = np.array(
-            [helper.float32_to_float8e5m2(x, fn=True, uz=True) for x in expected],
-            dtype=np.uint8,
-        )
-        packed_values = f8.tobytes()
+        expected = np.array([0, 0.5, 1, 49152, 10], dtype=ml_dtypes.float8_e5m2fnuz)
+        packed_values = expected.tobytes()
         y = helper.make_tensor(
             name="test",
             data_type=TensorProto.FLOAT8E5M2FNUZ,
@@ -605,7 +595,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(
             ynp.view(np.uint8),
-            expected.astype(ml_dtypes.float8_e5m2fnuz).view(np.uint8),
+            expected.view(np.uint8)
         )
 
     @parameterized.parameterized.expand(
