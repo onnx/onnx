@@ -1,6 +1,11 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import string
+
 import numpy as np
-from numpy.typing import ArrayLike
 
 import onnx
 from onnx import TensorProto
@@ -53,7 +58,7 @@ def expected_bitcast(input: TensorProto, to: TensorProto.DataType) -> TensorProt
     shape = tuple(input.dims)
 
     if from_size > to_size:
-        shape = shape + (int(from_size // to_size),)
+        shape = (*shape, int(from_size // to_size))
     elif from_size < to_size:
         shape = shape[:-1]
 
@@ -235,7 +240,7 @@ class BitCast(Base):
             node,
             [input_tensor],
             [output_tensor],
-            f"test_bitcast_higher_dimensionality_to_larger_type",
+            "test_bitcast_higher_dimensionality_to_larger_type",
         )
 
     @staticmethod
@@ -258,7 +263,7 @@ class BitCast(Base):
             node,
             [input_tensor],
             [output_tensor],
-            f"test_bitcast_higher_dimensionality_to_smaller_type",
+            "test_bitcast_higher_dimensionality_to_smaller_type",
         )
 
     @staticmethod
@@ -288,7 +293,7 @@ class BitCast(Base):
             node,
             [input_tensor],
             [output_tensor],
-            f"test_bitcast_higher_dimensionality_to_larger_type_string",
+            "test_bitcast_higher_dimensionality_to_larger_type_string",
         )
 
     @staticmethod
@@ -318,7 +323,7 @@ class BitCast(Base):
             node,
             [input_tensor],
             [output_tensor],
-            f"test_bitcast_higher_dimensionality_to_smaller_type_string",
+            "test_bitcast_higher_dimensionality_to_smaller_type_string",
         )
 
     @staticmethod
@@ -341,7 +346,7 @@ class BitCast(Base):
             node,
             [input_tensor],
             [output_tensor],
-            f"test_bitcast_from_scalar",
+            "test_bitcast_from_scalar",
         )
 
     @staticmethod
@@ -364,12 +369,11 @@ class BitCast(Base):
             node,
             [input_tensor],
             [output_tensor],
-            f"test_bitcast_to_scalar",
+            "test_bitcast_to_scalar",
         )
 
     @staticmethod
     def export_bitcast_from_scalar_string() -> None:
-        shape = ()
         from_data = np.array("AB")
 
         node = onnx.helper.make_node(
@@ -387,7 +391,7 @@ class BitCast(Base):
             node,
             [input_tensor],
             [output_tensor],
-            f"test_bitcast_from_scalar_string",
+            "test_bitcast_from_scalar_string",
         )
 
     @staticmethod
@@ -409,5 +413,5 @@ class BitCast(Base):
             node,
             [input_tensor],
             [output_tensor],
-            f"test_bitcast_to_scalar_string",
+            "test_bitcast_to_scalar_string",
         )

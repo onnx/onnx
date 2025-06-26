@@ -1,10 +1,15 @@
-import sys
-from typing import Optional
-import numpy as np
-from numpy.typing import NDArray
+# Copyright (c) ONNX Project Contributors
 
-from onnx import TensorProto
+# SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
+import sys
+from typing import TYPE_CHECKING
+
+import numpy as np
+
 import onnx
+from onnx import TensorProto
 from onnx.reference.custom_element_types import (
     bfloat16,
     float4e2m1,
@@ -14,6 +19,9 @@ from onnx.reference.custom_element_types import (
     float8e5m2fnuz,
 )
 from onnx.reference.op_run import OpRun
+
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
 
 
 def typeof(data_type: TensorProto.DataType) -> np.dtype:
@@ -53,7 +61,7 @@ def unpack(X: NDArray[np.uint8 | np.int8]) -> NDArray[np.uint8]:
     # Reverse of `pack`.
     signed = X.dtype == np.int8
     X = X.view(np.uint8).flatten()
-    Y = np.zeros(X.shape[:-1] + (X.shape[-1] * 2,), dtype=np.uint8)
+    Y = np.zeros((*X.shape[:-1], X.shape[-1] * 2), dtype=np.uint8)
     lo = (X & 0xF).view(np.uint8)
     hi = ((X & 0xF0) >> 4).view(np.uint8)
 
@@ -68,7 +76,7 @@ def unpack(X: NDArray[np.uint8 | np.int8]) -> NDArray[np.uint8]:
 
 class BitCast(OpRun):
     def _run(
-        self, X: NDArray, to: Optional[TensorProto.DataType] = None
+        self, X: NDArray, to: TensorProto.DataType | None = None
     ) -> tuple[NDArray]:
         if X.dtype.type in [np.str_, np.object_]:
             X = X.astype("S")
@@ -98,7 +106,7 @@ class BitCast(OpRun):
             # If the size of the "from" data type T1 > the size of the
             # "to" data type T2, the shape should go from [...] to
             # [..., sizeof(T1)/sizeof(T2)]
-            to_data = to_data.reshape(from_shape + (int(from_size // to_size),))
+            to_data = to_data.reshape((*from_shape, int(from_size // to_size)))
         elif from_size < to_size:
             # If the size of T1 < the size of T2, reshape from
             # [..., sizeof(T2)/sizeof(T1)] to [...]
