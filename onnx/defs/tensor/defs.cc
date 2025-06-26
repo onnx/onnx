@@ -82,7 +82,6 @@ The rules then become:
 | \[x\] > FLT_MAX   | NaN    | NaN      | Inf  | NaN      |
 | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
 | else              | RNE    | RNE      | RNE  | RNE      |
-
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
