@@ -69,7 +69,7 @@ concurrency:
 
 jobs:
 
-  call-ubuntu:
+  call-linux:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux.yml
     with:
@@ -110,7 +110,7 @@ jobs:
     name: Check for Publish release build to pypi
     runs-on: ubuntu-latest
 
-    needs: [call-ubuntu, call-mac, call-win_x86, call-sdist]
+    needs: [call-linux, call-mac, call-win_x86, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-')
 
     steps:
@@ -138,8 +138,8 @@ jobs:
     name: Check for Publish preview build to test.pypi-weekly
     runs-on: ubuntu-latest
 
-    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly   == 'yes' ) && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
       - name: print debug vars
@@ -191,8 +191,8 @@ jobs:
     name: Check for Publish release build to test.pypi (rc-candidates)
     runs-on: ubuntu-latest
 
-    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes' ) && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes') && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
       - name: print debug vars
@@ -243,7 +243,7 @@ jobs:
     name: Check for Publish preview build to pypi-weekly
     runs-on: ubuntu-latest
 
-    needs: [call-ubuntu, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
 
     steps:

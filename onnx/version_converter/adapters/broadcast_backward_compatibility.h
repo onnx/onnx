@@ -42,7 +42,7 @@ class BroadcastBackwardCompatibility final : public Adapter {
         "not have broadcastable inputs.",
         name().c_str(),
         initial_version().version(),
-        target_version().version());
+        target_version().version())
     if (req_broadcast == 1) {
       // If conditional is not fulfilled, we have a default broadcast
       // Add broadcast attribute

@@ -214,7 +214,7 @@ class InliningRenamer : private MutableVisitor {
     // for inputs. However, for outputs we use a unique dummy name to handle the case that it
     // is used in an output-context where it is not optional.
     ONNX_ASSERTM(
-        actuals.size() <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters");
+        actuals.size() <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters")
     auto& current_scope = rename_scopes.back();
     int i = 0;
     for (; i < actuals.size(); ++i) {
@@ -375,7 +375,7 @@ const TypeProto& GetType(const ModelProto& model, const std::string& var) {
     if (vi.name() == var)
       return vi.type();
   }
-  ONNX_ASSERTM(false, "Type unknown for %s", var.c_str());
+  ONNX_ASSERTM(false, "Type unknown for %s", var.c_str())
 }
 
 void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int target_version) {

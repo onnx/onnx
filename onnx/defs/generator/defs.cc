@@ -9,7 +9,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver19_doc = R"DOC(
+static const char* Constant_ver23_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
@@ -18,7 +18,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     23,
     OpSchema()
-        .SetDoc(Constant_ver19_doc)
+        .SetDoc(Constant_ver23_doc)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -59,7 +59,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* ConstantOfShape_ver20_doc = R"DOC(
+static const char* ConstantOfShape_ver23_doc = R"DOC(
 Generate a tensor with given value and shape.
 )DOC";
 
@@ -67,7 +67,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     23,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver20_doc)
+        .SetDoc(ConstantOfShape_ver23_doc)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -136,8 +136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor. If not specified,"
-            "the data type of the input tensor T1 is used. If input tensor T1 is also not"
-            "specified, then type defaults to 'float'.",
+            " the data type of the input tensor T1 is used.",
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Input(0, "input", "2D input tensor to copy shape, and optionally, type information from.", "T1")

@@ -14,7 +14,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Cast_ver19_doc = R"DOC(
+static const char* Cast_ver23_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
@@ -85,7 +85,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Cast,
     23,
     OpSchema()
-        .SetDoc(Cast_ver19_doc)
+        .SetDoc(Cast_ver23_doc)
         .Attr(
             "to",
             "The data type to which the elements of the input tensor are cast. "
@@ -128,7 +128,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* CastLike_ver21_doc = R"DOC(
+static const char* CastLike_ver23_doc = R"DOC(
 The operator casts the elements of a given input tensor (the first input) to
 the same data type as the elements of the second input tensor.
 See documentation of the Cast operator for further details.
@@ -138,7 +138,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     23,
     OpSchema()
-        .SetDoc(CastLike_ver21_doc)
+        .SetDoc(CastLike_ver23_doc)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -378,7 +378,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Reshape_ver19_doc = R"DOC(
+static const char* Reshape_ver23_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
@@ -398,7 +398,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     23,
     OpSchema()
-        .SetDoc(Reshape_ver19_doc)
+        .SetDoc(Reshape_ver23_doc)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -542,7 +542,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shape_ver19_doc = R"DOC(
+static const char* Shape_ver23_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 Optional attributes start and end can be used to compute a slice of the input tensor's shape.
 If start axis is omitted, the slice starts from axis 0.
@@ -587,7 +587,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     23,
     OpSchema()
-        .SetDoc(Shape_ver19_doc)
+        .SetDoc(Shape_ver23_doc)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -645,7 +645,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Size_ver19_doc = R"DOC(
+static const char* Size_ver23_doc = R"DOC(
 Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 )DOC";
 
@@ -653,7 +653,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Size,
     23,
     OpSchema()
-        .SetDoc(Size_ver19_doc)
+        .SetDoc(Size_ver23_doc)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
@@ -1240,7 +1240,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Transpose_ver13_doc = R"DOC(
+static const char* Transpose_ver23_doc = R"DOC(
 Transpose the input tensor similar to numpy.transpose. For example, when
 perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
 will be (2, 1, 3).
@@ -1250,7 +1250,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
     23,
     OpSchema()
-        .SetDoc(Transpose_ver13_doc)
+        .SetDoc(Transpose_ver23_doc)
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions, "
@@ -1882,7 +1882,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Squeeze_ver13_doc = R"DOC(
+static const char* Squeeze_ver23_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes an input `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
@@ -1893,7 +1893,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     23,
     OpSchema()
-        .SetDoc(Squeeze_ver13_doc)
+        .SetDoc(Squeeze_ver23_doc)
         .Input(
             0,
             "data",
@@ -1985,7 +1985,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* Unsqueeze_ver13_doc = R"DOC(
+static const char* Unsqueeze_ver23_doc = R"DOC(
 Insert single-dimensional entries to the shape of an input tensor (`data`).
 Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
@@ -2002,7 +2002,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     23,
     OpSchema()
-        .SetDoc(Unsqueeze_ver13_doc)
+        .SetDoc(Unsqueeze_ver23_doc)
         .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -3752,7 +3752,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver19_doc = R"DOC(
+static const char* Pad_ver23_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
@@ -3859,7 +3859,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Pad,
     23,
     OpSchema().FillUsing(PadDocGenerator(
-        Pad_ver19_doc,
+        Pad_ver23_doc,
         "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`",
         OpSchema::all_tensor_types_ir11(),
         "Constrain input and output types to all tensor types up to IRv11.")));

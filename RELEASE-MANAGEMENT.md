@@ -17,8 +17,8 @@ Branch cuts for a new release are planned every 4 months. However, the times can
 | Minor Version | Release branch cut | Release date | First patch release date | Second patch release date|
 | --- | --- | --- | --- | --- |
 | 1.17.0 | XYZ | XYZ | Not planned | Not planned |
-| 1.18.0 | Mar 2025 | Mai 2025 | Not planned | Not planned |
-| 1.19.0 (tbd) | July 2025 | August 2024 | Not planned |  Not planned |
+| 1.18.0 | Mar 2025 | May 2025 | Not planned | Not planned |
+| 1.19.0 (tbd) | July 2025 | August 2025 | Not planned |  Not planned |
 | 1.20.0 (tbd) | November 2025 | Dez 2025 | Not planned | Not planned |
 
 

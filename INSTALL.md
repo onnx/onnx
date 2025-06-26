@@ -71,6 +71,32 @@ set CMAKE_ARGS='-DONNX_USE_LITE_PROTO=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON'
 pip install -e . -v
 ```
 
+### Conda-forge-based development environment
+
+A conda-forge-based development environment is also provided.
+After installing the [pixi package manager](https://prefix.dev/), users may directly execute any of the following commands. Upon doing so pixi will install the required dependencies automatically in isolated environments.
+Running
+
+```sh
+pixi run install
+```
+
+builds and installs the `onnx` package into the default environment.
+After the installation has completed one can run the gtest and pytest suites via the pixi-tasks of the same name:
+
+```sh
+pixi run gtest
+```
+
+and
+
+```sh
+pixi run pytest
+```
+
+Further task for re-generating the operator documentation (`pixi run gen-docs`), setting-up lintrunner (`pixi run lintrunner-init`), and executing lintrunner (`pixi run lintrunner-run`) are also available.
+
+
 #### Old instructions
 
 If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building Protobuf locally also lets you control the version of Protobuf. The tested and recommended version is 5.29.2.
