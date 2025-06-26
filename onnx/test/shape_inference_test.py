@@ -426,6 +426,32 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_larger_to_smaller(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.UINT16, (2, 4, 3))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.UINT8)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (2, 4, 3, 2))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_smaller_to_larger(self, _, version) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.UINT8, (2, 4, 2))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.UINT16)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT16, (2, 4))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     @parameterized.expand(all_versions_for("Col2Im"))
     def test_col2im(self, _, version) -> None:
         graph = self._make_graph(
