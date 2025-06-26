@@ -201,6 +201,7 @@ class OpRun(abc.ABC):
                 f"evaluator_cls must be specified to evaluate att={att}"
             )
             return evaluator_cls(
+                att.g,
                 opsets=self.run_params["opsets"],
                 verbose=max(0, self.run_params.get("verbose", 0) - 2),
                 new_ops=None if new_ops is None else list(new_ops.values()),
