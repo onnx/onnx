@@ -88,7 +88,7 @@ def _reshape_input(
 
 
 class _CommonQuantizeLinear(OpRun):
-    def _run(  # noqa: PLR0911
+    def _run(
         self,
         x: np.ndarray,
         y_scale: np.ndarray,
