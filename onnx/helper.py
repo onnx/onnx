@@ -665,7 +665,7 @@ def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarr
         array_flat = np.append(array_flat, np.array([0]))
 
     def single_func(x, y) -> np.ndarray:
-        return subbyte._float32x2_to_4bitx2(x, y, signed)
+        return subbyte.float32x2_to_4bitx2(x, y, signed)
 
     func = np.frompyfunc(single_func, 2, 1)
 
@@ -694,7 +694,7 @@ def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
 
-    arr = subbyte._float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
+    arr = subbyte.float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
     return arr.astype(np.uint8)
 
 
