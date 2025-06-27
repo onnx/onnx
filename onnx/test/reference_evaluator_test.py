@@ -41,9 +41,6 @@ from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
-    _float32_to_bfloat16,
-    _float32_to_float8e4m3,
-    _float32_to_float8e5m2,
     make_function,
     make_graph,
     make_model,

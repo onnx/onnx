@@ -5,13 +5,11 @@
 
 from __future__ import annotations
 
-import ml_dtypes
 import numpy as np
 
-from onnx import TensorProto, subbyte
+import onnx
+from onnx import TensorProto
 from onnx.helper import (
-    _float32_to_float8e4m3,
-    _float32_to_float8e5m2,
     np_dtype_to_tensor_dtype,
     tensor_dtype_to_np_dtype,
 )
@@ -89,10 +87,6 @@ def _reshape_input(
     return value
 
 
-float32_to_float8e4m3 = np.vectorize(_float32_to_float8e4m3)
-float32_to_float8e5m2 = np.vectorize(_float32_to_float8e5m2)
-
-
 class _CommonQuantizeLinear(OpRun):
     def _run(  # noqa: PLR0911
         self,
@@ -142,39 +136,26 @@ class _CommonQuantizeLinear(OpRun):
             quant_range = _QUANT_INTEGER_RANGES[tensor_type]
             return (np.clip(xi, quant_range[0], quant_range[1]).astype(dtype),)
 
-        if tensor_type == TensorProto.FLOAT8E4M3FN:
-            f8 = float32_to_float8e4m3(x, saturate=saturate)
-            return (f8.astype(ml_dtypes.float8_e4m3fn),)
-
-        if tensor_type == TensorProto.FLOAT8E4M3FNUZ:
-            f8 = float32_to_float8e4m3(x, uz=True, saturate=saturate)
-            return (f8.astype(ml_dtypes.float8_e4m3fnuz),)
-
-        if tensor_type == TensorProto.FLOAT8E5M2:
-            f8 = float32_to_float8e5m2(x, saturate=saturate)
-            return (f8.astype(ml_dtypes.float8_e5m2),)
-
-        if tensor_type == TensorProto.FLOAT8E5M2FNUZ:
-            f8 = float32_to_float8e5m2(x, fn=True, uz=True, saturate=saturate)
-            return (f8.astype(ml_dtypes.float8_e5m2fnuz),)
+        if tensor_type in {
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+        }:
+            if saturate:
+                return (onnx.numpy_helper.saturating_cast(x, dtype=tensor_dtype_to_np_dtype(tensor_type)),)
+            else:
+                return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         if tensor_type in (TensorProto.UINT4, TensorProto.INT4):
             xi = np.rint(x).astype(np.int32)
             xi += zero_point
 
-            def single_func(x):
-                return subbyte._float32_to_4bit_unpacked(
-                    x, signed=(tensor_type == TensorProto.INT4)
-                )
-
-            func = np.vectorize(single_func)
-            i4 = func(xi)
-            return (i4,)
+            return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         if tensor_type == TensorProto.FLOAT4E2M1:
             x += zero_point
-            f4 = subbyte._float32_to_float4e2m1_unpacked(x)
-            return (f4.astype(ml_dtypes.float4_e2m1fn),)
+            return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."
