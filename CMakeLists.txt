@@ -117,6 +117,8 @@ if(MSVC)
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
   add_compile_options(/MP /utf-8 /nologo)
+  # operands are different enum types
+  add_compile_options(/wd5287)
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
