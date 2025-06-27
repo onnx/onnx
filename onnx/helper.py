@@ -357,17 +357,13 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
-def float32_to_bfloat16(*args, **kwargs) -> int:
-    return _float32_to_bfloat16(*args, **kwargs)
-
-
-# convert a float32 value to a bfloat16 (as int)
-# By default, this conversion rounds-to-nearest-even and supports NaN
-# Setting `truncate` to True enables a simpler conversion. In this mode the
-# conversion is performed by simply dropping the 2 least significant bytes of
-# the significand. In this mode an error of up to 1 bit may be introduced and
-# preservation of NaN values is not be guaranteed.
-def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
+def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
+    # convert a float32 value to a bfloat16 (as int)
+    # By default, this conversion rounds-to-nearest-even and supports NaN
+    # Setting `truncate` to True enables a simpler conversion. In this mode the
+    # conversion is performed by simply dropping the 2 least significant bytes of
+    # the significand. In this mode an error of up to 1 bit may be introduced and
+    # preservation of NaN values is not be guaranteed.
     ival = int.from_bytes(struct.pack("<f", fval), "little")
     if truncate:
         return ival >> 16
@@ -383,11 +379,7 @@ def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
-def float32_to_float8e4m3(*args, **kwargs) -> int:
-    return _float32_to_float8e4m3(*args, **kwargs)
-
-
-def _float32_to_float8e4m3(  # noqa: PLR0911
+def float32_to_float8e4m3(
     fval: float,
     scale: float = 1.0,
     fn: bool = True,
@@ -524,11 +516,7 @@ def _float32_to_float8e4m3(  # noqa: PLR0911
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
-def float32_to_float8e5m2(*args: Any, **kwargs: Any) -> int:
-    return _float32_to_float8e5m2(*args, **kwargs)
-
-
-def _float32_to_float8e5m2(  # noqa: PLR0911
+def float32_to_float8e5m2(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = False,
@@ -658,10 +646,6 @@ def _float32_to_float8e5m2(  # noqa: PLR0911
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
-    return _pack_float32_to_4bit(array, signed)
-
-
-def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
     """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
     See :ref:`onnx-detail-int4` for technical details.
 
@@ -693,10 +677,6 @@ def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndar
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
 def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
-    return _pack_float32_to_float4e2m1(array)
-
-
-def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     """Convert an array of float32 value to float4e2m1 and pack every two concecutive elements in a byte.
     See :ref:`onnx-detail-float4` for technical details.
 
@@ -716,6 +696,7 @@ def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
 
     arr = subbyte._float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
     return arr.astype(np.uint8)
+
 
 def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
     """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
