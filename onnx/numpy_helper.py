@@ -266,7 +266,7 @@ def _unpacked_float4e2m1_to_float32(
     return val
 
 
-def _unpack_uint4(
+def _unpack_4bit(
     data: npt.NDArray[np.uint8], dims: Sequence[int]
 ) -> npt.NDArray[np.uint8]:
     """Convert a packed uint4 array to unpacked uint4 array represented as uint8.
@@ -351,12 +351,16 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             onnx.TensorProto.FLOAT4E2M1,
         }:
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            return _unpack_uint4(data, dims).view(np_dtype)
+            return _unpack_4bit(data, dims).view(np_dtype)
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
 
-    # float16 is stored as int32 (uint16 type); Need view to get the original value
-    if tensor_dtype in {onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16}:
+    if tensor_dtype in {
+        onnx.TensorProto.BFLOAT16,
+        onnx.TensorProto.FLOAT16,
+        onnx.TensorProto.INT16,
+        onnx.TensorProto.UINT16,
+    }:
         return np.array(tensor.int32_data, dtype=np.uint16).reshape(dims).view(np_dtype)
 
     if tensor_dtype in {
@@ -364,6 +368,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E4M3FNUZ,
         onnx.TensorProto.FLOAT8E5M2,
         onnx.TensorProto.FLOAT8E5M2FNUZ,
+        onnx.TensorProto.BOOL,
     }:
         return np.array(tensor.int32_data, dtype=np.uint8).reshape(dims).view(np_dtype)
 
@@ -372,8 +377,8 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.INT4,
         onnx.TensorProto.FLOAT4E2M1,
     }:
-        data = np.array(tensor.int32_data, dtype=np.uint32).astype(np.uint8)
-        return _unpack_uint4(data, dims).view(np_dtype)
+        data = np.array(tensor.int32_data, dtype=np.uint8)
+        return _unpack_4bit(data, dims).view(np_dtype)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (onnx.TensorProto.COMPLEX64, onnx.TensorProto.COMPLEX128):
