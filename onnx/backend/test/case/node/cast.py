@@ -151,14 +151,22 @@ class Cast(Base):
                 ).reshape([3, 4])
                 input_shape = (3, 4)
 
-            if from_type == "FLOAT8E4M3FN":
-                TODO(justinchuby): here
-            input = make_tensor(
-                "input", from_dtype, input_shape, vals=np_fp32.astype(from_np_dtype)
-            )
-            output = make_tensor(
-                "output", to_dtype, input_shape, vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype)
-            )
+            if from_type in f8_types:
+                input = make_tensor(
+                    "input", from_dtype, input_shape, vals=onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
+                )
+            else:
+                input = make_tensor(
+                    "input", from_dtype, input_shape, vals=np_fp32.astype(from_np_dtype)
+                )
+            if to_type in f8_types:
+                output = make_tensor(
+                    "output", to_dtype, input_shape, vals=onnx.numpy_helper.saturating_cast(np_fp32, to_np_dtype)
+                )
+            else:
+                output = make_tensor(
+                    "output", to_dtype, input_shape, vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype)
+                )
             node = onnx.helper.make_node(
                 "Cast",
                 inputs=["input"],

@@ -3,22 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import ml_dtypes
 import numpy as np
 
 import onnx
 from onnx.reference.op_run import OpRun
-
-
-def _saturating_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
-    """Saturating cast for float8 and float4 types.
-
-    This function ensures that values outside the representable range
-    of the target dtype are clamped to the maximum or minimum representable
-    value of that dtype.
-    """
-    finfo = ml_dtypes.finfo(dtype)
-    return np.clip(x, finfo.min, finfo.max).astype(dtype)
 
 
 def cast_to(x: np.ndarray, to: onnx.TensorProto.DataType, saturate: bool):
@@ -36,7 +24,7 @@ def cast_to(x: np.ndarray, to: onnx.TensorProto.DataType, saturate: bool):
         }
         and saturate
     ):
-        return _saturating_cast(x, dtype)
+        return onnx.numpy_helper.saturating_cast(x, dtype)
 
     return x.astype(dtype)
 

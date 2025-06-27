@@ -6,6 +6,7 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING, Any
 
+import ml_dtypes
 import numpy as np
 import numpy.typing as npt
 import typing_extensions
@@ -698,3 +699,14 @@ def create_random_int(
         return np.random.randint(start, end, size=input_shape).astype(dtype)
     else:
         raise TypeError(f"{dtype} is not supported by create_random_int.")
+
+
+def saturating_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
+    """Saturating cast for float8 and float4 types.
+
+    This function ensures that values outside the representable range
+    of the target dtype are clamped to the maximum or minimum representable
+    value of that dtype.
+    """
+    finfo = ml_dtypes.finfo(dtype)
+    return np.clip(x, finfo.min, finfo.max).astype(dtype)
