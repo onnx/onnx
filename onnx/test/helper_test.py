@@ -543,9 +543,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(
-            ynp.view(np.uint8), expected.view(np.uint8)
-        )
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
@@ -578,9 +576,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(
-            ynp.view(np.uint8), expected.view(np.uint8)
-        )
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     def test_make_float8e5m2fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 49152, 10], dtype=ml_dtypes.float8_e5m2fnuz)
@@ -593,10 +589,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(
-            ynp.view(np.uint8),
-            expected.view(np.uint8)
-        )
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     @parameterized.parameterized.expand(
         itertools.product(

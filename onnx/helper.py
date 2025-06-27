@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 
 import google.protobuf.message
 import numpy as np
-import typing_extensions
 import numpy.typing as npt
+import typing_extensions
 
 import onnx
 from onnx import defs, subbyte
@@ -379,7 +379,7 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
 )
-def float32_to_float8e4m3(
+def float32_to_float8e4m3(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = True,
@@ -781,8 +781,12 @@ def make_tensor(
         vals = vals.view(np.float32)
     elif data_type == TensorProto.BFLOAT16:
         vals = vals.view(np.uint16)
-    elif data_type in {TensorProto.FLOAT8E4M3FN, TensorProto.FLOAT8E4M3FNUZ
-                       , TensorProto.FLOAT8E5M2, TensorProto.FLOAT8E5M2FNUZ}:
+    elif data_type in {
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    }:
         vals = vals.view(np.uint8)
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation

@@ -162,19 +162,27 @@ class TestNumpyHelper(unittest.TestCase):
 
     def test_float8e4m3_to_float32(self):
         self.assertEqual(
-            np.array(int("1111110", 2), dtype=np.uint8).view(ml_dtypes.float8_e4m3fn).astype(np.float32),
+            np.array(int("1111110", 2), dtype=np.uint8)
+            .view(ml_dtypes.float8_e4m3fn)
+            .astype(np.float32),
             448,
         )
         self.assertEqual(
-            np.array(int("1000", 2), dtype=np.uint8).view(ml_dtypes.float8_e4m3fn).astype(np.float32),
+            np.array(int("1000", 2), dtype=np.uint8)
+            .view(ml_dtypes.float8_e4m3fn)
+            .astype(np.float32),
             2 ** (-6),
         )
         self.assertEqual(
-            np.array(int("1", 2), dtype=np.uint8).view(ml_dtypes.float8_e4m3fn).astype(np.float32),
+            np.array(int("1", 2), dtype=np.uint8)
+            .view(ml_dtypes.float8_e4m3fn)
+            .astype(np.float32),
             2 ** (-9),
         )
         self.assertEqual(
-            np.array(int("111", 2), dtype=np.uint8).view(ml_dtypes.float8_e4m3fn).astype(np.float32),
+            np.array(int("111", 2), dtype=np.uint8)
+            .view(ml_dtypes.float8_e4m3fn)
+            .astype(np.float32),
             0.875 * 2 ** (-6),
         )
         for f in [
@@ -226,12 +234,16 @@ class TestNumpyHelper(unittest.TestCase):
         ]
     )
     def test_float8e4m3_to_float32_round(self, val: float, expected: float):
-        rounded = np.array(val).astype(ml_dtypes.float8_e4m3fn).astype(np.float32).item()
+        rounded = (
+            np.array(val).astype(ml_dtypes.float8_e4m3fn).astype(np.float32).item()
+        )
         self.assertEqual(rounded, expected)
 
     def test_float8e5m2_to_float32(self):
         self.assertEqual(
-            np.array(int("1111011", 2), dtype=np.uint8).view(ml_dtypes.float8_e5m2).item(),
+            np.array(int("1111011", 2), dtype=np.uint8)
+            .view(ml_dtypes.float8_e5m2)
+            .item(),
             57344,
         )
         self.assertEqual(
@@ -248,44 +260,44 @@ class TestNumpyHelper(unittest.TestCase):
         )
         self.assertTrue(
             np.isnan(
-                np.array(
-                    int("1111101", 2), dtype=np.uint8
-                ).view(ml_dtypes.float8_e5m2).item()
+                np.array(int("1111101", 2), dtype=np.uint8)
+                .view(ml_dtypes.float8_e5m2)
+                .item()
             )
         )
         self.assertTrue(
             np.isnan(
-                np.array(
-                    int("1111110", 2), dtype=np.uint8
-                ).view(ml_dtypes.float8_e5m2).item()
+                np.array(int("1111110", 2), dtype=np.uint8)
+                .view(ml_dtypes.float8_e5m2)
+                .item()
             )
         )
         self.assertTrue(
             np.isnan(
-                np.array(
-                    int("1111111", 2), dtype=np.uint8
-                ).view(ml_dtypes.float8_e5m2).item()
+                np.array(int("1111111", 2), dtype=np.uint8)
+                .view(ml_dtypes.float8_e5m2)
+                .item()
             )
         )
         self.assertTrue(
             np.isnan(
-                np.array(
-                    int("11111101", 2), dtype=np.uint8
-                ).view(ml_dtypes.float8_e5m2).item()
+                np.array(int("11111101", 2), dtype=np.uint8)
+                .view(ml_dtypes.float8_e5m2)
+                .item()
             )
         )
         self.assertTrue(
             np.isnan(
-                np.array(
-                    int("11111110", 2), dtype=np.uint8
-                ).view(ml_dtypes.float8_e5m2).item()
+                np.array(int("11111110", 2), dtype=np.uint8)
+                .view(ml_dtypes.float8_e5m2)
+                .item()
             )
         )
         self.assertTrue(
             np.isnan(
-                np.array(
-                    int("11111111", 2), dtype=np.uint8
-                ).view(ml_dtypes.float8_e5m2).item()
+                np.array(int("11111111", 2), dtype=np.uint8)
+                .view(ml_dtypes.float8_e5m2)
+                .item()
             )
         )
         self.assertEqual(
