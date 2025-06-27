@@ -271,8 +271,8 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.0/protobuf-31.0.tar.gz)
-    set(ProtobufSHA1 c0cecb7cfc881f56a5b09f00a965aae408265fd0)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz)
+    set(ProtobufSHA1 da10aaa3bf779735a8a9acde1256a47ce5d148be)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -282,7 +282,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.31.0")
+    set(Protobuf_VERSION "6.31.1")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -437,6 +437,8 @@ if(MSVC)
                               # possible loss of data
                       /wd4141 # 'inline': used more than once
   )
+  # operands are different enum types
+  add_compile_options(/wd5287)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
