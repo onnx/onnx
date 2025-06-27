@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 import google.protobuf.message
 import numpy as np
 import typing_extensions
+import numpy.typing as npt
 
 import onnx
 from onnx import defs, subbyte
@@ -351,13 +352,6 @@ def set_metadata_props(
 
 def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
-
-
-def _split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
-    return [
-        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
-        for i in range(len(ca) * 2)
-    ]
 
 
 @typing_extensions.deprecated(
@@ -723,6 +717,18 @@ def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
     arr = subbyte._float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
     return arr.astype(np.uint8)
 
+def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    odd_sized = size % 2 == 1
+    if odd_sized:
+        array_flat.resize([size + 1], refcheck=False)
+    array_flat &= 0x0F
+    array_flat[1::2] <<= 4
+    return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
+
 
 def make_tensor(
     name: str,
@@ -760,7 +766,7 @@ def make_tensor(
 
     if raw:
         # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
-        if data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
+        if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
             expected_size_bytes = 0.5
         else:
             expected_size_bytes = np_dtype.itemsize
@@ -788,7 +794,18 @@ def make_tensor(
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
-    # TODO(justinchuby): Pack 4bit types and update complex values to pairs.
+    if data_type == TensorProto.COMPLEX128:
+        vals = vals.view(np.float64)
+    elif data_type == TensorProto.COMPLEX64:
+        vals = vals.view(np.float32)
+    elif data_type == TensorProto.BFLOAT16:
+        vals = vals.view(np.uint16)
+    elif data_type in {TensorProto.FLOAT8E4M3FN, TensorProto.FLOAT8E4M3FNUZ
+                       , TensorProto.FLOAT8E5M2, TensorProto.FLOAT8E5M2FNUZ}:
+        vals = vals.view(np.uint8)
+    elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+        # Convert to packed 4-bit representation
+        vals = _pack_4bitx2(vals)
 
     field = tensor_dtype_to_field(data_type)
     getattr(tensor, field).extend(vals)
@@ -1612,15 +1629,10 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
         int(TensorProto.FLOAT): "float_data",
         int(TensorProto.INT32): "int32_data",
         int(TensorProto.INT64): "int64_data",
-        int(TensorProto.UINT8): "int32_data",
-        int(TensorProto.UINT16): "int32_data",
         int(TensorProto.DOUBLE): "double_data",
-        int(TensorProto.COMPLEX64): "float_data",
-        int(TensorProto.COMPLEX128): "double_data",
         int(TensorProto.UINT32): "uint64_data",
         int(TensorProto.UINT64): "uint64_data",
         int(TensorProto.STRING): "string_data",
-        int(TensorProto.BOOL): "int32_data",
     }
     return storage_tensor_type_to_field[
         _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
