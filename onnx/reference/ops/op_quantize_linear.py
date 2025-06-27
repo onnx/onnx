@@ -143,7 +143,11 @@ class _CommonQuantizeLinear(OpRun):
             TensorProto.FLOAT8E5M2FNUZ,
         }:
             if saturate:
-                return (onnx.numpy_helper.saturating_cast(x, dtype=tensor_dtype_to_np_dtype(tensor_type)),)
+                return (
+                    onnx.numpy_helper.saturating_cast(
+                        x, dtype=tensor_dtype_to_np_dtype(tensor_type)
+                    ),
+                )
             else:
                 return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 

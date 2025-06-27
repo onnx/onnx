@@ -23,6 +23,7 @@ from os import getenv
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
+import ml_dtypes
 import numpy as np
 import parameterized
 import version_utils
@@ -3593,9 +3594,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
-        expected1 = np.array([_float32_to_bfloat16(x) for x in data])
+        expected = data.astype(ml_dtypes.bfloat16)
         got = ref.run(None, {"X": data})
-        self.assertEqual(expected1.tolist(), got[0].tolist())
+        np.testing.assert_array_equal(expected, got[0])
 
     def test_quantize_linear_e4m3(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
