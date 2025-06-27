@@ -3,33 +3,23 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import sys
+import itertools
 
-import ml_dtypes
 import numpy as np
 
-import itertools
 import onnx
-from onnx import TensorProto, helper, subbyte
+from onnx import TensorProto
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 from onnx.helper import (
-    tensor_dtype_to_np_dtype,
     make_tensor,
-    tensor_dtype_to_field,
+    tensor_dtype_to_np_dtype,
 )
-from onnx.numpy_helper import (
-    _float8e4m3_to_float32,
-    _float8e5m2_to_float32,
-    _unpacked_float4e2m1_to_float32,
-)
-from onnx.subbyte import _float32_to_float4e2m1_unpacked
 
 
 class Cast(Base):
     @staticmethod
     def export() -> None:
-        shape = (3, 4)
         all_numeric_dtypes = [
             "FLOAT",
             "UINT8",
@@ -52,9 +42,7 @@ class Cast(Base):
             "INT4",
             "FLOAT4E2M1",
         ]
-        test_cases = itertools.product(
-            all_numeric_dtypes, all_numeric_dtypes
-        )
+        test_cases = itertools.product(all_numeric_dtypes, all_numeric_dtypes)
 
         f8_types = {"FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"}
 
@@ -153,19 +141,30 @@ class Cast(Base):
 
             if from_type in f8_types:
                 input = make_tensor(
-                    "input", from_dtype, input_shape, vals=onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
+                    "x",
+                    from_dtype,
+                    input_shape,
+                    vals=onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype),
+                    raw=True,
                 )
             else:
                 input = make_tensor(
-                    "input", from_dtype, input_shape, vals=np_fp32.astype(from_np_dtype)
+                    "x", from_dtype, input_shape, vals=np_fp32.astype(from_np_dtype)
                 )
             if to_type in f8_types:
                 output = make_tensor(
-                    "output", to_dtype, input_shape, vals=onnx.numpy_helper.saturating_cast(np_fp32, to_np_dtype)
+                    "x",
+                    to_dtype,
+                    input_shape,
+                    vals=onnx.numpy_helper.saturating_cast(np_fp32, to_np_dtype),
+                    raw=True,
                 )
             else:
                 output = make_tensor(
-                    "output", to_dtype, input_shape, vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype)
+                    "x",
+                    to_dtype,
+                    input_shape,
+                    vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype),
                 )
             node = onnx.helper.make_node(
                 "Cast",
@@ -182,20 +181,24 @@ class Cast(Base):
 
     @staticmethod
     def export_saturate_false() -> None:
-        test_cases = [
-            ("FLOAT", "FLOAT8E4M3FN"),
-            ("FLOAT16", "FLOAT8E4M3FN"),
-            ("FLOAT", "FLOAT8E4M3FNUZ"),
-            ("FLOAT16", "FLOAT8E4M3FNUZ"),
-            ("FLOAT", "FLOAT8E5M2"),
-            ("FLOAT16", "FLOAT8E5M2"),
-            ("FLOAT", "FLOAT8E5M2FNUZ"),
-            ("FLOAT16", "FLOAT8E5M2FNUZ"),
-        ]
-        vect_float32_to_float8e4m3 = np.vectorize(_float32_to_float8e4m3)
-        vect_float32_to_float8e5m2 = np.vectorize(_float32_to_float8e5m2)
-
+        test_cases = itertools.product(
+            [
+                "FLOAT",
+                "FLOAT16",
+            ],
+            [
+                "FLOAT8E4M3FN",
+                "FLOAT8E4M3FNUZ",
+                "FLOAT8E5M2",
+                "FLOAT8E5M2FNUZ",
+            ],
+        )
+        input_shape = (3, 5)
         for from_type, to_type in test_cases:
+            from_dtype = getattr(TensorProto, from_type)
+            to_dtype = getattr(TensorProto, to_type)
+            from_np_dtype = tensor_dtype_to_np_dtype(from_dtype)
+            to_np_dtype = tensor_dtype_to_np_dtype(to_dtype)
             np_fp32 = np.array(
                 [
                     "0.47892547",
@@ -217,51 +220,26 @@ class Cast(Base):
                 dtype=np.float32,
             )
 
-            if from_type == "FLOAT":
-                input_values = np_fp32
-                input = make_tensor("x", TensorProto.FLOAT, [3, 5], np_fp32.tolist())
-            elif from_type == "FLOAT16":
-                input_values = np_fp32.astype(np.float16).astype(np.float32)
-                input = make_tensor(
-                    "x", TensorProto.FLOAT16, [3, 5], input_values.tolist()
-                )
-            else:
-                raise ValueError(
-                    f"Conversion from {from_type} to {to_type} is not tested."
-                )
-
-            if to_type == "FLOAT8E4M3FN":
-                expected = vect_float32_to_float8e4m3(input_values, saturate=False)
-            elif to_type == "FLOAT8E4M3FNUZ":
-                expected = vect_float32_to_float8e4m3(
-                    input_values, uz=True, saturate=False
-                )
-            elif to_type == "FLOAT8E5M2":
-                expected = vect_float32_to_float8e5m2(input_values, saturate=False)
-            elif to_type == "FLOAT8E5M2FNUZ":
-                expected = vect_float32_to_float8e5m2(
-                    input_values, fn=True, uz=True, saturate=False
-                )
-            else:
-                raise ValueError(
-                    f"Conversion from {from_type} to {to_type} is not tested."
-                )
-
-            ivals = bytes([int(i) for i in expected])
-            tensor = TensorProto()
-            tensor.data_type = getattr(TensorProto, to_type)
-            tensor.name = "x"
-            tensor.dims.extend([3, 5])
-            field = tensor_dtype_to_field(tensor.data_type)
-            getattr(tensor, field).extend(ivals)
-
-            output = tensor
+            input = make_tensor(
+                "x",
+                from_dtype,
+                input_shape,
+                vals=np_fp32.astype(from_np_dtype),
+                raw=True,
+            )
+            output = make_tensor(
+                "x",
+                to_dtype,
+                input_shape,
+                vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype),
+                raw=True,
+            )
 
             node = onnx.helper.make_node(
                 "Cast",
                 inputs=["input"],
                 outputs=["output"],
-                to=getattr(TensorProto, to_type),
+                to=to_dtype,
                 saturate=0,
             )
             expect(
