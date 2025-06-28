@@ -5716,13 +5716,10 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         ref = ReferenceEvaluator(model)
-        data = np.array([0, 1, 2.4, 2.6, 4, 10], dtype=np.float32)
-        signed = cast_to == TensorProto.INT4
-        expected1 = np.array(
-            [subbyte._float32_to_4bit_unpacked(x, signed=signed) for x in data]
-        )
+        data = np.array([0, 1, 2.4, 2.6, 4, 10], dtype=onnx.helper.tensor_dtype_to_np_dtype(cast_from))
+        expected = data.astype(onnx.helper.tensor_dtype_to_np_dtype(cast_to))
         got = ref.run(None, {"X": data})
-        self.assertEqual(expected1.tolist(), got[0].tolist())
+        self.assertEqual(got[0].tolist(), expected.tolist())
 
     @parameterized.parameterized.expand(
         itertools.product(
