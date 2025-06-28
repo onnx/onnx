@@ -51,7 +51,7 @@ TENSOR_TYPE_MAP: dict[int, TensorDtypeMap] = {
     ),
     int(onnx.TensorProto.BFLOAT16): TensorDtypeMap(
         np.dtype(ml_dtypes.bfloat16),
-        int(onnx.TensorProto.UINT16),
+        int(onnx.TensorProto.INT32),
         "TensorProto.BFLOAT16",
     ),
     int(onnx.TensorProto.DOUBLE): TensorDtypeMap(
