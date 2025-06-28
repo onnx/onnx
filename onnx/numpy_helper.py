@@ -361,7 +361,13 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.INT16,
         onnx.TensorProto.UINT16,
     }:
-        return np.array(tensor.int32_data, dtype=np.uint16).reshape(dims).view(np_dtype)
+        return (
+            np.array(tensor.int32_data, dtype=np.int32)
+            .view(np.uint32)
+            .astype(np.uint16)
+            .reshape(dims)
+            .view(np_dtype)
+        )
 
     if tensor_dtype in {
         onnx.TensorProto.FLOAT8E4M3FN,
@@ -370,19 +376,27 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E5M2FNUZ,
         onnx.TensorProto.BOOL,
     }:
-        return np.array(tensor.int32_data, dtype=np.uint8).reshape(dims).view(np_dtype)
+        return (
+            np.array(tensor.int32_data, dtype=np.int32)
+            .view(np.uint32)
+            .astype(np.uint8)
+            .view(np_dtype)
+            .reshape(dims)
+        )
 
     if tensor_dtype in {
         onnx.TensorProto.UINT4,
         onnx.TensorProto.INT4,
         onnx.TensorProto.FLOAT4E2M1,
     }:
-        data = np.array(tensor.int32_data, dtype=np.uint8)
+        data = (
+            np.array(tensor.int32_data, dtype=np.int32).view(np.uint32).astype(np.uint8)
+        )
         return _unpack_4bit(data, dims).view(np_dtype)
 
     data = getattr(tensor, storage_field)
     if tensor_dtype in (onnx.TensorProto.COMPLEX64, onnx.TensorProto.COMPLEX128):
-        return np.array(data, dtype=storage_np_dtype).reshape(dims).view(dtype=np_dtype)
+        return np.array(data, dtype=storage_np_dtype).view(dtype=np_dtype).reshape(dims)
 
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 

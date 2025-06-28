@@ -5715,7 +5715,10 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         ref = ReferenceEvaluator(model)
-        data = np.array([0, 1, 2.4, 2.6, 4, 10], dtype=onnx.helper.tensor_dtype_to_np_dtype(cast_from))
+        data = np.array(
+            [0, 1, 2.4, 2.6, 4, 10],
+            dtype=onnx.helper.tensor_dtype_to_np_dtype(cast_from),
+        )
         expected = data.astype(onnx.helper.tensor_dtype_to_np_dtype(cast_to))
         got = ref.run(None, {"X": data})
         self.assertEqual(got[0].tolist(), expected.tolist())
