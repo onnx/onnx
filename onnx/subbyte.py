@@ -59,8 +59,8 @@ def float32x2_to_4bitx2(
     Returns:
         An ndarray with a single int8/uint8 element, containing both int4 elements
     """
-    i8_high = _float32_to_4bit_unpacked(val_high, signed)
-    i8_low = _float32_to_4bit_unpacked(val_low, signed)
+    i8_high = float32_to_4bit_unpacked(val_high, signed)
+    i8_low = float32_to_4bit_unpacked(val_low, signed)
     return i8_high << 4 | i8_low & 0x0F
 
 
