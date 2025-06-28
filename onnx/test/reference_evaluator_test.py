@@ -37,7 +37,6 @@ from onnx import (
     TensorProto,
     checker,
     parser,
-    subbyte,
 )
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
