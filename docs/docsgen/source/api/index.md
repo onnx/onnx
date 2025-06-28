@@ -50,7 +50,6 @@ verify a model with the following helpers.
 backend
 checker
 compose
-custom_element_types
 defs
 external_data_helper
 helper
