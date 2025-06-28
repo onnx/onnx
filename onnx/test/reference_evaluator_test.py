@@ -29,6 +29,7 @@ import parameterized
 import version_utils
 from numpy.testing import assert_allclose, assert_almost_equal
 
+import onnx
 from onnx import (
     AttributeProto,
     FunctionProto,
@@ -55,7 +56,7 @@ from onnx.helper import (
     make_tensor_value_info,
     make_value_info,
 )
-from onnx.numpy_helper import _float8e4m3_to_float32, _float8e5m2_to_float32, from_array
+from onnx.numpy_helper import from_array
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
@@ -3379,12 +3380,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        expected1 = np.array(
-            [_float8e4m3_to_float32(_float32_to_float8e4m3(x)) for x in data]
-        )
-        expected2 = np.array(
-            [_float8e5m2_to_float32(_float32_to_float8e5m2(x)) for x in data]
-        )
+        expected1 = onnx.numpy_helper.saturating_cast(
+            data, ml_dtypes.float8_e4m3fn
+        ).astype(np.float32)
+        expected2 = onnx.numpy_helper.saturating_cast(
+            data, ml_dtypes.float8_e5m2
+        ).astype(np.float32)
         got = ref.run(None, {"X": data})
         assert_allclose(expected1, got[0])
         assert_allclose(expected2, got[1])
@@ -3407,14 +3408,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         data = np.array([0, 1e7], dtype=np.float32)
-        expected = np.array(
-            [
-                _float8e4m3_to_float32(
-                    _float32_to_float8e4m3(x, uz=True, saturate=False), uz=True
-                )
-                for x in data
-            ]
-        )
+        expected = data.astype(ml_dtypes.float8_e4m3fnuz)
         ref = ReferenceEvaluator(model)
         got = ref.run(None, {"X": data})
         assert_allclose(got[0], expected)
@@ -3445,8 +3439,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        expected1 = np.array([_float32_to_float8e4m3(x) for x in data])
-        expected2 = np.array([_float32_to_float8e5m2(x) for x in data])
+        expected1 = onnx.numpy_helper.saturating_cast(data, ml_dtypes.float8_e4m3fn)
+        expected2 = onnx.numpy_helper.saturating_cast(data, ml_dtypes.float8_e5m2)
         got = ref.run(None, {"X": data})
         self.assertEqual(expected1.tolist(), got[0].tolist())
         self.assertEqual(expected2.tolist(), got[1].tolist())
