@@ -27,7 +27,7 @@ import ml_dtypes
 import numpy as np
 import parameterized
 import version_utils
-from numpy.testing import assert_allclose, assert_almost_equal
+from numpy.testing import assert_allclose
 
 import onnx
 from onnx import (
@@ -2686,7 +2686,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         for i in range(4):
-            assert_allclose(got1[i], expected[1])
+            np.testing.assert_equal(got1[i], expected[1])
 
     def test_split_2(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -5984,8 +5984,6 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @parameterized.parameterized.expand(
         [
-            ("UINT4", 0.84),
-            ("INT4", 0.84),
             ("FLOAT8E4M3FN", 0.23),
             ("FLOAT8E4M3FNUZ", 0.23),
             ("FLOAT8E5M2", 0.85),
@@ -5996,7 +5994,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             ("BFLOAT16", 2e-2),
         ]
     )
-    def test_add_custom_dtype(self, stype, atol):
+    def test_add_custom_dtype(self, stype: str, atol: float):
         itype = getattr(TensorProto, stype)
         model = make_model(
             make_graph(
@@ -6032,13 +6030,12 @@ class TestReferenceEvaluator(unittest.TestCase):
             ("FLOAT",),
             ("FLOAT16",),
             ("BFLOAT16",),
-            # Comparison fails with ml_dtypes
-            # ("FLOAT8E4M3FN", ),
-            # ("FLOAT8E4M3FNUZ", ),
-            # ("FLOAT8E5M2", ),
-            # ("FLOAT8E5M2FNUZ", ),
-            # ("INT4", ),
-            # ("UINT4", ),
+            ("FLOAT8E4M3FN",),
+            ("FLOAT8E4M3FNUZ",),
+            ("FLOAT8E5M2",),
+            ("FLOAT8E5M2FNUZ",),
+            ("INT4",),
+            ("UINT4",),
         ]
     )
     def test_cmp_custom_dtype(self, stype):
@@ -6069,7 +6066,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         feeds = dict(X=x, Y=y)
         expected = x >= y
         got = ref.run(None, feeds)[0]
-        assert_almost_equal(expected, got)
+        np.testing.assert_equal(expected, got)
 
     def test_scatter_elements_4d(self):
         model = make_model(
