@@ -2686,7 +2686,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         for i in range(4):
-            np.testing.assert_equal(got1[i], expected[1])
+            np.testing.assert_equal(got1[i], expected[i])
 
     def test_split_2(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -2713,7 +2713,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         for i in range(4):
-            assert_allclose(got1[i], expected[1])
+            assert_allclose(got1[i], expected[i])
 
     def test_split_num_outputs_4(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
@@ -2738,7 +2738,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         for i in range(4):
-            assert_allclose(got1[i], expected[1])
+            assert_allclose(got1[i], expected[i])
 
         # case 2
         feeds = {"X": np.arange(9).astype(np.float32)}
@@ -2752,7 +2752,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         for i in range(4):
-            assert_allclose(got1[i], expected[1])
+            assert_allclose(got1[i], expected[i])
 
     def test_argmin(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -5660,10 +5660,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             ),
             (TensorProto.INT4, [0], [0]),
         ]
-    )
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.22.0"),
-        "The test requires numpy 1.22.0 or later",
     )
     def test_quantize_linear_int4(self, qtype, data, expected):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])

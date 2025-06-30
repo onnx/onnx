@@ -34,6 +34,8 @@ _QUANT_INTEGER_RANGES = {
     TensorProto.INT8: (-128, 127),
     TensorProto.UINT16: (0, 65535),
     TensorProto.INT16: (-32768, 32767),
+    TensorProto.UINT4: (0, 15),
+    TensorProto.INT4: (-8, 7),
 }
 
 
@@ -150,12 +152,6 @@ class _CommonQuantizeLinear(OpRun):
                 )
             else:
                 return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
-
-        if tensor_type in (TensorProto.UINT4, TensorProto.INT4):
-            xi = np.rint(x).astype(np.int32)
-            xi += zero_point
-
-            return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         if tensor_type == TensorProto.FLOAT4E2M1:
             x += zero_point
