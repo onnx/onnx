@@ -148,9 +148,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "UTF-8 Normalized strings", "tensor(string)")
         .Attr(
             std::string("case_change_action"),
-            std::string(
-                "string enum that cases output to be lowercased/uppercases/unchanged."
-                " Valid values are \"LOWER\", \"UPPER\", \"NONE\". Default is \"NONE\""),
+            std::string("string enum that cases output to be lowercased/uppercases/unchanged."
+                        " Valid values are \"LOWER\", \"UPPER\", \"NONE\". Default is \"NONE\""),
             AttributeProto::STRING,
             std::string("NONE"))
         .Attr(

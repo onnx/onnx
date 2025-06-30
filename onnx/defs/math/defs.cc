@@ -44,16 +44,15 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
 static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
 (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
@@ -857,14 +856,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
 {broadcast_doc}
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1023,8 +1021,7 @@ static std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The operator computes the {description} values for the given input:
 
  {equation}
@@ -1033,17 +1030,16 @@ The "axis" attribute indicates the dimension along which {name}
 will be performed. The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{description}", description);
-        ReplaceAll(doc, "{equation}", equation););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{description}", description);
+                        ReplaceAll(doc, "{equation}", equation););
     std::string axis_attr;
-    POPULATE_OP_DOC_STR(
-        axis_attr = R"DOC(
+    POPULATE_OP_DOC_STR(axis_attr = R"DOC(
 Describes the dimension {name} will be performed on.
 Negative value means counting dimensions
 from the back. Accepted range is [-r, r-1] where r = rank(input).
 )DOC";
-        ReplaceAll(axis_attr, "{name}", name););
+                        ReplaceAll(axis_attr, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("axis", axis_attr, AttributeProto::INT, static_cast<int64_t>(-1));
     schema.Input(
@@ -3072,11 +3068,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> CosineSumWindowOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Generates a {name} window as described in the paper https://ieeexplore.ieee.org/document/1455106.
 )DOC";
-        ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{name}", name););
 
     schema.SetDoc(doc);
     schema.Attr(

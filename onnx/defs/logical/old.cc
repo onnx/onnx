@@ -11,15 +11,14 @@ namespace ONNX_NAMESPACE {
 static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset12(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First input operand for the logical operator.", "T");
     schema.Input(1, "B", "Second input operand for the logical operator.", "T");
@@ -85,8 +84,7 @@ inline static void logicalOpInference_opset1(InferenceContext& ctx) {
 static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset1(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B`.
 
@@ -94,7 +92,7 @@ If broadcasting is enabled, the right-hand-side argument will be broadcasted
 to match the shape of left-hand-side argument. See the doc of `Add` for a
 detailed description of the broadcasting rules.
 )DOC";
-        ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("broadcast", "Enable broadcasting", AttributeProto::INT, static_cast<int64_t>(0));
     schema.Attr("axis", "If set, defines the broadcast dimensions.", AttributeProto::INT, OPTIONAL_VALUE);
@@ -108,15 +106,14 @@ detailed description of the broadcasting rules.
 static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset7(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First input operand for the logical operator.", "T");
     schema.Input(1, "B", "Second input operand for the logical operator.", "T");

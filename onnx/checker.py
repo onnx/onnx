@@ -27,18 +27,7 @@ from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 import onnx.defs
 import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
-import onnx.shape_inference
-from onnx import (
-    IR_VERSION,
-    AttributeProto,
-    FunctionProto,
-    GraphProto,
-    ModelProto,
-    NodeProto,
-    SparseTensorProto,
-    TensorProto,
-    ValueInfoProto,
-)
+from onnx.onnx_pb import IR_VERSION
 
 if TYPE_CHECKING:
     from google.protobuf.message import Message
@@ -71,41 +60,43 @@ def _ensure_proto_type(proto: Message, proto_type: type[Message]) -> None:
 
 
 def check_value_info(
-    value_info: ValueInfoProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+    value_info: onnx.ValueInfoProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
 ) -> None:
-    _ensure_proto_type(value_info, ValueInfoProto)
+    _ensure_proto_type(value_info, onnx.ValueInfoProto)
     return C.check_value_info(value_info.SerializeToString(), ctx)
 
 
-def check_tensor(tensor: TensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT) -> None:
-    _ensure_proto_type(tensor, TensorProto)
+def check_tensor(
+    tensor: onnx.TensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+) -> None:
+    _ensure_proto_type(tensor, onnx.TensorProto)
     return C.check_tensor(tensor.SerializeToString(), ctx)
 
 
 def check_attribute(
-    attr: AttributeProto,
+    attr: onnx.AttributeProto,
     ctx: C.CheckerContext = DEFAULT_CONTEXT,
     lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
-    _ensure_proto_type(attr, AttributeProto)
+    _ensure_proto_type(attr, onnx.AttributeProto)
     return C.check_attribute(attr.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_node(
-    node: NodeProto,
+    node: onnx.NodeProto,
     ctx: C.CheckerContext = DEFAULT_CONTEXT,
     lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
-    _ensure_proto_type(node, NodeProto)
+    _ensure_proto_type(node, onnx.NodeProto)
     return C.check_node(node.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_function(
-    function: FunctionProto,
+    function: onnx.FunctionProto,
     ctx: C.CheckerContext | None = None,
     lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
-    _ensure_proto_type(function, FunctionProto)
+    _ensure_proto_type(function, onnx.FunctionProto)
     if ctx is None:
         ctx = C.CheckerContext()
         ctx.ir_version = onnx.helper.find_min_ir_version_for(
@@ -119,23 +110,23 @@ def check_function(
 
 
 def check_graph(
-    graph: GraphProto,
+    graph: onnx.GraphProto,
     ctx: C.CheckerContext = DEFAULT_CONTEXT,
     lexical_scope_ctx: C.LexicalScopeContext = LEXICAL_SCOPE_CONTEXT,
 ) -> None:
-    _ensure_proto_type(graph, GraphProto)
+    _ensure_proto_type(graph, onnx.GraphProto)
     return C.check_graph(graph.SerializeToString(), ctx, lexical_scope_ctx)
 
 
 def check_sparse_tensor(
-    sparse: SparseTensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
+    sparse: onnx.SparseTensorProto, ctx: C.CheckerContext = DEFAULT_CONTEXT
 ) -> None:
-    _ensure_proto_type(sparse, SparseTensorProto)
+    _ensure_proto_type(sparse, onnx.SparseTensorProto)
     C.check_sparse_tensor(sparse.SerializeToString(), ctx)
 
 
 def check_model(
-    model: ModelProto | str | bytes | os.PathLike,
+    model: onnx.ModelProto | str | bytes | os.PathLike,
     full_check: bool = False,
     skip_opset_compatibility_check: bool = False,
     check_custom_domain: bool = False,

@@ -127,9 +127,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
           }
         }
         if (min_version > 1) {
-          registerAdapter(
-              std::make_unique<NoPreviousVersionAdapter>(
-                  op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
+          registerAdapter(std::make_unique<NoPreviousVersionAdapter>(
+              op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
         }
       }
     }
