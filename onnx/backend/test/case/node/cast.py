@@ -187,9 +187,7 @@ class Cast(Base):
                     "x",
                     to_dtype,
                     input_shape,
-                    vals=np_fp32.astype(from_np_dtype)
-                    .astype(np.float32)
-                    .astype(to_np_dtype),
+                    vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype),
                 )
             node = onnx.helper.make_node(
                 "Cast",
