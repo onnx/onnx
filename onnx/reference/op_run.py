@@ -615,7 +615,7 @@ class OpFunction(OpRun):
 
     def __init__(
         self,
-        onnx_node: onnx.onnx.NodeProto,
+        onnx_node: onnx.NodeProto,
         run_params: dict[str, Any] | None,
         impl: Any = None,
         attributes: dict[str, Any] | None = None,
