@@ -576,7 +576,7 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     raw_key_type = np.result_type(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
 
-    valid_key_int_types = [
+    valid_key_int_types = {
         onnx.TensorProto.INT8,
         onnx.TensorProto.INT16,
         onnx.TensorProto.INT32,
@@ -585,7 +585,7 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
         onnx.TensorProto.UINT16,
         onnx.TensorProto.UINT32,
         onnx.TensorProto.UINT64,
-    ]
+    }
 
     if not (all(np.result_type(key) == raw_key_type for key in keys)):
         raise TypeError(

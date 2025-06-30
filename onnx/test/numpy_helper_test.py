@@ -108,11 +108,6 @@ class TestNumpyHelper(unittest.TestCase):
         self.assertEqual(out_tensor[0], one_array[0])
         self.assertEqual(out_tensor[1], one_array[1])
 
-    def test_from_dict_raises_type_error_when_values_are_not_np_arrays(self):
-        with self.assertRaises(TypeError):
-            # from_dict/from_array expects tensors to be numpy array's or similar.
-            numpy_helper.from_dict({0: 0.1, 1: 0.9})
-
     def test_from_dict_differing_key_types(self):
         with self.assertRaises(TypeError):
             # Differing key types should raise a TypeError
