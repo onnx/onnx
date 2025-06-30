@@ -856,24 +856,7 @@ class TestPrintableGraph(unittest.TestCase):
 
 @pytest.mark.parametrize(
     "tensor_dtype",
-    [
-        t
-        for t in helper.get_all_tensor_dtypes()
-        if t
-        not in {
-            TensorProto.BFLOAT16,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-            TensorProto.UINT4,
-            TensorProto.INT4,
-            TensorProto.STRING,
-            TensorProto.COMPLEX64,
-            TensorProto.COMPLEX128,
-            TensorProto.FLOAT4E2M1,
-        }
-    ],
+    [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
@@ -888,33 +871,26 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
 
 @pytest.mark.parametrize(
     "tensor_dtype",
-    [
-        t
-        for t in helper.get_all_tensor_dtypes()
-        if t
-        not in {
-            TensorProto.BFLOAT16,
-            TensorProto.STRING,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-            TensorProto.UINT4,
-            TensorProto.INT4,
-            TensorProto.FLOAT4E2M1,
-        }
-    ],
+    [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_raw(tensor_dtype: int) -> None:
     np_array = np.random.randn(2, 3).astype(
         helper.tensor_dtype_to_np_dtype(tensor_dtype)
     )
+    if tensor_dtype in {
+        TensorProto.FLOAT4E2M1,
+        TensorProto.INT4,
+        TensorProto.UINT4,
+    }:
+        vals = _pack_4bit(np_array).tobytes()
+    else:
+        vals = np_array.tobytes()
     tensor = helper.make_tensor(
         name="test",
         data_type=tensor_dtype,
         dims=np_array.shape,
-        vals=np_array.tobytes(),
+        vals=vals,
         raw=True,
     )
     np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))

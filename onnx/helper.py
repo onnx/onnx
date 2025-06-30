@@ -787,7 +787,7 @@ def make_tensor(
         vals = vals.view(np.float64)
     elif data_type == TensorProto.COMPLEX64:
         vals = vals.view(np.float32)
-    elif data_type == TensorProto.BFLOAT16:
+    elif data_type in {TensorProto.BFLOAT16, TensorProto.FLOAT16}:
         vals = vals.view(np.uint16)
     elif data_type in {
         TensorProto.FLOAT8E4M3FN,
@@ -799,6 +799,8 @@ def make_tensor(
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
         vals = _pack_4bitx2(vals)
+    elif data_type == TensorProto.BOOL:
+        vals = vals.astype(np.uint8)
 
     field = tensor_dtype_to_field(data_type)
     getattr(tensor, field).extend(vals)
