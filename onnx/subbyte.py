@@ -59,8 +59,8 @@ def float32x2_to_4bitx2(
     Returns:
         An ndarray with a single int8/uint8 element, containing both int4 elements
     """
-    i8_high = float32_to_4bit_unpacked(val_high, signed)
-    i8_low = float32_to_4bit_unpacked(val_low, signed)
+    i8_high = float32_to_4bit_unpacked(val_high, signed)  # type: ignore[arg-type]
+    i8_low = float32_to_4bit_unpacked(val_low, signed)  # type: ignore[arg-type]
     return i8_high << 4 | i8_low & 0x0F
 
 
@@ -68,7 +68,7 @@ def float32x2_to_4bitx2(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
     category=DeprecationWarning,
 )
-def unpack_4bitx2_unpack_4bitx2(
+def unpack_4bitx2(
     x: npt.NDArray[np.uint8], dims: int | Sequence[int]
 ) -> npt.NDArray[np.uint8]:
     """Unpack an array of packed uint8 elements (4bitx2) into individual elements

@@ -99,8 +99,8 @@ def to_sparse_tensor(att: onnx.AttributeProto) -> SparseTensor:
     """Hosts a sparse tensor."""
     shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
     return SparseTensor(
-        onnx.numpy_helper.to_array(att.values),
-        onnx.numpy_helper.to_array(att.indices),
+        onnx.numpy_helper.to_array(att.values),  # type: ignore[attr-defined]
+        onnx.numpy_helper.to_array(att.indices),  # type: ignore[attr-defined]
         shape,
     )  # type: ignore
 
