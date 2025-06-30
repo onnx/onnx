@@ -6045,7 +6045,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 [
                     make_node("Cast", ["X"], ["Xc"], to=itype),
                     make_node("Cast", ["Y"], ["Yc"], to=itype),
-                    make_node("Greater", ["Xc", "Yc"], ["Zc"]),
+                    make_node("GreaterOrEqual", ["Xc", "Yc"], ["Zc"]),
                     make_node("Cast", ["Zc"], ["Z"], to=TensorProto.BOOL),
                 ],
                 "nd",
@@ -6066,7 +6066,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         feeds = dict(X=x, Y=y)
         expected = x >= y
         got = ref.run(None, feeds)[0]
-        np.testing.assert_equal(expected, got)
+        np.testing.assert_equal(got, expected)
 
     def test_scatter_elements_4d(self):
         model = make_model(
