@@ -413,6 +413,8 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     """
     tensor = onnx.TensorProto()
     tensor.dims.extend(array.shape)
+    if name:
+        tensor.name = name
     if array.dtype == object or np.issubdtype(array.dtype, np.str_):
         # Special care for strings.
         tensor.data_type = onnx.TensorProto.STRING
@@ -447,8 +449,6 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
         array = _pack_4bitx2(array)
     if not _IS_LITTLE_ENDIAN:
         array = array.view(array.dtype.newbyteorder("<"))
-    if name:
-        tensor.name = name
 
     tensor.raw_data = array.tobytes()
     tensor.data_type = dtype

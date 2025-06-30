@@ -547,10 +547,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
-        f8 = np.array(
-            [helper._float32_to_float8e4m3(x, uz=True) for x in expected],
-            dtype=np.uint8,
-        )
+        f8 = expected.astype(ml_dtypes.float8_e4m3fnuz)
         packed_values = f8.tobytes()
         y = helper.make_tensor(
             name="test",
@@ -639,13 +636,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
     )
     def test_make_4bit_raw_tensor(self, dtype, dims) -> None:
-        type_range = {
-            TensorProto.UINT4: (0, 15),
-            TensorProto.INT4: (-8, 7),
-        }
-        data = np.random.randint(
-            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
-        ).astype(np.uint8)
+        data = np.random.randint(0, high=16, size=dims, dtype=np.uint8)
         packed_data = _pack_4bit(data)
 
         y = helper.make_tensor(
@@ -950,7 +941,7 @@ class TestHelperMappingFunctions(unittest.TestCase):
 
     def test_tensor_dtype_to_np_dtype_bfloat16(self) -> None:
         self.assertEqual(
-            helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16), np.dtype("float32")
+            helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16), ml_dtypes.bfloat16
         )
 
     def test_tensor_dtype_to_storage_tensor_dtype_bfloat16(self) -> None:

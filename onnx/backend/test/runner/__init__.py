@@ -214,10 +214,6 @@ class Runner:
                         model_dir=model_dir,
                     )
             else:
-                if not np.issubdtype(ref_outputs[i].dtype, np.number):
-                    if ref_outputs[i].tolist() != outputs[i].tolist():
-                        raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
-                    continue
                 np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
                 np.testing.assert_array_equal(
                     outputs[i].shape,
