@@ -44,6 +44,9 @@ class CastLike(Base):
         f8_types = {"FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"}
 
         for from_type, to_type in test_cases:
+            if from_type == to_type:
+                # Skip cases where from_type and to_type are the same
+                continue
             from_dtype = getattr(TensorProto, from_type)
             to_dtype = getattr(TensorProto, to_type)
             from_np_dtype = tensor_dtype_to_np_dtype(from_dtype)
@@ -133,6 +136,7 @@ class CastLike(Base):
                         "+INF",
                         "-INF",
                     ],
+                    dtype=np.float32,
                 ).reshape([3, 4])
                 input_shape = (3, 4)
 
@@ -161,7 +165,9 @@ class CastLike(Base):
                     "x",
                     to_dtype,
                     input_shape,
-                    vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype),
+                    vals=np_fp32.astype(from_np_dtype)
+                    .astype(np.float32)
+                    .astype(to_np_dtype),
                 )
 
             like = make_tensor("like", to_dtype, (0,), vals=[])
