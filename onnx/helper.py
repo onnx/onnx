@@ -785,23 +785,23 @@ def make_tensor(
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
     if data_type == TensorProto.COMPLEX128:
-        vals = vals.view(np.float64)
+        vals = vals.view(np.float64)  # type: ignore[union-attr]
     elif data_type == TensorProto.COMPLEX64:
-        vals = vals.view(np.float32)
+        vals = vals.view(np.float32)  # type: ignore[union-attr]
     elif data_type in {TensorProto.BFLOAT16, TensorProto.FLOAT16}:
-        vals = vals.view(np.uint16)
+        vals = vals.view(np.uint16)  # type: ignore[union-attr]
     elif data_type in {
         TensorProto.FLOAT8E4M3FN,
         TensorProto.FLOAT8E4M3FNUZ,
         TensorProto.FLOAT8E5M2,
         TensorProto.FLOAT8E5M2FNUZ,
     }:
-        vals = vals.view(np.uint8)
+        vals = vals.view(np.uint8)  # type: ignore[union-attr]
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
-        vals = _pack_4bitx2(vals)
+        vals = _pack_4bitx2(vals)  # type: ignore[union-attr]
     elif data_type == TensorProto.BOOL:
-        vals = vals.astype(np.uint8)
+        vals = vals.astype(np.uint8)  # type: ignore[union-attr]
 
     field = tensor_dtype_to_field(data_type)
     getattr(tensor, field).extend(vals)
