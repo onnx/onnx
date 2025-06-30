@@ -9,7 +9,7 @@
     :members:
 ```
 
-## Inference
+## ReferenceEvaluator
 
 ```{eval-rst}
 .. autoclass:: onnx.reference.ReferenceEvaluator

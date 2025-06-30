@@ -20,7 +20,7 @@ class Gemm_6_7 final : public Adapter {
  public:
   explicit Gemm_6_7() : Adapter("Gemm", OpSetID(6), OpSetID(7)) {}
 
-  void adapt_gemm_6_7(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_gemm_6_7(const std::shared_ptr<Graph>&, Node* node) const {
     const ArrayRef<Value*>& inputs = node->inputs();
     assertInputsAvailable(inputs, name().c_str(), 3);
     const auto& A_shape = inputs[0]->sizes();
@@ -42,7 +42,7 @@ class Gemm_6_7 final : public Adapter {
     ONNX_ASSERTM(
         check_numpy_unibroadcastable_and_require_broadcast(MN, C_shape) != -1,
         "Gemm being converted from 6 to 7 does not have "
-        "broadcastable inputs.");
+        "broadcastable inputs.")
     if (node->hasAttribute(kbroadcast))
       node->removeAttribute(kbroadcast);
   }

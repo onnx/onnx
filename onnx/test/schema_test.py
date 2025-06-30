@@ -5,12 +5,15 @@ from __future__ import annotations
 
 import contextlib
 import unittest
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 import parameterized
 
 import onnx
 from onnx import defs
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class TestSchema(unittest.TestCase):

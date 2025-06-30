@@ -6,25 +6,17 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
+import ml_dtypes
 import numpy as np
 import parameterized
 
 import onnx
+import onnx.reference
 from onnx import helper, numpy_helper
 
 
 def bfloat16_to_float32(ival: int) -> Any:
-    if ival == 0x7FC0:
-        return np.float32(np.nan)
-
-    expo = ival >> 7
-    prec = ival - (expo << 7)
-    sign = expo & 256
-    powe = expo & 255
-    fval = float(prec * 2 ** (-7) + 1) * 2.0 ** (powe - 127)
-    if sign:
-        fval = -fval
-    return np.float32(fval)
+    return np.int16(ival).view(ml_dtypes.bfloat16).astype(np.float32)
 
 
 def float8e4m3_to_float32(ival: int) -> Any:
@@ -597,6 +589,65 @@ class TestNumpyHelper(unittest.TestCase):
             # Differing value types should raise a TypeError
             numpy_helper.from_dict({0: np.array(1), 1: np.array(0.9)})
 
+    def _to_array_from_array(self, value: int, check_dtype: bool = True):
+        onnx_model = helper.make_model(
+            helper.make_graph(
+                [helper.make_node("Cast", ["X"], ["Y"], to=value)],
+                "test",
+                [helper.make_tensor_value_info("X", onnx.TensorProto.FLOAT, [4])],
+                [helper.make_tensor_value_info("Y", value, [4])],
+            )
+        )
+        ref = onnx.reference.ReferenceEvaluator(onnx_model)
+        start = ref.run(None, {"X": np.array([0, 1, -2, 3], dtype=np.float32)})
+        tp = numpy_helper.from_array(start[0], name="check")
+        self.assertEqual(tp.data_type, value)
+        back = numpy_helper.to_array(tp)
+        self.assertEqual(start[0].shape, back.shape)
+        if check_dtype:
+            self.assertEqual(start[0].dtype, back.dtype)
+        again = numpy_helper.from_array(back, name="check")
+        self.assertEqual(tp.data_type, again.data_type)
+        self.assertEqual(tp.name, again.name)
+        self.assertEqual(len(tp.raw_data), len(again.raw_data))
+        self.assertEqual(list(tp.raw_data), list(again.raw_data))
+        self.assertEqual(tp.raw_data, again.raw_data)
+        self.assertEqual(tuple(tp.dims), tuple(again.dims))
+        self.assertEqual(tp.SerializeToString(), again.SerializeToString())
+        self.assertEqual(tp.data_type, helper.np_dtype_to_tensor_dtype(back.dtype))
+
+    @parameterized.parameterized.expand(
+        [
+            ("FLOAT", onnx.TensorProto.FLOAT),
+            ("UINT8", onnx.TensorProto.UINT8),
+            ("INT8", onnx.TensorProto.INT8),
+            ("UINT16", onnx.TensorProto.UINT16),
+            ("INT16", onnx.TensorProto.INT16),
+            ("INT32", onnx.TensorProto.INT32),
+            ("INT64", onnx.TensorProto.INT64),
+            ("BOOL", onnx.TensorProto.BOOL),
+            ("FLOAT16", onnx.TensorProto.FLOAT16),
+            ("DOUBLE", onnx.TensorProto.DOUBLE),
+            ("UINT32", onnx.TensorProto.UINT32),
+            ("UINT64", onnx.TensorProto.UINT64),
+            ("COMPLEX64", onnx.TensorProto.COMPLEX64),
+            ("COMPLEX128", onnx.TensorProto.COMPLEX128),
+            ("BFLOAT16", onnx.TensorProto.BFLOAT16),
+            ("FLOAT8E4M3FN", onnx.TensorProto.FLOAT8E4M3FN),
+            ("FLOAT8E4M3FNUZ", onnx.TensorProto.FLOAT8E4M3FNUZ),
+            ("FLOAT8E5M2", onnx.TensorProto.FLOAT8E5M2),
+            ("FLOAT8E5M2FNUZ", onnx.TensorProto.FLOAT8E5M2FNUZ),
+            ("UINT4", onnx.TensorProto.UINT4),
+            ("INT4", onnx.TensorProto.INT4),
+            ("FLOAT4E2M1", onnx.TensorProto.FLOAT4E2M1),
+        ]
+    )
+    def test_to_array_from_array(self, _: str, data_type: onnx.TensorProto.DataType):
+        self._to_array_from_array(data_type)
+
+    def test_to_array_from_array_string(self):
+        self._to_array_from_array(onnx.TensorProto.STRING, False)
+
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

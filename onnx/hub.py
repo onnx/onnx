@@ -5,16 +5,16 @@
 
 This implements the python client for the ONNX model hub.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import os
 import sys
-import tarfile
 from io import BytesIO
 from os.path import join
-from typing import IO, Any, Dict, List, cast
+from typing import IO, Any, cast
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
@@ -47,19 +47,21 @@ class ModelInfo:
         Args:
             raw_model_info: A JSON dict containing the model info.
         """
-        self.model = cast(str, raw_model_info["model"])
+        self.model = cast("str", raw_model_info["model"])
 
-        self.model_path = cast(str, raw_model_info["model_path"])
-        self.metadata: dict[str, Any] = cast(Dict[str, Any], raw_model_info["metadata"])
+        self.model_path = cast("str", raw_model_info["model_path"])
+        self.metadata: dict[str, Any] = cast(
+            "dict[str, Any]", raw_model_info["metadata"]
+        )
         self.model_sha: str | None = None
         if "model_sha" in self.metadata:
-            self.model_sha = cast(str, self.metadata["model_sha"])
+            self.model_sha = cast("str", self.metadata["model_sha"])
 
         self.tags: set[str] = set()
         if "tags" in self.metadata:
-            self.tags = set(cast(List[str], self.metadata["tags"]))
+            self.tags = set(cast("list[str]", self.metadata["tags"]))
 
-        self.opset = cast(int, raw_model_info["opset_version"])
+        self.opset = cast("int", raw_model_info["opset_version"])
         self.raw_model_info: dict[str, Any] = raw_model_info
 
     def __str__(self) -> str:
@@ -167,7 +169,7 @@ def list_models(
     try:
         with urlopen(manifest_url) as response:
             manifest: list[ModelInfo] = [
-                ModelInfo(info) for info in json.load(cast(IO[str], response))
+                ModelInfo(info) for info in json.load(cast("IO[str]", response))
             ]
     except HTTPError as e:
         raise AssertionError(f"Could not find manifest at {manifest_url}") from e
@@ -287,36 +289,7 @@ def load(
                 "download the model from the model hub."
             )
 
-    return onnx.load(cast(IO[bytes], BytesIO(model_bytes)))
-
-
-def _tar_members_filter(tar: tarfile.TarFile, base: str) -> list[tarfile.TarInfo]:
-    """Check that the content of ``tar`` will be extracted safely
-
-    Args:
-        tar: The tarball file
-        base: The directory where the tarball will be extracted
-
-    Returns:
-        list of tarball members
-    """
-    result = []
-    for member in tar:
-        member_path = os.path.join(base, member.name)
-        abs_base = os.path.abspath(base)
-        abs_member = os.path.abspath(member_path)
-        if not abs_member.startswith(abs_base):
-            raise RuntimeError(
-                f"The tarball member {member_path} in downloading model contains "
-                f"directory traversal sequence which may contain harmful payload."
-            )
-        elif member.issym() or member.islnk():
-            raise RuntimeError(
-                f"The tarball member {member_path} in downloading model contains "
-                f"symbolic links which may contain harmful payload."
-            )
-        result.append(member)
-    return result
+    return onnx.load(cast("IO[bytes]", BytesIO(model_bytes)))
 
 
 def download_model_with_test_data(
@@ -393,23 +366,12 @@ def download_model_with_test_data(
                 "download the model from the model hub."
             )
 
-    with tarfile.open(local_model_with_data_path) as model_with_data_zipped:
-        # FIXME: Avoid index manipulation with magic numbers
-        local_model_with_data_dir_path = local_model_with_data_path[
-            0 : len(local_model_with_data_path) - 7
-        ]
-        # Mitigate tarball directory traversal risks
-        if hasattr(tarfile, "data_filter"):
-            model_with_data_zipped.extractall(
-                path=local_model_with_data_dir_path, filter="data"
-            )
-        else:
-            model_with_data_zipped.extractall(
-                path=local_model_with_data_dir_path,
-                members=_tar_members_filter(
-                    model_with_data_zipped, local_model_with_data_dir_path
-                ),
-            )
+    local_model_with_data_dir_path = local_model_with_data_path[
+        0 : len(local_model_with_data_path) - len(".tar.gz")
+    ]
+    onnx.utils._extract_model_safe(
+        local_model_with_data_path, local_model_with_data_dir_path
+    )
     model_with_data_path = (
         local_model_with_data_dir_path
         + "/"

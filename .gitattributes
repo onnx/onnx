@@ -1,1 +1,3 @@
-*.pb binary linguist-detectable=false
+# Set the default behavior
+* text=auto eol=auto
+*.bat text eol=crlf

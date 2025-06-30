@@ -45,7 +45,7 @@ You can submit a pull request (PR) with your code. The [SIG](community/sigs.md) 
 
 ### Development
 
-To build ONNX from source please follow the instructions listed [here](https://github.com/onnx/onnx#build-onnx-from-source).
+To build ONNX from source please follow the instructions listed [here](https://github.com/onnx/onnx/blob/main/INSTALL.md#build-onnx-from-source).
 
 Then, after you have made changes to Python and C++ files:
 
@@ -55,7 +55,7 @@ Then, after you have made changes to Python and C++ files:
 Assuming build succeed in the initial step, simply running
 
 ```sh
-pip install -e .
+pip install -e . -v
 ```
 
 from onnx root dir should work.
@@ -86,7 +86,7 @@ set ONNX_ML=1
 ```sh
 # UNIX
 export ONNX_ML=1
-pip install -e .
+pip install -e . -v
 python onnx/defs/gen_doc.py
 ```
 
@@ -123,7 +123,7 @@ Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examp
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
 
 ```sh
-pip install pytest nbval
+pip install pytest
 ```
 
 After installing pytest, run from the root of the repo:
@@ -146,7 +146,7 @@ python onnx/backend/test/stat_coverage.py
 
 Some functionalities are tested with googletest. Those tests are listed in `test/cpp`, and include tests for shape inference, data propagation, parser, and others.
 
-To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e .`.
+To run them, first build ONNX with `-DONNX_BUILD_TESTS=1` or `ONNX_BUILD_TESTS=1 pip install -e . -v`.
 
 ##### Linux and MacOS
 

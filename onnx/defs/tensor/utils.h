@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "onnx/defs/schema.h"
-#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 // The below is called by ops after opset 11, inclusively.
@@ -37,7 +36,7 @@ void resizeShapeInferenceHelper_opset7_to_10(
     const std::vector<float>& scales_data,
     TensorShapeProto* output_shape);
 
-enum class KeepAspectRatioPolicy {
+enum class KeepAspectRatioPolicy : std::uint8_t {
   STRETCH,
   NOT_LARGER,
   NOT_SMALLER,
@@ -54,6 +53,6 @@ extern const char* NonZero_ver9_doc;
 std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,
     const char* mode_description,
-    const std::vector<std::string> op_schema = OpSchema::all_tensor_types_ir4(),
-    const std::string op_schema_description = "Constrain input and output types to all tensor types.");
+    const std::vector<std::string>& op_schema = OpSchema::all_tensor_types_ir4(),
+    const std::string& op_schema_description = "Constrain input and output types to all tensor types.");
 } // namespace ONNX_NAMESPACE

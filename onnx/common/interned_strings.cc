@@ -9,19 +9,17 @@
 
 #include "onnx/common/interned_strings.h"
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <mutex>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 #include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
 
 struct InternedStrings {
-  InternedStrings() : next_sym(kLastSymbol) {
+  InternedStrings() {
 #define REGISTER_SYMBOL(s)   \
   string_to_sym_[#s] = k##s; \
   sym_to_string_[k##s] = #s;
@@ -58,12 +56,12 @@ struct InternedStrings {
   const char* customString(Symbol sym) {
     std::lock_guard<std::mutex> guard(mutex_);
     auto it = sym_to_string_.find(sym);
-    ONNX_ASSERT(it != sym_to_string_.end());
+    ONNX_ASSERT(it != sym_to_string_.end())
     return it->second.c_str();
   }
   std::unordered_map<std::string, uint32_t> string_to_sym_;
   std::unordered_map<uint32_t, std::string> sym_to_string_;
-  uint32_t next_sym;
+  uint32_t next_sym{kLastSymbol};
   std::mutex mutex_;
 };
 

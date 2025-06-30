@@ -363,7 +363,7 @@ class MaxPool(Base):
             constant_values=np.nan,
         )
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads, pads)
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_upper")
 
@@ -401,7 +401,7 @@ class MaxPool(Base):
             constant_values=np.nan,
         )
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads, pads)
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_same_lower")
 
@@ -424,7 +424,7 @@ class MaxPool(Base):
         strides = (1, 1)
         pad_bottom = pad_top = pad_right = pad_left = 2
         pads = [pad_top, pad_left, pad_bottom, pad_right]
-        out_shape, pads = get_output_shape_explicit_padding(
+        out_shape, extra_pads = get_output_shape_explicit_padding(
             pads, x_shape[2:], kernel_shape, strides
         )
         padded = np.pad(
@@ -434,7 +434,16 @@ class MaxPool(Base):
             constant_values=np.nan,
         )
 
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, "MAX", pads)
+        y = pool(
+            padded,
+            x_shape,
+            kernel_shape,
+            strides,
+            out_shape,
+            "MAX",
+            pads_required=extra_pads,
+            pads=pads,
+        )
 
         expect(node, inputs=[x], outputs=[y], name="test_maxpool_2d_pads")
 
@@ -653,7 +662,8 @@ class MaxPool(Base):
             strides,
             out_shape,
             "MAX",
-            pads,
+            pads_required=pads,
+            pads=None,
             dilations=dilations,
         )
 
@@ -702,7 +712,8 @@ class MaxPool(Base):
             strides,
             out_shape,
             "MAX",
-            pads,
+            pads_required=pads,
+            pads=None,
             dilations=dilations,
         )
 

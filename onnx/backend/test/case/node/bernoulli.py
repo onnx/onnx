@@ -10,7 +10,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def bernoulli_reference_implementation(x, dtype):  # type: ignore
+def bernoulli_reference_implementation(x, dtype):
     # binomial n = 1 equal bernoulli
     # This example and test-case is for informational purpose. The generator operator is
     # non-deterministic and may not produce the same values in different implementations

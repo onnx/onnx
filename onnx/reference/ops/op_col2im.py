@@ -62,7 +62,9 @@ def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strid
         )
 
 
-def _col2im_naive_implementation_2d(res, image_shape, kernel_shape, dilations, pads, strides):  # type: ignore
+def _col2im_naive_implementation_2d(
+    res, image_shape, kernel_shape, dilations, pads, strides
+):  # type: ignore
     # source: https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/im2col.h
 
     n_dims = len(pads) // 2
@@ -142,7 +144,9 @@ def _col2im_shape_check(X, output_shape, kernel_shape, dilations, pads, strides)
         )
 
 
-def col2im_naive_implementation(data, image_shape, kernel_shape, dilations, pads, strides):  # type: ignore
+def col2im_naive_implementation(
+    data, image_shape, kernel_shape, dilations, pads, strides
+):  # type: ignore
     """Naive implementation for `col2im`."""
     n_dims = len(pads) // 2
     new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
@@ -181,7 +185,9 @@ def col2im_naive_implementation(data, image_shape, kernel_shape, dilations, pads
 
 
 class Col2Im(OpRun):
-    def _run(self, data, image_shape, block_shape, dilations=None, pads=None, strides=None):  # type: ignore
+    def _run(
+        self, data, image_shape, block_shape, dilations=None, pads=None, strides=None
+    ):  # type: ignore
         if dilations is None:
             dilations = [1 for s in image_shape]
         if pads is None:

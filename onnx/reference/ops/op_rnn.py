@@ -52,12 +52,14 @@ class CommonRNN(OpRun):
                 self.activations[1],  # type: ignore
                 (
                     self.activation_alpha[1]  # type: ignore
-                    if self.activation_alpha is not None and len(self.activation_alpha) > 1  # type: ignore
+                    if self.activation_alpha is not None
+                    and len(self.activation_alpha) > 1  # type: ignore
                     else None
                 ),
                 (
                     self.activation_beta[1]  # type: ignore
-                    if self.activation_beta is not None and len(self.activation_beta) > 1  # type: ignore
+                    if self.activation_beta is not None
+                    and len(self.activation_beta) > 1  # type: ignore
                     else None
                 ),
             )

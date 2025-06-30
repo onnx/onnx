@@ -4,27 +4,19 @@
 from __future__ import annotations
 
 import collections.abc
+import functools
 import numbers
 import struct
+import typing
 from cmath import isnan
-from typing import (
-    Any,
-    Callable,
-    Dict,
-    KeysView,
-    List,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 
 import google.protobuf.message
 import numpy as np
+import typing_extensions
 
+import onnx
 from onnx import (
-    IR_VERSION,
     AttributeProto,
     FunctionProto,
     GraphProto,
@@ -40,14 +32,20 @@ from onnx import (
     TrainingInfoProto,
     TypeProto,
     ValueInfoProto,
+    _custom_element_types,
+    _mapping,
     defs,
-    mapping,
     subbyte,
 )
 
-VersionRowType = Union[Tuple[str, int, int, int], Tuple[str, int, int, int, int]]
-VersionTableType = List[VersionRowType]
-AssignmentBindingType = List[Tuple[str, str]]
+if TYPE_CHECKING:
+    from collections.abc import KeysView, Sequence
+
+    from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
+
+VersionRowType = Union[tuple[str, int, int, int], tuple[str, int, int, int, int]]
+VersionTableType = list[VersionRowType]
+AssignmentBindingType = list[tuple[str, str]]
 
 # This is a copy of the documented version in https://github.com/onnx/onnx/blob/main/docs/Versioning.md#released-versions
 # Both must be updated whenever a new version of ONNX is released.
@@ -76,13 +74,14 @@ VERSION_TABLE: VersionTableType = [
     ("1.14.1", 9, 19, 3, 1),
     ("1.15.0", 9, 20, 4, 1),
     ("1.16.0", 10, 21, 5, 1),
-    ("1.17.0", 10, 22, 6, 1),
+    ("1.17.0", 10, 22, 5, 1),
+    ("1.18.0", 11, 23, 5, 1),
 ]
 
-VersionMapType = Dict[Tuple[str, int], int]
+VersionMapType = dict[tuple[str, int], int]
 
 
-def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
+def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
 
@@ -99,7 +98,7 @@ def create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     return result
 
 
-OP_SET_ID_VERSION_MAP = create_op_set_id_version_map(VERSION_TABLE)
+OP_SET_ID_VERSION_MAP = _create_op_set_id_version_map(VERSION_TABLE)
 
 
 def find_min_ir_version_for(
@@ -303,11 +302,12 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
-    model.ir_version = IR_VERSION
+    model.ir_version = onnx.IR_VERSION
     model.graph.CopyFrom(graph)
 
-    opset_imports: Sequence[OperatorSetIdProto] | None = None
-    opset_imports = kwargs.pop("opset_imports", None)  # type: ignore
+    opset_imports: Sequence[OperatorSetIdProto] | None = kwargs.pop(
+        "opset_imports", None
+    )
     if opset_imports is not None:
         model.opset_import.extend(opset_imports)
     else:
@@ -315,8 +315,7 @@ def make_model(graph: GraphProto, **kwargs: Any) -> ModelProto:
         imp = model.opset_import.add()
         imp.version = defs.onnx_opset_version()
 
-    functions: Sequence[FunctionProto] | None = None
-    functions = kwargs.pop("functions", None)  # type: ignore
+    functions: Sequence[FunctionProto] | None = kwargs.pop("functions", None)
     if functions is not None:
         model.functions.extend(functions)
 
@@ -359,11 +358,18 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
 
 
-def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
+def _split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
     return [
         (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
         for i in range(len(ca) * 2)
     ]
+
+
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
+)
+def float32_to_bfloat16(*args, **kwargs) -> int:
+    return _float32_to_bfloat16(*args, **kwargs)
 
 
 # convert a float32 value to a bfloat16 (as int)
@@ -372,7 +378,7 @@ def split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
 # conversion is performed by simply dropping the 2 least significant bytes of
 # the significand. In this mode an error of up to 1 bit may be introduced and
 # preservation of NaN values is not be guaranteed.
-def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
+def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     ival = int.from_bytes(struct.pack("<f", fval), "little")
     if truncate:
         return ival >> 16
@@ -385,7 +391,14 @@ def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
     return (ival + rounded) >> 16
 
 
-def float32_to_float8e4m3(  # noqa: PLR0911
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
+)
+def float32_to_float8e4m3(*args, **kwargs) -> int:
+    return _float32_to_float8e4m3(*args, **kwargs)
+
+
+def _float32_to_float8e4m3(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = True,
@@ -519,7 +532,14 @@ def float32_to_float8e4m3(  # noqa: PLR0911
         return int(ret)
 
 
-def float32_to_float8e5m2(  # noqa: PLR0911
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
+)
+def float32_to_float8e5m2(*args: Any, **kwargs: Any) -> int:
+    return _float32_to_float8e5m2(*args, **kwargs)
+
+
+def _float32_to_float8e5m2(  # noqa: PLR0911
     fval: float,
     scale: float = 1.0,
     fn: bool = False,
@@ -645,7 +665,14 @@ def float32_to_float8e5m2(  # noqa: PLR0911
         raise NotImplementedError("fn and uz must be both False or True.")
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
+)
 def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
+    return _pack_float32_to_4bit(array, signed)
+
+
+def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
     """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
     See :ref:`onnx-detail-int4` for technical details.
 
@@ -659,16 +686,47 @@ def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarr
     if not isinstance(array, np.ndarray):
         array = np.asarray(array, dtype=np.float32)
 
-    array_flat = array.ravel()
+    array_flat: np.ndarray = array.ravel()
     is_odd_volume = np.prod(array.shape) % 2 == 1
     if is_odd_volume:
         array_flat = np.append(array_flat, np.array([0]))
 
-    single_func = lambda x, y: subbyte.float32x2_to_4bitx2(x, y, signed)  # noqa: E731
+    def single_func(x, y) -> np.ndarray:
+        return subbyte._float32x2_to_4bitx2(x, y, signed)
+
     func = np.frompyfunc(single_func, 2, 1)
 
-    arr = func(array_flat[0::2], array_flat[1::2])
-    return arr.astype(np.uint8)  # type: ignore[no-any-return]
+    arr: np.ndarray = func(array_flat[0::2], array_flat[1::2])
+    return arr.astype(np.uint8)
+
+
+@typing_extensions.deprecated(
+    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
+)
+def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
+    return _pack_float32_to_float4e2m1(array)
+
+
+def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
+    """Convert an array of float32 value to float4e2m1 and pack every two concecutive elements in a byte.
+    See :ref:`onnx-detail-float4` for technical details.
+
+    Args:
+        array: array of float to convert and pack
+
+    Returns:
+        Packed array of float4e2m1 (as uint8) with size `ceil(farray.size/2)` (single dimension).
+    """
+    if not isinstance(array, np.ndarray):
+        array = np.asarray(array, dtype=np.float32)
+
+    array_flat: np.ndarray = array.ravel()
+    is_odd_volume = np.prod(array.shape) % 2 == 1
+    if is_odd_volume:
+        array_flat = np.append(array_flat, np.array([0]))
+
+    arr = subbyte._float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
+    return arr.astype(np.uint8)
 
 
 def make_tensor(
@@ -701,7 +759,7 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     # Check number of vals specified equals tensor size
-    expected_size = 1
+    expected_size: float = 1
     if raw:
         # NumPy doesn't have BFLOAT16. TENSOR_TYPE_MAP maps it to float32, which has the wrong itemsize.
         if data_type == TensorProto.BFLOAT16:
@@ -713,13 +771,13 @@ def make_tensor(
             TensorProto.FLOAT8E5M2FNUZ,
         ):
             expected_size = 1
-        # NumPy doesn't have INT4. It is packed in couples to UINT8 buffers.
-        elif data_type in (TensorProto.UINT4, TensorProto.INT4):
-            expected_size = 0.5  # type: ignore[assignment]
+        # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
+        elif data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
+            expected_size = 0.5
         else:
             expected_size = np_dtype.itemsize
 
-    if type(vals) is np.ndarray and len(vals.shape) > 1:
+    if isinstance(vals, np.ndarray) and len(vals.shape) > 1:
         vals = vals.flatten()
     for d in dims:
         expected_size *= d
@@ -727,7 +785,7 @@ def make_tensor(
     if len(vals) != expected_size:
         # padding of half a byte is acceptable for 4bit types
         if not (
-            data_type in (TensorProto.UINT4, TensorProto.INT4)
+            data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1)
             and len(vals) == expected_size + 0.5
         ):
             raise ValueError(
@@ -738,7 +796,7 @@ def make_tensor(
         tensor.raw_data = vals
     else:
         if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-            vals = split_complex_to_pairs(vals)
+            vals = _split_complex_to_pairs(vals)
         elif data_type == TensorProto.FLOAT16:
             vals = (
                 np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
@@ -751,13 +809,13 @@ def make_tensor(
             TensorProto.FLOAT8E5M2FNUZ,
         ):
             fcast = {
-                TensorProto.BFLOAT16: float32_to_bfloat16,
-                TensorProto.FLOAT8E4M3FN: float32_to_float8e4m3,
-                TensorProto.FLOAT8E4M3FNUZ: lambda *args: float32_to_float8e4m3(  # type: ignore[misc]
+                TensorProto.BFLOAT16: _float32_to_bfloat16,
+                TensorProto.FLOAT8E4M3FN: _float32_to_float8e4m3,
+                TensorProto.FLOAT8E4M3FNUZ: lambda *args: _float32_to_float8e4m3(  # type: ignore[misc]
                     *args, uz=True
                 ),
-                TensorProto.FLOAT8E5M2: float32_to_float8e5m2,
-                TensorProto.FLOAT8E5M2FNUZ: lambda *args: float32_to_float8e5m2(  # type: ignore[misc]
+                TensorProto.FLOAT8E5M2: _float32_to_float8e5m2,
+                TensorProto.FLOAT8E5M2FNUZ: lambda *args: _float32_to_float8e5m2(  # type: ignore[misc]
                     *args, fn=True, uz=True
                 ),
             }[
@@ -780,7 +838,9 @@ def make_tensor(
             # to uint8 regardless of the value of 'signed'. Using int8 would cause
             # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
             # the way negative values are serialized by protobuf).
-            vals = pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
+            vals = _pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
+        elif data_type == TensorProto.FLOAT4E2M1:
+            vals = _pack_float32_to_float4e2m1(vals).flatten().tolist()
         elif data_type == TensorProto.BOOL:
             vals = np.array(vals).astype(int)
         elif data_type == TensorProto.STRING:
@@ -823,16 +883,18 @@ def make_sequence(
 
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
+
+    attribute: RepeatedCompositeFieldContainer | None = None
     if elem_type == SequenceProto.TENSOR:
         attribute = sequence.tensor_values
     elif elem_type == SequenceProto.SPARSE_TENSOR:
-        attribute = sequence.sparse_tensor_values  # type: ignore[assignment]
+        attribute = sequence.sparse_tensor_values
     elif elem_type == SequenceProto.SEQUENCE:
-        attribute = sequence.sequence_values  # type: ignore[assignment]
+        attribute = sequence.sequence_values
     elif elem_type == SequenceProto.MAP:
-        attribute = sequence.map_values  # type: ignore[assignment]
+        attribute = sequence.map_values
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = sequence.optional_values  # type: ignore[assignment]
+        attribute = sequence.optional_values
     else:
         raise TypeError("The element type in the input sequence is not supported.")
 
@@ -874,7 +936,7 @@ def make_map(
 def make_optional(
     name: str,
     elem_type: OptionalProto.DataType,
-    value: Any | None,
+    value: google.protobuf.message.Message | None,
 ) -> OptionalProto:
     """Make an Optional with specified value arguments."""
     optional = OptionalProto()
@@ -883,26 +945,30 @@ def make_optional(
 
     if elem_type == OptionalProto.UNDEFINED:
         return optional
+    attribute: google.protobuf.message.Message | None = None
     if elem_type == OptionalProto.TENSOR:
         attribute = optional.tensor_value
     elif elem_type == OptionalProto.SPARSE_TENSOR:
-        attribute = optional.sparse_tensor_value  # type: ignore[assignment]
+        attribute = optional.sparse_tensor_value
     elif elem_type == OptionalProto.SEQUENCE:
-        attribute = optional.sequence_value  # type: ignore[assignment]
+        attribute = optional.sequence_value
     elif elem_type == OptionalProto.MAP:
-        attribute = optional.map_value  # type: ignore[assignment]
+        attribute = optional.map_value
     elif elem_type == OptionalProto.OPTIONAL:
-        attribute = optional.optional_value  # type: ignore[assignment]
+        attribute = optional.optional_value
     else:
         raise TypeError("The element type in the input optional is not supported.")
 
+    assert value is not None
     attribute.CopyFrom(value)  # type: ignore[arg-type]
     return optional
 
 
 def _to_bytes(value: str | bytes) -> bytes:
     """Coerce a string (or bytes) value into UTF-8 bytes."""
-    return value if isinstance(value, bytes) else value.encode("utf-8")
+    if isinstance(value, str):
+        return value.encode("utf-8")
+    return value
 
 
 def make_attribute(
@@ -958,7 +1024,7 @@ def make_attribute(
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):
-                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
+                if all(issubclass(t, exp_t) for t in types):
                     attr_type = exp_enum
                     break
             if attr_type is None:
@@ -1353,13 +1419,13 @@ def printable_dim(dim: TensorShapeProto.Dimension) -> str:
 
 def printable_type(t: TypeProto) -> str:
     if t.WhichOneof("value") == "tensor_type":
-        s = TensorProto.DataType.Name(t.tensor_type.elem_type)
+        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)  # type: ignore[attr-defined]
         if t.tensor_type.HasField("shape"):
             if len(t.tensor_type.shape.dim):
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
             else:
                 s += ", scalar"
-        return s  # type: ignore[no-any-return]
+        return s
     if t.WhichOneof("value") is None:
         return ""
     return f"Unknown type {t.WhichOneof('value')}"
@@ -1374,7 +1440,7 @@ def printable_value_info(v: ValueInfoProto) -> str:
 
 def printable_tensor_proto(t: TensorProto) -> str:
     s = f"%{t.name}["
-    s += TensorProto.DataType.Name(t.data_type)
+    s += TensorProto.DataType.Name(t.data_type)  # type: ignore[attr-defined]
     if t.dims is not None:
         if len(t.dims):
             s += str(", " + "x".join(map(str, t.dims)))
@@ -1419,8 +1485,14 @@ def printable_node(
     return prefix + " ".join(content)
 
 
+@typing_extensions.deprecated(
+    "Deprecated since 1.19. Consider using onnx.printer.to_text() instead."
+)
 def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     """Display a GraphProto as a string.
+
+    .. deprecated:: 1.19
+        Consider using :func:`onnx.printer.to_text` instead.
 
     Args:
         graph (GraphProto): the graph to display
@@ -1437,9 +1509,7 @@ def printable_graph(graph: GraphProto, prefix: str = "") -> str:
     if len(graph.input):
         header.append("(")
         in_strs = []  # required inputs
-        in_with_init_strs = (
-            []
-        )  # optional inputs with initializer providing default value
+        in_with_init_strs: list = []  # optional inputs with initializer providing default value
         for inp in graph.input:
             if inp.name not in initializers:
                 in_strs.append(printable_value_info(inp))
@@ -1549,7 +1619,7 @@ def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
     Returns:
         numpy's data_type
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
 def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
@@ -1561,7 +1631,7 @@ def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     Returns:
         data_type for storage
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
 def tensor_dtype_to_string(tensor_dtype: int) -> str:
@@ -1573,9 +1643,10 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     Returns:
         the name of data_type
     """
-    return mapping.TENSOR_TYPE_MAP[tensor_dtype].name
+    return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
+@functools.lru_cache(None)
 def tensor_dtype_to_field(tensor_dtype: int) -> str:
     """Convert a TensorProto's data_type to corresponding field name for storage. It can be used while making tensors.
 
@@ -1585,12 +1656,27 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     Returns:
         field name
     """
-    return mapping._STORAGE_TENSOR_TYPE_TO_FIELD[
-        mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
+    storage_tensor_type_to_field = {
+        int(TensorProto.FLOAT): "float_data",
+        int(TensorProto.INT32): "int32_data",
+        int(TensorProto.INT64): "int64_data",
+        int(TensorProto.UINT8): "int32_data",
+        int(TensorProto.UINT16): "int32_data",
+        int(TensorProto.DOUBLE): "double_data",
+        int(TensorProto.COMPLEX64): "float_data",
+        int(TensorProto.COMPLEX128): "double_data",
+        int(TensorProto.UINT32): "uint64_data",
+        int(TensorProto.UINT64): "uint64_data",
+        int(TensorProto.STRING): "string_data",
+        int(TensorProto.BOOL): "int32_data",
+    }
+    return storage_tensor_type_to_field[
+        _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
     ]
 
 
-def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
+@functools.lru_cache(None)
+def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     """Convert a numpy's dtype to corresponding tensor type. It can be used while converting numpy arrays to tensors.
 
     Args:
@@ -1599,9 +1685,40 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> int:
     Returns:
         TensorsProto's data_type
     """
-    return cast(
-        int,
-        mapping._NP_TYPE_TO_TENSOR_TYPE[np_dtype],
+    _np_dtype_to_tensor_dtype = {
+        v.np_dtype: k
+        for k, v in _mapping.TENSOR_TYPE_MAP.items()
+        if k
+        not in {
+            TensorProto.BFLOAT16,
+            TensorProto.FLOAT8E4M3FN,
+            TensorProto.FLOAT8E4M3FNUZ,
+            TensorProto.FLOAT8E5M2,
+            TensorProto.FLOAT8E5M2FNUZ,
+            TensorProto.UINT4,
+            TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
+        }
+    }
+    if np_dtype in _np_dtype_to_tensor_dtype:
+        return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
+    if np.issubdtype(np_dtype, np.str_):
+        return TensorProto.STRING  # type: ignore[no-any-return]
+
+    if np_dtype in {
+        _custom_element_types.bfloat16,
+        _custom_element_types.float8e4m3fn,
+        _custom_element_types.float8e4m3fnuz,
+        _custom_element_types.float8e5m2,
+        _custom_element_types.float8e5m2fnuz,
+        _custom_element_types.int4,
+        _custom_element_types.uint4,
+        _custom_element_types.float4e2m1,
+    }:
+        return _custom_element_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
+
+    raise ValueError(
+        f"Unable to convert type {np_dtype!r} into TensorProto element type."
     )
 
 
@@ -1611,10 +1728,13 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     Returns:
         all tensor types from TensorProto
     """
-    return mapping.TENSOR_TYPE_MAP.keys()
+    return _mapping.TENSOR_TYPE_MAP.keys()
 
 
-_ATTRIBUTE_TYPE_TO_STR = {k: v for v, k in AttributeProto.AttributeType.items()}
+_ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
+    k: v
+    for v, k in AttributeProto.AttributeType.items()  # type: ignore[attr-defined]
+}
 
 
 def _attr_type_to_str(attr_type: int) -> str:
@@ -1626,6 +1746,6 @@ def _attr_type_to_str(attr_type: int) -> str:
     Returns:
         String representing the supplied attr_type.
     """
-    if attr_type in AttributeProto.AttributeType.values():
-        return _ATTRIBUTE_TYPE_TO_STR[attr_type]  # type: ignore[no-any-return]
-    return AttributeProto.AttributeType.keys()[0]  # type: ignore[no-any-return]
+    if attr_type in AttributeProto.AttributeType.values():  # type: ignore[attr-defined]
+        return _ATTRIBUTE_TYPE_TO_STR[attr_type]
+    return AttributeProto.AttributeType.keys()[0]  # type: ignore

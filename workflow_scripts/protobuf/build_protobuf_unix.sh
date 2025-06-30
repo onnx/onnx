@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2164,SC2103,SC2086
 
 # Copyright (c) ONNX Project Contributors
 
@@ -23,17 +24,25 @@ fi
 # Build protobuf from source with -fPIC on Unix-like system
 ORIGINAL_PATH=$(pwd)
 cd ..
-wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protobuf-cpp-3.21.12.tar.gz
-tar -xvf protobuf-cpp-3.21.12.tar.gz
-cd protobuf-3.21.12
+wget https://github.com/abseil/abseil-cpp/releases/download/20230802.2/abseil-cpp-20230802.2.tar.gz
+tar -xvf abseil-cpp-20230802.2.tar.gz
+
+wget https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protobuf-25.1.tar.gz
+tar -xvf protobuf-25.1.tar.gz
+cd protobuf-25.1
 mkdir build_source && cd build_source
-cmake ../cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALL_PROTOBUF_PATH -DCMAKE_INSTALL_SYSCONFDIR=/etc -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$BUILD_TYPE
-make -j$CORE_NUMBER
+cmake -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$INSTALL_PROTOBUF_PATH -DCMAKE_POSITION_INDEPENDENT_CODE=ON -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DABSL_ROOT_DIR="${ORIGINAL_PATH}/../abseil-cpp-20230802.2" -DCMAKE_CXX_STANDARD=17 -DABSL_PROPAGATE_CXX_STD=on ..
 if [ "$INSTALL_PROTOBUF_PATH" == "/usr" ]; then
-    # install protobuf on default system path so it needs sudo permission
-    sudo make install
+    # Don't use sudo for root
+    if [[ "$(id -u)" == "0" ]]; then
+      cmake --build . --target install --parallel $CORE_NUMBER
+    else
+      # install Protobuf on default system path so it needs sudo permission
+      sudo cmake --build . --target install --parallel $CORE_NUMBER
+    fi
 else
-    make install
+    cmake --build . --target install --parallel $CORE_NUMBER
     export PATH=$INSTALL_PROTOBUF_PATH/include:$INSTALL_PROTOBUF_PATH/lib:$INSTALL_PROTOBUF_PATH/bin:$PATH
 fi
+protoc --version
 cd $ORIGINAL_PATH

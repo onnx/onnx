@@ -4,10 +4,7 @@
 
 #include "onnx/checker.h"
 
-#include <fstream>
-#include <functional>
-#include <iterator>
-#include <set>
+#include <filesystem>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -15,17 +12,11 @@
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
-#include "onnx/proto_utils.h"
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
 #ifdef _WIN32
-#include <direct.h>
-
-#include <filesystem>
-
-#else // POSIX
-#include <sys/stat.h>
+#include "onnx/common/path.h"
 #endif
 
 namespace ONNX_NAMESPACE {
@@ -96,11 +87,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
   const char* value_field = nullptr;
 
-#define check_data_field(field)             \
-  bool has_##field = tensor.field().size(); \
-  if (has_##field) {                        \
-    ++num_value_fields;                     \
-    value_field = #field;                   \
+#define check_data_field(field)               \
+  bool has_##field = !tensor.field().empty(); \
+  if (has_##field) {                          \
+    ++num_value_fields;                       \
+    value_field = #field;                     \
   }
 
   check_data_field(float_data);
@@ -188,6 +179,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E5M2FNUZ:
       case TensorProto::UINT4:
       case TensorProto::INT4:
+      case TensorProto::FLOAT4E2M1:
         check_field(int32_data);
         break;
 
@@ -313,10 +305,8 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 1-dimensional tensor; indices[i] represents the
 // linearized index value for the i-th nonzero value.
-void check_sparse_tensor_indices_1(
-    const TensorProto& indices,
-    const SparseTensorProto& sparse_tensor_proto,
-    size_t nnz) {
+static void
+check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = 1;
   for (int i = 0; i < dense_rank; ++i)
@@ -353,10 +343,8 @@ void check_sparse_tensor_indices_1(
 // Check that the index data stored in a SparseTensorProto is valid.
 // indices: a 2-dimensional tensor; indices[i,j] represents the j-th
 // index value for the i-th nonzero value.
-void check_sparse_tensor_indices_2(
-    const TensorProto& indices,
-    const SparseTensorProto& sparse_tensor_proto,
-    size_t nnz) {
+static void
+check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
   if (static_cast<size_t>(indices.dims(0)) != nnz) {
     fail_check("Sparse tensor indices (", indices.name(), ") first dimension size does not equal NNZ.");
@@ -517,7 +505,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   for (const auto& sparse_tensor : attr.sparse_tensors()) {
     check_sparse_tensor(sparse_tensor, ctx);
   }
-  if (attr.graphs().size() > 0) {
+  if (!attr.graphs().empty()) {
     CheckerContext subgraph_ctx(ctx);
     subgraph_ctx.set_is_main_graph(false);
     for (const auto& graph : attr.graphs()) {
@@ -526,7 +514,7 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx, cons
   }
 }
 
-void print_warning_if_has_experimental(const std::unordered_set<std::string>& used_experimental_ops) {
+static void print_warning_if_has_experimental(const std::unordered_set<std::string>& used_experimental_ops) {
   if (!used_experimental_ops.empty()) {
     std::string all_experimental_ops;
     for (const auto& op : used_experimental_ops) {
@@ -534,7 +522,7 @@ void print_warning_if_has_experimental(const std::unordered_set<std::string>& us
     }
     // Remove the last comma which is unnecessary
     all_experimental_ops.pop_back();
-    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << std::endl;
+    std::cout << "Warning: Model contains experimental ops:" + all_experimental_ops << '\n';
   }
 }
 
@@ -614,8 +602,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     lex_ctx.add(value_info.name());
   }
 
-  std::unordered_set<std::reference_wrapper<const std::string>, std::hash<std::string>, std::equal_to<std::string>>
-      initializer_name_checker;
+  std::unordered_set<std::string> initializer_name_checker;
 
   for (const auto& init : graph.initializer()) {
     enforce_has_field(init, name);
@@ -624,7 +611,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
       fail_check("Tensor initializers must have a non-empty name");
     }
 
-    if (!initializer_name_checker.insert(std::cref(name)).second) {
+    if (!initializer_name_checker.emplace(name).second) {
       fail_check(name + " initializer name is not unique");
     }
 
@@ -649,7 +636,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     if (name.empty()) {
       fail_check("Sparse tensor initializers must have a non-empty name");
     }
-    if (!initializer_name_checker.insert(std::cref(name)).second) {
+    if (!initializer_name_checker.insert(name).second) {
       fail_check(name + " sparse initializer name is not unique across initializers and sparse_initializers");
     }
     check_sparse_tensor(sparse_init, ctx);
@@ -720,7 +707,9 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
 
 // Utilify function to get the imported version of domain from opset imports
 // Returns -1 if requested domain is not found in the opset_imports
-int get_version_for_domain(const std::string& domain, const std::unordered_map<std::string, int>& opset_imports) {
+static int get_version_for_domain(
+    const std::string& domain,
+    const std::unordered_map<std::string, int>& opset_imports) {
   auto it = opset_imports.find(domain);
   if (it == opset_imports.end()) {
     return -1;
@@ -894,7 +883,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   print_warning_if_has_experimental(used_experimental_ops);
 }
 
-void check_model(const ModelProto& model, CheckerContext& ctx) {
+static void check_model(const ModelProto& model, CheckerContext& ctx) {
   if (!model.ir_version()) {
     fail_check("The model does not have an ir_version set properly.");
   }
@@ -910,7 +899,6 @@ void check_model(const ModelProto& model, CheckerContext& ctx) {
       }
     }
   }
-  std::unordered_map<std::string, int> versions;
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
@@ -985,7 +973,15 @@ std::string resolve_external_data_location(
     const std::string& location,
     const std::string& tensor_name) {
 #ifdef _WIN32
-  auto file_path = std::filesystem::path(utf8str_to_wstring(location));
+  std::filesystem::path base_dir_path(utf8str_to_wstring(base_dir));
+  std::filesystem::path file_path(utf8str_to_wstring(location));
+#else // POSIX
+  std::filesystem::path base_dir_path(base_dir);
+  std::filesystem::path file_path(location);
+#endif
+  if (file_path.empty()) {
+    fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
+  }
   if (file_path.is_absolute()) {
     fail_check(
         "Location of external TensorProto ( tensor name: ",
@@ -993,81 +989,50 @@ std::string resolve_external_data_location(
         ") should be a relative path, but it is an absolute path: ",
         location);
   }
-  auto relative_path = file_path.lexically_normal().make_preferred().wstring();
-  // Check that normalized relative path contains ".." on Windows.
-  if (relative_path.find(L"..", 0) != std::string::npos) {
-    fail_check(
-        "Data of TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be file inside the ",
-        base_dir,
-        ", but the '",
-        location,
-        "' points outside the directory");
-  }
-  std::wstring data_path = path_join(utf8str_to_wstring(base_dir), relative_path);
-  struct _stat64 buff;
-  if (data_path.empty() || (data_path[0] != '#' && _wstat64(data_path.c_str(), &buff) != 0)) {
-    fail_check(
-        "Data of TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be stored in ",
-        location,
-        ", but it doesn't exist or is not accessible.");
-  }
-  return wstring_to_utf8str(data_path);
+  auto relative_path = file_path.lexically_normal().make_preferred();
+  // Check that normalized relative path doesn't contains ".."
+#ifdef _WIN32
+  if (relative_path.native().find(L"..", 0) != std::string::npos) {
 #else // POSIX
-  if (location.empty()) {
-    fail_check("Location of external TensorProto ( tensor name: ", tensor_name, ") should not be empty.");
-  } else if (location[0] == '/') {
-    fail_check(
-        "Location of external TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be a relative path, but it is an absolute path: ",
-        location);
-  }
-  std::string relative_path = clean_relative_path(location);
-  // Check that normalized relative path contains ".." on POSIX
-  if (relative_path.find("..", 0) != std::string::npos) {
-    fail_check(
-        "Data of TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be file inside the ",
-        base_dir,
-        ", but the '",
-        location,
-        "' points outside the directory");
-  }
-  std::string data_path = path_join(base_dir, relative_path);
-  // use stat64 to check whether the file exists
-#if defined(__APPLE__) || defined(__wasm__) || !defined(__GLIBC__)
-  struct stat buffer; // APPLE, wasm and non-glic stdlibs do not have stat64
-  if (data_path.empty() || (data_path[0] != '#' && stat((data_path).c_str(), &buffer) != 0)) {
-#else
-  struct stat64 buffer; // All POSIX under glibc except APPLE and wasm have stat64
-  if (data_path.empty() || (data_path[0] != '#' && stat64((data_path).c_str(), &buffer) != 0)) {
+  if (relative_path.native().find("..", 0) != std::string::npos) {
 #endif
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
+        ") should be file inside the ",
+        base_dir,
+        ", but the '",
+        location,
+        "' points outside the directory");
+  }
+  auto data_path = base_dir_path / relative_path;
+#ifdef _WIN32
+  auto data_path_str = wstring_to_utf8str(data_path.native());
+#else
+  auto data_path_str = data_path.native();
+#endif
+  // Check whether the file exists
+  if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::exists(data_path))) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
         ") should be stored in ",
-        data_path,
+        data_path_str,
         ", but it doesn't exist or is not accessible.");
   }
   // Do not allow symlinks or directories.
-  if (data_path.empty() || (data_path[0] != '#' && !S_ISREG(buffer.st_mode))) {
+  if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path))) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
-        data_path,
+        data_path_str,
         ", but it is not regular file.");
   }
-  return data_path;
-#endif
+  return data_path_str;
 }
 
-std::set<std::string> experimental_ops = {
+static std::unordered_set<std::string> experimental_ops = {
     "ATen",
     "Affine",
     "ConstantFill",

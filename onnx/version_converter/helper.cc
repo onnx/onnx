@@ -36,20 +36,15 @@ void assert_numpy_multibroadcastable(
     const std::vector<Dimension>& input1_sizes,
     const std::vector<Dimension>& input2_sizes) {
   // Generalize above for multibroadcastable case
-  const std::vector<Dimension>* A_ptr;
-  const std::vector<Dimension>* B_ptr;
-  int A;
-  int B;
+  const std::vector<Dimension>* A_ptr = &input1_sizes;
+  const std::vector<Dimension>* B_ptr = &input2_sizes;
+  int A = 1;
+  int B = 2;
   if (input1_sizes.size() < input2_sizes.size()) {
     A_ptr = &input2_sizes;
     B_ptr = &input1_sizes;
     A = 2;
     B = 1;
-  } else {
-    A_ptr = &input1_sizes;
-    B_ptr = &input2_sizes;
-    A = 1;
-    B = 2;
   }
   const std::vector<Dimension>& A_sizes = *A_ptr;
   const std::vector<Dimension>& B_sizes = *B_ptr;
@@ -62,13 +57,13 @@ void assert_numpy_multibroadcastable(
         i,
         B,
         axis + i,
-        A);
+        A)
   }
 }
 
 void assertNotParams(const std::vector<Dimension>& sizes) {
   for (const Dimension& dim : sizes) {
-    ONNX_ASSERTM(dim.is_int, "%s Dimension is a param instead of an int.", dim.param.c_str());
+    ONNX_ASSERTM(dim.is_int, "%s Dimension is a param instead of an int.", dim.param.c_str())
   }
 }
 
@@ -78,9 +73,9 @@ void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uin
       "%s in opset version 6 can only broadcast"
       " between %d inputs",
       name,
-      num_inputs);
+      num_inputs)
   for (int i = 0; i < (int)num_inputs; i++) {
-    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs);
+    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs)
     assertNotParams(inputs[i]->sizes());
   }
 }

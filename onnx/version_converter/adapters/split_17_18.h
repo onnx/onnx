@@ -20,7 +20,7 @@ class Split_17_18 : public Adapter {
  public:
   explicit Split_17_18() : Adapter("Split", OpSetID(17), OpSetID(18)) {}
 
-  void adapt_split_17_18(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_split_17_18(const std::shared_ptr<Graph>&, Node* node) const {
     const auto num_outputs = node->outputs().size();
     node->i_(knum_outputs, num_outputs);
   }

@@ -5,8 +5,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from onnx.reference.custom_element_types import (
+from onnx._custom_element_types import (
     bfloat16,
+    float4e2m1,
     float8e4m3fn,
     float8e4m3fnuz,
     float8e5m2,
@@ -27,6 +28,7 @@ def _check_dtype(val):  # type: ignore
         float8e5m2fnuz,
         uint4,
         int4,
+        float4e2m1,
         np.int8,
         np.uint8,
         np.float16,
@@ -108,7 +110,7 @@ class Constant_12(ConstantCommon):
             self.cst_convert = lambda v: v
         elif hasattr(self, "value") and self.value is not None:  # type: ignore
             self.cst_name = "value"  # type: ignore
-            self.cst = self.value if isinstance(self.value, RefAttrName) else self.value  # type: ignore
+            self.cst = self.value  # type: ignore
             self.cst_convert = lambda v: v
         else:
             for attr, np_dtype in {

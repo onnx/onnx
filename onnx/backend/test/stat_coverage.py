@@ -6,12 +6,15 @@
 from __future__ import annotations
 
 import os
-from typing import IO, Any, Sequence
+from typing import IO, TYPE_CHECKING, Any
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.test.loader import load_model_tests
 from onnx.backend.test.runner import Runner
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
@@ -252,7 +255,7 @@ def gen_model_test_coverage(
 
 
 def gen_overall_test_coverage(
-    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool  # noqa: ARG001
+    f: IO[Any],
 ) -> None:
     f.write("# Overall Test Coverage\n")
     f.write("## To be filled.\n")
@@ -276,7 +279,7 @@ def main() -> None:
         gen_outlines(f, False)
         gen_node_test_coverage(schemas, f, False)
         gen_model_test_coverage(schemas, f, False)
-        gen_overall_test_coverage(schemas, f, False)
+        gen_overall_test_coverage(f)
 
     if has_ml:
         fname = os.path.join(docs_dir, "TestCoverage-ml.md")
@@ -285,7 +288,7 @@ def main() -> None:
             gen_outlines(f, True)
             gen_node_test_coverage(schemas, f, True)
             gen_model_test_coverage(schemas, f, True)
-            gen_overall_test_coverage(schemas, f, True)
+            gen_overall_test_coverage(f)
 
 
 if __name__ == "__main__":

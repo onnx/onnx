@@ -8,13 +8,6 @@
     :members:
 ```
 
-## LargeModelFileFormat
-
-```{eval-rst}
-.. autoclass:: onnx.model_container.LargeModelFileFormat
-    :members:
-```
-
 ## make_large_model
 
 ```{eval-rst}

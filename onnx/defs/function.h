@@ -4,14 +4,11 @@
 
 #pragma once
 
-#include <mutex>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "attr_proto_util.h"
-#include "onnx/common/constants.h"
 #include "onnx/common/status.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
@@ -30,16 +27,13 @@ class FunctionBodyHelper {
   struct AttributeProtoWrapper {
     AttributeProto proto;
 
-    AttributeProtoWrapper() {}
+    AttributeProtoWrapper() = default;
 
-    AttributeProtoWrapper(const AttributeProto& attr_prot) {
-      proto = attr_prot;
-    }
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    AttributeProtoWrapper(AttributeProto attr_prot) : proto(std::move(attr_prot)) {}
 
     template <typename T>
-    AttributeProtoWrapper(const std::string& attr_name, const T& value) {
-      proto = MakeAttribute(attr_name, value);
-    }
+    AttributeProtoWrapper(const std::string& attr_name, const T& value) : proto(MakeAttribute(attr_name, value)) {}
   };
 
   struct NodeDef {
@@ -71,12 +65,12 @@ class FunctionBodyHelper {
   To build a node with attribute:
     {{"Y"}, "Concat", {"X1", "X2", "X3"}, {{"axis", 1}}}
       represents Y = Concat(X1,X2,X3) with axis = 1
-    The attribute type are infered from the attribute value's c++ type
+    The attribute type are inferred from the attribute value's c++ type
     Supported value types are
       int64_t -> int, vector<int64_t> -> ints
       float -> float, vector<float> -> floats
       string -> string, vector<string> ->strings
-    For refering an attribute from parent, use:
+    For referring an attribute from parent, use:
       {MakeRefAttribute("axes", AttributeProto::INTS)}}
 
   To build a node which belongs to a domain other than onnx standard domain:
@@ -110,7 +104,7 @@ class FunctionBodyHelper {
 
 class FunctionBuilder {
  public:
-  FunctionBuilder(FunctionProto& funProto_) : funProto(funProto_) {}
+  explicit FunctionBuilder(FunctionProto& funProto_) : funProto(funProto_) {}
 
   FunctionBuilder& Add(const char* nodes_txt) {
     OnnxParser parser(nodes_txt);
@@ -145,6 +139,38 @@ class FunctionBuilder {
   template <typename T>
   FunctionBuilder& Add(const char* node_txt, const std::string& attr_name, const T& attr_value) {
     return Add(node_txt, MakeAttribute(attr_name, attr_value));
+  }
+
+  template <typename T>
+  FunctionBuilder& AddAttributeToNode(const std::string& attr_name, const T& attr_value) {
+    auto& nodes = *funProto.mutable_node();
+    int nodes_size = nodes.size();
+    if (nodes_size != 0) {
+      auto& node = *funProto.mutable_node(nodes_size - 1);
+      *node.add_attribute() = MakeAttribute(attr_name, attr_value);
+    } else {
+      ONNX_THROW_EX(std::logic_error("Error adding attribute to node of a graph with no nodes"));
+    }
+    return *this;
+  }
+
+  template <typename T, typename... Args>
+  FunctionBuilder& AddAttributes(const std::string& attr_name, const T& attr_value, Args... args) {
+    AddAttributeToNode(attr_name, attr_value);
+    if constexpr (sizeof...(args) > 0) {
+      AddAttributes(args...);
+    }
+    return *this;
+  }
+
+  // Adds variable number of attributes to a node
+  template <typename... Args>
+  FunctionBuilder& Add(const char* node_txt, Args... args) {
+    Add(node_txt);
+    if constexpr (sizeof...(args) % 2 == 0) {
+      return AddAttributes(args...);
+    }
+    return *this;
   }
 
   FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {

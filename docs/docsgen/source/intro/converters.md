@@ -213,7 +213,7 @@ implements: [Converter for WOE](https://onnx.ai/sklearn-onnx/auto_tutorial/plot_
 ### Build
 
 The windows build requires conda. The following steps might not be up to date.
-Folder [onnx/.azure-pipelines](https://github.com/onnx/onnx/tree/main/.azure-pipelines)
+Folder [onnx/.github/workflows](https://github.com/onnx/onnx/tree/main/.github/workflows)
 contains the latest instructions.
 
 **Windows**

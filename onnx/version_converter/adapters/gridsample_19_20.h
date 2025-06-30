@@ -10,6 +10,8 @@
 
 #include <memory>
 
+#include "onnx/version_converter/adapters/adapter.h"
+
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
@@ -17,7 +19,7 @@ class GridSample_19_20 final : public Adapter {
  public:
   explicit GridSample_19_20() : Adapter("GridSample", OpSetID(19), OpSetID(20)) {}
 
-  void adapt_gridsample_19_20(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_gridsample_19_20(const std::shared_ptr<Graph>&, Node* node) const {
     if (node->hasAttribute(kmode) && (node->s(kmode) == "bilinear")) {
       node->s_(kmode, "linear");
     }

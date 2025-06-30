@@ -192,7 +192,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 }
 
 int handle_negative_axis_validate(const std::string& attrib, int axis, int rank) {
-  if (!(-rank <= axis && axis < rank)) {
+  if (-rank > axis || axis >= rank) {
     fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank);
   }
   return (axis >= 0 ? axis : axis + rank);
@@ -277,8 +277,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         const auto& dims = shape.dim();
         mergeInDimensionInfo(dims.Get(axis), sequence_len_dim, 1);
 
-        temporary_type_protos.push_back(RemoveIthDimensionFromShape(*input_type, axis));
-        subgraph_input_types.push_back(&temporary_type_protos.back());
+        temporary_type_protos.emplace_back(RemoveIthDimensionFromShape(*input_type, axis));
+        subgraph_input_types.emplace_back(&temporary_type_protos.back());
 
       } else {
         subgraph_input_types.push_back(input_type);

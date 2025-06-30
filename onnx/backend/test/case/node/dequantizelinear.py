@@ -236,6 +236,28 @@ class DequantizeLinear(Base):
         )
 
     @staticmethod
+    def export_float4e2m1() -> None:
+        node = onnx.helper.make_node(
+            "DequantizeLinear",
+            inputs=["x", "x_scale", "x_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        # scalar zero point and scale
+        x = make_tensor("x", TensorProto.FLOAT4E2M1, [5], [0, 1, -1, 1.5, -4])
+        x_scale = np.float32(2)
+        x_zero_point = make_tensor("x_zero_point", TensorProto.FLOAT4E2M1, (1,), [0])
+        y = np.array([0, 2, -2, 3, -8], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[x, x_scale, x_zero_point],
+            outputs=[y],
+            name="test_dequantizelinear_float4e2m1",
+        )
+
+    @staticmethod
     def export_blocked() -> None:
         node = onnx.helper.make_node(
             "DequantizeLinear",

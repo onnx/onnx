@@ -40,8 +40,7 @@ def multiclass_probability(k, R):
         max_error = 0
         for t in range(k):
             error = np.abs(Qp[t] - pQp)
-            if error > max_error:
-                max_error = error
+            max_error = max(error, max_error)
         if max_error < eps:
             break
 
@@ -214,7 +213,10 @@ class SVMClassifier(OpRunAiOnnxMl):
             label = max_class
 
         new_scores = write_scores(
-            scores.size, scores, self._svm.atts.post_transform, write_additional_scores  # type: ignore
+            scores.size,
+            scores,
+            self._svm.atts.post_transform,
+            write_additional_scores,  # type: ignore
         )
         return label, new_scores
 

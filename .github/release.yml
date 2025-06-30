@@ -1,0 +1,43 @@
+changelog:
+  exclude:
+    authors:
+      - dependabot
+  categories:
+    - title: Breaking Changes and Deprecations
+      labels:
+        - "topic: bc breaking"
+        - "topic: deprecation"
+    - title: Spec and Operator
+      labels:
+        - "module: spec"
+        - "topic: spec clarification"
+        - "topic: operator"
+        - "module: schema"
+    - title: Reference Implementation
+      labels:
+        - "module: reference implementation"
+    - title: Utilities and Tools
+      labels:
+        - "module: checker"
+        - "module: parser"
+        - "module: inliner"
+        - "module: utility"
+        - "module: optimizer"
+        - "module: version converter"
+        - "module: shape inference"
+        - "topic: partial data propagation"
+    - title: ONNX Hub
+      labels:
+        - "module: hub"
+    - title: Build, CI and Tests
+      labels:
+        - "topic: build"
+        - "topic: CI pipelines"
+        - "topic: test"
+        - "topic: compiler warning"
+    - title: Documentation
+      labels:
+        - "topic: documentation"
+    - title: Other Changes
+      labels:
+        - "*"

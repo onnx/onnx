@@ -10,7 +10,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def one_hot(indices, depth, axis=-1, dtype=np.float32):  # type: ignore
+def one_hot(indices, depth, axis=-1, dtype=np.float32):
     """Compute one hot from indices at a specific axis"""
     values = np.asarray(indices)
     rank = len(values.shape)

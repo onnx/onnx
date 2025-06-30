@@ -28,9 +28,12 @@ def inline_local_functions(
 
 
 def inline_selected_functions(
-    model: onnx.ModelProto, function_ids: list[tuple[str, str]], exclude: bool = False
+    model: onnx.ModelProto,
+    function_ids: list[tuple[str, str]],
+    exclude: bool = False,
+    inline_schema_functions: bool = False,
 ) -> onnx.ModelProto:
-    """Inline selected model-local functions in given model.
+    """Inline selected functions in given model.
 
     Arguments:
         model: an ONNX ModelProto
@@ -38,13 +41,20 @@ def inline_selected_functions(
             element is a tuple of (function domain, function name).
         exclude: if true, inlines all functions except those specified in function_ids.
            if false, inlines all functions specified in function_ids.
+        inline_schema_functions: if true, inlines schema-defined functions as well
+            as model-local functions. Otherwise, only model-local functions are inlined.
 
     Returns:
         ModelProto with all calls to model-local functions inlined (recursively)
     """
-    result = C.inline_selected_functions(
-        model.SerializeToString(), function_ids, exclude
-    )
+    if inline_schema_functions:
+        result = C.inline_selected_functions2(
+            model.SerializeToString(), function_ids, exclude
+        )
+    else:
+        result = C.inline_selected_functions(
+            model.SerializeToString(), function_ids, exclude
+        )
     inlined_model = onnx.ModelProto()
     inlined_model.ParseFromString(result)
     return inlined_model

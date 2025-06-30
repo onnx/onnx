@@ -127,11 +127,10 @@ class Scan(OpRun):
         results = [[] for _ in scan_names_out]  # type: ignore
 
         for it in range(max_iter):
-            inputs = {}
-            for name, value in zip(state_names_in, states):
-                inputs[name] = value
-            for name, value in zip(scan_names_in, scan_values):
-                inputs[name] = value[it]
+            inputs = dict(zip(state_names_in, states))
+            inputs.update(
+                {name: value[it] for name, value in zip(scan_names_in, scan_values)}
+            )
 
             try:
                 outputs_list = self._run_body(inputs)  # type: ignore

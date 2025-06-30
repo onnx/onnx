@@ -6,11 +6,11 @@
 
 #include <vector>
 
-#include "onnx/common/ir.h"
+#include "onnx/common/tensor.h"
 
 namespace ONNX_NAMESPACE {
 
 template <typename T>
-const std::vector<T> ParseData(const Tensor* tensor);
+std::vector<T> ParseData(const Tensor* tensor);
 
 } // namespace ONNX_NAMESPACE

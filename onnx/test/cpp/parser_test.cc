@@ -228,6 +228,44 @@ TEST(ParserTest, DomainOpCallTest) {
   Parse(n, code);
 }
 
+TEST(ParserTest, OptionalInputTest) {
+  const char* code = "x = SomeOp(y, , z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 3);
+  EXPECT_EQ(n.input(0), "y");
+  EXPECT_EQ(n.input(1), "");
+  EXPECT_EQ(n.input(2), "z");
+}
+
+TEST(ParserTest, LeadingOptionalInputTest) {
+  const char* code = "x = SomeOp( , z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 2);
+  EXPECT_EQ(n.input(0), "");
+  EXPECT_EQ(n.input(1), "z");
+}
+
+TEST(ParserTest, LeadingOptionalInputTest2) {
+  const char* code = "x = SomeOp(\"\" , z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 2);
+  EXPECT_EQ(n.input(0), "");
+  EXPECT_EQ(n.input(1), "z");
+}
+
+TEST(ParserTest, OptionalInputTest2) {
+  const char* code = "x = SomeOp(y, \"\", z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.input_size(), 3);
+  EXPECT_EQ(n.input(0), "y");
+  EXPECT_EQ(n.input(1), "");
+  EXPECT_EQ(n.input(2), "z");
+}
+
 TEST(ParserTest, NodeTest) {
   const char* code = "x = foo(y, z)";
   NodeProto n;
@@ -254,6 +292,23 @@ TEST(ParserTest, NodeTest) {
        variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
        }
        )ONNX");
+}
+
+TEST(ParserTest, NodeLabelTest) {
+  const char* code = "[node1] x = foo(y, z)";
+  NodeProto n;
+  Parse(n, code);
+  EXPECT_EQ(n.name(), "node1");
+
+  NodeList nl;
+  Parse(nl, R"ONNX( {
+     [node1] x = foo(y, z)
+     [node2] w = bar(x, y)
+     s = foobar(x, w)
+  } )ONNX");
+  EXPECT_EQ(nl.Get(0).name(), "node1");
+  EXPECT_EQ(nl.Get(1).name(), "node2");
+  EXPECT_FALSE(nl.Get(2).has_name());
 }
 
 TEST(ParserTest, QualifiedOpNameTest) {
@@ -661,6 +716,48 @@ agraph (float y = {1.0}, float[N] z) => (w) <
   EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).value(), "weight_1.bin");
   EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).key(), "offset");
   EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).value(), "17");
+}
+
+TEST(ParserTest, QuotedIdentifiersTest) {
+  const char* code = R"ONNX(
+"a graph name" (float[N, 128] "input/X", float[128,10] "input W", float[10] B) => (float[N] C)
+{
+    "some/temp" = MatMul("input/X", "input W")
+    S = Add("some/temp", B)
+    C = Softmax(S)
+}
+)ONNX";
+
+  GraphProto graph;
+  Parse(graph, code);
+
+  EXPECT_EQ(graph.name(), "a graph name");
+  EXPECT_EQ(graph.input_size(), 3);
+  EXPECT_EQ(graph.output_size(), 1);
+  EXPECT_EQ(graph.node_size(), 3);
+  EXPECT_EQ(graph.node(0).input(0), "input/X");
+  EXPECT_EQ(graph.node(0).input(1), "input W");
+  EXPECT_EQ(graph.node(0).output(0), "some/temp");
+}
+
+TEST(ParserTest, QuotedIdentifierTest2) {
+  const char* code = R"ONNX(
+<
+  opset_import: [ "" : 10 ],
+  domain: "ai.onnx.ml",
+  doc_string: "A function test case."
+>
+"a function name" (float[N] "#y", "$z") => (float[N] "!w")
+<float[N] "/layer/x", float[N] t>
+{
+    "/layer/x" = Add("#y", "$z")
+    t = Add("/layer/x", "/layer/x")
+    "!w" = Mul(t, "#y")
+}
+)ONNX";
+
+  FunctionProto fp;
+  Parse(fp, code);
 }
 
 } // namespace Test

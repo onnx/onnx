@@ -17,7 +17,7 @@ does not suffer too much.
 
 [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433)
 from NVIDIA, Intel and ARM introduces two types following
-[IEEE specifciations](https://en.wikipedia.org/wiki/IEEE_754).
+[IEEE specification](https://en.wikipedia.org/wiki/IEEE_754).
 First one is E4M3, 1 bit for the sign, 4 bits for the exponents and 3
 bits for the mantissa. Second one is E5M2, 1 bit for the sign,
 5 bits for the exponents and 2 for the mantissa. The first types
@@ -43,7 +43,7 @@ with float 8.
 - `E5M2FNUZ`: 1 bit for the sign, 5 bits for the exponents, 2 bits for the mantissa,
   only nan values and no infinite values (FN), no negative zero (UZ)
 
-The implementation is usually hardware dependant.
+The implementation is usually hardware dependent.
 NVIDIA, Intel and Arm implement `E4M3FN` and `E5M2` is its latest graphical processor.
 GraphCore does the same only with `E4M3FNUZ` and `E5M2FNUZ`.
 

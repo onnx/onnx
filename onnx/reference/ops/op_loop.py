@@ -37,7 +37,7 @@ class Loop(OpRun):
             raise TypeError(f"M must be empty or an array but its type is {type(M)}.")
         body = self.body  # type: ignore
         loop_inputs = body.input_names
-        inputs = {name: None for name in loop_inputs}
+        inputs = dict.fromkeys(loop_inputs)
         if v_initial is not None:
             inputs[loop_inputs[2]] = v_initial
         cond_name = body.output_names[0]
@@ -55,7 +55,9 @@ class Loop(OpRun):
         while cond and (M is None or it < M):
             self._log("  -- loop> {%r}", context)
             if len(body.input_names) > 0 and body.input_names[0] is not None:
-                inputs[body.input_names[0]] = np.array(it, dtype=None if M is None else M.dtype)  # type: ignore
+                inputs[body.input_names[0]] = np.array(
+                    it, dtype=None if M is None else M.dtype
+                )  # type: ignore
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
             outputs = self._run_body(inputs, attributes=attributes)  # type: ignore

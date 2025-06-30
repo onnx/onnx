@@ -4,12 +4,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <string>
+
 #include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
 using SupportType = OpSchema::SupportType;
+
+static std::vector<std::string> control_flow_types_ir10() {
+  auto t = OpSchema::all_tensor_types_ir10();
+  auto s = OpSchema::all_tensor_sequence_types_ir10();
+  auto o = OpSchema::all_optional_types_ir10();
+  t.insert(t.end(), s.begin(), s.end());
+  t.insert(t.end(), o.begin(), o.end());
+  return t;
+}
 
 static std::vector<std::string> control_flow_types_ir9() {
   auto t = OpSchema::all_tensor_types_ir9();
@@ -28,6 +39,53 @@ static std::vector<std::string> control_flow_types_ir4() {
   t.insert(t.end(), o.begin(), o.end());
   return t;
 }
+
+ONNX_OPERATOR_SET_SCHEMA(
+    If,
+    21,
+    OpSchema()
+        .SetDoc("If conditional")
+        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
+        .Output(
+            0,
+            "outputs",
+            "Values that are live-out to the enclosing scope. The return values in "
+            "the `then_branch` and `else_branch` must be of the same data type. "
+            "The `then_branch` and `else_branch` may produce tensors with the same "
+            "element type and different shapes. "
+            "If corresponding outputs from the then-branch and the else-branch have "
+            "static shapes S1 and S2, then the shape of the corresponding output "
+            "variable of the if-node (if present) must be compatible with both S1 "
+            "and S2 as it represents the union of both possible shapes."
+            "For example, if in a model file, the first "
+            "output of `then_branch` is typed float tensor with shape [2] and the "
+            "first output of `else_branch` is another float tensor with shape [3], "
+            "If's first output should have (a) no shape set, or (b) "
+            "a shape of rank 1 with neither `dim_value` nor `dim_param` set, or (c) "
+            "a shape of rank 1 with a unique `dim_param`. "
+            "In contrast, the first output cannot have the shape [2] since [2] and "
+            "[3] are not compatible.",
+            "V",
+            OpSchema::Variadic,
+            false)
+        .Attr(
+            "then_branch",
+            "Graph to run if condition is true. Has N outputs: values you wish to "
+            "be live-out to the enclosing scope. The number of outputs must match"
+            " the number of outputs in the else_branch.",
+            AttributeProto::GRAPH)
+        .Attr(
+            "else_branch",
+            "Graph to run if condition is false. Has N outputs: values you wish to"
+            " be live-out to the enclosing scope. The number of outputs must match"
+            " the number of outputs in the then_branch.",
+            AttributeProto::GRAPH)
+        .TypeConstraint(
+            "V",
+            control_flow_types_ir10(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.")
+        .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
+        .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
@@ -263,6 +321,59 @@ The input/output of subgraph (produced by loop node) matching is based on order 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
+    21,
+    OpSchema()
+        .SetDoc(Loop_ver16_doc)
+        .Input(
+            0,
+            "M",
+            "A maximum trip-count for the loop specified at runtime. Optional."
+            " Pass empty string to skip.",
+            "I",
+            OpSchema::Optional)
+        .Input(
+            1,
+            "cond",
+            "A boolean termination condition. Optional. Pass empty string to skip.",
+            "B",
+            OpSchema::Optional)
+        .Input(
+            2,
+            "v_initial",
+            "The initial values of any loop-carried dependencies (values that "
+            "change across loop iterations)",
+            "V",
+            OpSchema::Variadic,
+            false,
+            0)
+        .Output(
+            0,
+            "v_final_and_scan_outputs",
+            "Final N loop carried dependency values then K scan_outputs. "
+            "Scan outputs must be Tensors.",
+            "V",
+            OpSchema::Variadic,
+            false)
+        .Attr(
+            "body",
+            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
+            "condition, loop carried dependencies...). It has 1+N+K outputs: "
+            "(condition, loop carried dependencies..., scan_outputs...). Each "
+            "scan_output is created by concatenating the value of the specified "
+            "output value at the end of each iteration of the loop. It is an error"
+            " if the dimensions or data type of these scan_outputs change across loop"
+            " iterations.",
+            AttributeProto::GRAPH)
+        .TypeConstraint(
+            "V",
+            control_flow_types_ir10(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv10.")
+        .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
+        .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
+        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Loop,
     19,
     OpSchema()
         .SetDoc(Loop_ver16_doc)
@@ -493,6 +604,74 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
+    21,
+    OpSchema()
+        .SetDoc(scan_16_doc)
+        .Input(
+            0,
+            "initial_state_and_scan_inputs",
+            "Initial values of the loop's N state variables followed by M scan_inputs",
+            "V",
+            OpSchema::Variadic,
+            false)
+        .Output(
+            0,
+            "final_state_and_scan_outputs",
+            "Final values of the loop's N state variables followed by K scan_outputs",
+            "V",
+            OpSchema::Variadic,
+            false)
+        .Attr(
+            "body",
+            "The graph run each iteration. It has N+M inputs: "
+            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
+            "(loop state variables..., scan_output_elts...). Each "
+            "scan_output is created by concatenating the value of the specified "
+            "scan_output_elt value at the end of each iteration of the loop. It is an error"
+            " if the dimensions of these values change across loop iterations.",
+            AttributeProto::GRAPH,
+            true)
+        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M. ", AttributeProto::INT, true)
+        .Attr(
+            "scan_input_directions",
+            "An optional list of M flags. The i-th element of the list specifies the direction "
+            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
+            "indicates reverse direction. "
+            "If omitted, all scan_input tensors will be scanned in the forward direction.",
+            AttributeProto::INTS,
+            false)
+        .Attr(
+            "scan_output_directions",
+            "An optional list of K flags, one for each scan_output. The i-th element of the list "
+            "specifies whether the i-th scan_output should be constructed by appending or "
+            "prepending a new value in each iteration: 0 indicates appending and 1 "
+            "indicates prepending. "
+            "If omitted, all scan_output tensors will be produced by appending a value "
+            "in each iteration.",
+            AttributeProto::INTS,
+            false)
+        .Attr(
+            "scan_input_axes",
+            "An optional list of M flags. The i-th element of the list specifies the axis "
+            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
+            "be used as the scan axis for every scan_input. Negative value for an axis means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            AttributeProto::INTS,
+            false)
+        .Attr(
+            "scan_output_axes",
+            "An optional list of K flags. The i-th element of the list specifies the axis "
+            "for the i-th scan_output. The scan outputs are accumulated along the specified "
+            "axis. If omitted, 0 will be used as the scan axis for every scan_output. "
+            "Negative value for an axis means counting dimensions from the back. Accepted "
+            "range is [-r, r-1].",
+            AttributeProto::INTS,
+            false)
+        .TypeConstraint("V", OpSchema::all_tensor_types_ir10(), "All Tensor types up to IRv10.")
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Scan,
     19,
     OpSchema()
         .SetDoc(scan_16_doc)
@@ -627,6 +806,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types_ir4(), "All Tensor types up to IRv4.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
+// NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
   // NOTE:
   // The first input to Scan is sequence_lens. We skip that when processing
@@ -664,10 +844,10 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
         propagateShapeFromInputToOutput(ctx, i, i - 1);
 
         // remove batch size dimension and add to subgraph_input_types
-        temporary_type_protos.push_back(RemoveDimensionsFromShape(*input_type, 1));
-        subgraph_input_types.push_back(&temporary_type_protos.back());
+        temporary_type_protos.emplace_back(RemoveDimensionsFromShape(*input_type, 1));
+        subgraph_input_types.emplace_back(&temporary_type_protos.back());
       } else {
-        subgraph_input_types.push_back(input_type);
+        subgraph_input_types.emplace_back(input_type);
       }
     } else {
       // For other inputs there is no fixed relationships to the Scan outputs,
@@ -677,8 +857,8 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
       if (has_shape) {
         // remove batch size and sequence length dimensions and add to
         // subgraph_input_types
-        temporary_type_protos.push_back(RemoveDimensionsFromShape(*input_type, 2));
-        subgraph_input_types.push_back(&temporary_type_protos.back());
+        temporary_type_protos.emplace_back(RemoveDimensionsFromShape(*input_type, 2));
+        subgraph_input_types.emplace_back(&temporary_type_protos.back());
 
         // update batch_size and sequence_len if a value is available
         const auto& shape = input_type->tensor_type().shape();
@@ -688,7 +868,7 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
           mergeInDimensionInfo(dims.Get(1), sequence_len_dim, 1);
         }
       } else {
-        subgraph_input_types.push_back(input_type);
+        subgraph_input_types.emplace_back(input_type);
       }
     }
   }
@@ -700,7 +880,7 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
     for (size_t i = 1; i < num_inputs; ++i) {
-      input_data.push_back(ctx.getInputData(i));
+      input_data.emplace_back(ctx.getInputData(i));
     }
 
     output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
@@ -760,14 +940,14 @@ void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
   }
 }
 
-int handle_negative_axis_validate_opset9(const std::string& attrib, int axis, int rank) {
-  if (!(-rank <= axis && axis < rank)) {
+static int handle_negative_axis_validate_opset9(const std::string& attrib, int axis, int rank) {
+  if (-rank > axis || axis >= rank) {
     fail_shape_inference(attrib, " axis value ", axis, " is invalid for a tensor of rank ", rank);
   }
   return (axis >= 0 ? axis : axis + rank);
 }
 
-void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
+static void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
   auto num_loop_state_vars = num_inputs - num_scan_inputs;
@@ -827,7 +1007,7 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
       if (has_shape)
         propagateShapeFromInputToOutput(ctx, i, i);
 
-      subgraph_input_types.push_back(input_type);
+      subgraph_input_types.emplace_back(input_type);
     } else {
       // For other inputs there is no fixed relationships to the Scan outputs,
       // so we don't propagate type/shape information.
@@ -845,11 +1025,11 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
         const auto& dims = shape.dim();
         mergeInDimensionInfo(dims.Get(axis), sequence_len_dim, 1);
 
-        temporary_type_protos.push_back(RemoveIthDimensionFromShape(*input_type, axis));
-        subgraph_input_types.push_back(&temporary_type_protos.back());
+        temporary_type_protos.emplace_back(RemoveIthDimensionFromShape(*input_type, axis));
+        subgraph_input_types.emplace_back(&temporary_type_protos.back());
 
       } else {
-        subgraph_input_types.push_back(input_type);
+        subgraph_input_types.emplace_back(input_type);
       }
     }
   }
@@ -860,10 +1040,11 @@ void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
+    input_data.reserve(num_inputs);
     for (size_t i = 0; i < num_inputs; ++i) {
       // ctx.getInputData(i), the input to scan, does not represent the input to
       // scan body. So, we pass in null, to represent an unknown value.
-      input_data.push_back(nullptr);
+      input_data.emplace_back(nullptr);
     }
 
     output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
@@ -1102,7 +1283,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset8));
 
-void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
+static void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
@@ -1115,10 +1296,10 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
   // optional 'M' input for max iterations.
   TypeProto iter_num_type;
   iter_num_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_INT64);
-  subgraph_input_types.push_back(&iter_num_type);
+  subgraph_input_types.emplace_back(&iter_num_type);
 
   // 'cond'
-  subgraph_input_types.push_back(ctx.getInputType(1));
+  subgraph_input_types.emplace_back(ctx.getInputType(1));
 
   // loop state value types get propagated to outputs, but shape may change
   // across iterations so don't propagate it to the outputs and don't pass it
@@ -1128,11 +1309,11 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.push_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(*ctx.getInputType(i));
     auto& input_type = temporary_type_protos.back();
     input_type.mutable_tensor_type()->clear_shape();
 
-    subgraph_input_types.push_back(&input_type);
+    subgraph_input_types.emplace_back(&input_type);
   }
 
   // Run inferencing on the subgraph
@@ -1141,9 +1322,9 @@ void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    input_data.push_back(nullptr); // iteration number
+    input_data.emplace_back(nullptr); // iteration number
     for (size_t i = 1; i < num_inputs; ++i) {
-      input_data.push_back(ctx.getInputData(i));
+      input_data.emplace_back(ctx.getInputData(i));
     }
 
     subgraph_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
@@ -1373,7 +1554,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset8));
 
-void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
+static void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
@@ -1386,10 +1567,10 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
   // optional 'M' input for max iterations.
   TypeProto iter_num_type;
   iter_num_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_INT64);
-  subgraph_input_types.push_back(&iter_num_type);
+  subgraph_input_types.emplace_back(&iter_num_type);
 
   // 'cond'
-  subgraph_input_types.push_back(ctx.getInputType(1));
+  subgraph_input_types.emplace_back(ctx.getInputType(1));
 
   // loop state value types get propagated to outputs, but shape may change
   // across iterations so don't propagate it to the outputs and don't pass it
@@ -1399,11 +1580,11 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.push_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(*ctx.getInputType(i));
     auto& input_type = temporary_type_protos.back();
     input_type.mutable_tensor_type()->clear_shape();
 
-    subgraph_input_types.push_back(&input_type);
+    subgraph_input_types.emplace_back(&input_type);
   }
 
   // Run inferencing on the subgraph
@@ -1412,9 +1593,9 @@ void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    input_data.push_back(nullptr); // iteration number
+    input_data.emplace_back(nullptr); // iteration number
     for (size_t i = 1; i < num_inputs; ++i) {
-      input_data.push_back(ctx.getInputData(i));
+      input_data.emplace_back(ctx.getInputData(i));
     }
 
     subgraph_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
@@ -1854,7 +2035,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset9));
 
-void IfInferenceFunction1(InferenceContext& ctx) {
+static void IfInferenceFunction1(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -1950,7 +2131,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction1));
 
-void IfInferenceFunction_11(InferenceContext& ctx) {
+static void IfInferenceFunction_11(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -2057,7 +2238,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction_11));
 
-void IfInferenceFunction_13(InferenceContext& ctx) {
+static void IfInferenceFunction_13(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -2157,7 +2338,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction_13));
 
-void LoopInferenceFunction_13(InferenceContext& ctx) {
+static void LoopInferenceFunction_13(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   assert(num_inputs >= 2);
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
@@ -2172,10 +2353,10 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
   // optional 'M' input for max iterations.
   TypeProto iter_num_type;
   iter_num_type.mutable_tensor_type()->set_elem_type(TensorProto_DataType_INT64);
-  subgraph_input_types.push_back(&iter_num_type);
+  subgraph_input_types.emplace_back(&iter_num_type);
 
   // 'cond'
-  subgraph_input_types.push_back(ctx.getInputType(1));
+  subgraph_input_types.emplace_back(ctx.getInputType(1));
 
   // loop state value types get propagated to outputs, but shape may change
   // across iterations so don't propagate it to the outputs and don't pass it
@@ -2185,7 +2366,7 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
 
     // copy so we can remove the shape before passing to the subgraph
     // inferencing
-    temporary_type_protos.push_back(*ctx.getInputType(i));
+    temporary_type_protos.emplace_back(*ctx.getInputType(i));
     auto& input_type = temporary_type_protos.back();
 
     if (input_type.has_tensor_type()) {
@@ -2197,7 +2378,7 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
       }
     }
 
-    subgraph_input_types.push_back(&input_type);
+    subgraph_input_types.emplace_back(&input_type);
   }
 
   // Run inferencing on the subgraph
@@ -2206,9 +2387,9 @@ void LoopInferenceFunction_13(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    input_data.push_back(nullptr); // iteration number
+    input_data.emplace_back(nullptr); // iteration number
     for (size_t i = 1; i < num_inputs; ++i) {
-      input_data.push_back(ctx.getInputData(i));
+      input_data.emplace_back(ctx.getInputData(i));
     }
 
     subgraph_output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);

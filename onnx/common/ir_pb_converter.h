@@ -13,7 +13,6 @@
 
 #include "onnx/common/common.h"
 #include "onnx/common/ir.h"
-#include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
 

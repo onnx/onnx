@@ -10,7 +10,7 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
+def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):
     dims_x = len(x.shape)
     dim_ones = (1,) * (dims_x - 2)
     s = s.reshape(-1, *dim_ones)
@@ -20,7 +20,7 @@ def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
     return s * (x - mean) / np.sqrt(var + epsilon) + bias
 
 
-def _batchnorm_training_mode(x, s, bias, mean, var, momentum=0.9, epsilon=1e-5):  # type: ignore
+def _batchnorm_training_mode(x, s, bias, mean, var, momentum=0.9, epsilon=1e-5):
     axis = tuple(np.delete(np.arange(len(x.shape)), 1))
     saved_mean = x.mean(axis=axis)
     saved_var = x.var(axis=axis)

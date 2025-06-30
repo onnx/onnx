@@ -25,7 +25,7 @@ class PrepareContext:
 
 
 class SelectedIndex:
-    __slots__ = ("batch_index_", "class_index_", "box_index_")
+    __slots__ = ("batch_index_", "box_index_", "class_index_")
 
     def __init__(
         self, batch_index: int = 0, class_index: int = 0, box_index: int = 0
@@ -160,7 +160,7 @@ class NonMaxSuppression(OpRun):
             pc.max_output_boxes_per_class_ = max_output_boxes_per_class_tensor
         if iou_threshold_tensor.size != 0:
             pc.iou_threshold_ = iou_threshold_tensor
-        if score_threshold_tensor.size != 0:
+        if score_threshold_tensor is not None and score_threshold_tensor.size != 0:
             pc.score_threshold_ = score_threshold_tensor
 
         pc.boxes_size_ = boxes_tensor.size
@@ -177,13 +177,11 @@ class NonMaxSuppression(OpRun):
         self,
         boxes,
         scores,
-        max_output_boxes_per_class,
-        iou_threshold,
-        score_threshold,
-        center_point_box,
+        max_output_boxes_per_class=None,
+        iou_threshold=None,
+        score_threshold=None,
+        center_point_box=None,
     ):
-        center_point_box = center_point_box or self.center_point_box  # type: ignore
-
         pc = PrepareContext()
         self.prepare_compute(
             pc,

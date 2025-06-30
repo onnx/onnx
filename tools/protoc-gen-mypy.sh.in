@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# use PYTHON_EXECUTABLE from CMake to get the right python to execute
-"@PYTHON_EXECUTABLE@" -u "$DIR"/protoc-gen-mypy.py

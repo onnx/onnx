@@ -1,5 +1,11 @@
 # onnx.parser
 
+## parse_node
+
+```{eval-rst}
+.. autofunction:: onnx.parser.parse_node
+```
+
 ## parse_function
 
 ```{eval-rst}

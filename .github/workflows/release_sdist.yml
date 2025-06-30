@@ -1,0 +1,66 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: sdistRelease
+
+on: 
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      build_mode:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-sdist
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version: ['3.10']
+        target-architecture: ['arm64']
+
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        persist-credentials: false
+        submodules: true
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release_build.txt
+
+    - name: Build source distribution (preview build / weekly)
+      if: ${{ inputs.build_mode != 'release' }}
+      run: |
+        git clean -xdf
+        sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
+        ONNX_PREVIEW_BUILD=1 python -m build --sdist
+
+    - name: Build source distribution (for release)
+      if: ${{ inputs.build_mode == 'release' }}
+      run: |
+        git clean -xdf
+        python -m build --sdist
+
+    - name: Upload sdist
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: sdist
+        path: |
+            ./dist/*.tar.gz

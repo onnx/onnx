@@ -45,18 +45,22 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        persist-credentials: false
+        
     - name: Set up Python
-      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
+      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
       with:
         python-version: '3.11'
+        
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@b611370bb5703a7efb587f9d136a52ea24c5c38c # v3.25.11
+      uses: github/codeql-action/init@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18
       with:
         languages: ${{ matrix.language }}
         queries: security-extended,security-and-quality
@@ -71,7 +75,7 @@ jobs:
     - name: Install ONNX
       run: |
         source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
-        python -m pip install --quiet -r requirements-release.txt
+        python -m pip install --quiet -r requirements-release_build.txt
         git submodule update --init --recursive
         export ONNX_ML=1
         pip install .
@@ -87,6 +91,6 @@ jobs:
     #   ./location_of_script_within_repo/buildscript.sh
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@b611370bb5703a7efb587f9d136a52ea24c5c38c # v3.25.11
+      uses: github/codeql-action/analyze@ff0a06e83cb2de871e5a09832bc6a81e7276941f # v3.28.18
       with:
         category: "/language:${{matrix.language}}"

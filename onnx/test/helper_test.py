@@ -6,14 +6,14 @@ from __future__ import annotations
 import itertools
 import math
 import random
-import struct
 import unittest
 from typing import Any
 
+import ml_dtypes
 import numpy as np
+import numpy.typing as npt
 import parameterized
 import pytest
-import version_utils
 
 from onnx import (
     AttributeProto,
@@ -23,12 +23,25 @@ from onnx import (
     SequenceProto,
     TensorProto,
     TypeProto,
+    _custom_element_types,
     checker,
     defs,
     helper,
     numpy_helper,
 )
-from onnx.reference.op_run import to_array_extended
+
+
+def _pack_4bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    odd_sized = size % 2 == 1
+    if odd_sized:
+        array_flat.resize([size + 1], refcheck=False)
+    array_flat &= 0x0F
+    array_flat[1::2] <<= 4
+    return array_flat[0::2] | array_flat[1::2]
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -408,6 +421,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 19)], 9)
         test([("", 20)], 9)
         test([("", 21)], 10)
+        test([("", 22)], 10)
+        test([("", 23)], 11)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
@@ -444,34 +459,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
             ],
             dtype=np.float32,
         )
-        np_results = np.array(
-            [
-                [
-                    struct.unpack("!f", bytes.fromhex("3F800000"))[0],  # 1.0
-                    struct.unpack("!f", bytes.fromhex("40000000"))[0],
-                ],  # 2.0
-                [
-                    struct.unpack("!f", bytes.fromhex("40400000"))[0],  # 3.0
-                    struct.unpack("!f", bytes.fromhex("40800000"))[0],
-                ],  # 4.0
-                [
-                    struct.unpack("!f", bytes.fromhex("3DCC0000"))[
-                        0
-                    ],  # round-to-nearest-even rounds down (0x8000)
-                    struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],
-                ],  # round-to-nearest-even rounds up   (0x8000)
-                [
-                    struct.unpack("!f", bytes.fromhex("3DCC0000"))[
-                        0
-                    ],  # round-to-nearest-even rounds down (0x7fff)
-                    struct.unpack("!f", bytes.fromhex("3DCD0000"))[0],
-                ],  # round-to-nearest-even rounds up   (0xCCCD)
-                [
-                    struct.unpack("!f", bytes.fromhex("7FC00000"))[0],  # NaN
-                    struct.unpack("!f", bytes.fromhex("7F800000"))[0],
-                ],  # inf
-            ]
-        )
 
         tensor = helper.make_tensor(
             name="test",
@@ -480,15 +467,18 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=np_array,
         )
         self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
+        np.testing.assert_equal(
+            numpy_helper.to_array(tensor).view(np.uint16),
+            np_array.astype(ml_dtypes.bfloat16).view(np.uint16),
+        )
 
     def test_make_float8e4m3fn_tensor(self) -> None:
         y = helper.make_tensor(
             "zero_point", TensorProto.FLOAT8E4M3FN, [5], [0, 0.5, 1, 50000, 10.1]
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
-        np.testing.assert_equal(expected, ynp)
+        expected = np.array([0, 0.5, 1, 448, 10], dtype=ml_dtypes.float8_e4m3fn)
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     def test_make_float8e4m3fnuz_tensor(self) -> None:
         y = helper.make_tensor(
@@ -498,16 +488,16 @@ class TestHelperTensorFunctions(unittest.TestCase):
             [0, 0.5, 1, 50000, 10.1, -0.00001, 0.00001],
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 240, 10, 0, 0], dtype=np.float32)
-        np.testing.assert_equal(expected, ynp)
+        expected = np.array([0, 0.5, 1, 240, 10, 0, 0], dtype=ml_dtypes.float8_e4m3fnuz)
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     def test_make_float8e5m2_tensor(self) -> None:
         y = helper.make_tensor(
             "zero_point", TensorProto.FLOAT8E5M2, [5], [0, 0.5, 1, 50000, 96]
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 49152, 96], dtype=np.float32)
-        np.testing.assert_equal(expected, ynp)
+        expected = np.array([0, 0.5, 1, 49152, 96], dtype=ml_dtypes.float8_e5m2)
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     def test_make_float8e5m2fnuz_tensor(self) -> None:
         y = helper.make_tensor(
@@ -517,12 +507,13 @@ class TestHelperTensorFunctions(unittest.TestCase):
             [0, 0.5, 1, 50000, 96, -0.0000001, 0.0000001],
         )
         ynp = numpy_helper.to_array(y)
-        expected = np.array([0, 0.5, 1, 49152, 96, 0, 0], dtype=np.float32)
-        np.testing.assert_equal(expected, ynp)
+        expected = np.array(
+            [0, 0.5, 1, 49152, 96, 0, 0], dtype=ml_dtypes.float8_e5m2fnuz
+        )
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     def test_make_bfloat16_tensor_raw(self) -> None:
-        # numpy doesn't support bf16, so we have to compute the correct result manually
-        np_array = np.array(
+        array = np.array(
             [
                 [1.0, 2.0],
                 [3.0, 4.0],
@@ -530,48 +521,17 @@ class TestHelperTensorFunctions(unittest.TestCase):
                 [0.0998535081744, 0.1],
                 [np.nan, np.inf],
             ],
-            dtype=np.float32,
-        )
-        np_results = np.array(
-            [
-                [
-                    struct.unpack("!f", bytes.fromhex("3F800000"))[0],  # 1.0
-                    struct.unpack("!f", bytes.fromhex("40000000"))[0],
-                ],  # 2.0
-                [
-                    struct.unpack("!f", bytes.fromhex("40400000"))[0],  # 3.0
-                    struct.unpack("!f", bytes.fromhex("40800000"))[0],
-                ],  # 4.0
-                [
-                    struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],  # truncated
-                    struct.unpack("!f", bytes.fromhex("3DCB0000"))[0],
-                ],  # truncated
-                [
-                    struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],  # truncated
-                    struct.unpack("!f", bytes.fromhex("3DCC0000"))[0],
-                ],  # truncated
-                [
-                    struct.unpack("!f", bytes.fromhex("7FC00000"))[0],  # NaN
-                    struct.unpack("!f", bytes.fromhex("7F800000"))[0],
-                ],  # inf
-            ]
-        )
+            dtype=ml_dtypes.bfloat16,
+        ).view(np.uint16)
 
-        # write out 16-bit of fp32 to create bf16 using truncation, no rounding
-        def truncate(x):
-            return x >> 16
-
-        values_as_ints = np_array.astype(np.float32).view(np.uint32).flatten()
-        packed_values = truncate(values_as_ints).astype(np.uint16).tobytes()
         tensor = helper.make_tensor(
             name="test",
             data_type=TensorProto.BFLOAT16,
-            dims=np_array.shape,
-            vals=packed_values,
+            dims=array.shape,
+            vals=array.tobytes(),
             raw=True,
         )
-        self.assertEqual(tensor.name, "test")
-        np.testing.assert_equal(np_results, numpy_helper.to_array(tensor))
+        np.testing.assert_allclose(numpy_helper.to_array(tensor).view(np.uint16), array)
 
     def test_make_float8e4m3fn_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
@@ -587,7 +547,9 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(expected, ynp)
+        np.testing.assert_equal(
+            ynp.view(np.uint8), expected.astype(ml_dtypes.float8_e4m3fn).view(np.uint8)
+        )
 
     def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
@@ -603,7 +565,10 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(expected, ynp)
+        np.testing.assert_equal(
+            ynp.view(np.uint8),
+            expected.astype(ml_dtypes.float8_e4m3fnuz).view(np.uint8),
+        )
 
     def test_make_float8e5m2_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
@@ -619,7 +584,9 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(expected, ynp)
+        np.testing.assert_equal(
+            ynp.view(np.uint8), expected.astype(ml_dtypes.float8_e5m2).view(np.uint8)
+        )
 
     def test_make_float8e5m2fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
@@ -636,17 +603,16 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(expected, ynp)
+        np.testing.assert_equal(
+            ynp.view(np.uint8),
+            expected.astype(ml_dtypes.float8_e5m2fnuz).view(np.uint8),
+        )
 
     @parameterized.parameterized.expand(
         itertools.product(
             (TensorProto.UINT4, TensorProto.INT4),
             ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
         )
-    )
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.22.0"),
-        "The test requires numpy 1.22.0 or later",
     )
     def test_make_4bit_tensor(self, dtype, dims) -> None:
         type_range = {
@@ -664,17 +630,13 @@ class TestHelperTensorFunctions(unittest.TestCase):
         np.testing.assert_equal(actual_data_size, expected_data_size)
 
         # Check the expected data values.
-        ynp = to_array_extended(y)
-        np.testing.assert_equal(data, ynp)
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(ynp, data)
 
     @parameterized.parameterized.expand(
         itertools.product(
             ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
         )
-    )
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.22.0"),
-        "The test requires numpy 1.22.0 or later",
     )
     def test_4bit_tensor_size(self, dims) -> None:
         # A bug caused negative int4 values to inflate tensor size.
@@ -700,16 +662,41 @@ class TestHelperTensorFunctions(unittest.TestCase):
         }
         data = np.random.randint(
             type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
-        )
-        packed_data = helper.pack_float32_to_4bit(
-            data, signed=(dtype == TensorProto.INT4)
-        )
+        ).astype(np.uint8)
+        packed_data = _pack_4bit(data)
 
         y = helper.make_tensor(
             "packed_int4", dtype, dims, packed_data.tobytes(), raw=True
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(data, ynp)
+        np.testing.assert_equal(ynp.view(np.uint8), data)
+
+    def test_make_float4e2m1_raw_tensor(self) -> None:
+        data = np.array([0, 0.5, 1, 240, 10, -2], dtype=ml_dtypes.float4_e2m1fn)
+        expected = data.view(np.uint8)
+        packed_data = _pack_4bit(expected)
+        y = helper.make_tensor(
+            "packed_fp4e2m1",
+            TensorProto.FLOAT4E2M1,
+            data.shape,
+            packed_data.tobytes(),
+            raw=True,
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(ynp.view(np.uint8), expected)
+
+    def test_make_float4e2m1_tensor(self) -> None:
+        y = helper.make_tensor(
+            "zero_point",
+            TensorProto.FLOAT4E2M1,
+            [7],
+            [0, 0.5, 1, 50000, -0.6, -100, -5],
+        )
+        ynp = numpy_helper.to_array(y)
+        expected = np.array(
+            [0, 0.5, 1, 6, -0.5, -6, -4], dtype=ml_dtypes.float4_e2m1fn
+        ).view(np.uint8)
+        np.testing.assert_equal(ynp, expected)
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -910,6 +897,7 @@ class TestPrintableGraph(unittest.TestCase):
             TensorProto.STRING,
             TensorProto.COMPLEX64,
             TensorProto.COMPLEX128,
+            TensorProto.FLOAT4E2M1,
         }
     ],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
@@ -939,6 +927,7 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
             TensorProto.FLOAT8E5M2FNUZ,
             TensorProto.UINT4,
             TensorProto.INT4,
+            TensorProto.FLOAT4E2M1,
         }
     ],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
@@ -998,20 +987,20 @@ class TestHelperMappingFunctions(unittest.TestCase):
 class TestAttrTypeToStr(unittest.TestCase):
     @parameterized.parameterized.expand(
         [
-            (AttributeProto.AttributeType.FLOAT, "FLOAT"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.INT, "INT"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.STRING, "STRING"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.TENSOR, "TENSOR"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.GRAPH, "GRAPH"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.SPARSE_TENSOR, "SPARSE_TENSOR"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.TYPE_PROTO, "TYPE_PROTO"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.FLOATS, "FLOATS"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.INTS, "INTS"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.STRINGS, "STRINGS"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.TENSORS, "TENSORS"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.GRAPHS, "GRAPHS"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.SPARSE_TENSORS, "SPARSE_TENSORS"),  # type: ignore[attr-defined]
-            (AttributeProto.AttributeType.TYPE_PROTOS, "TYPE_PROTOS"),  # type: ignore[attr-defined]
+            (AttributeProto.AttributeType.FLOAT, "FLOAT"),
+            (AttributeProto.AttributeType.INT, "INT"),
+            (AttributeProto.AttributeType.STRING, "STRING"),
+            (AttributeProto.AttributeType.TENSOR, "TENSOR"),
+            (AttributeProto.AttributeType.GRAPH, "GRAPH"),
+            (AttributeProto.AttributeType.SPARSE_TENSOR, "SPARSE_TENSOR"),
+            (AttributeProto.AttributeType.TYPE_PROTO, "TYPE_PROTO"),
+            (AttributeProto.AttributeType.FLOATS, "FLOATS"),
+            (AttributeProto.AttributeType.INTS, "INTS"),
+            (AttributeProto.AttributeType.STRINGS, "STRINGS"),
+            (AttributeProto.AttributeType.TENSORS, "TENSORS"),
+            (AttributeProto.AttributeType.GRAPHS, "GRAPHS"),
+            (AttributeProto.AttributeType.SPARSE_TENSORS, "SPARSE_TENSORS"),
+            (AttributeProto.AttributeType.TYPE_PROTOS, "TYPE_PROTOS"),
         ]
     )
     def test_attr_type_to_str(self, attr_type, expected_str):
@@ -1021,6 +1010,16 @@ class TestAttrTypeToStr(unittest.TestCase):
     def test_attr_type_to_str_undefined(self):
         result = helper._attr_type_to_str(9999)
         self.assertEqual(result, "UNDEFINED")
+
+    def test_custom_types(self):
+        def _get(name):
+            if hasattr(_custom_element_types, name):
+                return getattr(_custom_element_types, name)
+            name = f"float8{name}"
+            return getattr(_custom_element_types, name)
+
+        for k, v in _custom_element_types.mapping_name_to_data_type.items():
+            self.assertEqual(helper.np_dtype_to_tensor_dtype(_get(k)), v)
 
 
 if __name__ == "__main__":

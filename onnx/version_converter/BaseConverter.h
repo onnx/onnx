@@ -8,19 +8,14 @@
 
 #pragma once
 
-#include <stdlib.h>
-
-#include <iostream>
-#include <map>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 
 #include "onnx/common/ir.h"
-#include "onnx/common/ir_pb_converter.h"
 #include "onnx/defs/schema.h"
-#include "onnx/proto_utils.h"
 #include "onnx/version_converter/adapters/adapter.h"
 
 namespace ONNX_NAMESPACE {
@@ -67,14 +62,14 @@ class BaseVersionConverter {
         if (adapter_ptr != target_map->second.end()) {
           return *(adapter_ptr->second);
         } else {
-          ONNX_ASSERTM(false, "No Adapter To Version %s for %s", target.c_str(), op_name.c_str());
+          ONNX_ASSERTM(false, "No Adapter To Version %s for %s", target.c_str(), op_name.c_str())
         }
       } else {
-        ONNX_ASSERTM(false, "No Adapter From Version %s for %s", initial.c_str(), op_name.c_str());
+        ONNX_ASSERTM(false, "No Adapter From Version %s for %s", initial.c_str(), op_name.c_str())
       }
     } else {
       // No adapters exist for the given op
-      ONNX_ASSERTM(false, "No Adapter For %s", op_name.c_str());
+      ONNX_ASSERTM(false, "No Adapter For %s", op_name.c_str())
     }
   }
 
@@ -87,7 +82,7 @@ class BaseVersionConverter {
     adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::move(a_ptr);
   }
 
-  void registerAdapter(const char* op, int64_t from, int64_t to, NodeTransformerFunction transformer) {
+  void registerAdapter(const char* op, int64_t from, int64_t to, const NodeTransformerFunction& transformer) {
     registerAdapter(std::make_unique<GenericAdapter>(op, from, to, transformer));
   }
 };

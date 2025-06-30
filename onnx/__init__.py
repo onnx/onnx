@@ -17,6 +17,7 @@ __all__ = [
     "IR_VERSION_2020_5_8",
     "IR_VERSION_2021_7_30",
     "IR_VERSION_2023_5_5",
+    "IR_VERSION_2024_3_25",
     "EXPERIMENTAL",
     "STABLE",
     # Modules
@@ -26,7 +27,6 @@ __all__ = [
     "gen_proto",
     "helper",
     "hub",
-    "mapping",
     "numpy_helper",
     "parser",
     "printer",
@@ -35,10 +35,13 @@ __all__ = [
     "version_converter",
     # Proto classes
     "AttributeProto",
+    "DeviceConfigurationProto",
     "FunctionProto",
     "GraphProto",
+    "IntIntListEntryProto",
     "MapProto",
     "ModelProto",
+    "NodeDeviceConfigurationProto",
     "NodeProto",
     "OperatorProto",
     "OperatorSetIdProto",
@@ -46,6 +49,9 @@ __all__ = [
     "OperatorStatus",
     "OptionalProto",
     "SequenceProto",
+    "SimpleShardedDimProto",
+    "ShardedDimProto",
+    "ShardingSpecProto",
     "SparseTensorProto",
     "StringStringEntryProto",
     "TensorAnnotation",
@@ -82,9 +88,11 @@ from onnx.external_data_helper import (
 )
 from onnx.onnx_pb import (
     AttributeProto,
+    DeviceConfigurationProto,
     EXPERIMENTAL,
     FunctionProto,
     GraphProto,
+    IntIntListEntryProto,
     IR_VERSION,
     IR_VERSION_2017_10_10,
     IR_VERSION_2017_10_30,
@@ -95,11 +103,16 @@ from onnx.onnx_pb import (
     IR_VERSION_2020_5_8,
     IR_VERSION_2021_7_30,
     IR_VERSION_2023_5_5,
+    IR_VERSION_2024_3_25,
     ModelProto,
+    NodeDeviceConfigurationProto,
     NodeProto,
     OperatorSetIdProto,
     OperatorStatus,
     STABLE,
+    SimpleShardedDimProto,
+    ShardedDimProto,
+    ShardingSpecProto,
     SparseTensorProto,
     StringStringEntryProto,
     TensorAnnotation,
@@ -122,7 +135,6 @@ from onnx import (
     gen_proto,
     helper,
     hub,
-    mapping,
     numpy_helper,
     parser,
     printer,
@@ -142,20 +154,20 @@ _DEFAULT_FORMAT = "protobuf"
 
 
 def _load_bytes(f: IO[bytes] | str | os.PathLike) -> bytes:
-    if hasattr(f, "read") and callable(typing.cast(IO[bytes], f).read):
-        content = typing.cast(IO[bytes], f).read()
+    if hasattr(f, "read") and callable(typing.cast("IO[bytes]", f).read):
+        content = typing.cast("IO[bytes]", f).read()
     else:
-        f = typing.cast(Union[str, os.PathLike], f)
+        f = typing.cast("Union[str, os.PathLike]", f)
         with open(f, "rb") as readable:
             content = readable.read()
     return content
 
 
 def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
-    if hasattr(f, "write") and callable(typing.cast(IO[bytes], f).write):
-        typing.cast(IO[bytes], f).write(content)
+    if hasattr(f, "write") and callable(typing.cast("IO[bytes]", f).write):
+        typing.cast("IO[bytes]", f).write(content)
     else:
-        f = typing.cast(Union[str, os.PathLike], f)
+        f = typing.cast("Union[str, os.PathLike]", f)
         with open(f, "wb") as writable:
             writable.write(content)
 

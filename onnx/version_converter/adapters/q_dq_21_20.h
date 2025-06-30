@@ -27,7 +27,7 @@ class QuantizeLinear_21_20 final : public TypeRestriction {
   explicit QuantizeLinear_21_20()
       : TypeRestriction("QuantizeLinear", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types) {}
 
-  void adapt_quantize_linear_21_20(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_quantize_linear_21_20(const std::shared_ptr<Graph>&, Node* node) const {
     if (node->hasAttribute(kblock_size)) {
       if ((node->i(kblock_size) != 0)) {
         ONNX_ASSERTM(false, "Blocked quantization is not supported for Opset Version %d.", target_version().version())
@@ -57,7 +57,7 @@ class DequantizeLinear_21_20 final : public TypeRestriction {
   explicit DequantizeLinear_21_20()
       : TypeRestriction("DequantizeLinear", OpSetID(21), OpSetID(20), q_dq_20_unallowed_types) {}
 
-  void adapt_dequantize_linear_21_20(std::shared_ptr<Graph>, Node* node) const {
+  void adapt_dequantize_linear_21_20(const std::shared_ptr<Graph>&, Node* node) const {
     if (node->hasAttribute(kblock_size)) {
       if ((node->i(kblock_size) != 0)) {
         ONNX_ASSERTM(false, "Blocked quantization is not supported for Opset Version %d.", target_version().version())

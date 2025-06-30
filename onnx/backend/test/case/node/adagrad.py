@@ -11,7 +11,7 @@ from onnx.backend.test.case.node import expect
 from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN
 
 
-def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # type: ignore
+def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):
     # Compute adjusted learning-rate.
     r_ = r / (1 + t * decay_factor)
     # Add gradient of regularization term.
@@ -22,7 +22,7 @@ def apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # ty
     h_sqrt = np.sqrt(h_new) + epsilon
     # Apply ADAGRAD update rule.
     x_new = x - r_ * g_regularized / h_sqrt
-    return (x_new, h_new)
+    return (x_new.astype(x.dtype), h_new.astype(h.dtype))
 
 
 class Adagrad(Base):

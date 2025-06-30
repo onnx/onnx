@@ -11,7 +11,7 @@ from onnx.backend.test.case.node import expect
 
 
 # Layer normalization's reference implementation
-def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):  # type: ignore
+def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):
     X_shape = X.shape
     X_rank = len(X_shape)
     if axis < 0:
@@ -23,7 +23,7 @@ def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):  # type: ignore
     reduction_shape = X_shape[0:axis] + (1,) * unsqueezed_rank
 
     # Parameter used to convert N-D tensor layer
-    # normalization to equivalent 2-D matirx operations.
+    # normalization to equivalent 2-D matrix operations.
     row_number = 1
     col_number = 1
     for i in range(X_rank):
@@ -59,7 +59,7 @@ def _layer_normalization(X, W, B, axis=-1, epsilon=1e-5):  # type: ignore
     return Y, X_mean, X_inv_std_dev
 
 
-def calculate_normalized_shape(X_shape, axis):  # type: ignore
+def calculate_normalized_shape(X_shape, axis):
     X_rank = len(X_shape)
     if axis < 0:
         axis = axis + X_rank

@@ -29,10 +29,35 @@ class Sub(Base):
         z = x - y
         expect(node, inputs=[x, y], outputs=[z], name="test_sub")
 
+        x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.int8)
+        y = np.random.randint(12, size=(3, 4, 5), dtype=np.int8)
+        z = x - y
+        expect(node, inputs=[x, y], outputs=[z], name="test_sub_int8")
+
+        x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.int16)
+        y = np.random.randint(12, size=(3, 4, 5), dtype=np.int16)
+        z = x - y
+        expect(node, inputs=[x, y], outputs=[z], name="test_sub_int16")
+
         x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint8)
         y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint8)
         z = x - y
         expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint8")
+
+        x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint16)
+        y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint16)
+        z = x - y
+        expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint16")
+
+        x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint32)
+        y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint32)
+        z = x - y
+        expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint32")
+
+        x = np.random.randint(12, 24, size=(3, 4, 5), dtype=np.uint64)
+        y = np.random.randint(12, size=(3, 4, 5), dtype=np.uint64)
+        z = x - y
+        expect(node, inputs=[x, y], outputs=[z], name="test_sub_uint64")
 
     @staticmethod
     def export_sub_broadcast() -> None:

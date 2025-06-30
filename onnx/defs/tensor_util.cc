@@ -13,7 +13,7 @@ namespace ONNX_NAMESPACE {
 
 #define DEFINE_PARSE_DATA(type, typed_data_fetch)                          \
   template <>                                                              \
-  const std::vector<type> ParseData(const Tensor* tensor) {                \
+  std::vector<type> ParseData(const Tensor* tensor) {                      \
     std::vector<type> res;                                                 \
     if (!tensor->is_raw_data()) {                                          \
       const auto& data = tensor->typed_data_fetch();                       \
@@ -23,7 +23,7 @@ namespace ONNX_NAMESPACE {
     /* make copy as we may have to reverse bytes */                        \
     std::string raw_data = tensor->raw();                                  \
     /* okay to remove const qualifier as we have already made a copy */    \
-    char* bytes = const_cast<char*>(raw_data.c_str());                     \
+    char* bytes = raw_data.data();                                         \
     /*onnx is little endian serialized always-tweak byte order if needed*/ \
     if (!is_processor_little_endian()) {                                   \
       const size_t element_size = sizeof(type);                            \

@@ -1,0 +1,333 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Create Releases
+on:
+  schedule:
+    # Run weekly on Monday 00:00 UTC
+    - cron:  '00 00 * * MON'
+
+  push:
+    branches: [main, rel-*]
+  pull_request:
+    branches: [main, rel-*]
+    types:
+      - labeled
+  workflow_dispatch:
+    inputs:
+      publish_pypi_weekly: # only from main branch it is possible to publish to pypi-weekly (official weekly preview build)
+        description: 'Publish to pypi-weekly'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
+      publish_testpypi_weekly: # only from main branch it is possible to publish to testpypi-weekly
+        description: 'Publish to testpypi-weekly'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
+      publish_testpypi_release: # only from rel branch it is possible to publish to test-pypi (for rc1, rc2, etc.)
+        description: 'Publish to testpypi-release'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
+      publish_pypi_release:
+        description: 'Caution: Publish to pypi-release'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
+      build_mode:
+        description: 'Specify the build mode (release or preview)'
+        required: true
+        type: choice
+        options:
+          - 'release'
+          - 'preview'
+        default: 'preview'
+
+
+
+permissions:
+
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+
+  call-linux:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_linux.yml
+    with:
+      os: "linux"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+
+  call-win_x86:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_win_x86_64.yml
+    with:
+      os: "win"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+
+  call-win_arm64:
+      if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+      uses: ./.github/workflows/release_win_aarch64.yml
+      with:
+        os: "win_arm64"
+        build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+
+  
+  call-mac:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_mac.yml
+    with:
+      os: "macos"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+  
+  call-sdist:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_sdist.yml
+    with:
+      os: "macos"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+     
+
+  check_for_publish_release_build_to_pypi:
+    name: Check for Publish release build to pypi
+    runs-on: ubuntu-latest
+
+    needs: [call-linux, call-mac, call-win_x86, call-sdist]
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-')
+
+    steps:
+
+      - name: Ensure build mode is release
+        run: |
+          if [ "${{ github.event.inputs.build_mode }}" != "release" ]; then
+            echo "Error: build_mode must be set to 'release' to proceed."
+            exit 1
+          fi
+
+      - name: Check if package_version matches branch
+        run: |
+          branch_version=${GITHUB_REF#refs/heads/rel-}
+          package_version=$(cat VERSION_NUMBER)
+          echo "Branch version: $branch_version"
+          echo "Package version: $package_version"
+          if [ "$branch_version" != "$package_version" ]; then
+            echo "Error: Branch version ($branch_version) does not match package version ($package_version)."
+            exit 1
+          fi
+
+
+  check_for_publish_preview_build_to_testpypi_weekly:
+    name: Check for Publish preview build to test.pypi-weekly
+    runs-on: ubuntu-latest
+
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
+
+    steps:
+      - name: print debug vars
+        run: |
+          echo "All environment variables:"
+          printenv
+
+
+  publish_preview_build_to_testpypi_weekly:
+    name: Publish preview build to test.pypi-weekly
+    runs-on: ubuntu-latest
+    needs: [check_for_publish_preview_build_to_testpypi_weekly]
+
+    environment:
+      name: testpypi-weekly
+      url: https://test.pypi.org/p/onnx-weekly
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: (github.event_name == 'workflow_dispatch' )
+        with:
+          pattern: wheels*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: (github.event_name == 'workflow_dispatch' )
+        with:
+          pattern: sdist
+          path: dist
+          merge-multiple: true
+
+      - name: Upload preview build to test.pypi
+        if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
+        id: upload_preview_build_to_testpypi_weekly
+        
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+          print-hash: true
+
+  check_for_publish_release_build_to_testpypi:
+    name: Check for Publish release build to test.pypi (rc-candidates)
+    runs-on: ubuntu-latest
+
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes') && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
+
+    steps:
+      - name: print debug vars
+        run: |
+          echo "All environment variables:"
+          printenv
+
+  publish_release_build_to_testpypi:
+      name: Publish release build to test.pypi
+      runs-on: ubuntu-latest
+      needs: [check_for_publish_release_build_to_testpypi] 
+
+      environment:
+        name: testpypi-release 
+        url: https://test.pypi.org/p/onnx
+
+      permissions:
+        contents: read
+        id-token: write
+
+      steps:
+
+        - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+          if: (github.event_name == 'workflow_dispatch' )
+          with:
+            pattern: wheels*
+            path: dist
+            merge-multiple: true
+
+        - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+          if: (github.event_name == 'workflow_dispatch' )
+          with:
+            pattern: sdist
+            path: dist
+            merge-multiple: true
+
+        - name: Upload release build to test.pypi
+          id: upload_release_build_to_testpypi
+
+          uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+          with:
+            repository-url: https://test.pypi.org/legacy/
+            verbose: true
+            print-hash: true
+  
+
+  check_for_publish_preview_build_to_pypi_weekly:
+    name: Check for Publish preview build to pypi-weekly
+    runs-on: ubuntu-latest
+
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
+
+    steps:
+      - name: placeholder for debug vars
+        run: |
+          echo "All environment variables:"
+          printenv
+
+  publish_preview_build_to_pypi_weekly:
+    name: Publish preview build to pypi-weekly
+    runs-on: ubuntu-latest
+    needs: [check_for_publish_preview_build_to_pypi_weekly]
+
+    environment:
+      name: pypi-weekly
+      url: https://pypi.org/p/onnx-weekly
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        with:
+          pattern: wheels*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        with:
+          pattern: sdist
+          path: dist
+          merge-multiple: true
+
+      - name: Upload preview_build to pypi-weekly
+        id: upload_preview_build_to_pypi_weekly
+        if: (github.ref == 'refs/heads/main') 
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+        with:   
+          repository-url: https://upload.pypi.org/legacy/
+          verbose: true     
+          print-hash: true  
+
+
+  publish_release_build_to_pypi:
+    name: Publish release build to pypi
+    runs-on: ubuntu-latest
+    needs: [check_for_publish_release_build_to_pypi]
+
+    environment:
+      name: pypi-release
+      url: https://pypi.org/p/onnx
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093        
+        with:
+          pattern: wheels*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093        
+        with:
+          pattern: sdist
+          path: dist
+          merge-multiple: true
+
+      - name: Publish release_build to pypi
+        if: (github.repository_owner == 'onnx')
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+        with:   
+          repository-url: https://upload.pypi.org/legacy/
+          verbose: true     
+          print-hash: true        
+
+  test_source_dist:
+    name: test source distribution
+    needs: [publish_preview_build_to_pypi_weekly, publish_release_build_to_testpypi]
+    if: (needs.publish_preview_build_to_pypi_weekly.result == 'success' || needs.publish_release_build_to_testpypi.result == 'success')
+    uses: ./.github/workflows/preview_source_dist_test.yml
+    with:
+      os: "macos"

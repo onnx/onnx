@@ -136,11 +136,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             return;
           }
           auto& cast_to = cast_to_attr->s();
-          if (0 == cast_to.compare("TO_FLOAT")) {
+          if ("TO_FLOAT" == cast_to) {
             output_type->set_elem_type(TensorProto::FLOAT);
-          } else if (0 == cast_to.compare("TO_INT64")) {
+          } else if ("TO_INT64" == cast_to) {
             output_type->set_elem_type(TensorProto::INT64);
-          } else if (0 == cast_to.compare("TO_STRING")) {
+          } else if ("TO_STRING" == cast_to) {
             output_type->set_elem_type(TensorProto::STRING);
           }
         }));
@@ -194,8 +194,20 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (nullptr == ctx.getInputType(0))
+          auto* cats_int64s = ctx.getAttribute("cats_int64s");
+          if (cats_int64s == nullptr) {
+            fail_shape_inference("Attribute 'cats_int64s' is required.");
+          }
+          auto* cats_strings = ctx.getAttribute("cats_strings");
+          if (cats_strings == nullptr) {
+            fail_shape_inference("Attribute 'cats_strings' is required.");
+          }
+          if (cats_int64s->ints_size() != cats_strings->strings_size()) {
+            fail_shape_inference("Attributes 'cats_int64s' and 'cats_strings' are required to be the same length.");
+          }
+          if (nullptr == ctx.getInputType(0)) {
             return;
+          }
           auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
           if (TensorProto::STRING == input_elem_type) {
             updateOutputElemType(ctx, 0, TensorProto::INT64);
@@ -370,8 +382,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          int key_length, key_type;
-          std::tie(key_type, key_length) =
+          auto [key_type, key_length] =
               getAttributeElementTypeAndLength(ctx, {"keys_tensor", "keys_strings", "keys_int64s", "keys_floats"});
           if (key_type == TensorProto::UNDEFINED) {
             fail_shape_inference("At least one of keys_tensor, keys_strings, keys_int64s, keys_floats must be set.");
@@ -385,8 +396,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
                 " are different, which is not permitted for LabelEncoders.");
           }
 
-          int value_length, value_type;
-          std::tie(value_type, value_length) = getAttributeElementTypeAndLength(
+          auto [value_type, value_length] = getAttributeElementTypeAndLength(
               ctx, {"values_tensor", "values_strings", "values_int64s", "values_floats"});
           if (value_type == TensorProto::UNDEFINED) {
             fail_shape_inference(
