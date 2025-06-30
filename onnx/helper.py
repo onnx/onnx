@@ -799,7 +799,7 @@ def make_tensor(
         vals = vals.view(np.uint8)  # type: ignore[union-attr]
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
-        vals = _pack_4bitx2(vals)  # type: ignore[union-attr]
+        vals = _pack_4bitx2(vals)  # type: ignore[union-attr,arg-type]
     elif data_type == TensorProto.BOOL:
         vals = vals.astype(np.uint8)  # type: ignore[union-attr]
 
