@@ -772,7 +772,8 @@ def make_tensor(
 
     if data_type == TensorProto.STRING:
         vals = np.array(vals).flatten()
-        vals = np.vectorize(_to_bytes)(vals)  # Convert to bytes
+        if len(vals) != 0:
+            vals = np.vectorize(_to_bytes)(vals)  # Convert to bytes
     elif data_type in {
         TensorProto.FLOAT8E4M3FN,
         TensorProto.FLOAT8E4M3FNUZ,
