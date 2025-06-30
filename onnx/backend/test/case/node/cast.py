@@ -136,6 +136,7 @@ class Cast(Base):
                         "+INF",
                         "-INF",
                     ],
+                    dtype=np.float32,
                 ).reshape([3, 4])
                 input_shape = (3, 4)
 
