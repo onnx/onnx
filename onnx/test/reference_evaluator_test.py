@@ -88,7 +88,7 @@ def skip_if_no_onnxruntime(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import onnxruntime
+            import onnxruntime  # noqa: PLC0415
 
             del onnxruntime
         except ImportError:
@@ -102,7 +102,7 @@ def skip_if_no_torch(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import torch
+            import torch  # noqa: PLC0415
 
             del torch
         except ImportError:
@@ -116,7 +116,7 @@ def skip_if_no_torchvision(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import torchvision
+            import torchvision  # noqa: PLC0415
 
             del torchvision
         except ImportError:
@@ -130,7 +130,7 @@ def skip_if_no_ml_dtypes(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         try:
-            import ml_dtypes
+            import ml_dtypes  # noqa: PLC0415
 
             del ml_dtypes
         except ImportError:
@@ -148,7 +148,7 @@ def make_sequence_value_info(name, elem_type, shape):
 
 
 def run_ort_inference(onnx_model):
-    import onnxruntime as ort
+    import onnxruntime as ort  # noqa: PLC0415
 
     onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
     for opset in onnx_model.opset_import:
@@ -232,8 +232,8 @@ def im2col(
                 new_shape = img.shape[:2] + out.shape
                 res = np.empty(new_shape, dtype=img.dtype)
             res[n, c, ...] = out
-    new_shape = res.shape[: -len(kernel_shape)] + (-1,)  # type: ignore
-    return res.reshape(new_shape)  # type: ignore
+    new_shape = (*res.shape[: -len(kernel_shape)], -1)
+    return res.reshape(new_shape)
 
 
 class TestReferenceEvaluator(unittest.TestCase):
@@ -1965,7 +1965,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_torch
     def test_col2im(self):
-        import torch
+        import torch  # noqa: PLC0415
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
@@ -2006,7 +2006,7 @@ class TestReferenceEvaluator(unittest.TestCase):
     def common_test_col2im(
         self, size, image_shape, block_shape, pads, strides, dilations
     ):
-        import torch
+        import torch  # noqa: PLC0415
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
@@ -2498,10 +2498,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             dtype=np.float32,
         )
 
-        # import onnxruntime
-        # ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString(), providers=["CPUExecutionProvider"])
-        # got0 = ref0.run(None, feeds)
-
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         assert_allclose(expected, got1[0])
@@ -2656,8 +2652,8 @@ class TestReferenceEvaluator(unittest.TestCase):
             self.common_test_roi_align("max")
 
     def common_test_roi_align_torch(self, mode):
-        import torch
-        from torchvision.ops import RoIAlign
+        import torch  # noqa: PLC0415
+        from torchvision.ops import RoIAlign  # noqa: PLC0415
 
         onnx_model = self.get_roi_align_model(mode)
         sess = ReferenceEvaluator(onnx_model)

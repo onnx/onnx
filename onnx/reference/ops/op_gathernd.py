@@ -43,7 +43,7 @@ def _gather_nd_impl(
 
     # Flatten 'data' to array of shape
     # (batch_dim_size, data.shape[batch_dimes:]).
-    reshaped_data = data.reshape((batch_dims_size,) + data.shape[batch_dims:])
+    reshaped_data = data.reshape((batch_dims_size, *data.shape[batch_dims:]))
 
     # Gather each scalar value from 'data'.
     for batch_dim in range(reshaped_indices.shape[0]):

@@ -476,7 +476,7 @@ class ReferenceEvaluator:
             expand = True
 
         if node.domain == "":
-            from onnx.reference.ops import load_op
+            from onnx.reference.ops import load_op  # noqa: PLC0415
 
             try:
                 return load_op(
@@ -506,23 +506,29 @@ class ReferenceEvaluator:
                 f"{node.domain},{node.op_type} from the list of inlined operator."
             )
         if node.domain == "ai.onnx.preview.training":
-            from onnx.reference.ops.aionnx_preview_training import load_op as load_op_pt
+            from onnx.reference.ops.aionnx_preview_training import (  # noqa: PLC0415
+                load_op as load_op_pt,
+            )
 
             return load_op_pt(node.domain, node.op_type, version)
 
         if node.domain == "experimental":
-            from onnx.reference.ops.experimental import load_op as load_op_exp
+            from onnx.reference.ops.experimental import (  # noqa: PLC0415
+                load_op as load_op_exp,
+            )
 
             return load_op_exp(node.domain, node.op_type, version)
 
         if node.domain == "ai.onnx.ml":
-            from onnx.reference.ops.aionnxml import load_op as load_op_ml
+            from onnx.reference.ops.aionnxml import (  # noqa: PLC0415
+                load_op as load_op_ml,
+            )
 
             return load_op_ml(node.domain, node.op_type, version)
 
         # It has to be a function.
         if key in self.functions_:
-            from onnx.reference.ops import load_op
+            from onnx.reference.ops import load_op  # noqa: PLC0415
 
             impl = self.functions_[key]
             return load_op(

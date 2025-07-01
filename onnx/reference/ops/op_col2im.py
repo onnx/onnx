@@ -197,7 +197,7 @@ class Col2Im(OpRun):
 
         bl = np.prod(block_shape)
         C = data.shape[1] // bl
-        data = data.reshape(data.shape[:1] + (C,) + (bl,) + data.shape[2:])
+        data = data.reshape((*data.shape[:1], C, bl, *data.shape[2:]))
 
         ks = tuple(block_shape)
         res = None

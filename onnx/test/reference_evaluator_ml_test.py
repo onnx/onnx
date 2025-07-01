@@ -9,8 +9,8 @@ import unittest
 from functools import wraps
 from os import getenv
 
-import numpy as np  # type: ignore
-from numpy.testing import assert_allclose  # type: ignore
+import numpy as np
+from numpy.testing import assert_allclose
 from parameterized import parameterized
 
 import onnx
@@ -49,7 +49,7 @@ OPSETS = [make_opsetid("", TARGET_OPSET), make_opsetid("ai.onnx.ml", TARGET_OPSE
 
 def has_onnxruntime():
     try:
-        import onnxruntime
+        import onnxruntime  # noqa: PLC0415
 
         del onnxruntime
     except ImportError:
@@ -70,9 +70,7 @@ def skip_if_no_onnxruntime(fn):
 class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     @staticmethod
     def _check_ort(onx, feeds, atol=0, rtol=0, equal=False, rev=False):
-        if not has_onnxruntime():
-            return
-        from onnxruntime import InferenceSession
+        from onnxruntime import InferenceSession  # noqa: PLC0415
 
         onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
         ml_domain_opset = ORT_MAX_ML_OPSET_SUPPORTED_VERSION
