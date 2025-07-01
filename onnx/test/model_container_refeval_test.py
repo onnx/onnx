@@ -97,7 +97,7 @@ class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
             ],
             dtype=np.float32,
         )
-        npt.assert_allclose(expected, got[0])  # type: ignore[index,arg-type]
+        npt.assert_allclose(expected, got[0])
 
     def test_large_onnx_no_large_initializer(self):
         model_proto = _linear_regression()

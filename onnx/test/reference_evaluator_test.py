@@ -167,7 +167,7 @@ def run_ort_inference(onnx_model):
     )
 
 
-def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  # type: ignore
+def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):
     """Naive implementation for `im2col`.
 
     Args:
@@ -1185,22 +1185,22 @@ class TestReferenceEvaluator(unittest.TestCase):
         class _InvAlpha:
             op_domain = "custom"
 
-            def __init__(self, onnx_node, run_params):  # type: ignore
+            def __init__(self, onnx_node, run_params):
                 self.onnx_node = onnx_node
                 self.run_params = run_params
 
-            def _run(self, x):  # type: ignore
+            def _run(self, x):
                 return (1 / (x + self.alpha),)
 
         class InvAlpha2(OpRun):
-            def _run(self, x):  # type: ignore
+            def _run(self, x):
                 return (1 / (x + self.alpha),)
 
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
-                alpha = alpha or self.alpha  # type: ignore
+            def _run(self, x, alpha=None):
+                alpha = alpha or self.alpha
                 return (1 / (x + alpha),)
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1236,8 +1236,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
-                alpha = alpha or self.alpha  # type: ignore
+            def _run(self, x, alpha=None):
+                alpha = alpha or self.alpha
                 return 1 / (x + alpha)
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1254,7 +1254,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
+            def _run(self, x, alpha=None):
+                del x, alpha
                 return tuple()
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1271,8 +1272,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
-                alpha = alpha or self.alpha  # type: ignore
+            def _run(self, x, alpha=None):
+                alpha = alpha or self.alpha
                 res = tuple([tuple([1 / (x + alpha)])])  # noqa: C409
                 assert isinstance(res, tuple)
                 assert isinstance(res[0], tuple)
@@ -1295,8 +1296,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
-                res = tuple([CustomType()])  # noqa: C409
+            def _run(self, x, alpha=None):
+                del x, alpha
+                res = (CustomType(),)
                 assert isinstance(res, tuple)
                 assert isinstance(res[0], CustomType)
                 return res
