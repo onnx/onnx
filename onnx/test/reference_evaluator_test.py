@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import importlib
 import itertools
 import math
 import unittest
@@ -76,6 +77,7 @@ from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release
 ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
@@ -87,12 +89,8 @@ ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
 def skip_if_no_onnxruntime(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            import onnxruntime  # noqa: PLC0415
-
-            del onnxruntime
-        except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed") from None
+        if importlib.util.find_spec("onnxruntime") is None:
+            raise unittest.SkipTest("onnxruntime not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -101,12 +99,8 @@ def skip_if_no_onnxruntime(fn):
 def skip_if_no_torch(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            import torch  # noqa: PLC0415
-
-            del torch
-        except ImportError:
-            raise unittest.SkipTest("torch not installed") from None
+        if importlib.util.find_spec("torch") is None:
+            raise unittest.SkipTest("torch not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -115,12 +109,8 @@ def skip_if_no_torch(fn):
 def skip_if_no_torchvision(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            import torchvision  # noqa: PLC0415
-
-            del torchvision
-        except ImportError:
-            raise unittest.SkipTest("torchvision not installed") from None
+        if importlib.util.find_spec("torchvision") is None:
+            raise unittest.SkipTest("torchvision not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -129,12 +119,8 @@ def skip_if_no_torchvision(fn):
 def skip_if_no_ml_dtypes(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            import ml_dtypes  # noqa: PLC0415
-
-            del ml_dtypes
-        except ImportError:
-            raise unittest.SkipTest("ml-dtypes not installed") from None
+        if importlib.util.find_spec("ml_dtypes") is None:
+            raise unittest.SkipTest("ml-dtypes not installed")
         fn(*args, **kwargs)
 
     return wrapper
