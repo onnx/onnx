@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
+import onnx.defs
 from onnx import TensorProto
 from onnx._custom_element_types import (
     bfloat16,
@@ -25,18 +26,7 @@ from onnx.numpy_helper import to_array
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-
-def _split_class_name(name):
-    if "_" in name:
-        prefix, vers = name.rsplit("_", maxsplit=1)
-        try:
-            v = int(vers)
-        except ValueError:
-            return name, None
-        return prefix, v
-    return name, None
+    from collections.abc import Sequence
 
 
 class RuntimeTypeError(RuntimeError):
@@ -69,8 +59,8 @@ class RefAttrName:
         return f"{self.__class__.__name__}({self.name!r})"
 
 
-def _build_schemas() -> dict[str, type]:
-    res: dict[str, type] = {}
+def _build_schemas() -> dict[str, onnx.defs.OpSchema]:
+    res: dict[str, onnx.defs.OpSchema] = {}
     for schema in get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
@@ -254,7 +244,7 @@ class OpRun(abc.ABC):
             added_attributes.append(name)
             if att.type == AttributeProto.GRAPH:
                 self.has_subgraph = True
-                self.has_linked_attribute |= value.has_linked_attribute
+                self.has_linked_attribute |= value.has_linked_attribute  # type: ignore[attr-defined]
                 setattr(
                     self,
                     f"_run_{att.name}",
@@ -279,7 +269,7 @@ class OpRun(abc.ABC):
                             and v.default_value.t.data_type == 0
                         ):
                             # default value is undefined, it depends on the inputs
-                            value = None
+                            value = None  # type: ignore[assignment]
                         else:
                             value = self._extract_attribute_value(v.default_value, v)
                         setattr(self, k, value)
@@ -311,12 +301,12 @@ class OpRun(abc.ABC):
         return list(local)
 
     @property
-    def input(self) -> Iterable[str]:
+    def input(self) -> Sequence[str]:
         """Returns node attribute `input`."""
         return self.onnx_node.input
 
     @property
-    def output(self) -> Iterable[str]:
+    def output(self) -> Sequence[str]:
         """Returns node attribute `output`."""
         return self.onnx_node.output
 

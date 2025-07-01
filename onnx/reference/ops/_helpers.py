@@ -5,7 +5,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from onnx.reference.op_run import OpRun, _split_class_name
+from onnx.reference.op_run import OpRun
+
+
+def _split_class_name(name):
+    if "_" in name:
+        prefix, vers = name.rsplit("_", maxsplit=1)
+        try:
+            v = int(vers)
+        except ValueError:
+            return name, None
+        return prefix, v
+    return name, None
 
 
 def build_registered_operators_any_domain(
