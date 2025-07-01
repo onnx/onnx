@@ -20,9 +20,7 @@ from onnx._custom_element_types import (
     int4,
     uint4,
 )
-from onnx.defs import get_all_schemas_with_history, get_schema, onnx_opset_version
-from onnx.helper import make_node, make_tensor_type_proto, np_dtype_to_tensor_dtype
-from onnx.numpy_helper import to_array
+import onnx.numpy_helper
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
 if TYPE_CHECKING:
@@ -61,7 +59,7 @@ class RefAttrName:
 
 def _build_schemas() -> dict[str, onnx.defs.OpSchema]:
     res: dict[str, onnx.defs.OpSchema] = {}
-    for schema in get_all_schemas_with_history():
+    for schema in onnx.defs.get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
             if schema.domain != res[schema.name].domain:
@@ -111,12 +109,7 @@ class SparseTensor:
 def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     """Hosts a sparse tensor."""
     shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
-    return SparseTensor(to_array(att.values), to_array(att.indices), shape)
-
-
-def to_array_extended(tensor: TensorProto) -> np.ndarray:
-    """Alias for :func:`to_array`."""
-    return to_array(tensor)
+    return SparseTensor(onnx.numpy_helper.to_array(att.values), onnx.numpy_helper.to_array(att.indices), shape)
 
 
 class Graph:
@@ -152,8 +145,8 @@ class OpRun(abc.ABC):
         ],
         AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
         AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
-        AttributeProto.TENSOR: lambda att: to_array_extended(att.t),
-        AttributeProto.TENSORS: lambda att: [to_array_extended(t) for t in att.tensors],
+        AttributeProto.TENSOR: lambda att: onnx.numpy_helper.to_array(att.t),
+        AttributeProto.TENSORS: lambda att: [onnx.numpy_helper.to_array(t) for t in att.tensors],
         AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
         AttributeProto.TYPE_PROTOS: lambda att: [OnnxType(t) for t in att.type_protos],
     }
@@ -477,12 +470,12 @@ class OpRun(abc.ABC):
     def infer_name(cls):
         name = cls.__name__
         if "_" not in name:
-            return name, onnx_opset_version()
+            return name, onnx.defs.onnx_opset_version()
         name, vers = name.rsplit("_", 1)
         try:
             i_vers = int(vers)
         except ValueError:
-            return cls.__name__, onnx_opset_version()
+            return cls.__name__, onnx.defs.onnx_opset_version()
         return name, i_vers
 
     @classmethod
@@ -521,16 +514,16 @@ class OpRun(abc.ABC):
         schema = None
         if n_inputs is None:
             if schema is None:
-                schema = get_schema(op_type, opset, domain)
+                schema = onnx.defs.get_schema(op_type, opset, domain)
             n_inputs = schema.min_input
         if n_outputs is None:
             if schema is None:
-                schema = get_schema(op_type, opset, domain)
+                schema = onnx.defs.get_schema(op_type, opset, domain)
             n_outputs = schema.min_output
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = make_node(op_type, names_in, names_out, **kwargs)
+        node = onnx.helper.make_node(op_type, names_in, names_out, **kwargs)
         return node
 
     @classmethod
@@ -564,7 +557,7 @@ class OpRun(abc.ABC):
             "verbose": verbose,
             "log": log_function,
             "new_ops": None,
-            "opsets": {"": onnx_opset_version()},
+            "opsets": {"": onnx.defs.onnx_opset_version()},
         }
         cl = cls(node, run_params)
         return cl
@@ -672,7 +665,7 @@ class OpFunctionContextDependant(OpFunction):
         OpFunction.__init__(self, onnx_node, run_params, impl=self, attributes={})
         self.parent = parent
         version = parent.opsets[onnx_node.domain]
-        self.schema_ = get_schema(onnx_node.op_type, version, onnx_node.domain)
+        self.schema_ = onnx.defs.get_schema(onnx_node.op_type, version, onnx_node.domain)
 
     def _run(self, *inputs, **kwargs):
         # Input types are known. They are used to properly
@@ -680,7 +673,7 @@ class OpFunctionContextDependant(OpFunction):
         types = []
         for t in inputs:
             try:
-                ttype = np_dtype_to_tensor_dtype(t.dtype)
+                ttype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
             except KeyError:
                 if t.dtype == float8e4m3fn:
                     ttype = TensorProto.FLOAT8E4M3FN  # type: ignore[attr-defined]
@@ -700,7 +693,7 @@ class OpFunctionContextDependant(OpFunction):
                     ttype = TensorProto.FLOAT4E2M1  # type: ignore[attr-defined]
                 else:
                     raise
-            types.append(make_tensor_type_proto(ttype, t.shape))
+            types.append(onnx.helper.make_tensor_type_proto(ttype, t.shape))
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)
