@@ -178,6 +178,12 @@ if version_utils.pillow_older_than("10.0"):
     backend_test.exclude("test_image_decoder_decode_webp_rgb")
     backend_test.exclude("test_image_decoder_decode_jpeg2k_rgb")
 
+if version_utils.numpy_older_than("2.0"):
+    # assert_allclose does not support ml_dtypes types in numpy < 2.0
+    backend_test.exclude(r"test_cast.*(FLOAT8|BFLOAT16|FLOAT4|INT4)")
+    backend_test.exclude(r"test_quantizelinear_e4m3fn")
+    backend_test.exclude(r"test_quantizelinear_float4e2m1")
+
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
 

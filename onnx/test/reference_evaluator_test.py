@@ -3379,6 +3379,10 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(got[2], expected1)
         assert_allclose(got[3], expected2)
 
+    @unittest.skipIf(
+        version_utils.numpy_older_than("2.0"),
+        "assert_allclose does not support ml_dtypes in numpy < 2.0",
+    )
     def test_cast_like_float8(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
