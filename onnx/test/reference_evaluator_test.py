@@ -12,7 +12,6 @@
 
 from __future__ import annotations
 
-import importlib
 import itertools
 import math
 import unittest
@@ -83,17 +82,6 @@ ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
 ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
     getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
-
-
-def skip_if_no_re2(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        spec = importlib.util.find_spec("re2")
-        if spec is None:
-            raise unittest.SkipTest("google-re2 not installed")
-        fn(*args, **kwargs)
-
-    return wrapper
 
 
 def skip_if_no_onnxruntime(fn):
@@ -5650,7 +5638,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             ),
         ]
     )
-    @skip_if_no_re2
     def test_regex_full_match(self, x, pattern, expected, expected_shape):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
         Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
@@ -5662,7 +5649,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(result.dtype.kind, "b")
         self.assertEqual(result.shape, expected_shape)
 
-    @skip_if_no_re2
     def test_regex_invalid_pattern(self):
         X = make_tensor_value_info("X", TensorProto.STRING, None)
         Y = make_tensor_value_info("Y", TensorProto.BOOL, None)
