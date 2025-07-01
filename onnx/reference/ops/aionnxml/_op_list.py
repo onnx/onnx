@@ -5,6 +5,27 @@
 # probabilities not consumed by any operator.
 from __future__ import annotations
 
+__all__ = [
+    "load_op",
+    "ArrayFeatureExtractor",
+    "Binarizer",
+    "DictVectorizer",
+    "FeatureVectorizer",
+    "Imputer",
+    "LabelEncoder",
+    "LinearClassifier",
+    "LinearRegressor",
+    "Normalizer",
+    "OneHotEncoder",
+    "Scaler",
+    "SVMClassifier",
+    "SVMRegressor",
+    "TreeEnsemble",
+    "TreeEnsembleClassifier",
+    "TreeEnsembleRegressor",
+    "OpRunAiOnnxMl",
+]
+
 import textwrap
 from typing import Any
 
