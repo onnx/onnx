@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import collections
 from enum import IntEnum
 
 import numpy as np
@@ -10,9 +11,9 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-class IntMap(dict):
+class IntMap(collections.UserDict):
     def __init__(self):
-        dict.__init__(self)
+        super().__init__()
         self.added_keys = []
 
     def emplace(self, key, value):
@@ -22,8 +23,8 @@ class IntMap(dict):
             raise TypeError(f"value must be a NGramPart not {type(value)}.")
         if key not in self:
             self.added_keys.append(key)
-            self[key] = value
-        return self[key]
+            self.data[key] = value
+        return self.data[key]
 
     def __repr__(self):
         vals = {k: repr(v) for k, v in self.items()}

@@ -110,8 +110,8 @@ def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     """Hosts a sparse tensor."""
     shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
     return SparseTensor(
-        onnx.numpy_helper.to_array(att.values),
-        onnx.numpy_helper.to_array(att.indices),
+        onnx.numpy_helper.to_array(att.values),  # type: ignore[attr-defined]
+        onnx.numpy_helper.to_array(att.indices),  # type: ignore[attr-defined]
         shape,
     )
 
@@ -288,7 +288,7 @@ class OpRun(abc.ABC):
         for init in graph.initializer:
             known.add(init.name)
         for sparse_init in graph.sparse_initializer:
-            known.add(sparse_init.name)
+            known.add(sparse_init.name)  # type: ignore[attr-defined]
         for inp in graph.input:
             known.add(inp.name)
         for node in graph.node:
