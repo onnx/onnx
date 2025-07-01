@@ -160,23 +160,24 @@ class CastLike(Base):
                 input_shape = (3, 4)
 
             if from_type in f8_types:
+                np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
                 input = make_tensor(
                     "x",
                     from_dtype,
                     input_shape,
-                    vals=onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype),
+                    vals=np_from,
                     raw=True,
                 )
             else:
-                input = make_tensor(
-                    "x", from_dtype, input_shape, vals=np_fp32.astype(from_np_dtype)
-                )
+                np_from = np_fp32.astype(from_np_dtype)
+                input = make_tensor("x", from_dtype, input_shape, vals=np_from)
+
             if to_type in f8_types:
                 output = make_tensor(
                     "x",
                     to_dtype,
                     input_shape,
-                    vals=onnx.numpy_helper.saturating_cast(np_fp32, to_np_dtype),
+                    vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
                     raw=True,
                 )
             else:
@@ -184,7 +185,7 @@ class CastLike(Base):
                     "x",
                     to_dtype,
                     input_shape,
-                    vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype),
+                    vals=np_from.astype(to_np_dtype),
                 )
 
             like = make_tensor("like", to_dtype, (0,), vals=[])
