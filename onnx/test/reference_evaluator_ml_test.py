@@ -138,7 +138,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x})
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_scaler(self):
@@ -162,7 +162,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x})
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_array_feature_extractor(self):
@@ -182,14 +182,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, feeds)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, feeds)[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
         expected = np.array([[0, 4, 8], [1, 5, 9]], dtype=np.float32).T
         feeds = {"X": x, "A": np.array([0, 1], dtype=np.int64)}
         self._check_ort(onx, feeds)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, feeds)[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
         expected = np.array(
             [[0, 4, 8], [1, 5, 9], [0, 4, 8], [1, 5, 9], [0, 4, 8], [1, 5, 9]],
@@ -199,7 +199,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, feeds)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, feeds)[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_normalizer(self):
@@ -224,7 +224,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, feeds, atol=1e-6)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, feeds)[0]
-                assert_allclose(value, got, atol=1e-6)
+                assert_allclose(got, value, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_feature_vectorizer(self):
@@ -268,7 +268,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, feeds, atol=1e-6)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, feeds)[0]
-                assert_allclose(value, got, atol=1e-6)
+                assert_allclose(got, value, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_float(self):
@@ -290,7 +290,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x})
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_float_2d(self):
@@ -312,7 +312,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x})
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_int(self):
@@ -334,7 +334,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x})
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_float_int(self):
@@ -357,7 +357,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x})
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_int_string(self):
@@ -539,7 +539,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x}, equal=True)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})
-        assert_allclose(expected, got[0], atol=1e-6)
+        assert_allclose(got[0], expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_regressor_2(self):
@@ -565,7 +565,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x}, equal=True)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})
-        assert_allclose(expected, got[0], atol=1e-6)
+        assert_allclose(got[0], expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_classifier_multi(self):
@@ -652,8 +652,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
                 expected = expected_post[post]
-                assert_allclose(expected[1], got[1], atol=1e-4)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-4)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_classifier_binary(self):
@@ -709,8 +709,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 # self._check_ort(onx, {"X": x}, rev=True)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_classifier_unary(self):
@@ -757,8 +757,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 # self._check_ort(onx, {"X": x}, rev=True)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_tree_ensemble_opset_latest(
@@ -955,7 +955,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         )
         sess = ReferenceEvaluator(model_proto)
         (actual,) = sess.run(None, {"X": x})
-        assert_allclose(expected_result, actual, atol=1e-6)
+        assert_allclose(actual, expected_result, atol=1e-6)
 
     @parameterized.expand(
         tuple(
@@ -1015,7 +1015,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         model_proto = model_factory(aggregate_function, rule)
         sess = ReferenceEvaluator(model_proto)
         (actual,) = sess.run(None, {"X": x})
-        assert_allclose(expected, actual, atol=1e-6)
+        assert_allclose(actual, expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_2_targets_opset3(self):
@@ -1115,7 +1115,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x}, equal=True)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})
-        assert_allclose(expected, got[0], atol=1e-6)
+        assert_allclose(got[0], expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_missing_opset3(self):
@@ -1127,7 +1127,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(onx, {"X": x}, equal=True)
         sess = ReferenceEvaluator(onx)
         got = sess.run(None, {"X": x})
-        assert_allclose(expected, got[0], atol=1e-6)
+        assert_allclose(got[0], expected, atol=1e-6)
         self.assertIn("op_type=TreeEnsembleRegressor", str(sess.rt_nodes_[0]))
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
@@ -1145,7 +1145,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         expected = np.array([[100001.0], [100100.0], [100100.0]], dtype=np_dtype)
         session = ReferenceEvaluator(model)
         (actual,) = session.run(None, {"X": x})
-        assert_allclose(expected, actual, atol=1e-6)
+        assert_allclose(actual, expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_missing_opset5_float16(self):
@@ -1159,7 +1159,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         expected = np.array([[0.577], [1.0], [1.0]], dtype=np_dtype)
         session = ReferenceEvaluator(model)
         (actual,) = session.run(None, {"X": x})
-        assert_allclose(expected, actual, atol=1e-6)
+        assert_allclose(actual, expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_single_tree_ensemble(self):
@@ -1368,7 +1368,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, {"X": x}, atol=1e-6)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected, got[0], atol=1e-6)
+                assert_allclose(got[0], expected, atol=1e-6)
 
     @staticmethod
     def _get_test_tree_ensemble_classifier_binary(post_transform):
@@ -1488,8 +1488,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     self._check_ort(onx, {"X": x})
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_tree_ensemble_classifier_multi(post_transform):
@@ -1636,8 +1636,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     self._check_ort(onx, {"X": x}, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_classifier_binary(post_transform, probability=True, linear=False):
@@ -1764,8 +1764,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-5)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-5)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_binary_noprob(self):
@@ -1811,8 +1811,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_noprob_linear(self):
@@ -1883,8 +1883,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_linear(self):
@@ -1956,8 +1956,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_classifier_linear_sv(post_transform, probability=True):
@@ -2046,8 +2046,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_regressor_linear(post_transform, one_class=0):
@@ -2086,7 +2086,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[0], got[0], atol=1e-6)
+                assert_allclose(got[0], expected[0], atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_regressor_linear_one_class(self):
@@ -2105,7 +2105,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
                 sess = ReferenceEvaluator(onx)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[0], got[0], atol=1e-6)
+                assert_allclose(got[0], expected[0], atol=1e-6)
 
     def test_onnxrt_tfidf_vectorizer_ints(self):
         inputi = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int64)
