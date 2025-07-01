@@ -27,8 +27,6 @@ class Cast(Base):
             ("FLOAT16", "DOUBLE"),
             ("DOUBLE", "FLOAT"),
             ("DOUBLE", "FLOAT16"),
-            ("FLOAT", "STRING"),
-            ("STRING", "FLOAT"),
             ("FLOAT", "BFLOAT16"),
             ("BFLOAT16", "FLOAT"),
             ("FLOAT", "FLOAT8E4M3FN"),
