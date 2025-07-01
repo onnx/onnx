@@ -22727,28 +22727,31 @@ This version of the operator has been available since version 19 of the default 
   to the following rules. `[x]` means the value rounded to
   the target mantissa width.
 
-  | x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
-  |------|----|----|----|----|
-  | 0 | 0 | 0 | 0 | 0 |
-  |-0 | -0 | 0 | -0 | 0 |
-  | NaN | NaN | NaN | NaN | NaN |
-  | +/- Inf | +/- FLT_MAX | NaN | FLT_MAX | NaN |
-  | [x] > FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX |
-  | [x] < -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
-  | else | RNE | RNE | RNE | RNE |
+  | x                 | E4M3FN   | E4M3FNUZ | E5M2     | E5M2FNUZ |
+  | ----------------- | -------- | -------- | -------- | -------- |
+  | 0                 | 0        | 0        | 0        | 0        |
+  | -0                | -0       | 0        | -0       | 0        |
+  | NaN               | NaN      | NaN      | NaN      | NaN      |
+  | Inf               | FLT_MAX  | NaN      | FLT_MAX  | NaN      |
+  | -Inf              | -FLT_MAX | NaN      | -FLT_MAX | NaN      |
+  | \[x\] > FLT_MAX   | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
+  | \[x\] \< -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
+  | else              | RNE      | RNE      | RNE      | RNE      |
 
   The behavior changes if the parameter 'saturate' is set to False.
   The rules then become:
 
-  | x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
-  |------|----|----|----|----|
-  | 0 | 0 | 0 | 0 | 0 |
-  |-0 | -0 | 0 | -0 | 0 |
-  | NaN | NaN | NaN | NaN | NaN |
-  | +/- Inf | NaN | NaN | +/- Inf | NaN |
-  | [x] > FLT_MAX | NaN | NaN | Inf | NaN |
-  | [x] < -FLT_MAX | NaN | NaN | -Inf | NaN |
-  | else | RNE | RNE | RNE | RNE |
+  | x                 | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
+  | ----------------- | ------ | -------- | ---- | -------- |
+  | 0                 | 0      | 0        | 0    | 0        |
+  | -0                | -0     | 0        | -0   | 0        |
+  | NaN               | NaN    | NaN      | NaN  | NaN      |
+  | -NaN              | -NaN   | NaN      | -NaN | NaN      |
+  | Inf               | NaN    | NaN      | Inf  | NaN      |
+  | -Inf              | -NaN   | NaN      | -Inf | NaN      |
+  | \[x\] > FLT_MAX   | NaN    | NaN      | Inf  | NaN      |
+  | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
+  | else              | RNE    | RNE      | RNE  | RNE      |
 
 #### Version
 
@@ -24571,28 +24574,31 @@ This version of the operator has been available since version 20 of the default 
   to the following rules. `[x]` means the value rounded to
   the target mantissa width.
 
-  | x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
-  |------|----|----|----|----|
-  | 0 | 0 | 0 | 0 | 0 |
-  |-0 | -0 | 0 | -0 | 0 |
-  | NaN | NaN | NaN | NaN | NaN |
-  | +/- Inf | +/- FLT_MAX | NaN | FLT_MAX | NaN |
-  | [x] > FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX |
-  | [x] < -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
-  | else | RNE | RNE | RNE | RNE |
+  | x                 | E4M3FN   | E4M3FNUZ | E5M2     | E5M2FNUZ |
+  | ----------------- | -------- | -------- | -------- | -------- |
+  | 0                 | 0        | 0        | 0        | 0        |
+  | -0                | -0       | 0        | -0       | 0        |
+  | NaN               | NaN      | NaN      | NaN      | NaN      |
+  | Inf               | FLT_MAX  | NaN      | FLT_MAX  | NaN      |
+  | -Inf              | -FLT_MAX | NaN      | -FLT_MAX | NaN      |
+  | \[x\] > FLT_MAX   | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
+  | \[x\] \< -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
+  | else              | RNE      | RNE      | RNE      | RNE      |
 
   The behavior changes if the parameter 'saturate' is set to False.
   The rules then become:
 
-  | x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
-  |------|----|----|----|----|
-  | 0 | 0 | 0 | 0 | 0 |
-  |-0 | -0 | 0 | -0 | 0 |
-  | NaN | NaN | NaN | NaN | NaN |
-  | +/- Inf | NaN | NaN | +/- Inf | NaN |
-  | [x] > FLT_MAX | NaN | NaN | Inf | NaN |
-  | [x] < -FLT_MAX | NaN | NaN | -Inf | NaN |
-  | else | RNE | RNE | RNE | RNE |
+  | x                 | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
+  | ----------------- | ------ | -------- | ---- | -------- |
+  | 0                 | 0      | 0        | 0    | 0        |
+  | -0                | -0     | 0        | -0   | 0        |
+  | NaN               | NaN    | NaN      | NaN  | NaN      |
+  | -NaN              | -NaN   | NaN      | -NaN | NaN      |
+  | Inf               | NaN    | NaN      | Inf  | NaN      |
+  | -Inf              | -NaN   | NaN      | -Inf | NaN      |
+  | \[x\] > FLT_MAX   | NaN    | NaN      | Inf  | NaN      |
+  | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
+  | else              | RNE    | RNE      | RNE  | RNE      |
 
 #### Version
 
@@ -28370,28 +28376,31 @@ This version of the operator has been available since version 23 of the default 
   to the following rules. `[x]` means the value rounded to
   the target mantissa width.
 
-  | x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
-  |------|----|----|----|----|
-  | 0 | 0 | 0 | 0 | 0 |
-  |-0 | -0 | 0 | -0 | 0 |
-  | NaN | NaN | NaN | NaN | NaN |
-  | +/- Inf | +/- FLT_MAX | NaN | FLT_MAX | NaN |
-  | [x] > FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX | FLT_MAX |
-  | [x] < -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
-  | else | RNE | RNE | RNE | RNE |
+  | x                 | E4M3FN   | E4M3FNUZ | E5M2     | E5M2FNUZ |
+  | ----------------- | -------- | -------- | -------- | -------- |
+  | 0                 | 0        | 0        | 0        | 0        |
+  | -0                | -0       | 0        | -0       | 0        |
+  | NaN               | NaN      | NaN      | NaN      | NaN      |
+  | Inf               | FLT_MAX  | NaN      | FLT_MAX  | NaN      |
+  | -Inf              | -FLT_MAX | NaN      | -FLT_MAX | NaN      |
+  | \[x\] > FLT_MAX   | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
+  | \[x\] \< -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
+  | else              | RNE      | RNE      | RNE      | RNE      |
 
   The behavior changes if the parameter 'saturate' is set to False.
   The rules then become:
 
-  | x | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
-  |------|----|----|----|----|
-  | 0 | 0 | 0 | 0 | 0 |
-  |-0 | -0 | 0 | -0 | 0 |
-  | NaN | NaN | NaN | NaN | NaN |
-  | +/- Inf | NaN | NaN | +/- Inf | NaN |
-  | [x] > FLT_MAX | NaN | NaN | Inf | NaN |
-  | [x] < -FLT_MAX | NaN | NaN | -Inf | NaN |
-  | else | RNE | RNE | RNE | RNE |
+  | x                 | E4M3FN | E4M3FNUZ | E5M2 | E5M2FNUZ |
+  | ----------------- | ------ | -------- | ---- | -------- |
+  | 0                 | 0      | 0        | 0    | 0        |
+  | -0                | -0     | 0        | -0   | 0        |
+  | NaN               | NaN    | NaN      | NaN  | NaN      |
+  | -NaN              | -NaN   | NaN      | -NaN | NaN      |
+  | Inf               | NaN    | NaN      | Inf  | NaN      |
+  | -Inf              | -NaN   | NaN      | -Inf | NaN      |
+  | \[x\] > FLT_MAX   | NaN    | NaN      | Inf  | NaN      |
+  | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
+  | else              | RNE    | RNE      | RNE  | RNE      |
 
 #### Version
 
