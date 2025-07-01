@@ -222,21 +222,21 @@ class _CommonQuantizeLinear(OpRun):
 
 
 class QuantizeLinear_10(_CommonQuantizeLinear):
-    def _run(self, x, y_scale, zero_point=None, axis=None):  # type: ignore
+    def _run(self, x, y_scale, zero_point=None, axis=None):
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
-        return super()._run(x, y_scale, zero_point, axis=axis)  # type: ignore
+        return super()._run(x, y_scale, zero_point, axis=axis)
 
 
 class QuantizeLinear_19(_CommonQuantizeLinear):
-    def _run(self, x, y_scale, zero_point=None, axis=None, saturate=None):  # type: ignore
+    def _run(self, x, y_scale, zero_point=None, axis=None, saturate=None):
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
-        return super()._run(x, y_scale, zero_point, axis=axis, saturate=saturate)  # type: ignore
+        return super()._run(x, y_scale, zero_point, axis=axis, saturate=saturate)
 
 
 class QuantizeLinear_21(_CommonQuantizeLinear):
-    def _run(self, *args, axis=None, saturate=None, block_size=None, output_dtype=None):  # type: ignore
+    def _run(self, *args, axis=None, saturate=None, block_size=None, output_dtype=None):
         # args: x, y_scale, zero_point
         return super()._run(
             *args,
@@ -244,7 +244,7 @@ class QuantizeLinear_21(_CommonQuantizeLinear):
             saturate=saturate,
             block_size=block_size,
             output_dtype=output_dtype,
-        )  # type: ignore
+        )
 
 
 class QuantizeLinear_23(_CommonQuantizeLinear):
@@ -256,7 +256,7 @@ class QuantizeLinear_23(_CommonQuantizeLinear):
         block_size=None,
         output_dtype=None,
         precision=None,
-    ):  # type: ignore
+    ):
         # args: x, y_scale, zero_point
         return super()._run(
             *args,
@@ -265,4 +265,4 @@ class QuantizeLinear_23(_CommonQuantizeLinear):
             block_size=block_size,
             output_dtype=output_dtype,
             precision=precision,
-        )  # type: ignore
+        )

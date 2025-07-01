@@ -114,4 +114,4 @@ class RotaryEmbedding(OpRun):
                 rotary_embedding_dim=rotary_embedding_dim,
                 num_heads=num_heads,
             ),
-        )  # type: ignore
+        )

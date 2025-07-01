@@ -7,7 +7,7 @@ from typing import NamedTuple
 
 import numpy as np
 
-from onnx import TensorProto
+from onnx.onnx_pb import TensorProto
 
 
 class TensorDtypeMap(NamedTuple):

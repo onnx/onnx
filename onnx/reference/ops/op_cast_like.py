@@ -38,15 +38,15 @@ def _cast_like(x, y, saturate):
     elif y.dtype == float4e2m1 and y.dtype.descr[0][0] == "float4e2m1":
         to = TensorProto.FLOAT4E2M1
     else:
-        to = np_dtype_to_tensor_dtype(y.dtype)  # type: ignore
+        to = np_dtype_to_tensor_dtype(y.dtype)
     return (cast_to(x, to, saturate),)
 
 
 class CastLike_15(OpRun):
-    def _run(self, x, y):  # type: ignore
+    def _run(self, x, y):
         return _cast_like(x, y, True)
 
 
 class CastLike_19(OpRun):
-    def _run(self, x, y, saturate=None):  # type: ignore
+    def _run(self, x, y, saturate=None):
         return _cast_like(x, y, saturate)
