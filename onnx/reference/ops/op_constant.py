@@ -18,7 +18,7 @@ from onnx._custom_element_types import (
 from onnx.reference.op_run import OpRun, RefAttrName
 
 
-def _check_dtype(val):  # type: ignore
+def _check_dtype(val):
     a = val.dtype
     if not isinstance(a, np.dtype) and a not in {
         bfloat16,
@@ -51,19 +51,19 @@ def _check_dtype(val):  # type: ignore
 
 
 class ConstantCommon(OpRun):
-    def _check(self, cst):  # type: ignore
+    def _check(self, cst):
         if isinstance(cst, tuple):
             raise TypeError(f"Unexpected type {type(cst)} for a constant.")
         return cst
 
 
 class Constant_1(ConstantCommon):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         ConstantCommon.__init__(self, onnx_node, run_params)
-        self.cst = self.value  # type: ignore
+        self.cst = self.value
         _check_dtype(self.cst)
 
-    def _run(self, **overridden_attributes):  # type: ignore
+    def _run(self, **overridden_attributes):
         if overridden_attributes and (
             len(overridden_attributes) > 1
             or "value" not in overridden_attributes
@@ -76,20 +76,20 @@ class Constant_1(ConstantCommon):
 
 
 class Constant_9(Constant_1):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         Constant_1.__init__(self, onnx_node, run_params)
 
 
 class Constant_11(ConstantCommon):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         ConstantCommon.__init__(self, onnx_node, run_params)
         if getattr(self, "sparse_value", None) is None:
-            self.cst = self.value  # type: ignore
+            self.cst = self.value
         else:
-            self.cst = self.sparse_value  # type: ignore
+            self.cst = self.sparse_value
         _check_dtype(self.cst)
 
-    def _run(self, **overridden_attributes):  # type: ignore
+    def _run(self, **overridden_attributes):
         if overridden_attributes and (
             len(overridden_attributes) > 1
             or "value" not in overridden_attributes
@@ -102,15 +102,15 @@ class Constant_11(ConstantCommon):
 
 
 class Constant_12(ConstantCommon):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         ConstantCommon.__init__(self, onnx_node, run_params)
-        if hasattr(self, "sparse_value") and self.sparse_value is not None:  # type: ignore
+        if hasattr(self, "sparse_value") and self.sparse_value is not None:
             self.cst_name = "sparse_value"
-            self.cst = self.sparse_value  # type: ignore
+            self.cst = self.sparse_value
             self.cst_convert = lambda v: v
-        elif hasattr(self, "value") and self.value is not None:  # type: ignore
-            self.cst_name = "value"  # type: ignore
-            self.cst = self.value  # type: ignore
+        elif hasattr(self, "value") and self.value is not None:
+            self.cst_name = "value"
+            self.cst = self.value
             self.cst_convert = lambda v: v
         else:
             for attr, np_dtype in {
@@ -121,15 +121,13 @@ class Constant_12(ConstantCommon):
                 "value_string": np.str_,
                 "value_strings": np.str_,
             }.items():
-                if hasattr(self, attr) and getattr(self, attr) is not None:  # type: ignore
+                if hasattr(self, attr) and getattr(self, attr) is not None:
                     self.cst_name = attr
                     v = getattr(self, attr)
                     self.cst = (
-                        v  # type: ignore
-                        if isinstance(v, RefAttrName)  # type: ignore
-                        else np.array(v, dtype=np_dtype)  # type: ignore
+                        v if isinstance(v, RefAttrName) else np.array(v, dtype=np_dtype)
                     )
-                    self.cst_convert = lambda v, np_dtype=np_dtype: np.array(  # type: ignore
+                    self.cst_convert = lambda v, np_dtype=np_dtype: np.array(
                         v, dtype=np_dtype
                     )
                     break
@@ -138,7 +136,7 @@ class Constant_12(ConstantCommon):
                 f"No constant is defined for operator 'Constant', outputs are {onnx_node.output}."
             )
 
-    def _run(self, **overridden_attributes):  # type: ignore
+    def _run(self, **overridden_attributes):
         if self.has_linked_attribute:
             if overridden_attributes is None:
                 raise RuntimeError(

@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 from onnx.reference.ops import op_grid_sample
 
 
-def _deform_conv_implementation(  # type: ignore
+def _deform_conv_implementation(
     X, W, offset, B, mask, dilations, group, kernel_shape, offset_group, pads, strides
 ):
     if dilations is None:
@@ -141,7 +141,7 @@ def _deform_conv_implementation(  # type: ignore
 
 
 class DeformConv(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,

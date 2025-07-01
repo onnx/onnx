@@ -517,37 +517,37 @@ def load_op(
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
     assert _registered_operators is not None
     if custom is not None:
-        return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
+        return lambda *args: OpFunction(*args, impl=custom)
     if version is None:
         version = onnx_opset_version()
     if domain != "":
         raise ValueError(f"Domain must be '' not {domain!r}.")
-    if op_type in _registered_operators and not expand:  # type: ignore
+    if op_type in _registered_operators and not expand:
         found = True
     else:
         # maybe the operator can be replaced by a function
         try:
-            schema = get_schema(op_type, version, domain)  # type: ignore
+            schema = get_schema(op_type, version, domain)
         except SchemaError:
             raise NotImplementedError(
                 f"No registered schema for operator {op_type!r} "
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None
-        if schema.has_function:  # type: ignore
-            body = schema.function_body  # type: ignore
+        if schema.has_function:
+            body = schema.function_body
             assert evaluator_cls is not None, (
                 f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
             )
             sess = evaluator_cls(body)
-            return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
-        if schema.has_context_dependent_function:  # type: ignore
+            return lambda *args, sess=sess: OpFunction(*args, impl=sess)
+        if schema.has_context_dependent_function:
             if node is None or input_types is None:
                 raise RuntimeContextError(
                     f"No registered implementation for operator {op_type!r} "
                     f"and domain {domain!r}, the operator has a context dependent function. "
                     f"but argument node or input_types is not defined (input_types={input_types})."
                 )
-            body = schema.get_context_dependent_function(  # type: ignore
+            body = schema.get_context_dependent_function(
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
             proto = FunctionProto()
@@ -556,13 +556,13 @@ def load_op(
                 f"evaluator_cls must be specified to evaluate function {proto.name!r}"
             )
             sess = evaluator_cls(proto)
-            return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
+            return lambda *args, sess=sess: OpFunction(*args, impl=sess)
         found = False
     if not found:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
-        has_function = schema.has_function if schema else None  # type: ignore
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
+        has_function = schema.has_function if schema else None
         has_context_dependent_function = (
-            schema.has_context_dependent_function if schema else None  # type: ignore
+            schema.has_context_dependent_function if schema else None
         )
         raise RuntimeImplementationError(
             f"No registered implementation for operator {op_type!r} "
@@ -595,7 +595,7 @@ def load_op(
             )
         cl = impl[best]
     if cl is None:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
         raise ValueError(
             f"Not registered implementation for operator {op_type!r}, "
             f"domain {domain!r}, and {version!r} in\n{available}"

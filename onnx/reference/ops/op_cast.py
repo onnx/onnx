@@ -150,10 +150,10 @@ def cast_to(x, to, saturate):  # noqa: PLR0911
 
 
 class Cast_1(OpRun):
-    def _run(self, x, to=None):  # type: ignore
+    def _run(self, x, to=None):
         return (cast_to(x, to, saturate=True),)
 
 
 class Cast_19(OpRun):
-    def _run(self, x, to=None, saturate=None):  # type: ignore
+    def _run(self, x, to=None, saturate=None):
         return (cast_to(x, to, saturate),)

@@ -10,7 +10,7 @@ from onnx.reference.ops.op_col2im import col2im_naive_implementation
 
 
 class ConvTranspose(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,

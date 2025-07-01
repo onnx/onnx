@@ -54,5 +54,5 @@ def _gather_nd_impl(
 
 
 class GatherND(OpRun):
-    def _run(self, data, indices, batch_dims=None):  # type: ignore
-        return _gather_nd_impl(data, indices, batch_dims)  # type: ignore
+    def _run(self, data, indices, batch_dims=None):
+        return _gather_nd_impl(data, indices, batch_dims)

@@ -37,7 +37,7 @@ def gather_numpy(self: np.ndarray, dim: int, index: np.ndarray) -> np.ndarray:
 
 
 class GatherElements(OpRun):
-    def _run(self, data, indices, axis=None):  # type: ignore
+    def _run(self, data, indices, axis=None):
         if indices.size == 0:
             return (np.empty((0,), dtype=data.dtype),)
         try:

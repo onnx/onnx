@@ -10,7 +10,7 @@ from onnx.reference.ops.op_conv import _conv_implementation
 
 
 class ConvInteger(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,
@@ -27,12 +27,12 @@ class ConvInteger(OpRun):
             raise ValueError(
                 f"X must have at least 3 dimensions but its shape is {X.shape}."
             )
-        auto_pad = auto_pad or self.auto_pad  # type: ignore
-        dilations = dilations or self.dilations  # type: ignore
-        group = group or self.group  # type: ignore
-        kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
-        pads = pads or self.pads  # type: ignore
-        strides = strides or self.strides  # type: ignore
+        auto_pad = auto_pad or self.auto_pad
+        dilations = dilations or self.dilations
+        group = group or self.group
+        kernel_shape = kernel_shape or self.kernel_shape
+        pads = pads or self.pads
+        strides = strides or self.strides
 
         X = X.astype(np.int32)
         if x_zero_point:

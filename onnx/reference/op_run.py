@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
 
-def _split_class_name(name):  # type: ignore
+def _split_class_name(name):
     if "_" in name:
         prefix, vers = name.rsplit("_", maxsplit=1)
         try:
@@ -74,17 +74,17 @@ def _build_schemas() -> dict[str, type]:
     for schema in get_all_schemas_with_history():
         # Multiple version can coexist. The last one is kept.
         if schema.name in res:
-            if schema.domain != res[schema.name].domain:  # type: ignore
+            if schema.domain != res[schema.name].domain:
                 raise NotImplementedError(
-                    f"This function assumes every operator has a unique name {schema.name!r} "  # type: ignore
-                    f"even across multiple domains {schema.domain!r} and {res[schema.name].domain!r}."  # type: ignore
+                    f"This function assumes every operator has a unique name {schema.name!r} "
+                    f"even across multiple domains {schema.domain!r} and {res[schema.name].domain!r}."
                 )
-            if schema.since_version > res[schema.name].since_version:  # type: ignore
+            if schema.since_version > res[schema.name].since_version:
                 # We keep the most recent one.
-                res[schema.name] = schema  # type: ignore
+                res[schema.name] = schema
         else:
-            res[schema.name] = schema  # type: ignore
-        res[schema.name + "_" + str(schema.since_version)] = schema  # type: ignore
+            res[schema.name] = schema
+        res[schema.name + "_" + str(schema.since_version)] = schema
     return res
 
 
@@ -121,7 +121,7 @@ class SparseTensor:
 def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     """Hosts a sparse tensor."""
     shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
-    return SparseTensor(to_array(att.values), to_array(att.indices), shape)  # type: ignore
+    return SparseTensor(to_array(att.values), to_array(att.indices), shape)
 
 
 def to_array_extended(tensor: TensorProto) -> np.ndarray:
@@ -191,13 +191,13 @@ class OpRun(abc.ABC):
             elif onnx_node.op_type in _schemas:
                 self._schema = _schemas[onnx_node.op_type]
             else:
-                self._schema = None  # type: ignore
+                self._schema = None
         else:
             self._schema = schema
         self.has_subgraph = False
         self._load_attributes()
 
-    def _log(self, pattern, *args):  # type: ignore
+    def _log(self, pattern, *args):
         self.run_params["log"](pattern, *args)
 
     def _extract_attribute_value(
@@ -222,7 +222,7 @@ class OpRun(abc.ABC):
                 functions=functions,
             )
         if att.type in OpRun._attribute_conversion_functions:
-            return OpRun._attribute_conversion_functions[att.type](att)  # type: ignore
+            return OpRun._attribute_conversion_functions[att.type](att)
         if ref_att is None:
             raise AttributeError(
                 f"Unable to convert attribute {att.name!r} type {att.type!r} "
@@ -254,7 +254,7 @@ class OpRun(abc.ABC):
             added_attributes.append(name)
             if att.type == AttributeProto.GRAPH:
                 self.has_subgraph = True
-                self.has_linked_attribute |= value.has_linked_attribute  # type: ignore
+                self.has_linked_attribute |= value.has_linked_attribute
                 setattr(
                     self,
                     f"_run_{att.name}",
@@ -266,7 +266,7 @@ class OpRun(abc.ABC):
                 )
 
         if self._schema and self.onnx_node.op_type not in {"Constant"}:
-            for k, v in self._schema.attributes.items():  # type: ignore
+            for k, v in self._schema.attributes.items():
                 if not hasattr(self, k):
                     if getattr(v, "required", True):
                         raise RuntimeError(
@@ -279,7 +279,7 @@ class OpRun(abc.ABC):
                             and v.default_value.t.data_type == 0
                         ):
                             # default value is undefined, it depends on the inputs
-                            value = None  # type: ignore
+                            value = None
                         else:
                             value = self._extract_attribute_value(v.default_value, v)
                         setattr(self, k, value)
@@ -299,7 +299,7 @@ class OpRun(abc.ABC):
         for init in graph.initializer:
             known.add(init.name)
         for sparse_init in graph.sparse_initializer:
-            known.add(sparse_init.name)  # type: ignore
+            known.add(sparse_init.name)
         for inp in graph.input:
             known.add(inp.name)
         for node in graph.node:
@@ -313,22 +313,22 @@ class OpRun(abc.ABC):
     @property
     def input(self) -> Iterable[str]:
         """Returns node attribute `input`."""
-        return self.onnx_node.input  # type: ignore
+        return self.onnx_node.input
 
     @property
     def output(self) -> Iterable[str]:
         """Returns node attribute `output`."""
-        return self.onnx_node.output  # type: ignore
+        return self.onnx_node.output
 
     @property
     def op_type(self) -> str:
         """Returns node attribute `op_type`."""
-        return self.onnx_node.op_type  # type: ignore
+        return self.onnx_node.op_type
 
     @property
     def domain(self) -> str:
         """Returns node attribute `domain`."""
-        return self.onnx_node.domain  # type: ignore
+        return self.onnx_node.domain
 
     def need_context(self) -> bool:
         """Tells the runtime if this node needs the context
@@ -349,7 +349,7 @@ class OpRun(abc.ABC):
         return "\n".join(atts)
 
     @abc.abstractmethod
-    def _run(self, *args, **kwargs):  # type: ignore
+    def _run(self, *args, **kwargs):
         """Should be overwritten.
 
         Args:
@@ -398,7 +398,7 @@ class OpRun(abc.ABC):
             )
         return res
 
-    def run(self, *args, linked_attributes=None, context=None):  # type: ignore
+    def run(self, *args, linked_attributes=None, context=None):
         """Calls method ``_run``, catches exceptions,
         displays a longer error message.
 
@@ -501,7 +501,7 @@ class OpRun(abc.ABC):
         n_inputs: int | None = None,
         n_outputs: int | None = None,
         **kwargs: Any,
-    ) -> NodeProto:  # type: ignore
+    ) -> NodeProto:
         """Creates an ONNX node for this class based on the given information.
 
         Args:
@@ -586,7 +586,7 @@ class OpRun(abc.ABC):
         n_outputs: int | None = None,
         verbose: int = 0,
         **kwargs: Any,
-    ) -> Any:  # type: ignore
+    ) -> Any:
         """Evaluates this operator.
 
         Args:
@@ -644,10 +644,10 @@ class OpFunction(OpRun):
             for name in getattr(self.impl_, "attributes_", attributes)  # type: ignore[union-attr]
         }
 
-    def _run(self, *inputs, **kwargs):  # type: ignore
+    def _run(self, *inputs, **kwargs):
         return self._run_impl(self.impl_, *inputs, **kwargs)
 
-    def _run_impl(self, impl, *inputs, **kwargs):  # type: ignore
+    def _run_impl(self, impl, *inputs, **kwargs):
         if len(impl.input_names) != len(inputs):
             raise RuntimeError(
                 f"Mismatch lengths between the number of inputs {len(inputs)} "

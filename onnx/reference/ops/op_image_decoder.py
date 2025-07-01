@@ -12,7 +12,7 @@ from onnx.reference.op_run import OpRun
 
 
 class ImageDecoder(OpRun):
-    def _run(self, encoded: np.ndarray, pixel_format="RGB") -> tuple[np.ndarray]:  # type: ignore
+    def _run(self, encoded: np.ndarray, pixel_format="RGB") -> tuple[np.ndarray]:
         try:
             import PIL.Image  # noqa: PLC0415
         except ImportError as e:
