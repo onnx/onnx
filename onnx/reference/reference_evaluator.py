@@ -253,7 +253,9 @@ class ReferenceEvaluator:
         elif isinstance(proto, NodeProto):
             self.onnx_graph_ = None
             self.opsets_ = {
-                proto.domain: 1 if proto.domain != "" else onnx.defs.onnx_opset_version()
+                proto.domain: 1
+                if proto.domain != ""
+                else onnx.defs.onnx_opset_version()
             }
         else:
             raise TypeError(f"Unexpected type {type(proto)} for proto.")

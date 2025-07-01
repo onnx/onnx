@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import numpy as np
 
 import onnx.defs
+import onnx.numpy_helper
 from onnx import TensorProto
 from onnx._custom_element_types import (
     bfloat16,
@@ -20,7 +21,6 @@ from onnx._custom_element_types import (
     int4,
     uint4,
 )
-import onnx.numpy_helper
 from onnx.onnx_pb import AttributeProto, GraphProto, NodeProto, TypeProto
 
 if TYPE_CHECKING:
@@ -109,7 +109,11 @@ class SparseTensor:
 def to_sparse_tensor(att: AttributeProto) -> SparseTensor:
     """Hosts a sparse tensor."""
     shape = tuple(d for d in att.dims)  # type: ignore[attr-defined]
-    return SparseTensor(onnx.numpy_helper.to_array(att.values), onnx.numpy_helper.to_array(att.indices), shape)
+    return SparseTensor(
+        onnx.numpy_helper.to_array(att.values),
+        onnx.numpy_helper.to_array(att.indices),
+        shape,
+    )
 
 
 class Graph:
@@ -146,7 +150,9 @@ class OpRun(abc.ABC):
         AttributeProto.STRING: lambda att: att.s.decode("utf-8"),
         AttributeProto.STRINGS: lambda att: [s.decode("utf-8") for s in att.strings],
         AttributeProto.TENSOR: lambda att: onnx.numpy_helper.to_array(att.t),
-        AttributeProto.TENSORS: lambda att: [onnx.numpy_helper.to_array(t) for t in att.tensors],
+        AttributeProto.TENSORS: lambda att: [
+            onnx.numpy_helper.to_array(t) for t in att.tensors
+        ],
         AttributeProto.TYPE_PROTO: lambda att: OnnxType(att.tp),
         AttributeProto.TYPE_PROTOS: lambda att: [OnnxType(t) for t in att.type_protos],
     }
@@ -296,12 +302,12 @@ class OpRun(abc.ABC):
     @property
     def input(self) -> Sequence[str]:
         """Returns node attribute `input`."""
-        return self.onnx_node.input
+        return self.onnx_node.input  # type: ignore[no-any-return]
 
     @property
     def output(self) -> Sequence[str]:
         """Returns node attribute `output`."""
-        return self.onnx_node.output
+        return self.onnx_node.output  # type: ignore[no-any-return]
 
     @property
     def op_type(self) -> str:
@@ -665,7 +671,9 @@ class OpFunctionContextDependant(OpFunction):
         OpFunction.__init__(self, onnx_node, run_params, impl=self, attributes={})
         self.parent = parent
         version = parent.opsets[onnx_node.domain]
-        self.schema_ = onnx.defs.get_schema(onnx_node.op_type, version, onnx_node.domain)
+        self.schema_ = onnx.defs.get_schema(
+            onnx_node.op_type, version, onnx_node.domain
+        )
 
     def _run(self, *inputs, **kwargs):
         # Input types are known. They are used to properly
