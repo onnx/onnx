@@ -2008,7 +2008,7 @@ class TestReferenceEvaluator(unittest.TestCase):
     def common_test_col2im(
         self, size, image_shape, block_shape, pads, strides, dilations
     ):
-        import torch
+        import torch  # noqa: PLC0415
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
