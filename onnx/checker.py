@@ -23,7 +23,7 @@ __all__ = [
 
 import os
 import sys
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING
 
 import onnx.defs
 import onnx.onnx_cpp2py_export.checker as C  # noqa: N812
@@ -47,9 +47,6 @@ DEFAULT_CONTEXT.ir_version = IR_VERSION
 DEFAULT_CONTEXT.opset_imports = {"": onnx.defs.onnx_opset_version()}
 
 LEXICAL_SCOPE_CONTEXT = C.LexicalScopeContext()
-
-
-FuncType = TypeVar("FuncType", bound=Callable[..., Any])
 
 
 def _ensure_proto_type(proto: Message, proto_type: type[Message]) -> None:

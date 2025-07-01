@@ -6074,7 +6074,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     keys_tensor=key_tensor,
                     values_tensor=values_tensor,
                     default_tensor=make_tensor(
-                        "default_tensor", TensorProto.STRING, [1], [0]
+                        "default_tensor", TensorProto.INT32, [1], [0]
                     ),
                 )
             ],
@@ -6100,7 +6100,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     keys_tensor=key_tensor,
                     values_strings=["a", "b", "cc", "ddd"],
                     default_tensor=make_tensor(
-                        "default_tensor", TensorProto.STRING, [1, 2], [0, 0]
+                        "default_tensor", TensorProto.STRING, [1, 2], ["a", "b"]
                     ),
                 )
             ],
