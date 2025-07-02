@@ -23,7 +23,6 @@ from onnx import (
     SequenceProto,
     TensorProto,
     TypeProto,
-    _custom_element_types,
     checker,
     defs,
     helper,
@@ -534,11 +533,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
         np.testing.assert_allclose(numpy_helper.to_array(tensor).view(np.uint16), array)
 
     def test_make_float8e4m3fn_tensor_raw(self) -> None:
-        expected = np.array([0, 0.5, 1, 448, 10], dtype=np.float32)
-        f8 = np.array(
-            [helper.float32_to_float8e4m3(x) for x in expected], dtype=np.uint8
-        )
-        packed_values = f8.tobytes()
+        expected = np.array([0, 0.5, 1, 448, 10], dtype=ml_dtypes.float8_e4m3fn)
+        packed_values = expected.tobytes()
         y = helper.make_tensor(
             name="test",
             data_type=TensorProto.FLOAT8E4M3FN,
@@ -547,15 +543,11 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(
-            ynp.view(np.uint8), expected.astype(ml_dtypes.float8_e4m3fn).view(np.uint8)
-        )
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     def test_make_float8e4m3fnuz_tensor_raw(self) -> None:
         expected = np.array([0, 0.5, 1, 240, 10], dtype=np.float32)
-        f8 = np.array(
-            [helper.float32_to_float8e4m3(x, uz=True) for x in expected], dtype=np.uint8
-        )
+        f8 = expected.astype(ml_dtypes.float8_e4m3fnuz)
         packed_values = f8.tobytes()
         y = helper.make_tensor(
             name="test",
@@ -571,11 +563,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
 
     def test_make_float8e5m2_tensor_raw(self) -> None:
-        expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
-        f8 = np.array(
-            [helper.float32_to_float8e5m2(x) for x in expected], dtype=np.uint8
-        )
-        packed_values = f8.tobytes()
+        expected = np.array([0, 0.5, 1, 49152, 10], dtype=ml_dtypes.float8_e5m2)
+        packed_values = expected.tobytes()
         y = helper.make_tensor(
             name="test",
             data_type=TensorProto.FLOAT8E5M2,
@@ -584,17 +573,11 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(
-            ynp.view(np.uint8), expected.astype(ml_dtypes.float8_e5m2).view(np.uint8)
-        )
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     def test_make_float8e5m2fnuz_tensor_raw(self) -> None:
-        expected = np.array([0, 0.5, 1, 49152, 10], dtype=np.float32)
-        f8 = np.array(
-            [helper.float32_to_float8e5m2(x, fn=True, uz=True) for x in expected],
-            dtype=np.uint8,
-        )
-        packed_values = f8.tobytes()
+        expected = np.array([0, 0.5, 1, 49152, 10], dtype=ml_dtypes.float8_e5m2fnuz)
+        packed_values = expected.tobytes()
         y = helper.make_tensor(
             name="test",
             data_type=TensorProto.FLOAT8E5M2FNUZ,
@@ -603,10 +586,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         ynp = numpy_helper.to_array(y)
-        np.testing.assert_equal(
-            ynp.view(np.uint8),
-            expected.astype(ml_dtypes.float8_e5m2fnuz).view(np.uint8),
-        )
+        np.testing.assert_equal(ynp.view(np.uint8), expected.view(np.uint8))
 
     @parameterized.parameterized.expand(
         itertools.product(
@@ -656,13 +636,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
     )
     def test_make_4bit_raw_tensor(self, dtype, dims) -> None:
-        type_range = {
-            TensorProto.UINT4: (0, 15),
-            TensorProto.INT4: (-8, 7),
-        }
-        data = np.random.randint(
-            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
-        ).astype(np.uint8)
+        data = np.random.randint(0, high=16, size=dims, dtype=np.uint8)
         packed_data = _pack_4bit(data)
 
         y = helper.make_tensor(
@@ -696,7 +670,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         expected = np.array(
             [0, 0.5, 1, 6, -0.5, -6, -4], dtype=ml_dtypes.float4_e2m1fn
         ).view(np.uint8)
-        np.testing.assert_equal(ynp, expected)
+        np.testing.assert_equal(ynp.view(np.uint8), expected)
 
     def test_make_sparse_tensor(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
@@ -882,24 +856,7 @@ class TestPrintableGraph(unittest.TestCase):
 
 @pytest.mark.parametrize(
     "tensor_dtype",
-    [
-        t
-        for t in helper.get_all_tensor_dtypes()
-        if t
-        not in {
-            TensorProto.BFLOAT16,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-            TensorProto.UINT4,
-            TensorProto.INT4,
-            TensorProto.STRING,
-            TensorProto.COMPLEX64,
-            TensorProto.COMPLEX128,
-            TensorProto.FLOAT4E2M1,
-        }
-    ],
+    [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
@@ -914,33 +871,26 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
 
 @pytest.mark.parametrize(
     "tensor_dtype",
-    [
-        t
-        for t in helper.get_all_tensor_dtypes()
-        if t
-        not in {
-            TensorProto.BFLOAT16,
-            TensorProto.STRING,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-            TensorProto.UINT4,
-            TensorProto.INT4,
-            TensorProto.FLOAT4E2M1,
-        }
-    ],
+    [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_raw(tensor_dtype: int) -> None:
     np_array = np.random.randn(2, 3).astype(
         helper.tensor_dtype_to_np_dtype(tensor_dtype)
     )
+    if tensor_dtype in {
+        TensorProto.FLOAT4E2M1,
+        TensorProto.INT4,
+        TensorProto.UINT4,
+    }:
+        vals = _pack_4bit(np_array).tobytes()
+    else:
+        vals = np_array.tobytes()
     tensor = helper.make_tensor(
         name="test",
         data_type=tensor_dtype,
         dims=np_array.shape,
-        vals=np_array.tobytes(),
+        vals=vals,
         raw=True,
     )
     np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
@@ -967,17 +917,15 @@ class TestHelperMappingFunctions(unittest.TestCase):
 
     def test_tensor_dtype_to_np_dtype_bfloat16(self) -> None:
         self.assertEqual(
-            helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16), np.dtype("float32")
+            helper.tensor_dtype_to_np_dtype(TensorProto.BFLOAT16), ml_dtypes.bfloat16
         )
 
     def test_tensor_dtype_to_storage_tensor_dtype_bfloat16(self) -> None:
         self.assertEqual(
             helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.BFLOAT16),
-            TensorProto.UINT16,
+            TensorProto.INT32,
         )
 
-    # BFloat16 tensor uses TensorProto.UINT16 as storage type;
-    # And the field name for TensorProto.UINT16 is int32_data
     def test_tensor_dtype_to_field_bfloat16(self) -> None:
         self.assertEqual(
             helper.tensor_dtype_to_field(TensorProto.BFLOAT16), "int32_data"
@@ -1011,17 +959,6 @@ class TestAttrTypeToStr(unittest.TestCase):
         result = helper._attr_type_to_str(9999)
         self.assertEqual(result, "UNDEFINED")
 
-    def test_custom_types(self):
-        def _get(name):
-            if hasattr(_custom_element_types, name):
-                return getattr(_custom_element_types, name)
-            name = f"float8{name}"
-            return getattr(_custom_element_types, name)
-
-        for k, v in _custom_element_types.mapping_name_to_data_type.items():
-            self.assertEqual(helper.np_dtype_to_tensor_dtype(_get(k)), v)
-
 
 if __name__ == "__main__":
     unittest.main()
-    pytest.main([__file__])

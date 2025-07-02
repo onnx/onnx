@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
+import ml_dtypes
 import numpy as np
 
 from onnx.onnx_pb import TensorProto
@@ -17,7 +18,10 @@ class TensorDtypeMap(NamedTuple):
 
 
 # tensor_dtype: (numpy type, storage type, string name)
-TENSOR_TYPE_MAP = {
+# The storage type is the type used to store the tensor in the *_data field of
+# a TensorProto. All available fields are float_data, int32_data, int64_data,
+# string_data, uint64_data and double_data.
+TENSOR_TYPE_MAP: dict[int, TensorDtypeMap] = {
     int(TensorProto.FLOAT): TensorDtypeMap(
         np.dtype("float32"), int(TensorProto.FLOAT), "TensorProto.FLOAT"
     ),
@@ -43,11 +47,12 @@ TENSOR_TYPE_MAP = {
         np.dtype("bool"), int(TensorProto.INT32), "TensorProto.BOOL"
     ),
     int(TensorProto.FLOAT16): TensorDtypeMap(
-        np.dtype("float16"), int(TensorProto.UINT16), "TensorProto.FLOAT16"
+        np.dtype("float16"), int(TensorProto.INT32), "TensorProto.FLOAT16"
     ),
-    # Native numpy does not support bfloat16 so now use float32.
     int(TensorProto.BFLOAT16): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT16), "TensorProto.BFLOAT16"
+        np.dtype(ml_dtypes.bfloat16),
+        int(TensorProto.INT32),
+        "TensorProto.BFLOAT16",
     ),
     int(TensorProto.DOUBLE): TensorDtypeMap(
         np.dtype("float64"), int(TensorProto.DOUBLE), "TensorProto.DOUBLE"
@@ -56,10 +61,12 @@ TENSOR_TYPE_MAP = {
         np.dtype("complex64"), int(TensorProto.FLOAT), "TensorProto.COMPLEX64"
     ),
     int(TensorProto.COMPLEX128): TensorDtypeMap(
-        np.dtype("complex128"), int(TensorProto.DOUBLE), "TensorProto.COMPLEX128"
+        np.dtype("complex128"),
+        int(TensorProto.DOUBLE),
+        "TensorProto.COMPLEX128",
     ),
     int(TensorProto.UINT32): TensorDtypeMap(
-        np.dtype("uint32"), int(TensorProto.UINT32), "TensorProto.UINT32"
+        np.dtype("uint32"), int(TensorProto.UINT64), "TensorProto.UINT32"
     ),
     int(TensorProto.UINT64): TensorDtypeMap(
         np.dtype("uint64"), int(TensorProto.UINT64), "TensorProto.UINT64"
@@ -67,28 +74,35 @@ TENSOR_TYPE_MAP = {
     int(TensorProto.STRING): TensorDtypeMap(
         np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
     ),
-    # Native numpy does not support float8 types, so now use float32 for these types.
-    # TODO(after #6605): Use ml_dtypes instead.
     int(TensorProto.FLOAT8E4M3FN): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FN"
+        np.dtype(ml_dtypes.float8_e4m3fn),
+        int(TensorProto.INT32),
+        "TensorProto.FLOAT8E4M3FN",
     ),
     int(TensorProto.FLOAT8E4M3FNUZ): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E4M3FNUZ"
+        np.dtype(ml_dtypes.float8_e4m3fnuz),
+        int(TensorProto.INT32),
+        "TensorProto.FLOAT8E4M3FNUZ",
     ),
     int(TensorProto.FLOAT8E5M2): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2"
+        np.dtype(ml_dtypes.float8_e5m2),
+        int(TensorProto.INT32),
+        "TensorProto.FLOAT8E5M2",
     ),
     int(TensorProto.FLOAT8E5M2FNUZ): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT8E5M2FNUZ"
+        np.dtype(ml_dtypes.float8_e5m2fnuz),
+        int(TensorProto.INT32),
+        "TensorProto.FLOAT8E5M2FNUZ",
     ),
-    # Native numpy does not support uint4/int4 so now use uint8/int8 for these types.
     int(TensorProto.UINT4): TensorDtypeMap(
-        np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT4"
+        np.dtype(ml_dtypes.uint4), int(TensorProto.INT32), "TensorProto.UINT4"
     ),
     int(TensorProto.INT4): TensorDtypeMap(
-        np.dtype("int8"), int(TensorProto.INT32), "TensorProto.INT4"
+        np.dtype(ml_dtypes.int4), int(TensorProto.INT32), "TensorProto.INT4"
     ),
     int(TensorProto.FLOAT4E2M1): TensorDtypeMap(
-        np.dtype("float32"), int(TensorProto.UINT8), "TensorProto.FLOAT4E2M1"
+        np.dtype(ml_dtypes.float4_e2m1fn),
+        int(TensorProto.INT32),
+        "TensorProto.FLOAT4E2M1",
     ),
 }

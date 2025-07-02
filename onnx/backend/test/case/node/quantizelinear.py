@@ -234,7 +234,7 @@ class QuantizeLinear(Base):
             "y_zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
         )
         y = make_tensor(
-            "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]
+            "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, 0, 0, 3, 4, 4, 5, 5, 11]
         )
 
         expect(

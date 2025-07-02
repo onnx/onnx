@@ -23,12 +23,13 @@ from os import getenv
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
+import ml_dtypes
 import numpy as np
 import parameterized
 import version_utils
 from numpy.testing import assert_allclose
 
-import onnx._custom_element_types as custom
+import onnx
 from onnx import (
     AttributeProto,
     FunctionProto,
@@ -36,15 +37,11 @@ from onnx import (
     TensorProto,
     checker,
     parser,
-    subbyte,
 )
 from onnx.backend.test.case.node.roialign import get_roi_align_input_values
 from onnx.checker import check_model
 from onnx.defs import onnx_opset_version
 from onnx.helper import (
-    float32_to_bfloat16,
-    float32_to_float8e4m3,
-    float32_to_float8e5m2,
     make_function,
     make_graph,
     make_model,
@@ -58,7 +55,7 @@ from onnx.helper import (
     make_tensor_value_info,
     make_value_info,
 )
-from onnx.numpy_helper import float8e4m3_to_float32, float8e5m2_to_float32, from_array
+from onnx.numpy_helper import from_array
 from onnx.reference import ReferenceEvaluator
 from onnx.reference.op_run import OpRun, OpRunExpand
 from onnx.reference.ops import load_op
@@ -111,16 +108,6 @@ def skip_if_no_torchvision(fn):
     def wrapper(*args, **kwargs):
         if importlib.util.find_spec("torchvision") is None:
             raise unittest.SkipTest("torchvision not installed")
-        fn(*args, **kwargs)
-
-    return wrapper
-
-
-def skip_if_no_ml_dtypes(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if importlib.util.find_spec("ml_dtypes") is None:
-            raise unittest.SkipTest("ml-dtypes not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -3368,18 +3355,22 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        expected1 = np.array(
-            [float8e4m3_to_float32(float32_to_float8e4m3(x)) for x in data]
-        )
-        expected2 = np.array(
-            [float8e5m2_to_float32(float32_to_float8e5m2(x)) for x in data]
-        )
+        expected1 = onnx.numpy_helper.saturating_cast(
+            data, ml_dtypes.float8_e4m3fn
+        ).astype(np.float32)
+        expected2 = onnx.numpy_helper.saturating_cast(
+            data, ml_dtypes.float8_e5m2
+        ).astype(np.float32)
         got = ref.run(None, {"X": data})
         assert_allclose(got[0], expected1)
         assert_allclose(got[1], expected2)
         assert_allclose(got[2], expected1)
         assert_allclose(got[3], expected2)
 
+    @unittest.skipIf(
+        version_utils.numpy_older_than("2.0"),
+        "assert_allclose does not support ml_dtypes in numpy < 2.0",
+    )
     def test_cast_like_float8(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
@@ -3396,14 +3387,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         data = np.array([0, 1e7], dtype=np.float32)
-        expected = np.array(
-            [
-                float8e4m3_to_float32(
-                    float32_to_float8e4m3(x, uz=True, saturate=False), uz=True
-                )
-                for x in data
-            ]
-        )
+        expected = data.astype(ml_dtypes.float8_e4m3fnuz)
         ref = ReferenceEvaluator(model)
         got = ref.run(None, {"X": data})
         assert_allclose(got[0], expected)
@@ -3434,8 +3418,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        expected1 = np.array([float32_to_float8e4m3(x) for x in data])
-        expected2 = np.array([float32_to_float8e5m2(x) for x in data])
+        expected1 = onnx.numpy_helper.saturating_cast(data, ml_dtypes.float8_e4m3fn)
+        expected2 = onnx.numpy_helper.saturating_cast(data, ml_dtypes.float8_e5m2)
         got = ref.run(None, {"X": data})
         self.assertEqual(got[0].tolist(), expected1.tolist())
         self.assertEqual(got[1].tolist(), expected2.tolist())
@@ -3583,7 +3567,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 1e5, 200], dtype=np.float32)
-        expected = np.array([float32_to_bfloat16(x) for x in data])
+        expected = data.astype(ml_dtypes.bfloat16)
         got = ref.run(None, {"X": data})
         np.testing.assert_array_equal(got[0], expected)
 
@@ -5705,11 +5689,11 @@ class TestReferenceEvaluator(unittest.TestCase):
             )
         )
         ref = ReferenceEvaluator(model)
-        data = np.array([0, 1, 2.4, 2.6, 4, 10], dtype=np.float32)
-        signed = cast_to == TensorProto.INT4
-        expected = np.array(
-            [subbyte.float32_to_4bit_unpacked(x, signed=signed) for x in data]
+        data = np.array(
+            [0, 1, 2.4, 2.6, 4, 10],
+            dtype=onnx.helper.tensor_dtype_to_np_dtype(cast_from),
         )
+        expected = data.astype(onnx.helper.tensor_dtype_to_np_dtype(cast_to))
         got = ref.run(None, {"X": data})
         self.assertEqual(got[0].tolist(), expected.tolist())
 
@@ -5736,10 +5720,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array(range(7), dtype=np.float32)
-        cast_from_np = custom.uint4 if cast_from == TensorProto.UINT4 else custom.int4
-        expected = np.array(
-            [subbyte.float32_to_4bit_unpacked(x, cast_from_np) for x in data]
-        )
+        expected = data.astype(onnx.helper.tensor_dtype_to_np_dtype(cast_from))
         got = ref.run(None, {"X": data})
         np.testing.assert_array_equal(got[0], expected)
 
@@ -6023,13 +6004,12 @@ class TestReferenceEvaluator(unittest.TestCase):
             ("FLOAT",),
             ("FLOAT16",),
             ("BFLOAT16",),
-            # Comparison fails with ml_dtypes
-            # ("FLOAT8E4M3FN", ),
-            # ("FLOAT8E4M3FNUZ", ),
-            # ("FLOAT8E5M2", ),
-            # ("FLOAT8E5M2FNUZ", ),
-            # ("INT4", ),
-            # ("UINT4", ),
+            ("FLOAT8E4M3FN",),
+            ("FLOAT8E4M3FNUZ",),
+            ("FLOAT8E5M2",),
+            ("FLOAT8E5M2FNUZ",),
+            ("INT4",),
+            ("UINT4",),
         ]
     )
     def test_cmp_custom_dtype(self, stype):
@@ -6039,7 +6019,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 [
                     make_node("Cast", ["X"], ["Xc"], to=itype),
                     make_node("Cast", ["Y"], ["Yc"], to=itype),
-                    make_node("Greater", ["Xc", "Yc"], ["Zc"]),
+                    make_node("GreaterOrEqual", ["Xc", "Yc"], ["Zc"]),
                     make_node("Cast", ["Zc"], ["Z"], to=TensorProto.BOOL),
                 ],
                 "nd",
