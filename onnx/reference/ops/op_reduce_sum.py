@@ -9,7 +9,7 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 class ReduceSum_1(OpRunReduceNumpy):
-    def _run(self, x, axes=None, keepdims=None):  # type: ignore
+    def _run(self, x, axes=None, keepdims=None):
         axes = tuple(axes) if axes is not None else None
         res = np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype)
         if keepdims == 0 and not isinstance(res, np.ndarray):
@@ -19,7 +19,7 @@ class ReduceSum_1(OpRunReduceNumpy):
 
 
 class ReduceSum_13(OpRunReduceNumpy):
-    def _run(self, x, axes=None, keepdims=None, noop_with_empty_axes=None):  # type: ignore
+    def _run(self, x, axes=None, keepdims=None, noop_with_empty_axes=None):
         if (axes is None or axes.shape == (0,)) and noop_with_empty_axes:
             return (x,)
         axes = self.handle_axes(axes)

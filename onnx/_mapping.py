@@ -7,8 +7,7 @@ from typing import NamedTuple
 
 import ml_dtypes
 import numpy as np
-
-import onnx
+from onnx_pb import TensorProto
 
 
 class TensorDtypeMap(NamedTuple):
@@ -22,87 +21,87 @@ class TensorDtypeMap(NamedTuple):
 # a TensorProto. All available fields are float_data, int32_data, int64_data,
 # string_data, uint64_data and double_data.
 TENSOR_TYPE_MAP: dict[int, TensorDtypeMap] = {
-    int(onnx.TensorProto.FLOAT): TensorDtypeMap(
-        np.dtype("float32"), int(onnx.TensorProto.FLOAT), "TensorProto.FLOAT"
+    int(TensorProto.FLOAT): TensorDtypeMap(
+        np.dtype("float32"), int(TensorProto.FLOAT), "TensorProto.FLOAT"
     ),
-    int(onnx.TensorProto.UINT8): TensorDtypeMap(
-        np.dtype("uint8"), int(onnx.TensorProto.INT32), "TensorProto.UINT8"
+    int(TensorProto.UINT8): TensorDtypeMap(
+        np.dtype("uint8"), int(TensorProto.INT32), "TensorProto.UINT8"
     ),
-    int(onnx.TensorProto.INT8): TensorDtypeMap(
-        np.dtype("int8"), int(onnx.TensorProto.INT32), "TensorProto.INT8"
+    int(TensorProto.INT8): TensorDtypeMap(
+        np.dtype("int8"), int(TensorProto.INT32), "TensorProto.INT8"
     ),
-    int(onnx.TensorProto.UINT16): TensorDtypeMap(
-        np.dtype("uint16"), int(onnx.TensorProto.INT32), "TensorProto.UINT16"
+    int(TensorProto.UINT16): TensorDtypeMap(
+        np.dtype("uint16"), int(TensorProto.INT32), "TensorProto.UINT16"
     ),
-    int(onnx.TensorProto.INT16): TensorDtypeMap(
-        np.dtype("int16"), int(onnx.TensorProto.INT32), "TensorProto.INT16"
+    int(TensorProto.INT16): TensorDtypeMap(
+        np.dtype("int16"), int(TensorProto.INT32), "TensorProto.INT16"
     ),
-    int(onnx.TensorProto.INT32): TensorDtypeMap(
-        np.dtype("int32"), int(onnx.TensorProto.INT32), "TensorProto.INT32"
+    int(TensorProto.INT32): TensorDtypeMap(
+        np.dtype("int32"), int(TensorProto.INT32), "TensorProto.INT32"
     ),
-    int(onnx.TensorProto.INT64): TensorDtypeMap(
-        np.dtype("int64"), int(onnx.TensorProto.INT64), "TensorProto.INT64"
+    int(TensorProto.INT64): TensorDtypeMap(
+        np.dtype("int64"), int(TensorProto.INT64), "TensorProto.INT64"
     ),
-    int(onnx.TensorProto.BOOL): TensorDtypeMap(
-        np.dtype("bool"), int(onnx.TensorProto.INT32), "TensorProto.BOOL"
+    int(TensorProto.BOOL): TensorDtypeMap(
+        np.dtype("bool"), int(TensorProto.INT32), "TensorProto.BOOL"
     ),
-    int(onnx.TensorProto.FLOAT16): TensorDtypeMap(
-        np.dtype("float16"), int(onnx.TensorProto.INT32), "TensorProto.FLOAT16"
+    int(TensorProto.FLOAT16): TensorDtypeMap(
+        np.dtype("float16"), int(TensorProto.INT32), "TensorProto.FLOAT16"
     ),
-    int(onnx.TensorProto.BFLOAT16): TensorDtypeMap(
+    int(TensorProto.BFLOAT16): TensorDtypeMap(
         np.dtype(ml_dtypes.bfloat16),
-        int(onnx.TensorProto.INT32),
+        int(TensorProto.INT32),
         "TensorProto.BFLOAT16",
     ),
-    int(onnx.TensorProto.DOUBLE): TensorDtypeMap(
-        np.dtype("float64"), int(onnx.TensorProto.DOUBLE), "TensorProto.DOUBLE"
+    int(TensorProto.DOUBLE): TensorDtypeMap(
+        np.dtype("float64"), int(TensorProto.DOUBLE), "TensorProto.DOUBLE"
     ),
-    int(onnx.TensorProto.COMPLEX64): TensorDtypeMap(
-        np.dtype("complex64"), int(onnx.TensorProto.FLOAT), "TensorProto.COMPLEX64"
+    int(TensorProto.COMPLEX64): TensorDtypeMap(
+        np.dtype("complex64"), int(TensorProto.FLOAT), "TensorProto.COMPLEX64"
     ),
-    int(onnx.TensorProto.COMPLEX128): TensorDtypeMap(
+    int(TensorProto.COMPLEX128): TensorDtypeMap(
         np.dtype("complex128"),
-        int(onnx.TensorProto.DOUBLE),
+        int(TensorProto.DOUBLE),
         "TensorProto.COMPLEX128",
     ),
-    int(onnx.TensorProto.UINT32): TensorDtypeMap(
-        np.dtype("uint32"), int(onnx.TensorProto.UINT64), "TensorProto.UINT32"
+    int(TensorProto.UINT32): TensorDtypeMap(
+        np.dtype("uint32"), int(TensorProto.UINT64), "TensorProto.UINT32"
     ),
-    int(onnx.TensorProto.UINT64): TensorDtypeMap(
-        np.dtype("uint64"), int(onnx.TensorProto.UINT64), "TensorProto.UINT64"
+    int(TensorProto.UINT64): TensorDtypeMap(
+        np.dtype("uint64"), int(TensorProto.UINT64), "TensorProto.UINT64"
     ),
-    int(onnx.TensorProto.STRING): TensorDtypeMap(
-        np.dtype("object"), int(onnx.TensorProto.STRING), "TensorProto.STRING"
+    int(TensorProto.STRING): TensorDtypeMap(
+        np.dtype("object"), int(TensorProto.STRING), "TensorProto.STRING"
     ),
-    int(onnx.TensorProto.FLOAT8E4M3FN): TensorDtypeMap(
+    int(TensorProto.FLOAT8E4M3FN): TensorDtypeMap(
         np.dtype(ml_dtypes.float8_e4m3fn),
-        int(onnx.TensorProto.INT32),
+        int(TensorProto.INT32),
         "TensorProto.FLOAT8E4M3FN",
     ),
-    int(onnx.TensorProto.FLOAT8E4M3FNUZ): TensorDtypeMap(
+    int(TensorProto.FLOAT8E4M3FNUZ): TensorDtypeMap(
         np.dtype(ml_dtypes.float8_e4m3fnuz),
-        int(onnx.TensorProto.INT32),
+        int(TensorProto.INT32),
         "TensorProto.FLOAT8E4M3FNUZ",
     ),
-    int(onnx.TensorProto.FLOAT8E5M2): TensorDtypeMap(
+    int(TensorProto.FLOAT8E5M2): TensorDtypeMap(
         np.dtype(ml_dtypes.float8_e5m2),
-        int(onnx.TensorProto.INT32),
+        int(TensorProto.INT32),
         "TensorProto.FLOAT8E5M2",
     ),
-    int(onnx.TensorProto.FLOAT8E5M2FNUZ): TensorDtypeMap(
+    int(TensorProto.FLOAT8E5M2FNUZ): TensorDtypeMap(
         np.dtype(ml_dtypes.float8_e5m2fnuz),
-        int(onnx.TensorProto.INT32),
+        int(TensorProto.INT32),
         "TensorProto.FLOAT8E5M2FNUZ",
     ),
-    int(onnx.TensorProto.UINT4): TensorDtypeMap(
-        np.dtype(ml_dtypes.uint4), int(onnx.TensorProto.INT32), "TensorProto.UINT4"
+    int(TensorProto.UINT4): TensorDtypeMap(
+        np.dtype(ml_dtypes.uint4), int(TensorProto.INT32), "TensorProto.UINT4"
     ),
-    int(onnx.TensorProto.INT4): TensorDtypeMap(
-        np.dtype(ml_dtypes.int4), int(onnx.TensorProto.INT32), "TensorProto.INT4"
+    int(TensorProto.INT4): TensorDtypeMap(
+        np.dtype(ml_dtypes.int4), int(TensorProto.INT32), "TensorProto.INT4"
     ),
-    int(onnx.TensorProto.FLOAT4E2M1): TensorDtypeMap(
+    int(TensorProto.FLOAT4E2M1): TensorDtypeMap(
         np.dtype(ml_dtypes.float4_e2m1fn),
-        int(onnx.TensorProto.INT32),
+        int(TensorProto.INT32),
         "TensorProto.FLOAT4E2M1",
     ),
 }

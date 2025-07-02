@@ -390,7 +390,7 @@ def _interpolate_nd(
 
 
 class Resize(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         roi,
@@ -439,8 +439,8 @@ class Resize(OpRun):
                 roi=roi,
                 keep_aspect_ratio_policy=keep_aspect_ratio_policy,
                 exclude_outside=exclude_outside,
-                coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
-                extrapolation_value=extrapolation_value,  # type: ignore
+                coordinate_transformation_mode=coordinate_transformation_mode,
+                extrapolation_value=extrapolation_value,
             ).astype(X.dtype)
             return (output,)
 
@@ -460,14 +460,14 @@ class Resize(OpRun):
                 roi=roi,
                 keep_aspect_ratio_policy=keep_aspect_ratio_policy,
                 exclude_outside=exclude_outside,
-                coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
-                extrapolation_value=extrapolation_value,  # type: ignore
+                coordinate_transformation_mode=coordinate_transformation_mode,
+                extrapolation_value=extrapolation_value,
             ).astype(X.dtype)
             if res is None:
                 res = np.empty((reshaped.shape[0], *output.shape), dtype=output.dtype)
             res[i] = output
 
-        res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)  # type: ignore
+        res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)
         new_perm = list(perm)
         for i, a in enumerate(perm):
             new_perm[a] = i

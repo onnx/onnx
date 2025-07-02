@@ -9,7 +9,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class Imputer(OpRunAiOnnxMl):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         imputed_value_floats=None,

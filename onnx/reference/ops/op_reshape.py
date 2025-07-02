@@ -22,7 +22,7 @@ def reshape_reference_implementation(
 
 
 class CommonReshape(OpRun):
-    def _run(self, data, shape):  # type: ignore
+    def _run(self, data, shape):
         return (reshape_reference_implementation(data, shape, 0),)
 
 
@@ -31,7 +31,7 @@ class Reshape_5(CommonReshape):
 
 
 class Reshape_14(CommonReshape):
-    def _run(self, data, shape, allowzero=None):  # type: ignore
+    def _run(self, data, shape, allowzero=None):
         if allowzero is None:
             allowzero = getattr(self, "allowzero", 0) == 1
         else:

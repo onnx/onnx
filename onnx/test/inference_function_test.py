@@ -103,8 +103,8 @@ class TestInferenceFunctionCall(unittest.TestCase):
                 ADD_SCHEMA,
                 ["A", "B"],
                 ["C"],
-                _to_tensor_types(ins),  # type: ignore[arg-type]
-            ) == _to_tensor_types(outs)  # type: ignore[arg-type]
+                _to_tensor_types(ins),
+            ) == _to_tensor_types(outs)
 
     def test_clip_inference_with_optional_input(self) -> None:
         # Test case where the second input is optional

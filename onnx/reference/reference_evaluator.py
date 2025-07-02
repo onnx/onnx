@@ -9,6 +9,7 @@ from typing import Any
 import numpy as np
 
 import onnx
+import onnx.model_container
 from onnx.onnx_pb import (
     FunctionProto,
     GraphProto,
@@ -105,7 +106,7 @@ class ReferenceEvaluator:
 
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
+            def _run(self, x, alpha=None):
                 # None must be the default value, it is automatically
                 # replaced by class OpRun with either the default value
                 # specified in the NodeProto or an attribute value defined
@@ -195,7 +196,7 @@ class ReferenceEvaluator:
         self,
         proto: Any,
         opsets: dict[str, int] | None = None,
-        functions: list[ReferenceEvaluator | FunctionProto] | None = None,  # type: ignore
+        functions: list[ReferenceEvaluator | FunctionProto] | None = None,
         verbose: int = 0,
         new_ops: list[type[op_run.OpRun]] | None = None,
         optimized: bool = True,
@@ -211,10 +212,8 @@ class ReferenceEvaluator:
         self.output_types_ = None
         self.input_types_ = None
 
-        from onnx import model_container  # Avoid circular import.
-
-        if isinstance(proto, model_container.ModelContainer):
-            self.container_: model_container.ModelContainer | None = proto
+        if isinstance(proto, onnx.model_container.ModelContainer):
+            self.container_: onnx.model_container.ModelContainer | None = proto
             proto = self.container_.model_proto
         else:
             self.container_ = None
@@ -241,13 +240,13 @@ class ReferenceEvaluator:
                 raise TypeError("opsets must be a dictionary if proto is GraphProto.")
             self.opsets_ = opsets
         elif isinstance(proto, FunctionProto):
-            self.onnx_graph_ = None  # type: ignore
+            self.onnx_graph_ = None
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
             if opsets is not None:
                 raise ValueError("opsets must be None if proto is FunctionProto.")
             self.attributes_ = list(proto.attribute)
         elif isinstance(proto, NodeProto):
-            self.onnx_graph_ = None  # type: ignore
+            self.onnx_graph_ = None
             self.opsets_ = {
                 proto.domain: 1
                 if proto.domain != ""
@@ -261,7 +260,7 @@ class ReferenceEvaluator:
             self.output_names_ = [o.name for o in self.onnx_graph_.output]
             self.output_types_ = [i.type for i in self.onnx_graph_.output]
             self.inits_ = list(self.onnx_graph_.initializer) + list(
-                self.onnx_graph_.sparse_initializer  # type: ignore
+                self.onnx_graph_.sparse_initializer
             )
             self.nodes_ = self.onnx_graph_.node
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
@@ -278,13 +277,13 @@ class ReferenceEvaluator:
             else:
                 self.nodes_ = proto.node
         if functions is not None:
-            for f in functions:  # type: ignore
+            for f in functions:
                 if isinstance(f, FunctionProto):
                     self.functions_[f.domain, f.name] = self.__class__(
                         f, verbose=verbose, functions=list(self.functions_.values())
                     )
                 elif isinstance(f, ReferenceEvaluator):
-                    onx = f.proto_  # type: ignore
+                    onx = f.proto_
                     self.functions_[onx.domain, onx.name] = f
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
@@ -296,9 +295,9 @@ class ReferenceEvaluator:
                     raise AttributeError(
                         f"Class {cl} must define attribute 'op_domain'."
                     )
-                if not issubclass(cl, op_run.OpRun):  # type: ignore
+                if not issubclass(cl, op_run.OpRun):
                     raise TypeError(f"Class {cl} must inherit from OpRun (in new_ops).")
-                key = cl.op_domain, cl.__name__  # type: ignore
+                key = cl.op_domain, cl.__name__
                 if key in self.new_ops_:
                     # Already an implementation, the first one is used.
                     continue
@@ -344,27 +343,27 @@ class ReferenceEvaluator:
             print(pattern % tuple(new_args))
 
     @property
-    def input_names(self):  # type: ignore
+    def input_names(self):
         """Returns the input names."""
         return self.input_names_
 
     @property
-    def input_types(self):  # type: ignore
+    def input_types(self):
         """Returns the input types if any specified."""
         return self.input_types_
 
     @property
-    def output_names(self):  # type: ignore
+    def output_names(self):
         """Returns the output names."""
         return self.output_names_
 
     @property
-    def output_types(self):  # type: ignore
+    def output_types(self):
         """Returns the output types."""
         return self.output_types_
 
     @property
-    def opsets(self):  # type: ignore
+    def opsets(self):
         """Returns the opsets."""
         return self.opsets_
 
@@ -416,7 +415,7 @@ class ReferenceEvaluator:
                     all_types[shape_type.name] = shape_type.type
             self.all_types_ = all_types
         else:
-            self.all_types_ = None  # type: ignore
+            self.all_types_ = None
 
         for node in self.nodes_:
             try:
@@ -433,7 +432,7 @@ class ReferenceEvaluator:
                                 *args, parent=parent
                             )
                     else:
-                        cl = self._load_impl(node, it)  # type: ignore
+                        cl = self._load_impl(node, it)
                 else:
                     raise op_run.RuntimeContextError(
                         f"No implementation was found for node type {node.op_type!r} from domain {node.domain!r}. "
@@ -472,7 +471,7 @@ class ReferenceEvaluator:
             expand = True
 
         if node.domain == "":
-            from onnx.reference.ops import load_op
+            from onnx.reference.ops import load_op  # noqa: PLC0415
 
             try:
                 return load_op(
@@ -502,23 +501,29 @@ class ReferenceEvaluator:
                 f"{node.domain},{node.op_type} from the list of inlined operator."
             )
         if node.domain == "ai.onnx.preview.training":
-            from onnx.reference.ops.aionnx_preview_training import load_op as load_op_pt
+            from onnx.reference.ops.aionnx_preview_training import (  # noqa: PLC0415
+                load_op as load_op_pt,
+            )
 
             return load_op_pt(node.domain, node.op_type, version)
 
         if node.domain == "experimental":
-            from onnx.reference.ops.experimental import load_op as load_op_exp
+            from onnx.reference.ops.experimental import (  # noqa: PLC0415
+                load_op as load_op_exp,
+            )
 
             return load_op_exp(node.domain, node.op_type, version)
 
         if node.domain == "ai.onnx.ml":
-            from onnx.reference.ops.aionnxml import load_op as load_op_ml
+            from onnx.reference.ops.aionnxml import (  # noqa: PLC0415
+                load_op as load_op_ml,
+            )
 
             return load_op_ml(node.domain, node.op_type, version)
 
         # It has to be a function.
         if key in self.functions_:
-            from onnx.reference.ops import load_op
+            from onnx.reference.ops import load_op  # noqa: PLC0415
 
             impl = self.functions_[key]
             return load_op(
@@ -539,7 +544,7 @@ class ReferenceEvaluator:
         feed_inputs: dict[str, Any],
         attributes: dict[str, Any] | None = None,
         intermediate: bool = False,
-    ) -> dict[str, Any] | list[Any]:  # type: ignore
+    ) -> dict[str, Any] | list[Any]:
         """Executes the onnx model.
 
         Args:

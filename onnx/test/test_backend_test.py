@@ -84,7 +84,7 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
+        return d.type == DeviceType.CPU
 
 
 test_coverage_safelist = {

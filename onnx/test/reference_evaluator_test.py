@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+import importlib
 import itertools
 import math
 import unittest
@@ -73,6 +74,7 @@ from onnx.reference.ops_optimized.op_conv_optimized import _conv_implementation_
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release
 ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
@@ -84,12 +86,8 @@ ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
 def skip_if_no_onnxruntime(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            import onnxruntime
-
-            del onnxruntime
-        except ImportError:
-            raise unittest.SkipTest("onnxruntime not installed") from None
+        if importlib.util.find_spec("onnxruntime") is None:
+            raise unittest.SkipTest("onnxruntime not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -98,12 +96,8 @@ def skip_if_no_onnxruntime(fn):
 def skip_if_no_torch(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            import torch
-
-            del torch
-        except ImportError:
-            raise unittest.SkipTest("torch not installed") from None
+        if importlib.util.find_spec("torch") is None:
+            raise unittest.SkipTest("torch not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -112,12 +106,8 @@ def skip_if_no_torch(fn):
 def skip_if_no_torchvision(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        try:
-            import torchvision
-
-            del torchvision
-        except ImportError:
-            raise unittest.SkipTest("torchvision not installed") from None
+        if importlib.util.find_spec("torchvision") is None:
+            raise unittest.SkipTest("torchvision not installed")
         fn(*args, **kwargs)
 
     return wrapper
@@ -131,7 +121,7 @@ def make_sequence_value_info(name, elem_type, shape):
 
 
 def run_ort_inference(onnx_model):
-    import onnxruntime as ort
+    import onnxruntime as ort  # noqa: PLC0415
 
     onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
     for opset in onnx_model.opset_import:
@@ -150,7 +140,7 @@ def run_ort_inference(onnx_model):
     )
 
 
-def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):  # type: ignore
+def im2col_naive_implementation(data, kernel_shape, dilations, pads, strides):
     """Naive implementation for `im2col`.
 
     Args:
@@ -215,8 +205,8 @@ def im2col(
                 new_shape = img.shape[:2] + out.shape
                 res = np.empty(new_shape, dtype=img.dtype)
             res[n, c, ...] = out
-    new_shape = res.shape[: -len(kernel_shape)] + (-1,)  # type: ignore
-    return res.reshape(new_shape)  # type: ignore
+    new_shape = (*res.shape[: -len(kernel_shape)], -1)
+    return res.reshape(new_shape)
 
 
 class TestReferenceEvaluator(unittest.TestCase):
@@ -1168,22 +1158,22 @@ class TestReferenceEvaluator(unittest.TestCase):
         class _InvAlpha:
             op_domain = "custom"
 
-            def __init__(self, onnx_node, run_params):  # type: ignore
+            def __init__(self, onnx_node, run_params):
                 self.onnx_node = onnx_node
                 self.run_params = run_params
 
-            def _run(self, x):  # type: ignore
+            def _run(self, x):
                 return (1 / (x + self.alpha),)
 
         class InvAlpha2(OpRun):
-            def _run(self, x):  # type: ignore
+            def _run(self, x):
                 return (1 / (x + self.alpha),)
 
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
-                alpha = alpha or self.alpha  # type: ignore
+            def _run(self, x, alpha=None):
+                alpha = alpha or self.alpha
                 return (1 / (x + alpha),)
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1219,8 +1209,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
-                alpha = alpha or self.alpha  # type: ignore
+            def _run(self, x, alpha=None):
+                alpha = alpha or self.alpha
                 return 1 / (x + alpha)
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1237,7 +1227,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
+            def _run(self, x, alpha=None):
+                del x, alpha
                 return tuple()
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
@@ -1254,8 +1245,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
-                alpha = alpha or self.alpha  # type: ignore
+            def _run(self, x, alpha=None):
+                alpha = alpha or self.alpha
                 res = tuple([tuple([1 / (x + alpha)])])  # noqa: C409
                 assert isinstance(res, tuple)
                 assert isinstance(res[0], tuple)
@@ -1278,8 +1269,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         class InvAlpha(OpRun):
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore  # noqa: ARG002
-                res = tuple([CustomType()])  # noqa: C409
+            def _run(self, x, alpha=None):
+                del x, alpha
+                res = (CustomType(),)
                 assert isinstance(res, tuple)
                 assert isinstance(res[0], CustomType)
                 return res
@@ -1948,7 +1940,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     @skip_if_no_torch
     def test_col2im(self):
-        import torch
+        import torch  # noqa: PLC0415
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
@@ -1989,7 +1981,7 @@ class TestReferenceEvaluator(unittest.TestCase):
     def common_test_col2im(
         self, size, image_shape, block_shape, pads, strides, dilations
     ):
-        import torch
+        import torch  # noqa: PLC0415
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
@@ -2473,10 +2465,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             dtype=np.float32,
         )
 
-        # import onnxruntime
-        # ref0 = onnxruntime.InferenceSession(onnx_model.SerializeToString(), providers=["CPUExecutionProvider"])
-        # got0 = ref0.run(None, feeds)
-
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
@@ -2631,8 +2619,8 @@ class TestReferenceEvaluator(unittest.TestCase):
             self.common_test_roi_align("max")
 
     def common_test_roi_align_torch(self, mode):
-        import torch
-        from torchvision.ops import RoIAlign
+        import torch  # noqa: PLC0415
+        from torchvision.ops import RoIAlign  # noqa: PLC0415
 
         onnx_model = self.get_roi_align_model(mode)
         sess = ReferenceEvaluator(onnx_model)

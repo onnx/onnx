@@ -35,10 +35,6 @@ if TYPE_CHECKING:
 # Limitation of single protobuf file is 2GiB
 MAXIMUM_PROTOBUF = 2147483648
 
-# TODO: This thing where we reserialize the protobuf back into the
-# string, only to deserialize it at the call site, is really goofy.
-# Stop doing that.
-
 
 # NB: Please don't edit this context!
 DEFAULT_CONTEXT = C.CheckerContext()

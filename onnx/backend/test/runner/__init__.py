@@ -111,7 +111,7 @@ class Runner:
         return self
 
     def enable_report(self) -> Runner:
-        import pytest
+        import pytest  # noqa: PLC0415
 
         for category, items_map in self._test_items.items():
             for item in items_map.values():
