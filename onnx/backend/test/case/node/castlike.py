@@ -13,6 +13,9 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 from onnx.helper import make_tensor, tensor_dtype_to_np_dtype
 
+F8_TYPES = frozenset({"FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"})
+FOUR_BIT_TYPES = frozenset({"UINT4", "INT4", "FLOAT4E2M1"})
+
 
 class CastLike(Base):
     @staticmethod
@@ -157,7 +160,7 @@ class CastLike(Base):
                 ).reshape([3, 4])
                 input_shape = (3, 4)
 
-            if from_type in f8_types:
+            if from_type in F8_TYPES:
                 np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
                 input = make_tensor(
                     "x",
@@ -166,11 +169,19 @@ class CastLike(Base):
                     vals=np_from,
                     raw=True,
                 )
+            elif from_type in FOUR_BIT_TYPES:
+                np_from = np_fp32.astype(from_np_dtype)
+                packed = onnx.numpy_helper._pack_4bitx2(np_from)
+                input = make_tensor(
+                    "x", from_dtype, input_shape, vals=packed.tobytes(), raw=True
+                )
             else:
                 np_from = np_fp32.astype(from_np_dtype)
-                input = make_tensor("x", from_dtype, input_shape, vals=np_from)
+                input = make_tensor(
+                    "x", from_dtype, input_shape, vals=np_from, raw=True
+                )
 
-            if to_type in f8_types:
+            if to_type in F8_TYPES:
                 output = make_tensor(
                     "x",
                     to_dtype,
@@ -178,12 +189,18 @@ class CastLike(Base):
                     vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
                     raw=True,
                 )
+            elif to_type in FOUR_BIT_TYPES:
+                packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
+                output = make_tensor(
+                    "x", to_dtype, input_shape, vals=packed.tobytes(), raw=True
+                )
             else:
                 output = make_tensor(
                     "x",
                     to_dtype,
                     input_shape,
                     vals=np_from.astype(to_np_dtype),
+                    raw=True,
                 )
 
             like = make_tensor("like", to_dtype, (0,), vals=[])
