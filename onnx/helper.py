@@ -18,7 +18,7 @@ import numpy.typing as npt
 import typing_extensions
 
 import onnx
-from onnx import defs, subbyte
+from onnx import _mapping, defs, subbyte
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -982,7 +982,7 @@ def make_attribute(
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):
-                if all(issubclass(t, exp_t) for t in types):
+                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
                     attr_type = exp_enum
                     break
             if attr_type is None:
@@ -1577,8 +1577,6 @@ def tensor_dtype_to_np_dtype(tensor_dtype: int) -> np.dtype:
     Returns:
         numpy's data_type
     """
-    from onnx import _mapping
-
     return _mapping.TENSOR_TYPE_MAP[tensor_dtype].np_dtype
 
 
@@ -1591,8 +1589,6 @@ def tensor_dtype_to_storage_tensor_dtype(tensor_dtype: int) -> int:
     Returns:
         data_type for storage
     """
-    from onnx import _mapping
-
     return _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
 
 
@@ -1605,8 +1601,6 @@ def tensor_dtype_to_string(tensor_dtype: int) -> str:
     Returns:
         the name of data_type
     """
-    from onnx import _mapping
-
     return _mapping.TENSOR_TYPE_MAP[tensor_dtype].name
 
 
@@ -1620,8 +1614,6 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
     Returns:
         field name
     """
-    from onnx import _mapping
-
     storage_tensor_type_to_field = {
         int(TensorProto.FLOAT): "float_data",
         int(TensorProto.INT32): "int32_data",
@@ -1646,8 +1638,6 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     Returns:
         TensorsProto's data_type
     """
-    from onnx import _mapping
-
     _np_dtype_to_tensor_dtype = {
         v.np_dtype: k for k, v in _mapping.TENSOR_TYPE_MAP.items()
     }
@@ -1667,8 +1657,6 @@ def get_all_tensor_dtypes() -> KeysView[int]:
     Returns:
         all tensor types from TensorProto
     """
-    from onnx import _mapping
-
     return _mapping.TENSOR_TYPE_MAP.keys()
 
 
