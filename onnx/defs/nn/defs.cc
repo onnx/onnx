@@ -36,7 +36,7 @@ static const char* conv_transpose_auto_pad_doc =
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
 
-static void convPoolShapeInference(
+ONNX_API void convPoolShapeInference(
     InferenceContext& ctx,
     bool use_dilation,
     bool require_kernel_shape,
@@ -1105,7 +1105,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           convPoolShapeInference(ctx, true, false, 0, 1);
         }));
 
-static void convTransposeShapeInference(InferenceContext& ctx) {
+ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // we need at least two inputs to have a shape for this inference.
@@ -1466,7 +1466,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 // For GlobalPool operations.
-static void globalPoolTypeShapeInference(InferenceContext& ctx) {
+ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // needs at least one input with shape.

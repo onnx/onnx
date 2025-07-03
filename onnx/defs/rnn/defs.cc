@@ -5,7 +5,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static void RNNShapeInference(InferenceContext& ctx) {
+ONNX_API void RNNShapeInference(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
