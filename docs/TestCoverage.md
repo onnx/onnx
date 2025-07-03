@@ -4124,7 +4124,7 @@ for from_type, to_type in test_cases:
     if from_type in F8_TYPES:
         np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
         input = make_tensor(
-            "x",
+            "input",
             from_dtype,
             input_shape,
             vals=np_from,
@@ -4134,17 +4134,17 @@ for from_type, to_type in test_cases:
         np_from = np_fp32.astype(from_np_dtype)
         packed = onnx.numpy_helper._pack_4bitx2(np_from)
         input = make_tensor(
-            "x", from_dtype, input_shape, vals=packed.tobytes(), raw=True
+            "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
     else:
         np_from = np_fp32.astype(from_np_dtype)
         input = make_tensor(
-            "x", from_dtype, input_shape, vals=np_from, raw=True
+            "input", from_dtype, input_shape, vals=np_from, raw=True
         )
 
     if to_type in F8_TYPES:
         output = make_tensor(
-            "x",
+            "output",
             to_dtype,
             input_shape,
             vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
@@ -4153,11 +4153,11 @@ for from_type, to_type in test_cases:
     elif to_type in FOUR_BIT_TYPES:
         packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
         output = make_tensor(
-            "x", to_dtype, input_shape, vals=packed.tobytes(), raw=True
+            "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
     else:
         output = make_tensor(
-            "x",
+            "output",
             to_dtype,
             input_shape,
             vals=np_from.astype(to_np_dtype),
@@ -4223,14 +4223,14 @@ for from_type, to_type in test_cases:
     )
 
     input = make_tensor(
-        "x",
+        "input",
         from_dtype,
         input_shape,
         vals=np_fp32.astype(from_np_dtype),
         raw=True,
     )
     output = make_tensor(
-        "x",
+        "output",
         to_dtype,
         input_shape,
         vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype),
@@ -4404,7 +4404,7 @@ for from_type, to_type in test_cases:
     if from_type in F8_TYPES:
         np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
         input = make_tensor(
-            "x",
+            "input",
             from_dtype,
             input_shape,
             vals=np_from,
@@ -4414,17 +4414,17 @@ for from_type, to_type in test_cases:
         np_from = np_fp32.astype(from_np_dtype)
         packed = onnx.numpy_helper._pack_4bitx2(np_from)
         input = make_tensor(
-            "x", from_dtype, input_shape, vals=packed.tobytes(), raw=True
+            "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
     else:
         np_from = np_fp32.astype(from_np_dtype)
         input = make_tensor(
-            "x", from_dtype, input_shape, vals=np_from, raw=True
+            "input", from_dtype, input_shape, vals=np_from, raw=True
         )
 
     if to_type in F8_TYPES:
         output = make_tensor(
-            "x",
+            "output",
             to_dtype,
             input_shape,
             vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
@@ -4433,11 +4433,11 @@ for from_type, to_type in test_cases:
     elif to_type in FOUR_BIT_TYPES:
         packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
         output = make_tensor(
-            "x", to_dtype, input_shape, vals=packed.tobytes(), raw=True
+            "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
     else:
         output = make_tensor(
-            "x",
+            "output",
             to_dtype,
             input_shape,
             vals=np_from.astype(to_np_dtype),
@@ -4505,19 +4505,21 @@ for from_type, to_type in test_cases:
     )
 
     input = make_tensor(
-        "x",
+        "input",
         from_dtype,
         input_shape,
         vals=np_fp32.astype(from_np_dtype),
         raw=True,
     )
     output = make_tensor(
-        "x",
+        "output",
         to_dtype,
         input_shape,
         vals=np_fp32.astype(from_np_dtype).astype(to_np_dtype),
         raw=True,
     )
+
+    like = make_tensor("like", to_dtype, (0,), vals=[])
 
     node = onnx.helper.make_node(
         "CastLike",
@@ -4525,8 +4527,6 @@ for from_type, to_type in test_cases:
         outputs=["output"],
         saturate=0,
     )
-
-    like = make_tensor("like", to_dtype, (0,), vals=[])
 
     expect(
         node,
