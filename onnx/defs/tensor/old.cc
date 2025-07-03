@@ -2205,7 +2205,7 @@ The `output` is calculated via the following equation:
     output = np.copy(data)
     update_indices = indices.shape[:-1]
     for idx in np.ndindex(update_indices):
-        output[indices[idx]] = updates[idx]
+        output[tuple(indices[idx])] = updates[idx]
 The order of iteration in the above loop is not specified.
 In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
 This ensures that the output value does not depend on the iteration order.
@@ -2218,12 +2218,12 @@ When `reduction` is set to "add", `output` is calculated as follows:
     output = np.copy(data)
     update_indices = indices.shape[:-1]
     for idx in np.ndindex(update_indices):
-        output[indices[idx]] += updates[idx]
+        output[tuple(indices[idx])] += updates[idx]
 When `reduction` is set to "mul", `output` is calculated as follows:
     output = np.copy(data)
     update_indices = indices.shape[:-1]
     for idx in np.ndindex(update_indices):
-        output[indices[idx]] *= updates[idx]
+        output[tuple(indices[idx])] *= updates[idx]
 This operator is the inverse of GatherND.
 Example 1:
 ```
@@ -2317,7 +2317,7 @@ The `output` is calculated via the following equation:
     output = np.copy(data)
     update_indices = indices.shape[:-1]
     for idx in np.ndindex(update_indices):
-        output[indices[idx]] = updates[idx]
+        output[tuple(indices[idx])] = updates[idx]
 
 The order of iteration in the above loop is not specified.
 In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
@@ -2410,7 +2410,7 @@ The `output` is calculated via the following equation:
     output = np.copy(data)
     update_indices = indices.shape[:-1]
     for idx in np.ndindex(update_indices):
-        output[indices[idx]] = updates[idx]
+        output[tuple(indices[idx])] = updates[idx]
 
 The order of iteration in the above loop is not specified.
 In particular, indices should not have duplicate entries: that is, if idx1 != idx2, then indices[idx1] != indices[idx2].
