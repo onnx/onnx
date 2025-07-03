@@ -10,7 +10,7 @@ from onnx.reference.ops.op_conv import _conv_implementation
 
 
 class QLinearConv(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         x_scale,
@@ -28,12 +28,12 @@ class QLinearConv(OpRun):
         pads=None,
         strides=None,
     ):
-        auto_pad = auto_pad or self.auto_pad  # type: ignore
-        dilations = dilations or self.dilations  # type: ignore
-        group = group or self.group  # type: ignore
-        kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
-        pads = pads or self.pads  # type: ignore
-        strides = strides or self.strides  # type: ignore
+        auto_pad = auto_pad or self.auto_pad
+        dilations = dilations or self.dilations
+        group = group or self.group
+        kernel_shape = kernel_shape or self.kernel_shape
+        pads = pads or self.pads
+        strides = strides or self.strides
 
         X = x.astype(np.int32)
         if x_zero_point is not None:
