@@ -270,7 +270,7 @@ def _interpolate_nd_with_x(
             roi=roi,
             exclude_outside=exclude_outside,
             **kwargs,
-        )
+        )        
     res1d = []
     for i in range(data.shape[0]):
         r = _interpolate_nd_with_x(
@@ -389,6 +389,17 @@ def _interpolate_nd(
     return ret
 
 
+def safe_cast(arr, dtype):
+    if np.issubdtype(dtype, np.integer):
+        info = np.iinfo(dtype)
+        arr = np.round(arr)
+    elif np.issubdtype(dtype, np.floating):
+        info = np.finfo(dtype)
+    else:
+        raise TypeError(f"Unsupported target dtype {dtype}")
+    return np.clip(arr + 0.5, info.min, info.max).astype(dtype)
+
+
 class Resize(OpRun):
     def _run(
         self,
@@ -431,17 +442,20 @@ class Resize(OpRun):
             raise ValueError(f"Unexpected value {mode!r} for mode.")
 
         if axes is None:
-            output = _interpolate_nd(
-                X,
-                fct,
-                scale_factors=scales,
-                output_size=sizes,
-                roi=roi,
-                keep_aspect_ratio_policy=keep_aspect_ratio_policy,
-                exclude_outside=exclude_outside,
-                coordinate_transformation_mode=coordinate_transformation_mode,
-                extrapolation_value=extrapolation_value,
-            ).astype(X.dtype)
+            output = safe_cast(
+                _interpolate_nd(
+                    X,
+                    fct,
+                    scale_factors=scales,
+                    output_size=sizes,
+                    roi=roi,
+                    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                    exclude_outside=exclude_outside,
+                    coordinate_transformation_mode=coordinate_transformation_mode,
+                    extrapolation_value=extrapolation_value,
+                ),
+                X.dtype,
+            )
             return (output,)
 
         # axes is not None
@@ -462,10 +476,10 @@ class Resize(OpRun):
                 exclude_outside=exclude_outside,
                 coordinate_transformation_mode=coordinate_transformation_mode,
                 extrapolation_value=extrapolation_value,
-            ).astype(X.dtype)
+            )
             if res is None:
-                res = np.empty((reshaped.shape[0], *output.shape), dtype=output.dtype)
-            res[i] = output
+                res = np.empty((reshaped.shape[0], *output.shape), dtype=X.dtype)
+            res[i] = safe_cast(output, X.dtype)
 
         res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)
         new_perm = list(perm)
