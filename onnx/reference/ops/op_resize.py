@@ -270,7 +270,7 @@ def _interpolate_nd_with_x(
             roi=roi,
             exclude_outside=exclude_outside,
             **kwargs,
-        )        
+        )
     res1d = []
     for i in range(data.shape[0]):
         r = _interpolate_nd_with_x(
@@ -397,7 +397,7 @@ def safe_cast(arr, dtype):
         info = np.finfo(dtype)
     else:
         raise TypeError(f"Unsupported target dtype {dtype}")
-    return np.clip(arr + 0.5, info.min, info.max).astype(dtype)
+    return np.clip(arr, info.min, info.max).astype(dtype)
 
 
 class Resize(OpRun):
