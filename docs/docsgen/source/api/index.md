@@ -2,6 +2,10 @@
 
 # API Reference
 
+```{tip}
+Looking for a more modern API? The [ir-py project](https://github.com/onnx/ir-py) provides alternative Python APIs for creating and manipulating ONNX models with improved ergonomics and developer experience.
+```
+
 ## Versioning
 
 The following example shows how to retrieve onnx version,
