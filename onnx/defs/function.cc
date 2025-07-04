@@ -5,6 +5,7 @@
 #include "onnx/defs/function.h"
 
 #include "onnx/defs/schema.h"
+#include "onnx/inliner/inliner.h"
 
 static std::string InteralTensorNameGenerator(const std::string& node_name, const std::string& internal_name) {
   std::string new_name = "Func_" + node_name + internal_name;
@@ -166,6 +167,54 @@ bool FunctionBodyHelper::BuildFunctionProto(
 
   schema.BuildFunction(functionProto);
   return true;
+}
+
+FunctionBuilder& FunctionBuilder::AddInlinedCall(
+    std::initializer_list<std::string_view> outputs,
+    const GraphProto& graph,
+    std::initializer_list<std::string_view> inputs,
+    std::string_view prefix) {
+  // Create a renamer with the given prefix
+  inliner::Renamer renamer(std::string(prefix), graph);
+
+  // Bind formal inputs to actual inputs
+  auto input_it = inputs.begin();
+  for (const auto& graph_input : graph.input()) {
+    if (input_it != inputs.end()) {
+      renamer.BindName(graph_input.name(), std::string(*input_it));
+      ++input_it;
+    }
+  }
+
+  // Bind formal outputs to actual outputs
+  auto output_it = outputs.begin();
+  for (const auto& graph_output : graph.output()) {
+    if (output_it != outputs.end()) {
+      renamer.BindName(graph_output.name(), std::string(*output_it));
+      ++output_it;
+    }
+  }
+
+  // Add Constant nodes for every initializer in the graph
+  for (const auto& initializer : graph.initializer()) {
+    std::string const_name = renamer.CreateUniqueName(initializer.name());
+    renamer.BindName(initializer.name(), const_name);
+    Const(const_name, initializer);
+  }
+
+  // Add a copy of every node in the graph with renamed variables
+  for (const auto& node : graph.node()) {
+    NodeProto new_node;
+    new_node.CopyFrom(node);
+
+    // Rename the node using the renamer
+    renamer.RenameNode(new_node);
+
+    // Add the node to the function
+    *funProto.add_node() = new_node;
+  }
+
+  return *this;
 }
 
 } // namespace ONNX_NAMESPACE
