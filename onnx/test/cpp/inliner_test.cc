@@ -436,27 +436,17 @@ TEST(FunctionBuilder, AddInlinedCallBasic) {
   // Test the AddInlinedCall functionality
   GraphProto graph;
 
-  // Add input to graph
-  auto* input = graph.add_input();
-  input->set_name("x");
+  // Create a simple graph using parser for better readability
+  const char* graph_text = R"ONNX(
+test_graph (float x) => (float y)
+<float const_val = 2.0>
+{
+    y = Add(x, const_val)
+}
+)ONNX";
 
-  // Add output to graph
-  auto* output = graph.add_output();
-  output->set_name("y");
-
-  // Add an initializer (constant)
-  auto* initializer = graph.add_initializer();
-  initializer->set_name("const_val");
-  initializer->set_data_type(1); // FLOAT
-  initializer->add_dims(1);
-  initializer->add_float_data(2.0f);
-
-  // Add a node: y = Add(x, const_val)
-  auto* node = graph.add_node();
-  node->set_op_type("Add");
-  node->add_input("x");
-  node->add_input("const_val");
-  node->add_output("y");
+  auto status = OnnxParser::Parse(graph, graph_text);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
 
   // Create a function and use AddInlinedCall
   FunctionProto function;
