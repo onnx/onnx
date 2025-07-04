@@ -159,12 +159,13 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class InliningRenamer : private MutableVisitor {
- private:
+class InliningRenamer : public MutableVisitor {
+ protected:  // Changed from private to protected to allow inheritance
   std::string suffix;
   NameGenerator& generator;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
+ protected:  // Allow access to these methods from derived classes
   InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
@@ -722,66 +723,32 @@ void InlineSelectedFunctions(
   InlinerImpl::InlineSelectedFunctions(model, to_inline, schema_registry);
 }
 
-// Implementation of the Renamer class
-class Renamer::Impl {
- public:
+// Implementation of the Renamer class using InliningRenamer for proper graph-value attribute handling
+class Renamer::Impl : public InliningRenamer {
+ private:
   std::unique_ptr<NameGenerator> generator_;
-  std::string suffix_;
-  std::unordered_map<std::string, std::string> name_bindings_;
 
+ public:
   Impl(const std::string& prefix, const GraphProto& graph)
-      : generator_(std::make_unique<NameGenerator>(graph)), suffix_("__" + prefix) {}
+      : generator_(std::make_unique<NameGenerator>(graph)), 
+        InliningRenamer("__" + prefix, *generator_) {}
 
   Impl(const std::string& prefix, const FunctionProto& function)
-      : generator_(std::make_unique<NameGenerator>(function)), suffix_("__" + prefix) {}
+      : generator_(std::make_unique<NameGenerator>(function)), 
+        InliningRenamer("__" + prefix, *generator_) {}
 
   std::string CreateUnique(const std::string& name) {
-    return generator_->CreateNew(name + suffix_);
+    return MakeUnique(name);
   }
 
   void BindName(const std::string& formal_name, const std::string& actual_name) {
-    name_bindings_[formal_name] = actual_name;
-  }
-
-  std::string LookupOrCreate(const std::string& name, bool is_new_def) {
-    // First check if we have a binding for this name
-    auto it = name_bindings_.find(name);
-    if (it != name_bindings_.end()) {
-      return it->second;
-    }
-
-    // If it's a new definition and not bound, create a unique name
-    if (is_new_def) {
-      std::string new_name = CreateUnique(name);
-      name_bindings_[name] = new_name;
-      return new_name;
-    }
-
-    // Otherwise, leave the name unchanged (outer scope variable)
-    return name;
+    auto& current_scope = rename_scopes.back();
+    current_scope[formal_name] = actual_name;
   }
 
   void RenameNode(NodeProto& node) {
-    // Rename node name if it exists
-    if (!node.name().empty()) {
-      node.set_name(CreateUnique(node.name()));
-    }
-
-    // Rename inputs (these are references, not new definitions)
-    for (int i = 0; i < node.input_size(); ++i) {
-      std::string& input_name = *node.mutable_input(i);
-      if (!input_name.empty()) {
-        input_name = LookupOrCreate(input_name, false);
-      }
-    }
-
-    // Rename outputs (these are new definitions)
-    for (int i = 0; i < node.output_size(); ++i) {
-      std::string& output_name = *node.mutable_output(i);
-      if (!output_name.empty()) {
-        output_name = LookupOrCreate(output_name, true);
-      }
-    }
+    // Use the InliningRenamer's ProcessNode method which handles graph-value attributes
+    ProcessNode(&node);
   }
 };
 
