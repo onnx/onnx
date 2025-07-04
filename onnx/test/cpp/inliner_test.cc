@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
+#include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
@@ -430,5 +431,85 @@ agraph (float[N, C] X, int32[N] expected) => (float Y)
   // Nested call to LogSoftmax should be inlined.
   ASSERT_FALSE(ContainsOp(model, "LogSoftmax"));
 }
+
+TEST(FunctionBuilder, AddInlinedCallBasic) {
+  // Test the AddInlinedCall functionality
+  GraphProto graph;
+
+  // Add input to graph
+  auto* input = graph.add_input();
+  input->set_name("x");
+
+  // Add output to graph
+  auto* output = graph.add_output();
+  output->set_name("y");
+
+  // Add an initializer (constant)
+  auto* initializer = graph.add_initializer();
+  initializer->set_name("const_val");
+  initializer->set_data_type(1); // FLOAT
+  initializer->add_dims(1);
+  initializer->add_float_data(2.0f);
+
+  // Add a node: y = Add(x, const_val)
+  auto* node = graph.add_node();
+  node->set_op_type("Add");
+  node->add_input("x");
+  node->add_input("const_val");
+  node->add_output("y");
+
+  // Create a function and use AddInlinedCall
+  FunctionProto function;
+  FunctionBuilder builder(function);
+
+  builder.AddInlinedCall({"result"}, graph, {"input_x"}, "test");
+
+  // Verify the function has the expected structure
+  ASSERT_EQ(function.node_size(), 2); // One Constant node + one Add node
+
+  // Check the first node is a Constant
+  ASSERT_EQ(function.node(0).op_type(), "Constant");
+  ASSERT_EQ(function.node(0).output_size(), 1);
+  ASSERT_TRUE(function.node(0).output(0).find("test") != std::string::npos);
+
+  // Check the second node is an Add
+  ASSERT_EQ(function.node(1).op_type(), "Add");
+  ASSERT_EQ(function.node(1).input_size(), 2);
+  ASSERT_EQ(function.node(1).output_size(), 1);
+  ASSERT_EQ(function.node(1).input(0), "input_x"); // Should be renamed to actual input
+  ASSERT_EQ(function.node(1).output(0), "result"); // Should be renamed to actual output
+}
+
+TEST(Renamer, BasicFunctionality) {
+  // Test the Renamer class functionality
+  GraphProto graph;
+
+  // Add input to graph
+  auto* input = graph.add_input();
+  input->set_name("input");
+
+  // Create a Renamer instance
+  inliner::Renamer renamer("test", graph);
+
+  // Test binding names
+  renamer.BindName("formal_input", "actual_input");
+
+  // Test creating unique names
+  std::string unique_name = renamer.CreateUniqueName("temp");
+  ASSERT_TRUE(unique_name.find("test") != std::string::npos);
+
+  // Test renaming a node
+  NodeProto node;
+  node.set_op_type("Add");
+  node.add_input("formal_input");
+  node.add_output("temp_output");
+
+  renamer.RenameNode(node);
+
+  // Verify renaming worked correctly
+  ASSERT_EQ(node.input(0), "actual_input"); // Should be bound to actual name
+  ASSERT_TRUE(node.output(0).find("test") != std::string::npos); // Should have prefix
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE
