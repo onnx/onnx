@@ -730,15 +730,22 @@ class Renamer::Impl : public InliningRenamer {
 
  public:
   Impl(const std::string& prefix, const GraphProto& graph)
-      : generator_(std::make_unique<NameGenerator>(graph)), 
-        InliningRenamer("__" + prefix, *generator_) {}
+      : InliningRenamer("__" + prefix, *(generator_ = std::make_unique<NameGenerator>(graph))) {}
 
   Impl(const std::string& prefix, const FunctionProto& function)
-      : generator_(std::make_unique<NameGenerator>(function)), 
-        InliningRenamer("__" + prefix, *generator_) {}
+      : InliningRenamer("__" + prefix, *(generator_ = std::make_unique<NameGenerator>(function))) {}
 
-  std::string CreateUnique(const std::string& name) {
-    return MakeUnique(name);
+  std::string BindToUniqueName(const std::string& original_name) {
+    // First create the unique name using the inherited MakeUnique method
+    std::string unique_name = MakeUnique(original_name);
+    
+    // Then bind the original name to the unique name
+    if (!rename_scopes.empty()) {
+      auto& current_scope = rename_scopes.back();
+      current_scope[original_name] = unique_name;
+    }
+    
+    return unique_name;
   }
 
   void BindName(const std::string& formal_name, const std::string& actual_name) {
@@ -767,8 +774,8 @@ void Renamer::RenameNode(NodeProto& node) {
   pImpl_->RenameNode(node);
 }
 
-std::string Renamer::CreateUniqueName(const std::string& suggested_name) {
-  return pImpl_->CreateUnique(suggested_name);
+std::string Renamer::BindToUniqueName(const std::string& original_name) {
+  return pImpl_->BindToUniqueName(original_name);
 }
 
 } // namespace inliner

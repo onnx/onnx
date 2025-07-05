@@ -197,8 +197,7 @@ FunctionBuilder& FunctionBuilder::AddInlinedCall(
 
   // Add Constant nodes for every initializer in the graph
   for (const auto& initializer : graph.initializer()) {
-    std::string const_name = renamer.CreateUniqueName(initializer.name());
-    renamer.BindName(initializer.name(), const_name);
+    std::string const_name = renamer.BindToUniqueName(initializer.name());
     Const(const_name, initializer);
   }
 

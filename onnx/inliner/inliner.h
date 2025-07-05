@@ -118,19 +118,22 @@ class Renamer {
   void BindName(const std::string& formal_name, const std::string& actual_name);
 
   /**
+   * @brief Creates a unique name for the given name and binds it.
+   *
+   * This method creates a unique name based on the prefix and binds the original
+   * name to the unique name for later reference renaming.
+   *
+   * @param original_name The name to create a unique version of.
+   * @return The unique name that was created and bound.
+   */
+  std::string BindToUniqueName(const std::string& original_name);
+
+  /**
    * @brief Renames all variables in the given node according to the current bindings.
    *
    * @param node The node to rename. Input and output names will be updated in place.
    */
   void RenameNode(NodeProto& node);
-
-  /**
-   * @brief Creates a unique name based on the given suggested name.
-   *
-   * @param suggested_name The suggested name to make unique.
-   * @return A unique name based on the suggested name.
-   */
-  std::string CreateUniqueName(const std::string& suggested_name);
 
  private:
   // Pimpl pattern to hide internal implementation details

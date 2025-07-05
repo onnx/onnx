@@ -484,8 +484,8 @@ TEST(Renamer, BasicFunctionality) {
   // Test binding names
   renamer.BindName("formal_input", "actual_input");
 
-  // Test creating unique names
-  std::string unique_name = renamer.CreateUniqueName("temp");
+  // Test creating unique names and binding
+  std::string unique_name = renamer.BindToUniqueName("temp");
   ASSERT_TRUE(unique_name.find("test") != std::string::npos);
 
   // Test renaming a node
