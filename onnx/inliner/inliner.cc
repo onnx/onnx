@@ -7,6 +7,7 @@
 #include "onnx/inliner/inliner.h"
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -158,12 +159,13 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class InliningRenamer : private MutableVisitor {
- private:
+class InliningRenamer : public MutableVisitor {
+ protected:  // Changed from private to protected to allow inheritance
   std::string suffix;
   NameGenerator& generator;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
+ protected:  // Allow access to these methods from derived classes
   InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
@@ -720,5 +722,61 @@ void InlineSelectedFunctions(
   }
   InlinerImpl::InlineSelectedFunctions(model, to_inline, schema_registry);
 }
+
+// Implementation of the Renamer class using InliningRenamer for proper graph-value attribute handling
+class Renamer::Impl : public InliningRenamer {
+ private:
+  std::unique_ptr<NameGenerator> generator_;
+
+ public:
+  Impl(const std::string& prefix, const GraphProto& graph)
+      : InliningRenamer("__" + prefix, *(generator_ = std::make_unique<NameGenerator>(graph))) {}
+
+  Impl(const std::string& prefix, const FunctionProto& function)
+      : InliningRenamer("__" + prefix, *(generator_ = std::make_unique<NameGenerator>(function))) {}
+
+  std::string BindToUniqueName(const std::string& original_name) {
+    // First create the unique name using the inherited MakeUnique method
+    std::string unique_name = MakeUnique(original_name);
+    
+    // Then bind the original name to the unique name
+    if (!rename_scopes.empty()) {
+      auto& current_scope = rename_scopes.back();
+      current_scope[original_name] = unique_name;
+    }
+    
+    return unique_name;
+  }
+
+  void BindName(const std::string& formal_name, const std::string& actual_name) {
+    auto& current_scope = rename_scopes.back();
+    current_scope[formal_name] = actual_name;
+  }
+
+  void RenameNode(NodeProto& node) {
+    // Use the InliningRenamer's ProcessNode method which handles graph-value attributes
+    ProcessNode(&node);
+  }
+};
+
+Renamer::Renamer(const std::string& prefix, const GraphProto& graph) : pImpl_(std::make_unique<Impl>(prefix, graph)) {}
+
+Renamer::Renamer(const std::string& prefix, const FunctionProto& function)
+    : pImpl_(std::make_unique<Impl>(prefix, function)) {}
+
+Renamer::~Renamer() = default;
+
+void Renamer::BindName(const std::string& formal_name, const std::string& actual_name) {
+  pImpl_->BindName(formal_name, actual_name);
+}
+
+void Renamer::RenameNode(NodeProto& node) {
+  pImpl_->RenameNode(node);
+}
+
+std::string Renamer::BindToUniqueName(const std::string& original_name) {
+  return pImpl_->BindToUniqueName(original_name);
+}
+
 } // namespace inliner
 } // namespace ONNX_NAMESPACE
