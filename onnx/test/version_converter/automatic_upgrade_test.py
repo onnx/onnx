@@ -1914,6 +1914,17 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [TensorProto.BOOL],
         )
 
+    def test_BitCast(self) -> None:
+        self._test_op_upgrade(
+            "BitCast",
+            24,
+            [[2, 3]],
+            [[2, 3, 2]],
+            [TensorProto.UINT8],
+            [TensorProto.UINT4],
+            attrs={"to": int(TensorProto.UINT4)},
+        )
+
     def test_ops_tested(self) -> None:
         # NOTE: This test is order dependent and needs to run last in this class
         all_schemas = onnx.defs.get_all_schemas()
