@@ -117,6 +117,7 @@ if(MSVC)
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
   add_compile_options(/MP /utf-8 /nologo)
+  add_compile_options(/d2ReducedOptimizeHugeFunctions)
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
