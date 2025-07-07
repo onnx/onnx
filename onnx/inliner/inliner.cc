@@ -160,12 +160,12 @@ class NameGenerator : private Visitor {
 };
 
 class InliningRenamer : public MutableVisitor {
- protected:  // Changed from private to protected to allow inheritance
+ protected: // Changed from private to protected to allow inheritance
   std::string suffix;
   NameGenerator& generator;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
- protected:  // Allow access to these methods from derived classes
+ protected: // Allow access to these methods from derived classes
   InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
@@ -738,13 +738,13 @@ class Renamer::Impl : public InliningRenamer {
   std::string BindToUniqueName(const std::string& original_name) {
     // First create the unique name using the inherited MakeUnique method
     std::string unique_name = MakeUnique(original_name);
-    
+
     // Then bind the original name to the unique name
     if (!rename_scopes.empty()) {
       auto& current_scope = rename_scopes.back();
       current_scope[original_name] = unique_name;
     }
-    
+
     return unique_name;
   }
 
