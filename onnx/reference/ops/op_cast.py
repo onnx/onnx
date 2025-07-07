@@ -9,7 +9,9 @@ import onnx
 from onnx.reference.op_run import OpRun
 
 
-def cast_to(x: np.ndarray, to: onnx.TensorProto.DataType, saturate: bool, round_mode: str = "up"):
+def cast_to(
+    x: np.ndarray, to: onnx.TensorProto.DataType, saturate: bool, round_mode: str = "up"
+):
     if to == onnx.TensorProto.STRING:
         return x.astype(np.str_)
 
@@ -25,9 +27,11 @@ def cast_to(x: np.ndarray, to: onnx.TensorProto.DataType, saturate: bool, round_
         and saturate
     ):
         return onnx.numpy_helper.saturating_cast(x, dtype)
-    
+
     if to == onnx.TensorProto.FLOAT8E8M0:
-        return onnx.numpy_helper.float32_to_float8e8m0(x, saturate, round_mode).astype(dtype)
+        return onnx.numpy_helper.float32_to_float8e8m0(x, saturate, round_mode).astype(
+            dtype
+        )
 
     return x.astype(dtype)
 
