@@ -206,16 +206,16 @@ def float8e5m2_to_float32(
 
 def float32_to_float8e8m0(
     x: np.ndarray,
-    saturate=True,
-    round_mode="up",
+    saturate: bool = True,
+    round_mode: str = "up",
 ) -> np.ndarray:
     """Convert float32 NumPy array to float8e8m0 representation. If the input
     is not a float32 array, it will be cast to one first.
 
     Args:
-        x_f32 (np.ndarray): Input array to convert.
-        saturate (bool): Whether to saturate at max/min float8e8m0 value.
-        round_mode (str): "nearest", "up", or "down".
+        x: Input array to convert.
+        saturate: Whether to saturate at max/min float8e8m0 value.
+        round_mode: "nearest", "up", or "down".
 
     Returns:
         np.ndarray: Array of ml_dtypes.float8_e8m0fnu values.
