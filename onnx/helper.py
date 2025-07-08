@@ -784,7 +784,7 @@ def make_tensor(
         vals = onnx.numpy_helper.saturating_cast(np.asarray(vals), np_dtype).flatten()
     elif data_type == TensorProto.FLOAT8E8M0:
         vals = onnx.numpy_helper.float32_to_float8e8m0(
-            vals, saturate=True, round_mode="up"
+            np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()

@@ -205,21 +205,22 @@ def float8e5m2_to_float32(
 
 
 def float32_to_float8e8m0(
-    x_f32: Sequence[float] | np.ndarray,
+    x: np.ndarray,
     saturate=True,
     round_mode="up",
 ) -> np.ndarray:
-    """Convert float32 NumPy array to float8e8m0 representation.
+    """Convert float32 NumPy array to float8e8m0 representation. If the input
+    is not a float32 array, it will be cast to one first.
 
     Args:
-        x_f32 (np.ndarray): Array of float32 values to convert.
-        saturate (bool): Whether to saturate at maximum float8e8m0 value.
+        x_f32 (np.ndarray): Input array to convert.
+        saturate (bool): Whether to saturate at max/min float8e8m0 value.
         round_mode (str): "nearest", "up", or "down".
 
     Returns:
-        np.ndarray: Array of uint8 representing float8e8m0 values.
+        np.ndarray: Array of ml_dtypes.float8_e8m0fnu values.
     """
-    x_f32 = np.asarray(x_f32, dtype=np.float32)
+    x_f32 = np.asarray(x, dtype=np.float32)
     f_bits = x_f32.view(np.uint32)
 
     # Extract exponent bits
@@ -237,6 +238,7 @@ def float32_to_float8e8m0(
     normal_mask = ~special_mask
 
     if round_mode == "nearest":
+        # Get guard, round, sticky, and least significant bits
         g = ((f_bits & 0x400000) > 0).astype(np.uint8)
         r = ((f_bits & 0x200000) > 0).astype(np.uint8)
         s = ((f_bits & 0x1FFFFF) > 0).astype(np.uint8)

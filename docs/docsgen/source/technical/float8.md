@@ -224,7 +224,7 @@ The E8M0 data type serves as the common scale type for all [OCP Microscaling (MX
      - :math:`00000000_2 = 2^{-127}`
 ```
 
-When computing scale factors in MX formats, there are diffent casting choices one can make. For this reason, the ONNX spec for the Cast operator has introduced an additional "round_mode" attribute, which accepts the following:
+When computing scale factors in MX formats, there are different casting choices one can make. For this reason, the ONNX spec for the Cast operator has introduced an additional "round_mode" attribute, which accepts the following:
 - "up": round to nearest value away from zero
 - "down": round to nearest value towards zero
 - "nearest": round to nearest value and ties round up

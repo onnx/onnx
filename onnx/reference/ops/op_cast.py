@@ -37,15 +37,15 @@ def cast_to(
 
 
 class Cast_1(OpRun):
-    def _run(self, x, to=None):  # type: ignore
+    def _run(self, x, to=None):
         return (cast_to(x, to, saturate=True, round_mode="up"),)
 
 
 class Cast_19(OpRun):
-    def _run(self, x, to=None, saturate=None):  # type: ignore
+    def _run(self, x, to=None, saturate=None):
         return (cast_to(x, to, saturate, round_mode="up"),)
 
 
 class Cast_24(OpRun):
-    def _run(self, x, to=None, saturate=None, round_mode=None):  # type: ignore
+    def _run(self, x, to=None, saturate=None, round_mode=None):
         return (cast_to(x, to, saturate, round_mode),)

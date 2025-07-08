@@ -5277,7 +5277,7 @@ expect(
   | else              | RNE    | RNE      | RNE  | RNE      |
 
   FLOAT8E8M0 type was introduced to enable [Microscaling (MX) formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf).
-  When casting to FLOAT8E8M0, the rounding behavior can be specified using the `rounding_mode` and `saturate` attributes.
+  When casting to FLOAT8E8M0, the rounding behavior can be specified using the `round_mode` and `saturate` attributes.
   The current CUDA behavior is to round up and saturate. Casting negative values to FLOAT8E8M0 gives undefined behavior.
 
 #### Version
