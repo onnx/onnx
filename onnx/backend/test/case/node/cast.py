@@ -15,7 +15,7 @@ from onnx.helper import (
     make_tensor,
     tensor_dtype_to_np_dtype,
 )
-from onnx.numpy_helper import float32_to_float8e8m0
+from onnx.numpy_helper import to_float8e8m0
 
 F8_TYPES = frozenset({"FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"})
 FOUR_BIT_TYPES = frozenset({"UINT4", "INT4", "FLOAT4E2M1"})
@@ -312,12 +312,12 @@ class Cast(Base):
         for from_type, to_type in test_cases:
             if from_type == "FLOAT":
                 input_np = np_fp32
-                output_np = float32_to_float8e8m0(np_fp32)
+                output_np = to_float8e8m0(np_fp32)
             elif from_type == "FLOAT16":
                 input_np = np_fp32.astype(np.float16)
-                output_np = float32_to_float8e8m0(input_np)
+                output_np = to_float8e8m0(input_np)
             elif from_type == "FLOAT8E8M0":
-                input_np = float32_to_float8e8m0(np_fp32)
+                input_np = to_float8e8m0(np_fp32)
                 if to_type == "FLOAT":
                     output_np = input_np.astype(np.float32)
                 elif to_type == "FLOAT16":

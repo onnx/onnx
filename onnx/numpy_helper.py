@@ -204,7 +204,7 @@ def float8e5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
-def float32_to_float8e8m0(
+def to_float8e8m0(
     x: np.ndarray,
     saturate: bool = True,
     round_mode: str = "up",

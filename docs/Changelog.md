@@ -29843,6 +29843,16 @@ This version of the operator has been available since version 23 of the default 
   FLOAT8E8M0 type was introduced to enable [Microscaling (MX) formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf).
   When casting to FLOAT8E8M0, the rounding behavior can be specified using the `round_mode` and `saturate` attributes.
   The current CUDA behavior is to round up and saturate. Casting negative values to FLOAT8E8M0 gives undefined behavior.
+  The following table describes the casting behavior of special values to FLOAT8E8M0 in the two most common cases.
+
+  | x                 | saturate + up | non-saturate + nearest |
+  | ----------------- | ------------- | ---------------------  |
+  | 0                 | 0             | NaN                    |
+  | NaN               | NaN           | NaN                    |
+  | Inf               | E8M0_MAX      | NaN                    |
+  | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
+  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
+
 
 #### Version
 

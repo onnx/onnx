@@ -5279,6 +5279,16 @@ expect(
   FLOAT8E8M0 type was introduced to enable [Microscaling (MX) formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf).
   When casting to FLOAT8E8M0, the rounding behavior can be specified using the `round_mode` and `saturate` attributes.
   The current CUDA behavior is to round up and saturate. Casting negative values to FLOAT8E8M0 gives undefined behavior.
+  The following table describes the casting behavior of special values to FLOAT8E8M0 in the two most common cases.
+
+  | x                 | saturate + up | non-saturate + nearest |
+  | ----------------- | ------------- | ---------------------  |
+  | 0                 | 0             | NaN                    |
+  | NaN               | NaN           | NaN                    |
+  | Inf               | E8M0_MAX      | NaN                    |
+  | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
+  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
+
 
 #### Version
 
@@ -5551,12 +5561,12 @@ test_cases = [
 for from_type, to_type in test_cases:
     if from_type == "FLOAT":
         input_np = np_fp32
-        output_np = float32_to_float8e8m0(np_fp32)
+        output_np = to_float8e8m0(np_fp32)
     elif from_type == "FLOAT16":
         input_np = np_fp32.astype(np.float16)
-        output_np = float32_to_float8e8m0(input_np)
+        output_np = to_float8e8m0(input_np)
     elif from_type == "FLOAT8E8M0":
-        input_np = float32_to_float8e8m0(np_fp32)
+        input_np = to_float8e8m0(np_fp32)
         if to_type == "FLOAT":
             output_np = input_np.astype(np.float32)
         elif to_type == "FLOAT16":
