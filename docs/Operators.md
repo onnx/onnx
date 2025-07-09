@@ -5284,11 +5284,12 @@ expect(
   | x                 | saturate + up | non-saturate + nearest |
   | ----------------- | ------------- | ---------------------  |
   | 0                 | 0             | NaN                    |
+  | -0                | Unspecified   | Unspecified            |
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
   | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-
+  | x \< 0            | Unspecified   | Unspecified            |
 
 #### Version
 
@@ -5302,7 +5303,7 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">1</a>, <a href="C
 <dt><tt>round_mode</tt> : string (default is up)</dt>
 <dd>Rounding mode of float8e8m0 conversion. It only applies to float8e8m0 casting and is `up` by default. `up`: round to nearest value away from zero, `down`: round to nearest value towards zero, `nearest`: round to nearest value and ties round up.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
-<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. All cases are fully described in two tables inserted in the operator description.</dd>
+<dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. All cases are fully described in the tables inserted in the operator description.</dd>
 <dt><tt>to</tt> : int (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>

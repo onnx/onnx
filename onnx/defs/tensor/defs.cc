@@ -91,11 +91,12 @@ The following table describes the casting behavior of special values to FLOAT8E8
 | x                 | saturate + up | non-saturate + nearest |
 | ----------------- | ------------- | ---------------------  |
 | 0                 | 0             | NaN                    |
+| -0                | Unspecified   | Unspecified            |
 | NaN               | NaN           | NaN                    |
 | Inf               | E8M0_MAX      | NaN                    |
 | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
 | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-
+| x \< 0            | Unspecified   | Unspecified            |
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -113,7 +114,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The parameter defines how the conversion behaves if an input value is out of "
             "range of the destination type. It only applies for float 8 conversion "
             "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. "
-            "All cases are fully described in two tables inserted in the operator description.",
+            "All cases are fully described in the tables inserted in the operator description.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .Attr(
