@@ -3952,4 +3952,67 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
+static const char* TensorScatter_ver24_doc = R"DOC(
+TensorScatter performs kv cache updates for Attention calculations. The past and present cache tensors have the
+same shape, with the sequence length dimension being max_seqlen, so the sizes of these tensors do not need to 
+grow between iterations. 
+The optional write_indices input indicates the write index for each sample in the batch, assumed to be zero 
+if not provided. During the prefill phase of attention, only the first two inputs are needed. During the decode 
+phase, write_indices is also needed so that the incoming k and v can be appended after the last valid token 
+for each sample in the batch.
+
+In order to perform kv caching in place, as is the common practice for efficient inference, the execution 
+provider needs to alias the buffers for .
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    TensorScatter,
+    24,
+    OpSchema()
+        .SetDoc(TensorScatter_ver24_doc)
+        .Attr(
+            "mode",
+            "The write mode of kv cache. Supported modes include 'linear' and 'circular'. 'linear' mode requires "
+            "write_indices+sequence_length<=max_sequence_length. For “circular” mode, the updates happen in "
+            "wrap-around fashion, ie, the update index is modulo max_sequence_length",
+            AttributeProto::STRING,
+            std::string("linear"))
+        .Input(
+            0,
+            "past_cache",
+            "Past state cache for key or value tensor with 4D shape `(batch_size, num_heads, max_sequence_length, k_head_size)`"
+            "or 3D shape `(batch_size, max_sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "update",
+            "New update tensor with 4D shape `(batch_size, num_heads, sequence_length, k_head_size)` "
+            "or 3D shape `(batch_size, sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "write_indices",
+            "The write indices for incoming key and value in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(0, "present_cache", "Updated cache. Same shape as cache.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
