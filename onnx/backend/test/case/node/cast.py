@@ -331,14 +331,14 @@ class Cast(Base):
                     f"Conversion from {from_type} to {to_type} is not tested."
                 )
             input = make_tensor(
-                "x",
+                "input",
                 getattr(TensorProto, from_type),
                 [2, 4],
                 input_np.tobytes(),
                 raw=True,
             )
             output = make_tensor(
-                "y",
+                "output",
                 getattr(TensorProto, to_type),
                 [2, 4],
                 output_np.tobytes(),
