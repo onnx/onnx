@@ -40,7 +40,6 @@ def _compute_attention(
     softcap=None,
     qk_matmul_output_mode=None,
 ) -> np.ndarray:
-    assert len(Q.shape) == len(K.shape) == len(V.shape)
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
     # NewShapeK  (batch_size, kv_num_heads, kv_sequence_length, head_size)
@@ -87,26 +86,29 @@ def _compute_attention(
     # Create attn_bias
     q_sequence_length = Q.shape[2]
     kv_sequence_length = K.shape[2]
-    attn_bias = np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
     # First case: If is_causal is provided
     # If set to true, the attention masking is a lower triangular matrix when the mask
     # is a square matrix. The attention masking has the form of the upper left causal
     # bias due to the alignment when the mask is a non-square matrix.
     if is_causal == 1:
-        assert attn_mask is None
-        temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=bool)
-        temp_mask = np.tril(temp_mask, k=0)
-        temp_mask = np.logical_not(temp_mask)
-        attn_bias_ma = np.ma.array(attn_bias, mask=temp_mask)
-        attn_bias = attn_bias_ma.filled(fill_value=float("-inf"))
-    if attn_mask is not None:
-        assert is_causal != 1
+        mask = (
+            1 - np.tril(np.ones((q_sequence_length, kv_sequence_length)), k=0)
+        ).astype(Q.dtype)
+        mask[mask == 1] = -np.inf
+        if attn_mask is None:
+            attn_bias = mask
+        else:
+            while len(mask.shape) < len(attn_mask.shape):
+                mask = np.expand_dims(mask, 0)
+            attn_bias = attn_mask.copy()
+            attn_bias[..., -mask.shape[-1] :] += mask
+    elif attn_mask is not None:
         if attn_mask.dtype == bool:
             attn_mask = np.logical_not(attn_mask)
             attn_bias_ma = np.ma.array(attn_bias, mask=attn_mask)
             attn_bias = attn_bias_ma.filled(fill_value=float("-inf"))
         else:
-            attn_bias += attn_mask
+            attn_bias = attn_bias + attn_mask
 
     # Group Query Attention is applied if the following are satisfied
     # 1) q_num_heads != kv_num_heads
