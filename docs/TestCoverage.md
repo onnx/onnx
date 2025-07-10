@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 183/195 (93.85%, 5 generators excluded) common operators.
+Node tests have covered 184/196 (93.88%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -25590,6 +25590,92 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh_example")
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.tanh(x)
 expect(node, inputs=[x], outputs=[y], name="test_tanh")
+```
+
+</details>
+
+
+### TensorScatter
+There are 2 test cases, listed as following:
+<details>
+<summary>tensorscatter</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+    mode="linear",
+)
+past_cache = np.array(
+    [
+        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [[[5, 5, 5, 5]]],
+        [[[1, 1, 1, 1]]],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 2], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[[1, 5, 3, 4], [5, 5, 7, 8], [8, 5, 6, 5], [4, 5, 2, 1]]],
+        [[[1, 2, 1, 4], [5, 6, 1, 8], [8, 7, 1, 5], [4, 3, 1, 1]]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter",
+)
+```
+
+</details>
+<details>
+<summary>tensorscatter_circular</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+    mode="circular",
+)
+past_cache = np.array(
+    [
+        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [[[5, 5, 5, 5], [6, 6, 6, 6,]]],
+        [[[1, 1, 1, 1], [2, 2, 2, 2,]]],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 3], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[[1, 5, 6, 4], [5, 5, 6, 8], [8, 5, 6, 5], [4, 5, 6, 1]]],
+        [[[2, 2, 3, 1], [2, 6, 7, 1], [2, 7, 6, 1], [2, 3, 2, 1]]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter_circular",
+)
 ```
 
 </details>

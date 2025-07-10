@@ -33,7 +33,7 @@ class TensorScatter(Base):
             ],
             dtype=np.float32,
         )
-        write_indices = np.array([[1, 2]], dtype=np.int64)
+        write_indices = np.array([1, 2], dtype=np.int64)
         present_cache = np.array(
             [
                 [[[1, 5, 3, 4], [5, 5, 7, 8], [8, 5, 6, 5], [4, 5, 2, 1]]],
@@ -48,6 +48,7 @@ class TensorScatter(Base):
             name="test_tensorscatter",
         )
 
+    @staticmethod
     def export_tensorscatter_circular() -> None:
         node = onnx.helper.make_node(
             "TensorScatter",
@@ -64,12 +65,32 @@ class TensorScatter(Base):
         )
         update = np.array(
             [
-                [[[5, 5, 5, 5], [6, 6, 6, 6,]]],
-                [[[1, 1, 1, 1], [2, 2, 2, 2,]]],
+                [
+                    [
+                        [5, 5, 5, 5],
+                        [
+                            6,
+                            6,
+                            6,
+                            6,
+                        ],
+                    ]
+                ],
+                [
+                    [
+                        [1, 1, 1, 1],
+                        [
+                            2,
+                            2,
+                            2,
+                            2,
+                        ],
+                    ]
+                ],
             ],
             dtype=np.float32,
         )
-        write_indices = np.array([[1, 3]], dtype=np.int64)
+        write_indices = np.array([1, 3], dtype=np.int64)
         present_cache = np.array(
             [
                 [[[1, 5, 6, 4], [5, 5, 6, 8], [8, 5, 6, 5], [4, 5, 6, 1]]],
@@ -83,4 +104,3 @@ class TensorScatter(Base):
             outputs=[present_cache],
             name="test_tensorscatter_circular",
         )
-
