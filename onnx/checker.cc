@@ -177,6 +177,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E4M3FNUZ:
       case TensorProto::FLOAT8E5M2:
       case TensorProto::FLOAT8E5M2FNUZ:
+      case TensorProto::FLOAT8E8M0:
       case TensorProto::UINT4:
       case TensorProto::INT4:
       case TensorProto::FLOAT4E2M1:

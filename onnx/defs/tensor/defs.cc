@@ -14,7 +14,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Cast_ver23_doc = R"DOC(
+static const char* Cast_ver24_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
@@ -52,7 +52,7 @@ if the destination type is not a float 8 type.
   * fixed point: `{1, 0}`.
   * bool: no change.
 
-Float 8 type were introduced to speed up the training of
+Float 8 types (E4M3FN, E4M3FNUZ, E5M2, E5M2FNUZ) were introduced to speed up the training of
 deep models. By default the conversion of a float *x* obeys
 to the following rules. `[x]` means the value rounded to
 the target mantissa width.
@@ -82,13 +82,28 @@ The rules then become:
 | \[x\] > FLT_MAX   | NaN    | NaN      | Inf  | NaN      |
 | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
 | else              | RNE    | RNE      | RNE  | RNE      |
+
+FLOAT8E8M0 type was introduced to enable [Microscaling (MX) formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf).
+When casting to FLOAT8E8M0, the rounding behavior can be specified using the `round_mode` and `saturate` attributes.
+The current CUDA behavior is to round up and saturate. Casting negative values to FLOAT8E8M0 gives undefined behavior.
+The following table describes the casting behavior of special values to FLOAT8E8M0 in the two most common cases.
+
+| x                 | saturate + up | non-saturate + nearest |
+| ----------------- | ------------- | ---------------------  |
+| 0                 | 0             | NaN                    |
+| -0                | Unspecified   | Unspecified            |
+| NaN               | NaN           | NaN                    |
+| Inf               | E8M0_MAX      | NaN                    |
+| x > E8M0_MAX      | E8M0_MAX      | NaN                    |
+| x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
+| x \< 0            | Unspecified   | Unspecified            |
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    23,
+    24,
     OpSchema()
-        .SetDoc(Cast_ver23_doc)
+        .SetDoc(Cast_ver24_doc)
         .Attr(
             "to",
             "The data type to which the elements of the input tensor are cast. "
@@ -98,10 +113,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
             "range of the destination type. It only applies for float 8 conversion "
-            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz). It is true by default. "
-            "All cases are fully described in two tables inserted in the operator description.",
+            "(float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. "
+            "All cases are fully described in the tables inserted in the operator description.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
+        .Attr(
+            "round_mode",
+            "Rounding mode for conversion to float8e8m0. It only applies to casting to float8e8m0 and is `up` by default. "
+            "`up`: round to nearest value away from zero, "
+            "`down`: round to nearest value towards zero, "
+            "`nearest`: round to nearest value and ties round up.",
+            AttributeProto::STRING,
+            std::string("up"))
         .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -115,11 +138,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
-            OpSchema::all_non_complex_tensor_types_ir11(),
+            OpSchema::all_non_complex_tensor_types_ir12(),
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
-            OpSchema::all_non_complex_tensor_types_ir11(),
+            OpSchema::all_non_complex_tensor_types_ir12(),
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
