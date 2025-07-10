@@ -29863,7 +29863,7 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>round_mode</tt> : string (default is up)</dt>
-<dd>Rounding mode of float8e8m0 conversion. It only applies to float8e8m0 casting and is `up` by default. `up`: round to nearest value away from zero, `down`: round to nearest value towards zero, `nearest`: round to nearest value and ties round up.</dd>
+<dd>Rounding mode for conversion to float8e8m0. It only applies to casting to float8e8m0 and is `up` by default. `up`: round to nearest value away from zero, `down`: round to nearest value towards zero, `nearest`: round to nearest value and ties round up.</dd>
 <dt><tt>saturate</tt> : int (default is 1)</dt>
 <dd>The parameter defines how the conversion behaves if an input value is out of range of the destination type. It only applies for float 8 conversion (float8e4m3fn, float8e4m3fnuz, float8e5m2, float8e5m2fnuz, float8e8m0). It is true by default. All cases are fully described in the tables inserted in the operator description.</dd>
 <dt><tt>to</tt> : int (required)</dt>

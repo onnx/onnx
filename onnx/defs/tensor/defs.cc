@@ -119,7 +119,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .Attr(
             "round_mode",
-            "Rounding mode of float8e8m0 conversion. It only applies to float8e8m0 casting and is `up` by default. "
+            "Rounding mode for conversion to float8e8m0. It only applies to casting to float8e8m0 and is `up` by default. "
             "`up`: round to nearest value away from zero, "
             "`down`: round to nearest value towards zero, "
             "`nearest`: round to nearest value and ties round up.",
