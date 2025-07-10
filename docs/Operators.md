@@ -155,6 +155,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
 |<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-22">22</a>, <a href="Changelog.md#Tan-7">7</a>|
 |<a href="#Tanh">Tanh</a>|<a href="Changelog.md#Tanh-13">13</a>, <a href="Changelog.md#Tanh-6">6</a>, <a href="Changelog.md#Tanh-1">1</a>|
+|<a href="#TensorScatter">TensorScatter</a>|<a href="Changelog.md#TensorScatter-24">24</a>|
 |<a href="#TfIdfVectorizer">TfIdfVectorizer</a>|<a href="Changelog.md#TfIdfVectorizer-9">9</a>|
 |<a href="#Tile">Tile</a>|<a href="Changelog.md#Tile-13">13</a>, <a href="Changelog.md#Tile-6">6</a>, <a href="Changelog.md#Tile-1">1</a>|
 |<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-24">24</a>, <a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
@@ -36897,6 +36898,144 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh_example")
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.tanh(x)
 expect(node, inputs=[x], outputs=[y], name="test_tanh")
+```
+
+</details>
+
+
+### <a name="TensorScatter"></a><a name="tensorscatter">**TensorScatter**</a>
+
+  TensorScatter performs kv cache updates for Attention calculations. The past and present cache tensors have the
+  same shape, with the sequence length dimension being max_seqlen, so the sizes of these tensors do not need to
+  grow between iterations.
+  The optional write_indices input indicates the write index for each sample in the batch, assumed to be zero
+  if not provided. During the prefill phase of attention, only the first two inputs are needed. During the decode
+  phase, write_indices is also needed so that the incoming k and v can be appended after the last valid token
+  for each sample in the batch.
+
+  In order to perform kv caching in place, as is the common practice for efficient inference, the execution
+  provider needs to alias the buffers for .
+
+#### Version
+
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string (default is linear)</dt>
+<dd>The write mode of kv cache. Supported modes include 'linear' and 'circular'. 'linear' mode requires write_indices+sequence_length<=max_sequence_length. For “circular” mode, the updates happen in wrap-around fashion, ie, the update index is modulo max_sequence_length</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>past_cache</tt> (differentiable) : T</dt>
+<dd>Past state cache for key or value tensor with 4D shape `(batch_size, num_heads, max_sequence_length, k_head_size)`or 3D shape `(batch_size, max_sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.</dd>
+<dt><tt>update</tt> (differentiable) : T</dt>
+<dd>New update tensor with 4D shape `(batch_size, num_heads, sequence_length, k_head_size)` or 3D shape `(batch_size, sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.</dd>
+<dt><tt>write_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>The write indices for incoming key and value in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>present_cache</tt> (differentiable) : T</dt>
+<dd>Updated cache. Same shape as cache.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tensorscatter</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+    mode="linear",
+)
+past_cache = np.array(
+    [
+        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [[[5, 5, 5, 5]]],
+        [[[1, 1, 1, 1]]],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 2], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[[1, 5, 3, 4], [5, 5, 7, 8], [8, 5, 6, 5], [4, 5, 2, 1]]],
+        [[[1, 2, 1, 4], [5, 6, 1, 8], [8, 7, 1, 5], [4, 3, 1, 1]]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tensorscatter_circular</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+    mode="circular",
+)
+past_cache = np.array(
+    [
+        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [[[5, 5, 5, 5], [6, 6, 6, 6,]]],
+        [[[1, 1, 1, 1], [2, 2, 2, 2,]]],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 3], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[[1, 5, 6, 4], [5, 5, 6, 8], [8, 5, 6, 5], [4, 5, 6, 1]]],
+        [[[2, 2, 3, 1], [2, 6, 7, 1], [2, 7, 6, 1], [2, 3, 2, 1]]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter_circular",
+)
 ```
 
 </details>

@@ -15,22 +15,24 @@ class TensorScatter(OpRun):
 
         present_cache = np.copy(past_cache)
         batch_size = past_cache.shape[0]
-        max_seq_len = past_cache.shape[-2]
-        seq_len = update.shape[-2]
+        num_heads = past_cache.shape[1]
+        max_seq_len = past_cache.shape[2]
+        seq_len = update.shape[2]
 
         if mode == "linear":
             for i in range(batch_size):
-                start = write_indices[i]
-                end = start + seq_len
-                present_cache[i, :, start:end, :] = update[i]
+                idx = write_indices[i]
+                for h in range(num_heads):
+                    for s in range(max_seq_len):
+                        present_cache[i, h, s, idx] = update[i, h, 0, s]
         elif mode == "circular":
             for i in range(batch_size):
                 for j in range(seq_len):
-                    index = (write_indices[i] + j) % max_seq_len
-                    present_cache[i, :, index, :] = update[i, :, j, :]
+                    idx = (write_indices[i] + j) % max_seq_len
+                    for h in range(num_heads):
+                        for s in range(max_seq_len):
+                            present_cache[i, h, s, idx] = update[i, h, j, s]
         else:
             raise ValueError(f"Unsupported mode: {mode}")
 
         return (present_cache,)
-
-

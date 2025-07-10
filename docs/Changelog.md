@@ -29920,7 +29920,6 @@ This version of the operator has been available since version 24 of the default 
 <dt><tt>target_type</tt> (non-differentiable) : T2</dt>
 <dd>The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.</dd>
 </dl>
-
 #### Outputs
 
 <dl>
@@ -30060,7 +30059,11 @@ This version of the operator has been available since version 24 of the default 
 <dt><tt>x_scale</tt> : T2</dt>
 <dd>Scale for input `x`. For per-tensor/layer dequantization the scale is a scalar, for per per-axis dequantization it is a 1-D Tensor and for blocked dequantization it has the same shape as the input, except for one dimension in which blocking is performed.</dd>
 <dt><tt>x_zero_point</tt> (optional) : T1</dt>
-<dd>Zero point for input `x`. Shape must match x_scale. It's optional. Zero point is 0 when it's not specified.</dd>
+<dt><tt>update</tt> (differentiable) : T</dt>
+<dd>New update tensor with 4D shape `(batch_size, num_heads, sequence_length, k_head_size)` or 3D shape `(batch_size, sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.</dd>
+<dt><tt>write_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>The write indices for incoming key and value in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.</dd>
+>>>>>>> 8fddb98a (add TensorScatter op and tests)
 </dl>
 
 #### Outputs
@@ -30120,7 +30123,6 @@ This version of the operator has been available since version 24 of the default 
 </dl>
 
 ### <a name="Identity-24"></a>**Identity-24**</a>
-
   Identity operator
 
 #### Version
@@ -31175,9 +31177,6 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to all tensor types up to IRv12.</dd>
 </dl>
 
-# ai.onnx.preview.training
-## Version 1 of the 'ai.onnx.preview.training' operator set
-### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
 
   Compute one iteration of ADAGRAD, a stochastic gradient based optimization
       algorithm. This operator can conduct the optimization of multiple tensor variables.
