@@ -263,6 +263,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask"],
             outputs=["Y"],
+            is_causal=1,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -318,6 +319,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask"],
             outputs=["Y"],
+            is_causal=1,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -834,6 +836,7 @@ class Attention(Base):
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
             qk_matmul_output_mode=1,
+            is_causal=1,
         )
 
         past_sequence_length = 12
@@ -869,6 +872,7 @@ class Attention(Base):
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
             qk_matmul_output_mode=1,
+            is_causal=1,
         )
 
         past_sequence_length = 12
