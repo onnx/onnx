@@ -1343,12 +1343,14 @@ class OpSet_Onnx_ver23 {
 
 // Forward declarations for ai.onnx version 24
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter);
 
 // Iterate over schema from ai.onnx version 24
 class OpSet_Onnx_ver24 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter)>());
   }
 };
 
