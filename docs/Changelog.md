@@ -29914,7 +29914,7 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>mode</tt> : string (default is linear)</dt>
-<dd>The write mode of kv cache. Supported modes include 'linear' and 'circular'. 'linear' mode requires write_indices+sequence_length<=max_sequence_length. For “circular” mode, the updates happen in wrap-around fashion, ie, the update index is modulo max_sequence_length</dd>
+<dd>The write mode of kv cache. Supported modes include `linear` and `circular`. `linear` mode requires write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in wrap-around fashion, ie, the update index is modulo `max_sequence_length`</dd>
 </dl>
 
 #### Inputs (2 - 3)
