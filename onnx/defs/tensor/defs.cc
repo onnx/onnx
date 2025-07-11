@@ -3972,9 +3972,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(TensorScatter_ver24_doc)
         .Attr(
             "mode",
-            "The write mode of kv cache. Supported modes include 'linear' and 'circular'. 'linear' mode requires "
-            "write_indices+sequence_length<=max_sequence_length. For “circular” mode, the updates happen in "
-            "wrap-around fashion, ie, the update index is modulo max_sequence_length",
+            "The write mode of kv cache. Supported modes include `linear` and `circular`. `linear` mode requires "
+            "write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in "
+            "wrap-around fashion, ie, the update index is modulo `max_sequence_length`",
             AttributeProto::STRING,
             std::string("linear"))
         .Input(

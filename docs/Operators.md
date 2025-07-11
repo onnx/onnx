@@ -36924,7 +36924,7 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>mode</tt> : string (default is linear)</dt>
-<dd>The write mode of kv cache. Supported modes include 'linear' and 'circular'. 'linear' mode requires write_indices+sequence_length<=max_sequence_length. For “circular” mode, the updates happen in wrap-around fashion, ie, the update index is modulo max_sequence_length</dd>
+<dd>The write mode of kv cache. Supported modes include `linear` and `circular`. `linear` mode requires write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in wrap-around fashion, ie, the update index is modulo `max_sequence_length`</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -36967,23 +36967,23 @@ node = onnx.helper.make_node(
 )
 past_cache = np.array(
     [
-        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
-        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
     ],
     dtype=np.float32,
 )
 update = np.array(
     [
-        [[[5, 5, 5, 5]]],
-        [[[1, 1, 1, 1]]],
+        [[[5, 5, 5, 5, 5]]],
+        [[[1, 1, 1, 1, 1]]],
     ],
     dtype=np.float32,
 )
 write_indices = np.array([1, 2], dtype=np.int64)
 present_cache = np.array(
     [
-        [[[1, 5, 3, 4], [5, 5, 7, 8], [8, 5, 6, 5], [4, 5, 2, 1]]],
-        [[[1, 2, 1, 4], [5, 6, 1, 8], [8, 7, 1, 5], [4, 3, 1, 1]]],
+        [[[1, 2, 3, 4, 5], [5, 5, 5, 5, 5], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [1, 1, 1, 1, 1], [4, 3, 2, 1, 0]]],
     ],
     dtype=np.float32,
 )
@@ -36992,6 +36992,60 @@ expect(
     inputs=[past_cache, update, write_indices],
     outputs=[present_cache],
     name="test_tensorscatter",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tensorscatter_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+)
+past_cache = np.array(
+    [
+        [[1, 2, 3, 4, 5, 6], [5, 6, 7, 8, 9, 10], [8, 7, 6, 5, 4, 3], [5, 4, 3, 2, 1, 0]],
+        [[1, 2, 3, 4, 5, 6], [5, 6, 7, 8, 9, 10], [8, 7, 6, 5, 4, 3], [5, 4, 3, 2, 1, 0]],
+        [[1, 2, 3, 4, 5, 6], [5, 6, 7, 8, 9, 10], [8, 7, 6, 5, 4, 3], [5, 4, 3, 2, 1, 0]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [
+            [4, 4, 4, 4, 4, 4],
+            [5, 5, 5, 5, 5, 5],
+        ],
+        [
+            [6, 6, 6, 6, 6, 6],
+            [7, 7, 7, 7, 7, 7],
+        ],
+        [
+            [2, 2, 2, 2, 2, 2], 
+            [3, 3, 3, 3, 3, 3],
+        ],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 2, 0], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[1, 2, 3, 4, 5, 6], [4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [5, 4, 3, 2, 1, 0]],
+        [[1, 2, 3, 4, 5, 6], [5, 6, 7, 8, 9, 10], [6, 6, 6, 6, 6, 6], [7, 7, 7, 7, 7, 7]],
+        [[2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3], [8, 7, 6, 5, 4, 3], [5, 4, 3, 2, 1, 0]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter_3d",
 )
 ```
 
@@ -37010,23 +37064,37 @@ node = onnx.helper.make_node(
 )
 past_cache = np.array(
     [
-        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
-        [[[1, 2, 3, 4], [5, 6, 7, 8], [8, 7, 6, 5], [4, 3, 2, 1]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
     ],
     dtype=np.float32,
 )
 update = np.array(
     [
-        [[[5, 5, 5, 5], [6, 6, 6, 6,]]],
-        [[[1, 1, 1, 1], [2, 2, 2, 2,]]],
+        [
+            [
+                [5, 5, 5, 5, 5],
+                [
+                    6, 6, 6, 6, 6,
+                ],
+            ]
+        ],
+        [
+            [
+                [1, 1, 1, 1, 1],
+                [
+                    2, 2, 2, 2, 2,
+                ],
+            ]
+        ],
     ],
     dtype=np.float32,
 )
 write_indices = np.array([1, 3], dtype=np.int64)
 present_cache = np.array(
     [
-        [[[1, 5, 6, 4], [5, 5, 6, 8], [8, 5, 6, 5], [4, 5, 6, 1]]],
-        [[[2, 2, 3, 1], [2, 6, 7, 1], [2, 7, 6, 1], [2, 3, 2, 1]]],
+        [[[1, 2, 3, 4, 5], [5, 5, 5, 5, 5], [6, 6, 6, 6, 6], [4, 3, 2, 1, 0]]],
+        [[[2, 2, 2, 2, 2], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [1, 1, 1, 1, 1]]],
     ],
     dtype=np.float32,
 )
