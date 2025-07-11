@@ -12,7 +12,6 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
-
 static std::vector<std::string> control_flow_types_ir12() {
   auto t = OpSchema::all_tensor_types_ir12();
   auto s = OpSchema::all_tensor_sequence_types_ir12();
