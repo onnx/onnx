@@ -271,12 +271,14 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz)
-    set(ProtobufSHA1 da10aaa3bf779735a8a9acde1256a47ce5d148be)
+    # Temporarily use protobuf commit to work around MSVC ICE
+    # set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/archive/960e79087b332583c80537c949621108a85aa442.zip)
+    # set(ProtobufSHA1 da10aaa3bf779735a8a9acde1256a47ce5d148be)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
-      URL_HASH SHA1=${ProtobufSHA1}
+      # URL_HASH SHA1=${ProtobufSHA1}
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
