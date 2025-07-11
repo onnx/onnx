@@ -1343,12 +1343,46 @@ class OpSet_Onnx_ver23 {
 
 // Forward declarations for ai.onnx version 24
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Constant);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, ConstantOfShape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, DequantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Flatten);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Identity);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, If);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Loop);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Pad);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Reshape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Shape);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Size);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Squeeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Transpose);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Unsqueeze);
 
 // Iterate over schema from ai.onnx version 24
 class OpSet_Onnx_ver24 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Constant)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, ConstantOfShape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, DequantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Flatten)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Identity)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, If)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Loop)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Pad)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Reshape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Shape)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Size)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Squeeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Transpose)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Unsqueeze)>());
   }
 };
 
