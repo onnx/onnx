@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -214,6 +215,30 @@ class FunctionBuilder {
     opset->set_version(version);
     return *this;
   }
+
+  /**
+   * @brief Adds an inlined call to a graph as a sequence of nodes in the function.
+   *
+   * This method effectively inlines the logic from the given graph into the function
+   * being constructed. It:
+   * - Adds a Constant node for every initializer in the graph
+   * - Adds a copy of every node in the graph
+   * - Renames formal input parameters to match actual inputs
+   * - Renames formal output parameters to match actual outputs
+   * - Renames all other intermediate values with a unique prefix
+   * - Leaves references to undefined names (outer scope variables) unchanged
+   *
+   * @param outputs List of output variable names for the inlined call
+   * @param graph The graph to inline
+   * @param inputs List of input variable names for the inlined call
+   * @param prefix Prefix to add to intermediate variable names for uniqueness
+   * @return Reference to this FunctionBuilder for method chaining
+   */
+  FunctionBuilder& AddInlinedCall(
+      std::initializer_list<std::string_view> outputs,
+      const GraphProto& graph,
+      std::initializer_list<std::string_view> inputs,
+      std::string_view prefix);
 
  private:
   FunctionProto& funProto;
