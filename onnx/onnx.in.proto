@@ -692,7 +692,7 @@ message TensorProto {
   // - For 4-bit data types, each `int32_data` stores two elements.
   //
   // When this field is present, the data_type field MUST be
-  // INT32, INT16, INT8, INT4, UINT16, UINT8, UINT4, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ, FLOAT4E2M1
+  // INT32, INT16, INT8, INT4, UINT16, UINT8, UINT4, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ, FLOAT8E8M0, FLOAT4E2M1
   repeated int32 int32_data = 5 [packed = true];
 
   // For strings.
