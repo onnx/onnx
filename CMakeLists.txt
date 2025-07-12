@@ -436,6 +436,7 @@ if(MSVC)
                       /wd4267 # Conversion from 'size_t' to 'int',
                               # possible loss of data
                       /wd4141 # 'inline': used more than once
+                      /Zc:lambda # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076?sort=newest
   )
   # operands are different enum types
   add_compile_options(/wd5287)
