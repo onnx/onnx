@@ -437,7 +437,7 @@ if(MSVC)
             # possible loss of data
     /wd4141 # 'inline': used more than once
   )
-  target_compile_options(onnx_proto PRIVATE
+  add_compile_options(
     /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
     /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
   )
