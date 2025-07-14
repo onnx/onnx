@@ -117,6 +117,10 @@ if(MSVC)
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
   add_compile_options(/MP /utf-8 /nologo)
+  add_compile_options(
+    /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
+    /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
+  )
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
@@ -436,10 +440,6 @@ if(MSVC)
     /wd4267 # Conversion from 'size_t' to 'int',
             # possible loss of data
     /wd4141 # 'inline': used more than once
-  )
-  add_compile_options(
-    /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
-    /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
   )
 endif()
 
