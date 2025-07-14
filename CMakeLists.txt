@@ -428,19 +428,19 @@ target_include_directories(onnx_proto PUBLIC
 if(MSVC)
   # For disabling Protobuf related warnings
   target_compile_options(onnx_proto PUBLIC
-                      /wd4146 # unary minus operator applied to unsigned type,
-                              # result still unsigned
-                      /wd4244 # 'argument': conversion from 'google::
-                              # protobuf::uint64' to 'int', possible
-                              # loss of data
-                      /wd4267 # Conversion from 'size_t' to 'int',
-                              # possible loss of data
-                      /wd4141 # 'inline': used more than once
+    /wd4146 # unary minus operator applied to unsigned type,
+            # result still unsigned
+    /wd4244 # 'argument': conversion from 'google::
+            # protobuf::uint64' to 'int', possible
+            # loss of data
+    /wd4267 # Conversion from 'size_t' to 'int',
+            # possible loss of data
+    /wd4141 # 'inline': used more than once
   )
-  target_compile_options(onnx_proto PRIVATE /Zc:lambda)  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
-
-  # operands are different enum types
-  add_compile_options(/wd5287)
+  target_compile_options(onnx_proto PRIVATE
+    /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
+    /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
+  )
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
