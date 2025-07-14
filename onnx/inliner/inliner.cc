@@ -740,10 +740,9 @@ class Renamer::Impl : public InliningRenamer {
     std::string unique_name = MakeUnique(original_name);
 
     // Then bind the original name to the unique name
-    if (!rename_scopes.empty()) {
-      auto& current_scope = rename_scopes.back();
-      current_scope[original_name] = unique_name;
-    }
+    ONNX_ASSERT(!rename_scopes.empty());
+    auto& current_scope = rename_scopes.back();
+    current_scope[original_name] = unique_name;
 
     return unique_name;
   }
