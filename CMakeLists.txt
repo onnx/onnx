@@ -436,8 +436,9 @@ if(MSVC)
                       /wd4267 # Conversion from 'size_t' to 'int',
                               # possible loss of data
                       /wd4141 # 'inline': used more than once
-                      /Zc:lambda # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076?sort=newest
   )
+  target_compile_options(onnx_proto PRIVATE /Zc:lambda)  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
+
   # operands are different enum types
   add_compile_options(/wd5287)
 endif()
@@ -494,7 +495,6 @@ if(MSVC)
   if(ONNX_WERROR)
     target_compile_options(onnx PRIVATE "/WX")
   endif()
-  target_compile_options(onnx PRIVATE "/Zc:lambda")  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
 else()
   target_compile_options(onnx PRIVATE -Wall -Wextra)
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
