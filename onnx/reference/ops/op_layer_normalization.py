@@ -65,7 +65,7 @@ def _layer_normalization(
 
 
 class LayerNormalization(OpRun):
-    def _run(self, X, Scale, B=None, axis=None, epsilon=None, stash_type=None):  # type: ignore
+    def _run(self, X, Scale, B=None, axis=None, epsilon=None, stash_type=None):
         if stash_type != 1:
             raise NotImplementedError(
                 f"LayerNormalization not implemented for stash_type={stash_type} != 1."

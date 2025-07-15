@@ -9,7 +9,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class LinearRegressor(OpRunAiOnnxMl):
-    def _run(  # type: ignore
+    def _run(
         self, x, coefficients=None, intercepts=None, targets=1, post_transform=None
     ):
         coefficients = np.array(coefficients).astype(x.dtype)

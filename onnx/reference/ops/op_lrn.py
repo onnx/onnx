@@ -11,7 +11,7 @@ from onnx.reference.op_run import OpRun
 
 
 class LRN(OpRun):
-    def _run(self, x, alpha=None, beta=None, bias=None, size=None):  # type: ignore
+    def _run(self, x, alpha=None, beta=None, bias=None, size=None):
         if len(x.shape) != 4:
             raise RuntimeError(
                 f"LRN only applies on 4D tensors but shape is {x.shape!r}."
