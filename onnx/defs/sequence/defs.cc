@@ -284,9 +284,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "I",
             OpSchema::Optional)
         .Output(0, "output_sequence", "One or more outputs forming a sequence of tensors after splitting", "S")
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input types to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input types to all tensor types.")
         .TypeConstraint("I", {"tensor(int32)", "tensor(int64)"}, "Constrain split size to integral tensor.")
-        .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain output types to all tensor types.")
+        .TypeConstraint("S", OpSchema::all_tensor_sequence_types_ir4(), "Constrain output types to all tensor types.")
         .Attr(
             "axis",
             "Which axis to split on. "

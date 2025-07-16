@@ -1420,7 +1420,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input and output types to numeric tensors.")
+        .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input and output types to numeric tensors.")
         .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
         .Attr(
             "axis",
