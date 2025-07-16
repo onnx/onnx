@@ -175,7 +175,7 @@ class OpSchema final {
     NonDifferentiable = 2
   };
 
-  // Formal parameter represenation, including input/output name, typeStr,
+  // Formal parameter representation, including input/output name, typeStr,
   // description, and type constraints.
   class FormalParameter final {
    public:
@@ -264,7 +264,7 @@ class OpSchema final {
     // It should contain at least one element if this formal parameter is good.
     DataTypeSet type_set_;
 
-    // The <parameter type> string specified when registring an op.
+    // The <parameter type> string specified when registering an op.
     // It could be a supported data type or a type constraint key, which
     // maps to a set of supported data types.
     std::string type_str_;
@@ -593,6 +593,8 @@ class OpSchema final {
 
   static const std::vector<std::string>& numeric_types_for_math_reduction();
 
+  static const std::vector<std::string>& all_numeric_types_ir12();
+
   static const std::vector<std::string>& all_numeric_types_ir11();
 
   static const std::vector<std::string>& all_numeric_types_ir10();
@@ -631,6 +633,10 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_non_complex_tensor_types_ir11();
 
+  static const std::vector<std::string>& all_tensor_types_ir12();
+
+  static const std::vector<std::string>& all_non_complex_tensor_types_ir12();
+
   static const std::vector<std::string>& all_tensor_sequence_types();
 
   static const std::vector<std::string>& all_tensor_sequence_types_ir4();
@@ -640,6 +646,8 @@ class OpSchema final {
   static const std::vector<std::string>& all_tensor_sequence_types_ir10();
 
   static const std::vector<std::string>& all_tensor_sequence_types_ir11();
+
+  static const std::vector<std::string>& all_tensor_sequence_types_ir12();
 
   static const std::vector<std::string>& all_optional_types();
 
@@ -651,8 +659,10 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_optional_types_ir11();
 
+  static const std::vector<std::string>& all_optional_types_ir12();
+
   // Calls the passed function with `this` as an argument. Useful for
-  // adding docs for temlated/macro ops.
+  // adding docs for templated/macro ops.
   OpSchema& FillUsing(const std::function<void(OpSchema&)>& populator);
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
@@ -747,7 +757,7 @@ class OpSchema final {
   // with a newer since_version_, reflecting the opset version at the time of change.
   // For a function op, operators used to define its function body may change
   // while there is no change to the function op definition itself.
-  // When this happens, mutiple function bodies are provided, each for a specific opset version.
+  // When this happens, multiple function bodies are provided, each for a specific opset version.
   //
   // Take LogSoftmax for example. Its latest opset version is 13.
   // In LogSoftmax's function body, ReduceMax (with since_version_ 1, 11, 12, 18) is used.
@@ -756,7 +766,7 @@ class OpSchema final {
   // When the same model but opset_import version 18 is loaded, function body
   // with opset_version 18 is used for inlining.
   // Clearly function body for opset_import version 13 will not work
-  // in a model with opset_import version 18 because the function body make worng use of ReduceMax(18).
+  // in a model with opset_import version 18 because the function body make wrong use of ReduceMax(18).
   // Inside GetFunction we ensure that ops being used to construct a function body do not endure such
   // issue.
   const FunctionProto* GetFunction(
@@ -868,6 +878,7 @@ class ISchemaRegistry {
   virtual ~ISchemaRegistry() = default;
 
   virtual const OpSchema*
+  // NOLINTNEXTLINE(google-default-arguments)
   GetSchema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
@@ -884,17 +895,17 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 23);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 24);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
-      // versining is not meaningful and that domain should have only one
+      // versioning is not meaningful and that domain should have only one
       // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 22;
+      last_release_version_map_[ONNX_DOMAIN] = 23;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
@@ -1156,8 +1167,9 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     return nullptr;
   }
 
-  static OpSchemaRegistry* Instance();
+  ONNX_API static OpSchemaRegistry* Instance();
 
+  // NOLINTNEXTLINE(google-default-arguments)
   const OpSchema* GetSchema(
       const std::string& key,
       const int maxInclusiveVersion,
@@ -1255,26 +1267,11 @@ OpSchema GetOpSchema();
 #define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
 
-// Defines specialization of GetOpSchema for a class whose name is determined
-// based on a convention using name, domain, and version.  Operator schema are
-// normally included in operator sets and registered in OpSchemaRegistry::map().
-// In this case, callers should set dbg_included_in_static_opset to true.  This
-// assists with runtime validation in DEBUG builds ensuring the intended set
-// of operator schema is registered.
-#define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
-  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
-  template <>                                                                                           \
-  OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {                      \
-    return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
-  }                                                                                                     \
-  static size_t dbg_count_check_##name##_##domain##_ver##ver [[maybe_unused]] =                         \
-      (dbg_included_in_static_opset) ? ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() : 0;
 #ifdef NDEBUG
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0
+#define ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(name, domain, ver, dbg_included_in_static_opset) \
+  static size_t dbg_count_check_##name##_##domain##_ver##ver [[maybe_unused]] = 0
 #else
-#define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().IncrementCount()
-#define ONNX_DBG_GET_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().GetCount()
-
 class DbgOperatorSetTracker {
  public:
   static DbgOperatorSetTracker& Instance();
@@ -1290,6 +1287,29 @@ class DbgOperatorSetTracker {
  private:
   size_t count_ = 0;
 };
+#define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().IncrementCount()
+#define ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(name, domain, ver, dbg_included_in_static_opset) \
+  static size_t dbg_count_check_##name##_##domain##_ver##ver [[maybe_unused]] =                  \
+      (dbg_included_in_static_opset) ? ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() : 0;
+#endif
+
+// Defines specialization of GetOpSchema for a class whose name is determined
+// based on a convention using name, domain, and version.  Operator schema are
+// normally included in operator sets and registered in OpSchemaRegistry::map().
+// In this case, callers should set dbg_included_in_static_opset to true.  This
+// assists with runtime validation in DEBUG builds ensuring the intended set
+// of operator schema is registered.
+
+#define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
+  class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
+  template <>                                                                                           \
+  OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {                      \
+    return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
+  }                                                                                                     \
+  ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(domain, ver, name, dbg_included_in_static_opset)
+#ifndef NDEBUG
+#define ONNX_DBG_GET_COUNT_IN_OPSETS() DbgOperatorSetTracker::Instance().GetCount()
+
 #endif
 
 // Naming convention for operator schema classes
@@ -1302,11 +1322,7 @@ class DbgOperatorSetTracker {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
-#ifdef __GNUC__
-#define ONNX_UNUSED __attribute__((__unused__))
-#else
-#define ONNX_UNUSED
-#endif
+#define ONNX_UNUSED [[maybe_unused]]
 
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)

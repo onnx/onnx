@@ -38,15 +38,15 @@ conda install -c conda-forge onnx
 
 ## Build ONNX from Source
 
-Before building from source uninstall any existing versions of ONNX `pip uninstall onnx`.
+Before building from source uninstall any existing versions of ONNX via `pip uninstall onnx`.
 
 C++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
 
-If you don't have Protobuf installed, ONNX will internally download and build Protobuf for ONNX build.
+Protobuf is required for ONNX. If you don't have Protobuf installed, ONNX will internally download and build Protobuf for ONNX build.
 
 Or, you can manually install [Protobuf C/C++ libraries and tools](https://github.com/protocolbuffers/protobuf) with specified version before proceeding forward. Then depending on how you installed Protobuf, you need to set environment variable CMAKE_ARGS to "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON" or "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF". For example, you may need to run the following command:
 
-Linux:
+Linux or Mac:
 
 ```sh
 export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
@@ -58,22 +58,59 @@ Windows:
 set CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 ```
 
-The ON/OFF depends on what kind of Protobuf library you have. Shared libraries are files ending with \*.dll/\*.so/\*.dylib. Static libraries are files ending with \*.a/\*.lib. This option depends on how you get your Protobuf library and how it was built. And it is default OFF. You don't need to run the commands above if you'd prefer to use a static Protobuf library.
+The ON/OFF depends on what kind of Protobuf library you have. Shared libraries are files ending with \*.dll/\*.so/\*.dylib. Static libraries are files ending with \*.a/\*.lib. This option depends on how you get your Protobuf library and how it was built. Because its default value is OFF, you don't need to run the commands above if you'd prefer to use a static Protobuf library.
 
 ### Windows
 
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building Protobuf locally also lets you control the version of Protobuf. The tested and recommended version is 3.21.12.
+```
+git clone https://github.com/onnx/onnx.git
+cd onnx
+git submodule update --init --recursive
+# prefer lite proto
+set CMAKE_ARGS='-DONNX_USE_LITE_PROTO=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON'
+pip install -e . -v
+```
 
-The instructions in this README assume you are using Visual Studio. It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building Protobuf as well as ONNX.
+### Conda-forge-based development environment
 
-You can get Protobuf by running the following commands:
+A conda-forge-based development environment is also provided.
+After installing the [pixi package manager](https://prefix.dev/), users may directly execute any of the following commands. Upon doing so pixi will install the required dependencies automatically in isolated environments.
+Running
+
+```sh
+pixi run install
+```
+
+builds and installs the `onnx` package into the default environment.
+After the installation has completed one can run the gtest and pytest suites via the pixi-tasks of the same name:
+
+```sh
+pixi run gtest
+```
+
+and
+
+```sh
+pixi run pytest
+```
+
+Further task for re-generating the operator documentation (`pixi run gen-docs`), setting-up lintrunner (`pixi run lintrunner-init`), and executing lintrunner (`pixi run lintrunner-run`) are also available.
+
+
+#### Old instructions
+
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building Protobuf locally also lets you control the version of Protobuf. The tested and recommended version is 5.29.2.
+
+The instructions in this README assume you are using Visual Studio 2019. It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building Protobuf as well as ONNX.
+
+You can build Protobuf from source by running the following commands:
 
 ```bat
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
 git checkout v5.29.2
-cd cmake
-cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF .
+git submodule update --init --recursive
+cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF
 cmake --build . --config Release --target install
 ```
 
@@ -104,16 +141,16 @@ pip install -e . -v
 
 ### Linux
 
-First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 3.20.2. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
+First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 4.25.1. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
-Ubuntu 20.04 (and newer) users may choose to install Protobuf via
+Ubuntu 20.04 (and newer) users may choose to install Protobuf (which is usually lower than 4.25.1) via
 
 ```sh
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
 ```
 In this case, ONNX is able to detect and use the system Profobuf. Users of other Linux distributions can use their system package manager to install Profobuf libraries similarly.
 
-A more general way is to build and install it from source. See the instructions below for more details.
+A better way is to build and install the required Protobuf version from source. See the instructions below for more details.
 
 <details>
   <summary> Installing Protobuf from source </summary>

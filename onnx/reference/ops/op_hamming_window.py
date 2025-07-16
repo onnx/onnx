@@ -15,7 +15,7 @@ class HammingWindow(_CommonWindow):
     `alpha=0.54, beta=0.46`
     """
 
-    def _run(self, size, output_datatype=None, periodic=None):  # type: ignore
+    def _run(self, size, output_datatype=None, periodic=None):
         ni, N_1 = self._begin(size, periodic, output_datatype)
         alpha = 25.0 / 46.0
         beta = 1 - alpha

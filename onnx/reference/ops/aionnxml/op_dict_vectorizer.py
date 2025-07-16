@@ -9,7 +9,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class DictVectorizer(OpRunAiOnnxMl):
-    def _run(self, x, int64_vocabulary=None, string_vocabulary=None):  # type: ignore
+    def _run(self, x, int64_vocabulary=None, string_vocabulary=None):
         if isinstance(x, (np.ndarray, list)):
             if int64_vocabulary is None and string_vocabulary is None:
                 raise ValueError(
@@ -33,7 +33,7 @@ class DictVectorizer(OpRunAiOnnxMl):
             rows = np.array(rows_list)
             cols = np.array(cols_list)
 
-            res = np.zeros((len(x), len(dict_labels)), dtype=values.dtype)  # type: ignore
+            res = np.zeros((len(x), len(dict_labels)), dtype=values.dtype)
             for r, c, v in zip(rows, cols, values):
                 res[r, c] = v
             return (res,)

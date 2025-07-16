@@ -36,7 +36,7 @@ class Reshape_5_4 final : public Adapter {
         std::string raw_data = node_ptr->t(kvalue).raw();
         ONNX_ASSERTM(
             !raw_data.empty() && raw_data.size() % 8 == 0,
-            "Raw Data must be non-empty and size must be a multiple of 8");
+            "Raw Data must be non-empty and size must be a multiple of 8")
         int64_t* raw = reinterpret_cast<int64_t*>(raw_data.data());
         node->is_(kshape, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
       } else {
@@ -60,7 +60,7 @@ class Reshape_5_4 final : public Adapter {
         }
       }
     }
-    ONNX_ASSERTM(node->hasAttribute(kshape), "No initializer or constant input to Reshape node found");
+    ONNX_ASSERTM(node->hasAttribute(kshape), "No initializer or constant input to Reshape node found")
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {

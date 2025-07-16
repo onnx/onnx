@@ -71,7 +71,7 @@ except (OSError, subprocess.CalledProcessError):
 with open(os.path.join(TOP_DIR, "VERSION_NUMBER"), encoding="utf-8") as version_file:
     _version = version_file.read().strip()
     if ONNX_PREVIEW_BUILD:
-        # Create the dev build for weekly releases / dev build
+        # Create the preview build for weekly releases
         todays_date = datetime.date.today().strftime("%Y%m%d")
         _version += ".dev" + todays_date
     VERSION_INFO = {"version": _version, "git_version": _git_version}
@@ -91,10 +91,6 @@ def cd(path):
         yield
     finally:
         os.chdir(orig_path)
-
-
-def get_ext_suffix():
-    return sysconfig.get_config_var("EXT_SUFFIX")
 
 
 def get_python_execute():
@@ -177,7 +173,6 @@ class CmakeBuild(setuptools.Command):
                 f"-DPython3_EXECUTABLE={get_python_execute()}",
                 "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
-                f"-DPY_EXT_SUFFIX={get_ext_suffix() or ''}",
             ]
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
@@ -213,10 +208,10 @@ class CmakeBuild(setuptools.Command):
                 extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
                 # prevent crossfire with downstream scripts
                 del os.environ["CMAKE_ARGS"]
-                logging.info("Extra cmake args: %s", extra_cmake_args)
+                logging.info("Extra cmake args: %s", extra_cmake_args)  # noqa: LOG015
                 cmake_args.extend(extra_cmake_args)
             cmake_args.append(TOP_DIR)
-            logging.info("Using cmake args: %s", cmake_args)
+            logging.info("Using cmake args: %s", cmake_args)  # noqa: LOG015
             if "-DONNX_DISABLE_EXCEPTIONS=ON" in cmake_args:
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."

@@ -11,15 +11,15 @@ from onnx.reference.op_run import OpRun
 class MaxUnpool(OpRun):
     def _run(
         self, X, indices, output_shape=None, kernel_shape=None, pads=None, strides=None
-    ):  # type: ignore
+    ):
         pooling_dims = len(X.shape) - 2
         if pooling_dims > 3:
             raise NotImplementedError(
                 f"Unsupported pooling size {pooling_dims} for operator MaxUnpool."
             )
-        kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
-        pads = pads or self.pads  # type: ignore
-        strides = strides or self.strides  # type: ignore
+        kernel_shape = kernel_shape or self.kernel_shape
+        pads = pads or self.pads
+        strides = strides or self.strides
 
         if strides is None:
             strides = [1 for d in kernel_shape]

@@ -5,12 +5,15 @@ from __future__ import annotations
 
 import contextlib
 import unittest
-from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import parameterized
 
 import onnx
 from onnx import defs
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class TestSchema(unittest.TestCase):
@@ -111,9 +114,9 @@ class TestOpSchema(unittest.TestCase):
     def test_name(self):
         # Test that the name parameter is required and is a string
         with self.assertRaises(TypeError):
-            defs.OpSchema(domain="test_domain", since_version=1)  # type: ignore
+            defs.OpSchema(domain="test_domain", since_version=1)
         with self.assertRaises(TypeError):
-            defs.OpSchema(123, "test_domain", 1)  # type: ignore
+            defs.OpSchema(123, "test_domain", 1)
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertEqual(schema.name, "test_op")
@@ -121,9 +124,9 @@ class TestOpSchema(unittest.TestCase):
     def test_domain(self):
         # Test that the domain parameter is required and is a string
         with self.assertRaises(TypeError):
-            defs.OpSchema(name="test_op", since_version=1)  # type: ignore
+            defs.OpSchema(name="test_op", since_version=1)
         with self.assertRaises(TypeError):
-            defs.OpSchema("test_op", 123, 1)  # type: ignore
+            defs.OpSchema("test_op", 123, 1)
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertEqual(schema.domain, "test_domain")
@@ -131,7 +134,7 @@ class TestOpSchema(unittest.TestCase):
     def test_since_version(self):
         # Test that the since_version parameter is required and is an integer
         with self.assertRaises(TypeError):
-            defs.OpSchema("test_op", "test_domain")  # type: ignore
+            defs.OpSchema("test_op", "test_domain")
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertEqual(schema.since_version, 1)

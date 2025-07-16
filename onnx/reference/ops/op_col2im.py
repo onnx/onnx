@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 
 
-def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strides):  # type: ignore
+def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strides):
     output_height, output_width = output_shape
     kernel_height, kernel_width = kernel_shape
     dilation_height, dilation_width = dilations
@@ -64,7 +64,7 @@ def _col2im_shape_check_2d(X, output_shape, kernel_shape, dilations, pads, strid
 
 def _col2im_naive_implementation_2d(
     res, image_shape, kernel_shape, dilations, pads, strides
-):  # type: ignore
+):
     # source: https://github.com/pytorch/pytorch/blob/master/aten/src/ATen/native/im2col.h
 
     n_dims = len(pads) // 2
@@ -107,7 +107,7 @@ def _col2im_naive_implementation_2d(
     return data_im.reshape(image_shape)
 
 
-def _col2im_shape_check(X, output_shape, kernel_shape, dilations, pads, strides):  # type: ignore
+def _col2im_shape_check(X, output_shape, kernel_shape, dilations, pads, strides):
     n_input_plane = X.shape[0]
 
     kernel_size = np.prod(kernel_shape)
@@ -146,7 +146,7 @@ def _col2im_shape_check(X, output_shape, kernel_shape, dilations, pads, strides)
 
 def col2im_naive_implementation(
     data, image_shape, kernel_shape, dilations, pads, strides
-):  # type: ignore
+):
     """Naive implementation for `col2im`."""
     n_dims = len(pads) // 2
     new_pads = np.array([(pads[i], pads[i + n_dims]) for i in range(n_dims)])
@@ -187,7 +187,7 @@ def col2im_naive_implementation(
 class Col2Im(OpRun):
     def _run(
         self, data, image_shape, block_shape, dilations=None, pads=None, strides=None
-    ):  # type: ignore
+    ):
         if dilations is None:
             dilations = [1 for s in image_shape]
         if pads is None:
@@ -197,7 +197,7 @@ class Col2Im(OpRun):
 
         bl = np.prod(block_shape)
         C = data.shape[1] // bl
-        data = data.reshape(data.shape[:1] + (C,) + (bl,) + data.shape[2:])
+        data = data.reshape((*data.shape[:1], C, bl, *data.shape[2:]))
 
         ks = tuple(block_shape)
         res = None
@@ -210,4 +210,4 @@ class Col2Im(OpRun):
                     new_shape = data.shape[:2] + out.shape
                     res = np.empty(new_shape, dtype=data.dtype)
                 res[n, c, ...] = out
-        return (res,)  # type: ignore
+        return (res,)

@@ -9,8 +9,7 @@ import pathlib
 import tempfile
 import unittest
 import uuid
-from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import parameterized
@@ -33,6 +32,9 @@ from onnx.external_data_helper import (
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class TestLoadExternalDataBase(unittest.TestCase):
@@ -76,14 +78,14 @@ class TestLoadExternalDataBase(unittest.TestCase):
             inputs=[],
             outputs=["values"],
             value=self.create_external_data_tensor(
-                self.attribute_value,  # type: ignore[arg-type]
+                self.attribute_value,
                 "attribute_value",
             ),
         )
 
         initializers = [
             self.create_external_data_tensor(
-                self.initializer_value,  # type: ignore[arg-type]
+                self.initializer_value,
                 "input_value",
                 location,
             )
@@ -297,8 +299,8 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
     def create_test_model_proto(self) -> ModelProto:
         tensors = self.create_data_tensors(
             [
-                (self.attribute_value, "attribute_value"),  # type: ignore[list-item]
-                (self.initializer_value, "input_value"),  # type: ignore[list-item]
+                (self.attribute_value, "attribute_value"),
+                (self.initializer_value, "input_value"),
             ]
         )
 

@@ -7,10 +7,7 @@ import itertools
 import os
 import platform
 import unittest
-from collections.abc import Sequence
-from typing import Any
-
-import numpy
+from typing import TYPE_CHECKING, Any
 
 import onnx.backend.base
 import onnx.backend.test
@@ -19,6 +16,11 @@ import onnx.version_converter
 from onnx import ModelProto, NodeProto, TensorProto
 from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import numpy
 
 # The following just executes the fake backend through the backend test
 # infrastructure. Since we don't have full reference implementation of all ops
@@ -82,7 +84,7 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
+        return d.type == DeviceType.CPU
 
 
 test_coverage_safelist = {

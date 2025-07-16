@@ -148,8 +148,8 @@ of each object of the graph.
             node.name, node.op_type, node.input, node.output))
 ```
 
-The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` gives the
-corresponding type with numpy.
+The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` converts
+the integer to its corresponding numpy data type (float32 for 1).
 
 ```{eval-rst}
 .. exec_code::
@@ -378,7 +378,7 @@ how the initializers look like.
 The type is defined as integer as well with the same meaning.
 In this second example, there is only one input left.
 Input `A` and `B` were removed. They could be kept. In that case,
-they are optional: every initiliazer sharing the same name as input
+they are optional: every initializer sharing the same name as input
 is considered as a default value. It replaces the input if this one
 is not given.
 

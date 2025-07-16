@@ -1,2 +1,1 @@
-google-re2; python_version<"3.13"
 Pillow
