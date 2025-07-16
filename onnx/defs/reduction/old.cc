@@ -463,4 +463,31 @@ ONNX_OPERATOR_SET_SCHEMA(
     18,
     OpSchema().FillUsing(ReduceFunctionOp("sum square", EMPTY_ZERO, reduce_sum_square_func_body_opset18)));
 
+static const char* reduce_log_sum_func_body_opset18 = R"ONNX(
+  {
+    reduced_sum = ReduceSum<keepdims: int = @keepdims>(data, axes)
+    reduced = Log (reduced_sum)
+  }
+  )ONNX";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSum,
+    18,
+    OpSchema().FillUsing(ReduceFunctionOp("log sum", EMPTY_MINUS_INF, reduce_log_sum_func_body_opset18)));
+
+static const char* reduce_log_sum_exp_func_body_opset18 = R"ONNX(
+  {
+    data_double = Cast<to = 11>(data)
+    data_exp = Exp (data_double)
+    reduced_sum = ReduceSum<keepdims: int = @keepdims>(data_exp, axes)
+    reduced_double = Log (reduced_sum)
+    reduced = CastLike(reduced_double, data)
+  }
+  )ONNX";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSumExp,
+    18,
+    OpSchema().FillUsing(ReduceFunctionOp("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body_opset18)));
+
 } // namespace ONNX_NAMESPACE
