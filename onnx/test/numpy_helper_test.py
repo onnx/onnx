@@ -166,6 +166,7 @@ class TestNumpyHelper(unittest.TestCase):
             ("FLOAT8E4M3FNUZ", onnx.TensorProto.FLOAT8E4M3FNUZ),
             ("FLOAT8E5M2", onnx.TensorProto.FLOAT8E5M2),
             ("FLOAT8E5M2FNUZ", onnx.TensorProto.FLOAT8E5M2FNUZ),
+            ("FLOAT8E8M0", onnx.TensorProto.FLOAT8E8M0),
             ("UINT4", onnx.TensorProto.UINT4),
             ("INT4", onnx.TensorProto.INT4),
             ("FLOAT4E2M1", onnx.TensorProto.FLOAT4E2M1),
