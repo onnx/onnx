@@ -442,6 +442,8 @@ if(MSVC)
   )
 endif()
 
+# ONNX object library contains object files of
+# both Protobuf generated sources and our C++ sources
 add_library(onnx_object OBJECT ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
 set_target_properties(onnx_object PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(onnx_object PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
