@@ -439,7 +439,7 @@ TEST(FunctionBuilder, AddInlinedCallBasic) {
   // Create a simple graph using parser for better readability
   const char* graph_text = R"ONNX(
 test_graph (float x) => (float y)
-<float const_val = 2.0>
+<float const_val = {2.0}>
 {
     y = Add(x, const_val)
 }
