@@ -1752,11 +1752,11 @@ If start axis is omitted, the slice starts from axis 0.
 The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
 If the end axis is omitted, the axes upto the last one will be included.
 Negative axes indicate counting back from the last axis.
-Note that axes will be clamped to the range [0, r-1], where r is the
+Note that axes will be clamped to the range [0, r], where r is the
 rank of the input tensor if they are out-of-range (after adding r in the case of
 negative axis). Thus, specifying any end value > r is equivalent to specifying an end
 value of r, and specifying any start value < -r is equivalent to specifying a start
-value of 0.
+value of 0. If start > end, the result will be an empty shape.
 
 Examples:
 
@@ -7553,11 +7553,11 @@ If start axis is omitted, the slice starts from axis 0.
 The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
 If the end axis is omitted, the axes upto the last one will be included.
 Negative axes indicate counting back from the last axis.
-Note that axes will be clamped to the range [0, r-1], where r is the
+Note that axes will be clamped to the range [0, r], where r is the
 rank of the input tensor if they are out-of-range (after adding r in the case of
 negative axis). Thus, specifying any end value > r is equivalent to specifying an end
 value of r, and specifying any start value < -r is equivalent to specifying a start
-value of 0.
+value of 0. If start > end, the result will be an empty shape.
 
 Examples:
 
@@ -7656,11 +7656,11 @@ If start axis is omitted, the slice starts from axis 0.
 The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
 If the end axis is omitted, the axes upto the last one will be included.
 Negative axes indicate counting back from the last axis.
-Note that axes will be clamped to the range [0, r-1], where r is the
+Note that axes will be clamped to the range [0, r], where r is the
 rank of the input tensor if they are out-of-range (after adding r in the case of
 negative axis). Thus, specifying any end value > r is equivalent to specifying an end
 value of r, and specifying any start value < -r is equivalent to specifying a start
-value of 0.
+value of 0. If start > end, the result will be an empty shape.
 
 Examples:
 
