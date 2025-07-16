@@ -3854,7 +3854,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("YCast = Cast (YExtraDim)", "to", T1)
               .Add("YPreReshape = Squeeze(YCast)");
           // Reshape Y to 3D if input is a 3D tensor
-          if (q_num_heads != 0 && kv_num_heads != 0) {
+          if (is_3d_input) {
             builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)")
                 .Add("YNewShape = Concat <axis = 0> (Zero1D, Zero1D, NegOne)")
                 .Add("Y = Reshape(YTranspose, YNewShape)");
