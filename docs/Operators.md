@@ -5588,8 +5588,8 @@ expect(
   | 0                 | 0        | 0        | 0        | 0        |
   | -0                | -0       | 0        | -0       | 0        |
   | NaN               | NaN      | NaN      | NaN      | NaN      |
-  | Inf               | FLT_MAX  | NaN      | FLT_MAX  | NaN      |
-  | -Inf              | -FLT_MAX | NaN      | -FLT_MAX | NaN      |
+  | Inf               | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
+  | -Inf              | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
   | \[x\] > FLT_MAX   | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
   | \[x\] \< -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
   | else              | RNE      | RNE      | RNE      | RNE      |
