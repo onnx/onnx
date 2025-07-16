@@ -3697,12 +3697,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("KReshaped = Transpose <perm = [0, 2, 1, 3]> (KIntermediate)")
                 .Add("VReshaped = Transpose <perm = [0, 2, 1, 3]> (VIntermediate)");
           } else {
-            // For 4D inputs: Direct reshape to [batch_size, num_heads, seq_length, head_size]
-            builder.Add("QNewShape = Concat <axis = 0> (BatchSize, QNumHeadsAttr, QSeqLen, NegOne)")
-                .Add("KVNewShape = Concat <axis = 0> (BatchSize, KVNumHeadsAttr, KVSeqLen, NegOne)")
-                .Add("QReshaped = Reshape (Q, QNewShape)")
-                .Add("KReshaped = Reshape (K, KVNewShape)")
-                .Add("VReshaped = Reshape (V, KVNewShape)");
+            // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
+            builder.Add("QReshaped = Identity(Q)")
+                .Add("KReshaped = Identity(K)")
+                .Add("VReshaped = Identity(V)");
           }
 
           builder
