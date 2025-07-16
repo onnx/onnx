@@ -450,4 +450,17 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 13, OpSchema().FillUsing(ReduceOpGenerator("L
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 18, OpSchema().FillUsing(ReduceOpGenerator("max", EMPTY_MIN, true, true)));
 ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 18, OpSchema().FillUsing(ReduceOpGenerator("min", EMPTY_MAX, true, true)));
+
+static const char* reduce_sum_square_func_body_opset18 = R"ONNX(
+  {
+    data_square = Mul(data, data)
+    reduced = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
+  }
+  )ONNX";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceSumSquare,
+    18,
+    OpSchema().FillUsing(ReduceFunctionOp("sum square", EMPTY_ZERO, reduce_sum_square_func_body_opset18)));
+
 } // namespace ONNX_NAMESPACE

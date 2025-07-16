@@ -24,21 +24,21 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceOpDynamicAxes("sum", EMPTY_ZERO)));
 
-static const char* reduce_sum_square_func_body = R"ONNX(
+ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 18, OpSchema().FillUsing(ReduceOpDynamicAxes("mean", EMPTY_UNDEFINED)));
+
+ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 18, OpSchema().FillUsing(ReduceOpDynamicAxes("product", EMPTY_ONE)));
+
+static const char* reduce_sum_square_func_body_opset24 = R"ONNX(
   {
     data_square = Mul(data, data)
-    reduced = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
+    reduced = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_square, axes)
   }
   )ONNX";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSumSquare,
-    18,
-    OpSchema().FillUsing(ReduceFunctionOp("sum square", EMPTY_ZERO, reduce_sum_square_func_body)));
-
-ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 18, OpSchema().FillUsing(ReduceOpDynamicAxes("mean", EMPTY_UNDEFINED)));
-
-ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 18, OpSchema().FillUsing(ReduceOpDynamicAxes("product", EMPTY_ONE)));
+    24,
+    OpSchema().FillUsing(ReduceFunctionOp("sum square", EMPTY_ZERO, reduce_sum_square_func_body_opset24)));
 
 static const char* reduce_log_sum_func_body = R"ONNX(
   {
