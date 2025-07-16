@@ -1378,7 +1378,7 @@ a tiebreaker. That is, the element with the lower index will appear first.
 
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    11,
+    24,
     OpSchema()
         .SetDoc(TopK_ver11_doc)
         .Input(

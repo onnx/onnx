@@ -273,7 +273,7 @@ in 'split' must be equal to the dimension size of input tensor on 'axis'.
 
 ONNX_OPERATOR_SET_SCHEMA(
     SplitToSequence,
-    11,
+    24,
     OpSchema()
         .Input(0, "input", "The tensor to split", "T")
         .Input(
