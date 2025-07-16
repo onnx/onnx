@@ -3741,24 +3741,26 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("Epsilon = Cast (FloatEpsilon)", "to", stash_type)
               .Add("XU = Cast (X)", "to", stash_type);
 
-          // Handle axis conversion
-          builder.Add("Rank = Shape <start = 0, end = 0> (Shape(X))")
+          // Handle axis conversion and calculate the axes for reduction
+          builder.Add("Rank = Size (Shape(X))")
               .Const1D("AxisValue", axis)
               .Const1D("Zero", (int64_t)0)
               .Add("AxisIsNegative = Less(AxisValue, Zero)")
               .Add("AdjustedAxis = Add(AxisValue, Rank)")
               .Add("FinalAxis = Where(AxisIsNegative, AdjustedAxis, AxisValue)")
-              .Add("AxesRange = Range(FinalAxis, Rank, Constant<value = tensor(int64): 1>())");
+              .Add("One = Constant<value = tensor(int64): 1>()")
+              .Add("AxesRange = Range(FinalAxis, Rank, One)");
 
           // Calculate mean and variance
           builder.Add("Mean = ReduceMean (XU, AxesRange)")
-              .Add("MeanBroadcasted = Identity(Mean)")
-              .Add("Diff = Sub (XU, MeanBroadcasted)")
+              .Add("Diff = Sub (XU, Mean)")
               .Add("DiffSquared = Mul (Diff, Diff)")
               .Add("Variance = ReduceMean (DiffSquared, AxesRange)")
               .Add("VarEpsilon = Add (Variance, Epsilon)")
               .Add("StdDev = Sqrt (VarEpsilon)")
-              .Add("InvStdDev = Div (Constant<value = tensor(float): 1.0>(), StdDev)")
+              .Add("OneConst = Constant<value = tensor(float): 1.0>()")
+              .Add("OneConstCasted = Cast(OneConst)", "to", stash_type)
+              .Add("InvStdDev = Div (OneConstCasted, StdDev)")
               .Add("Normalized = Mul (Diff, InvStdDev)");
 
           // Handle optional scale and bias
@@ -3784,11 +3786,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("Y = Cast (Normalized)", "to", in_type);
           }
 
-          // Optional outputs
+          // Optional outputs for Mean and InvStdDev
           if (schema.outputs().size() > 1) {
-            builder.Add("MeanOut = Cast (Mean)", "to", stash_type);
+            builder.Add("Mean = Cast (Mean)", "to", stash_type);
             if (schema.outputs().size() > 2) {
-              builder.Add("InvStdDevOut = Cast (InvStdDev)", "to", stash_type);
+              builder.Add("InvStdDev = Cast (InvStdDev)", "to", stash_type);
             }
           }
 
