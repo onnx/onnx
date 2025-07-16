@@ -63,9 +63,9 @@ the target mantissa width.
 | -0                | -0       | 0        | -0       | 0        |
 | NaN               | NaN      | NaN      | NaN      | NaN      |
 | Inf               | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
-| -Inf              | FLT_MIN  | FLT_MIN  | FLT_MIN  | FLT_MIN  |
+| -Inf              | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
 | \[x\] > FLT_MAX   | FLT_MAX  | FLT_MAX  | FLT_MAX  | FLT_MAX  |
-| \[x\] \< FLT_MIN  | FLT_MIN  | FLT_MIN  | FLT_MIN  | FLT_MIN  |
+| \[x\] \< -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX | -FLT_MAX |
 | else              | RNE      | RNE      | RNE      | RNE      |
 
 The behavior changes if the parameter 'saturate' is set to False.
