@@ -768,8 +768,8 @@ class Renamer::Impl {
   Impl(const std::string& prefix, const FunctionProto& function)
       : generator_(function), renamer_("__" + prefix, generator_) {}
 
-  std::string BindToUniqueName(const std::string& original_name) {
-    return renamer_.BindToUniqueName(original_name);
+  InliningRenamer& GetRenamer() {
+    return renamer_;
   }
 
   void BindName(const std::string& formal_name, const std::string& actual_name) {
@@ -798,7 +798,7 @@ void Renamer::RenameNode(NodeProto& node) {
 }
 
 std::string Renamer::BindToUniqueName(const std::string& original_name) {
-  return pImpl_->BindToUniqueName(original_name);
+  return pImpl_->GetRenamer().BindToUniqueName(original_name);
 }
 
 } // namespace inliner
