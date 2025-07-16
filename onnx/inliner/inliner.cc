@@ -726,8 +726,7 @@ void InlineSelectedFunctions(
 // Helper class to access InliningRenamer functionality
 class RenamerHelper : public InliningRenamer {
  public:
-  RenamerHelper(const std::string& suffix, NameGenerator& generator)
-      : InliningRenamer(suffix, generator) {}
+  RenamerHelper(const std::string& suffix, NameGenerator& generator) : InliningRenamer(suffix, generator) {}
 
   // Expose protected methods for delegation
   std::string CreateUniqueName(const std::string& name) {
@@ -756,8 +755,7 @@ class Renamer::Impl {
   RenamerHelper renamer_;
 
  public:
-  Impl(const std::string& prefix, const GraphProto& graph)
-      : generator_(graph), renamer_("__" + prefix, generator_) {}
+  Impl(const std::string& prefix, const GraphProto& graph) : generator_(graph), renamer_("__" + prefix, generator_) {}
 
   Impl(const std::string& prefix, const FunctionProto& function)
       : generator_(function), renamer_("__" + prefix, generator_) {}
