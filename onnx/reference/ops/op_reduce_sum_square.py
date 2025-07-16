@@ -20,7 +20,9 @@ class ReduceSumSquare_1(OpRunReduceNumpy):
 
 class ReduceSumSquare_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
-        if self.is_axes_empty(axes) and noop_with_empty_axes != 0:
+        if (
+            axes is None or (hasattr(axes, "shape") and axes.shape == (0,))
+        ) and noop_with_empty_axes != 0:
             return (data,)
 
         axes = self.handle_axes(axes)
