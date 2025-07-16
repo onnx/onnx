@@ -213,7 +213,6 @@ class InliningRenamer : public MutableVisitor {
   }
 
  private:
-
   // Replace given name with a unique version of the name, and cache the
   // renaming-binding in current scope.
   void Rename(std::string& name) {
