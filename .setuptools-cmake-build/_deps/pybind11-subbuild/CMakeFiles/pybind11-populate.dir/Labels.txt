@@ -1,0 +1,14 @@
+# Target labels
+ pybind11-populate
+# Source files and their labels
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/CMakeFiles/pybind11-populate
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/CMakeFiles/pybind11-populate.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/CMakeFiles/pybind11-populate-complete.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-build.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-configure.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-download.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-install.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-mkdir.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-patch.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-test.rule
+/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-update.rule

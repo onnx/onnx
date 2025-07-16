@@ -1,0 +1,13 @@
+--only-binary=:all:
+build~=1.0; python_version>="3.7"
+numpy~=1.20.0; python_version=="3.7" and platform_python_implementation=="PyPy"
+numpy~=1.23.0; python_version=="3.8" and platform_python_implementation=="PyPy"
+numpy~=1.25.0; python_version=="3.9" and platform_python_implementation=='PyPy'
+numpy~=1.21.5; platform_python_implementation!="PyPy" and python_version>="3.7" and python_version<"3.10"
+numpy~=1.22.2; platform_python_implementation!="PyPy" and python_version=="3.10"
+numpy~=1.26.0; platform_python_implementation!="PyPy" and python_version>="3.11" and python_version<"3.13"
+pytest~=7.0
+pytest-timeout
+scipy~=1.5.4; platform_python_implementation!="PyPy" and python_version<"3.10"
+scipy~=1.8.0; platform_python_implementation!="PyPy" and python_version=="3.10" and sys_platform!='win32'
+scipy~=1.11.1; platform_python_implementation!="PyPy" and python_version>="3.11" and python_version<"3.13" and sys_platform!='win32'

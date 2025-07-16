@@ -1,0 +1,60 @@
+# This is a format job. Pre-commit has a first-party GitHub action, so we use
+# that: https://github.com/pre-commit/action
+
+name: Format
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+    - master
+    - stable
+    - "v*"
+
+permissions:
+  contents: read
+
+env:
+  FORCE_COLOR: 3
+  # For cmake:
+  VERBOSE: 1
+
+jobs:
+  pre-commit:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+    - name: Add matchers
+      run: echo "::add-matcher::$GITHUB_WORKSPACE/.github/matchers/pylint.json"
+    - uses: pre-commit/action@v3.0.1
+      with:
+        # Slow hooks are marked with manual - slow is okay here, run them too
+        extra_args: --hook-stage manual --all-files
+
+  clang-tidy:
+    # When making changes here, please also review the "Clang-Tidy" section
+    # in .github/CONTRIBUTING.md and update as needed.
+    name: Clang-Tidy
+    runs-on: ubuntu-latest
+    container: silkeh/clang:18-bookworm
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install requirements
+      run: apt-get update && apt-get install -y git python3-dev python3-pytest
+
+    - name: Configure
+      run: >
+        cmake -S . -B build
+        -DCMAKE_CXX_CLANG_TIDY="$(which clang-tidy);--use-color;--warnings-as-errors=*"
+        -DDOWNLOAD_EIGEN=ON
+        -DDOWNLOAD_CATCH=ON
+        -DCMAKE_CXX_STANDARD=17
+
+    - name: Build
+      run: cmake --build build -j 2 -- --keep-going

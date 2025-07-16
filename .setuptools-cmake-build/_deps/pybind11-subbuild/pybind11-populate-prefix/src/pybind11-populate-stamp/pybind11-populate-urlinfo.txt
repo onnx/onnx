@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/download-pybind11-populate.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/verify-pybind11-populate.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/extract-pybind11-populate.cmake
+source_dir=/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-src
+work_dir=/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps
+url(s)=https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.tar.gz
+hash=SHA1=8c7e3e8fec829ced31a495dec281153511f33c63
+      no_extract=
+

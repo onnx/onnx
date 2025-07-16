@@ -1,0 +1,24 @@
+template <op_id id, op_type ot, typename L = undefined_t, typename R = undefined_t>
+    template <typename ThisT>
+        auto &this_ = static_cast<ThisT &>(*this);
+                if (load_impl<ThisT>(temp, false)) {
+        ssize_t nd = 0;
+        auto trivial = broadcast(buffers, nd, shape);
+        auto ndim = (size_t) nd;
+    int nd;
+    ssize_t ndim() const { return detail::array_proxy(m_ptr)->nd; }
+        using op = op_impl<id, ot, Base, L_type, R_type>;
+template <op_id id, op_type ot, typename L, typename R>
+    template <detail::op_id id, detail::op_type ot, typename L, typename R, typename... Extra>
+    class_ &def(const detail::op_<id, ot, L, R> &op, const Extra &...extra) {
+    class_ &def_cast(const detail::op_<id, ot, L, R> &op, const Extra &...extra) {
+@pytest.mark.parametrize("access", ["ro", "rw", "static_ro", "static_rw"])
+struct IntStruct {
+    explicit IntStruct(int v) : value(v){};
+    ~IntStruct() { value = -value; }
+    IntStruct(const IntStruct &) = default;
+    IntStruct &operator=(const IntStruct &) = default;
+    py::class_<IntStruct>(m, "IntStruct").def(py::init([](const int i) { return IntStruct(i); }));
+    py::implicitly_convertible<int, IntStruct>();
+    m.def("test", [](int expected, const IntStruct &in) {
+        [](int expected, const IntStruct &in) {

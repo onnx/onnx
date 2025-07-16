@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/CMakeFiles/pybind11-populate"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/CMakeFiles/pybind11-populate.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/CMakeFiles/pybind11-populate-complete.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-build.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-configure.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-install.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-patch.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-test.rule"
+		},
+		{
+			"file" : "/home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-subbuild/pybind11-populate-prefix/src/pybind11-populate-stamp/pybind11-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"pybind11-populate"
+		],
+		"name" : "pybind11-populate"
+	}
+}

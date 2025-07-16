@@ -1,0 +1,38 @@
+---
+# See all possible options and defaults with:
+# clang-format --style=llvm --dump-config
+BasedOnStyle: LLVM
+AccessModifierOffset: -4
+AllowShortLambdasOnASingleLine: true
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBinaryOperators: All
+BreakConstructorInitializers: BeforeColon
+ColumnLimit: 99
+CommentPragmas: 'NOLINT:.*|^ IWYU pragma:'
+IncludeBlocks: Regroup
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+Language: Cpp
+SpaceAfterCStyleCast: true
+Standard: Cpp11
+StatementMacros: ['PyObject_HEAD']
+TabWidth: 4
+IncludeCategories:
+  - Regex:           '<pybind11/.*'
+    Priority:        -1
+  - Regex:           'pybind11.h"$'
+    Priority:        1
+  - Regex:           '^".*/?detail/'
+    Priority:        1
+    SortPriority:    2
+  - Regex:           '^"'
+    Priority:        1
+    SortPriority:    3
+  - Regex:           '<[[:alnum:]._]+>'
+    Priority:        4
+  - Regex:           '.*'
+    Priority:        5
+...

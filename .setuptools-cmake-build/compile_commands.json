@@ -1,0 +1,338 @@
+[
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -o CMakeFiles/onnx_proto.dir/onnx/onnx-ml.pb.cc.o -c /home/runner/work/onnx/onnx/.setuptools-cmake-build/onnx/onnx-ml.pb.cc",
+  "file": "/home/runner/work/onnx/onnx/.setuptools-cmake-build/onnx/onnx-ml.pb.cc",
+  "output": "CMakeFiles/onnx_proto.dir/onnx/onnx-ml.pb.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -o CMakeFiles/onnx_proto.dir/onnx/onnx-operators-ml.pb.cc.o -c /home/runner/work/onnx/onnx/.setuptools-cmake-build/onnx/onnx-operators-ml.pb.cc",
+  "file": "/home/runner/work/onnx/onnx/.setuptools-cmake-build/onnx/onnx-operators-ml.pb.cc",
+  "output": "CMakeFiles/onnx_proto.dir/onnx/onnx-operators-ml.pb.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -o CMakeFiles/onnx_proto.dir/onnx/onnx-data.pb.cc.o -c /home/runner/work/onnx/onnx/.setuptools-cmake-build/onnx/onnx-data.pb.cc",
+  "file": "/home/runner/work/onnx/onnx/.setuptools-cmake-build/onnx/onnx-data.pb.cc",
+  "output": "CMakeFiles/onnx_proto.dir/onnx/onnx-data.pb.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/checker.cc.o -c /home/runner/work/onnx/onnx/onnx/checker.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/checker.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/checker.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/common/assertions.cc.o -c /home/runner/work/onnx/onnx/onnx/common/assertions.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/common/assertions.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/common/assertions.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/common/interned_strings.cc.o -c /home/runner/work/onnx/onnx/onnx/common/interned_strings.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/common/interned_strings.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/common/interned_strings.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/common/ir_pb_converter.cc.o -c /home/runner/work/onnx/onnx/onnx/common/ir_pb_converter.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/common/ir_pb_converter.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/common/ir_pb_converter.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/common/model_helpers.cc.o -c /home/runner/work/onnx/onnx/onnx/common/model_helpers.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/common/model_helpers.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/common/model_helpers.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/common/status.cc.o -c /home/runner/work/onnx/onnx/onnx/common/status.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/common/status.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/common/status.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/attr_proto_util.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/attr_proto_util.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/attr_proto_util.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/attr_proto_util.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/controlflow/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/controlflow/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/controlflow/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/controlflow/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/controlflow/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/controlflow/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/controlflow/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/controlflow/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/controlflow/utils.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/controlflow/utils.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/controlflow/utils.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/controlflow/utils.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/data_type_utils.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/data_type_utils.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/data_type_utils.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/data_type_utils.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/function.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/function.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/function.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/function.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/generator/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/generator/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/generator/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/generator/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/generator/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/generator/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/generator/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/generator/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/generator/utils.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/generator/utils.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/generator/utils.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/generator/utils.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/image/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/image/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/image/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/image/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/logical/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/logical/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/logical/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/logical/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/logical/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/logical/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/logical/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/logical/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/math/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/math/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/math/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/math/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/math/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/math/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/math/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/math/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/math/utils.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/math/utils.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/math/utils.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/math/utils.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/nn/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/nn/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/nn/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/nn/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/nn/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/nn/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/nn/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/nn/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/object_detection/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/object_detection/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/object_detection/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/object_detection/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/object_detection/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/object_detection/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/object_detection/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/object_detection/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/optional/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/optional/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/optional/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/optional/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/optional/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/optional/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/optional/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/optional/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/parser.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/parser.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/parser.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/parser.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/printer.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/printer.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/printer.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/printer.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/quantization/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/quantization/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/quantization/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/quantization/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/quantization/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/quantization/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/quantization/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/quantization/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/reduction/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/reduction/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/reduction/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/reduction/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/reduction/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/reduction/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/reduction/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/reduction/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/reduction/utils.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/reduction/utils.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/reduction/utils.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/reduction/utils.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/rnn/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/rnn/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/rnn/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/rnn/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/rnn/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/rnn/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/rnn/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/rnn/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/schema.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/schema.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/schema.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/schema.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/sequence/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/sequence/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/sequence/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/sequence/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/shape_inference.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/shape_inference.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/shape_inference.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/shape_inference.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/tensor/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/tensor/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/tensor/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/tensor/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/tensor/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/tensor/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/tensor/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/tensor/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/tensor/utils.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/tensor/utils.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/tensor/utils.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/tensor/utils.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/tensor_proto_util.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/tensor_proto_util.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/tensor_proto_util.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/tensor_proto_util.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/tensor_util.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/tensor_util.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/tensor_util.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/tensor_util.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/text/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/text/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/text/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/text/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/traditionalml/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/traditionalml/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/traditionalml/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/traditionalml/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/traditionalml/old.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/traditionalml/old.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/traditionalml/old.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/traditionalml/old.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/defs/training/defs.cc.o -c /home/runner/work/onnx/onnx/onnx/defs/training/defs.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/defs/training/defs.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/defs/training/defs.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/inliner/inliner.cc.o -c /home/runner/work/onnx/onnx/onnx/inliner/inliner.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/inliner/inliner.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/inliner/inliner.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/shape_inference/implementation.cc.o -c /home/runner/work/onnx/onnx/onnx/shape_inference/implementation.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/shape_inference/implementation.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/shape_inference/implementation.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/version_converter/convert.cc.o -c /home/runner/work/onnx/onnx/onnx/version_converter/convert.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/version_converter/convert.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/version_converter/convert.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -fvisibility-inlines-hidden -Wall -Wextra -Wno-stringop-overflow -o CMakeFiles/onnx.dir/onnx/version_converter/helper.cc.o -c /home/runner/work/onnx/onnx/onnx/version_converter/helper.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/version_converter/helper.cc",
+  "output": "CMakeFiles/onnx.dir/onnx/version_converter/helper.cc.o"
+},
+{
+  "directory": "/home/runner/work/onnx/onnx/.setuptools-cmake-build",
+  "command": "/usr/bin/c++ -DONNX_ML=1 -DONNX_NAMESPACE=onnx -Donnx_cpp2py_export_EXPORTS -I/home/runner/work/onnx/onnx -I/home/runner/work/onnx/onnx/.setuptools-cmake-build -isystem /home/runner/work/onnx/onnx/.setuptools-cmake-build/_deps/pybind11-src/include -isystem /opt/hostedtoolcache/Python/3.11.13/x64/include/python3.11  -Wnon-virtual-dtor -O3 -DNDEBUG -fPIC -fvisibility=hidden -flto -fno-fat-lto-objects -o CMakeFiles/onnx_cpp2py_export.dir/onnx/cpp2py_export.cc.o -c /home/runner/work/onnx/onnx/onnx/cpp2py_export.cc",
+  "file": "/home/runner/work/onnx/onnx/onnx/cpp2py_export.cc",
+  "output": "CMakeFiles/onnx_cpp2py_export.dir/onnx/cpp2py_export.cc.o"
+}
+]

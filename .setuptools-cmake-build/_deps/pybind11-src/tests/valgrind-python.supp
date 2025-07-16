@@ -1,0 +1,117 @@
+# Valgrind suppression file for CPython errors and leaks in pybind11 tests
+
+# Taken verbatim from https://github.com/python/cpython/blob/3.9/Misc/valgrind-python.supp#L266-L272
+{
+   Uninitialised byte(s) false alarm, see bpo-35561
+   Memcheck:Param
+   epoll_ctl(event)
+   fun:epoll_ctl
+   fun:pyepoll_internal_ctl
+}
+
+{
+   Python leaks when spawning a subprocess
+   Memcheck:Leak
+   fun:malloc
+   fun:_PyMem_RawMalloc
+   fun:PyMem_RawMalloc
+   fun:PyThread_allocate_lock
+   fun:_PyEval_InitState
+   fun:PyInterpreterState_New
+   ...
+   fun:pyinit_core*
+   fun:Py_InitializeFromConfig
+   fun:pymain_init
+   fun:pymain_main
+}
+
+{
+   Python leaks when spawning a subprocess
+   Memcheck:Leak
+   fun:malloc
+   fun:_PyMem_RawMalloc
+   fun:_PyMem_DebugRawAlloc
+   fun:_PyMem_DebugRawMalloc
+   fun:PyMem_RawMalloc
+   fun:PyThread_allocate_lock
+   fun:_PyRuntimeState_Init_impl
+   fun:_PyRuntimeState_Init
+   fun:_PyRuntime_Initialize
+   fun:pymain_init
+   fun:pymain_main
+   fun:Py_BytesMain
+}
+
+{
+   Python leaks when spawning a subprocess
+   Memcheck:Leak
+   fun:malloc
+   fun:_PyMem_RawMalloc
+   fun:PyMem_RawMalloc
+   fun:PyThread_allocate_lock
+   fun:_PyImport_AcquireLock
+   fun:_imp_acquire_lock_impl*
+   fun:_imp_acquire_lock
+   fun:cfunction_vectorcall_NOARGS
+   fun:_PyObject_VectorcallTstate
+   fun:PyObject_Vectorcall
+   fun:call_function
+   fun:_PyEval_EvalFrameDefault
+   fun:_PyEval_EvalFrame
+   fun:function_code_fastcall
+}
+
+{
+   Python leaks when spawning a subprocess
+   Memcheck:Leak
+   fun:malloc
+   fun:_PyMem_RawMalloc
+   fun:PyMem_RawMalloc
+   fun:PyThread_allocate_lock
+   fun:newlockobject
+   ...
+   fun:cfunction_vectorcall_NOARGS
+   fun:_PyObject_VectorcallTstate
+   fun:PyObject_Vectorcall
+   fun:call_function
+   fun:_PyEval_EvalFrameDefault
+   fun:_PyEval_EvalFrame
+   fun:function_code_fastcall
+   fun:_PyFunction_Vectorcall
+}
+
+{
+   Python leaks when spawning a subprocess
+   Memcheck:Leak
+   fun:malloc
+   fun:_PyMem_RawMalloc
+   fun:PyMem_RawMalloc
+   fun:PyThread_allocate_lock
+   fun:rlock_new
+   fun:type_call
+   fun:_PyObject_Call
+   fun:PyObject_Call
+   fun:do_call_core
+   fun:_PyEval_EvalFrameDefault
+   fun:_PyEval_EvalFrame
+   fun:_PyEval_EvalCode
+   fun:_PyFunction_Vectorcall
+}
+
+# Not really CPython-specific, see link
+{
+   dlopen leak (https://stackoverflow.com/questions/1542457/memory-leak-reported-by-valgrind-in-dlopen)
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:dl_open_worker
+   fun:_dl_catch_exception
+   fun:_dl_open
+   fun:dlopen_doit
+   fun:_dl_catch_exception
+   fun:_dl_catch_error
+   fun:_dlerror_run
+   fun:dlopen@@GLIBC_2.2.5
+   fun:_PyImport_FindSharedFuncptr
+   fun:_PyImport_LoadDynamicModuleWithSpec
+}

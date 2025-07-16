@@ -1,0 +1,21 @@
+# Warning: this is currently used for pyodide, and is not a general out-of-tree
+# builder for the tests (yet). Specifically, wheels can't be built from SDists.
+
+[build-system]
+requires = ["scikit-build-core"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "pybind11_tests"
+version = "0.0.1"
+dependencies = ["pytest", "pytest-timeout", "numpy", "scipy"]
+
+[tool.scikit-build]
+# Hide a warning while we also support CMake < 3.15
+cmake.version = ">=3.15"
+
+[tool.scikit-build.cmake.define]
+PYBIND11_FINDPYTHON = true
+
+[tool.cibuildwheel]
+test-command = "pytest -o timeout=0 -p no:cacheprovider {project}/tests/test_*.py"

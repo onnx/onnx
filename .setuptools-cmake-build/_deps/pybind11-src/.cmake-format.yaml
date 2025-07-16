@@ -1,0 +1,73 @@
+parse:
+  additional_commands:
+    pybind11_add_module:
+      flags:
+        - THIN_LTO
+        - MODULE
+        - SHARED
+        - NO_EXTRAS
+        - EXCLUDE_FROM_ALL
+        - SYSTEM
+
+format:
+  line_width: 99
+  tab_size: 2
+
+  # If an argument group contains more than this many sub-groups
+  # (parg or kwarg groups) then force it to a vertical layout.
+  max_subgroups_hwrap: 2
+
+  # If a positional argument group contains more than this many
+  # arguments, then force it to a vertical layout.
+  max_pargs_hwrap: 6
+
+  # If a cmdline positional group consumes more than this many
+  # lines without nesting, then invalidate the layout (and nest)
+  max_rows_cmdline: 2
+  separate_ctrl_name_with_space: false
+  separate_fn_name_with_space: false
+  dangle_parens: false
+
+  # If the trailing parenthesis must be 'dangled' on its on
+  # 'line, then align it to this reference: `prefix`: the start'
+  # 'of the statement,  `prefix-indent`: the start of the'
+  # 'statement, plus one indentation  level, `child`: align to'
+  # the column of the arguments
+  dangle_align: prefix
+  # If the statement spelling length (including space and
+  # parenthesis) is smaller than this amount, then force reject
+  # nested layouts.
+  min_prefix_chars: 4
+
+  # If the statement spelling length (including space and
+  # parenthesis) is larger than the tab width by more than this
+  # amount, then force reject un-nested layouts.
+  max_prefix_chars: 10
+
+  # If a candidate layout is wrapped horizontally but it exceeds
+  # this many lines, then reject the layout.
+  max_lines_hwrap: 2
+
+  line_ending: unix
+
+  # Format command names consistently as 'lower' or 'upper' case
+  command_case: canonical
+
+  # Format keywords consistently as 'lower' or 'upper' case
+  # unchanged is valid too
+  keyword_case: 'upper'
+
+  # A list of command names which should always be wrapped
+  always_wrap: []
+
+  # If true, the argument lists which are known to be sortable
+  # will be sorted lexicographically
+  enable_sort: true
+
+  # If true, the parsers may infer whether or not an argument
+  # list is sortable (without annotation).
+  autosort: false
+
+# Causes a few issues - can be solved later, possibly.
+markup:
+  enable_markup: false

@@ -1,0 +1,61 @@
+name: Bug Report
+description: File an issue about a bug
+title: "[BUG]: "
+labels: [triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do your best to make the issue as easy to act on as possible, and only submit here if there is clearly a problem with pybind11 (ask first if unsure). **Note that a reproducer in a PR is much more likely to get immediate attention.**
+
+  - type: checkboxes
+    id: steps
+    attributes:
+      label: Required prerequisites
+      description: Make sure you've completed the following steps before submitting your issue -- thank you!
+      options:
+        - label: Make sure you've read the [documentation](https://pybind11.readthedocs.io). Your issue may be addressed there.
+          required: true
+        - label: Search the [issue tracker](https://github.com/pybind/pybind11/issues) and [Discussions](https:/pybind/pybind11/discussions) to verify that this hasn't already been reported. +1 or comment there if it has.
+          required: true
+        - label: Consider asking first in the [Gitter chat room](https://gitter.im/pybind/Lobby) or in a [Discussion](https:/pybind/pybind11/discussions/new).
+          required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: What version (or hash if on master) of pybind11 are you using?
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem description
+      placeholder: >-
+        Provide a short description, state the expected behavior and what
+        actually happens. Include relevant information like what version of
+        pybind11 you are using, what system you are on, and any useful commands
+        / output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Reproducible example code
+      placeholder: >-
+        The code should be minimal, have no external dependencies, isolate the
+        function(s) that cause breakage. Submit matched and complete C++ and
+        Python snippets that can be easily compiled and run to diagnose the
+        issue. — Note that a reproducer in a PR is much more likely to get
+        immediate attention: failing tests in the pybind11 CI are the best
+        starting point for working out fixes.
+      render: text
+
+  - type: input
+    id: regression
+    attributes:
+      label: Is this a regression? Put the last known working version here if it is.
+      description: Put the last known working version here if this is a regression.
+      value: Not a regression

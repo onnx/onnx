@@ -1,0 +1,30 @@
+name: WASM
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+    - master
+    - stable
+    - v*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-wasm-emscripten:
+    name: Pyodide wheel
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - uses: pypa/cibuildwheel@v2.20
+      env:
+        PYODIDE_BUILD_EXPORTS: whole_archive
+      with:
+        package-dir: tests
+        only: cp312-pyodide_wasm32

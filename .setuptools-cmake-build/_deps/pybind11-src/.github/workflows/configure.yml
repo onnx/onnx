@@ -1,0 +1,92 @@
+name: Config
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+      - stable
+      - v*
+
+permissions:
+  contents: read
+
+env:
+  PIP_BREAK_SYSTEM_PACKAGES: 1
+  # For cmake:
+  VERBOSE: 1
+
+jobs:
+  # This tests various versions of CMake in various combinations, to make sure
+  # the configure step passes.
+  cmake:
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-20.04, macos-13, windows-latest]
+        arch: [x64]
+        cmake: ["3.26"]
+
+        include:
+        - runs-on: ubuntu-20.04
+          arch: x64
+          cmake: "3.5"
+
+        - runs-on: ubuntu-20.04
+          arch: x64
+          cmake: "3.29"
+
+        - runs-on: macos-13
+          arch: x64
+          cmake: "3.7"
+
+        - runs-on: windows-2019
+          arch: x64 # x86 compilers seem to be missing on 2019 image
+          cmake: "3.18"
+
+    name: 🐍 3.7 • CMake ${{ matrix.cmake }} • ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python 3.7
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.7
+        architecture: ${{ matrix.arch }}
+
+    - name: Prepare env
+      run: python -m pip install -r tests/requirements.txt
+
+    # An action for adding a specific version of CMake:
+    #   https://github.com/jwlawson/actions-setup-cmake
+    - name: Setup CMake ${{ matrix.cmake }}
+      uses: jwlawson/actions-setup-cmake@v2.0
+      with:
+        cmake-version: ${{ matrix.cmake }}
+
+    # These steps use a directory with a space in it intentionally
+    - name: Make build directories
+      run: mkdir "build dir"
+
+    - name: Configure
+      working-directory: build dir
+      shell: bash
+      run: >
+        cmake ..
+        -DPYBIND11_WERROR=ON
+        -DDOWNLOAD_CATCH=ON
+        -DPYTHON_EXECUTABLE=$(python -c "import sys; print(sys.executable)")
+
+    # Only build and test if this was manually triggered in the GitHub UI
+    - name: Build
+      working-directory: build dir
+      if: github.event_name == 'workflow_dispatch'
+      run: cmake --build . --config Release
+
+    - name: Test
+      working-directory: build dir
+      if: github.event_name == 'workflow_dispatch'
+      run: cmake --build . --config Release --target check

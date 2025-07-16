@@ -1,0 +1,87 @@
+[build-system]
+requires = ["setuptools>=42", "cmake>=3.18", "ninja"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.check-manifest]
+ignore = [
+    "tests/**",
+    "docs/**",
+    "tools/**",
+    "include/**",
+    ".*",
+    "pybind11/include/**",
+    "pybind11/share/**",
+    "CMakeLists.txt",
+    "noxfile.py",
+]
+
+
+[tool.mypy]
+files = ["pybind11"]
+python_version = "3.8"
+strict = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["ghapi.*"]
+ignore_missing_imports = true
+
+
+[tool.pylint]
+master.py-version = "3.7"
+reports.output-format = "colorized"
+messages_control.disable = [
+  "design",
+  "fixme",
+  "imports",
+  "line-too-long",
+  "imports",
+  "invalid-name",
+  "protected-access",
+  "missing-module-docstring",
+  "unused-argument",  # covered by Ruff ARG
+]
+
+[tool.ruff]
+target-version = "py37"
+src = ["src"]
+
+[tool.ruff.lint]
+extend-select = [
+  "B",           # flake8-bugbear
+  "I",           # isort
+  "N",           # pep8-naming
+  "ARG",         # flake8-unused-arguments
+  "C4",          # flake8-comprehensions
+  "EM",          # flake8-errmsg
+  "ICN",         # flake8-import-conventions
+  "PGH",         # pygrep-hooks
+  "PIE",         # flake8-pie
+  "PL",          # pylint
+  "PT",          # flake8-pytest-style
+  "RET",         # flake8-return
+  "RUF100",      # Ruff-specific
+  "SIM",         # flake8-simplify
+  "UP",          # pyupgrade
+  "YTT",         # flake8-2020
+]
+ignore = [
+  "PLR",    # Design related pylint
+  "E501",   # Line too long (Black is enough)
+  "PT011",  # Too broad with raises in pytest
+  "PT004",  # Fixture that doesn't return needs underscore (no, it is fine)
+  "SIM118", # iter(x) is not always the same as iter(x.keys())
+]
+unfixable = ["T20"]
+isort.known-first-party = ["env", "pybind11_cross_module_tests", "pybind11_tests"]
+isort.required-imports = ["from __future__ import annotations"]
+
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["EM", "N", "E721"]
+"tests/test_call_policies.py" = ["PLC1901"]
+
+[tool.repo-review]
+ignore = ["PP"]
