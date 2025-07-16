@@ -26514,14 +26514,14 @@ This version of the operator has been available since version 22 of the default 
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>1D output tensor</dd>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -28110,14 +28110,14 @@ This version of the operator has been available since version 22 of the default 
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
