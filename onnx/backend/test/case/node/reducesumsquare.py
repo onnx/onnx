@@ -192,3 +192,30 @@ class ReduceSumSquare(Base):
             outputs=[reduced],
             name="test_reduce_sum_square_empty_set",
         )
+
+    @staticmethod
+    def export_empty_axes_input_noop() -> None:
+        keepdims = 1
+
+        node = onnx.helper.make_node(
+            "ReduceSumSquare",
+            inputs=["data", "axes"],
+            outputs=["reduced"],
+            keepdims=keepdims,
+            noop_with_empty_axes=True,
+        )
+
+        data = np.array(
+            [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]], dtype=np.float32
+        )
+        axes = np.array([], dtype=np.int64)
+        reduced = np.array(data)
+        # When noop_with_empty_axes=True and axes is empty, should return input tensor unchanged
+        # [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+
+        expect(
+            node,
+            inputs=[data, axes],
+            outputs=[reduced],
+            name="test_reduce_sum_square_empty_axes_input_noop",
+        )
