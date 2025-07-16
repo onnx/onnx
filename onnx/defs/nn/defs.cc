@@ -1880,8 +1880,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "ratio",
-            "The ratio of random dropout, with value in [0, 1). If this input was not set, "
-            "or if it was set to 0, the output would be a simple copy of the input. "
+            "The ratio of random dropout, with value in [0, 1). If set to 0, "
+            "the output would be a simple copy of the input. "
             "If it's non-zero, output will be a random dropout of the scaled input, which is typically "
             "the case during training. It is an optional value, if not specified it will default to 0.5.",
             "T1",
@@ -1971,7 +1971,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Flatten_ver11_doc = R"DOC(
+static const char* Flatten_ver24_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -1979,9 +1979,9 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    23,
+    24,
     OpSchema()
-        .SetDoc(Flatten_ver11_doc)
+        .SetDoc(Flatten_ver24_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -1997,8 +1997,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_ir11(),
-            "Constrain input and output to all tensor types up to IRv10.")
+            OpSchema::all_tensor_types_ir12(),
+            "Constrain input and output to all tensor types up to IRv12.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "
@@ -2503,7 +2503,7 @@ static bool BuildContextDependentFunctionBodyLayerNormalization(
     const OpSchema& schema,
     FunctionProto& functionProto,
     int sinceVersion) {
-  ONNX_ASSERT(sinceVersion == 17 || sinceVersion == 18);
+  ONNX_ASSERT(sinceVersion == 17 || sinceVersion == 18)
   // LayerNormalization <axis, epsilon, stash_type> (X, Scale, B) => (Y, Mean?, InvStdDev?)
   auto* tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
@@ -3343,7 +3343,7 @@ The following pattern is applied to the Q, K and V inputs after appropriate resh
   The following pattern is applied by this operator:
       Q          K          V
       |          |          |
-     Q*scale     K*scale    |
+Q*sqrt(scale) K*sqrt(scale) |
       |          |          |
       |       Transpose     |
       |          |          |
@@ -3375,8 +3375,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "scale",
-            "Scaling factor applied. Scale q, k before matmul for stability see https://tinyurl.com/sudb9s96 for math. "
-            "Default value is `1/sqrt(head_size)`",
+            "Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent "
+            "[numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.",
             AttributeProto::FLOAT,
             OPTIONAL_VALUE)
         .Attr(

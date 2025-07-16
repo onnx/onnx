@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Squeeze_1(OpRun):
-    def _run(self, data, axes=None):  # type: ignore
+    def _run(self, data, axes=None):
         if isinstance(axes, np.ndarray):
             axes = tuple(axes)
         elif axes in [[], ()]:
@@ -30,11 +30,11 @@ class Squeeze_11(Squeeze_1):
 
 
 class Squeeze_13(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         OpRun.__init__(self, onnx_node, run_params)
         self.axes = None
 
-    def _run(self, data, axes=None):  # type: ignore
+    def _run(self, data, axes=None):
         if axes is not None:
             if hasattr(axes, "__iter__"):
                 sq = np.squeeze(data, axis=tuple(axes))

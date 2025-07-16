@@ -593,6 +593,8 @@ class OpSchema final {
 
   static const std::vector<std::string>& numeric_types_for_math_reduction();
 
+  static const std::vector<std::string>& all_numeric_types_ir12();
+
   static const std::vector<std::string>& all_numeric_types_ir11();
 
   static const std::vector<std::string>& all_numeric_types_ir10();
@@ -631,6 +633,10 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_non_complex_tensor_types_ir11();
 
+  static const std::vector<std::string>& all_tensor_types_ir12();
+
+  static const std::vector<std::string>& all_non_complex_tensor_types_ir12();
+
   static const std::vector<std::string>& all_tensor_sequence_types();
 
   static const std::vector<std::string>& all_tensor_sequence_types_ir4();
@@ -641,6 +647,8 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_tensor_sequence_types_ir11();
 
+  static const std::vector<std::string>& all_tensor_sequence_types_ir12();
+
   static const std::vector<std::string>& all_optional_types();
 
   static const std::vector<std::string>& all_optional_types_ir4();
@@ -650,6 +658,8 @@ class OpSchema final {
   static const std::vector<std::string>& all_optional_types_ir10();
 
   static const std::vector<std::string>& all_optional_types_ir11();
+
+  static const std::vector<std::string>& all_optional_types_ir12();
 
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for templated/macro ops.
@@ -885,7 +895,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 23);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 24);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
@@ -1312,11 +1322,7 @@ class DbgOperatorSetTracker {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
-#ifdef __GNUC__
-#define ONNX_UNUSED __attribute__((__unused__))
-#else
-#define ONNX_UNUSED
-#endif
+#define ONNX_UNUSED [[maybe_unused]]
 
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)

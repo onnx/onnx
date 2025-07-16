@@ -21,8 +21,7 @@ def _softcap(X, softcap):
         Y = X / softcap
         Y = np.tanh(Y)
         return Y * softcap
-    else:
-        return X
+    return X
 
 
 def _compute_attention(
@@ -92,21 +91,25 @@ def _compute_attention(
     # If set to true, the attention masking is a lower triangular matrix when the mask
     # is a square matrix. The attention masking has the form of the upper left causal
     # bias due to the alignment when the mask is a non-square matrix.
-    if is_causal == 1:
-        assert attn_mask is None
-        temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=bool)
-        temp_mask = np.tril(temp_mask, k=0)
-        temp_mask = np.logical_not(temp_mask)
-        attn_bias_ma = np.ma.array(attn_bias, mask=temp_mask)
-        attn_bias = attn_bias_ma.filled(fill_value=float("-inf"))
-    if attn_mask is not None:
-        assert is_causal != 1
-        if attn_mask.dtype == bool:
-            attn_mask = np.logical_not(attn_mask)
-            attn_bias_ma = np.ma.array(attn_bias, mask=attn_mask)
+    if is_causal:
+        if attn_mask is None:
+            temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=bool)
+            temp_mask = np.tril(temp_mask, k=0)
+            temp_mask = np.logical_not(temp_mask)
+            attn_bias_ma = np.ma.array(attn_bias, mask=temp_mask)
             attn_bias = attn_bias_ma.filled(fill_value=float("-inf"))
         else:
-            attn_bias += attn_mask
+            if attn_mask.dtype == np.bool_:
+                attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
+            temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
+            temp_mask = 1 - np.tril(temp_mask, k=0)
+            temp_mask[temp_mask == 1] = -np.inf
+            attn_bias = attn_mask + temp_mask
+    elif attn_mask is not None:
+        if attn_mask.dtype == np.bool_:
+            attn_mask = (1 - attn_mask).astype(Q.dtype)
+            attn_mask[attn_mask == 1] = -np.inf
+        attn_bias = attn_bias + attn_mask
 
     # Group Query Attention is applied if the following are satisfied
     # 1) q_num_heads != kv_num_heads

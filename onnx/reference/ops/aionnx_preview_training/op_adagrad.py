@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
-def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # type: ignore
+def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):
     # Compute adjusted learning-rate.
     r_ = r / (1 + t * decay_factor)
     # Add gradient of regularization term.
@@ -23,9 +23,9 @@ def _apply_adagrad(r, t, x, g, h, norm_coefficient, epsilon, decay_factor):  # t
 
 
 class Adagrad(OpRunTraining):
-    def _run(self, *data, decay_factor=None, epsilon=None, norm_coefficient=None):  # type: ignore
+    def _run(self, *data, decay_factor=None, epsilon=None, norm_coefficient=None):
         if len(data) == 5:
-            return self._run1(  # type: ignore
+            return self._run1(
                 *data,
                 decay_factor=decay_factor,
                 epsilon=epsilon,
@@ -35,7 +35,7 @@ class Adagrad(OpRunTraining):
         xs = []
         hs = []
         for i in range(n):
-            a, b = self._run1(  # type: ignore
+            a, b = self._run1(
                 *data[:2],
                 data[2 + i],
                 data[2 + n + i],
@@ -50,7 +50,7 @@ class Adagrad(OpRunTraining):
 
     def _run1(
         self, r, t, x, g, h, decay_factor=None, epsilon=None, norm_coefficient=None
-    ):  # type: ignore
+    ):
         x_new, h_new = _apply_adagrad(
             r,
             t,
@@ -59,6 +59,6 @@ class Adagrad(OpRunTraining):
             h,
             norm_coefficient,
             epsilon,
-            decay_factor,  # type: ignore
+            decay_factor,
         )
         return x_new, h_new

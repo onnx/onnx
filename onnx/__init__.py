@@ -125,7 +125,7 @@ from onnx.onnx_pb import (
 )
 from onnx.onnx_operators_pb import OperatorProto, OperatorSetProto
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
-from onnx.version import version as __version__
+import onnx.version
 
 # Import common subpackages so they're available when you 'import onnx'
 from onnx import (
@@ -142,6 +142,8 @@ from onnx import (
     utils,
     version_converter,
 )
+
+__version__ = onnx.version.version
 
 # Supported model formats that can be loaded from and saved to
 # The literals are formats with built-in support. But we also allow users to
