@@ -160,12 +160,12 @@ class NameGenerator : private Visitor {
 };
 
 class InliningRenamer : public MutableVisitor {
- protected: // Changed from private to protected to allow inheritance
+ private:
   std::string suffix;
   NameGenerator& generator;
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
- protected: // Allow access to these methods from derived classes
+ public:
   InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
@@ -180,6 +180,39 @@ class InliningRenamer : public MutableVisitor {
   std::string MakeUnique(const std::string& name) {
     return generator.CreateNew(name + suffix);
   }
+
+  /**
+   * @brief Binds a formal parameter name to an actual parameter name.
+   *
+   * @param formal_name The formal parameter name to bind.
+   * @param actual_name The actual parameter name to bind to.
+   */
+  void BindFormalToActual(const std::string& formal_name, const std::string& actual_name) {
+    auto& current_scope = rename_scopes.back();
+    current_scope[formal_name] = actual_name;
+  }
+
+  /**
+   * @brief Creates a unique name for the given name and binds it.
+   *
+   * This method creates a unique name based on the suffix and binds the original
+   * name to the unique name for later reference renaming.
+   *
+   * @param original_name The name to create a unique version of.
+   * @return The unique name that was created and bound.
+   */
+  std::string BindToUniqueName(const std::string& original_name) {
+    // First create the unique name using MakeUnique
+    std::string unique_name = MakeUnique(original_name);
+
+    // Then bind the original name to the unique name
+    auto& current_scope = rename_scopes.back();
+    current_scope[original_name] = unique_name;
+
+    return unique_name;
+  }
+
+ private:
 
   // Replace given name with a unique version of the name, and cache the
   // renaming-binding in current scope.
@@ -723,36 +756,11 @@ void InlineSelectedFunctions(
   InlinerImpl::InlineSelectedFunctions(model, to_inline, schema_registry);
 }
 
-// Helper class to access InliningRenamer functionality
-class RenamerHelper : public InliningRenamer {
- public:
-  RenamerHelper(const std::string& suffix, NameGenerator& generator) : InliningRenamer(suffix, generator) {}
-
-  // Expose protected methods for delegation
-  std::string CreateUniqueName(const std::string& name) {
-    return MakeUnique(name);
-  }
-
-  void BindFormalToActual(const std::string& formal_name, const std::string& actual_name) {
-    auto& current_scope = rename_scopes.back();
-    current_scope[formal_name] = actual_name;
-  }
-
-  std::vector<std::unordered_map<std::string, std::string>>& GetRenameScopes() {
-    return rename_scopes;
-  }
-
-  // Forward the ProcessNode method
-  void ProcessNodeForRenaming(NodeProto& node) {
-    ProcessNode(&node);
-  }
-};
-
-// Implementation of the Renamer class using delegation to RenamerHelper for proper graph-value attribute handling
+// Implementation of the Renamer class using InliningRenamer directly
 class Renamer::Impl {
  private:
   NameGenerator generator_;
-  RenamerHelper renamer_;
+  InliningRenamer renamer_;
 
  public:
   Impl(const std::string& prefix, const GraphProto& graph) : generator_(graph), renamer_("__" + prefix, generator_) {}
@@ -761,16 +769,7 @@ class Renamer::Impl {
       : generator_(function), renamer_("__" + prefix, generator_) {}
 
   std::string BindToUniqueName(const std::string& original_name) {
-    // First create the unique name using the renamer's MakeUnique method
-    std::string unique_name = renamer_.CreateUniqueName(original_name);
-
-    // Then bind the original name to the unique name
-    auto& rename_scopes = renamer_.GetRenameScopes();
-    ONNX_ASSERT(!rename_scopes.empty());
-    auto& current_scope = rename_scopes.back();
-    current_scope[original_name] = unique_name;
-
-    return unique_name;
+    return renamer_.BindToUniqueName(original_name);
   }
 
   void BindName(const std::string& formal_name, const std::string& actual_name) {
@@ -778,8 +777,8 @@ class Renamer::Impl {
   }
 
   void RenameNode(NodeProto& node) {
-    // Use the RenamerHelper's ProcessNode method which handles graph-value attributes
-    renamer_.ProcessNodeForRenaming(node);
+    // Use the InliningRenamer's ProcessNode method which handles graph-value attributes
+    renamer_.ProcessNode(&node);
   }
 };
 
