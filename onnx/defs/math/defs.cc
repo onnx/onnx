@@ -2529,6 +2529,27 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       }
     }
 
+    // Validate that term_size is compatible with rank before accessing dimensions
+    if (ellipsis_index != std::string::npos) {
+      // For ellipsis case, rank must be at least term_size
+      if (rank < term_size) {
+        fail_shape_inference(
+            "Ellipsis represents incompatible dimensions for input ",
+            num_operands,
+            ". Rank ",
+            rank,
+            " is less than term size ",
+            term_size,
+            ".");
+      }
+    } else {
+      // For non-ellipsis case, rank must equal term_size
+      if (rank != term_size) {
+        fail_shape_inference(
+            "Rank of input ", num_operands, " (", rank, ") does not match the equation indices (", term_size, ").");
+      }
+    }
+
     for (size_t index = 0; index < term.size(); ++index) {
       if (index == ellipsis_index) {
         // find ellipsis and record the dims represented by ellipsis
@@ -2536,21 +2557,15 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         if (ellipsis_flag) {
           ellipsis_flag = false;
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            // Only access shape.dim() if rank > 0 to avoid segfault on scalar inputs
-            if (rank > 0) {
-              *ellipsis_dims_value.add_dim() = shape.dim(index + i - num_illegal_char);
-            }
+            *ellipsis_dims_value.add_dim() = shape.dim(index + i - num_illegal_char);
           }
         } else {
           for (size_t i = 0; i < ellipsis_dims; i++) {
-            // Only access shape.dim() if rank > 0 to avoid segfault on scalar inputs
-            if (rank > 0) {
-              const auto shape_dim = shape.dim(index + i - num_illegal_char);
-              const auto current_dim = ellipsis_dims_value.mutable_dim(i);
-              if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
-                  shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
-                current_dim->set_dim_value(shape_dim.dim_value());
-              }
+            const auto shape_dim = shape.dim(index + i - num_illegal_char);
+            const auto current_dim = ellipsis_dims_value.mutable_dim(i);
+            if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
+                shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
+              current_dim->set_dim_value(shape_dim.dim_value());
             }
           }
         }
@@ -2565,14 +2580,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
 
       const auto inserted = label_maps.emplace(term[index], num_labels).second;
       if (inserted) {
-        // Only access shape.dim() if rank > 0 to avoid segfault on scalar inputs
-        if (rank > 0) {
-          *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
-        } else {
-          // For scalars (rank == 0), we should not reach here since term_size should be 0
-          // The rank vs term_size validation below should catch this case
-          fail_shape_inference("Unexpected letter index in term for scalar input ", num_operands);
-        }
+        *dims_value.add_dim() = shape.dim(index + ellipsis_dims - num_illegal_char);
         ++num_labels;
       } else {
         repeated_labels.insert(term[index]);
@@ -2583,9 +2591,6 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       // If there is an ellipsis, the number of dimensions it represents
       // must be total dim - letter dimensions
       if (num_ellipsis == 0) {
-        if (rank < term_size) {
-          fail_shape_inference("Ellipsis represents incompatible dimensions.");
-        }
         num_ellipsis_indices = rank - term_size;
       } else { // ellipsis has been seen before. Check that if dimensions
                // are compatible
@@ -2594,10 +2599,6 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         }
       }
       num_ellipsis++;
-    } else {
-      if (rank != term_size) {
-        fail_shape_inference("Rank of input ", num_operands, " does not match the equation indices.");
-      }
     }
     num_operands++;
   }
