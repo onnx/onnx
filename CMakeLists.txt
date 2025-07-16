@@ -411,7 +411,7 @@ list(APPEND ONNX_SRCS ${__tmp_srcs})
 
 # Hide all symbols we don't need
 set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -442,9 +442,8 @@ if(MSVC)
   )
 endif()
 
-# ONNX object library contains object files of
-# both Protobuf generated sources and our C++ sources
-add_library(onnx_object OBJECT ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+# ONNX object library contains object files of our C++ sources
+add_library(onnx_object OBJECT ${ONNX_SRCS})
 set_target_properties(onnx_object PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(onnx_object PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 target_link_libraries(onnx_object PUBLIC onnx_proto)
