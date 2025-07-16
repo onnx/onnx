@@ -70,8 +70,8 @@ to `False` instead of `True`.)DOC";
           1,
           "axes",
           "Optional input list of integers, along which to reduce. "
-          "When not provided, reduction happens over all axes. "
-          "When provided but empty, behavior depends on 'noop_with_empty_axes': "
+          "The default is to reduce over empty axes. "
+          "When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': "
           "reduction over all axes if 'noop_with_empty_axes' is false, "
           "or acts as Identity op if 'noop_with_empty_axes' is true. "
           "Accepted range is [-r, r-1] where r = rank(data).",
