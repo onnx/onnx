@@ -3684,11 +3684,16 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
               .Add("KVSeqLen = Shape <start = -2, end = -1> (K)") // kv_sequence_length
               .Const1D("NegOne", static_cast<int64_t>(-1)) // head_size, inferred from other dimensions
-              .Add("QNewShape = Concat <axis = 0> (BatchSize, QNumHeadsAttr, QSeqLen, NegOne)")
-              .Add("KVNewShape = Concat <axis = 0> (BatchSize, KVNumHeadsAttr, KVSeqLen, NegOne)")
-              .Add("QReshaped = Reshape (Q, QNewShape)")
-              .Add("KReshaped = Reshape (K, KVNewShape)")
-              .Add("VReshaped = Reshape (V, KVNewShape)")
+              // First reshape to [batch_size, seq_length, num_heads, head_size]
+              .Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, NegOne)")
+              .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, NegOne)")
+              .Add("QIntermediate = Reshape (Q, QIntermediateShape)")
+              .Add("KIntermediate = Reshape (K, KVIntermediateShape)")
+              .Add("VIntermediate = Reshape (V, KVIntermediateShape)")
+              // Then transpose to [batch_size, num_heads, seq_length, head_size]
+              .Add("QReshaped = Transpose <perm = [0, 2, 1, 3]> (QIntermediate)")
+              .Add("KReshaped = Transpose <perm = [0, 2, 1, 3]> (KIntermediate)")
+              .Add("VReshaped = Transpose <perm = [0, 2, 1, 3]> (VIntermediate)")
               .Add("QNumHeads = Shape <start = 1, end = 2> (QReshaped)") // q_num_heads
               .Add("KVNumHeads = Shape <start = 1, end = 2> (KReshaped)"); // kv_num_heads
 
