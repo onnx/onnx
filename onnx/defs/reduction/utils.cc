@@ -61,17 +61,19 @@ to `False` instead of `True`.)DOC";
     if (axes_input) {
       schema.Attr(
           "noop_with_empty_axes",
-          "Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. "
-          "When axes is empty and this attribute is set to true, input tensor will not be reduced,"
-          "and the output tensor would be equivalent to input tensor.",
+          "Defines behavior when 'axes' is explicitly provided but empty. "
+          "If false (default), reduction happens over all axes. "
+          "If true, input tensor is returned unchanged (acts as Identity op).",
           AttributeProto::INT,
           static_cast<int64_t>(0));
       schema.Input(
           1,
           "axes",
           "Optional input list of integers, along which to reduce. "
-          "The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, "
-          "else act as an Identity op when 'noop_with_empty_axes' is true. "
+          "When not provided, reduction happens over all axes. "
+          "When provided but empty, behavior depends on 'noop_with_empty_axes': "
+          "reduction over all axes if 'noop_with_empty_axes' is false, "
+          "or acts as Identity op if 'noop_with_empty_axes' is true. "
           "Accepted range is [-r, r-1] where r = rank(data).",
           "tensor(int64)",
           OpSchema::Optional,
