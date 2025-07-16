@@ -1680,10 +1680,10 @@ class Attention(Base):
     @staticmethod
     def export_attention_3d_transpose_verification() -> None:
         """Test case to verify correct 3D to 4D transpose behavior.
-        
+
         This test verifies that 3D inputs are correctly reshaped and transposed
-        according to the ONNX specification: 
-        [batch_size, seq_length, hidden_size] -> 
+        according to the ONNX specification:
+        [batch_size, seq_length, hidden_size] ->
         [batch_size, seq_length, num_heads, head_size] ->
         [batch_size, num_heads, seq_length, head_size]
         """
