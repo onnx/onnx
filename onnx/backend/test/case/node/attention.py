@@ -1712,7 +1712,7 @@ class Attention(Base):
             start_idx = head * head_size
             end_idx = start_idx + head_size
             Q[0, :, start_idx:end_idx] = float(head + 1)
-        
+
         K = np.ones((batch_size, kv_seq_length, kv_hidden_size), dtype=np.float32) * 0.1
         V = np.ones((batch_size, kv_seq_length, kv_hidden_size), dtype=np.float32) * 0.1
 
