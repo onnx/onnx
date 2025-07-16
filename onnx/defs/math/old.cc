@@ -875,12 +875,47 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
         .SetDoc(Elu_ver6_doc)
-        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "1D output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+          {
+            Alpha = Constant <value_float: float = @alpha>()
+            AlphaCast = CastLike (Alpha, X)
+            Zero = Constant <value = float {0.0}>()
+            ZeroCast = CastLike (Zero, X)
+            One = Constant <value = float {1.0}>()
+            OneCast = CastLike (One, X)
+            XLessThanZero = Less (X, ZeroCast)
+            ExpX = Exp (X)
+            ExpXSubOne = Sub (ExpX, OneCast)
+            AlphaMulExpXSubOne = Mul (AlphaCast, ExpXSubOne)
+            Y = Where(XLessThanZero, AlphaMulExpXSubOne, X)
+          }
+        )ONNX",
+            18));
+
+static const char* Elu_ver22_doc = R"DOC(
+Elu takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
+0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Elu,
+    22,
+    OpSchema()
+        .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
+        .SetDoc(Elu_ver22_doc)
+        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "1D output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
         .FunctionBody(
             R"ONNX(
@@ -2932,8 +2967,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         // old definition.
         .Attr("consumed_inputs", "legacy optimization attribute.", AttributeProto::INTS, OPTIONAL_VALUE)
         .SetDoc(Elu_ver1_doc)
-        .Input(0, "X", "Input tensor", "T")
-        .Output(0, "Y", "Output tensor", "T")
+        .Input(0, "X", "1D input tensor", "T")
+        .Output(0, "Y", "1D input tensor", "T")
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
