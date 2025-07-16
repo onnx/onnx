@@ -111,7 +111,7 @@ class Runner:
         return self
 
     def enable_report(self) -> Runner:
-        import pytest
+        import pytest  # noqa: PLC0415
 
         for category, items_map in self._test_items.items():
             for item in items_map.values():
@@ -214,19 +214,16 @@ class Runner:
                         model_dir=model_dir,
                     )
             else:
-                if not np.issubdtype(ref_outputs[i].dtype, np.number):
-                    if ref_outputs[i].tolist() != outputs[i].tolist():
-                        raise AssertionError(f"{ref_outputs[i]} != {outputs[i]}")
-                    continue
-                np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
                 np.testing.assert_array_equal(
                     outputs[i].shape,
                     ref_outputs[i].shape,
                     err_msg=f"Output {i} has incorrect shape",
                 )
                 if ref_outputs[i].dtype == object:
+                    # Strings
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
+                    np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
                     np.testing.assert_allclose(
                         outputs[i], ref_outputs[i], rtol=rtol, atol=atol
                     )

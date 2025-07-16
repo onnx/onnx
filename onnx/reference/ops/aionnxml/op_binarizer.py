@@ -11,5 +11,5 @@ def compute_binarizer(x, threshold=None):
 
 
 class Binarizer(OpRunAiOnnxMl):
-    def _run(self, x, threshold=None):  # type: ignore
+    def _run(self, x, threshold=None):
         return compute_binarizer(x, threshold)

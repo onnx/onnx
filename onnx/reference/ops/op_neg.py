@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Neg(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         return (np.negative(x),)
