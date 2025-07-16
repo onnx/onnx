@@ -1703,7 +1703,7 @@ class Attention(Base):
         head_size = 4
         q_hidden_size = q_num_heads * head_size  # 3 * 4 = 12
         kv_hidden_size = kv_num_heads * head_size  # 3 * 4 = 12
-        
+
         # Create structured inputs to verify correct transpose behavior
         # Q has a pattern where each position in hidden dimension has a specific value
         Q = np.zeros((batch_size, q_seq_length, q_hidden_size), dtype=np.float32)
