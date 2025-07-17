@@ -63,7 +63,7 @@ to `False` instead of `True`.)DOC";
           "noop_with_empty_axes",
           "Defines behavior when axes is not provided or is empty. "
           "If false (default), reduction happens over all axes. "
-          "If true, input tensor is returned unchanged (acts as Identity op).",
+          "If true, no reduction is applied, but other operations may be performed. For example, ReduceSumSquare acts as a vanilla Square.",
           AttributeProto::INT,
           static_cast<int64_t>(0));
       schema.Input(
