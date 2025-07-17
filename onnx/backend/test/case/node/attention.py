@@ -30,6 +30,23 @@ class Attention(Base):
         )
 
     @staticmethod
+    def export_attention_fp16() -> None:
+        node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
+
+        Q = np.random.rand(2, 3, 4, 8).astype(np.float16)
+        K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+        V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+
+        Y, _, _, _ = _compute_attention(Q, K, V)
+
+        expect(
+            node,
+            inputs=[Q, K, V],
+            outputs=[Y],
+            name="test_attention_4d_fp16",
+        )
+
+    @staticmethod
     def export_attention_gqa() -> None:
         node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
 
@@ -515,6 +532,38 @@ class Attention(Base):
         )
 
     @staticmethod
+    def export_attention_gqa_with_past_and_present_fp16() -> None:
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+            outputs=["Y", "present_key", "present_value"],
+        )
+
+        past_sequence_length = 12
+        Q = np.random.rand(2, 9, 4, 8).astype(np.float16)
+        K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+        V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+        attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float16)
+        past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float16)
+        past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float16)
+
+        Y, present_key, present_value, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask, past_key, past_value],
+            outputs=[Y, present_key, present_value],
+            name="test_attention_4d_gqa_with_past_and_present_fp16",
+        )
+
+    @staticmethod
     def export_attention_diff_head_sizes_with_past_and_present() -> None:
         node = onnx.helper.make_node(
             "Attention",
@@ -544,6 +593,70 @@ class Attention(Base):
             inputs=[Q, K, V, attn_mask, past_key, past_value],
             outputs=[Y, present_key, present_value],
             name="test_attention_4d_diff_heads_with_past_and_present",
+        )
+
+    @staticmethod
+    def export_attention_diff_head_sizes_with_past_and_present_mask3D() -> None:
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+            outputs=["Y", "present_key", "present_value"],
+        )
+
+        past_sequence_length = 12
+        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        attn_mask = np.random.rand(2, 1, 4, 6 + past_sequence_length).astype(np.float32)
+        past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+        past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
+
+        Y, present_key, present_value, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask, past_key, past_value],
+            outputs=[Y, present_key, present_value],
+            name="test_attention_4d_diff_heads_with_past_and_present_mask3d",
+        )
+
+    @staticmethod
+    def export_attention_diff_head_sizes_with_past_and_present_mask4D() -> None:
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+            outputs=["Y", "present_key", "present_value"],
+        )
+
+        past_sequence_length = 12
+        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        attn_mask = np.random.rand(2, 3, 4, 6 + past_sequence_length).astype(np.float32)
+        past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+        past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
+
+        Y, present_key, present_value, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            past_key=past_key,
+            past_value=past_value,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask, past_key, past_value],
+            outputs=[Y, present_key, present_value],
+            name="test_attention_4d_diff_heads_with_past_and_present_mask4d",
         )
 
     @staticmethod

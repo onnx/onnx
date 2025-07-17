@@ -3676,17 +3676,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
 
           FunctionBuilder builder(functionProto);
-          builder
-              .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
-              .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
-              .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
-              .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
-              .Add("KVSeqLen = Shape <start = -2, end = -1> (K)") // kv_sequence_length
-              .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
-
           if (is_3d_input) {
             // For 3D inputs: First reshape to [batch_size, seq_length, num_heads, head_size]
             // then transpose to [batch_size, num_heads, seq_length, head_size]
+            builder
+                .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+                .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
+                .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
+                .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
+                .Add("KVSeqLen = Shape <start = -2, end = -1> (K)") // kv_sequence_length
+                .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
+
             builder.Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, NegOne)")
                 .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, NegOne)")
                 .Add("QIntermediate = Reshape (Q, QIntermediateShape)")
@@ -3743,22 +3743,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          // Create a attn_bias filled with zeros of shape (q_sequence_length, kv_sequence_length)
-          builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
-              .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
-              .Add("AttnBiasZeros = ConstantOfShape(AttnBiasShape)");
-
           // If attn_mask is provided
           float neg_inf = -std::numeric_limits<float>::infinity();
-          builder.Const1D("FloatInf", neg_inf);
           if (ctx.hasInput(3)) {
             auto* up = ctx.getInputType(3);
             if ((up == nullptr) || (!up->has_tensor_type()))
               return false;
             int64_t U = up->tensor_type().elem_type();
+            builder.Const1D("FloatInf", neg_inf);
+            builder.Const1D("ScalarZero", 0.f);
             builder.Add(
-                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL ? "AttnBias = Where(attn_mask, AttnBiasZeros, FloatInf)"
-                                                               : "AttnBias = Add(attn_mask, AttnBiasZeros)");
+                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL ? "AttnBias = Where(attn_mask, ScalarZero, FloatInf)"
+                                                               : "AttnBias = Identity(attn_mask)");
           } else {
             // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
             // is a square matrix. The attention masking has the form of the upper left causal bias due to
@@ -3766,12 +3762,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             // An error is thrown if both attn_mask and is_causal are set.
             auto* is_causal_attr = ctx.getAttribute("is_causal");
             int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+            if (!is_3d_input) {
+              builder.Add("QSeqLen = Shape <start = -2, end = -1> (Q)"); // q_sequence_length
+            }
+
             if (is_causal == 1) {
-              builder.Add("TempMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
-                  .Add("TempMaskTri = Trilu <upper = 0> (TempMask, Zero1D)")
-                  .Add("AttnBias = Where(TempMaskTri, AttnBiasZeros, FloatInf)");
+              builder.Const1D("FloatInf", neg_inf);
+              builder.Const1D("ScalarZero", 0.f);
+              builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
+                  .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
+                  .Add("AttnBiasZeros_ = ConstantOfShape(AttnBiasShape)")
+                  .Add("AttnBiasZeros = CastLike(AttnBiasZeros_, Q)")
+                  .Add("BoolMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
+                  .Add("BoolMaskTri = Trilu <upper = 0> (BoolMask, Zero1D)")
+                  .Add("AttnBias = Where(BoolMaskTri, ScalarZero, FloatInf)");
             } else {
-              builder.Add("AttnBias = Identity(AttnBiasZeros)");
+              builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
+                  .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
+                  .Add("AttnBias = ConstantOfShape(AttnBiasShape)");
             }
           }
           builder.Add("AttnBiasT = Cast (AttnBias)", "to", T1);
@@ -3810,7 +3818,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           //            -----MatMul------
           //                    |
           //                    Y
-          builder.Add("KTranspose = Transpose <perm = [0, 1 ,3, 2]> (KAttentionInput)")
+          builder.Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KAttentionInput)")
               .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
               .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
               .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
@@ -3848,9 +3856,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          builder.Add("YExtraDim = MatMul(SoftmaxOut, VAttentionInput)")
-              .Add("YCast = Cast (YExtraDim)", "to", T1)
-              .Add("YPreReshape = Squeeze(YCast)");
+          builder.Add("YPreReshape = MatMul(SoftmaxOut, VAttentionInput)");
           // Reshape Y to 3D if input is a 3D tensor
           if (is_3d_input) {
             builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)")
