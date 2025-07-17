@@ -8,28 +8,28 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def _gemm00(a, b, c, alpha, beta):  # type: ignore
+def _gemm00(a, b, c, alpha, beta):
     o = np.dot(a, b) * alpha
     if c is not None and beta != 0:
         o += c * beta
     return o
 
 
-def _gemm01(a, b, c, alpha, beta):  # type: ignore
+def _gemm01(a, b, c, alpha, beta):
     o = np.dot(a, b.T) * alpha
     if c is not None and beta != 0:
         o += c * beta
     return o
 
 
-def _gemm10(a, b, c, alpha, beta):  # type: ignore
+def _gemm10(a, b, c, alpha, beta):
     o = np.dot(a.T, b) * alpha
     if c is not None and beta != 0:
         o += c * beta
     return o
 
 
-def _gemm11(a, b, c, alpha, beta):  # type: ignore
+def _gemm11(a, b, c, alpha, beta):
     o = np.dot(a.T, b.T) * alpha
     if c is not None and beta != 0:
         o += c * beta
@@ -47,7 +47,7 @@ class Gemm_6(OpRun):
         transA=None,
         transB=None,
         broadcast=None,
-    ):  # type: ignore
+    ):
         if broadcast == 0:
             if transA:
                 _meth = _gemm11 if transB else _gemm10
@@ -69,7 +69,7 @@ class Gemm_6(OpRun):
 
 
 class Gemm_7(OpRun):
-    def _run(self, a, b, c=None, alpha=None, beta=None, transA=None, transB=None):  # type: ignore
+    def _run(self, a, b, c=None, alpha=None, beta=None, transA=None, transB=None):
         if transA:
             _meth = _gemm11 if transB else _gemm10
         else:

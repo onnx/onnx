@@ -89,12 +89,12 @@ class DFT_17(OpRun):
         axis: int = 1,
         inverse: bool = False,
         onesided: bool = False,
-    ) -> tuple[np.ndarray]:  # type: ignore
+    ) -> tuple[np.ndarray]:
         # Convert to positive axis
         axis = axis % len(x.shape)
         if dft_length is None:
             dft_length = x.shape[axis]
-        if inverse:  # type: ignore
+        if inverse:
             result = _cifft(x, dft_length, axis=axis, onesided=onesided)
         else:
             result = _cfft(x, dft_length, axis=axis, onesided=onesided, normalize=False)
@@ -109,12 +109,12 @@ class DFT_20(OpRun):
         axis: int = -2,
         inverse: bool = False,
         onesided: bool = False,
-    ) -> tuple[np.ndarray]:  # type: ignore
+    ) -> tuple[np.ndarray]:
         # Convert to positive axis
         axis = axis % len(x.shape)
         if dft_length is None:
             dft_length = x.shape[axis]
-        if inverse:  # type: ignore
+        if inverse:
             result = _cifft(x, dft_length, axis=axis, onesided=onesided)
         else:
             result = _cfft(x, dft_length, axis=axis, onesided=onesided, normalize=False)

@@ -117,6 +117,10 @@ if(MSVC)
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
   add_compile_options(/MP /utf-8 /nologo)
+  add_compile_options(
+    /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
+    /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
+  )
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
@@ -271,8 +275,8 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.0/protobuf-31.0.tar.gz)
-    set(ProtobufSHA1 c0cecb7cfc881f56a5b09f00a965aae408265fd0)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz)
+    set(ProtobufSHA1 da10aaa3bf779735a8a9acde1256a47ce5d148be)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -282,7 +286,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.31.0")
+    set(Protobuf_VERSION "6.31.1")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -428,14 +432,14 @@ target_include_directories(onnx_proto PUBLIC
 if(MSVC)
   # For disabling Protobuf related warnings
   target_compile_options(onnx_proto PUBLIC
-                      /wd4146 # unary minus operator applied to unsigned type,
-                              # result still unsigned
-                      /wd4244 # 'argument': conversion from 'google::
-                              # protobuf::uint64' to 'int', possible
-                              # loss of data
-                      /wd4267 # Conversion from 'size_t' to 'int',
-                              # possible loss of data
-                      /wd4141 # 'inline': used more than once
+    /wd4146 # unary minus operator applied to unsigned type,
+            # result still unsigned
+    /wd4244 # 'argument': conversion from 'google::
+            # protobuf::uint64' to 'int', possible
+            # loss of data
+    /wd4267 # Conversion from 'size_t' to 'int',
+            # possible loss of data
+    /wd4141 # 'inline': used more than once
   )
 endif()
 

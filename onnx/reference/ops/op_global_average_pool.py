@@ -13,9 +13,9 @@ def _global_average_pool(x: np.ndarray) -> np.ndarray:
     y = np.average(x, axis=axis)
     for _ in axis:
         y = np.expand_dims(y, -1)
-    return y  # type: ignore
+    return y
 
 
 class GlobalAveragePool(OpRun):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         return (_global_average_pool(x).astype(x.dtype),)
