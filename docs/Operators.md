@@ -2417,6 +2417,66 @@ expect(
 
 
 <details>
+<summary>attention_3d_transpose_verification</summary>
+
+```python
+"""Test case to verify correct 3D to 4D transpose behavior.
+
+This test verifies that 3D inputs are correctly reshaped and transposed
+according to the ONNX specification:
+[batch_size, seq_length, hidden_size] ->
+[batch_size, seq_length, num_heads, head_size] ->
+[batch_size, num_heads, seq_length, head_size]
+"""
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+# Test inputs that will clearly demonstrate the transpose behavior
+batch_size = 1
+q_seq_length = 2
+kv_seq_length = 2
+head_size = 4
+q_hidden_size = q_num_heads * head_size  # 3 * 4 = 12
+kv_hidden_size = kv_num_heads * head_size  # 3 * 4 = 12
+
+# Create structured inputs to verify correct transpose behavior
+# Q has a pattern where each position in hidden dimension has a specific value
+Q = np.zeros((batch_size, q_seq_length, q_hidden_size), dtype=np.float32)
+# Fill Q with pattern: head0=[1,1,1,1], head1=[2,2,2,2], head2=[3,3,3,3]
+for head in range(q_num_heads):
+    start_idx = head * head_size
+    end_idx = start_idx + head_size
+    Q[0, :, start_idx:end_idx] = float(head + 1)
+
+K = np.ones((batch_size, kv_seq_length, kv_hidden_size), dtype=np.float32) * 0.1
+V = np.ones((batch_size, kv_seq_length, kv_hidden_size), dtype=np.float32) * 0.1
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_transpose_verification",
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_3d_with_past_and_present</summary>
 
 ```python
@@ -3092,6 +3152,105 @@ expect(
 
 
 <details>
+<summary>attention_diff_head_sizes_with_past_and_present_mask3D</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(2, 1, 4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_diff_heads_with_past_and_present_mask3d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_diff_head_sizes_with_past_and_present_mask4D</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(2, 3, 4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_diff_heads_with_past_and_present_mask4d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_fp16</summary>
+
+```python
+node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float16)
+K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+
+Y, _, _, _ = _compute_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_fp16",
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_gqa</summary>
 
 ```python
@@ -3264,6 +3423,44 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_gqa_with_past_and_present",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_gqa_with_past_and_present_fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 9, 4, 8).astype(np.float16)
+K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float16)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float16)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float16)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_gqa_with_past_and_present_fp16",
 )
 ```
 
