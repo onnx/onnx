@@ -10978,6 +10978,24 @@ expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_inner_prod")
 
 
 <details>
+<summary>einsum_scalar</summary>
+
+```python
+Eqn = "->"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.array(5.0)  # scalar input
+Z = einsum_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_scalar")
+```
+
+</details>
+
+
+<details>
 <summary>einsum_sum</summary>
 
 ```python
@@ -11037,14 +11055,14 @@ Other versions of this operator: <a href="Changelog.md#Elu-1">1</a>, <a href="Ch
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>1D output tensor</dd>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -32509,11 +32527,11 @@ expect(
   The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
   If the end axis is omitted, the axes upto the last one will be included.
   Negative axes indicate counting back from the last axis.
-  Note that axes will be clamped to the range [0, r-1], where r is the
+  Note that axes will be clamped to the range [0, r], where r is the
   rank of the input tensor if they are out-of-range (after adding r in the case of
   negative axis). Thus, specifying any end value > r is equivalent to specifying an end
   value of r, and specifying any start value < -r is equivalent to specifying a start
-  value of 0.
+  value of 0. If start > end, the result will be an empty shape.
 
   Examples:
 
@@ -32614,6 +32632,8 @@ test_shape("_start_1_end_2", x, start=1, end=2)
 test_shape("_clip_start", x, start=-10)
 
 test_shape("_clip_end", x, end=10)
+
+test_shape("_start_greater_than_end", x, start=2, end=1)
 ```
 
 </details>
@@ -34814,14 +34834,14 @@ Other versions of this operator: <a href="Changelog.md#Softplus-1">1</a>
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
