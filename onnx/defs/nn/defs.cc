@@ -3698,9 +3698,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("VReshaped = Transpose <perm = [0, 2, 1, 3]> (VIntermediate)");
           } else {
             // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
-            builder.Add("QReshaped = Identity(Q)")
-                .Add("KReshaped = Identity(K)")
-                .Add("VReshaped = Identity(V)");
+            builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
           }
 
           builder
