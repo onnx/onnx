@@ -73,7 +73,7 @@ to `False` instead of `True`.)DOC";
           "The default is to reduce over empty axes. "
           "When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': "
           "reduction over all axes if 'noop_with_empty_axes' is false, "
-          "or acts as Identity op if 'noop_with_empty_axes' is true. "
+          "or no reduction is applied if 'noop_with_empty_axes' is true (but other operations may be performed). "
           "Accepted range is [-r, r-1] where r = rank(data).",
           "tensor(int64)",
           OpSchema::Optional,
