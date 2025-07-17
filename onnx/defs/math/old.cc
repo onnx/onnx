@@ -1420,6 +1420,13 @@ static const char* Pow_ver13_doc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
+
+For mixed precision operations where the base and exponent have different types,
+the computation is performed by promoting both operands to a common type during
+calculation, then casting the result back to the base type (T). For example,
+given Pow(int(2), float(0.5)), the base is promoted to float for computation
+(float(2.0) ^ float(0.5) = float(1.414...)), and the result is cast back to
+the base type (int(1)).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1474,6 +1481,13 @@ static const char* Pow_ver12_doc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
+
+For mixed precision operations where the base and exponent have different types,
+the computation is performed by promoting both operands to a common type during
+calculation, then casting the result back to the base type (T). For example,
+given Pow(int(2), float(0.5)), the base is promoted to float for computation
+(float(2.0) ^ float(0.5) = float(1.414...)), and the result is cast back to
+the base type (int(1)).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
