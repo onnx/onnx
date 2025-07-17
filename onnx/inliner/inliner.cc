@@ -214,33 +214,6 @@ class InliningRenamer : public MutableVisitor {
     return unique_name;
   }
 
- private:
-  // Replace given name with a unique version of the name, and cache the
-  // renaming-binding in current scope.
-  void Rename(std::string& name) {
-    auto new_name = MakeUnique(name);
-    auto& current_scope = rename_scopes.back();
-    current_scope[name] = new_name;
-    name = new_name;
-  }
-
-  void LookupOrRename(std::string& name, bool is_new_def) {
-    if (name.empty())
-      return;
-    for (auto i = rename_scopes.size(); i > 0; --i) {
-      const auto& map = rename_scopes[i - 1];
-      auto iter = map.find(name);
-      if (iter != map.end()) {
-        name = iter->second;
-        return;
-      }
-    }
-    if (is_new_def) {
-      Rename(name);
-    }
-    // Otherwise, it is a reference to an outer-scope variable that should not be renamed.
-  }
-
   template <bool isOutput>
   void Bind(
       google::protobuf::RepeatedPtrField<std::string>& formals,
@@ -300,6 +273,33 @@ class InliningRenamer : public MutableVisitor {
     for (auto& n : *graph->mutable_node())
       VisitNode(&n);
     rename_scopes.pop_back();
+  }
+
+ private:
+  // Replace given name with a unique version of the name, and cache the
+  // renaming-binding in current scope.
+  void Rename(std::string& name) {
+    auto new_name = MakeUnique(name);
+    auto& current_scope = rename_scopes.back();
+    current_scope[name] = new_name;
+    name = new_name;
+  }
+
+  void LookupOrRename(std::string& name, bool is_new_def) {
+    if (name.empty())
+      return;
+    for (auto i = rename_scopes.size(); i > 0; --i) {
+      const auto& map = rename_scopes[i - 1];
+      auto iter = map.find(name);
+      if (iter != map.end()) {
+        name = iter->second;
+        return;
+      }
+    }
+    if (is_new_def) {
+      Rename(name);
+    }
+    // Otherwise, it is a reference to an outer-scope variable that should not be renamed.
   }
 
  public:
