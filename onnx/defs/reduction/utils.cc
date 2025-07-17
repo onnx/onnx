@@ -61,7 +61,7 @@ to `False` instead of `True`.)DOC";
     if (axes_input) {
       schema.Attr(
           "noop_with_empty_axes",
-          "Defines behavior when 'axes' is explicitly provided but empty. "
+          "Defines behavior when axes is not provided or is empty. "
           "If false (default), reduction happens over all axes. "
           "If true, input tensor is returned unchanged (acts as Identity op).",
           AttributeProto::INT,
