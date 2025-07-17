@@ -2952,24 +2952,18 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* epsilon_attr = ctx.getAttribute("epsilon");
           float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
 
-          auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
-            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
-            tp.add_dims(1);
-            return tp;
-          };
-
           FunctionBuilder builder(functionProto);
           builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
               .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
               .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
               .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-              .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
+              .Const("Axis", axis) // axis : scalar
               .Add(
                   axis >= 0 // number of axes that are reduced =
-                      ? "PosAxis1D = Identity (Axis1D)" // [axis]: 1D tensor
-                      : "PosAxis1D = Add (Rank, Axis1D)") // [rank + axis] : 1D tensor
-              .Const1D("One1D", (int64_t)1)
-              .Add("ReduceAxes = Range(PosAxis1D, Rank, One1D)")
+                      ? "PosAxis = Identity (Axis)" // axis: scalar
+                      : "PosAxis = Add (Rank, Axis)") // rank + axis : scalar
+              .Const("One", (int64_t)1)
+              .Add("ReduceAxes = Range(PosAxis, Rank, One)")
               .Add("XU = Cast (X)", "to", U);
           builder.Add("XSquared = Mul (XU, XU)")
               .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
