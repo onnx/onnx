@@ -3358,9 +3358,9 @@ class TestReferenceEvaluator(unittest.TestCase):
         expected1 = onnx.numpy_helper.saturate_cast(
             data, ml_dtypes.float8_e4m3fn
         ).astype(np.float32)
-        expected2 = onnx.numpy_helper.saturate_cast(
-            data, ml_dtypes.float8_e5m2
-        ).astype(np.float32)
+        expected2 = onnx.numpy_helper.saturate_cast(data, ml_dtypes.float8_e5m2).astype(
+            np.float32
+        )
         got = ref.run(None, {"X": data})
         assert_allclose(got[0], expected1)
         assert_allclose(got[1], expected2)
