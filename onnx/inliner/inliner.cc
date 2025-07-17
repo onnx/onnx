@@ -163,6 +163,8 @@ class InliningRenamer : public MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
+
+ protected:
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
  public:
