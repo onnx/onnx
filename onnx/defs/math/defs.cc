@@ -680,11 +680,14 @@ produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 
 For mixed precision operations where the base and exponent have different types,
-the computation is performed by promoting both operands to a common type during
-calculation, then casting the result back to the base type (T). For example,
-given Pow(int(2), float(0.5)), the base is promoted to float for computation
-(float(2.0) ^ float(0.5) = float(1.414...)), and the result is cast back to
-the base type (int(1)).
+the computation is performed using standard arithmetic type promotion rules during
+calculation, then casting the result back to the base type (T). The promotion follows
+these rules: when one operand is an integer type and the other is a floating-point type,
+computation is performed in floating-point; when both operands are floating-point types
+of different precisions, computation is performed using the higher precision type.
+For example, given Pow(int(2), float(0.5)), the computation is performed in float
+(float(2.0) ^ float(0.5) = float(1.414...)), and the result is cast back to the base
+type (int(1)).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
