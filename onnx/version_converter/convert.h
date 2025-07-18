@@ -871,6 +871,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+
+    /******** 24 -> 25 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", 24, 25, CompatibleAdapter()));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", 24, 25, CompatibleAdapter()));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

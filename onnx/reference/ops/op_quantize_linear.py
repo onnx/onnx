@@ -27,6 +27,8 @@ _QUANT_TYPES = {
     TensorProto.FLOAT8E5M2,
     TensorProto.FLOAT8E5M2FNUZ,
     TensorProto.FLOAT4E2M1,
+    TensorProto.FLOAT6E2M3,
+    TensorProto.FLOAT6E3M2,
 }
 
 _QUANT_INTEGER_RANGES = {
@@ -156,6 +158,12 @@ class _CommonQuantizeLinear(OpRun):
         if tensor_type == TensorProto.FLOAT4E2M1:
             x += zero_point
             return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
+
+        if tensor_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            if saturate:
+                return onnx.numpy_helper.saturating_cast(x, dtype=tensor_dtype_to_np_dtype(tensor_type))
+            else:
+                return x.astype(tensor_dtype_to_np_dtype(tensor_type))
 
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."

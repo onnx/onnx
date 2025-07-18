@@ -31,6 +31,10 @@ def cast_to(
     if to == onnx.TensorProto.FLOAT8E8M0:
         return onnx.numpy_helper.to_float8e8m0(x, saturate, round_mode).astype(dtype)
 
+    if dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
+        # TODO: Implement FP6 casting with rounding/saturation
+        return x.astype(dtype)
+
     return x.astype(dtype)
 
 

@@ -77,6 +77,7 @@ class _CommonDequantizeLinear(OpRun):
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
         }
+        fp6_type = x_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}
         if (
             x_zero_point is not None
             and not fp8_type
@@ -91,6 +92,8 @@ class _CommonDequantizeLinear(OpRun):
             dx = x.astype(np.float32) - _reshape_input(
                 x_zero_point, x.shape, axis, block_size
             )
+        elif fp6_type:
+            dx = x.astype(np.float32)  # TODO: Proper dequant
         else:
             if fp8_type and x_zero_point is not None:
                 u_x_zero_point = x_zero_point.astype(np.uint8)

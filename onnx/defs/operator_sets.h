@@ -1386,6 +1386,20 @@ class OpSet_Onnx_ver24 {
   }
 };
 
+// Forward declarations for ai.onnx version 25
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, QuantizeLinear);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, DequantizeLinear);
+
+// Iterate over schema from ai.onnx version 25
+class OpSet_Onnx_ver25 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, QuantizeLinear)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, DequantizeLinear)>());
+    // Add other updated ops
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -1411,6 +1425,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver22>();
   RegisterOpSetSchema<OpSet_Onnx_ver23>();
   RegisterOpSetSchema<OpSet_Onnx_ver24>();
+  RegisterOpSetSchema<OpSet_Onnx_ver25>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1420,6 +1435,7 @@ inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicat
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
   // Version-specific registration sees duplicate schema version request as error if fail_duplicate_schema
+  RegisterOpSetSchema<OpSet_Onnx_ver25>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver24>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver23>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver22>(target_version, fail_duplicate_schema);

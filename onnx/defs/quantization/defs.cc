@@ -39,7 +39,7 @@ In all cases, `y_zero_point` must have the same shape as `y_scale`.
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
-    24,
+    25,
     OpSchema()
         .Input(0, "x", "N-D full precision Input tensor to be quantized.", "T1")
         .Input(
@@ -114,7 +114,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float8e5m2fnuz)",
              "tensor(uint4)",
              "tensor(int4)",
-             "tensor(float4e2m1)"},
+             "tensor(float4e2m1)",
+             "tensor(float6e2m3)",
+             "tensor(float6e3m2)"},
             "The type of the input `y_zero_point` and the output `y`.")
         .SetDoc(QuantizeLinear_ver24_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
@@ -162,7 +164,7 @@ is the same as `x_scale`. The output type also determines the precision of the m
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
-    24,
+    25,
     OpSchema()
         .Input(0, "x", "N-D quantized input tensor to be de-quantized.", "T1")
         .Input(
