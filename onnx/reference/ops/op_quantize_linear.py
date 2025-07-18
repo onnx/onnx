@@ -161,9 +161,9 @@ class _CommonQuantizeLinear(OpRun):
 
         if tensor_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
             if saturate:
-                return onnx.numpy_helper.saturating_cast(x, dtype=tensor_dtype_to_np_dtype(tensor_type))
+                return float32_to_float6e2m3(x + zero_point, True)  # Adjust for type
             else:
-                return x.astype(tensor_dtype_to_np_dtype(tensor_type))
+                return x.astype(np_dtype)
 
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."

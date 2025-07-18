@@ -9,6 +9,10 @@
 
 #include <cctype>
 #include <string>
+#include <unordered_map>
+#include <cstdint>
+#include <sstream>
+#include "onnx/onnx.pb.h"
 
 #include "onnx/common/common.h"
 

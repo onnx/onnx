@@ -93,7 +93,7 @@ class _CommonDequantizeLinear(OpRun):
                 x_zero_point, x.shape, axis, block_size
             )
         elif fp6_type:
-            dx = x.astype(np.float32)  # TODO: Proper dequant
+            dx = float6e2m3_to_float32(x) * x_scale  # TODO: Real dequant"
         else:
             if fp8_type and x_zero_point is not None:
                 u_x_zero_point = x_zero_point.astype(np.uint8)

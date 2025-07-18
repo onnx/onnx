@@ -51,3 +51,16 @@ class Cast_19(OpRun):
 class Cast_24(OpRun):
     def _run(self, x, to=None, saturate=None, round_mode=None):
         return (cast_to(x, to, saturate, round_mode),)
+
+
+def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
+    sign = np.signbit(x).astype(np.uint8) << 5
+    abs_x = np.abs(x)
+    exp = np.floor(np.log2(abs_x)).astype(np.int8) - 3  # Bias 3?
+    mant = np.round((abs_x / 2**exp) * 8).astype(np.uint8) & 0x07  # 3 bits
+    val = sign | ((exp & 0x03) << 3) | mant
+    if saturate: val = np.clip(val, 0, 63)
+    return val
+
+def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
+    return np.round(x).astype(np.uint8)
