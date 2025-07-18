@@ -382,24 +382,22 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
 import bitarray  # Assume installed or add dep
 import math
 def _pack_6bit(values: np.ndarray) -> np.ndarray:
-    bits = (values.astype(np.uint8) & 0x3F).flatten()
-    ba = bitarray.bitarray()
-    for v in bits:
-        ba.extend(format(v, '06b'))
-    packed = np.frombuffer(ba.tobytes(), dtype=np.uint8)[:math.ceil(len(bits)*6/8)]
-    return packed
+    flat = values.astype(np.uint8) & 0x3F
+    padded_len = ((len(flat) + 3) // 4) * 4
+    padded = np.pad(flat, (0, padded_len - len(flat)), constant_values=0)
+    groups = padded.reshape(-1, 4)
+    packed = (groups[:,0] | (groups[:,1] << 6) | (groups[:,2] << 12) | (groups[:,3] << 18)).view(np.uint8)
+    return packed.ravel()
 
 def _unpack_6bit(data: np.ndarray, original_size: int) -> np.ndarray:
-    ba = bitarray.bitarray()
-    ba.frombytes(data.tobytes())
-    bits = [int(ba[i:i+6].to01(), 2) for i in range(0, original_size*6, 6)]
-    return np.array(bits, dtype=np.uint8).reshape(dims)
+    bits = np.unpackbits(data, bitorder='little')
+    unpacked = np.packbits(bits.reshape(-1, 6), axis=1, bitorder='little') & 0x3F
+    return unpacked[:original_size].reshape(dims).astype(np.uint8)
 
 # For FLOAT6E2M3 and FLOAT6E3M2, assume conversion after unpacking to uint8 placeholder
 # Add in to_array switch:
 if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
-    data = np.frombuffer(raw_data, dtype=np.uint8)
-    unpacked = _unpack_6bit(data, np.prod(dims))
+    unpacked = _unpack_6bit(np.frombuffer(raw_data, dtype=np.uint8), np.prod(dims))
     return unpacked.view(np_dtype)  # Placeholder dtype
 
 
@@ -453,8 +451,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             return _unpack_4bit(data, dims).view(np_dtype)
 
         if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
-            data = np.frombuffer(raw_data, dtype=np.uint8)
-            unpacked = _unpack_6bit(data, np.prod(dims))
+            unpacked = _unpack_6bit(np.frombuffer(raw_data, dtype=np.uint8), np.prod(dims))
             return unpacked.view(np_dtype)  # Placeholder dtype
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)

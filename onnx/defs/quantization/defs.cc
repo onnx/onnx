@@ -39,7 +39,7 @@ In all cases, `y_zero_point` must have the same shape as `y_scale`.
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
-    25,
+    24,
     OpSchema()
         .Input(0, "x", "N-D full precision Input tensor to be quantized.", "T1")
         .Input(
@@ -164,7 +164,7 @@ is the same as `x_scale`. The output type also determines the precision of the m
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
-    25,
+    24,
     OpSchema()
         .Input(0, "x", "N-D quantized input tensor to be de-quantized.", "T1")
         .Input(
