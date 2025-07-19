@@ -110,4 +110,14 @@ TENSOR_TYPE_MAP: dict[int, TensorDtypeMap] = {
         int(TensorProto.INT32),
         "TensorProto.FLOAT8E8M0",
     ),
+    int(TensorProto.FLOAT6E2M3): TensorDtypeMap(
+        np.dtype(ml_dtypes.float6_e2m3fn) if hasattr(ml_dtypes, 'float6_e2m3fn') else np.dtype('uint8'),
+        int(TensorProto.INT32),
+        "TensorProto.FLOAT6E2M3",
+    ),
+    int(TensorProto.FLOAT6E3M2): TensorDtypeMap(
+        np.dtype(ml_dtypes.float6_e3m2) if hasattr(ml_dtypes, 'float6_e3m2') else np.dtype('uint8'),
+        int(TensorProto.INT32),
+        "TensorProto.FLOAT6E3M2",
+    ),
 }

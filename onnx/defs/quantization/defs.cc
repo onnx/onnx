@@ -114,7 +114,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float8e5m2fnuz)",
              "tensor(uint4)",
              "tensor(int4)",
-             "tensor(float4e2m1)"},
+             "tensor(float4e2m1)",
+             "tensor(float6e2m3)",
+             "tensor(float6e3m2)"},
             "The type of the input `y_zero_point` and the output `y`.")
         .SetDoc(QuantizeLinear_ver24_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
