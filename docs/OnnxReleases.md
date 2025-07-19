@@ -36,8 +36,29 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
     1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
         * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
-## Upload release candidate to TestPyPI
+## Upload release candidate to TestPyPI without offline step (onnx version 1.19)
 
+* Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow", select the workflow
+
+<img width="1557" height="743" alt="create_releases_run_workflow" src="https://github.com/user-attachments/assets/9281f94b-bfa8-425f-9c5e-ed2a73daf796" />
+
+RC-Candidates
+* Published to https://test.pypi.org/
+* Build-mode: Release
+
+* This button triggers the build of the different OS
+
+<img width="1059" height="755" alt="create_releases_overview_jobs" src="https://github.com/user-attachments/assets/d56018f4-a26e-4a38-af0f-6d34f36510c7" />
+
+* All artifacts of the single runs could be found associated to the job
+
+<img width="1556" height="335" alt="create_releases_artifact_overview" src="https://github.com/user-attachments/assets/5f1cb1db-9a22-4a15-84bf-bb68c488898a" />
+
+* For 
+
+
+
+## Upload release candidate to TestPyPI (valid for releases up to and including 1.18 / fallback for 1.19)
 **Important**
 * **WAIT** for PR to set the release branch's `VERSION_NUMBER` to merge and build before continuing.
 * To push files to TestPyPI or PyPI, install `twine` if you don't already have it: `pip install twine`
