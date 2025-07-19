@@ -36,7 +36,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
     1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
         * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
-## Upload release candidate to TestPyPI without offline step (onnx version 1.19)
+## Upload release candidate to TestPyPI without offline steps (onnx version 1.19)
 
 * Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow", select the workflow
 
