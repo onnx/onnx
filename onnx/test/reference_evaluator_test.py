@@ -3355,12 +3355,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        expected1 = onnx.numpy_helper.saturating_cast(
+        expected1 = onnx.numpy_helper.saturate_cast(
             data, ml_dtypes.float8_e4m3fn
         ).astype(np.float32)
-        expected2 = onnx.numpy_helper.saturating_cast(
-            data, ml_dtypes.float8_e5m2
-        ).astype(np.float32)
+        expected2 = onnx.numpy_helper.saturate_cast(data, ml_dtypes.float8_e5m2).astype(
+            np.float32
+        )
         got = ref.run(None, {"X": data})
         assert_allclose(got[0], expected1)
         assert_allclose(got[1], expected2)
@@ -3418,8 +3418,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
         ref = ReferenceEvaluator(model)
         data = np.array([0, 1, 2, 5e-2, 200], dtype=np.float32)
-        expected1 = onnx.numpy_helper.saturating_cast(data, ml_dtypes.float8_e4m3fn)
-        expected2 = onnx.numpy_helper.saturating_cast(data, ml_dtypes.float8_e5m2)
+        expected1 = onnx.numpy_helper.saturate_cast(data, ml_dtypes.float8_e4m3fn)
+        expected2 = onnx.numpy_helper.saturate_cast(data, ml_dtypes.float8_e5m2)
         got = ref.run(None, {"X": data})
         self.assertEqual(got[0].tolist(), expected1.tolist())
         self.assertEqual(got[1].tolist(), expected2.tolist())

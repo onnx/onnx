@@ -26,7 +26,7 @@ def cast_to(
         }
         and saturate
     ):
-        return onnx.numpy_helper.saturating_cast(x, dtype)
+        return onnx.numpy_helper.saturate_cast(x, dtype)
 
     if to == onnx.TensorProto.FLOAT8E8M0:
         return onnx.numpy_helper.to_float8e8m0(x, saturate, round_mode).astype(dtype)
