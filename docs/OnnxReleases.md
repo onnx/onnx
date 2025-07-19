@@ -175,11 +175,14 @@ Validation steps must be completed before this point! This is the point of new r
     * .tar.gz and .zip will be auto-generated after publishing the release.
 
 ## Upload to Official PyPI
+* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above)
+
 ### NOTES:
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
   * Please make sure everything is good on TestPyPI before uploading to PyPI**
 * PyPI has separate logins, passwords, and API tokens from TestPyPI but the process is the same. An ONNX PyPI owner will need to grant access, etc.
 
+### old notes (with twine) ##
 Follow the **Wheels** and **Source Distribution** steps in [Upload release candidate toTestPyPI](#Upload-release-candidate-to-TestPyPI) above with the following changes:
 * Create a new API token of onnx scope for uploading onnx wheel in your [PyPI account](https://pypi.org/manage/account) (**API tokens** section).
     * Remove the created token after pushing the wheels and source for the release.
