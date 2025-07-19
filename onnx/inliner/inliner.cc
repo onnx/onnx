@@ -7,6 +7,7 @@
 #include "onnx/inliner/inliner.h"
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -158,12 +159,15 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class InliningRenamer : private MutableVisitor {
+class InliningRenamer : public MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
+
+ protected:
   std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
+ public:
   InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
@@ -179,30 +183,35 @@ class InliningRenamer : private MutableVisitor {
     return generator.CreateNew(name + suffix);
   }
 
-  // Replace given name with a unique version of the name, and cache the
-  // renaming-binding in current scope.
-  void Rename(std::string& name) {
-    auto new_name = MakeUnique(name);
+  /**
+   * @brief Binds a formal parameter name to an actual parameter name.
+   *
+   * @param formal_name The formal parameter name to bind.
+   * @param actual_name The actual parameter name to bind to.
+   */
+  void BindFormalToActual(const std::string& formal_name, const std::string& actual_name) {
     auto& current_scope = rename_scopes.back();
-    current_scope[name] = new_name;
-    name = new_name;
+    current_scope[formal_name] = actual_name;
   }
 
-  void LookupOrRename(std::string& name, bool is_new_def) {
-    if (name.empty())
-      return;
-    for (auto i = rename_scopes.size(); i > 0; --i) {
-      const auto& map = rename_scopes[i - 1];
-      auto iter = map.find(name);
-      if (iter != map.end()) {
-        name = iter->second;
-        return;
-      }
-    }
-    if (is_new_def) {
-      Rename(name);
-    }
-    // Otherwise, it is a reference to an outer-scope variable that should not be renamed.
+  /**
+   * @brief Creates a unique name for the given name and binds it.
+   *
+   * This method creates a unique name based on the suffix and binds the original
+   * name to the unique name for later reference renaming.
+   *
+   * @param original_name The name to create a unique version of.
+   * @return The unique name that was created and bound.
+   */
+  std::string BindToUniqueName(const std::string& original_name) {
+    // First create the unique name using MakeUnique
+    std::string unique_name = MakeUnique(original_name);
+
+    // Then bind the original name to the unique name
+    auto& current_scope = rename_scopes.back();
+    current_scope[original_name] = unique_name;
+
+    return unique_name;
   }
 
   template <bool isOutput>
@@ -264,6 +273,33 @@ class InliningRenamer : private MutableVisitor {
     for (auto& n : *graph->mutable_node())
       VisitNode(&n);
     rename_scopes.pop_back();
+  }
+
+ private:
+  // Replace given name with a unique version of the name, and cache the
+  // renaming-binding in current scope.
+  void Rename(std::string& name) {
+    auto new_name = MakeUnique(name);
+    auto& current_scope = rename_scopes.back();
+    current_scope[name] = new_name;
+    name = new_name;
+  }
+
+  void LookupOrRename(std::string& name, bool is_new_def) {
+    if (name.empty())
+      return;
+    for (auto i = rename_scopes.size(); i > 0; --i) {
+      const auto& map = rename_scopes[i - 1];
+      auto iter = map.find(name);
+      if (iter != map.end()) {
+        name = iter->second;
+        return;
+      }
+    }
+    if (is_new_def) {
+      Rename(name);
+    }
+    // Otherwise, it is a reference to an outer-scope variable that should not be renamed.
   }
 
  public:
@@ -720,5 +756,51 @@ void InlineSelectedFunctions(
   }
   InlinerImpl::InlineSelectedFunctions(model, to_inline, schema_registry);
 }
+
+// Implementation of the Renamer class using InliningRenamer directly
+class Renamer::Impl {
+ private:
+  NameGenerator generator_;
+  InliningRenamer renamer_;
+
+ public:
+  Impl(const std::string& prefix, const GraphProto& graph) : generator_(graph), renamer_("__" + prefix, generator_) {}
+
+  Impl(const std::string& prefix, const FunctionProto& function)
+      : generator_(function), renamer_("__" + prefix, generator_) {}
+
+  InliningRenamer& GetRenamer() {
+    return renamer_;
+  }
+
+  void BindName(const std::string& formal_name, const std::string& actual_name) {
+    renamer_.BindFormalToActual(formal_name, actual_name);
+  }
+
+  void RenameNode(NodeProto& node) {
+    // Use the InliningRenamer's ProcessNode method which handles graph-value attributes
+    renamer_.ProcessNode(&node);
+  }
+};
+
+Renamer::Renamer(const std::string& prefix, const GraphProto& graph) : pImpl_(std::make_unique<Impl>(prefix, graph)) {}
+
+Renamer::Renamer(const std::string& prefix, const FunctionProto& function)
+    : pImpl_(std::make_unique<Impl>(prefix, function)) {}
+
+Renamer::~Renamer() = default;
+
+void Renamer::BindName(const std::string& formal_name, const std::string& actual_name) {
+  pImpl_->BindName(formal_name, actual_name);
+}
+
+void Renamer::RenameNode(NodeProto& node) {
+  pImpl_->RenameNode(node);
+}
+
+std::string Renamer::BindToUniqueName(const std::string& original_name) {
+  return pImpl_->GetRenamer().BindToUniqueName(original_name);
+}
+
 } // namespace inliner
 } // namespace ONNX_NAMESPACE

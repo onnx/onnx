@@ -13,7 +13,7 @@ from onnx.reference.ops.op_resize import _get_all_coords
 
 class GridSample(OpRun):
     # https://github.com/pytorch/pytorch/blob/v2.0.0/aten/src/ATen/native/GridSampler.h#L26
-    def _gs_denormalize(self, n, length: int, align_corners: bool):  # type: ignore
+    def _gs_denormalize(self, n, length: int, align_corners: bool):
         # n is the normalized coordinate (float)
         # x is the unormalized coordinate (float)
         if align_corners:
@@ -49,7 +49,7 @@ class GridSample(OpRun):
             x[i] = self._gs_denormalize(n=v, length=dim, align_corners=align_corners)
         return x
 
-    def _gs_reflect(self, x, x_min, x_max):  # type: ignore
+    def _gs_reflect(self, x, x_min, x_max):
         """Reflect by the near border till within the borders
         Use float for borders to avoid potential issues with integer T
         """
@@ -73,7 +73,7 @@ class GridSample(OpRun):
                 fx = x_min + r
         return fx
 
-    def _gs_get_cubic_coeffs(self, x, coeffs):  # type: ignore
+    def _gs_get_cubic_coeffs(self, x, coeffs):
         """Calculate cubic convolution interpolation coefficients
         ROBERT G. KEYS https://ieeexplore.ieee.org/document/1163711
         Use float to avoid potential issues with integer.
@@ -96,7 +96,7 @@ class GridSample(OpRun):
         coeffs[0] = 1 - x
         coeffs[1] = x
 
-    def _gs_bicubic_interpolate(self, p, x, y):  # type: ignore
+    def _gs_bicubic_interpolate(self, p, x, y):
         v = np.empty((4,), dtype=p.dtype)
         coeffs = np.empty((4,), dtype=p.dtype)
         self._gs_get_cubic_coeffs(x, coeffs)
@@ -197,14 +197,14 @@ class GridSample(OpRun):
             padding_mode=padding_mode,
         )
 
-    def _clamp(self, val, lo, hi):  # type: ignore
+    def _clamp(self, val, lo, hi):
         if val < lo:
             return lo
         if val > hi:
             return hi
         return val
 
-    def _pixel_at_ndarray(self, ndarray, x: list, border, padding_mode):  # type: ignore
+    def _pixel_at_ndarray(self, ndarray, x: list, border, padding_mode):
         # boarder: [x_1_min, x_2_min, ..., x_1_max, x_2_max, ...]
         num_dims = ndarray.ndim
         assert num_dims == len(x) == int(len(border) / 2)
@@ -235,7 +235,7 @@ class GridSample(OpRun):
             padding_mode=padding_mode,
         )
 
-    def _pixel_at_array(self, array, i: int, border, padding_mode):  # type: ignore
+    def _pixel_at_array(self, array, i: int, border, padding_mode):
         assert array.ndim == 1
         d = array.shape[0]
         if padding_mode == "zeros":
@@ -289,9 +289,9 @@ class GridSample(OpRun):
     def _run(self, X, grid, mode=None, padding_mode=None, align_corners=None):
         # This implementation supports GridSample arbitrary dimensions.
 
-        mode = mode or self.mode  # type: ignore
-        padding_mode = padding_mode or self.padding_mode  # type: ignore
-        align_corners = align_corners or self.align_corners  # type: ignore
+        mode = mode or self.mode
+        padding_mode = padding_mode or self.padding_mode
+        align_corners = align_corners or self.align_corners
 
         x_dims = X.shape
         grid_dims = grid.shape

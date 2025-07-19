@@ -9,7 +9,7 @@ from onnx.reference.ops.op_pool_common import CommonPool
 
 
 class LpPool(CommonPool):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         auto_pad=None,
