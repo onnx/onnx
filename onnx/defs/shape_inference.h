@@ -931,4 +931,17 @@ void checkDuplicateAxes(Axes& axes, int rank) {
   }
 }
 
+// Shape inference functions for various ONNX operators.
+// Users can use these functions to implement shape inference for custom operators
+// by calling them in their own inference functions.
+ONNX_API void RNNShapeInference(InferenceContext& ctx);
+ONNX_API void convPoolShapeInference(
+    InferenceContext& ctx,
+    bool use_dilation,
+    bool require_kernel_shape,
+    int input1Idx,
+    int input2Idx);
+ONNX_API void convTransposeShapeInference(InferenceContext& ctx);
+ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx);
+
 } // namespace ONNX_NAMESPACE

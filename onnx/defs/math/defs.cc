@@ -425,8 +425,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
         .SetDoc(Elu_ver22_doc)
-        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "1D output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
         .FunctionBody(
@@ -1227,8 +1227,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     22,
     OpSchema()
         .SetDoc(Softplus_ver22_doc)
-        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
         .FunctionBody(
@@ -2603,6 +2603,27 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       }
     }
 
+    // Validate that term_size is compatible with rank before accessing dimensions
+    if (ellipsis_index != std::string::npos) {
+      // For ellipsis case, rank must be at least term_size
+      if (rank < term_size) {
+        fail_shape_inference(
+            "Ellipsis represents incompatible dimensions for input ",
+            num_operands,
+            ". Rank ",
+            rank,
+            " is less than term size ",
+            term_size,
+            ".");
+      }
+    } else {
+      // For non-ellipsis case, rank must equal term_size
+      if (rank != term_size) {
+        fail_shape_inference(
+            "Rank of input ", num_operands, " (", rank, ") does not match the equation indices (", term_size, ").");
+      }
+    }
+
     for (size_t index = 0; index < term.size(); ++index) {
       if (index == ellipsis_index) {
         // find ellipsis and record the dims represented by ellipsis
@@ -2644,9 +2665,6 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       // If there is an ellipsis, the number of dimensions it represents
       // must be total dim - letter dimensions
       if (num_ellipsis == 0) {
-        if (rank < term_size) {
-          fail_shape_inference("Ellipsis represents incompatible dimensions.");
-        }
         num_ellipsis_indices = rank - term_size;
       } else { // ellipsis has been seen before. Check that if dimensions
                // are compatible
@@ -2655,10 +2673,6 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         }
       }
       num_ellipsis++;
-    } else {
-      if (rank != term_size) {
-        fail_shape_inference("Rank of input ", num_operands, " does not match the equation indices.");
-      }
     }
     num_operands++;
   }

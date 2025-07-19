@@ -9,6 +9,9 @@ on:
     # run weekly on Sunday 23:59
     - cron:  '29 23 * * SUN'
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
