@@ -54,7 +54,7 @@ RC-Candidates
 
 <img width="1556" height="335" alt="create_releases_artifact_overview" src="https://github.com/user-attachments/assets/5f1cb1db-9a22-4a15-84bf-bb68c488898a" />
 
-* For 
+* Before the final merge, it must be confirmed manually via the set up deployment environments.
 
 
 
