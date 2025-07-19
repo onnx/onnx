@@ -9,8 +9,8 @@ from onnx.reference.op_run import OpRun
 
 
 class CenterCropPad(OpRun):
-    def _run(self, input_data, shape, axes=None):  # type: ignore
-        axes = axes or self.axes  # type: ignore
+    def _run(self, input_data, shape, axes=None):
+        axes = axes or self.axes
         input_rank = len(input_data.shape)
         if axes is None:
             axes = list(range(input_rank))
