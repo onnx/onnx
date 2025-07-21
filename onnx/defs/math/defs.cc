@@ -44,16 +44,15 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
 static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
 (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
@@ -857,14 +856,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
 {broadcast_doc}
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1023,8 +1021,7 @@ static std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The operator computes the {description} values for the given input:
 
  {equation}
@@ -1033,17 +1030,16 @@ The "axis" attribute indicates the dimension along which {name}
 will be performed. The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{description}", description);
-        ReplaceAll(doc, "{equation}", equation););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{description}", description);
+                        ReplaceAll(doc, "{equation}", equation););
     std::string axis_attr;
-    POPULATE_OP_DOC_STR(
-        axis_attr = R"DOC(
+    POPULATE_OP_DOC_STR(axis_attr = R"DOC(
 Describes the dimension {name} will be performed on.
 Negative value means counting dimensions
 from the back. Accepted range is [-r, r-1] where r = rank(input).
 )DOC";
-        ReplaceAll(axis_attr, "{name}", name););
+                        ReplaceAll(axis_attr, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("axis", axis_attr, AttributeProto::INT, static_cast<int64_t>(-1));
     schema.Input(
@@ -1358,141 +1354,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           defs::math::utils::MatMulShapeInference(ctx, 0, 1);
         }));
 
-static const char* TopK_ver11_doc = R"DOC(
-Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
-shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
-
-* Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
-  which contains the values of the top k elements along the specified axis
-* Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
-  contains the indices of the top k elements (original indices from the input
-  tensor).
-
-* If "largest" is 1 (the default value) then the k largest elements are returned.
-* If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
-* If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
-
-Given two equivalent values, this operator uses the indices along the axis as
-a tiebreaker. That is, the element with the lower index will appear first.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    11,
-    OpSchema()
-        .SetDoc(TopK_ver11_doc)
-        .Input(
-            0,
-            "X",
-            "Tensor of shape [a_0, a_1, ..., a_{n-1}]",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            1,
-            "K",
-            "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "Values",
-            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
-            "containing top K values from the input tensor",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            1,
-            "Indices",
-            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
-            "containing the corresponding input tensor indices for the top K "
-            "values.",
-            "I",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
-        .Attr(
-            "axis",
-            "Dimension on which to do the sort. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INT,
-            static_cast<int64_t>(-1))
-        .Attr(
-            "largest",
-            "Whether to return the top-K largest or smallest elements.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
-        .Attr("sorted", "Whether to return the elements in sorted order.", AttributeProto::INT, static_cast<int64_t>(1))
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference:
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          updateOutputElemType(ctx, 1, TensorProto::INT64);
-          // Shape inference:
-          if (!hasInputShape(ctx, 0))
-            return;
-          auto& input_shape = getInputShape(ctx, 0);
-          int64_t rank = input_shape.dim_size();
-          int64_t axis = getAttribute(ctx, "axis", -1);
-          if (axis < 0)
-            axis += rank;
-          if (axis < 0 || axis >= rank) {
-            fail_shape_inference("Invalid value for attribute axis");
-          }
-
-          const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
-          const auto* k = ctx.getInputData(1);
-
-          // Infer output shape if:
-          // (1) 'K' is available
-          // (2) axis_dim has dim value
-          // Otherwise cannot reliably compute output shape as axis dim value is
-          // unknown and hence cannot determine if axis dim value >= k (which
-          // should be enforced)
-          if (nullptr != k && axis_dim.has_dim_value()) {
-            int64_t k_value = 0;
-            if (k->dims_size() != 1 || k->dims(0) != 1) {
-              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
-            }
-            if (k->data_type() == TensorProto::INT64) {
-              const auto data = ParseData<int64_t>(k);
-              k_value = data[0];
-            } else {
-              fail_shape_inference("K input must be of type int64.");
-            }
-            if (axis_dim.dim_value() < k_value) {
-              fail_shape_inference("Axis has less than the requested k elements.");
-            }
-
-            TensorShapeProto result_shape = input_shape;
-            result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
-
-            updateOutputShape(ctx, 0, result_shape);
-            updateOutputShape(ctx, 1, result_shape);
-
-            return;
-          }
-
-          // Infer output shapes' rank in any case
-          auto* output_shape_0 = getOutputShape(ctx, 0);
-          auto* output_shape_1 = getOutputShape(ctx, 1);
-          for (int i = 0; i < input_shape.dim_size(); ++i) {
-            output_shape_0->add_dim();
-            output_shape_1->add_dim();
-          }
-
-          return;
-        }));
+    24,
+    OpSchema().FillUsing(defs::math::utils::TopKOpGenerator(OpSchema::all_numeric_types_ir4())));
 
 static const char* Sin_ver22_doc = R"DOC(
 Calculates the sine of the given input tensor, element-wise.
@@ -3086,11 +2951,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> CosineSumWindowOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 Generates a {name} window as described in the paper https://ieeexplore.ieee.org/document/1455106.
 )DOC";
-        ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{name}", name););
 
     schema.SetDoc(doc);
     schema.Attr(
