@@ -36925,7 +36925,7 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is -2)</dt>
-<dd>The sequence axis of the `past_cache` and `update` tensors. Default is -2.</dd>
+<dd>The sequence axis of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.</dd>
 <dt><tt>mode</tt> : string (default is linear)</dt>
 <dd>The write mode of kv cache. Supported modes include `linear` and `circular`. `linear` mode requires write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in wrap-around fashion, ie, the update index is modulo `max_sequence_length`</dd>
 </dl>
@@ -37107,25 +37107,13 @@ update = np.array(
         [
             [
                 [5, 5, 5, 5, 5],
-                [
-                    6,
-                    6,
-                    6,
-                    6,
-                    6,
-                ],
+                [6, 6, 6, 6, 6],
             ]
         ],
         [
             [
                 [1, 1, 1, 1, 1],
-                [
-                    2,
-                    2,
-                    2,
-                    2,
-                    2,
-                ],
+                [2, 2, 2, 2, 2],
             ]
         ],
     ],

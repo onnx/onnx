@@ -3973,7 +3973,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(TensorScatter_ver24_doc)
         .Attr(
             "axis",
-            "The sequence axis of the `past_cache` and `update` tensors. Default is -2.",
+            "The sequence axis of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.",
             AttributeProto::INT,
             static_cast<int64_t>(-2))
         .Attr(

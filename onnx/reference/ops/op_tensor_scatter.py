@@ -10,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class TensorScatter(OpRun):
     def _run(self, past_cache, update, write_indices=None, mode="linear", axis=-2):
-        if mode not in ["linear", "circular"]:
+        if mode not in {"linear", "circular"}:
             raise ValueError(f"Unsupported mode: {mode}")
 
         if write_indices is None:
