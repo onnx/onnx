@@ -29919,15 +29919,6 @@ This version of the operator has been available since version 24 of the default 
 <dd>Input tensor to be cast.</dd>
 <dt><tt>target_type</tt> (non-differentiable) : T2</dt>
 <dd>The (first) input tensor will be cast to produce a tensor of the same type as this (second input) tensor.</dd>
-</dl>
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> (differentiable) : T2</dt>
-<dd>Output tensor produced by casting the first input tensor to have the same type as the second input tensor.</dd>
-</dl>
-
-#### Type Constraints
 
 <dl>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
@@ -29981,13 +29972,8 @@ This version of the operator has been available since version 24 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
-</dl>
 
 ### <a name="ConstantOfShape-24"></a>**ConstantOfShape-24**</a>
-
-  Generate a tensor with given value and shape.
-
-#### Version
 
 This version of the operator has been available since version 24 of the default ONNX operator set.
 

@@ -36906,15 +36906,16 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh")
 ### <a name="TensorScatter"></a><a name="tensorscatter">**TensorScatter**</a>
 
   TensorScatter performs kv cache updates for Attention calculations. The past and present cache tensors have the
-  same shape, with the sequence length dimension being max_seqlen, so the sizes of these tensors do not need to
-  grow between iterations.
-  The optional write_indices input indicates the write index for each sample in the batch, assumed to be zero
+  same shape, with the sequence length dimension (indicated by the `axis` attribute) being max_sequence_length, so the
+  sizes of these tensors do not need to grow between iterations.
+
+  The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
   if not provided. During the prefill phase of attention, only the first two inputs are needed. During the decode
-  phase, write_indices is also needed so that the incoming k and v can be appended after the last valid token
+  phase, `write_indices` is also needed so that the incoming k and v can be appended after the last valid token
   for each sample in the batch.
 
-  In order to perform kv caching in place, as is the common practice for efficient inference, the execution
-  provider needs to alias the buffers for .
+  This operator is intended to support an explicit representation of in-place kv cache updates in Attention-based models
+  (instead of modeling it via a functional Concat operation).
 
 #### Version
 
@@ -36923,6 +36924,8 @@ This version of the operator has been available since version 24 of the default 
 #### Attributes
 
 <dl>
+<dt><tt>axis</tt> : int (default is -2)</dt>
+<dd>The sequence axis of the `past_cache` and `update` tensors. Default is -2.</dd>
 <dt><tt>mode</tt> : string (default is linear)</dt>
 <dd>The write mode of kv cache. Supported modes include `linear` and `circular`. `linear` mode requires write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in wrap-around fashion, ie, the update index is modulo `max_sequence_length`</dd>
 </dl>
@@ -36931,9 +36934,9 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>past_cache</tt> (differentiable) : T</dt>
-<dd>Past state cache for key or value tensor with 4D shape `(batch_size, num_heads, max_sequence_length, k_head_size)`or 3D shape `(batch_size, max_sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.</dd>
+<dd>Past state cache for key or value tensor with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.</dd>
 <dt><tt>update</tt> (differentiable) : T</dt>
-<dd>New update tensor with 4D shape `(batch_size, num_heads, sequence_length, k_head_size)` or 3D shape `(batch_size, sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.</dd>
+<dd>New update tensor with shape `(batch_size, D1, D2, ..., sequence_length, ..., Dn)`.</dd>
 <dt><tt>write_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>The write indices for incoming key and value in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.</dd>
 </dl>
@@ -36942,7 +36945,7 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>present_cache</tt> (differentiable) : T</dt>
-<dd>Updated cache. Same shape as cache.</dd>
+<dd>Updated cache. Same shape as `past_cache`.</dd>
 </dl>
 
 #### Type Constraints
@@ -37009,9 +37012,24 @@ node = onnx.helper.make_node(
 )
 past_cache = np.array(
     [
-        [[1, 2, 3, 4, 5, 6], [5, 6, 7, 8, 9, 10], [8, 7, 6, 5, 4, 3], [5, 4, 3, 2, 1, 0]],
-        [[1, 2, 3, 4, 5, 6], [5, 6, 7, 8, 9, 10], [8, 7, 6, 5, 4, 3], [5, 4, 3, 2, 1, 0]],
-        [[1, 2, 3, 4, 5, 6], [5, 6, 7, 8, 9, 10], [8, 7, 6, 5, 4, 3], [5, 4, 3, 2, 1, 0]],
+        [
+            [1, 2, 3, 4, 5, 6],
+            [5, 6, 7, 8, 9, 10],
+            [8, 7, 6, 5, 4, 3],
+            [5, 4, 3, 2, 1, 0],
+        ],
+        [
+            [1, 2, 3, 4, 5, 6],
+            [5, 6, 7, 8, 9, 10],
+            [8, 7, 6, 5, 4, 3],
+            [5, 4, 3, 2, 1, 0],
+        ],
+        [
+            [1, 2, 3, 4, 5, 6],
+            [5, 6, 7, 8, 9, 10],
+            [8, 7, 6, 5, 4, 3],
+            [5, 4, 3, 2, 1, 0],
+        ],
     ],
     dtype=np.float32,
 )
@@ -37026,7 +37044,7 @@ update = np.array(
             [7, 7, 7, 7, 7, 7],
         ],
         [
-            [2, 2, 2, 2, 2, 2], 
+            [2, 2, 2, 2, 2, 2],
             [3, 3, 3, 3, 3, 3],
         ],
     ],
@@ -37035,9 +37053,24 @@ update = np.array(
 write_indices = np.array([1, 2, 0], dtype=np.int64)
 present_cache = np.array(
     [
-        [[1, 2, 3, 4, 5, 6], [4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [5, 4, 3, 2, 1, 0]],
-        [[1, 2, 3, 4, 5, 6], [5, 6, 7, 8, 9, 10], [6, 6, 6, 6, 6, 6], [7, 7, 7, 7, 7, 7]],
-        [[2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3], [8, 7, 6, 5, 4, 3], [5, 4, 3, 2, 1, 0]],
+        [
+            [1, 2, 3, 4, 5, 6],
+            [4, 4, 4, 4, 4, 4],
+            [5, 5, 5, 5, 5, 5],
+            [5, 4, 3, 2, 1, 0],
+        ],
+        [
+            [1, 2, 3, 4, 5, 6],
+            [5, 6, 7, 8, 9, 10],
+            [6, 6, 6, 6, 6, 6],
+            [7, 7, 7, 7, 7, 7],
+        ],
+        [
+            [2, 2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3, 3],
+            [8, 7, 6, 5, 4, 3],
+            [5, 4, 3, 2, 1, 0],
+        ],
     ],
     dtype=np.float32,
 )
@@ -37075,7 +37108,11 @@ update = np.array(
             [
                 [5, 5, 5, 5, 5],
                 [
-                    6, 6, 6, 6, 6,
+                    6,
+                    6,
+                    6,
+                    6,
+                    6,
                 ],
             ]
         ],
@@ -37083,7 +37120,11 @@ update = np.array(
             [
                 [1, 1, 1, 1, 1],
                 [
-                    2, 2, 2, 2, 2,
+                    2,
+                    2,
+                    2,
+                    2,
+                    2,
                 ],
             ]
         ],

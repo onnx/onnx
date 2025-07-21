@@ -3954,15 +3954,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* TensorScatter_ver24_doc = R"DOC(
 TensorScatter performs kv cache updates for Attention calculations. The past and present cache tensors have the
-same shape, with the sequence length dimension being max_seqlen, so the sizes of these tensors do not need to 
-grow between iterations. 
-The optional write_indices input indicates the write index for each sample in the batch, assumed to be zero 
+same shape, with the sequence length dimension (indicated by the `axis` attribute) being max_sequence_length, so the
+sizes of these tensors do not need to grow between iterations.
+
+The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero 
 if not provided. During the prefill phase of attention, only the first two inputs are needed. During the decode 
-phase, write_indices is also needed so that the incoming k and v can be appended after the last valid token 
+phase, `write_indices` is also needed so that the incoming k and v can be appended after the last valid token 
 for each sample in the batch.
 
-In order to perform kv caching in place, as is the common practice for efficient inference, the execution 
-provider needs to alias the buffers for .
+This operator is intended to support an explicit representation of in-place kv cache updates in Attention-based models
+(instead of modeling it via a functional Concat operation).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -3970,6 +3971,11 @@ ONNX_OPERATOR_SET_SCHEMA(
     24,
     OpSchema()
         .SetDoc(TensorScatter_ver24_doc)
+        .Attr(
+            "axis",
+            "The sequence axis of the `past_cache` and `update` tensors. Default is -2.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-2))
         .Attr(
             "mode",
             "The write mode of kv cache. Supported modes include `linear` and `circular`. `linear` mode requires "
@@ -3980,8 +3986,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "past_cache",
-            "Past state cache for key or value tensor with 4D shape `(batch_size, num_heads, max_sequence_length, k_head_size)`"
-            "or 3D shape `(batch_size, max_sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.",
+            "Past state cache for key or value tensor with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.",
             "T",
             OpSchema::Single,
             true,
@@ -3990,8 +3995,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "update",
-            "New update tensor with 4D shape `(batch_size, num_heads, sequence_length, k_head_size)` "
-            "or 3D shape `(batch_size, sequence_length, k_hidden_size)` where `k_hidden_size = num_heads * k_head_size`.",
+            "New update tensor with shape `(batch_size, D1, D2, ..., sequence_length, ..., Dn)`.",
             "T",
             OpSchema::Single,
             true,
@@ -4009,7 +4013,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "present_cache",
-            "Updated cache. Same shape as cache.",
+            "Updated cache. Same shape as `past_cache`.",
             "T",
             OpSchema::Single,
             true,
@@ -4018,6 +4022,55 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir12(), "Constrain input and output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Check that updates and past_cache have the same rank
+          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
+            const auto& past_cache_shape = getInputShape(ctx, 0);
+            const auto& update_shape = getInputShape(ctx, 1);
+            const int past_cache_rank = static_cast<int>(past_cache_shape.dim_size());
+            const int update_rank = static_cast<int>(update_shape.dim_size());
+
+            if (past_cache_rank != update_rank) {
+              fail_shape_inference(
+                  "past_cache and update must have the same rank. past_cache_rank=",
+                  past_cache_rank,
+                  ", update_rank=",
+                  update_rank);
+            }
+
+            // Check that all dimensions match except the axis dimension
+            // Read axis from attribute, default is -2
+            auto axis_attr = ctx.getAttribute("axis");
+            int64_t axis = axis_attr ? axis_attr->i() : -2;
+
+            // Handle negative axis
+            if (axis < 0) {
+              axis += past_cache_rank;
+            }
+
+            // Validate axis is within bounds
+            if (axis < 0 || axis >= past_cache_rank) {
+              fail_shape_inference(
+                  "axis ", axis_attr ? axis_attr->i() : -2, " is out of range for rank ", past_cache_rank);
+            }
+            for (int i = 0; i < past_cache_rank; ++i) {
+              if (i != axis) {
+                // All dimensions except axis should match
+                Dim dim;
+                unifyInputDim(ctx, 0, i, dim);
+                unifyInputDim(ctx, 1, i, dim);
+              }
+            }
+          }
+
+          // Check that write_indices is of shape (batch_size,)
+          if (hasInputShape(ctx, 2)) {
+            checkInputRank(ctx, 2, 1);
+            Dim batch_size;
+            unifyInputDim(ctx, 0, 0, batch_size);
+            unifyInputDim(ctx, 2, 0, batch_size);
+          }
+
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
