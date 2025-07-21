@@ -64,6 +64,54 @@ def infer_shapes(
     )
 
 
+
+
+# ADD THE NEW FUNCTION infer_types AFTER infer_shapes
+def infer_types(
+    model: ModelProto | bytes,
+    check_type: bool = False,
+    strict_mode: bool = False,
+    data_prop: bool = False,
+) -> ModelProto:
+    """Apply type inference to the provided ModelProto without requiring shape inference to succeed.
+
+    Inferred types are added to the value_info field of the graph.
+
+    If the inferred values conflict with values already provided in the
+    graph, that means that the provided values are invalid (or there is a
+    bug in type inference), and the result is unspecified.
+
+    Arguments:
+        model: ModelProto.
+        check_type: Checks the type-equality for input and output.
+        strict_mode: Stricter type inference, it will throw errors if any;
+            Otherwise, simply stop if any error.
+        data_prop: Enables data propagation for limited operators to perform type computation.
+
+    Returns:
+        (ModelProto) model with inferred type information
+    """
+    if isinstance(model, (ModelProto, bytes)):
+        model_str = model if isinstance(model, bytes) else model.SerializeToString()
+        # This will call the C++ implementation once it's available
+        # For now, this will raise an AttributeError until C++ side is implemented
+        inferred_model_str = C.infer_types(
+            model_str, check_type, strict_mode, data_prop
+        )
+        return onnx.load_from_string(inferred_model_str)
+    if isinstance(model, str):
+        raise TypeError(
+            "infer_types only accepts ModelProto or bytes,"
+            "you can use infer_types_path for the model path (String)."
+        )
+
+    raise TypeError(
+        f"infer_types only accepts ModelProto or bytes, incorrect type: {type(model)}"
+    )
+
+
+
+
 def infer_shapes_path(
     model_path: str | os.PathLike,
     output_path: str | os.PathLike = "",
@@ -100,6 +148,47 @@ def infer_shapes_path(
     if output_path == "":
         output_path = model_path
     C.infer_shapes_path(model_path, output_path, check_type, strict_mode, data_prop)
+
+
+
+
+def infer_types_path(
+    model_path: str | os.PathLike,
+    output_path: str | os.PathLike = "",
+    check_type: bool = False,
+    strict_mode: bool = False,
+    data_prop: bool = False,
+) -> None:
+    """Take model path for type_inference.
+
+    This function is the same as :func:`infer_types` but supports >2GB models.
+    The function outputs the inferred model to the `output_path`. The original model path
+    is used if not specified.
+    """
+    if isinstance(model_path, ModelProto):
+        raise TypeError(
+            "infer_types_path only accepts model Path (String),"
+            "you can use infer_types for the ModelProto."
+        )
+    try:
+        model_path = os.fspath(model_path)
+    except TypeError as exp:
+        raise TypeError(
+            "infer_types_path only accepts model path as a string or PathLike, "
+            f"incorrect model path type: {type(model_path)}"
+        ) from exp
+    try:
+        output_path = os.fspath(output_path)
+    except TypeError as exp:
+        raise TypeError(
+            "infer_types_path only accepts output path as a string or PathLike, "
+            f"incorrect output path type: {type(output_path)}"
+        ) from exp
+
+    if output_path == "":
+        output_path = model_path
+    # This will call the C++ implementation once it's available
+    C.infer_types_path(model_path, output_path, check_type, strict_mode, data_prop)
 
 
 def infer_node_outputs(
