@@ -53,16 +53,25 @@ def _compute_attention(
         assert q_num_heads is not None and kv_num_heads is not None
 
         head_size_q = int(hidden_size_q / q_num_heads)
-        new_shape_q = [batch_size, q_num_heads, Q.shape[1], head_size_q]
-        Q = np.reshape(Q, new_shape_q)
+        # First reshape to [batch_size, q_sequence_length, q_num_heads, head_size]
+        intermediate_shape_q = [batch_size, Q.shape[1], q_num_heads, head_size_q]
+        Q = np.reshape(Q, intermediate_shape_q)
+        # Then transpose to [batch_size, q_num_heads, q_sequence_length, head_size]
+        Q = np.transpose(Q, (0, 2, 1, 3))
 
         head_size_k = int(hidden_size_k / kv_num_heads)
-        new_shape_k = [batch_size, kv_num_heads, K.shape[1], head_size_k]
-        K = np.reshape(K, new_shape_k)
+        # First reshape to [batch_size, kv_sequence_length, kv_num_heads, head_size]
+        intermediate_shape_k = [batch_size, K.shape[1], kv_num_heads, head_size_k]
+        K = np.reshape(K, intermediate_shape_k)
+        # Then transpose to [batch_size, kv_num_heads, kv_sequence_length, head_size]
+        K = np.transpose(K, (0, 2, 1, 3))
 
         head_size_v = int(hidden_size_v / kv_num_heads)
-        new_shape_v = [batch_size, kv_num_heads, V.shape[1], head_size_v]
-        V = np.reshape(V, new_shape_v)
+        # First reshape to [batch_size, kv_sequence_length, kv_num_heads, head_size]
+        intermediate_shape_v = [batch_size, V.shape[1], kv_num_heads, head_size_v]
+        V = np.reshape(V, intermediate_shape_v)
+        # Then transpose to [batch_size, kv_num_heads, kv_sequence_length, head_size]
+        V = np.transpose(V, (0, 2, 1, 3))
     assert len(Q.shape) == 4 and len(K.shape) == 4 and len(V.shape) == 4
 
     # Calculate Scaling Factor if not provided
