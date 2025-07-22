@@ -3953,17 +3953,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 static const char* TensorScatter_ver24_doc = R"DOC(
-TensorScatter performs kv cache updates for Attention calculations. The past and present cache tensors have the
-same shape, with the sequence length dimension (indicated by the `axis` attribute) being max_sequence_length, so the
-sizes of these tensors do not need to grow between iterations.
+TensorScatter is a generic tensor update operation, motivated by the requirements for KV cache updates for Attention
+ops commonly found in LLMs. It is a functional operation that models an in-place update to a KV cache buffer.
+
+The past and present cache tensors have the same shape, with the sequence length dimension (indicated by the
+`axis` attribute) being max_sequence_length, so the sizes of these tensors do not need to grow between iterations.
 
 The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
 if not provided. During the prefill phase of attention, only the first two inputs are needed. During the decode
 phase, `write_indices` is also needed so that the incoming k and v can be appended after the last valid token
 for each sample in the batch.
-
-This operator is intended to support an explicit representation of in-place kv cache updates in Attention-based models
-(instead of modeling it via a functional Concat operation).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -4049,9 +4048,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             // Validate axis is within bounds
-            if (axis < 0 || axis >= past_cache_rank) {
-              fail_shape_inference(
-                  "axis ", axis_attr ? axis_attr->i() : -2, " is out of range for rank ", past_cache_rank);
+            if (axis <= 0 || axis >= past_cache_rank) {
+              fail_shape_inference("axis ", axis, " is out of range for rank ", past_cache_rank);
             }
             for (int i = 0; i < past_cache_rank; ++i) {
               if (i != axis) {

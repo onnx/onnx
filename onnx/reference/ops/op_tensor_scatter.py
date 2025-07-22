@@ -20,7 +20,6 @@ class TensorScatter(OpRun):
         update_shape = update.shape
         axis = axis % len(input_shape)
 
-        print(input_shape, update_shape, axis)
         for i in range(len(input_shape)):
             if i != axis:
                 if input_shape[i] != update_shape[i]:
