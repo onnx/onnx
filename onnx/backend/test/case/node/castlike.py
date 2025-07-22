@@ -161,7 +161,7 @@ class CastLike(Base):
                 input_shape = (3, 4)
 
             if from_type in F8_TYPES:
-                np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
+                np_from = onnx.numpy_helper.saturate_cast(np_fp32, from_np_dtype)
                 input = make_tensor(
                     "input",
                     from_dtype,
@@ -186,7 +186,7 @@ class CastLike(Base):
                     "output",
                     to_dtype,
                     input_shape,
-                    vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
+                    vals=onnx.numpy_helper.saturate_cast(np_from, to_np_dtype),
                     raw=True,
                 )
             elif to_type in FOUR_BIT_TYPES:
