@@ -379,6 +379,42 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
 
 
+import bitarray  # Assume installed or add dep
+import math
+def _pack_6bit(values: np.ndarray) -> np.ndarray:
+    flat = values.astype(np.uint8) & 0x3F
+    n = len(flat)
+    packed_size = math.ceil(n * 6 / 8)
+    packed = np.zeros(packed_size, dtype=np.uint8)
+    bit_pos = 0
+    for val in flat:
+        for i in range(6):
+            if bit_pos // 8 < packed_size:
+                packed[bit_pos // 8] |= ((val >> i) & 1) << (bit_pos % 8)
+            bit_pos += 1
+    return packed
+
+def _unpack_6bit(data: np.ndarray, original_size: int) -> np.ndarray:
+    unpacked = np.zeros(original_size, dtype=np.uint8)
+    bit_pos = 0
+    for i in range(original_size):
+        val = 0
+        for j in range(6):
+            if bit_pos // 8 < len(data):
+                val |= ((data[bit_pos // 8] >> (bit_pos % 8)) & 1) << j
+            bit_pos += 1
+        unpacked[i] = val
+    return unpacked.reshape(dims)
+
+# For FLOAT6E2M3 and FLOAT6E3M2, assume conversion after unpacking to uint8 placeholder
+# Add in to_array switch:
+if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
+    data = np.frombuffer(raw_data, dtype=np.uint8)
+    unpacked = _unpack_6bit(data, np.prod(dims))
+    unpacked = np.where(unpacked == 0x20, 0, unpacked)  # Handle -0 to 0 per spec
+    return unpacked.view(np_dtype)  # Placeholder dtype
+
+
 def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
     """Converts a tensor def object to a numpy array.
 
@@ -427,6 +463,12 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         }:
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_4bit(data, dims).view(np_dtype)
+
+        if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
+            data = np.frombuffer(raw_data, dtype=np.uint8)
+            unpacked = _unpack_6bit(data, np.prod(dims))
+            unpacked = np.where(unpacked == 0x20, 0, unpacked)  # Handle -0 to 0 per spec
+            return unpacked.view(np_dtype)  # Placeholder dtype
 
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
 

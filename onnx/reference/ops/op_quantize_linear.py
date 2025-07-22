@@ -27,6 +27,8 @@ _QUANT_TYPES = {
     TensorProto.FLOAT8E5M2,
     TensorProto.FLOAT8E5M2FNUZ,
     TensorProto.FLOAT4E2M1,
+    TensorProto.FLOAT6E2M3,
+    TensorProto.FLOAT6E3M2,
 }
 
 _QUANT_INTEGER_RANGES = {
@@ -156,6 +158,12 @@ class _CommonQuantizeLinear(OpRun):
         if tensor_type == TensorProto.FLOAT4E2M1:
             x += zero_point
             return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
+
+        if tensor_type == TensorProto.FLOAT6E2M3:
+            return (float32_to_float6e2m3(x + zero_point, saturate).astype(np.uint8),)
+
+        if tensor_type == TensorProto.FLOAT6E3M2:
+            return float32_to_float6e3m2(x + zero_point, saturate)
 
         raise ValueError(
             f"Unexpected type: output_dtype={tensor_type} is not a supported quantized type."
