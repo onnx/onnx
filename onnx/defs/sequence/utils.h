@@ -16,9 +16,11 @@ namespace defs {
 namespace sequence {
 namespace utils {
 
-std::function<void(OpSchema&)> SplitToSequenceOpGenerator (const std::vector<std::string>& allowed_types);
+std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
+    const std::vector<std::string>& input_types,
+    const std::vector<std::string>& output_types);
 
 }
-}
-}
-}
+} // namespace sequence
+} // namespace defs
+} // namespace ONNX_NAMESPACE

@@ -1,11 +1,10 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <algorithm>
-#include <numeric>
-
 #include "onnx/defs/sequence/utils.h"
 
+#include <algorithm>
+#include <numeric>
 #include <string>
 
 namespace ONNX_NAMESPACE {
@@ -30,10 +29,11 @@ with lengths of the parts on 'axis' specified in 'split'. In this scenario, the 
 in 'split' must be equal to the dimension size of input tensor on 'axis'.
 )DOC";
 
-std::function<void(OpSchema&)> SplitToSequenceOpGenerator (const std::vector<std::string>& allowed_types) {
+std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
+    const std::vector<std::string>& input_types,
+    const std::vector<std::string>& output_types) {
   return [=](OpSchema& schema) {
-    schema
-        .Input(0, "input", "The tensor to split", "T")
+    schema.Input(0, "input", "The tensor to split", "T")
         .Input(
             1,
             "split",
@@ -42,9 +42,9 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator (const std::vector<std
             "I",
             OpSchema::Optional)
         .Output(0, "output_sequence", "One or more outputs forming a sequence of tensors after splitting", "S")
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input types to all tensor types.")
+        .TypeConstraint("T", input_types, "Constrain input types to all tensor types.")
         .TypeConstraint("I", {"tensor(int32)", "tensor(int64)"}, "Constrain split size to integral tensor.")
-        .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain output types to all tensor types.")
+        .TypeConstraint("S", output_types, "Constrain output types to all tensor types.")
         .Attr(
             "axis",
             "Which axis to split on. "
@@ -184,7 +184,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator (const std::vector<std
   };
 }
 
-}
-}
-}
-}
+} // namespace utils
+} // namespace sequence
+} // namespace defs
+} // namespace ONNX_NAMESPACE
