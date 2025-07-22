@@ -55,7 +55,7 @@ class Cast_24(OpRun):
 
 def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
     sign = np.signbit(x).astype(np.uint8) << 5
-    abs_x = np.abs(x)
+    abs_x = np.abs(x.astype(np.float32))
     is_zero = abs_x == 0
     exp = np.floor(np.log2(np.where(is_zero, 1, abs_x))).astype(np.int8) + 3  # Bias 3 for E2M3
     mant = np.round((abs_x / (2 ** (exp - 3))) * 8).astype(np.uint8) & 0x07
@@ -71,7 +71,7 @@ def float32_to_float6e2m3(x: np.ndarray, saturate: bool) -> np.ndarray:
 def float32_to_float6e3m2(x: np.ndarray, saturate: bool) -> np.ndarray:
     # Similar logic with bias 4, mant 2 bits, max 48
     sign = np.signbit(x).astype(np.uint8) << 5
-    abs_x = np.abs(x)
+    abs_x = np.abs(x.astype(np.float32))
     exp = np.floor(np.log2(abs_x + 1e-20)).astype(np.int8) + 4
     mant = np.round((abs_x / (2** (exp - 4))) * 4).astype(np.uint8) & 0x03
     val = sign | ((np.clip(exp, 0, 7) << 2) | mant)

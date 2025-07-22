@@ -230,12 +230,6 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
   }
 } // namespace Utils
 
-bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
-  TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  const auto& allowedSet = t.GetAllowedDataTypes();
-  return (allowedSet.find(type_str) != allowedSet.end());
-}
-
 int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   if (!IsValidDataTypeString(type_str)) {
     ONNX_THROW_EX(
