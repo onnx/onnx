@@ -30911,6 +30911,61 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
+### <a name="SplitToSequence-24"></a>**SplitToSequence-24**</a>
+
+  Split a tensor into a sequence of tensors, along the specified 'axis'.
+  Lengths of the parts can be specified using the optional argument 'split'.
+  If the argument `split' is not specified, a default scalar value of 1
+  is used as the value of `split'.
+  'split' must contain only positive numbers.
+  'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
+  If 'split' is a scalar, then 'input' will be split into chunks all of size 'split'
+  if possible. The last chunk alone may be smaller than 'split' if the 'input' size
+  along the given axis 'axis' is not divisible by 'split'.
+  If 'split' is a 1-dimensional tensor, the input tensor is split into 'size(split)' chunks,
+  with lengths of the parts on 'axis' specified in 'split'. In this scenario, the sum of entries
+  in 'split' must be equal to the dimension size of input tensor on 'axis'.
+
+#### Version
+
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to split on. A negative value means counting dimensions from the back. Accepted range is [-rank, rank-1].</dd>
+<dt><tt>keepdims</tt> : int (default is 1)</dt>
+<dd>Keep the split dimension or not. Default 1, which means we keep split dimension. If input 'split' is specified, this attribute is ignored.</dd>
+</dl>
+
+#### Inputs (1 - 2)
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The tensor to split</dd>
+<dt><tt>split</tt> (optional) : I</dt>
+<dd>Length of each output. It can be either a scalar(tensor of empty shape), or a 1-D tensor. All values must be >= 0. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output_sequence</tt> : S</dt>
+<dd>One or more outputs forming a sequence of tensors after splitting</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input types to all tensor types.</dd>
+<dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain split size to integral tensor.</dd>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dd>Constrain output types to all tensor types.</dd>
+</dl>
+
 ### <a name="Squeeze-24"></a>**Squeeze-24**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
@@ -30943,6 +30998,66 @@ This version of the operator has been available since version 24 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
 <dd>Constrain input and output types to all tensor types up to IRv12.</dd>
+</dl>
+
+### <a name="TopK-24"></a>**TopK-24**</a>
+
+  Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
+  shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
+
+  * Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
+    which contains the values of the top k elements along the specified axis
+  * Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
+    contains the indices of the top k elements (original indices from the input
+    tensor).
+
+  * If "largest" is 1 (the default value) then the k largest elements are returned.
+  * If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+  * If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+
+  Given two equivalent values, this operator uses the indices along the axis as
+  a tiebreaker. That is, the element with the lower index will appear first.
+
+#### Version
+
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>Dimension on which to do the sort. Negative value means counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).</dd>
+<dt><tt>largest</tt> : int (default is 1)</dt>
+<dd>Whether to return the top-K largest or smallest elements.</dd>
+<dt><tt>sorted</tt> : int (default is 1)</dt>
+<dd>Whether to return the elements in sorted order.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Tensor of shape [a_0, a_1, ..., a_{n-1}]</dd>
+<dt><tt>K</tt> (non-differentiable) : tensor(int64)</dt>
+<dd>A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Values</tt> (differentiable) : T</dt>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing top K values from the input tensor</dd>
+<dt><tt>Indices</tt> (non-differentiable) : I</dt>
+<dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing the corresponding input tensor indices for the top K values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 ### <a name="Transpose-24"></a>**Transpose-24**</a>

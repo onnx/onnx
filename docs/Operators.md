@@ -145,7 +145,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
 |<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
 |<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
-|<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-11">11</a>|
+|<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-24">24</a>, <a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-24">24</a>, <a href="Changelog.md#Squeeze-23">23</a>, <a href="Changelog.md#Squeeze-21">21</a>, <a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
 |<a href="#StringConcat">StringConcat</a>|<a href="Changelog.md#StringConcat-20">20</a>|
@@ -157,7 +157,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Tanh">Tanh</a>|<a href="Changelog.md#Tanh-13">13</a>, <a href="Changelog.md#Tanh-6">6</a>, <a href="Changelog.md#Tanh-1">1</a>|
 |<a href="#TfIdfVectorizer">TfIdfVectorizer</a>|<a href="Changelog.md#TfIdfVectorizer-9">9</a>|
 |<a href="#Tile">Tile</a>|<a href="Changelog.md#Tile-13">13</a>, <a href="Changelog.md#Tile-6">6</a>, <a href="Changelog.md#Tile-1">1</a>|
-|<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
+|<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-24">24</a>, <a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
 |<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-24">24</a>, <a href="Changelog.md#Transpose-23">23</a>, <a href="Changelog.md#Transpose-21">21</a>, <a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
 |<a href="#Trilu">Trilu</a>|<a href="Changelog.md#Trilu-14">14</a>|
 |<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
@@ -2881,7 +2881,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.bool)
+attn_mask = np.random.rand(4, 6).astype(bool)
 
 Y, _, _, _ = _compute_attention(
     Q,
@@ -2914,7 +2914,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(2, 3, 4, 6).astype(np.bool)
+attn_mask = np.random.rand(2, 3, 4, 6).astype(bool)
 
 Y, _, _, _ = _compute_attention(
     Q,
@@ -35732,7 +35732,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#SplitToSequence-11">11</a>
 
 #### Attributes
 
@@ -35762,11 +35764,11 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input types to all tensor types.</dd>
 <dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain split size to integral tensor.</dd>
-<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain output types to all tensor types.</dd>
 </dl>
 
@@ -37342,9 +37344,9 @@ expect(node, inputs=[x, repeats], outputs=[z], name="test_tile_precomputed")
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 24 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="Changelog.md#TopK-10">10</a>
+Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-11">11</a>
 
 #### Attributes
 
@@ -37378,7 +37380,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
