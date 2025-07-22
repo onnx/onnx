@@ -3957,9 +3957,9 @@ TensorScatter performs kv cache updates for Attention calculations. The past and
 same shape, with the sequence length dimension (indicated by the `axis` attribute) being max_sequence_length, so the
 sizes of these tensors do not need to grow between iterations.
 
-The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero 
-if not provided. During the prefill phase of attention, only the first two inputs are needed. During the decode 
-phase, `write_indices` is also needed so that the incoming k and v can be appended after the last valid token 
+The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
+if not provided. During the prefill phase of attention, only the first two inputs are needed. During the decode
+phase, `write_indices` is also needed so that the incoming k and v can be appended after the last valid token
 for each sample in the batch.
 
 This operator is intended to support an explicit representation of in-place kv cache updates in Attention-based models
