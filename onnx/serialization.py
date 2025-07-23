@@ -130,7 +130,7 @@ class _TextProtoSerializer(ProtoSerializer):
     """Serialize and deserialize text proto."""
 
     supported_format = "textproto"
-    file_extensions = frozenset({".textproto", ".prototxt", ".pbtxt"})
+    file_extensions = frozenset({".txtpb", ".textproto", ".prototxt", ".pbtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         textproto = google.protobuf.text_format.MessageToString(proto)

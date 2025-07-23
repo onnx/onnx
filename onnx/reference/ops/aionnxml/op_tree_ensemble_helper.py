@@ -91,7 +91,7 @@ class TreeEnsemble:
         return index
 
     def leave_index_tree(self, X: np.ndarray) -> np.ndarray:
-        """Computes the leave index for all trees."""
+        """Computes the leaf index for all trees."""
         if len(X.shape) == 1:
             X = X.reshape((1, -1))
         outputs = []
