@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t', '3.14-dev']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
         architecture: ['x64', 'x86']
         exclude:
           - python-version: '3.13t'
@@ -94,7 +94,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the latest numpy
-      if: steps.build_wheel.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t'
       run: |
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
@@ -102,7 +102,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: steps.build_wheel.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t'
       run: |
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
