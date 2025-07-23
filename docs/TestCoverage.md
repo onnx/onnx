@@ -2197,7 +2197,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.bool)
+attn_mask = np.random.rand(4, 6).astype(bool)
 
 Y, _, _, _ = _compute_attention(
     Q,
@@ -2228,7 +2228,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(2, 3, 4, 6).astype(np.bool)
+attn_mask = np.random.rand(2, 3, 4, 6).astype(bool)
 
 Y, _, _, _ = _compute_attention(
     Q,
@@ -4624,7 +4624,7 @@ for from_type, to_type in test_cases:
         input_shape = (3, 4)
 
     if from_type in F8_TYPES:
-        np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
+        np_from = onnx.numpy_helper.saturate_cast(np_fp32, from_np_dtype)
         input = make_tensor(
             "input",
             from_dtype,
@@ -4649,7 +4649,7 @@ for from_type, to_type in test_cases:
             "output",
             to_dtype,
             input_shape,
-            vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
+            vals=onnx.numpy_helper.saturate_cast(np_from, to_np_dtype),
             raw=True,
         )
     elif to_type in FOUR_BIT_TYPES:
@@ -4988,7 +4988,7 @@ for from_type, to_type in test_cases:
         input_shape = (3, 4)
 
     if from_type in F8_TYPES:
-        np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
+        np_from = onnx.numpy_helper.saturate_cast(np_fp32, from_np_dtype)
         input = make_tensor(
             "input",
             from_dtype,
@@ -5013,7 +5013,7 @@ for from_type, to_type in test_cases:
             "output",
             to_dtype,
             input_shape,
-            vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
+            vals=onnx.numpy_helper.saturate_cast(np_from, to_np_dtype),
             raw=True,
         )
     elif to_type in FOUR_BIT_TYPES:
