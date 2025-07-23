@@ -2881,7 +2881,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(bool)
+attn_mask = np.random.rand(4, 6).astype(np.bool)
 
 Y, _, _, _ = _compute_attention(
     Q,
@@ -2914,7 +2914,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(2, 3, 4, 6).astype(bool)
+attn_mask = np.random.rand(2, 3, 4, 6).astype(np.bool)
 
 Y, _, _, _ = _compute_attention(
     Q,
