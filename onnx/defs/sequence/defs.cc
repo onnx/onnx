@@ -259,9 +259,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     SplitToSequence,
     24,
-    OpSchema().FillUsing(defs::sequence::utils::SplitToSequenceOpGenerator(
-        OpSchema::all_tensor_types_ir4(),
-        OpSchema::all_tensor_sequence_types_ir4())));
+    OpSchema().FillUsing(
+        defs::sequence::utils::SplitToSequenceOpGenerator(
+            OpSchema::all_tensor_types_ir4(),
+            OpSchema::all_tensor_sequence_types_ir4())));
 
 static const char* ConcatFromSequence_ver11_doc = R"DOC(
 Concatenate a sequence of tensors into a single tensor.

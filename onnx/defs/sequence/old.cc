@@ -14,8 +14,9 @@ namespace ONNX_NAMESPACE {
 ONNX_OPERATOR_SET_SCHEMA(
     SplitToSequence,
     11,
-    OpSchema().FillUsing(defs::sequence::utils::SplitToSequenceOpGenerator(
-        OpSchema::all_tensor_types(),
-        OpSchema::all_tensor_sequence_types())));
+    OpSchema().FillUsing(
+        defs::sequence::utils::SplitToSequenceOpGenerator(
+            OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_sequence_types())));
 
 }
