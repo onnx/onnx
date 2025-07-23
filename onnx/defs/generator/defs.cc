@@ -96,7 +96,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",         "tensor(uint4)",
              "tensor(int4)",           "tensor(bool)",       "tensor(bfloat16)",       "tensor(float8e4m3fn)",
              "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(float4e2m1)",
-             "tensor(float8e8m0)"},
+             "tensor(float8e8m0)",     "tensor(uint2)",      "tensor(int2)"},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {

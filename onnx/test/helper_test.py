@@ -43,6 +43,21 @@ def _pack_4bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::2] | array_flat[1::2]
 
 
+def _pack_2bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    pad_len = size % 4
+    if pad_len:
+        array_flat.resize([size + (4 - pad_len)], refcheck=False)
+    array_flat &= 0x03
+    array_flat[1::4] <<= 2
+    array_flat[2::4] <<= 4
+    array_flat[3::4] <<= 6
+    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
+
+
 class TestHelperAttributeFunctions(unittest.TestCase):
     def test_attr_float(self) -> None:
         # float
@@ -624,6 +639,8 @@ class TestHelperTensorFunctions(unittest.TestCase):
             ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
         )
     )
+
+    ## TODO:: Add test for 2 bit tensor
     def test_make_4bit_tensor(self, dtype, dims) -> None:
         type_range = {
             TensorProto.UINT4: (0, 15),
@@ -929,6 +946,8 @@ def test_make_tensor_raw(tensor_dtype: int) -> None:
         TensorProto.UINT4,
     }:
         vals = _pack_4bit(np_array).tobytes()
+    elif tensor_dtype in {TensorProto.UINT2, TensorProto.INT2}:
+        vals = _pack_2bit(np_array).tobytes()
     else:
         vals = np_array.tobytes()
     tensor = helper.make_tensor(
