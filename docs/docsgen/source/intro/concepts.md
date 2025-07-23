@@ -201,9 +201,9 @@ and {mod}`numpy`.
 ```
 
 ONNX is strongly typed and its definition does not support
-implicit cast. It is impossible to add two tensors or matrices
-with different types even if other languages do. That's why an explicit
-cast must be inserted in a graph.
+implicit cast. ONNX does not allow addition of two tensors
+or matrices with different types, even if other languages do.
+That's why an explicit cast must be inserted in a graph.
 
 ### Sparse Tensor
 
@@ -230,7 +230,7 @@ Every version brings updated or new operators.
     print(onnx.__version__, " opset=", onnx.defs.onnx_opset_version())
 ```
 
-An opset is also attached to every ONNX graph globally.
+An opset version is also attached to every ONNX graph.
 It defines the version of all operators inside the graph.
 Operator *Add* was updated in version 6, 7, 13 and 14. If the
 graph opset is 15, it means operator *Add* follows specifications
