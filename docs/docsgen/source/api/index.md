@@ -3,7 +3,7 @@
 # API Reference
 
 ```{tip}
-Looking for a more modern API? The [ir-py project](https://github.com/onnx/ir-py) provides alternative Python APIs for creating and manipulating ONNX models with improved ergonomics and developer experience.
+The [ir-py project](https://github.com/onnx/ir-py) provides alternative Pythonic APIs for creating and manipulating ONNX models without interaction with Protobuf.
 ```
 
 ## Versioning
