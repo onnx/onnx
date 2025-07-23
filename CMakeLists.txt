@@ -134,10 +134,6 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
-if(ONNX_BUILD_PYTHON)
-  set(python_dev_component Development.Module)
-endif()
-
 # explicitly configure FindPython3.cmake to find python3 in virtual environment first
 if(NOT DEFINED Python3_FIND_VIRTUALENV)
   set(Python3_FIND_VIRTUALENV FIRST)
@@ -147,7 +143,22 @@ if(NOT DEFINED Python3_FIND_STRATEGY)
   set(Python3_FIND_STRATEGY LOCATION)
 endif()
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+if(CMAKE_CROSSCOMPILING)
+  # When cross-compiling, the interpreter and the compiling/linking steps
+  # must use a different package. See the discussion about this at
+  # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
+  if(ONNX_BUILD_PYTHON)
+    find_package(Python3 REQUIRED COMPONENTS Development.Module)
+  endif()
+  find_package(Python REQUIRED COMPONENTS Interpreter)
+  set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
+else()
+  if(ONNX_BUILD_PYTHON)
+    set(python_dev_component Development.Module)
+  endif()
+  find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  set(ONNX_PYTHON_INTERPRETER Python3::Interpreter)
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
@@ -361,7 +372,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
     endif()
 
     add_custom_target("${GENERATED_FILE_WE}_proto_file"
-                       COMMAND Python3::Interpreter "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
+                       COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
                        BYPRODUCTS "${GENERATED_PROTO}"
                        DEPENDS ${INFILE}
                        COMMENT "Running gen_proto.py on ${INFILE}"
