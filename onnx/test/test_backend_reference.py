@@ -61,7 +61,7 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
+        return d.type == DeviceType.CPU
 
     @classmethod
     def create_inference_session(cls, model):
@@ -124,44 +124,6 @@ backend_test.exclude(
 # The following tests are about deprecated operators.
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 
-# The following tests are using types not supported by numpy.
-# They could be if method to_array is extended to support custom
-# types the same as the reference implementation does
-# (see onnx.reference.op_run.to_array_extended).
-backend_test.exclude(
-    "(test_cast_FLOAT_to_FLOAT8"
-    "|test_cast_FLOAT16_to_FLOAT8"
-    "|test_castlike_FLOAT_to_FLOAT8"
-    "|test_castlike_FLOAT16_to_FLOAT8"
-    "|test_cast_FLOAT_to_UINT4"
-    "|test_cast_FLOAT16_to_UINT4"
-    "|test_cast_FLOAT_to_INT4"
-    "|test_cast_FLOAT16_to_INT4"
-    "|test_cast_no_saturate_FLOAT_to_FLOAT8"
-    "|test_cast_no_saturate_FLOAT16_to_FLOAT8"
-    "|test_cast_BFLOAT16_to_FLOAT"
-    "|test_castlike_BFLOAT16_to_FLOAT"
-    "|test_cast_FLOAT_to_FLOAT4"
-    "|test_cast_FLOAT16_to_FLOAT4"
-    "|test_quantizelinear_e4m3"
-    "|test_quantizelinear_e5m2"
-    "|test_quantizelinear_uint4"
-    "|test_quantizelinear_int4"
-    "|test_quantizelinear_float4e2m1"
-    ")"
-)
-
-# The following tests are using types not supported by NumPy.
-# They could be if method to_array is extended to support custom
-# types the same as the reference implementation does
-# (see onnx.reference.op_run.to_array_extended).
-backend_test.exclude(
-    "(test_cast_FLOAT_to_BFLOAT16"
-    "|test_castlike_FLOAT_to_BFLOAT16"
-    "|test_castlike_FLOAT_to_BFLOAT16_expanded"
-    ")"
-)
-
 # The following tests are too slow with the reference implementation (Conv).
 backend_test.exclude(
     "(test_bvlc_alexnet"
@@ -196,18 +158,12 @@ backend_test.exclude("(test_eyelike_without_dtype)")
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
 
-# Currently google-re2/Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
+# Currently Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
 if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_basic_cpu")
     backend_test.exclude("test_regex_full_match_email_domain_cpu")
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
-
-if sys.version_info >= (3, 13):
-    # TODO(https://github.com/google/re2/issues/516): Remove the skips
-    backend_test.exclude("test_regex_full_match_basic_cpu")
-    backend_test.exclude("test_regex_full_match_email_domain_cpu")
-    backend_test.exclude("test_regex_full_match_empty_cpu")
 
 if sys.version_info < (3, 10):
     #  AttributeError: module 'numpy.typing' has no attribute 'NDArray'
@@ -221,6 +177,23 @@ if sys.platform == "darwin":
 if version_utils.pillow_older_than("10.0"):
     backend_test.exclude("test_image_decoder_decode_webp_rgb")
     backend_test.exclude("test_image_decoder_decode_jpeg2k_rgb")
+
+if version_utils.numpy_older_than("2.0"):
+    # assert_allclose does not support ml_dtypes types in numpy < 2.0
+    backend_test.exclude(r"test_cast.*(FLOAT8|BFLOAT16|FLOAT4|INT4)")
+    backend_test.exclude(r"test_quantizelinear_e4m3fn")
+    backend_test.exclude(r"test_quantizelinear_float4e2m1")
+
+# The documentation does not explicitly say that is_causal=1 and attn_mask is not None
+# is not allowed. The expansion (based on the function definition in ONNX)
+# assumes this case never happens and behaves likes is_causal=0 even if it is 1.
+# The reference implementation and the backend tests have a different behabiour in that case.
+backend_test.exclude(
+    "(test_attention_4d_with_past_and_present_qk_matmul_bias_4d_mask_causal_expanded"
+    "|test_attention_4d_with_past_and_present_qk_matmul_bias_3d_mask_causal_expanded"
+    "|test_attention_4d_attn_mask_4d_causal_expanded"
+    "|test_attention_4d_attn_mask_3d_causal_expanded)"
+)
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

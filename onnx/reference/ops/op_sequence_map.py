@@ -7,7 +7,7 @@ from onnx.reference.op_run import OpRun
 
 
 class SequenceMap(OpRun):
-    def _run(self, input_sequence, *additional_inputs, body=None, attributes=None):  # type: ignore
+    def _run(self, input_sequence, *additional_inputs, body=None, attributes=None):
         if len(additional_inputs) == 1 and isinstance(additional_inputs[0], list):
             res = None
             for obj1, obj2 in zip(input_sequence, additional_inputs[0]):
@@ -18,7 +18,7 @@ class SequenceMap(OpRun):
                 else:
                     for s, i in zip(res, r):
                         s.append(i)
-            return tuple(res)  # type: ignore
+            return tuple(res)
 
         feeds = dict(zip(body.input_names[1:], additional_inputs))
         res = None
@@ -30,4 +30,4 @@ class SequenceMap(OpRun):
             else:
                 for s, i in zip(res, r):
                     s.append(i)
-        return tuple(res)  # type: ignore
+        return tuple(res)

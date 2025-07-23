@@ -83,8 +83,8 @@ def apply_affine_transform(theta_n, original_grid_homo):
 
 
 class AffineGrid(OpRun):
-    def _run(self, theta, size, align_corners=None):  # type: ignore
-        align_corners = align_corners or self.align_corners  # type: ignore
+    def _run(self, theta, size, align_corners=None):
+        align_corners = align_corners or self.align_corners
         _, _, *data_size = size
         original_grid = construct_original_grid(data_size, align_corners)
         grid = apply_affine_transform(theta, original_grid)

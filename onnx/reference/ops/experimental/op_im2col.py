@@ -8,7 +8,7 @@ from onnx.reference.ops_optimized.op_conv_optimized import im2col_fast
 
 
 class Im2Col(OpRunExperimental):
-    def _run(self, img, kernel_shape, dilations=None, pads=None, strides=None):  # type: ignore
+    def _run(self, img, kernel_shape, dilations=None, pads=None, strides=None):
         if dilations is None:
             dilations = [1 for s in img.shape[2:]]
         if pads is None:
@@ -17,7 +17,7 @@ class Im2Col(OpRunExperimental):
             strides = [1 for s in img.shape[2:]]
 
         if min(dilations) == max(dilations) == 1:
-            return (im2col_fast(img, tuple(kernel_shape[2:]), pads, strides)[0],)  # type: ignore
+            return (im2col_fast(img, tuple(kernel_shape[2:]), pads, strides)[0],)
 
         if dilations[0] != 1 or min(dilations) != max(dilations):
             # Let's compute the dilated kernel.
@@ -32,4 +32,4 @@ class Im2Col(OpRunExperimental):
                 )
             kernel_shape = new_kernel_shape
 
-        return (im2col_fast(img, tuple(kernel_shape[2:]), pads, strides),)  # type: ignore
+        return (im2col_fast(img, tuple(kernel_shape[2:]), pads, strides),)

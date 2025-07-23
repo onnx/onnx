@@ -6,7 +6,7 @@ import numpy as np
 
 def compute_logistic(val: float) -> float:
     v = 1.0 / (1.0 + np.exp(-np.abs(val)))
-    return (1.0 - v) if val < 0 else v  # type: ignore
+    return (1.0 - v) if val < 0 else v
 
 
 logistic = np.vectorize(compute_logistic)
@@ -43,10 +43,10 @@ def softmax_zero(values: np.ndarray) -> np.ndarray:
 def softmax(values: np.ndarray) -> np.ndarray:
     """Modifications in place."""
     if len(values.shape) == 2:
-        v_max = values.max(axis=1, keepdims=1)  # type: ignore
+        v_max = values.max(axis=1, keepdims=1)
         values -= v_max
         np.exp(values, out=values)
-        s = values.sum(axis=1, keepdims=1)  # type: ignore
+        s = values.sum(axis=1, keepdims=1)
         values /= s
         return values
     v_max = values.max()

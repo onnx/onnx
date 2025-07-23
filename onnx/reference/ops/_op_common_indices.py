@@ -6,7 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 
-def _get_indices(i, shape):  # type: ignore
+def _get_indices(i, shape):
     res = np.empty((len(shape),), dtype=np.int64)
     k = len(shape) - 1
     while k > 0:
@@ -19,7 +19,7 @@ def _get_indices(i, shape):  # type: ignore
     return res
 
 
-def _is_out(ind, shape):  # type: ignore
+def _is_out(ind, shape):
     for i, s in zip(ind, shape):
         if i < 0:
             return True
@@ -28,7 +28,7 @@ def _is_out(ind, shape):  # type: ignore
     return False
 
 
-def _get_index(indices, shape):  # type: ignore
+def _get_index(indices, shape):
     ind = 0
     mul = 1
     for pos, sh in zip(reversed(indices), reversed(shape)):

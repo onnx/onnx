@@ -9,7 +9,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class FeatureVectorizer(OpRunAiOnnxMl):
-    def _preprocess(self, a, cut):  # type: ignore
+    def _preprocess(self, a, cut):
         if len(a.shape) == 1:
             a = a.reshape((-1, 1))
         if len(a.shape) != 2:
@@ -22,9 +22,7 @@ class FeatureVectorizer(OpRunAiOnnxMl):
             return b
         return a
 
-    def _run(self, *args, inputdimensions=None):  # type: ignore
-        args = [  # type: ignore
-            self._preprocess(a, axis) for a, axis in zip(args, inputdimensions)
-        ]
+    def _run(self, *args, inputdimensions=None):
+        args = [self._preprocess(a, axis) for a, axis in zip(args, inputdimensions)]
         res = np.concatenate(args, axis=1)
         return (res,)
