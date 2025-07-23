@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 import numpy as np
 
+import onnx
 from onnx.reference.op_run import OpRun
 
 
@@ -389,17 +390,6 @@ def _interpolate_nd(
     return ret
 
 
-def safe_cast(arr, dtype):
-    if np.issubdtype(dtype, np.integer):
-        info = np.iinfo(dtype)
-        arr = np.round(arr)
-    elif np.issubdtype(dtype, np.floating):
-        info = np.finfo(dtype)
-    else:
-        raise TypeError(f"Unsupported target dtype {dtype}")
-    return np.clip(arr, info.min, info.max).astype(dtype)
-
-
 class Resize(OpRun):
     def _run(
         self,
@@ -442,7 +432,7 @@ class Resize(OpRun):
             raise ValueError(f"Unexpected value {mode!r} for mode.")
 
         if axes is None:
-            output = safe_cast(
+            output = onnx.numpy_helper.saturate_cast(
                 _interpolate_nd(
                     X,
                     fct,
@@ -479,7 +469,7 @@ class Resize(OpRun):
             )
             if res is None:
                 res = np.empty((reshaped.shape[0], *output.shape), dtype=X.dtype)
-            res[i] = safe_cast(output, X.dtype)
+            res[i] = onnx.numpy_helper.saturate_cast(output, X.dtype)
 
         res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)
         new_perm = list(perm)
