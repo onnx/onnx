@@ -669,6 +669,10 @@ void InferTypesForNode(
             const std::string& output_name = node.output(i);
             if (inferred_outputs[i].value_case() != TypeProto::VALUE_NOT_SET) {
                 output_types[output_name] = inferred_outputs[i];
+            } else {
+              LOGS_DEFAULT(WARNING) << "Shape inference failed for output " << i 
+                                    << " (" << output_name << ") of node " << node.name() 
+                                    << " (op_type: " << node.op_type() << ")";
             }
         }
         
