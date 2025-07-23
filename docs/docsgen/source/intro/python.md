@@ -152,7 +152,7 @@ of each object of the graph.
             node.name, node.op_type, node.input, node.output))
 ```
 
-The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` converts
+The tensor type is an integer value (=1 for `FLOAT`). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` converts
 the integer to its corresponding numpy data type (float32 for 1).
 
 ```{eval-rst}
@@ -232,7 +232,7 @@ overcome that limit.
 
 ### Data Serialization
 
-The serialization of tensor usually happens like the following:
+The serialization of tensors usually happens like the following:
 
 ```{eval-rst}
 .. exec_code::

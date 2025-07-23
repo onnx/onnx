@@ -204,6 +204,81 @@ def float8e5m2_to_float32(
     return res.reshape(dims)  # type: ignore[no-any-return]
 
 
+def to_float8e8m0(
+    x: np.ndarray,
+    saturate: bool = True,
+    round_mode: str = "up",
+) -> np.ndarray:
+    """Convert float32 NumPy array to float8e8m0 representation. If the input
+    is not a float32 array, it will be cast to one first.
+
+    Args:
+        x: Input array to convert.
+        saturate: Whether to saturate at max/min float8e8m0 value.
+        round_mode: "nearest", "up", or "down".
+
+    Returns:
+        np.ndarray: Array of ml_dtypes.float8_e8m0fnu values.
+    """
+    x_f32 = np.asarray(x, dtype=np.float32)
+    f_bits = x_f32.view(np.uint32)
+
+    # Extract exponent bits
+    exponent = (f_bits >> 23) & 0xFF
+    exponent = exponent.astype(
+        np.uint16
+    )  # use uint16 to prevent overflow during computation
+
+    # Identify NaN or Inf
+    special_mask = exponent == 0xFF  # noqa: PLR2004
+    output = np.zeros_like(exponent, dtype=np.uint8)
+    output[special_mask] = 0xFF  # Preserve NaN/Inf as max exponent
+
+    # Process normal numbers
+    normal_mask = ~special_mask
+
+    if round_mode == "nearest":
+        # Get guard, round, sticky, and least significant bits
+        g = ((f_bits & 0x400000) > 0).astype(np.uint8)
+        r = ((f_bits & 0x200000) > 0).astype(np.uint8)
+        s = ((f_bits & 0x1FFFFF) > 0).astype(np.uint8)
+        lsb = (exponent > 0).astype(np.uint8)
+
+        round_up = (g == 1) & ((r == 1) | (s == 1) | (lsb == 1))
+
+        increment = np.zeros_like(exponent)
+        increment[round_up & normal_mask] = 1
+
+        if saturate:
+            max_mask = (exponent == 0xFE) & round_up & normal_mask  # noqa: PLR2004
+            increment[max_mask] = 0  # Don't overflow past max value
+
+        exponent += increment
+
+    elif round_mode == "up":
+        has_fraction = (f_bits & 0x4FFFFF) > 0
+        round_up = has_fraction & normal_mask
+
+        if saturate:
+            max_mask = (exponent == 0xFE) & round_up  # noqa: PLR2004
+            round_up[max_mask] = False
+
+        exponent += round_up.astype(np.uint16)
+
+    elif round_mode == "down":
+        pass  # No rounding needed
+
+    else:
+        raise ValueError(f"Unsupported rounding mode: {round_mode}")
+
+    # Clip exponent to uint8 range
+    exponent = exponent.astype(np.uint8)
+
+    output[normal_mask] = exponent[normal_mask]
+
+    return output.view(ml_dtypes.float8_e8m0fnu)
+
+
 @typing_extensions.deprecated(
     "Deprecated since 1.18. Scheduled to remove in 1.20. Consider implementing your own unpack logic",
     category=DeprecationWarning,
@@ -374,6 +449,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E4M3FNUZ,
         onnx.TensorProto.FLOAT8E5M2,
         onnx.TensorProto.FLOAT8E5M2FNUZ,
+        onnx.TensorProto.FLOAT8E8M0,
         onnx.TensorProto.BOOL,
     }:
         return (
@@ -720,12 +796,17 @@ def create_random_int(
         raise TypeError(f"{dtype} is not supported by create_random_int.")
 
 
-def saturating_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
-    """Saturating cast for float8 and float4 types.
+def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
+    """Saturate cast for numeric types.
 
     This function ensures that values outside the representable range
     of the target dtype are clamped to the maximum or minimum representable
     value of that dtype.
     """
-    finfo = ml_dtypes.finfo(dtype)
-    return np.clip(x, finfo.min, finfo.max).astype(dtype)
+    if np.issubdtype(dtype, np.integer) or dtype in (ml_dtypes.int4, ml_dtypes.uint4):
+        info = ml_dtypes.iinfo(dtype)
+        x = np.round(x)
+    else:
+        info = ml_dtypes.finfo(dtype)  # type: ignore[assignment]
+
+    return np.clip(x, info.min, info.max).astype(dtype)
