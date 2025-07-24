@@ -36914,7 +36914,7 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh")
   dimension: (batch_size, D1, D2, ..., sequence_length, ..., Dn), where sequence_length <= max_sequence_length.
 
   The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
-  if not provided. When the `mode` attribute is set to "circular", the write index is mod max_sequence_length.
+  if not provided. When the `mode` attribute is set to "circular", the write index is modulo max_sequence_length.
   The operation can be described using the following pseudocode:
 
   ```
@@ -36929,7 +36929,8 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh")
   ```
 
   During the prefill phase of attention, only the first two inputs are needed. During the decode phase, `write_indices`
-  is also needed so that the incoming k and v can be appended after the last valid token for each sample in the batch.
+  is also needed so that the incoming key or value update can be appended after the last valid token for each sample
+  in the batch.
 
 #### Version
 
@@ -36939,20 +36940,20 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>axis</tt> : int (default is -2)</dt>
-<dd>The sequence axis of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.</dd>
+<dd>Sequence dimension of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.</dd>
 <dt><tt>mode</tt> : string (default is linear)</dt>
-<dd>The write mode of kv cache. Supported modes include `linear` and `circular`. `linear` mode requires write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in wrap-around fashion, ie, the update index is modulo `max_sequence_length`</dd>
+<dd>Write mode of cache update. Supported modes include `linear` and `circular`. `linear` mode requires write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in wrap-around fashion, ie, the update index is modulo `max_sequence_length`</dd>
 </dl>
 
 #### Inputs (2 - 3)
 
 <dl>
 <dt><tt>past_cache</tt> (differentiable) : T</dt>
-<dd>Past state cache for key or value tensor with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.</dd>
+<dd>Past state cache for key or value with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.</dd>
 <dt><tt>update</tt> (differentiable) : T</dt>
 <dd>New update tensor with shape `(batch_size, D1, D2, ..., sequence_length, ..., Dn)`.</dd>
 <dt><tt>write_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>The write indices for incoming key and value in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.</dd>
+<dd>Write indices for the incoming update tensor in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.</dd>
 </dl>
 
 #### Outputs

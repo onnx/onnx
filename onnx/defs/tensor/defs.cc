@@ -3962,7 +3962,7 @@ not need to grow between iterations. The `update` tensor's shape only differs fr
 dimension: (batch_size, D1, D2, ..., sequence_length, ..., Dn), where sequence_length <= max_sequence_length.
 
 The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
-if not provided. When the `mode` attribute is set to "circular", the write index is mod max_sequence_length.
+if not provided. When the `mode` attribute is set to "circular", the write index is modulo max_sequence_length.
 The operation can be described using the following pseudocode:
 
 ```
@@ -3977,7 +3977,8 @@ for prefix_idx in np.ndindex(past_cache.shape[:axis]):
 ```
 
 During the prefill phase of attention, only the first two inputs are needed. During the decode phase, `write_indices`
-is also needed so that the incoming k and v can be appended after the last valid token for each sample in the batch.
+is also needed so that the incoming key or value update can be appended after the last valid token for each sample
+in the batch.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -3987,12 +3988,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(TensorScatter_ver24_doc)
         .Attr(
             "axis",
-            "The sequence axis of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.",
+            "Sequence dimension of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.",
             AttributeProto::INT,
             static_cast<int64_t>(-2))
         .Attr(
             "mode",
-            "The write mode of kv cache. Supported modes include `linear` and `circular`. `linear` mode requires "
+            "Write mode of cache update. Supported modes include `linear` and `circular`. `linear` mode requires "
             "write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in "
             "wrap-around fashion, ie, the update index is modulo `max_sequence_length`",
             AttributeProto::STRING,
@@ -4000,7 +4001,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             0,
             "past_cache",
-            "Past state cache for key or value tensor with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.",
+            "Past state cache for key or value with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.",
             "T",
             OpSchema::Single,
             true,
@@ -4018,7 +4019,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "write_indices",
-            "The write indices for incoming key and value in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.",
+            "Write indices for the incoming update tensor in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.",
             "tensor(int64)",
             OpSchema::Optional,
             true,
