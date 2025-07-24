@@ -36908,13 +36908,28 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh")
   TensorScatter is a generic tensor update operation, motivated by the requirements for KV cache updates for Attention
   ops commonly found in LLMs. It is a functional operation that models an in-place update to a KV cache buffer.
 
-  The past and present cache tensors have the same shape, with the sequence length dimension (indicated by the
-  `axis` attribute) being max_sequence_length, so the sizes of these tensors do not need to grow between iterations.
+  The past and present cache tensors have the same shape (batch_size, D1, D2, ..., max_sequence_length, ..., Dn), with
+  the sequence dimension (indicated by the `axis` attribute) being max_sequence_length, so the sizes of these tensors do
+  not need to grow between iterations. The `update` tensor's shape only differs from the cache tensors in the sequence
+  dimension: (batch_size, D1, D2, ..., sequence_length, ..., Dn), where sequence_length <= max_sequence_length.
 
   The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
-  if not provided. During the prefill phase of attention, only the first two inputs are needed. During the decode
-  phase, `write_indices` is also needed so that the incoming k and v can be appended after the last valid token
-  for each sample in the batch.
+  if not provided. When the `mode` attribute is set to "circular", the write index is mod max_sequence_length.
+  The operation can be described using the following pseudocode:
+
+  ```
+  for prefix_idx in np.ndindex(past_cache.shape[:axis]):
+      batch_idx = prefix_idx[0]
+      for sequence_idx in range(sequence_length):
+          cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+          if mode == "circular":
+              cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+          update_idx = (*prefix_idx, sequence_idx)
+          present_cache[cache_idx] = update[update_idx]
+  ```
+
+  During the prefill phase of attention, only the first two inputs are needed. During the decode phase, `write_indices`
+  is also needed so that the incoming k and v can be appended after the last valid token for each sample in the batch.
 
 #### Version
 
@@ -37012,22 +37027,22 @@ node = onnx.helper.make_node(
 past_cache = np.array(
     [
         [
-            [1, 2, 3, 4, 5, 6],
-            [5, 6, 7, 8, 9, 10],
-            [8, 7, 6, 5, 4, 3],
-            [5, 4, 3, 2, 1, 0],
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
         ],
         [
-            [1, 2, 3, 4, 5, 6],
-            [5, 6, 7, 8, 9, 10],
-            [8, 7, 6, 5, 4, 3],
-            [5, 4, 3, 2, 1, 0],
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
         ],
         [
-            [1, 2, 3, 4, 5, 6],
-            [5, 6, 7, 8, 9, 10],
-            [8, 7, 6, 5, 4, 3],
-            [5, 4, 3, 2, 1, 0],
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
         ],
     ],
     dtype=np.float32,
@@ -37035,16 +37050,16 @@ past_cache = np.array(
 update = np.array(
     [
         [
-            [4, 4, 4, 4, 4, 4],
-            [5, 5, 5, 5, 5, 5],
+            [4, 4, 4, 4, 4],
+            [5, 5, 5, 5, 5],
         ],
         [
-            [6, 6, 6, 6, 6, 6],
-            [7, 7, 7, 7, 7, 7],
+            [6, 6, 6, 6, 6],
+            [7, 7, 7, 7, 7],
         ],
         [
-            [2, 2, 2, 2, 2, 2],
-            [3, 3, 3, 3, 3, 3],
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3],
         ],
     ],
     dtype=np.float32,
@@ -37053,22 +37068,22 @@ write_indices = np.array([1, 2, 0], dtype=np.int64)
 present_cache = np.array(
     [
         [
-            [1, 2, 3, 4, 5, 6],
-            [4, 4, 4, 4, 4, 4],
-            [5, 5, 5, 5, 5, 5],
-            [5, 4, 3, 2, 1, 0],
+            [1, 2, 3, 4, 5],
+            [4, 4, 4, 4, 4],
+            [5, 5, 5, 5, 5],
+            [5, 4, 3, 2, 1],
         ],
         [
-            [1, 2, 3, 4, 5, 6],
-            [5, 6, 7, 8, 9, 10],
-            [6, 6, 6, 6, 6, 6],
-            [7, 7, 7, 7, 7, 7],
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [6, 6, 6, 6, 6],
+            [7, 7, 7, 7, 7],
         ],
         [
-            [2, 2, 2, 2, 2, 2],
-            [3, 3, 3, 3, 3, 3],
-            [8, 7, 6, 5, 4, 3],
-            [5, 4, 3, 2, 1, 0],
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
         ],
     ],
     dtype=np.float32,

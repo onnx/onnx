@@ -32,29 +32,19 @@ class TensorScatter(OpRun):
                         f"Input shape {input_shape} and update shape {update_shape} are not compatible in axis dimension"
                     )
 
-        batch_size = input_shape[0]
-        max_seq_len = input_shape[axis]
-        seq_len = update.shape[axis]
-
+        max_sequence_length = input_shape[axis]
+        sequence_length = update_shape[axis]
         present_cache = np.copy(past_cache)
 
-        # Reshape from (batch_size, D1, D2, ..., Dn) to (batch_size, D1 * ... * D(axis-1), D(axis), D(axis+1) * ... * Dn)
-        new_shape = (
-            batch_size,
-            np.prod(input_shape[1:axis], dtype=np.int64),
-            -1,
-            np.prod(input_shape[axis + 1 :], dtype=np.int64),
-        )
-        present_cache = present_cache.reshape(new_shape)
-        update = update.reshape(new_shape)
-
-        for i in range(batch_size):
-            start_idx = write_indices[i]
-            for j in range(new_shape[1]):
-                for k in range(seq_len):
-                    idx = start_idx + k
-                    if mode == "circular":
-                        idx = idx % max_seq_len
-                    present_cache[i, j, idx, :] = update[i, j, k, :]
+        for prefix_idx in np.ndindex(input_shape[:axis]):
+            batch_idx = prefix_idx[0]
+            for sequence_idx in range(sequence_length):
+                cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+                if mode == "circular":
+                    cache_idx = tuple(
+                        np.mod(np.asarray(cache_idx), max_sequence_length)
+                    )
+                update_idx = (*prefix_idx, sequence_idx)
+                present_cache[cache_idx] = update[update_idx]
 
         return (present_cache.reshape(input_shape),)
