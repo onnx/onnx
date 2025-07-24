@@ -1,5 +1,9 @@
 # ONNX with Python
 
+```{tip}
+Check out the [ir-py project](https://github.com/onnx/ir-py) for an alternative set of Python APIs for creating and manipulating ONNX models. The ir-py project provides a more modern and ergonomic interface compared to the ONNX Protobuf APIs described here.
+```
+
 Next sections highlight the main functions used to build
 an ONNX graph with the {ref}`Python API <l-python-onnx-api>`
 *onnx* offers.
