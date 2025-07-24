@@ -31000,6 +31000,43 @@ This version of the operator has been available since version 24 of the default 
 <dd>Constrain input and output types to all tensor types up to IRv12.</dd>
 </dl>
 
+### <a name="Swish-24"></a>**Swish-24**</a>
+
+  Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
+  where $Swish(x) = x * sigmoid(alpha * x)$.
+
+#### Version
+
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient to multiply with input before sigmoid.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(bfloat16), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="TopK-24"></a>**TopK-24**</a>
 
   Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
