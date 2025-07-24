@@ -3952,4 +3952,142 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
+static const char* TensorScatter_ver24_doc = R"DOC(
+TensorScatter is a generic tensor update operation, motivated by the requirements for KV cache updates for Attention
+ops commonly found in LLMs. It is a functional operation that models an in-place update to a KV cache buffer.
+
+The past and present cache tensors have the same shape (batch_size, D1, D2, ..., max_sequence_length, ..., Dn), with
+the sequence dimension (indicated by the `axis` attribute) being max_sequence_length, so the sizes of these tensors do
+not need to grow between iterations. The `update` tensor's shape only differs from the cache tensors in the sequence
+dimension: (batch_size, D1, D2, ..., sequence_length, ..., Dn), where sequence_length <= max_sequence_length.
+
+The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
+if not provided. When the `mode` attribute is set to "circular", the write index is modulo max_sequence_length.
+The operation can be described using the following pseudocode:
+
+```
+for prefix_idx in np.ndindex(past_cache.shape[:axis]):
+    batch_idx = prefix_idx[0]
+    for sequence_idx in range(sequence_length):
+        cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+        if mode == "circular":
+            cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+        update_idx = (*prefix_idx, sequence_idx)
+        present_cache[cache_idx] = update[update_idx]
+```
+
+During the prefill phase of attention, only the first two inputs are needed. During the decode phase, `write_indices`
+is also needed so that the incoming key or value update can be appended after the last valid token for each sample
+in the batch.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    TensorScatter,
+    24,
+    OpSchema()
+        .SetDoc(TensorScatter_ver24_doc)
+        .Attr(
+            "axis",
+            "Sequence dimension of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-2))
+        .Attr(
+            "mode",
+            "Write mode of cache update. Supported modes include `linear` and `circular`. `linear` mode requires "
+            "write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in "
+            "wrap-around fashion, ie, the update index is modulo `max_sequence_length`",
+            AttributeProto::STRING,
+            std::string("linear"))
+        .Input(
+            0,
+            "past_cache",
+            "Past state cache for key or value with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "update",
+            "New update tensor with shape `(batch_size, D1, D2, ..., sequence_length, ..., Dn)`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "write_indices",
+            "Write indices for the incoming update tensor in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.",
+            "tensor(int64)",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "present_cache",
+            "Updated cache. Same shape as `past_cache`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir12(), "Constrain input and output types to any tensor type.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Check that updates and past_cache have the same rank
+          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
+            const auto& past_cache_shape = getInputShape(ctx, 0);
+            const auto& update_shape = getInputShape(ctx, 1);
+            const int past_cache_rank = static_cast<int>(past_cache_shape.dim_size());
+            const int update_rank = static_cast<int>(update_shape.dim_size());
+
+            if (past_cache_rank != update_rank) {
+              fail_shape_inference(
+                  "past_cache and update must have the same rank. past_cache_rank=",
+                  past_cache_rank,
+                  ", update_rank=",
+                  update_rank);
+            }
+
+            // Check that all dimensions match except the axis dimension
+            // Read axis from attribute, default is -2
+            auto axis_attr = ctx.getAttribute("axis");
+            int64_t axis = axis_attr ? axis_attr->i() : -2;
+
+            // Handle negative axis
+            if (axis < 0) {
+              axis += past_cache_rank;
+            }
+
+            // Validate axis is within bounds
+            if (axis <= 0 || axis >= past_cache_rank) {
+              fail_shape_inference("axis ", axis, " is out of range for rank ", past_cache_rank);
+            }
+            for (int i = 0; i < past_cache_rank; ++i) {
+              if (i != axis) {
+                // All dimensions except axis should match
+                Dim dim;
+                unifyInputDim(ctx, 0, i, dim);
+                unifyInputDim(ctx, 1, i, dim);
+              }
+            }
+          }
+
+          // Check that write_indices is of shape (batch_size,)
+          if (hasInputShape(ctx, 2)) {
+            checkInputRank(ctx, 2, 1);
+            Dim batch_size;
+            unifyInputDim(ctx, 0, 0, batch_size);
+            unifyInputDim(ctx, 2, 0, batch_size);
+          }
+
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
