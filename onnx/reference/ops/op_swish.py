@@ -8,9 +8,7 @@ import numpy as np
 from onnx.reference.ops._op import OpRunUnaryNum
 
 
-class Softplus(OpRunUnaryNum):
-    def _run(self, X):
-        tmp = np.asarray(np.exp(X), dtype=X.dtype)
-        tmp += 1
-        np.log(tmp, out=tmp)
-        return (tmp,)
+class Swish(OpRunUnaryNum):
+    def _run(self, x, alpha=None):
+        alpha = self.alpha if alpha is None else alpha
+        return (x * (1 / (1 + np.exp(-alpha * x))).astype(x.dtype),)
