@@ -1855,7 +1855,7 @@ class Attention(Base):
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
         K = np.random.rand(2, 3, 6, 8).astype(np.float32)
         V = np.random.rand(2, 3, 6, 10).astype(np.float32)
-        attn_mask = np.random.rand(2, 3, 4, 6).astype(np.float32)
+        attn_mask = np.random.rand(2, 3, 4, 4).astype(np.float32)
         nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
 
         Y, _, _, _ = _compute_attention(
