@@ -380,13 +380,14 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
 
 
 def _unpack_2bit(
-        data: npt.NDArray[np.uint8], dims: Sequence[int]
+    data: npt.NDArray[np.uint8], dims: Sequence[int]
 ) -> npt.NDArray[np.uint8]:
     """Convert a packed uint2 array to unpacked uint2 array represented as uint8.
 
     Args:
         data: A numpy array.
         dims: The dimensions are used to reshape the unpacked buffer.
+
     Returns:
         A numpy array of int8/uint8 reshaped to dims.
     """
@@ -396,8 +397,8 @@ def _unpack_2bit(
     result[2::4] = (data >> 4) & 0x03
     result[3::4] = (data >> 6) & 0x03
     if result.size > np.prod(dims):
-       # handle padding due to non multiple of 4 elements
-       result = result[:np.prod(dims)]
+        # handle padding due to non multiple of 4 elements
+        result = result[: np.prod(dims)]
     result.resize(dims, refcheck=False)
     return result
 
@@ -465,7 +466,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         }:
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_4bit(data, dims).view(np_dtype)
-        
+
         if tensor_dtype in {onnx.TensorProto.INT2, onnx.TensorProto.UINT2}:
             data = np.frombuffer(raw_data, dtype=np.uint8)
             return _unpack_2bit(data, dims).view(np_dtype)
@@ -511,7 +512,7 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             np.array(tensor.int32_data, dtype=np.int32).view(np.uint32).astype(np.uint8)
         )
         return _unpack_4bit(data, dims).view(np_dtype)
-    
+
     if tensor_dtype in {onnx.TensorProto.UINT2, onnx.TensorProto.INT2}:
         data = (
             np.array(tensor.int32_data, dtype=np.int32).view(np.uint32).astype(np.uint8)
@@ -571,7 +572,7 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     }:
         # Pack the array into int4
         array = _pack_4bitx2(array)
-    if dtype in { onnx.TensorProto.INT2, onnx.TensorProto.UINT2 }:
+    if dtype in {onnx.TensorProto.INT2, onnx.TensorProto.UINT2}:
         # Pack the array into int2
         array = _pack_2bitx4(array)
     if not _IS_LITTLE_ENDIAN:
@@ -854,7 +855,12 @@ def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
     of the target dtype are clamped to the maximum or minimum representable
     value of that dtype.
     """
-    if np.issubdtype(dtype, np.integer) or dtype in (ml_dtypes.int4, ml_dtypes.uint4, ml_dtypes.uint2, ml_dtypes.int2):
+    if np.issubdtype(dtype, np.integer) or dtype in (
+        ml_dtypes.int4,
+        ml_dtypes.uint4,
+        ml_dtypes.uint2,
+        ml_dtypes.int2,
+    ):
         info = ml_dtypes.iinfo(dtype)
         x = np.round(x)
     else:

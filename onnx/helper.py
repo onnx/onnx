@@ -765,7 +765,7 @@ def make_tensor(
         if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
             expected_size_bytes = 0.5
         # NumPy doesn't have INT2. It is packed in 4 elements per byte.
-        elif data_type == TensorProto.INT2:
+        elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
             expected_size_bytes = 0.25
         else:
             expected_size_bytes = np_dtype.itemsize
@@ -824,7 +824,7 @@ def make_tensor(
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
         vals = _pack_4bitx2(vals)  # type: ignore[union-attr,arg-type]
-    elif data_type == TensorProto.INT2:
+    elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
         # Convert to packed 2-bit representation
         vals = _pack_2bitx4(vals)  # type: ignore[union-attr,arg-type]
     elif data_type == TensorProto.BOOL:
