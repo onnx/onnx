@@ -3712,6 +3712,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
             builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
+            builder.Add("QSeqLen = Shape <start = -2, end = -1> (Q)");
           }
 
           builder
@@ -3754,44 +3755,37 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
+          builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)");
+          builder.Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)");
+          builder.Const1D("FloatInf", -std::numeric_limits<float>::infinity());
+          builder.Const1D("ScalarZero", 0.f);
+
           // If attn_mask is provided
-          float neg_inf = -std::numeric_limits<float>::infinity();
           if (ctx.hasInput(3)) {
             auto* up = ctx.getInputType(3);
             if ((up == nullptr) || (!up->has_tensor_type()))
               return false;
             int64_t U = up->tensor_type().elem_type();
-            builder.Const1D("FloatInf", neg_inf);
-            builder.Const1D("ScalarZero", 0.f);
             builder.Add(
                 U == ONNX_NAMESPACE::TensorProto_DataType_BOOL ? "AttnBias = Where(attn_mask, ScalarZero, FloatInf)"
                                                                : "AttnBias = Identity(attn_mask)");
           } else {
-            // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
-            // is a square matrix. The attention masking has the form of the upper left causal bias due to
-            // the alignment when the mask is a non-square matrix.
-            // An error is thrown if both attn_mask and is_causal are set.
-            auto* is_causal_attr = ctx.getAttribute("is_causal");
-            int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
-            if (!is_3d_input) {
-              builder.Add("QSeqLen = Shape <start = -2, end = -1> (Q)"); // q_sequence_length
-            }
+            builder.Add("AttnBias = ConstantOfShape(AttnBiasShape)");
+          }
 
-            if (is_causal == 1) {
-              builder.Const1D("FloatInf", neg_inf);
-              builder.Const1D("ScalarZero", 0.f);
-              builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
-                  .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
-                  .Add("AttnBiasZeros_ = ConstantOfShape(AttnBiasShape)")
-                  .Add("AttnBiasZeros = CastLike(AttnBiasZeros_, Q)")
-                  .Add("BoolMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
-                  .Add("BoolMaskTri = Trilu <upper = 0> (BoolMask, Zero1D)")
-                  .Add("AttnBias = Where(BoolMaskTri, ScalarZero, FloatInf)");
-            } else {
-              builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
-                  .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
-                  .Add("AttnBias = ConstantOfShape(AttnBiasShape)");
-            }
+          // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
+          // is a square matrix. The attention masking has the form of the upper left causal bias due to
+          // the alignment when the mask is a non-square matrix.
+          // An error is thrown if both attn_mask and is_causal are set.
+          auto* is_causal_attr = ctx.getAttribute("is_causal");
+          int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+          if (is_causal == 1) {
+            builder.Add("BoolMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
+                .Add("BoolMaskTri = Trilu <upper = 0> (BoolMask, Zero1D)")
+                .Add("MaskTri = Where(BoolMaskTri, ScalarZero, FloatInf)")
+                .Add("AttnBiasCausal = Add(AttnBias, MaskTri)");
+          } else {
+            builder.Add("AttnBiasCausal = Identity(AttnBias)");
           }
 
           // Add padding mask if kv_nonpad_seqlen is provided
@@ -3805,12 +3799,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
                 .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
-                .Add("AttnBiasWithPadding = Add(AttnBias, PaddingMask4D)");
+                .Add("AttnBiasCausalPad = Add(AttnBiasCausal, PaddingMask4D)");
           }
           else {
-            builder.Add("AttnBiasWithPadding = Identity(AttnBias)");
+            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausal)");
           }
-          builder.Add("AttnBiasT = Cast (AttnBiasWithPadding)", "to", T1);
+          builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
 
           // Group Query Attention is applied if the following are satisfied
           // 1) q_num_heads != kv_num_heads
