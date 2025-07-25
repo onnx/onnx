@@ -1473,6 +1473,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"consumed_inputs": [0]},
         )
 
+    def test_Swish(self) -> None:
+        self._test_op_upgrade("Swish", 24, attrs={"alpha": 0.2})
+
     def test_Tanh(self) -> None:
         self._test_op_upgrade("Tanh", 1, attrs={"consumed_inputs": [0]})
 
@@ -1912,6 +1915,22 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [[2, 3]],
             [TensorProto.STRING],
             [TensorProto.BOOL],
+        )
+
+    def test_TensorScatter(self) -> None:
+        self._test_op_upgrade(
+            "TensorScatter",
+            24,
+            [
+                [2, 3, 4, 5],
+                [2, 3, 2, 5],
+                [
+                    2,
+                ],
+            ],
+            [[2, 3, 4, 5]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64],
+            [TensorProto.FLOAT],
         )
 
     def test_ops_tested(self) -> None:

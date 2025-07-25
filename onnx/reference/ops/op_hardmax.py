@@ -11,6 +11,8 @@ from onnx.reference.ops._op import OpRunUnaryNum
 class Hardmax(OpRunUnaryNum):
     def _run(self, x, axis=None):
         axis = axis or self.axis
+        if x.size == 0:
+            return (x,)
         x_argmax = np.argmax(x, axis=axis)
         y = np.zeros_like(x)
         np.put_along_axis(

@@ -13,7 +13,7 @@ from onnx.reference.ops._op import OpRunUnaryNum
 class Erf(OpRunUnaryNum):
     def __init__(self, onnx_node, run_params):
         OpRunUnaryNum.__init__(self, onnx_node, run_params)
-        self._erf = np.vectorize(erf)
+        self._erf = np.vectorize(erf, otypes=["f"])
 
     def _run(self, x):
         return (self._erf(x).astype(x.dtype),)
