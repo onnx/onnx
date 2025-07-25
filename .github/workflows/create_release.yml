@@ -111,7 +111,7 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: [call-linux, call-mac, call-win_x86, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-')
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (!contains(join(needs.*.result, ' '), 'failure')) && (github.event.inputs.publish_pypi_release == 'yes') && startsWith(github.ref, 'refs/heads/rel-') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-')
 
     steps:
 
@@ -139,7 +139,7 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (!contains(join(needs.*.result, ' '), 'failure')) && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
       - name: print debug vars
@@ -192,7 +192,7 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes') && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (!contains(join(needs.*.result, ' '), 'failure')) && (github.event.inputs.publish_testpypi_release == 'yes') && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
       - name: print debug vars
@@ -244,7 +244,7 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (!contains(join(needs.*.result, ' '), 'failure')) && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
 
     steps:
       - name: placeholder for debug vars
