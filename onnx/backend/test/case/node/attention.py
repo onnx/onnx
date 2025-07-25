@@ -1843,3 +1843,32 @@ class Attention(Base):
             outputs=[Y],
             name="test_attention_3d_transpose_verification",
         )
+
+    @staticmethod
+    def export_attention_4d_diff_heads_mask4d_padded_kv() -> None:
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+            outputs=["Y"],
+        )
+
+        Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+        K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+        V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+        attn_mask = np.random.rand(2, 3, 4, 6).astype(np.float32)
+        nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+        Y, _, _, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            nonpad_kv_seqlen=nonpad_kv_seqlen,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+            outputs=[Y],
+            name="test_attention_4d_diff_heads_mask4d_padded_kv",
+        )

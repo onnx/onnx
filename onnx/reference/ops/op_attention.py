@@ -31,6 +31,7 @@ def _compute_attention(
     attn_mask: np.ndarray | None = None,
     past_key: np.ndarray | None = None,
     past_value: np.ndarray | None = None,
+    nonpad_kv_seqlen: np.ndarray | None = None,
     scale=None,
     is_causal=False,
     q_num_heads=None,
@@ -120,6 +121,13 @@ def _compute_attention(
             attn_mask[attn_mask == 1] = -np.inf
         attn_bias = attn_bias + attn_mask
 
+    if nonpad_kv_seqlen is not None:
+        attn_bias = attn_bias.reshape((1,) * (4 - attn_bias.ndim) + attn_bias.shape) # broadcast to 4D
+        padding_mask = np.arange(kv_sequence_length) < nonpad_kv_seqlen[:, np.newaxis]
+        padding_mask = padding_mask.reshape(batch_size, 1, 1, kv_sequence_length)
+        padding_mask = np.where(padding_mask, 0, -np.inf)
+        attn_bias += padding_mask
+
     # Group Query Attention is applied if the following are satisfied
     # 1) q_num_heads != kv_num_heads
     # 2) q_num_heads % kv_num_heads == 0
@@ -197,6 +205,7 @@ class Attention(OpRun):
         attn_mask: np.ndarray | None = None,
         past_key: np.ndarray | None = None,
         past_value: np.ndarray | None = None,
+        nonpad_kv_seqlen: np.ndarray | None = None,
         scale=None,
         is_causal=False,
         q_num_heads=None,
@@ -212,6 +221,7 @@ class Attention(OpRun):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
+            nonpad_kv_seqlen=nonpad_kv_seqlen,
             scale=scale,
             is_causal=is_causal,
             q_num_heads=q_num_heads,
