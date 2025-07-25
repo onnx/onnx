@@ -155,6 +155,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
 |<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-22">22</a>, <a href="Changelog.md#Tan-7">7</a>|
 |<a href="#Tanh">Tanh</a>|<a href="Changelog.md#Tanh-13">13</a>, <a href="Changelog.md#Tanh-6">6</a>, <a href="Changelog.md#Tanh-1">1</a>|
+|<a href="#TensorScatter">TensorScatter</a>|<a href="Changelog.md#TensorScatter-24">24</a>|
 |<a href="#TfIdfVectorizer">TfIdfVectorizer</a>|<a href="Changelog.md#TfIdfVectorizer-9">9</a>|
 |<a href="#Tile">Tile</a>|<a href="Changelog.md#Tile-13">13</a>, <a href="Changelog.md#Tile-6">6</a>, <a href="Changelog.md#Tile-1">1</a>|
 |<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-24">24</a>, <a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
@@ -36897,6 +36898,256 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh_example")
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.tanh(x)
 expect(node, inputs=[x], outputs=[y], name="test_tanh")
+```
+
+</details>
+
+
+### <a name="TensorScatter"></a><a name="tensorscatter">**TensorScatter**</a>
+
+  TensorScatter is a generic tensor update operation, motivated by the requirements for KV cache updates for Attention
+  ops commonly found in LLMs. It is a functional operation that models an in-place update to a KV cache buffer.
+
+  The past and present cache tensors have the same shape (batch_size, D1, D2, ..., max_sequence_length, ..., Dn), with
+  the sequence dimension (indicated by the `axis` attribute) being max_sequence_length, so the sizes of these tensors do
+  not need to grow between iterations. The `update` tensor's shape only differs from the cache tensors in the sequence
+  dimension: (batch_size, D1, D2, ..., sequence_length, ..., Dn), where sequence_length <= max_sequence_length.
+
+  The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
+  if not provided. When the `mode` attribute is set to "circular", the write index is modulo max_sequence_length.
+  The operation can be described using the following pseudocode:
+
+  ```
+  for prefix_idx in np.ndindex(past_cache.shape[:axis]):
+      batch_idx = prefix_idx[0]
+      for sequence_idx in range(sequence_length):
+          cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+          if mode == "circular":
+              cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+          update_idx = (*prefix_idx, sequence_idx)
+          present_cache[cache_idx] = update[update_idx]
+  ```
+
+  During the prefill phase of attention, only the first two inputs are needed. During the decode phase, `write_indices`
+  is also needed so that the incoming key or value update can be appended after the last valid token for each sample
+  in the batch.
+
+#### Version
+
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -2)</dt>
+<dd>Sequence dimension of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.</dd>
+<dt><tt>mode</tt> : string (default is linear)</dt>
+<dd>Write mode of cache update. Supported modes include `linear` and `circular`. `linear` mode requires write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in wrap-around fashion, ie, the update index is modulo `max_sequence_length`</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>past_cache</tt> (differentiable) : T</dt>
+<dd>Past state cache for key or value with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.</dd>
+<dt><tt>update</tt> (differentiable) : T</dt>
+<dd>New update tensor with shape `(batch_size, D1, D2, ..., sequence_length, ..., Dn)`.</dd>
+<dt><tt>write_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Write indices for the incoming update tensor in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>present_cache</tt> (differentiable) : T</dt>
+<dd>Updated cache. Same shape as `past_cache`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tensorscatter</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+    mode="linear",
+)
+past_cache = np.array(
+    [
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [[[5, 5, 5, 5, 5]]],
+        [[[1, 1, 1, 1, 1]]],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 2], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[[1, 2, 3, 4, 5], [5, 5, 5, 5, 5], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [1, 1, 1, 1, 1], [4, 3, 2, 1, 0]]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tensorscatter_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+)
+past_cache = np.array(
+    [
+        [
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
+        ],
+        [
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
+        ],
+        [
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
+        ],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [
+            [4, 4, 4, 4, 4],
+            [5, 5, 5, 5, 5],
+        ],
+        [
+            [6, 6, 6, 6, 6],
+            [7, 7, 7, 7, 7],
+        ],
+        [
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3],
+        ],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 2, 0], dtype=np.int64)
+present_cache = np.array(
+    [
+        [
+            [1, 2, 3, 4, 5],
+            [4, 4, 4, 4, 4],
+            [5, 5, 5, 5, 5],
+            [5, 4, 3, 2, 1],
+        ],
+        [
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [6, 6, 6, 6, 6],
+            [7, 7, 7, 7, 7],
+        ],
+        [
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
+        ],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter_3d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tensorscatter_circular</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+    mode="circular",
+)
+past_cache = np.array(
+    [
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [
+            [
+                [5, 5, 5, 5, 5],
+                [6, 6, 6, 6, 6],
+            ]
+        ],
+        [
+            [
+                [1, 1, 1, 1, 1],
+                [2, 2, 2, 2, 2],
+            ]
+        ],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 3], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[[1, 2, 3, 4, 5], [5, 5, 5, 5, 5], [6, 6, 6, 6, 6], [4, 3, 2, 1, 0]]],
+        [[[2, 2, 2, 2, 2], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [1, 1, 1, 1, 1]]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter_circular",
+)
 ```
 
 </details>
