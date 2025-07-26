@@ -3802,6 +3802,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           return;
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    TopK,
+    11,
+    OpSchema().FillUsing(defs::math::utils::TopKOpGenerator(OpSchema::all_numeric_types())));
+
 static const char* Clip_ver6_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified with arguments 'min' and 'max'. They default to

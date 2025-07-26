@@ -110,7 +110,7 @@ jobs:
     name: Check for Publish release build to pypi
     runs-on: ubuntu-latest
 
-    needs: [call-linux, call-mac, call-win_x86, call-sdist]
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-')
 
     steps:
