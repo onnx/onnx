@@ -944,4 +944,61 @@ ONNX_API void convPoolShapeInference(
 ONNX_API void convTransposeShapeInference(InferenceContext& ctx);
 ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx);
 
+
+/**
+ * Apply type inference to the provided ModelProto.
+ * 
+ * @param model The model to perform type inference on (modified in-place)
+ * @param check_type Whether to check type consistency between inputs and outputs
+ * @param strict_mode If true, throw errors on any inference failure; if false, continue on errors
+ * @param data_prop Whether to enable data propagation for limited operators
+ */
+ONNX_API void InferTypes(
+    ModelProto& model,
+    bool check_type = false,
+    bool strict_mode = false,
+    bool data_prop = false);
+
+/**
+ * Apply type inference to a model file.
+ * 
+ * @param model_path Path to the input model file
+ * @param output_path Path to save the model with inferred types (if empty, overwrites input)
+ * @param check_type Whether to check type consistency between inputs and outputs
+ * @param strict_mode If true, throw errors on any inference failure; if false, continue on errors
+ * @param data_prop Whether to enable data propagation for limited operators
+ */
+ONNX_API void InferTypesFromPath(
+    const std::string& model_path,
+    const std::string& output_path = "",
+    bool check_type = false,
+    bool strict_mode = false,
+    bool data_prop = false);
+
+/**
+ * Perform type inference for a single node.
+ * 
+ * @param node The node to perform inference on
+ * @param input_types Map of input tensor names to their types
+ * @param output_types Map to store inferred output types
+ * @param data_prop Whether to enable data propagation
+ */
+ONNX_API void InferTypesForNode(
+    const NodeProto& node,
+    const std::unordered_map<std::string, TypeProto>& input_types,
+    std::unordered_map<std::string, TypeProto>& output_types,
+    bool data_prop = false);
+
+/**
+ * Validate type consistency in a graph.
+ * 
+ * @param graph The graph to validate
+ * @param value_types Map of tensor names to their types
+ */
+ONNX_API void ValidateTypeConsistency(
+    const GraphProto& graph,
+    const std::unordered_map<std::string, TypeProto>& value_types);
+
+} // namespace ONNX_NAMESPACE
+
 } // namespace ONNX_NAMESPACE

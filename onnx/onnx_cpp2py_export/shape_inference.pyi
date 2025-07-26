@@ -37,6 +37,22 @@ def infer_shapes_path(
     strict_mode: bool,
     data_prop: bool,
 ) -> None: ...
+def infer_types(
+    b: bytes, check_type: bool, strict_mode: bool, data_prop: bool
+) -> bytes: ...
+def infer_types_path(
+    model_path: str,
+    output_path: str,
+    check_type: bool,
+    strict_mode: bool,
+    data_prop: bool,
+) -> None: ...
+
+def infer_function_output_types(
+    b: bytes,
+    input_types: list[bytes],
+    attributes: list[bytes],
+) -> list[bytes]: ...
 def infer_function_output_types(
     b: bytes,
     input_types: list[bytes],
