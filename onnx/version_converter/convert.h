@@ -853,7 +853,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("SplitToSequence", OpSetID(23), OpSetID(24)));
 
     /******** 24 -> 23 ********/
-    const std::vector<TensorProto_DataType> ir12_types_not_in_ir11 = {TensorProto_DataType_FLOAT8E8M0};
+    const std::vector<TensorProto_DataType> ir12_types_not_in_ir11 = {TensorProto_DataType_FLOAT8E8M0, TensorProto_DataType_UINT2, TensorProto_DataType_INT2};
     registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));

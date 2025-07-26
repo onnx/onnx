@@ -15,6 +15,7 @@ from onnx.helper import make_tensor, tensor_dtype_to_np_dtype
 
 F8_TYPES = frozenset({"FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"})
 FOUR_BIT_TYPES = frozenset({"UINT4", "INT4", "FLOAT4E2M1"})
+TWO_BIT_TYPES = frozenset({"UINT2", "INT2"})
 
 
 class CastLike(Base):
@@ -59,6 +60,16 @@ class CastLike(Base):
             ("FLOAT4E2M1", "FLOAT16"),
             ("FLOAT", "FLOAT4E2M1"),
             ("FLOAT16", "FLOAT4E2M1"),
+            ("FLOAT", "UINT2"),
+            ("FLOAT16", "UINT2"),
+            ("FLOAT", "INT2"),
+            ("FLOAT16", "INT2"),
+            ("UINT2", "FLOAT"),
+            ("UINT2", "FLOAT16"),
+            ("UINT2", "UINT8"),
+            ("INT2", "FLOAT"),
+            ("INT2", "FLOAT16"),
+            ("INT2", "INT8"),
         ]
 
         f8_types = {"FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"}
@@ -116,6 +127,9 @@ class CastLike(Base):
                 input_shape = (3, 5)
             elif from_type in ("UINT4", "INT4") or to_type in ("UINT4", "INT4"):
                 np_fp32 = np.arange(-9, 16).astype(np.float32)
+                input_shape = (5, 5)
+            elif from_type in ("UINT2", "INT2") or to_type in ("UINT2", "INT2"):
+                np_fp32 = np.arange(-3, 4).astype(np.float32)
                 input_shape = (5, 5)
             elif from_type == "FLOAT4E2M1" or to_type == "FLOAT4E2M1":
                 np_fp32 = np.array(
