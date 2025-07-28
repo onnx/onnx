@@ -18,7 +18,10 @@ if TYPE_CHECKING:
 
 class TestSchema(unittest.TestCase):
     def test_get_schema(self) -> None:
-        defs.get_schema("Relu")
+        v = defs.get_schema("Relu")
+        self.assertEqual(
+            v.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        )
 
     def test_typecheck(self) -> None:
         defs.get_schema("Conv")
@@ -29,8 +32,24 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(v.type, onnx.AttributeProto.FLOAT)
 
     def test_function_body(self) -> None:
+        v = defs.get_schema("Selu")
+        self.assertEqual(type(v.function_body), onnx.FunctionProto)
         self.assertEqual(
-            type(defs.get_schema("Selu").function_body), onnx.FunctionProto
+            v.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        )
+
+    def test_node_determinism(self) -> None:
+        v = defs.get_schema("RandomNormalLike")
+        self.assertEqual(
+            v.node_determinism, defs.OpSchema.NodeDeterminism.NonDeterministic
+        )
+        v = defs.get_schema("BatchNormalization")
+        self.assertEqual(
+            v.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        )
+        v = defs.get_schema("CastLike")
+        self.assertEqual(
+            v.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
         )
 
 
@@ -39,6 +58,9 @@ class TestOpSchema(unittest.TestCase):
         # Test that the constructor creates an OpSchema object
         schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertIsInstance(schema, defs.OpSchema)
+        self.assertEqual(
+            schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        )
 
     def test_init_with_inputs(self) -> None:
         op_schema = defs.OpSchema(
