@@ -1538,6 +1538,42 @@ void OpSchema::Finalize() {
   }
 }
 
+OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
+  if (node_determinism_ == NodeDeterminism::Unknown) {
+    if (HasContextDependentFunction()) {
+      return NodeDeterminism::Unknown;
+    } else if (const FunctionProto* func_proto = GetFunction(); func_proto) {
+      const OpSchemaRegistry& reg = *OpSchemaRegistry::Instance();
+      std::unordered_map<std::string, int> domain_to_opset_version;
+      for (const auto& opset : func_proto->opset_import()) {
+        domain_to_opset_version[opset.domain()] = opset.version();
+      }
+      for (const NodeProto& n : func_proto->node()) {
+        const int opset = domain_to_opset_version[n.domain()];
+        const OpSchema* sch = reg.GetSchema(n.op_type(), opset, n.domain());
+        if (!sch) {
+          return NodeDeterminism::Unknown;
+        }
+        switch (sch->GetNodeDeterminism()) {
+          case NodeDeterminism::NonDeterministic:
+            return NodeDeterminism::NonDeterministic;
+          case NodeDeterminism::Unknown:
+            return NodeDeterminism::Unknown;
+          default:
+            break;
+        }
+      }
+    }
+    return NodeDeterminism::Deterministic;
+  }
+  return node_determinism_;
+}
+
+OpSchema& OpSchema::SetNodeDeterminism(NodeDeterminism node_determinism) {
+  this->node_determinism_ = node_determinism;
+  return *this;
+}
+
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
     out << "Attributes:" << '\n';

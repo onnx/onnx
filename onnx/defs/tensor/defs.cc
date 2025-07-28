@@ -215,6 +215,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
         })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               auto target_type = ctx.getInputType(1);
