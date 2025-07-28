@@ -3311,7 +3311,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static const char* Attention_ver23_doc = R"DOC(
+static const char* Attention_ver24_doc = R"DOC(
 
 Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
 
@@ -3337,6 +3337,8 @@ The following pattern is applied to the Q, K and V inputs after appropriate resh
   The following pattern is applied by this operator:
       Q          K          V
       |          |          |
+[Q_prologue][K_prologue][V_prologue]
+      |          |          |
 Q*sqrt(scale) K*sqrt(scale) |
       |          |          |
       |       Transpose     |
@@ -3345,11 +3347,17 @@ Q*sqrt(scale) K*sqrt(scale) |
             |               |
  at_mask---Add              |
             |               |
+   [MatMul1_epilogue]       |
+            |               |
   softcap (if provided)     |
             |               |
          Softmax            |
             |               |
+  [Softmax_epilogue]        |
+            |               |
             -----MatMul------
+                   |
+          [MatMul2_epilogue]
                    |
                    Y
 ```
@@ -3358,9 +3366,9 @@ Q*sqrt(scale) K*sqrt(scale) |
 
 ONNX_OPERATOR_SET_SCHEMA(
     Attention,
-    23,
+    24,
     OpSchema()
-        .SetDoc(Attention_ver23_doc)
+        .SetDoc(Attention_ver24_doc)
         .Attr(
             "is_causal",
             "If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. "
@@ -3384,12 +3392,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Attr(
-            "softmax_precision",
-            "The floating-point precision used in softmax computation. "
-            "If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.",
-            AttributeProto::INT,
-            OPTIONAL_VALUE)
-        .Attr(
             "softcap",
             "Softcap value for attention weights. Default value is 0.",
             AttributeProto::FLOAT,
@@ -3403,6 +3405,37 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
+        .Attr(
+            "Q_prologue",
+            "One of six subgraphs for controlling quantization and precision. "
+            "Typically only QuantizeLinear, DequantizeLinear, and Cast nodes should appear in the subgraph.",
+            AttributeProto::GRAPH)
+        .Attr(
+            "K_prologue",
+            "One of six subgraphs for controlling quantization and precision. "
+            "Typically only QuantizeLinear, DequantizeLinear, and Cast nodes should appear in the subgraph.",
+            AttributeProto::GRAPH)
+        .Attr(
+            "V_prologue",
+            "One of six subgraphs for controlling quantization and precision. "
+            "Typically only QuantizeLinear, DequantizeLinear, and Cast nodes should appear in the subgraph.",
+            AttributeProto::GRAPH)
+        .Attr(
+            "MatMul1_epilogue",
+            "One of six subgraphs for controlling quantization and precision. "
+            "Typically only QuantizeLinear, DequantizeLinear, and Cast nodes should appear in the subgraph.",
+            AttributeProto::GRAPH)
+        .Attr(
+            "Softmax_epilogue",
+            "One of six subgraphs for controlling quantization and precision. "
+            "Typically only QuantizeLinear, DequantizeLinear, and Cast nodes should appear in the subgraph.",
+            AttributeProto::GRAPH)
+        .Attr(
+            "MatMul2_epilogue",
+            "One of six subgraphs for controlling quantization and precision. "
+            "Typically only QuantizeLinear, DequantizeLinear, and Cast nodes should appear in the subgraph.",
+            AttributeProto::GRAPH)
+        .Attr(
         .Input(
             0,
             "Q",
@@ -3644,15 +3677,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return false;
           int64_t T1 = t_qk->tensor_type().elem_type();
 
-          // Determine precision types for Softmax
-          auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
-          int64_t softmax_precision = (softmax_precision_attr != nullptr) ? softmax_precision_attr->i() : T1;
-          if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-            return false; // Error
-
           auto mkbooltensor = [](bool val) -> ONNX_NAMESPACE::TensorProto {
             auto tp = ONNX_NAMESPACE::ToTensor(std::vector<bool>{val});
             tp.add_dims(1);
@@ -3829,9 +3853,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             builder.Add("QKAttnWeightSoftcap = Identity(QKAttnWeightWithBias)");
           }
-          builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
-              .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
-              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
+          builder.Add("SoftmaxOut = Softmax (QKAttnWeightSoftcap)")
 
           // QK MatMul output if required
           auto* qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
