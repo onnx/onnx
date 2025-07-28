@@ -3330,7 +3330,7 @@ Attention bias to be added is calculated based on `attn_mask` input and `is_caus
 1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
 2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
 
-With respect to KV cache update, there are two ways this operator can be used:
+With respect to KV cache update, this operator allows the following two use cases:
 
 1) Cache update happens inside the Attention operator. In this case, the `K` and `V` inputs contain only the incoming
 tokens for the current autoregressive step, and the four optional inputs/outputs past and present key and value are
@@ -3442,11 +3442,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "attn_mask",
             "Attention mask. "
-            "Shape must be broadcastable to "
-            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "In KV cache use case 1 described in the op description, shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
             "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
-            "The kv_sequence dimension can be smaller than `total_sequence_length` in the case where `K` and `V` are the entire cache tensor "
-            "(See KV cache case 2 in the op description). "
+            "In all other cases without past and present key and value inputs, the last dimension can be smaller than or equal to the `kv_sequence_length` of `K` and `V`, "
+            "but still needs to be at least as long as the maximum value of `nonpad_kv_seqlen` if provided."
             "Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. "
             "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
@@ -3466,8 +3465,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             6,
             "nonpad_kv_seqlen",
-            "A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding)"
-            "tokens in each sample. A padding mask can be derived from this.",
+            "A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) "
+            "tokens in each sample. A padding mask can be derived from this. This should not be used together with "
+            "`past_key` and `past_value` inputs or `present_key` and `present_value` outputs "
+            "(See the KV cache use cases in the operator description).",
             "tensor(int64)",
             OpSchema::Optional)
         .Output(
@@ -3681,11 +3682,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             tp.add_dims(1);
             return tp;
           };
-          auto mkfloattensor = [](float val) -> ONNX_NAMESPACE::TensorProto {
-            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<float>{val});
-            tp.add_dims(1);
-            return tp;
-          };
           // If shape is 3D, q_num_heads and kv_num_heads is provided,
           // for 4D cases, set num_heads to zero for reshape purposes
           auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
@@ -3735,6 +3731,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
               .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
               .Const1D("One1D", static_cast<int64_t>(1))
+              .Const1D("NegOne1D", static_cast<int64_t>(-1))
               .Const1D("One1DF", static_cast<float>(1))
               .Const1D("Zero1D", static_cast<int64_t>(0))
               .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
@@ -3764,7 +3761,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)");
-          builder.Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)");
+          builder.Add("AttnBiasShape = Concat <axis = 0> (QSeqLen, NewKVSeqLen)");
           float neg_inf = -std::numeric_limits<float>::infinity();
           builder.Const1D("FloatNegInf", neg_inf);
           builder.Const1D("ScalarZero", 0.f);
@@ -3781,11 +3778,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             // If attn_mask has a shorter kv sequence length, we pad it to NewKVSeqLen with FloatNegInf
             builder.Add("MaskKVSeqLen = Shape <start = -1> (attn_mask)")
                 .Add("PaddingKVSeqLen = Sub(NewKVSeqLen, MaskKVSeqLen)")
-                .Add("MaskPrefixShape = Shape <start = 0, end = -1> (attn_mask)")
-                .Add("MaskPaddingShape = Concat <axis = 0> (MaskPrefixShape, PaddingKVSeqLen)")
-                .Add("MaskPadding = ConstantOfShape (MaskPaddingShape)", "value", mkfloattensor(neg_inf))
-                .Add("MaskPaddingCast = CastLike (MaskPadding, AttnBiasShort)")
-                .Add("AttnBias = Concat <axis = -1> (AttnBiasShort, MaskPaddingCast)");
+                .Add("Pads = Concat <axis = 0> (Zero1D, PaddingKVSeqLen)")
+                .Add("FloatNegInfCast = CastLike(FloatNegInf, AttnBiasShort)")
+                .Add("AttnBias = Pad(AttnBiasShort, Pads, FloatNegInfCast, NegOne1D)");
           } else {
             builder.Add("AttnBias = ConstantOfShape(AttnBiasShape)");
           }

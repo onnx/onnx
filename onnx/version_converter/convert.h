@@ -58,6 +58,7 @@
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
+#include "onnx/version_converter/adapters/Attention_24_23.h"
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
@@ -854,7 +855,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("SplitToSequence", OpSetID(23), OpSetID(24)));
 
     /******** 24 -> 23 ********/
-    registerAdapter(std::make_unique<CompatibleAdapter>("Attention", OpSetID(24), OpSetID(23)));
+    registerAdapter(std::make_unique<Attention_24_23>());
     const std::vector<TensorProto_DataType> ir12_types_not_in_ir11 = {TensorProto_DataType_FLOAT8E8M0};
     registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
