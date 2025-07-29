@@ -56,10 +56,11 @@ OpSchema = C.OpSchema
 OpSchema.function_body = _function_proto  # type: ignore
 
 
-@property
-def _non_deterministic(self) -> bool:
+@property  # type: ignore
+def _non_deterministic(self):
     """Check if the operator is non-deterministic."""
     return self.node_determinism != OpSchema.NodeDeterminism.Deterministic
+
 
 OpSchema.non_deterministic = _non_deterministic  # type: ignore
 
