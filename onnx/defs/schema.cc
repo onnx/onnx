@@ -1536,6 +1536,10 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
 
+  if (HasContextDependentFunction()) {
+    ENFORCE(node_determinism_ != NodeDeterminism::Unknown);
+  }
+
   for (auto& func : opset_version_to_function_body_) {
     BuildFunction(*func.second);
   }
