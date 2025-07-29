@@ -168,7 +168,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
 |<a href="#AffineGrid">AffineGrid</a>|<a href="Changelog.md#AffineGrid-20">20</a>|20|
-|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-23">23</a>|23|
+|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-23">23</a>|24|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|24|
@@ -1646,9 +1646,23 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
   2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
   3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
-  Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
-  1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
-  2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
+  1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+
+  With respect to KV cache update, this operator allows the following two use cases:
+
+  1) Cache update happens inside the Attention operator. In this case, the `K` and `V` inputs contain only the incoming
+  tokens for the current autoregressive step, and the four optional inputs/outputs past and present key and value are
+  all needed. The Attention op performs a Concat operation on the past and incoming key and value to form the present
+  key and value, respectively. Note that this only works correctly for the special case where the past key and value
+  do not contain padded tokens.
+  2) Cache update happens outside the Attention operator (for example, through the `TensorScatter` operator). In this
+  case, the `K` and `V` inputs correspond to the entire cache tensor, so the four optional inputs/outputs past and
+  present key and value should not be used. An additional input `nonpad_kv_seqlen` of shape (batch_size,) may be
+  provided to indicate the number of non-padding tokens in each sample of the batch to save unnecessary computation.
+  Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
+  as the maximum value of `nonpad_kv_seqlen`.
 
   Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
   The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
@@ -1677,7 +1691,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 #### Version
 
-This version of the operator has been available since version 23 of the default ONNX operator set.
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 
 #### Attributes
 
@@ -1698,7 +1714,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>The floating-point precision used in softmax computation. If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.</dd>
 </dl>
 
-#### Inputs (3 - 6)
+#### Inputs (3 - 7)
 
 <dl>
 <dt><tt>Q</tt> : T1</dt>
@@ -1708,11 +1724,13 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>V</tt> : T2</dt>
 <dd>Value tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`</dd>
 <dt><tt>attn_mask</tt> (optional) : U</dt>
-<dd>Attention mask. Shape must be broadcastable to 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length.` Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. Also supports a float mask of the same type as query, key, value that is added to the attention score.</dd>
+<dd>Attention mask. In KV cache use case 1 described in the op description, shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length.` In all other cases without past and present key and value inputs, the last dimension can be smaller than or equal to the `kv_sequence_length` of `K` and `V`, but still needs to be at least as long as the maximum value of `nonpad_kv_seqlen` if provided.Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. Also supports a float mask of the same type as query, key, value that is added to the attention score.</dd>
 <dt><tt>past_key</tt> (optional) : T1</dt>
 <dd>past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`</dd>
 <dt><tt>past_value</tt> (optional) : T2</dt>
 <dd>past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`</dd>
+<dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
+<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (See the KV cache use cases in the operator description).</dd>
 </dl>
 
 #### Outputs (1 - 4)
@@ -2695,6 +2713,41 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_3d_with_past_and_present_qk_matmul_softmax",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_diff_heads_mask4d_padded_kv</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(np.float32)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_diff_heads_mask4d_padded_kv",
 )
 ```
 

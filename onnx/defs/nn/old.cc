@@ -4202,7 +4202,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-
 static const char* Attention_ver23_doc = R"DOC(
 
 Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.

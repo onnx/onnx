@@ -19,7 +19,7 @@ class Attention_24_23 final : public Adapter {
 
   void adapt_attention_24_23(const std::shared_ptr<Graph>&, Node* node) const {
     const ArrayRef<Value*>& inputs = node->inputs();
-    
+
     // Check if nonpad_kv_seqlen input is present (input index 6)
     if (inputs.size() > 6) {
       ONNX_ASSERTM(
@@ -39,4 +39,4 @@ class Attention_24_23 final : public Adapter {
 };
 
 } // namespace version_conversion
-} // namespace ONNX_NAMESPACE 
+} // namespace ONNX_NAMESPACE

@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "onnx/version_converter/BaseConverter.h"
+#include "onnx/version_converter/adapters/Attention_24_23.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
 #include "onnx/version_converter/adapters/axis_attribute_to_input.h"
@@ -58,7 +59,6 @@
 #include "onnx/version_converter/adapters/upsample_8_9.h"
 #include "onnx/version_converter/adapters/upsample_9_10.h"
 #include "onnx/version_converter/adapters/upsample_9_8.h"
-#include "onnx/version_converter/adapters/Attention_24_23.h"
 
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
@@ -128,9 +128,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
           }
         }
         if (min_version > 1) {
-          registerAdapter(
-              std::make_unique<NoPreviousVersionAdapter>(
-                  op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
+          registerAdapter(std::make_unique<NoPreviousVersionAdapter>(
+              op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
         }
       }
     }

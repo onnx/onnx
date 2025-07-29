@@ -3773,8 +3773,9 @@ ONNX_OPERATOR_SET_SCHEMA(
               return false;
             int64_t U = up->tensor_type().elem_type();
             builder.Add(
-                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL ? "AttnBiasShort = Where(attn_mask, ScalarZero, FloatNegInf)"
-                                                               : "AttnBiasShort = Identity(attn_mask)");
+                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL
+                    ? "AttnBiasShort = Where(attn_mask, ScalarZero, FloatNegInf)"
+                    : "AttnBiasShort = Identity(attn_mask)");
             // If attn_mask has a shorter kv sequence length, we pad it to NewKVSeqLen with FloatNegInf
             builder.Add("MaskKVSeqLen = Shape <start = -1> (attn_mask)")
                 .Add("PaddingKVSeqLen = Sub(NewKVSeqLen, MaskKVSeqLen)")
@@ -3805,15 +3806,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (!is_3d_input) {
               builder.Add("KVSeqLen = Shape <start = -2, end = -1> (K)");
             }
-            builder.Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
+            builder
+                .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
                 .Add("Range = Range(Zero1D, KVSeqLen, One1D)") // [KVSeqLen,]
                 .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
                 .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
                 .Add("AttnBiasCausalPad = Add(AttnBiasCausal, PaddingMask4D)");
-          }
-          else {
+          } else {
             builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausal)");
           }
           builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
