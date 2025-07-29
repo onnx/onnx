@@ -175,9 +175,9 @@ class OpSchema final {
     NonDifferentiable = 2
   };
   enum class NodeDeterminism : uint8_t {
-    Deterministic = 0,
+    Unknown = 0,
     NonDeterministic = 1,
-    Unknown = 2,
+    Deterministic = 2,
   };
 
   // Formal parameter representation, including input/output name, typeStr,
