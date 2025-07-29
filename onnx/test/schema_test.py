@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 
 class TestSchema(unittest.TestCase):
     def test_get_schema(self) -> None:
-        v = defs.get_schema("Relu")
+        relu_schema = defs.get_schema("Relu")
         self.assertEqual(
-            v.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+            relu_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
         )
 
     def test_typecheck(self) -> None:
@@ -32,25 +32,28 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(v.type, onnx.AttributeProto.FLOAT)
 
     def test_function_body(self) -> None:
-        v = defs.get_schema("Selu")
-        self.assertEqual(type(v.function_body), onnx.FunctionProto)
+        selu_schema = defs.get_schema("Selu")
+        self.assertEqual(type(selu_schema.function_body), onnx.FunctionProto)
         self.assertEqual(
-            v.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+            selu_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
         )
 
     def test_node_determinism(self) -> None:
-        v = defs.get_schema("RandomNormalLike")
+        rand_schema = defs.get_schema("RandomNormalLike")
         self.assertEqual(
-            v.node_determinism, defs.OpSchema.NodeDeterminism.NonDeterministic
+            rand_schema.node_determinism, defs.OpSchema.NodeDeterminism.NonDeterministic
         )
-        v = defs.get_schema("BatchNormalization")
+        self.assertTrue(rand_schema.non_deterministic)
+        bn_schema = defs.get_schema("BatchNormalization")
         self.assertEqual(
-            v.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+            bn_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
         )
-        v = defs.get_schema("CastLike")
+        self.assertFalse(bn_schema.non_deterministic)
+        cast_like_schema = defs.get_schema("CastLike")
         self.assertEqual(
-            v.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+            cast_like_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
         )
+        self.assertFalse(cast_like_schema.non_deterministic)
 
 
 class TestOpSchema(unittest.TestCase):
