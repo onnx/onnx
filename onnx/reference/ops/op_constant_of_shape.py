@@ -13,7 +13,7 @@ class ConstantOfShape(OpRun):
         if self.value is None:
             value = np.array(0, dtype=np.float32)
         else:
-            value = self.value.item()
+            value = self.value.flat[0]
 
         try:
             res = np.full(tuple(data), value)
