@@ -3442,12 +3442,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "attn_mask",
             "Attention mask. "
-            "In KV cache use case 1 described in the op description, shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
             "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
-            "In all other cases without past and present key and value inputs, the last dimension can be smaller than or equal to the `kv_sequence_length` of `K` and `V`, "
-            "but still needs to be at least as long as the maximum value of `nonpad_kv_seqlen` if provided."
-            "Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. "
-            "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
+            "The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity, "
+            "but it still needs to be at least as long as the maximum value of `nonpad_kv_seqlen` if provided. "
+            "Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, "
+            "or a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
             OpSchema::Optional)
         .Input(
