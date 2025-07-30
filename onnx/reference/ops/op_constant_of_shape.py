@@ -23,7 +23,7 @@ class ConstantOfShape(OpRun):
             res = np.full(tuple(data), value)
         except TypeError as e:
             raise RuntimeError(
-                f"Unable to create a constant of shape {data!r} with value {self.cst!r} "
-                f"(raw value={value!r})."
+                f"Unable to create a constant of shape {data!r} with value {value!r} "
+                f"(raw value={self.value!r})."
             ) from e
         return (res,)
