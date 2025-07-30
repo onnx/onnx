@@ -1545,6 +1545,16 @@ void OpSchema::Finalize() {
 
 OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
   if (node_determinism_ == NodeDeterminism::Unknown) {
+    for (const auto& attr : attributes()) {
+      switch (attr.second.type) {
+        case AttributeProto::GRAPH:
+        case AttributeProto::GRAPHS:
+          return NodeDeterminism::NonDeterministic;
+        default:
+          break;
+      }
+    }
+
     if (HasContextDependentFunction()) {
       return NodeDeterminism::Unknown;
     } else if (const FunctionProto* func_proto = GetFunction(); func_proto) {

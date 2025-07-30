@@ -55,6 +55,12 @@ class TestSchema(unittest.TestCase):
             defs.OpSchema.NodeDeterminism.Deterministic,
         )
         self.assertFalse(cast_like_schema.non_deterministic)
+        if_schema = defs.get_schema("If")
+        self.assertEqual(
+            if_schema.node_determinism,
+            defs.OpSchema.NodeDeterminism.NonDeterministic,
+        )
+        self.assertTrue(if_schema.non_deterministic)
 
 
 class TestOpSchema(unittest.TestCase):
