@@ -1587,246 +1587,7 @@ static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const cha
 
 ONNX_OPERATOR_SET_SCHEMA(GlobalLpPool, 22, OpSchema().FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver15_doc = R"DOC(
-Carries out batch normalization as described in the paper
-https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-There are five required inputs 'X', 'scale', 'B', 'input_mean' and
-'input_var'.
-Note that 'input_mean' and 'input_var' are expected to be the estimated
-statistics in inference mode (training_mode=False, default),
-and the running statistics in training mode (training_mode=True).
-There are multiple cases for the number of outputs, which we list below:
 
-* Output case #1: Y, running_mean, running_var (training_mode=True)
-* Output case #2: Y (training_mode=False)
-
-When training_mode=False, extra outputs are invalid.
-The outputs are updated as follows when training_mode=True:
-```
-running_mean = input_mean * momentum + current_mean * (1 - momentum)
-running_var = input_var * momentum + current_var * (1 - momentum)
-
-Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
-```
-where:
-```
-current_mean = ReduceMean(X, axis=all_except_channel_index)
-current_var =  ReduceVar(X, axis=all_except_channel_index)
-```
-Notice that `ReduceVar` refers to the population variance, and it equals to
-`sum(sqrd(x_i - x_avg)) / N`
-where `N` is the population size (this formula does not use sample size `N - 1`).
-
-The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
-
-When training_mode=False:
-```
-Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
-```
-
-For previous (depreciated) non-spatial cases, implementors are suggested
-to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    BatchNormalization,
-    15,
-    OpSchema()
-        .NumOutputs({1, 3})
-        .SetDoc(BatchNormalization_ver15_doc + GenerateOptionalArgumentsDoc())
-        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
-        .Attr(
-            "momentum",
-            "Factor used in computing the running mean and variance."
-            "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
-            AttributeProto::FLOAT,
-            0.9f)
-        .Attr(
-            "training_mode",
-            "If set to true, it indicates BatchNormalization is being used for training, and outputs 1 "
-            "and 2 are to be computed.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Input(
-            0,
-            "X",
-            "Input data tensor from the previous operator; "
-            "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
-            "where N is the batch size, C is the number of channels. "
-            "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
-            "For image data, input dimensions become (N x C x H x W). "
-            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(1, "scale", "Scale tensor of shape (C).", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(2, "B", "Bias tensor of shape (C).", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(
-            3,
-            "input_mean",
-            "running (training) or estimated (testing) mean tensor of shape (C).",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            4,
-            "input_var",
-            "running (training) or estimated (testing) variance tensor of shape (C).",
-            "T2",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            0,
-            "Y",
-            "The output tensor of the same shape as X",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            1,
-            "running_mean",
-            "The running mean after the BatchNormalization operator.",
-            "T2",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            2,
-            "running_var",
-            "The running variance after the BatchNormalization operator. This op uses the population size (N) for "
-            "calculating variance, and not the sample size N-1.",
-            "T2",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-            "Constrain input and output types to float tensors.")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-            "Constrain scale and bias types to float tensors.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-            "Constrain mean and variance types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateShapeAndTypeFromFirstInput(ctx);
-          propagateShapeFromInputToOutput(ctx, 0, 0);
-
-          // Inputs 1 to 4 must be of rank 1.
-          checkInputRank(ctx, 1, 1);
-          checkInputRank(ctx, 2, 1);
-          checkInputRank(ctx, 3, 1);
-          checkInputRank(ctx, 4, 1);
-
-          Dim num_channels;
-
-          if (hasInputShape(ctx, 0)) {
-            if (getInputShape(ctx, 0).dim_size() > 1)
-              unifyInputDim(ctx, 0, 1, num_channels);
-            else
-              unifyDim(num_channels, 1);
-          }
-
-          unifyInputDim(ctx, 1, 0, num_channels);
-          unifyInputDim(ctx, 2, 0, num_channels);
-          unifyInputDim(ctx, 3, 0, num_channels);
-          unifyInputDim(ctx, 4, 0, num_channels);
-
-          if (ctx.getAttribute("training_mode") && static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
-            if (ctx.getNumOutputs() != 3)
-              fail_shape_inference("This number of op outputs should be 3 when Training_mode = True, but it is not.");
-          } else {
-            if (ctx.getNumOutputs() != 1)
-              fail_shape_inference("This number of op outputs should be 1 when Training_mode = False, but it is not.");
-          }
-
-          if (ctx.getNumOutputs() > 1) {
-            TensorShapeProto outputs_shape;
-            *outputs_shape.add_dim() = num_channels; // channel
-
-            propagateElemTypeFromInputToOutput(ctx, 3, 1);
-            updateOutputShape(ctx, 1, outputs_shape);
-
-            if (ctx.getNumOutputs() > 2) {
-              propagateElemTypeFromInputToOutput(ctx, 4, 2);
-              updateOutputShape(ctx, 2, outputs_shape);
-            }
-          }
-        }));
-
-static const char* InstanceNormalization_ver22_doc = R"DOC(
-Carries out instance normalization as described in the paper
-https://arxiv.org/abs/1607.08022.
-
-y = scale * (x - mean) / sqrt(variance + epsilon) + B,
-where mean and variance are computed per instance per channel.
-
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    InstanceNormalization,
-    22,
-    OpSchema()
-        .SetDoc(InstanceNormalization_ver22_doc)
-        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
-        .Input(
-            0,
-            "input",
-            "Input data tensor from the previous operator; "
-            "dimensions for image case are (N x C x H x W), "
-            "where N is the batch size, C is the number of "
-            "channels, and H and W are the height and the "
-            "width of the data. For non image case, the "
-            "dimensions are in the form of "
-            "(N x C x D1 x D2 ... Dn), where N is the batch "
-            "size.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            1,
-            "scale",
-            "The input 1-dimensional scale tensor of size C.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            2,
-            "B",
-            "The input 1-dimensional bias tensor of size C.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The output tensor of the same shape as input.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
 static const char* LpNormalization_ver22_doc = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
@@ -2454,388 +2215,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
 
-static const char* LayerNormalization_ver17_doc = R"DOC(
-      This is layer normalization defined in ONNX as function.
-      The overall computation can be split into two stages.
-      The first stage is standardization, which makes the
-      normalized elements have zero mean and unit variances.
-      The computation required by standardization can be
-      described by the following equations.
-      ```
-      Mean = ReduceMean<axes=normalized_axes>(X)
-      D = Sub(X, Mean)
-      DD = Mul(D, D)
-      Var = ReduceMean<axes=normalized_axes>(DD)
-      VarEps = Add(Var, epsilon)
-      StdDev = Sqrt(VarEps)
-      InvStdDev = Reciprocal(StdDev)
-      Normalized = Mul(D, InvStdDev)
-      ```
-      where `normalized_axes` is `[axis, ..., rank of X - 1]`.
-      The variables `Var` and `StdDev` stand for variance and
-      standard deviation, respectively. The second output is
-      `Mean` and the last one is `InvStdDev`.
-      Depending on `stash_type` attribute, the actual computation
-      must happen in different floating-point precision.
-      For example, if `stash_type` is 1, this operator casts
-      all input variables to 32-bit float, perform the computation, and
-      finally cast `Normalized` back to the original type of `X`.
-      The second stage then scales and shifts the outcome of the
-      first stage using
-      ```
-      NormalizedScaled = Mul(Normalized, Scale)
-      Y = Add(NormalizedScaled, B)
-      ```
-      The second stage doesn't depends on `stash_type`.
-      All equations are in [this syntax](https://github.com/onnx/onnx/blob/main/docs/Syntax.md).
-      The same variable (i.e., input, output, and attribute) uses
-      the same name in the equations above and this operator's definition.
-      Let `d[i]` indicate the i-th dimension of `X`.
-      If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
-      the shape of `Mean` and `InvStdDev` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
-      `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
-      (tensors `Scale` and `B` should be unidirectional broadcastable to tensor `X`);
-      for more details please check [the doc](Broadcasting.md).
-)DOC";
 
-static bool BuildContextDependentFunctionBodyLayerNormalization(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto,
-    int sinceVersion) {
-  ONNX_ASSERT(sinceVersion == 17 || sinceVersion == 18)
-  // LayerNormalization <axis, epsilon, stash_type> (X, Scale, B) => (Y, Mean?, InvStdDev?)
-  auto* tp = ctx.getInputType(0);
-  if ((tp == nullptr) || (!tp->has_tensor_type()))
-    return false;
-  int64_t T = tp->tensor_type().elem_type();
 
-  auto type_attr = ctx.getAttribute("stash_type");
-  int64_t U =
-      (type_attr != nullptr) ? type_attr->i() : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-  if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) && (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
-    return false; // Error
 
-  auto* axis_attr = ctx.getAttribute("axis");
-  int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
-  auto* epsilon_attr = ctx.getAttribute("epsilon");
-  float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
 
-  auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
-    auto tp = ONNX_NAMESPACE::ToTensor(std::vector<int64_t>{val});
-    tp.add_dims(1);
-    return tp;
-  };
-  // The treatment of "axis" is different in "LayerNormalization" and in Reduction operations.
-  // This complicates the function definition, requiring reshaping inputs/outputs.
-  // Input X shape: [d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]
-  // This is treated as a 2D shape [d[0] * ... * d[axis-1], d[axis] * ... * d[rank-1]]
-  // Normalization is applied to the second dimension.
-  // Output Y has same shape as X
-  // Outputs Mean and InvStdDev have shape: [d[0], ..., d[axis-1], 1, ..., 1]
-  FunctionBuilder builder(functionProto);
-  builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
-      .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
-      .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
-      .Add("Rank = Size (XShape)") // rank of input tensor: scalar
-      .Add("Zero1D = Constant()", "value", mktensor(0)) // [0] : 1D tensor
-      .Add("Axis1D = Constant()", "value", mktensor(axis)) // [axis] : 1D tensor
-      .Add("PrefixShape = Slice (XShape, Zero1D, Axis1D)") // [d[0], ..., d[axis-1]]
-      .Add(
-          axis >= 0 // number of axes that are reduced =
-              ? "NumReducedAxes = Sub (Rank, Axis1D)" // [rank - axis]: 1D tensor
-              : "NumReducedAxes = Neg (Axis1D)") // [-axis] : 1D tensor
-      .Add(
-          "SuffixShape = ConstantOfShape (NumReducedAxes)",
-          "value",
-          mktensor(1)) // [1, ..., 1] for reduced axes
-      .Add("ReducedShape = Concat <axis = 0> (PrefixShape, SuffixShape)") // [d[0], ..., d[axis-1], 1, ..., 1]
-      .Add("X2D = Flatten (X)", "axis", axis)
-      .Add("XU = Cast (X2D)", "to", U);
-  if (sinceVersion == 17) {
-    builder.Add("Mean2D = ReduceMean <axes = [1]> (XU)")
-        .Add("Square = Mul (XU, XU)")
-        .Add("MeanOfSquare = ReduceMean <axes = [1]> (Square)");
-  } else if (sinceVersion == 18) {
-    builder.Add("Axes_1 = Constant()", "value", mktensor(1))
-        .Add("Mean2D = ReduceMean (XU, Axes_1)")
-        .Add("Square = Mul (XU, XU)")
-        .Add("MeanOfSquare = ReduceMean (Square, Axes_1)");
-  }
-  builder.Add("SquareOfMean = Mul (Mean2D, Mean2D)")
-      .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
-      .Add("VarPlusEpsilon = Add (Var, Epsilon)")
-      .Add("StdDev = Sqrt (VarPlusEpsilon)")
-      .Add("Deviation = Sub (XU, Mean2D)")
-      .Add("Normalized = Div (Deviation, StdDev)")
-      .Add("NormalizedT = Cast (Normalized)", "to", T)
-      .Add("Scale2D = Flatten <axis = 0> (Scale)")
-      .Add("Scaled = Mul (NormalizedT, Scale2D)");
-  if (ctx.hasInput(2)) {
-    builder.Add("B2D = Flatten <axis=0> (B)");
-    builder.Add("Biased = Add (Scaled, B2D)");
-  } else {
-    builder.Add("Biased = Identity (Scaled)");
-  }
-  builder.Add("Y = Reshape (Biased, XShape)");
-  builder.Add("InvStdDev2D = Reciprocal (StdDev)");
-  if (ctx.hasOutput(1))
-    builder.Add("Mean = Reshape (Mean2D, ReducedShape)");
-  if (ctx.hasOutput(2))
-    builder.Add("InvStdDev = Reshape (InvStdDev2D, ReducedShape)");
 
-  schema.BuildFunction(functionProto);
-  return true;
-}
-
-static bool BuildContextDependentFunctionBodyLayerNormalizationVer17(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto) {
-  return BuildContextDependentFunctionBodyLayerNormalization(ctx, schema, functionProto, 17);
-}
-
-static bool BuildContextDependentFunctionBodyLayerNormalizationVer18(
-    const FunctionBodyBuildContext& ctx,
-    const OpSchema& schema,
-    FunctionProto& functionProto) {
-  return BuildContextDependentFunctionBodyLayerNormalization(ctx, schema, functionProto, 18);
-}
-
-ONNX_OPERATOR_SET_SCHEMA(
-    LayerNormalization,
-    17,
-    OpSchema()
-        .SetDoc(LayerNormalization_ver17_doc)
-        .Attr(
-            "axis",
-            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). "
-            "Negative value means counting dimensions from the back.",
-            AttributeProto::INT,
-            static_cast<int64_t>(-1))
-        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
-        .Attr(
-            "stash_type",
-            "Type of Mean and InvStdDev. This also specifies stage one's computation precision.",
-            AttributeProto::INT,
-            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
-        .AllowUncheckedAttributes()
-        .Input(0, "X", "Tensor to be normalized.", "T")
-        .Input(1, "Scale", "Scale tensor.", "T")
-        .Input(2, "B", "Bias tensor.", "T", OpSchema::Optional)
-        .Output(0, "Y", "Normalized tensor.", "T")
-        .Output(1, "Mean", "Saved mean used during training to speed up gradient computation", "U", OpSchema::Optional)
-        .Output(
-            2,
-            "InvStdDev",
-            "Saved inverse standard deviation used during training to speed up gradient computation.",
-            "U",
-            OpSchema::Optional)
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
-            "Constrain input types and output Y type to float tensors.")
-        .TypeConstraint("U", {"tensor(float)", "tensor(bfloat16)"}, "Type of Mean and InvStdDev tensors.")
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer17, 17)
-        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer18, 18)
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateShapeAndTypeFromFirstInput(ctx);
-          auto stash_type = static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-          auto stash_type_proto = ctx.getAttribute("stash_type");
-          if (stash_type_proto) {
-            stash_type = stash_type_proto->i();
-          }
-          if (ctx.getNumOutputs() > 1) {
-            auto output_type = ctx.getOutputType(1);
-            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(stash_type));
-          }
-          if (ctx.getNumOutputs() > 2) {
-            auto output_type = ctx.getOutputType(2);
-            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(stash_type));
-          }
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
-          }
-
-          auto& input_shape = getInputShape(ctx, 0);
-          int64_t input_ndim = input_shape.dim_size();
-          int64_t axis = -1;
-          auto axis_proto = ctx.getAttribute("axis");
-          if (axis_proto) {
-            axis = axis_proto->i();
-          }
-          if (axis < 0) {
-            // Convert negative axis value to equivalent
-            // positive value.
-            axis += input_ndim;
-          }
-          if (axis < 0) {
-            fail_shape_inference(
-                "Unexpected axis value (",
-                axis,
-                ") rank of first input is ",
-                input_ndim,
-                " in ",
-                ctx.getDisplayName(),
-                ".");
-          }
-          if (ctx.getNumOutputs() > 1) {
-            auto mean_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
-            mean_shape->CopyFrom(input_shape);
-            for (int d = static_cast<int>(axis); d < input_ndim; ++d)
-              mean_shape->mutable_dim(d)->set_dim_value(1);
-          }
-
-          if (ctx.getNumOutputs() > 2) {
-            auto inv_std_dev_shape = ctx.getOutputType(2)->mutable_tensor_type()->mutable_shape();
-            inv_std_dev_shape->CopyFrom(input_shape);
-            for (int d = static_cast<int>(axis); d < input_ndim; ++d)
-              inv_std_dev_shape->mutable_dim(d)->set_dim_value(1);
-          }
-        }));
-
-static const char* GroupNormalization_ver21_doc = R"DOC(
-A GroupNormalization function. Carries out group normalization as described in
-the paper https://arxiv.org/abs/1803.08494
-
-This operator transforms input according to
-```
-y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
-```
-where the mean and variance are computed per instance per group of channels, and
-`scale` and `bias` should be specified for each channel. The number of
-groups `num_groups` should be divisible by the number of channels so that there are
-an equal number of channels per group.
-
-The overall computation has two stages: the first stage normalizes the elements to
-have zero mean and unit variance for each instance in each group, and the second
-stage scales and shifts the results of the first stage. The floating-point precision
-used in the first stage is determined by the `stash_type` attribute. For example,
-if `stash_type` is 1, the operator casts all input variables to 32-bit float,
-performs the computation, and finally casts the normalized results back to the
-original type of `X`. The second stage does not depend on `stash_type`.
-
-When the number of groups is the same as the number of channels, this operator is
-equivalent to InstanceNormalization. When there is only one group, this operator
-is equivalent to LayerNormalization.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    GroupNormalization,
-    21,
-    OpSchema()
-        .SetDoc(GroupNormalization_ver21_doc)
-        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
-        .Attr(
-            "num_groups",
-            "The number of groups of channels. It should be a divisor of the number of channels `C`.",
-            AttributeProto::INT,
-            true)
-        .Attr(
-            "stash_type",
-            "The floating-point precision used in stage one of the computation.",
-            AttributeProto::INT,
-            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
-        .Input(
-            0,
-            "X",
-            "Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, "
-            "`C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are "
-            "computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are "
-            "in the form of `(N x C x D1 x D2 ... Dn)`.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(1, "scale", "Scale tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(2, "bias", "Bias tensor of shape `(C)`.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "Y",
-            "The output tensor of the same shape as `X`.",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
-        .SetContextDependentFunctionBodyBuilder(
-            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
-              // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
-              auto* tp = ctx.getInputType(0);
-              if ((tp == nullptr) || (!tp->has_tensor_type()))
-                return false;
-              int64_t in_type = tp->tensor_type().elem_type();
-
-              auto* epsilon_attr = ctx.getAttribute("epsilon");
-              float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
-              auto* num_groups_attr = ctx.getAttribute("num_groups");
-              if (num_groups_attr == nullptr)
-                return false;
-              int64_t num_groups = num_groups_attr->i();
-
-              auto stash_type_attr = ctx.getAttribute("stash_type");
-              int64_t stash_type = (stash_type_attr != nullptr)
-                  ? stash_type_attr->i()
-                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
-              if ((stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
-                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
-                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
-                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
-                return false; // Error
-
-              FunctionBuilder builder(functionProto);
-              builder.Const1D("FloatEpsilon", epsilon)
-                  .Add("Epsilon = Cast (FloatEpsilon)", "to", stash_type)
-                  .Add("XU = Cast (X)", "to", stash_type)
-                  .Add("XShape = Shape (XU)") // shape of input tensor: 1D tensor
-                  .Add("C = Shape <start = 1, end = 2> (X)")
-                  .Const1D("NumGroups", num_groups)
-                  .Add("GroupSize = Div (C, NumGroups)")
-                  .Add("N = Shape <start = 0, end = 1> (X)") // batch size
-                  .Add("InstanceShape = Shape <start = 2> (X)") // data instance shape
-
-                  // NewShape = [N, num_groups, group_size, H, W, (...)]
-                  .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, InstanceShape)")
-                  .Add("XReshaped = Reshape (XU, NewShape)")
-
-                  // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
-                  .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
-                  .Add("X3D = Reshape (XReshaped, Shape3D)")
-
-                  // Calculate statistics
-                  .Const1D("Axes2", (int64_t)2)
-                  .Add("Mean = ReduceMean (X3D, Axes2)")
-                  .Add("Square = Mul (X3D, X3D)")
-                  .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
-                  .Add("SquareOfMean = Mul (Mean, Mean)")
-                  .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
-                  .Add("VarPlusEpsilon = Add (Var, Epsilon)")
-                  .Add("StdDev = Sqrt (VarPlusEpsilon)")
-                  .Add("Deviation = Sub (X3D, Mean)")
-                  .Add("NormalizedU = Div (Deviation, StdDev)")
-
-                  // Reshape to [N, C, H x W (x ...)] and cast to original type
-                  .Add("NormalizedOriginalShape = Reshape (NormalizedU, XShape)")
-                  .Add("NormalizedNC = Reshape (NormalizedOriginalShape, Shape3D)")
-                  .Add("NormalizedT = Cast (NormalizedNC)", "to", in_type)
-
-                  // Reshape scale and bias to [1, C, 1] for broadcasting
-                  .Add("ScaleShape = Constant <value_ints = [1, -1, 1]> ()")
-                  .Add("ScaleT = Cast (scale)", "to", in_type)
-                  .Add("BiasT = Cast (bias)", "to", in_type)
-                  .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
-                  .Add("BiasReshaped = Reshape (BiasT, ScaleShape)")
-
-                  // Calculate scaled and biased output
-                  .Add("Scaled = Mul (ScaleReshaped, NormalizedT)")
-                  .Add("Biased = Add (Scaled, BiasReshaped)")
-                  .Add("Y = Reshape (Biased, XShape)");
-
-              schema.BuildFunction(functionProto);
-              return true;
-            }));
 
 static const char* RMSNormalization_ver23_doc = R"DOC(
       This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
@@ -3861,4 +3245,627 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
+
+// Opset 24: Normalization operators with optional scale and bias
+
+static const char* BatchNormalization_ver24_doc = R"DOC(
+Carries out batch normalization as described in the paper
+https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+There are five required inputs 'X', 'scale', 'B', 'input_mean' and
+'input_var'.
+Note that 'input_mean' and 'input_var' are expected to be the estimated
+statistics in inference mode (training_mode=False, default),
+and the running statistics in training mode (training_mode=True).
+There are multiple cases for the number of outputs, which we list below:
+
+* Output case #1: Y, running_mean, running_var (training_mode=True)
+* Output case #2: Y (training_mode=False)
+
+When training_mode=False, extra outputs are invalid.
+The outputs are updated as follows when training_mode=True:
+```
+running_mean = input_mean * momentum + current_mean * (1 - momentum)
+running_var = input_var * momentum + current_var * (1 - momentum)
+
+Y = (X - current_mean) / sqrt(current_var + epsilon) * scale + B
+```
+where:
+```
+current_mean = ReduceMean(X, axis=all_except_channel_index)
+current_var =  ReduceVar(X, axis=all_except_channel_index)
+```
+Notice that `ReduceVar` refers to the population variance, and it equals to
+`sum(sqrd(x_i - x_avg)) / N`
+where `N` is the population size (this formula does not use sample size `N - 1`).
+
+The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
+
+When training_mode=False:
+```
+Y = (X - input_mean) / sqrt(input_var + epsilon) * scale + B
+```
+
+For previous (depreciated) non-spatial cases, implementors are suggested
+to flatten the input shape to (N x C * D1 * D2 * ... * Dn) before a BatchNormalization Op.
+
+When scale and bias are not provided, they default to 1.0 and 0.0 respectively.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BatchNormalization,
+    24,
+    OpSchema()
+        .NumOutputs({1, 3})
+        .SetDoc(BatchNormalization_ver24_doc + GenerateOptionalArgumentsDoc())
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
+        .Attr(
+            "momentum",
+            "Factor used in computing the running mean and variance."
+            "e.g., running_mean = running_mean * momentum + mean * (1 - momentum).",
+            AttributeProto::FLOAT,
+            0.9f)
+        .Attr(
+            "training_mode",
+            "If set to true, it indicates BatchNormalization is being used for training, and outputs 1 "
+            "and 2 are to be computed.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "X",
+            "Input data tensor from the previous operator; "
+            "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
+            "where N is the batch size, C is the number of channels. "
+            "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
+            "For image data, input dimensions become (N x C x H x W). "
+            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(1, "scale", "Scale tensor of shape (C). Default value is 1.0.", "T1", OpSchema::Optional, true, 1, OpSchema::Differentiable)
+        .Input(2, "B", "Bias tensor of shape (C). Default value is 0.0.", "T1", OpSchema::Optional, true, 1, OpSchema::Differentiable)
+        .Input(
+            3,
+            "input_mean",
+            "running (training) or estimated (testing) mean tensor of shape (C).",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            4,
+            "input_var",
+            "running (training) or estimated (testing) variance tensor of shape (C).",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "The output tensor of the same shape as X",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            1,
+            "running_mean",
+            "The running mean after the BatchNormalization operator.",
+            "T2",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            2,
+            "running_var",
+            "The running variance after the BatchNormalization operator. This op uses the population size (N) for "
+            "calculating variance, and not the sample size N-1.",
+            "T2",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain scale and bias types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain mean and variance types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          // Inputs 3 to 4 must be of rank 1.
+          checkInputRank(ctx, 3, 1);
+          checkInputRank(ctx, 4, 1);
+
+          // Optional inputs 1 and 2 must be of rank 1 if present.
+          if (ctx.hasInput(1)) {
+            checkInputRank(ctx, 1, 1);
+          }
+          if (ctx.hasInput(2)) {
+            checkInputRank(ctx, 2, 1);
+          }
+
+          Dim num_channels;
+
+          if (hasInputShape(ctx, 0)) {
+            if (getInputShape(ctx, 0).dim_size() > 1)
+              unifyInputDim(ctx, 0, 1, num_channels);
+            else
+              unifyDim(num_channels, 1);
+          }
+
+          if (ctx.hasInput(1)) {
+            unifyInputDim(ctx, 1, 0, num_channels);
+          }
+          if (ctx.hasInput(2)) {
+            unifyInputDim(ctx, 2, 0, num_channels);
+          }
+          unifyInputDim(ctx, 3, 0, num_channels);
+          unifyInputDim(ctx, 4, 0, num_channels);
+
+          if (ctx.getAttribute("training_mode") && static_cast<int>(ctx.getAttribute("training_mode")->i()) != 0) {
+            if (ctx.getNumOutputs() != 3)
+              fail_shape_inference("This number of op outputs should be 3 when Training_mode = True, but it is not.");
+          } else {
+            if (ctx.getNumOutputs() != 1)
+              fail_shape_inference("This number of op outputs should be 1 when Training_mode = False, but it is not.");
+          }
+
+          if (ctx.getNumOutputs() > 1) {
+            TensorShapeProto outputs_shape;
+            *outputs_shape.add_dim() = num_channels; // channel
+
+            propagateElemTypeFromInputToOutput(ctx, 3, 1);
+            updateOutputShape(ctx, 1, outputs_shape);
+
+            if (ctx.getNumOutputs() > 2) {
+              propagateElemTypeFromInputToOutput(ctx, 4, 2);
+              updateOutputShape(ctx, 2, outputs_shape);
+            }
+          }
+        }));
+
+static const char* InstanceNormalization_ver24_doc = R"DOC(
+Carries out instance normalization as described in the paper
+https://arxiv.org/abs/1607.08022.
+
+y = scale * (x - mean) / sqrt(variance + epsilon) + B,
+where mean and variance are computed per instance per channel.
+
+When scale and bias are not provided, they default to 1.0 and 0.0 respectively.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    InstanceNormalization,
+    24,
+    OpSchema()
+        .SetDoc(InstanceNormalization_ver24_doc)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
+        .Input(
+            0,
+            "input",
+            "Input data tensor from the previous operator; "
+            "dimensions for image case are (N x C x H x W), "
+            "where N is the batch size, C is the number of "
+            "channels, and H and W are the height and the "
+            "width of the data. For non image case, the "
+            "dimensions are in the form of "
+            "(N x C x D1 x D2 ... Dn), where N is the batch "
+            "size.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "scale",
+            "The input 1-dimensional scale tensor of size C. Default value is 1.0.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "B",
+            "The input 1-dimensional bias tensor of size C. Default value is 0.0.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "The output tensor of the same shape as input.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
+
+static const char* GroupNormalization_ver24_doc = R"DOC(
+A GroupNormalization function. Carries out group normalization as described in
+the paper https://arxiv.org/abs/1803.08494
+
+This operator transforms input according to
+```
+y = scale * (x - mean) / sqrt(variance + epsilon) + bias,
+```
+where the mean and variance are computed per instance per group of channels, and
+`scale` and `bias` should be specified for each channel. The number of
+groups `num_groups` should be divisible by the number of channels so that there are
+an equal number of channels per group.
+
+The overall computation has two stages: the first stage normalizes the elements to
+have zero mean and unit variance for each instance in each group, and the second
+stage scales and shifts the results of the first stage. The floating-point precision
+used in the first stage is determined by the `stash_type` attribute. For example,
+if `stash_type` is 1, the operator casts all input variables to 32-bit float,
+performs the computation, and finally casts the normalized results back to the
+original type of `X`. The second stage does not depend on `stash_type`.
+
+When the number of groups is the same as the number of channels, this operator is
+equivalent to InstanceNormalization. When there is only one group, this operator
+is equivalent to LayerNormalization.
+
+When scale and bias are not provided, they default to 1.0 and 0.0 respectively.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    GroupNormalization,
+    24,
+    OpSchema()
+        .SetDoc(GroupNormalization_ver24_doc)
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
+        .Attr(
+            "num_groups",
+            "The number of groups of channels. It should be a divisor of the number of channels `C`.",
+            AttributeProto::INT,
+            true)
+        .Attr(
+            "stash_type",
+            "The floating-point precision used in stage one of the computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+        .Input(
+            0,
+            "X",
+            "Input data tensor. Dimensions for image cases are `(N x C x H x W)`, where `N` is the batch size, "
+            "`C` is the number of channels, and `H` and `W` are the height and width of the data. Statistics are "
+            "computed for every group of channels over `C`, `H`, and `W`. For non-image cases, the dimensions are "
+            "in the form of `(N x C x D1 x D2 ... Dn)`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(1, "scale", "Scale tensor of shape `(C)`. Default value is 1.0.", "T", OpSchema::Optional, true, 1, OpSchema::Differentiable)
+        .Input(2, "bias", "Bias tensor of shape `(C)`. Default value is 0.0.", "T", OpSchema::Optional, true, 1, OpSchema::Differentiable)
+        .Output(
+            0,
+            "Y",
+            "The output tensor of the same shape as `X`.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
+              auto* tp = ctx.getInputType(0);
+              if ((tp == nullptr) || (!tp->has_tensor_type()))
+                return false;
+              int64_t in_type = tp->tensor_type().elem_type();
+
+              auto* epsilon_attr = ctx.getAttribute("epsilon");
+              float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+              auto* num_groups_attr = ctx.getAttribute("num_groups");
+              if (num_groups_attr == nullptr)
+                return false;
+              int64_t num_groups = num_groups_attr->i();
+
+              auto stash_type_attr = ctx.getAttribute("stash_type");
+              int64_t stash_type = (stash_type_attr != nullptr)
+                  ? stash_type_attr->i()
+                  : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+              if ((stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+                  (stash_type != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+                return false; // Error
+
+              FunctionBuilder builder(functionProto);
+              builder.Const1D("FloatEpsilon", epsilon)
+                  .Add("Epsilon = Cast (FloatEpsilon)", "to", stash_type)
+                  .Add("XU = Cast (X)", "to", stash_type)
+                  .Add("XShape = Shape (XU)") // shape of input tensor: 1D tensor
+                  .Add("C = Shape <start = 1, end = 2> (X)")
+                  .Const1D("NumGroups", num_groups)
+                  .Add("GroupSize = Div (C, NumGroups)")
+                  .Add("N = Shape <start = 0, end = 1> (X)") // batch size
+                  .Add("InstanceShape = Shape <start = 2> (X)") // data instance shape
+
+                  // NewShape = [N, num_groups, group_size, H, W, (...)]
+                  .Add("NewShape = Concat <axis = 0> (N, NumGroups, GroupSize, InstanceShape)")
+                  .Add("XReshaped = Reshape (XU, NewShape)")
+
+                  // Flatten into 3D tensor: [N, num_groups, group_size x H x W (x ...)]
+                  .Add("Shape3D = Constant <value_ints = [0, 0, -1]> ()")
+                  .Add("X3D = Reshape (XReshaped, Shape3D)")
+
+                  // Calculate statistics
+                  .Const1D("Axes2", (int64_t)2)
+                  .Add("Mean = ReduceMean (X3D, Axes2)")
+                  .Add("Square = Mul (X3D, X3D)")
+                  .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
+                  .Add("SquareOfMean = Mul (Mean, Mean)")
+                  .Add("Var = Sub (MeanOfSquare, SquareOfMean)")
+                  .Add("VarPlusEpsilon = Add (Var, Epsilon)")
+                  .Add("StdDev = Sqrt (VarPlusEpsilon)")
+                  .Add("Deviation = Sub (X3D, Mean)")
+                  .Add("NormalizedU = Div (Deviation, StdDev)")
+
+                  // Reshape to [N, C, H x W (x ...)] and cast to original type
+                  .Add("NormalizedOriginalShape = Reshape (NormalizedU, XShape)")
+                  .Add("NormalizedNC = Reshape (NormalizedOriginalShape, Shape3D)")
+                  .Add("NormalizedT = Cast (NormalizedNC)", "to", in_type);
+
+              // Handle optional scale and bias inputs
+              if (ctx.hasInput(1) && ctx.hasInput(2)) {
+                // Both scale and bias provided
+                builder.Add("ScaleShape = Constant <value_ints = [1, -1, 1]> ()")
+                    .Add("ScaleT = Cast (scale)", "to", in_type)
+                    .Add("BiasT = Cast (bias)", "to", in_type)
+                    .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
+                    .Add("BiasReshaped = Reshape (BiasT, ScaleShape)")
+                    .Add("Scaled = Mul (ScaleReshaped, NormalizedT)")
+                    .Add("Biased = Add (Scaled, BiasReshaped)")
+                    .Add("Y = Reshape (Biased, XShape)");
+              } else if (ctx.hasInput(1)) {
+                // Only scale provided
+                builder.Add("ScaleShape = Constant <value_ints = [1, -1, 1]> ()")
+                    .Add("ScaleT = Cast (scale)", "to", in_type)
+                    .Add("ScaleReshaped = Reshape (ScaleT, ScaleShape)")
+                    .Add("Scaled = Mul (ScaleReshaped, NormalizedT)")
+                    .Add("Y = Reshape (Scaled, XShape)");
+              } else if (ctx.hasInput(2)) {
+                // Only bias provided
+                builder.Add("BiasShape = Constant <value_ints = [1, -1, 1]> ()")
+                    .Add("BiasT = Cast (bias)", "to", in_type)
+                    .Add("BiasReshaped = Reshape (BiasT, BiasShape)")
+                    .Add("Biased = Add (NormalizedT, BiasReshaped)")
+                    .Add("Y = Reshape (Biased, XShape)");
+              } else {
+                // Neither scale nor bias provided
+                builder.Add("Y = Reshape (NormalizedT, XShape)");
+              }
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
+
+static const char* LayerNormalization_ver24_doc = R"DOC(
+This is layer normalization defined in ONNX as function.
+The overall computation can be split into two stages. The first stage is standardization,
+which makes the computation numerically stable. The second stage then scales and shifts
+the outcome of the first stage.
+
+Input `X` has shape `[d_0, d_1, ..., d_{axis-1}, d_{axis}, ..., d_{rank-1}]`
+and the normalization is performed over the last `rank-axis` dimensions.
+
+Let `d` be the product of the last `rank-axis` dimensions, i.e.,
+`d = d_{axis} * d_{axis+1} * ... * d_{rank-1}`.
+The last `rank-axis` dimensions of `X` are flattened to become a `d`-dimensional vector.
+Let `x` be one such vector. The mean and standard deviation of `x` are computed along its entries.
+Let `mean` and `stdev` be the mean and standard deviation, respectively.
+
+The entries of `x` are then standardized by `(x - mean) / stdev`.
+
+The above procedure is applied to each of the vectors created by flattening
+the last `rank-axis` dimensions of `X`.
+
+The computation of ReduceMean and ReduceVar uses float to avoid overflow for float16 inputs.
+
+If input `Scale` and input `B` are specified, the computation becomes
+`Scale * (x - mean) / stdev + B`.
+
+When Scale and bias are not provided, they default to 1.0 and 0.0 respectively.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LayerNormalization,
+    24,
+    OpSchema()
+        .SetDoc(LayerNormalization_ver24_doc)
+        .Attr(
+            "axis",
+            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). "
+            "Negative value means counting dimensions from the back.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
+        .Attr(
+            "stash_type",
+            "Type of Mean and InvStdDev. This also specifies stage one's computation precision.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+        .AllowUncheckedAttributes()
+        .Input(0, "X", "Tensor to be normalized.", "T")
+        .Input(1, "Scale", "Scale tensor. Default value is 1.0.", "T", OpSchema::Optional)
+        .Input(2, "B", "Bias tensor. Default value is 0.0.", "T", OpSchema::Optional)
+        .Output(0, "Y", "Normalized tensor.", "T")
+        .Output(1, "Mean", "Saved mean used during training to speed up gradient computation", "U", OpSchema::Optional)
+        .Output(
+            2,
+            "InvStdDev",
+            "Saved inverse standard deviation used during training to speed up gradient computation.",
+            "U",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input types and output Y type to float tensors.")
+        .TypeConstraint("U", {"tensor(float)", "tensor(bfloat16)"}, "Type of Mean and InvStdDev tensors.")
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+          auto* tp = ctx.getInputType(0);
+          if ((tp == nullptr) || (!tp->has_tensor_type()))
+            return false;
+          int64_t in_type = tp->tensor_type().elem_type();
+
+          auto* epsilon_attr = ctx.getAttribute("epsilon");
+          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+          
+          auto* axis_attr = ctx.getAttribute("axis");
+          int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
+
+          auto stash_type_attr = ctx.getAttribute("stash_type");
+          int64_t stash_type = (stash_type_attr != nullptr)
+              ? stash_type_attr->i()
+              : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (stash_type != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (stash_type != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+              (stash_type != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
+
+          FunctionBuilder builder(functionProto);
+          builder.Const1D("FloatEpsilon", epsilon)
+              .Add("Epsilon = Cast (FloatEpsilon)", "to", stash_type)
+              .Add("XU = Cast (X)", "to", stash_type);
+
+          // Handle axis conversion and calculate the axes for reduction
+          builder.Add("Rank = Size (Shape(X))")
+              .Const1D("AxisValue", axis)
+              .Const1D("Zero", (int64_t)0)
+              .Add("AxisIsNegative = Less(AxisValue, Zero)")
+              .Add("AdjustedAxis = Add(AxisValue, Rank)")
+              .Add("FinalAxis = Where(AxisIsNegative, AdjustedAxis, AxisValue)")
+              .Add("One = Constant<value = tensor(int64): 1>()")
+              .Add("AxesRange = Range(FinalAxis, Rank, One)");
+
+          // Calculate mean and variance
+          builder.Add("Mean = ReduceMean (XU, AxesRange)")
+              .Add("Diff = Sub (XU, Mean)")
+              .Add("DiffSquared = Mul (Diff, Diff)")
+              .Add("Variance = ReduceMean (DiffSquared, AxesRange)")
+              .Add("VarEpsilon = Add (Variance, Epsilon)")
+              .Add("StdDev = Sqrt (VarEpsilon)")
+              .Add("OneConst = Constant<value = tensor(float): 1.0>()")
+              .Add("OneConstCasted = Cast(OneConst)", "to", stash_type)
+              .Add("InvStdDev = Div (OneConstCasted, StdDev)")
+              .Add("Normalized = Mul (Diff, InvStdDev)");
+
+          // Handle optional scale and bias
+          if (ctx.hasInput(1) && ctx.hasInput(2)) {
+            // Both scale and bias provided
+            builder.Add("ScaleU = Cast (Scale)", "to", stash_type)
+                .Add("BiasU = Cast (B)", "to", stash_type)
+                .Add("Scaled = Mul (Normalized, ScaleU)")
+                .Add("ScaledBiased = Add (Scaled, BiasU)")
+                .Add("Y = Cast (ScaledBiased)", "to", in_type);
+          } else if (ctx.hasInput(1)) {
+            // Only scale provided
+            builder.Add("ScaleU = Cast (Scale)", "to", stash_type)
+                .Add("Scaled = Mul (Normalized, ScaleU)")
+                .Add("Y = Cast (Scaled)", "to", in_type);
+          } else if (ctx.hasInput(2)) {
+            // Only bias provided
+            builder.Add("BiasU = Cast (B)", "to", stash_type)
+                .Add("Biased = Add (Normalized, BiasU)")
+                .Add("Y = Cast (Biased)", "to", in_type);
+          } else {
+            // Neither scale nor bias provided
+            builder.Add("Y = Cast (Normalized)", "to", in_type);
+          }
+
+          // Optional outputs for Mean and InvStdDev
+          if (schema.outputs().size() > 1) {
+            builder.Add("Mean = Cast (Mean)", "to", stash_type);
+            if (schema.outputs().size() > 2) {
+              builder.Add("InvStdDev = Cast (InvStdDev)", "to", stash_type);
+            }
+          }
+
+          schema.BuildFunction(functionProto);
+          return true;
+        })
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          auto stash_type = static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          auto stash_type_proto = ctx.getAttribute("stash_type");
+          if (stash_type_proto) {
+            stash_type = stash_type_proto->i();
+          }
+          if (ctx.getNumOutputs() > 1) {
+            auto output_type = ctx.getOutputType(1);
+            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(stash_type));
+          }
+          if (ctx.getNumOutputs() > 2) {
+            auto output_type = ctx.getOutputType(2);
+            output_type->mutable_tensor_type()->set_elem_type(static_cast<int32_t>(stash_type));
+          }
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          auto& input_shape = getInputShape(ctx, 0);
+          int64_t input_ndim = input_shape.dim_size();
+          int64_t axis = -1;
+          auto axis_proto = ctx.getAttribute("axis");
+          if (axis_proto) {
+            axis = axis_proto->i();
+          }
+          if (axis < 0) {
+            // Convert negative axis value to equivalent
+            // positive value.
+            axis += input_ndim;
+          }
+          if (axis < 0) {
+            fail_shape_inference(
+                "Unexpected axis value (",
+                axis,
+                ") rank of first input is ",
+                input_ndim,
+                " in ",
+                ctx.getDisplayName(),
+                ".");
+          }
+
+          if (ctx.getNumOutputs() > 1) {
+            // Outputs 1 and 2 have the same shape as the reduced axes.
+            TensorShapeProto mean_shape;
+            for (int i = 0; i < axis; ++i) {
+              *mean_shape.add_dim() = input_shape.dim(i);
+            }
+            for (int i = axis; i < input_ndim; ++i) {
+              mean_shape.add_dim()->set_dim_value(1);
+            }
+            updateOutputShape(ctx, 1, mean_shape);
+            if (ctx.getNumOutputs() > 2) {
+              updateOutputShape(ctx, 2, mean_shape);
+            }
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
