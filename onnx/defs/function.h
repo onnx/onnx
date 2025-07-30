@@ -82,9 +82,9 @@ class FunctionBodyHelper {
 
   For more examples, please find the references of this function
   */
-  static std::vector<NodeProto> BuildNodes(const std::vector<NodeDef>& node_defs);
+  ONNX_API static std::vector<NodeProto> BuildNodes(const std::vector<NodeDef>& node_defs);
 
-  static void BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs);
+  ONNX_API static void BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs);
 
   static bool BuildFunctionProto(
       FunctionProto& functionProto,

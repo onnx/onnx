@@ -351,7 +351,7 @@ class OpSchema final {
    * SinceVersion(3), and another, updated op schema entry for Foo
    * with SinceVersion(6).
    */
-  OpSchema& SinceVersion(OperatorSetVersion n); // aka int
+  ONNX_API OpSchema& SinceVersion(OperatorSetVersion n); // aka int
 
   /**
    * Marks this op as deprecated as of it's since_version. This will cause the
@@ -378,7 +378,7 @@ class OpSchema final {
   //
   // Note that signatures are defined to allow for forward-declaring
   // any structs used from ir.h
-  OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
+  ONNX_API OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
   InferenceFunction GetTypeAndShapeInferenceFunction() const {
     return tensor_inference_function_ ? tensor_inference_function_ : dummyInferenceFunction;
   }
@@ -413,12 +413,12 @@ class OpSchema final {
   }
 
   // Functions to specify name for the operator schema.
-  OpSchema& SetName(const char* name);
-  OpSchema& SetName(std::string name);
+  ONNX_API OpSchema& SetName(const char* name);
+  ONNX_API OpSchema& SetName(std::string name);
 
   // Functions to specify code location for the operator schema.
-  OpSchema& SetLocation(const char* file, int line);
-  OpSchema& SetLocation(std::string file, int line);
+  ONNX_API OpSchema& SetLocation(const char* file, int line);
+  ONNX_API OpSchema& SetLocation(std::string file, int line);
 
   // Functions to specify domain for the operator schema.
   // Default domain value (ONNX_DOMAIN) means it's ONNX domain.
@@ -528,9 +528,9 @@ class OpSchema final {
   // (represented as "") in the graph even though the later inputs have values.
   // It's useful for complex situation when there are several independent
   // optional inputs.
-  OpSchema& Input(int n, FormalParameter formal_parameter);
+  ONNX_API OpSchema& Input(int n, FormalParameter formal_parameter);
 
-  OpSchema& Input(
+  ONNX_API OpSchema& Input(
       int n,
       std::string name,
       const std::string& description,
@@ -541,7 +541,7 @@ class OpSchema final {
       DifferentiationCategory differentiation_category = Unknown);
 
   // Non-STL wrapper to reduce binary size
-  OpSchema& Input(
+  ONNX_API OpSchema& Input(
       int n,
       const char* name,
       const char* description,
@@ -551,9 +551,9 @@ class OpSchema final {
       int min_arity = 1,
       DifferentiationCategory differentiation_category = Unknown);
 
-  OpSchema& Output(int n, FormalParameter formal_parameter);
+  ONNX_API OpSchema& Output(int n, FormalParameter formal_parameter);
 
-  OpSchema& Output(
+  ONNX_API OpSchema& Output(
       int n,
       std::string name,
       const std::string& description,
@@ -564,7 +564,7 @@ class OpSchema final {
       DifferentiationCategory differentiation_category = Unknown);
 
   // Non-STL wrapper to reduce binary size
-  OpSchema& Output(
+  ONNX_API OpSchema& Output(
       int n,
       const char* name,
       const char* description,
@@ -574,10 +574,10 @@ class OpSchema final {
       int min_arity = 1,
       DifferentiationCategory differentiation_category = Unknown);
 
-  OpSchema& TypeConstraint(std::string type_str, std::vector<std::string> constraints, std::string description);
+  ONNX_API OpSchema& TypeConstraint(std::string type_str, std::vector<std::string> constraints, std::string description);
 
   // Non-STL wrapper to reduce binary size
-  OpSchema&
+  ONNX_API OpSchema&
   TypeConstraint(const char* type_str, std::initializer_list<const char*> constraints, const char* description);
 
   // Convenience members for types
@@ -743,14 +743,14 @@ class OpSchema final {
     return !opset_version_to_function_body_.empty();
   }
 
-  OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version = kUninitializedSinceVersion);
+  ONNX_API OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version = kUninitializedSinceVersion);
 
-  OpSchema& FunctionBody(
+  ONNX_API OpSchema& FunctionBody(
       const std::vector<NodeProto>& func_nodes,
       const std::vector<OperatorSetIdProto>& opsets,
       int opset_version = kUninitializedSinceVersion);
 
-  OpSchema& FunctionBody(const char* func_body, int opset_version = kUninitializedSinceVersion);
+  ONNX_API OpSchema& FunctionBody(const char* func_body, int opset_version = kUninitializedSinceVersion);
 
   // since_version_ of an OpSchema tells the last opset version when an op is defined.
   // When the op's definition is changed, a new OpSchema (of the same op_type) is created
@@ -769,7 +769,7 @@ class OpSchema final {
   // in a model with opset_import version 18 because the function body make wrong use of ReduceMax(18).
   // Inside GetFunction we ensure that ops being used to construct a function body do not endure such
   // issue.
-  const FunctionProto* GetFunction(
+  ONNX_API const FunctionProto* GetFunction(
       int requested_opset_version = OpSchema::kUninitializedSinceVersion,
       bool validate = false) const;
 
@@ -794,7 +794,7 @@ class OpSchema final {
       ContextDependentFunctionBodyBuilder,
       int opset_version = kUninitializedSinceVersion);
 
-  bool BuildContextDependentFunction(
+  ONNX_API bool BuildContextDependentFunction(
       const FunctionBodyBuildContext& ctx,
       FunctionProto& function_proto,
       int requested_opset_version = OpSchema::kUninitializedSinceVersion) const;
@@ -803,7 +803,7 @@ class OpSchema final {
   // It will also parse all type strings specified for inputs/outputs into valid
   // TypeProto and create global unique string pointer as the DataType for
   // efficiency.
-  void Finalize();
+  ONNX_API void Finalize();
 
   // Build function with information stored in opschema
   void BuildFunction(FunctionProto& function_body) const;
@@ -974,7 +974,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       last_release_version_map_.at(domain) = last_release_version;
     }
 
-    static DomainToVersionRange& Instance();
+    ONNX_API static DomainToVersionRange& Instance();
 
    private:
     // Key: domain. Value: <lowest version, highest version> pair.
@@ -1006,7 +1006,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         ONNX_HANDLE_EXCEPTION([&]() { std::cerr << "Schema error: " << e.what() << '\n'; });
       }
     }
-    static void
+    ONNX_API static void
     OpSchemaRegisterImpl(OpSchema&& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       op_schema.Finalize();
       auto& m = GetMapWithoutEnsuringRegistration();
@@ -1047,7 +1047,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         }
       }
 
-      CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
+      ONNX_API CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
       schema_ver_map.insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
     }
 
@@ -1065,7 +1065,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       return -1;
     }
 
-    static void CheckDomainAndVersionToRegister(
+    ONNX_API static void CheckDomainAndVersionToRegister(
         const OpSchema& op_schema,
         const std::string& op_name,
         const std::string& op_domain) {
@@ -1198,7 +1198,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    * We wrap it inside a function to avoid the static initialization order
    * fiasco.
    */
-  static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
+  ONNX_API static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
   static OpName_Domain_Version_Schema_Map& map();
   static int loaded_schema_version;
 

@@ -885,6 +885,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       const override;
 };
 
-ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
+ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
 } // namespace version_conversion
 } // namespace ONNX_NAMESPACE

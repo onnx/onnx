@@ -11,6 +11,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
 namespace Common {
@@ -55,13 +56,13 @@ class Status {
   Status& operator=(Status&&) = default;
   ~Status() = default;
 
-  bool IsOK() const noexcept;
+  ONNX_API IsOK() const noexcept;
 
   StatusCode Code() const noexcept;
 
   StatusCategory Category() const noexcept;
 
-  const std::string& ErrorMessage() const;
+  ONNX_API std::string& ErrorMessage() const;
 
   std::string ToString() const;
 

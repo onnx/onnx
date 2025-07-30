@@ -1592,18 +1592,18 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   return out;
 }
 
-OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
+ONNX_API OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
   static DomainToVersionRange domain_to_version_range;
   return domain_to_version_range;
 };
 
 // Private method used by OpSchemaRegisterOnce and OpSchemaRegistry::map()
-OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {
+ONNX_API OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {
   static OpName_Domain_Version_Schema_Map map;
   return map;
 }
 
-OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
+ONNX_API OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
   auto& map = GetMapWithoutEnsuringRegistration();
 
   // The following class is used to register operators the

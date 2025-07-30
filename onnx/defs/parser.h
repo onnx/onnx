@@ -439,7 +439,7 @@ class OnnxParser : public ParserBase {
 
   Status Parse(FunctionProto& fn);
 
-  Status Parse(ModelProto& model);
+  ONNX_API Status Parse(ModelProto& model);
 
   template <typename T>
   static Status Parse(T& parsedData, const char* input) {
