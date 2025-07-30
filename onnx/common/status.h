@@ -56,13 +56,13 @@ class Status {
   Status& operator=(Status&&) = default;
   ~Status() = default;
 
-  ONNX_API IsOK() const noexcept;
+  ONNX_API bool IsOK() const noexcept;
 
   StatusCode Code() const noexcept;
 
   StatusCategory Category() const noexcept;
 
-  ONNX_API std::string& ErrorMessage() const;
+  ONNX_API const std::string& ErrorMessage() const;
 
   std::string ToString() const;
 

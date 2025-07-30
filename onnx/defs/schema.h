@@ -1047,7 +1047,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         }
       }
 
-      ONNX_API CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
+      CheckDomainAndVersionToRegister(op_schema, op_name, op_domain);
       schema_ver_map.insert(std::pair<int, OpSchema&&>(ver, std::move(op_schema)));
     }
 
