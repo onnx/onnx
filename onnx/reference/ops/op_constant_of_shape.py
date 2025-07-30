@@ -15,7 +15,7 @@ class ConstantOfShape(OpRun):
         else:
             if self.value.size != 1:
                 raise ValueError(
-                    f"Operator ConstantOfShape ({self.onnx_node.name}) expects a single element tensor as value, but the size of 'value' is {len(self.value)}."
+                    f"Operator ConstantOfShape ({self.onnx_node.name!r}) expects a single element tensor as value, but the size of 'value' is {len(self.value)}."
                 )
             value = self.value.flat[0]
 

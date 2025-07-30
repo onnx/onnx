@@ -40,7 +40,7 @@ class If(OpRun):
     ):
         if cond.size != 1:
             raise ValueError(
-                f"Operator If ({self.onnx_node.name}) expects a single element as condition, but the size of 'cond' is {len(cond)}."
+                f"Operator If ({self.onnx_node.name!r}) expects a single element as condition, but the size of 'cond' is {len(cond)}."
             )
         cond_ = cond.item()
         if cond_:
