@@ -170,6 +170,8 @@ class TestNumpyHelper(unittest.TestCase):
             ("UINT4", onnx.TensorProto.UINT4),
             ("INT4", onnx.TensorProto.INT4),
             ("FLOAT4E2M1", onnx.TensorProto.FLOAT4E2M1),
+            ("UINT2", onnx.TensorProto.UINT2),
+            ("INT2", onnx.TensorProto.INT2),
         ]
     )
     def test_to_array_from_array(self, _: str, data_type: onnx.TensorProto.DataType):
