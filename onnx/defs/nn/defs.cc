@@ -3444,8 +3444,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Attention mask. "
             "Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
             "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
-            "The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity, "
-            "but it still needs to be at least as long as the maximum value of `nonpad_kv_seqlen` if provided. "
+            "The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. "
             "Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, "
             "or a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
@@ -3807,12 +3806,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               builder.Add("KVSeqLen = Shape <start = -2, end = -1> (K)");
             }
             builder
-                .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)")  // [batch_size, 1]
-                .Add("Range = Range(Zero1D, KVSeqLen, One1D)")  // [KVSeqLen,]
-                .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)")  // [batch_size, KVSeqLen]
-                .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)")  // [batch_size, KVSeqLen]
-                .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)")  // [batch_size, 1, KVSeqLen]
-                .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)")  // [batch_size, 1, 1, KVSeqLen]
+                .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
+                .Add("Range = Range(Zero1D, KVSeqLen, One1D)") // [KVSeqLen,]
+                .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
+                .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
+                .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
+                .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
                 .Add("AttnBiasCausalPad = Add(AttnBiasCausal, PaddingMask4D)");
           } else {
             builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausal)");
