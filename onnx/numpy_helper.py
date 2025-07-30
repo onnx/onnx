@@ -856,8 +856,8 @@ def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
     value of that dtype.
     """
     if np.issubdtype(dtype, np.integer) or dtype in (
-        ml_dtypes.int4,
         ml_dtypes.uint4,
+        ml_dtypes.int4,
         ml_dtypes.uint2,
         ml_dtypes.int2,
     ):

@@ -130,7 +130,7 @@ class CastLike(Base):
                 input_shape = (5, 5)
             elif from_type in ("UINT2", "INT2") or to_type in ("UINT2", "INT2"):
                 np_fp32 = np.arange(-3, 4).astype(np.float32)
-                input_shape = (5, 5)
+                input_shape = (7, 1)
             elif from_type == "FLOAT4E2M1" or to_type == "FLOAT4E2M1":
                 np_fp32 = np.array(
                     [
@@ -189,6 +189,12 @@ class CastLike(Base):
                 input = make_tensor(
                     "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
                 )
+            elif from_type in TWO_BIT_TYPES:
+                np_from = np_fp32.astype(from_np_dtype)
+                packed = onnx.numpy_helper._pack_2bitx4(np_from)
+                input = make_tensor(
+                    "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
+                )
             else:
                 np_from = np_fp32.astype(from_np_dtype)
                 input = make_tensor(
@@ -205,6 +211,11 @@ class CastLike(Base):
                 )
             elif to_type in FOUR_BIT_TYPES:
                 packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
+                output = make_tensor(
+                    "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
+                )
+            elif to_type in TWO_BIT_TYPES:
+                packed = onnx.numpy_helper._pack_2bitx4(np_from.astype(to_np_dtype))
                 output = make_tensor(
                     "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
                 )

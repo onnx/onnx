@@ -132,7 +132,7 @@ class Cast(Base):
                 input_shape = (5, 5)
             elif from_type in ("UINT2", "INT2") or to_type in ("UINT2", "INT2"):
                 np_fp32 = np.arange(-3, 4).astype(np.float32)
-                input_shape = (5, 5)
+                input_shape = (7, 1)
             elif from_type == "FLOAT4E2M1" or to_type == "FLOAT4E2M1":
                 np_fp32 = np.array(
                     [

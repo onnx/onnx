@@ -3,8 +3,7 @@ Copyright (c) ONNX Project Contributors
 
 SPDX-License-Identifier: Apache-2.0
 -->
-(onnx-detail-int2) = 
-
+(onnx-detail-int2)= 
 
 # 2 bit integer types
 
@@ -26,7 +25,7 @@ All 2-bit types are stored as 4×2-bit values in a single byte. The elements are
 
 Packing:
 ```
-pack(x0, x1, x2, x3): (x3 << 6) | (x2 << 4) | (x1 << 2) | (x0 & 0x03)
+pack(x0, x1, x2, x3): (x0 & 0x03) | (x1 << 2) | (x2 << 4) | (x3 << 6)
 ```
 
 Unpacking:
