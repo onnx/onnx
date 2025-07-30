@@ -13,6 +13,10 @@ class ConstantOfShape(OpRun):
         if self.value is None:
             value = np.array(0, dtype=np.float32)
         else:
+            if self.value.size != 1:
+                raise ValueError(
+                    f"Operator ConstantOfShape ({self.onnx_node.name}) expects a single element tensor as value, but the size of 'value' is {len(self.value)}."
+                )
             value = self.value.flat[0]
 
         try:
