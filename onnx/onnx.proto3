@@ -86,7 +86,7 @@ enum Version {
   IR_VERSION_2019_9_19 = 0x0000000000000006;
 
   // IR VERSION 7 published on May 8, 2020
-  // - Add support to allow function body graph to rely on multiple external opreator sets.
+  // - Add support to allow function body graph to rely on multiple external operator sets.
   // - Add a list to promote inference graph's initializers to global and
   //   mutable variables. Global variables are visible in all graphs of the
   //   stored models.
@@ -109,12 +109,16 @@ enum Version {
   IR_VERSION_2023_5_5 = 0x0000000000000009;
 
   // IR VERSION 10 published on March 25, 2024
-  // Added UINT4, INT4.
+  // Added UINT4, INT4, overload field for functions and metadata_props on multiple proto definitions.
   IR_VERSION_2024_3_25 = 0x000000000000000A;
 
-  // IR VERSION 11 published on TBD
+  // IR VERSION 11 published on May 12, 2025
   // Added FLOAT4E2M1, multi-device protobuf classes.
-  IR_VERSION = 0x000000000000000B;
+  IR_VERSION_2025_05_12 = 0x000000000000000B;
+
+  // IR VERSION 12 published on TBD
+  // Added FLOAT8E8M0.
+  IR_VERSION = 0x000000000000000C;
 }
 
 // Attributes
@@ -495,7 +499,7 @@ message ModelProto {
   //
   // The (domain, name, overload) tuple must be unique across the function protos in this list.
   // In case of any conflicts the behavior (whether the model local functions are given higher priority,
-  // or standard operator sets are given higher priotity or this is treated as error) is defined by
+  // or standard operator sets are given higher priority or this is treated as error) is defined by
   // the runtimes.
   //
   // The operator sets imported by FunctionProto should be compatible with the ones
@@ -640,6 +644,10 @@ message TensorProto {
     // 4-bit floating point data types
     FLOAT4E2M1 = 23;
 
+    // E8M0 type used as the scale for microscaling (MX) formats:
+    // https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
+    FLOAT8E8M0 = 24;
+
     // Future extensions go here.
   }
 
@@ -685,7 +693,7 @@ message TensorProto {
   // - For 4-bit data types, each `int32_data` stores two elements.
   //
   // When this field is present, the data_type field MUST be
-  // INT32, INT16, INT8, INT4, UINT16, UINT8, UINT4, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ, FLOAT4E2M1
+  // INT32, INT16, INT8, INT4, UINT16, UINT8, UINT4, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ, FLOAT8E8M0, FLOAT4E2M1
   repeated int32 int32_data = 5 [packed = true];
 
   // For strings.

@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: ignore
+def scatter_elements(data, indices, updates, axis=0, reduction=None):
     """Scatter elements.
 
     ::
@@ -109,6 +109,6 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):  # type: i
 
 
 class ScatterElements(OpRun):
-    def _run(self, data, indices, updates, axis=None, reduction=None):  # type: ignore
+    def _run(self, data, indices, updates, axis=None, reduction=None):
         res = scatter_elements(data, indices, updates, axis=axis, reduction=reduction)
         return (res,)

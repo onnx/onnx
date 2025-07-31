@@ -7,7 +7,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Identity(OpRun):
-    def _run(self, a):  # type: ignore
+    def _run(self, a):
         if a is None:
             return (None,)
         return (a.copy(),)

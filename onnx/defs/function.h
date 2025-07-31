@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -65,12 +66,12 @@ class FunctionBodyHelper {
   To build a node with attribute:
     {{"Y"}, "Concat", {"X1", "X2", "X3"}, {{"axis", 1}}}
       represents Y = Concat(X1,X2,X3) with axis = 1
-    The attribute type are infered from the attribute value's c++ type
+    The attribute type are inferred from the attribute value's c++ type
     Supported value types are
       int64_t -> int, vector<int64_t> -> ints
       float -> float, vector<float> -> floats
       string -> string, vector<string> ->strings
-    For refering an attribute from parent, use:
+    For referring an attribute from parent, use:
       {MakeRefAttribute("axes", AttributeProto::INTS)}}
 
   To build a node which belongs to a domain other than onnx standard domain:
@@ -141,6 +142,38 @@ class FunctionBuilder {
     return Add(node_txt, MakeAttribute(attr_name, attr_value));
   }
 
+  template <typename T>
+  FunctionBuilder& AddAttributeToNode(const std::string& attr_name, const T& attr_value) {
+    auto& nodes = *funProto.mutable_node();
+    int nodes_size = nodes.size();
+    if (nodes_size != 0) {
+      auto& node = *funProto.mutable_node(nodes_size - 1);
+      *node.add_attribute() = MakeAttribute(attr_name, attr_value);
+    } else {
+      ONNX_THROW_EX(std::logic_error("Error adding attribute to node of a graph with no nodes"));
+    }
+    return *this;
+  }
+
+  template <typename T, typename... Args>
+  FunctionBuilder& AddAttributes(const std::string& attr_name, const T& attr_value, Args... args) {
+    AddAttributeToNode(attr_name, attr_value);
+    if constexpr (sizeof...(args) > 0) {
+      AddAttributes(args...);
+    }
+    return *this;
+  }
+
+  // Adds variable number of attributes to a node
+  template <typename... Args>
+  FunctionBuilder& Add(const char* node_txt, Args... args) {
+    Add(node_txt);
+    if constexpr (sizeof...(args) % 2 == 0) {
+      return AddAttributes(args...);
+    }
+    return *this;
+  }
+
   FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
     std::string constant_op(name);
     constant_op += " = Constant()";
@@ -182,6 +215,30 @@ class FunctionBuilder {
     opset->set_version(version);
     return *this;
   }
+
+  /**
+   * @brief Adds an inlined call to a graph as a sequence of nodes in the function.
+   *
+   * This method effectively inlines the logic from the given graph into the function
+   * being constructed. It:
+   * - Adds a Constant node for every initializer in the graph
+   * - Adds a copy of every node in the graph
+   * - Renames formal input parameters to match actual inputs
+   * - Renames formal output parameters to match actual outputs
+   * - Renames all other intermediate values with a unique prefix
+   * - Leaves references to undefined names (outer scope variables) unchanged
+   *
+   * @param outputs List of output variable names for the inlined call
+   * @param graph The graph to inline
+   * @param inputs List of input variable names for the inlined call
+   * @param prefix Prefix to add to intermediate variable names for uniqueness
+   * @return Reference to this FunctionBuilder for method chaining
+   */
+  FunctionBuilder& AddInlinedCall(
+      std::initializer_list<std::string_view> outputs,
+      const GraphProto& graph,
+      std::initializer_list<std::string_view> inputs,
+      std::string_view prefix);
 
  private:
   FunctionProto& funProto;

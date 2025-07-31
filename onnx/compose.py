@@ -119,7 +119,7 @@ def merge_graphs(
         prefix1 (string): Optional prefix to be added to all names in g1
         prefix2 (string): Optional prefix to be added to all names in g2
         name (string): Optional name for the combined graph
-                       By default, the name is g1.name and g2.name concatenated with an undescore delimiter
+                       By default, the name is g1.name and g2.name concatenated with an underscore delimiter
         doc_string (string): Optional docstring for the combined graph
                              If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
 
@@ -321,7 +321,7 @@ def merge_models(
         prefix1 (string): Optional prefix to be added to all names in m1
         prefix2 (string): Optional prefix to be added to all names in m2
         name (string): Optional name for the combined graph
-                       By default, the name is g1.name and g2.name concatenated with an undescore delimiter
+                       By default, the name is g1.name and g2.name concatenated with an underscore delimiter
         doc_string (string): Optional docstring for the combined graph
                              If not provided, a default docstring with the concatenation of g1 and g2 docstrings is used
         producer_name (string): Optional producer name for the combined model. Default: 'onnx.compose'
@@ -477,12 +477,16 @@ def add_prefix_graph(
 
     if name_map is None:
         name_map = {}
+
     if rename_edges:
+        # See https://github.com/onnx/onnx/pull/6869#issuecomment-2852719536.
+        # Consider only intermediate nodes, that are not connected to graph outputs.
+        # Rename graph inputs or outputs separately based on rename_inputs/rename_outputs flags.
+        graph_output_names = {o.name for o in g.output}
         for n in g.node:
-            for e in n.input:
-                name_map[e] = _prefixed(prefix, e)
             for e in n.output:
-                name_map[e] = _prefixed(prefix, e)
+                if e not in graph_output_names:
+                    name_map[e] = _prefixed(prefix, e)
 
     if rename_inputs:
         for entry in g.input:

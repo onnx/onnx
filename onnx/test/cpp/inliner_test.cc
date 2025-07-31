@@ -9,6 +9,7 @@
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
+#include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
@@ -18,7 +19,11 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-static void InlineFunctions(ModelProto& model, const char* input, const inliner::FunctionIdSet* to_inline = nullptr) {
+static void InlineFunctions(
+    ModelProto& model,
+    const char* input,
+    const inliner::FunctionIdSet* to_inline = nullptr,
+    const ISchemaRegistry* schema_registry = nullptr) {
   OnnxParser parser(input);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -28,7 +33,9 @@ static void InlineFunctions(ModelProto& model, const char* input, const inliner:
   shape_inference::InferShapes(model);
 
   // std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
-  if (to_inline != nullptr)
+  if (schema_registry != nullptr)
+    inliner::InlineSelectedFunctions(model, *to_inline, schema_registry);
+  else if (to_inline != nullptr)
     inliner::InlineSelectedFunctions(model, *to_inline);
   else
     inliner::InlineLocalFunctions(model, true);
@@ -191,7 +198,7 @@ foo (x) => (y)
 
   ModelProto model;
   InlineFunctions(model, code);
-  // Check that valueinfo is propagated fron function to main graph.
+  // Check that valueinfo is propagated from function to main graph.
   auto& graph = model.graph();
   auto& temp_new_name = graph.node(0).output(0);
   auto& valueinfos = graph.value_info();
@@ -370,6 +377,128 @@ bar (x) => (y) {
   ASSERT_EQ(node2.op_type(), "ReduceLogSum");
   ASSERT_EQ(node2.input_size(), 2);
   ASSERT_EQ(node2.attribute_size(), 0);
+}
+
+TEST(SchemaFunctionInliner, BasicTest) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: ["" : 18]>
+agraph (float[N, 128] X) => (float[N, 128] Y)
+{
+  Y = Softmax (X)
+}
+)ONNX";
+
+  ModelProto model;
+  inliner::FunctionIdVector to_inline = {{"", "Softmax"}};
+  auto to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline));
+  InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
+  auto num_nodes = model.graph().node_size();
+  ASSERT_GT(num_nodes, 1);
+}
+
+static bool ContainsOp(const ModelProto& model, const char* op_type) {
+  for (const auto& node : model.graph().node()) {
+    if (node.op_type() == op_type) {
+      return true;
+    }
+  }
+  return false;
+}
+
+TEST(SchemaFunctionInliner, NestedTest) {
+  const char* code = R"ONNX(
+<ir_version: 8, opset_import: ["" : 18]>
+agraph (float[N, C] X, int32[N] expected) => (float Y)
+{
+  Y, log_prob = SoftmaxCrossEntropyLoss (X, expected)
+}
+)ONNX";
+
+  ModelProto model;
+  inliner::FunctionIdVector to_inline = {{"", "SoftmaxCrossEntropyLoss"}};
+  auto to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline));
+  InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
+  auto num_nodes = model.graph().node_size();
+  ASSERT_GT(num_nodes, 1);
+  // Nested call to LogSoftmax should not be inlined.
+  ASSERT_TRUE(ContainsOp(model, "LogSoftmax"));
+
+  inliner::FunctionIdVector to_inline2 = {{"", "SoftmaxCrossEntropyLoss"}, {"", "LogSoftmax"}};
+  to_inline_set = inliner::FunctionIdSet::Create(std::move(to_inline2));
+  InlineFunctions(model, code, to_inline_set.get(), OpSchemaRegistry::Instance());
+  num_nodes = model.graph().node_size();
+  ASSERT_GT(num_nodes, 1);
+  // Nested call to LogSoftmax should be inlined.
+  ASSERT_FALSE(ContainsOp(model, "LogSoftmax"));
+}
+
+TEST(FunctionBuilder, AddInlinedCallBasic) {
+  // Test the AddInlinedCall functionality
+  GraphProto graph;
+
+  // Create a simple graph using parser for better readability
+  const char* graph_text = R"ONNX(
+test_graph (float x) => (float y)
+<float const_val = {2.0}>
+{
+    y = Add(x, const_val)
+}
+)ONNX";
+
+  auto status = OnnxParser::Parse(graph, graph_text);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  // Create a function and use AddInlinedCall
+  FunctionProto function;
+  FunctionBuilder builder(function);
+
+  builder.AddInlinedCall({"result"}, graph, {"input_x"}, "test");
+
+  // Verify the function has the expected structure
+  ASSERT_EQ(function.node_size(), 2); // One Constant node + one Add node
+
+  // Check the first node is a Constant
+  ASSERT_EQ(function.node(0).op_type(), "Constant");
+  ASSERT_EQ(function.node(0).output_size(), 1);
+  ASSERT_TRUE(function.node(0).output(0).find("test") != std::string::npos);
+
+  // Check the second node is an Add
+  ASSERT_EQ(function.node(1).op_type(), "Add");
+  ASSERT_EQ(function.node(1).input_size(), 2);
+  ASSERT_EQ(function.node(1).output_size(), 1);
+  ASSERT_EQ(function.node(1).input(0), "input_x"); // Should be renamed to actual input
+  ASSERT_EQ(function.node(1).output(0), "result"); // Should be renamed to actual output
+}
+
+TEST(Renamer, BasicFunctionality) {
+  // Test the Renamer class functionality
+  GraphProto graph;
+
+  // Add input to graph
+  auto* input = graph.add_input();
+  input->set_name("input");
+
+  // Create a Renamer instance
+  inliner::Renamer renamer("test", graph);
+
+  // Test binding names
+  renamer.BindName("formal_input", "actual_input");
+
+  // Test creating unique names and binding
+  std::string unique_name = renamer.BindToUniqueName("temp");
+  ASSERT_TRUE(unique_name.find("test") != std::string::npos);
+
+  // Test renaming a node
+  NodeProto node;
+  node.set_op_type("Add");
+  node.add_input("formal_input");
+  node.add_output("temp_output");
+
+  renamer.RenameNode(node);
+
+  // Verify renaming worked correctly
+  ASSERT_EQ(node.input(0), "actual_input"); // Should be bound to actual name
+  ASSERT_TRUE(node.output(0).find("test") != std::string::npos); // Should have prefix
 }
 
 } // namespace Test

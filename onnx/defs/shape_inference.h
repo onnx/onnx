@@ -522,9 +522,7 @@ inline void propagateElemTypeFromAttributeToOutput(
 }
 
 inline TensorShapeProto* getTensorMutableShape(TypeProto::ValueCase value_case, TypeProto& type) {
-  if (value_case == TypeProto::kTensorType) {
-    return type.mutable_tensor_type()->mutable_shape();
-  } else if (value_case == TypeProto::kSparseTensorType) {
+  if (value_case == TypeProto::kTensorType || value_case == TypeProto::kSparseTensorType) {
     return type.mutable_tensor_type()->mutable_shape();
   }
   return nullptr;
@@ -722,9 +720,8 @@ inline void mergeInDimensionInfo(
     } else {
       target_dim.set_dim_value(source_value);
     }
-  } else if (target_dim.has_dim_value()) {
+  } else if (target_dim.has_dim_value() || target_dim.has_dim_param()) {
     // if target has a value we preserve it so do nothing
-  } else if (target_dim.has_dim_param()) {
     // prefer target param over source
   } else if (source_dim.has_dim_param()) {
     target_dim.set_dim_param(source_dim.dim_param());
@@ -839,10 +836,9 @@ inline void unifyDim(const Dim& source_dim, Dim& target_dim) {
     } else {
       target_dim.set_dim_value(source_value);
     }
-  } else if (target_dim.has_dim_value()) {
+  } else if (target_dim.has_dim_value() || target_dim.has_dim_param()) {
     // if target has a value we preserve it.
     // we cannot set source dim value.
-  } else if (target_dim.has_dim_param()) {
     // prefer target param over source
     // we cannot currently unify the dim_params
   } else if (source_dim.has_dim_param()) {
@@ -934,5 +930,18 @@ void checkDuplicateAxes(Axes& axes, int rank) {
     tmp[actual_axis] = true;
   }
 }
+
+// Shape inference functions for various ONNX operators.
+// Users can use these functions to implement shape inference for custom operators
+// by calling them in their own inference functions.
+ONNX_API void RNNShapeInference(InferenceContext& ctx);
+ONNX_API void convPoolShapeInference(
+    InferenceContext& ctx,
+    bool use_dilation,
+    bool require_kernel_shape,
+    int input1Idx,
+    int input2Idx);
+ONNX_API void convTransposeShapeInference(InferenceContext& ctx);
+ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx);
 
 } // namespace ONNX_NAMESPACE

@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunBinary
 
 
 class BitwiseAnd(OpRunBinary):
-    def _run(self, x, y):  # type: ignore
+    def _run(self, x, y):
         return (np.bitwise_and(x, y),)

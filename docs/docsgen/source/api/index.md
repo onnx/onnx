@@ -2,6 +2,10 @@
 
 # API Reference
 
+```{tip}
+The [ir-py project](https://github.com/onnx/ir-py) provides alternative Pythonic APIs for creating and manipulating ONNX models without interaction with Protobuf.
+```
+
 ## Versioning
 
 The following example shows how to retrieve onnx version,
@@ -50,7 +54,6 @@ verify a model with the following helpers.
 backend
 checker
 compose
-custom_element_types
 defs
 external_data_helper
 helper

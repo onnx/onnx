@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import contextlib
+import os
 import struct
+import tempfile
 import unittest
 
 import numpy as np
@@ -2183,6 +2185,79 @@ class TestVersionConverter(unittest.TestCase):
         )
         with context_manager:
             test(y_shape, scale_shape, axis, block_size)
+
+    def test_external_data_version_conversion(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a model with external data
+            shape = (2, 3)
+            random_data = np.random.rand(*shape).astype(np.float32)
+
+            initializer_tensor = onnx.helper.make_tensor(
+                name="initializer_tensor",
+                data_type=onnx.TensorProto.FLOAT,
+                dims=list(shape),
+                vals=random_data.tobytes(),
+                raw=True,
+            )
+            initializer_scalar = onnx.helper.make_tensor(
+                name="initializer_scalar",
+                data_type=onnx.TensorProto.FLOAT,
+                dims=[],
+                vals=[1.0],
+            )
+
+            add_node = onnx.helper.make_node(
+                "Add",
+                inputs=["initializer_tensor", "initializer_scalar"],
+                outputs=["sum_output"],
+            )
+
+            graph_def = onnx.helper.make_graph(
+                name="SimpleAddition",
+                nodes=[add_node],
+                inputs=[],
+                outputs=[
+                    onnx.helper.make_tensor_value_info(
+                        "sum_output", onnx.TensorProto.FLOAT, list(shape)
+                    )
+                ],
+                initializer=[initializer_tensor, initializer_scalar],
+            )
+
+            # Save model to file with external data
+            model_filename = os.path.join(temp_dir, "test_simple_add.onnx")
+            data_filename = "test_simple_add.onnx.data"  # Use relative path
+            opset_imports = [onnx.helper.make_opsetid("", 20)]
+            model_def = onnx.helper.make_model(graph_def, opset_imports=opset_imports)
+            model_def.ir_version = 10
+            onnx.save_model(
+                model_def,
+                model_filename,
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=data_filename,
+                size_threshold=0,
+                convert_attribute=False,
+            )
+
+            # Load the model and verify external data
+            converted_model = onnx.version_converter.convert_version(
+                onnx.load(model_filename, load_external_data=False), 21
+            )
+            self.assertEqual(len(converted_model.graph.initializer), 2)
+
+            # Verify the large tensor has external data
+            tensors = {init.name: init for init in converted_model.graph.initializer}
+            self.assertIn("initializer_tensor", tensors)
+            large_tensor = tensors["initializer_tensor"]
+            self.assertEqual(large_tensor.data_location, TensorProto.EXTERNAL)
+            self.assertEqual(len(large_tensor.external_data), 3)
+
+            # Convert external_data to dictionary for order-independent checking
+            external_data_dict = {ed.key: ed.value for ed in large_tensor.external_data}
+            self.assertEqual(external_data_dict["location"], data_filename)
+            self.assertEqual(external_data_dict["offset"], "0")
+            self.assertEqual(external_data_dict["length"], "24")
 
 
 if __name__ == "__main__":

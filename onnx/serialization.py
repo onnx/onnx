@@ -57,7 +57,7 @@ class _Registry:
     def register(self, serializer: ProtoSerializer) -> None:
         self._serializers[serializer.supported_format] = serializer
         self._extension_to_format.update(
-            {ext: serializer.supported_format for ext in serializer.file_extensions}
+            dict.fromkeys(serializer.file_extensions, serializer.supported_format)
         )
 
     def get(self, fmt: str) -> ProtoSerializer:
@@ -118,7 +118,7 @@ class _ProtobufSerializer(ProtoSerializer):
             raise TypeError(
                 f"Parameter 'serialized' must be bytes, but got type: {type(serialized)}"
             )
-        decoded = typing.cast(Optional[int], proto.ParseFromString(serialized))
+        decoded = typing.cast("Optional[int]", proto.ParseFromString(serialized))
         if decoded is not None and decoded != len(serialized):
             raise google.protobuf.message.DecodeError(
                 f"Protobuf decoding consumed too few bytes: {decoded} out of {len(serialized)}"
@@ -130,7 +130,7 @@ class _TextProtoSerializer(ProtoSerializer):
     """Serialize and deserialize text proto."""
 
     supported_format = "textproto"
-    file_extensions = frozenset({".textproto", ".prototxt", ".pbtxt"})
+    file_extensions = frozenset({".txtpb", ".textproto", ".prototxt", ".pbtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         textproto = google.protobuf.text_format.MessageToString(proto)

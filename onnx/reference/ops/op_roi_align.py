@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class PreCalc:
-    def __init__(self, pos1=0, pos2=0, pos3=0, pos4=0, w1=0, w2=0, w3=0, w4=0):  # type: ignore
+    def __init__(self, pos1=0, pos2=0, pos3=0, pos4=0, w1=0, w2=0, w3=0, w4=0):
         self.pos1 = pos1
         self.pos2 = pos2
         self.pos3 = pos3
@@ -25,7 +25,7 @@ class PreCalc:
 
 class RoiAlign(OpRun):
     @staticmethod
-    def pre_calc_for_bilinear_interpolate(  # type: ignore
+    def pre_calc_for_bilinear_interpolate(
         height: int,
         width: int,
         pooled_height: int,
@@ -99,7 +99,7 @@ class RoiAlign(OpRun):
                         w3 = ly * hx
                         w4 = ly * lx
 
-                        # save weights and indeces
+                        # save weights and indices
                         pc = PreCalc()
                         pc.pos1 = y_low * width + x_low
                         pc.pos2 = y_low * width + x_high
@@ -114,7 +114,7 @@ class RoiAlign(OpRun):
                         pre_calc_index += 1
 
     @staticmethod
-    def roi_align_forward(  # type: ignore
+    def roi_align_forward(
         output_shape: tuple[int, int, int, int],
         bottom_data,
         spatial_scale,
@@ -133,7 +133,7 @@ class RoiAlign(OpRun):
         pooled_height = output_shape[2]
         pooled_width = output_shape[3]
 
-        # 100 is a random chosed value, need be tuned
+        # 100 is a random chosen value, need be tuned
         for n in range(n_rois):
             index_n = n * channels * pooled_width * pooled_height
 
@@ -251,7 +251,7 @@ class RoiAlign(OpRun):
 
                         top_data[index] = output_val
 
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         rois,
@@ -265,12 +265,12 @@ class RoiAlign(OpRun):
     ):
         coordinate_transformation_mode = (
             coordinate_transformation_mode or self.coordinate_transformation_mode
-        )  # type: ignore
-        mode = mode or self.mode  # type: ignore
-        output_height = output_height or self.output_height  # type: ignore
-        output_width = output_width or self.output_width  # type: ignore
-        sampling_ratio = sampling_ratio or self.sampling_ratio  # type: ignore
-        spatial_scale = spatial_scale or self.spatial_scale  # type: ignore
+        )
+        mode = mode or self.mode
+        output_height = output_height or self.output_height
+        output_width = output_width or self.output_width
+        sampling_ratio = sampling_ratio or self.sampling_ratio
+        spatial_scale = spatial_scale or self.spatial_scale
 
         num_channels = X.shape[1]
         num_rois = batch_indices.shape[0]
