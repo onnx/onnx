@@ -253,11 +253,11 @@ inline void setTensorElementType(int32_t elem_type, TypeProto::ValueCase value_c
   }
 }
 
-void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type);
+ONNX_API void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type);
 
-void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
+ONNX_API void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
 
-void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
+ONNX_API void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
 
 inline void propagateElemTypeFromDtypeToOutput(
     InferenceContext& ctx,
@@ -451,7 +451,7 @@ inline void propagateShapeFromInputToOutput(InferenceContext& ctx, size_t inputI
   propagateShape(input_type, output_type);
 }
 
-inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
+ONNX_API inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;
