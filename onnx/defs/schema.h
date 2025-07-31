@@ -574,7 +574,8 @@ class OpSchema final {
       int min_arity = 1,
       DifferentiationCategory differentiation_category = Unknown);
 
-  ONNX_API OpSchema& TypeConstraint(std::string type_str, std::vector<std::string> constraints, std::string description);
+  ONNX_API OpSchema& 
+  TypeConstraint(std::string type_str, std::vector<std::string> constraints, std::string description);
 
   // Non-STL wrapper to reduce binary size
   ONNX_API OpSchema&
@@ -743,7 +744,9 @@ class OpSchema final {
     return !opset_version_to_function_body_.empty();
   }
 
-  ONNX_API OpSchema& FunctionBody(const std::vector<NodeProto>& func_nodes, int opset_version = kUninitializedSinceVersion);
+  ONNX_API OpSchema& FunctionBody(
+      const std::vector<NodeProto>& func_nodes,
+      int opset_version = kUninitializedSinceVersion);
 
   ONNX_API OpSchema& FunctionBody(
       const std::vector<NodeProto>& func_nodes,
@@ -1199,7 +1202,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    * fiasco.
    */
   ONNX_API static OpName_Domain_Version_Schema_Map& GetMapWithoutEnsuringRegistration();
-  static OpName_Domain_Version_Schema_Map& map();
+  ONNX_API static OpName_Domain_Version_Schema_Map& map();
   static int loaded_schema_version;
 
  public:

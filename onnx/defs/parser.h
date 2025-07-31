@@ -417,27 +417,27 @@ class OnnxParser : public ParserBase {
  public:
   explicit OnnxParser(const char* cstr) : ParserBase(cstr) {}
 
-  Status Parse(TensorShapeProto& shape);
+  ONNX_API Status Parse(TensorShapeProto& shape);
 
-  Status Parse(TypeProto& typeProto);
+  ONNX_API Status Parse(TypeProto& typeProto);
 
-  Status Parse(StringStringList& stringStringList);
+  ONNX_API Status Parse(StringStringList& stringStringList);
 
-  Status Parse(TensorProto& tensorProto);
+  ONNX_API Status Parse(TensorProto& tensorProto);
 
-  Status Parse(AttributeProto& attr);
+  ONNX_API Status Parse(AttributeProto& attr);
 
-  Status Parse(AttributeProto& attr, std::string& name);
+  ONNX_API Status Parse(AttributeProto& attr, std::string& name);
 
-  Status Parse(AttrList& attrlist);
+  ONNX_API Status Parse(AttrList& attrlist);
 
-  Status Parse(NodeProto& node);
+  ONNX_API Status Parse(NodeProto& node);
 
-  Status Parse(NodeList& nodelist);
+  ONNX_API Status Parse(NodeList& nodelist);
 
-  Status Parse(GraphProto& graph);
+  ONNX_API Status Parse(GraphProto& graph);
 
-  Status Parse(FunctionProto& fn);
+  ONNX_API Status Parse(FunctionProto& fn);
 
   ONNX_API Status Parse(ModelProto& model);
 
