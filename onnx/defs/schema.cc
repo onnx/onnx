@@ -1603,7 +1603,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistr
   return map;
 }
 
-ONNX_API OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
+OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
   auto& map = GetMapWithoutEnsuringRegistration();
 
   // The following class is used to register operators the
