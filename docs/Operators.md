@@ -145,7 +145,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Slice">Slice</a>|<a href="Changelog.md#Slice-13">13</a>, <a href="Changelog.md#Slice-11">11</a>, <a href="Changelog.md#Slice-10">10</a>, <a href="Changelog.md#Slice-1">1</a>|
 |<a href="#SpaceToDepth">SpaceToDepth</a>|<a href="Changelog.md#SpaceToDepth-13">13</a>, <a href="Changelog.md#SpaceToDepth-1">1</a>|
 |<a href="#Split">Split</a>|<a href="Changelog.md#Split-18">18</a>, <a href="Changelog.md#Split-13">13</a>, <a href="Changelog.md#Split-11">11</a>, <a href="Changelog.md#Split-2">2</a>, <a href="Changelog.md#Split-1">1</a>|
-|<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-11">11</a>|
+|<a href="#SplitToSequence">SplitToSequence</a>|<a href="Changelog.md#SplitToSequence-24">24</a>, <a href="Changelog.md#SplitToSequence-11">11</a>|
 |<a href="#Sqrt">Sqrt</a>|<a href="Changelog.md#Sqrt-13">13</a>, <a href="Changelog.md#Sqrt-6">6</a>, <a href="Changelog.md#Sqrt-1">1</a>|
 |<a href="#Squeeze">Squeeze</a>|<a href="Changelog.md#Squeeze-24">24</a>, <a href="Changelog.md#Squeeze-23">23</a>, <a href="Changelog.md#Squeeze-21">21</a>, <a href="Changelog.md#Squeeze-13">13</a>, <a href="Changelog.md#Squeeze-11">11</a>, <a href="Changelog.md#Squeeze-1">1</a>|
 |<a href="#StringConcat">StringConcat</a>|<a href="Changelog.md#StringConcat-20">20</a>|
@@ -155,9 +155,10 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Sum">Sum</a>|<a href="Changelog.md#Sum-13">13</a>, <a href="Changelog.md#Sum-8">8</a>, <a href="Changelog.md#Sum-6">6</a>, <a href="Changelog.md#Sum-1">1</a>|
 |<a href="#Tan">Tan</a>|<a href="Changelog.md#Tan-22">22</a>, <a href="Changelog.md#Tan-7">7</a>|
 |<a href="#Tanh">Tanh</a>|<a href="Changelog.md#Tanh-13">13</a>, <a href="Changelog.md#Tanh-6">6</a>, <a href="Changelog.md#Tanh-1">1</a>|
+|<a href="#TensorScatter">TensorScatter</a>|<a href="Changelog.md#TensorScatter-24">24</a>|
 |<a href="#TfIdfVectorizer">TfIdfVectorizer</a>|<a href="Changelog.md#TfIdfVectorizer-9">9</a>|
 |<a href="#Tile">Tile</a>|<a href="Changelog.md#Tile-13">13</a>, <a href="Changelog.md#Tile-6">6</a>, <a href="Changelog.md#Tile-1">1</a>|
-|<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
+|<a href="#TopK">TopK</a>|<a href="Changelog.md#TopK-24">24</a>, <a href="Changelog.md#TopK-11">11</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-1">1</a>|
 |<a href="#Transpose">Transpose</a>|<a href="Changelog.md#Transpose-24">24</a>, <a href="Changelog.md#Transpose-23">23</a>, <a href="Changelog.md#Transpose-21">21</a>, <a href="Changelog.md#Transpose-13">13</a>, <a href="Changelog.md#Transpose-1">1</a>|
 |<a href="#Trilu">Trilu</a>|<a href="Changelog.md#Trilu-14">14</a>|
 |<a href="#Unique">Unique</a>|<a href="Changelog.md#Unique-11">11</a>|
@@ -167,7 +168,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Xor">Xor</a>|<a href="Changelog.md#Xor-7">7</a>, <a href="Changelog.md#Xor-1">1</a>|
 |**Function**|**Since version**|**Function version**|
 |<a href="#AffineGrid">AffineGrid</a>|<a href="Changelog.md#AffineGrid-20">20</a>|20|
-|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-23">23</a>|23|
+|<a href="#Attention">Attention</a>|<a href="Changelog.md#Attention-24">24</a>, <a href="Changelog.md#Attention-23">23</a>|24|
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|24|
@@ -207,6 +208,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#SoftmaxCrossEntropyLoss">SoftmaxCrossEntropyLoss</a>|<a href="Changelog.md#SoftmaxCrossEntropyLoss-13">13</a>, <a href="Changelog.md#SoftmaxCrossEntropyLoss-12">12</a>|13|
 |<a href="#Softplus">Softplus</a>|<a href="Changelog.md#Softplus-22">22</a>, <a href="Changelog.md#Softplus-1">1</a>|18|
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-22">22</a>, <a href="Changelog.md#Softsign-1">1</a>|18|
+|<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
 
 ### ai.onnx.preview.training
@@ -1644,9 +1646,23 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
   2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
   3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
-  Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
-  1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
-  2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
+  1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+  2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+
+  With respect to KV cache update, this operator allows the following two use cases:
+
+  1) Cache update happens inside the Attention operator. In this case, the `K` and `V` inputs contain only the incoming
+  tokens for the current autoregressive step, and the four optional inputs/outputs past and present key and value are
+  all needed. The Attention op performs a Concat operation on the past and incoming key and value to form the present
+  key and value, respectively. Note that this only works correctly for the special case where the past key and value
+  do not contain padded tokens.
+  2) Cache update happens outside the Attention operator (for example, through the `TensorScatter` operator). In this
+  case, the `K` and `V` inputs correspond to the entire cache tensor, so the four optional inputs/outputs past and
+  present key and value should not be used. An additional input `nonpad_kv_seqlen` of shape (batch_size,) may be
+  provided to indicate the number of non-padding tokens in each sample of the batch to save unnecessary computation.
+  Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
+  as the maximum value of `nonpad_kv_seqlen`.
 
   Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
   The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
@@ -1675,7 +1691,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 #### Version
 
-This version of the operator has been available since version 23 of the default ONNX operator set.
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 
 #### Attributes
 
@@ -1696,7 +1714,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>The floating-point precision used in softmax computation. If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.</dd>
 </dl>
 
-#### Inputs (3 - 6)
+#### Inputs (3 - 7)
 
 <dl>
 <dt><tt>Q</tt> : T1</dt>
@@ -1706,11 +1724,13 @@ This version of the operator has been available since version 23 of the default 
 <dt><tt>V</tt> : T2</dt>
 <dd>Value tensor. 4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`</dd>
 <dt><tt>attn_mask</tt> (optional) : U</dt>
-<dd>Attention mask. Shape must be broadcastable to 4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length.` Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. Also supports a float mask of the same type as query, key, value that is added to the attention score.</dd>
+<dd>Attention mask. Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` where `total_sequence_length = past_sequence_length + kv_sequence_length.` The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, or a float mask of the same type as query, key, value that is added to the attention score.</dd>
 <dt><tt>past_key</tt> (optional) : T1</dt>
 <dd>past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`</dd>
 <dt><tt>past_value</tt> (optional) : T2</dt>
 <dd>past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`</dd>
+<dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
+<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (See the KV cache use cases in the operator description).</dd>
 </dl>
 
 #### Outputs (1 - 4)
@@ -2417,6 +2437,66 @@ expect(
 
 
 <details>
+<summary>attention_3d_transpose_verification</summary>
+
+```python
+"""Test case to verify correct 3D to 4D transpose behavior.
+
+This test verifies that 3D inputs are correctly reshaped and transposed
+according to the ONNX specification:
+[batch_size, seq_length, hidden_size] ->
+[batch_size, seq_length, num_heads, head_size] ->
+[batch_size, num_heads, seq_length, head_size]
+"""
+q_num_heads, kv_num_heads = 3, 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+# Test inputs that will clearly demonstrate the transpose behavior
+batch_size = 1
+q_seq_length = 2
+kv_seq_length = 2
+head_size = 4
+q_hidden_size = q_num_heads * head_size  # 3 * 4 = 12
+kv_hidden_size = kv_num_heads * head_size  # 3 * 4 = 12
+
+# Create structured inputs to verify correct transpose behavior
+# Q has a pattern where each position in hidden dimension has a specific value
+Q = np.zeros((batch_size, q_seq_length, q_hidden_size), dtype=np.float32)
+# Fill Q with pattern: head0=[1,1,1,1], head1=[2,2,2,2], head2=[3,3,3,3]
+for head in range(q_num_heads):
+    start_idx = head * head_size
+    end_idx = start_idx + head_size
+    Q[0, :, start_idx:end_idx] = float(head + 1)
+
+K = np.ones((batch_size, kv_seq_length, kv_hidden_size), dtype=np.float32) * 0.1
+V = np.ones((batch_size, kv_seq_length, kv_hidden_size), dtype=np.float32) * 0.1
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    q_num_heads=q_num_heads,
+    kv_num_heads=kv_num_heads,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_transpose_verification",
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_3d_with_past_and_present</summary>
 
 ```python
@@ -2640,6 +2720,41 @@ expect(
 
 
 <details>
+<summary>attention_4d_diff_heads_mask4d_padded_kv</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(np.float32)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_diff_heads_mask4d_padded_kv",
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_attn_3d_mask</summary>
 
 ```python
@@ -2821,7 +2936,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(4, 6).astype(np.bool)
+attn_mask = np.random.rand(4, 6).astype(bool)
 
 Y, _, _, _ = _compute_attention(
     Q,
@@ -2854,7 +2969,7 @@ node = onnx.helper.make_node(
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
-attn_mask = np.random.rand(2, 3, 4, 6).astype(np.bool)
+attn_mask = np.random.rand(2, 3, 4, 6).astype(bool)
 
 Y, _, _, _ = _compute_attention(
     Q,
@@ -3092,6 +3207,105 @@ expect(
 
 
 <details>
+<summary>attention_diff_head_sizes_with_past_and_present_mask3D</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(2, 1, 4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_diff_heads_with_past_and_present_mask3d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_diff_head_sizes_with_past_and_present_mask4D</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(2, 3, 4, 6 + past_sequence_length).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 10).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_diff_heads_with_past_and_present_mask4d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_fp16</summary>
+
+```python
+node = onnx.helper.make_node("Attention", inputs=["Q", "K", "V"], outputs=["Y"])
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float16)
+K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+
+Y, _, _, _ = _compute_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_4d_fp16",
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_gqa</summary>
 
 ```python
@@ -3264,6 +3478,44 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_gqa_with_past_and_present",
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_gqa_with_past_and_present_fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+)
+
+past_sequence_length = 12
+Q = np.random.rand(2, 9, 4, 8).astype(np.float16)
+K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+attn_mask = np.random.rand(4, 6 + past_sequence_length).astype(np.float16)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float16)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float16)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    past_key=past_key,
+    past_value=past_value,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_gqa_with_past_and_present_fp16",
 )
 ```
 
@@ -5810,7 +6062,7 @@ for from_type, to_type in test_cases:
         input_shape = (3, 4)
 
     if from_type in F8_TYPES:
-        np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
+        np_from = onnx.numpy_helper.saturate_cast(np_fp32, from_np_dtype)
         input = make_tensor(
             "input",
             from_dtype,
@@ -5835,7 +6087,7 @@ for from_type, to_type in test_cases:
             "output",
             to_dtype,
             input_shape,
-            vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
+            vals=onnx.numpy_helper.saturate_cast(np_from, to_np_dtype),
             raw=True,
         )
     elif to_type in FOUR_BIT_TYPES:
@@ -6225,7 +6477,7 @@ for from_type, to_type in test_cases:
         input_shape = (3, 4)
 
     if from_type in F8_TYPES:
-        np_from = onnx.numpy_helper.saturating_cast(np_fp32, from_np_dtype)
+        np_from = onnx.numpy_helper.saturate_cast(np_fp32, from_np_dtype)
         input = make_tensor(
             "input",
             from_dtype,
@@ -6250,7 +6502,7 @@ for from_type, to_type in test_cases:
             "output",
             to_dtype,
             input_shape,
-            vals=onnx.numpy_helper.saturating_cast(np_from, to_np_dtype),
+            vals=onnx.numpy_helper.saturate_cast(np_from, to_np_dtype),
             raw=True,
         )
     elif to_type in FOUR_BIT_TYPES:
@@ -10978,6 +11230,24 @@ expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_inner_prod")
 
 
 <details>
+<summary>einsum_scalar</summary>
+
+```python
+Eqn = "->"
+node = onnx.helper.make_node(
+    "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+)
+
+X = np.array(5.0)  # scalar input
+Z = einsum_reference_implementation(Eqn, (X,))
+
+expect(node, inputs=[X], outputs=[Z], name="test_einsum_scalar")
+```
+
+</details>
+
+
+<details>
 <summary>einsum_sum</summary>
 
 ```python
@@ -11037,14 +11307,14 @@ Other versions of this operator: <a href="Changelog.md#Elu-1">1</a>, <a href="Ch
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>1D output tensor</dd>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -24540,7 +24810,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24549,7 +24819,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL1-1">1</a>, <a hre
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -24799,7 +25069,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24808,7 +25078,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceL2-1">1</a>, <a hre
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25076,7 +25346,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -25085,7 +25355,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSum-1">1</a>, <a
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25244,7 +25514,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -25253,7 +25523,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceLogSumExp-1">1</a>,
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25509,7 +25779,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -25518,7 +25788,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMax-1">1</a>, <a hr
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -25816,7 +26086,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -25825,7 +26095,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMean-1">1</a>, <a h
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -26056,7 +26326,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -26065,7 +26335,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceMin-1">1</a>, <a hr
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -26366,7 +26636,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -26375,7 +26645,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceProd-1">1</a>, <a h
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -26623,7 +26893,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -26632,7 +26902,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSum-1">1</a>, <a hr
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -26952,7 +27222,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced,and the output tensor would be equivalent to input tensor.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -26961,7 +27231,7 @@ Other versions of this operator: <a href="Changelog.md#ReduceSumSquare-1">1</a>,
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, else act as an Identity op when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -32509,11 +32779,11 @@ expect(
   The end axis, if specified, is exclusive (and the returned value will not include the size of that axis).
   If the end axis is omitted, the axes upto the last one will be included.
   Negative axes indicate counting back from the last axis.
-  Note that axes will be clamped to the range [0, r-1], where r is the
+  Note that axes will be clamped to the range [0, r], where r is the
   rank of the input tensor if they are out-of-range (after adding r in the case of
   negative axis). Thus, specifying any end value > r is equivalent to specifying an end
   value of r, and specifying any start value < -r is equivalent to specifying a start
-  value of 0.
+  value of 0. If start > end, the result will be an empty shape.
 
   Examples:
 
@@ -32614,6 +32884,8 @@ test_shape("_start_1_end_2", x, start=1, end=2)
 test_shape("_clip_start", x, start=-10)
 
 test_shape("_clip_end", x, end=10)
+
+test_shape("_start_greater_than_end", x, start=2, end=1)
 ```
 
 </details>
@@ -34814,14 +35086,14 @@ Other versions of this operator: <a href="Changelog.md#Softplus-1">1</a>
 
 <dl>
 <dt><tt>X</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
-<dd>1D input tensor</dd>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -35515,7 +35787,9 @@ expect(
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#SplitToSequence-11">11</a>
 
 #### Attributes
 
@@ -35545,11 +35819,11 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input types to all tensor types.</dd>
 <dt><tt>I</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain split size to integral tensor.</dd>
-<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
+<dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain output types to all tensor types.</dd>
 </dl>
 
@@ -36504,6 +36778,72 @@ expect(
 </details>
 
 
+### <a name="Swish"></a><a name="swish">**Swish**</a>
+
+  Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
+  where $Swish(x) = x * sigmoid(alpha * x)$.
+
+#### Version
+
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Coefficient to multiply with input before sigmoid.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> (differentiable) : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (differentiable) : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(bfloat16), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>swish</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Swish",
+    inputs=["x"],
+    outputs=["y"],
+    alpha=1.0,  # pass alpha as attribute
+)
+
+x = np.array([3, 4, 5], dtype=np.float32)
+y = swish(x, alpha=1.0)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_swish",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
 ### <a name="Tan"></a><a name="tan">**Tan**</a>
 
   Calculates the tangent of the given input tensor, element-wise.
@@ -36611,6 +36951,256 @@ expect(node, inputs=[x], outputs=[y], name="test_tanh_example")
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.tanh(x)
 expect(node, inputs=[x], outputs=[y], name="test_tanh")
+```
+
+</details>
+
+
+### <a name="TensorScatter"></a><a name="tensorscatter">**TensorScatter**</a>
+
+  TensorScatter is a generic tensor update operation, motivated by the requirements for KV cache updates for Attention
+  ops commonly found in LLMs. It is a functional operation that models an in-place update to a KV cache buffer.
+
+  The past and present cache tensors have the same shape (batch_size, D1, D2, ..., max_sequence_length, ..., Dn), with
+  the sequence dimension (indicated by the `axis` attribute) being max_sequence_length, so the sizes of these tensors do
+  not need to grow between iterations. The `update` tensor's shape only differs from the cache tensors in the sequence
+  dimension: (batch_size, D1, D2, ..., sequence_length, ..., Dn), where sequence_length <= max_sequence_length.
+
+  The optional `write_indices` input indicates the write index for each sample in the batch, assumed to be zero
+  if not provided. When the `mode` attribute is set to "circular", the write index is modulo max_sequence_length.
+  The operation can be described using the following pseudocode:
+
+  ```
+  for prefix_idx in np.ndindex(past_cache.shape[:axis]):
+      batch_idx = prefix_idx[0]
+      for sequence_idx in range(sequence_length):
+          cache_idx = (*prefix_idx, write_indices[batch_idx] + sequence_idx)
+          if mode == "circular":
+              cache_idx = tuple(np.mod(np.asarray(cache_idx), max_sequence_length))
+          update_idx = (*prefix_idx, sequence_idx)
+          present_cache[cache_idx] = update[update_idx]
+  ```
+
+  During the prefill phase of attention, only the first two inputs are needed. During the decode phase, `write_indices`
+  is also needed so that the incoming key or value update can be appended after the last valid token for each sample
+  in the batch.
+
+#### Version
+
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -2)</dt>
+<dd>Sequence dimension of the `past_cache` and `update` tensors. It cannot be 0 (the batch dimension). Default is -2.</dd>
+<dt><tt>mode</tt> : string (default is linear)</dt>
+<dd>Write mode of cache update. Supported modes include `linear` and `circular`. `linear` mode requires write_indices+sequence_length<=max_sequence_length. For `circular` mode, the updates happen in wrap-around fashion, ie, the update index is modulo `max_sequence_length`</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>past_cache</tt> (differentiable) : T</dt>
+<dd>Past state cache for key or value with shape `(batch_size, D1, D2, ..., max_sequence_length, ..., Dn)`.</dd>
+<dt><tt>update</tt> (differentiable) : T</dt>
+<dd>New update tensor with shape `(batch_size, D1, D2, ..., sequence_length, ..., Dn)`.</dd>
+<dt><tt>write_indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
+<dd>Write indices for the incoming update tensor in the cache. Shape is `(batch_size,)`. Assumed to be all zeros if not provided.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>present_cache</tt> (differentiable) : T</dt>
+<dd>Updated cache. Same shape as `past_cache`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tensorscatter</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+    mode="linear",
+)
+past_cache = np.array(
+    [
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [[[5, 5, 5, 5, 5]]],
+        [[[1, 1, 1, 1, 1]]],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 2], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[[1, 2, 3, 4, 5], [5, 5, 5, 5, 5], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [1, 1, 1, 1, 1], [4, 3, 2, 1, 0]]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tensorscatter_3d</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+)
+past_cache = np.array(
+    [
+        [
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
+        ],
+        [
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
+        ],
+        [
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
+        ],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [
+            [4, 4, 4, 4, 4],
+            [5, 5, 5, 5, 5],
+        ],
+        [
+            [6, 6, 6, 6, 6],
+            [7, 7, 7, 7, 7],
+        ],
+        [
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3],
+        ],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 2, 0], dtype=np.int64)
+present_cache = np.array(
+    [
+        [
+            [1, 2, 3, 4, 5],
+            [4, 4, 4, 4, 4],
+            [5, 5, 5, 5, 5],
+            [5, 4, 3, 2, 1],
+        ],
+        [
+            [1, 2, 3, 4, 5],
+            [5, 6, 7, 8, 9],
+            [6, 6, 6, 6, 6],
+            [7, 7, 7, 7, 7],
+        ],
+        [
+            [2, 2, 2, 2, 2],
+            [3, 3, 3, 3, 3],
+            [8, 7, 6, 5, 4],
+            [5, 4, 3, 2, 1],
+        ],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter_3d",
+)
+```
+
+</details>
+
+
+<details>
+<summary>tensorscatter_circular</summary>
+
+```python
+node = onnx.helper.make_node(
+    "TensorScatter",
+    inputs=["past_cache", "update", "write_indices"],
+    outputs=["present_cache"],
+    mode="circular",
+)
+past_cache = np.array(
+    [
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+        [[[1, 2, 3, 4, 5], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [4, 3, 2, 1, 0]]],
+    ],
+    dtype=np.float32,
+)
+update = np.array(
+    [
+        [
+            [
+                [5, 5, 5, 5, 5],
+                [6, 6, 6, 6, 6],
+            ]
+        ],
+        [
+            [
+                [1, 1, 1, 1, 1],
+                [2, 2, 2, 2, 2],
+            ]
+        ],
+    ],
+    dtype=np.float32,
+)
+write_indices = np.array([1, 3], dtype=np.int64)
+present_cache = np.array(
+    [
+        [[[1, 2, 3, 4, 5], [5, 5, 5, 5, 5], [6, 6, 6, 6, 6], [4, 3, 2, 1, 0]]],
+        [[[2, 2, 2, 2, 2], [5, 6, 7, 8, 9], [8, 7, 6, 5, 4], [1, 1, 1, 1, 1]]],
+    ],
+    dtype=np.float32,
+)
+expect(
+    node,
+    inputs=[past_cache, update, write_indices],
+    outputs=[present_cache],
+    name="test_tensorscatter_circular",
+)
 ```
 
 </details>
@@ -37125,9 +37715,9 @@ expect(node, inputs=[x, repeats], outputs=[z], name="test_tile_precomputed")
 
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 24 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="Changelog.md#TopK-10">10</a>
+Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="Changelog.md#TopK-10">10</a>, <a href="Changelog.md#TopK-11">11</a>
 
 #### Attributes
 
@@ -37161,7 +37751,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
 <dd>Constrain index tensor to int64</dd>
