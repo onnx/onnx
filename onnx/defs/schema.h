@@ -574,7 +574,7 @@ class OpSchema final {
       int min_arity = 1,
       DifferentiationCategory differentiation_category = Unknown);
 
-  ONNX_API OpSchema& 
+  ONNX_API OpSchema&
   TypeConstraint(std::string type_str, std::vector<std::string> constraints, std::string description);
 
   // Non-STL wrapper to reduce binary size

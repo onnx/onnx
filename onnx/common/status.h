@@ -11,6 +11,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+
 #include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
