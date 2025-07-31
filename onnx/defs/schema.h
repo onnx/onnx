@@ -1200,8 +1200,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
    *
    * We wrap it inside a function to avoid the static initialization order
    * fiasco.
-   * 
-   * With the change in function visibility, the 
+   *
+   * With the change in function visibility, the
    * GetMapWithoutEnsuringRegistration() and map() methods cannot be used
    * to access the schema map directly from outside the OpSchemaRegistry class.
    * Hence the ONNX_API macro is used to ensure that the methods are
