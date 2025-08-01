@@ -19,11 +19,13 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Create new page for the release in [Release logistics wiki](https://github.com/onnx/onnx/wiki)
 
 ## Create Release Branch
+*It is recommended to have preliminary release notes available before creating the release branch so that there are no delays afterwards in publishing the first rc candidate to pypi and inform the partner repositories for the new release.*
+
 * In `main` branch, before creating the release branch:
     1.  Bump the `LAST_RELEASE_VERSION` in [version.h](/onnx/common/version.h).
         * Set to X.Y.Z, which is same as the release branch you are currently creating.
         * After the release branch is cut, `VERSION_NUMBER` in `main` will be increased to the next future version.
-    1.  Make sure the release version, IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/onnx/test/helper_test.py).
+    1.  Make sure the release version, IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/onnx/test/helper_test.py) -- [example PR](https://github.com/onnx/onnx/commit/8827114d2c90c924ab05b68ac1093b0a6adf9324)
 
 * Create a release branch
     1. Click "New branch" from [branches](https://github.com/onnx/onnx/branches) and choose `main` as Source.
