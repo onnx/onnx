@@ -1400,11 +1400,11 @@ class OpSet_Onnx_ver24 {
 
 // Iterate over schema from ai.onnx version 25
 class OpSet_Onnx_ver25 {
-  public:
-   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-     // TODO: Remove after introducing the first schema to opset 25
-     (void)fn;
-   }
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    // TODO: Remove after introducing the first schema to opset 25
+    (void)fn;
+  }
 };
 
 inline void RegisterOnnxOperatorSetSchema() {
