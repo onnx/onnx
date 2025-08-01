@@ -29770,6 +29770,67 @@ This version of the operator has been available since version 23 of the default 
 </dl>
 
 ## Version 24 of the default ONNX operator set
+### <a name="BitCast-24"></a>**BitCast-24**</a>
+
+  This operator outputs a tensor with the same underlying bits as a given input tensor,
+  but reinterpretted as a different data type. Unlike the Cast operator, it doesn't try to
+  transform the data - instead the output data has the same binary representation as the
+  input just as a new data type. It supports all non-complex types.
+
+  When converting from a larger data type `T1` (with size M) to a smaller one `T2` (with size N),
+  for an input tensor with some shape `[...]`, the output tensor will have shape `[..., M / N]`.
+  This is because each value of type `T1` will be reinterpreted as `M / N` values of type `T2`.
+  For example, some `int16` values `[x1, x2, x3, ...]`, which are to be reinterpreted as `int8`,
+  would become `[[y1_2, y1_1], [y2_2, y2_1], [y3_2, y3_1], ...]` on little endian systems where
+  `ym_n` represents the `n`th byte of `xm`.
+
+  When `T1` is smaller than `T2`, the rightmost dimension of `T1` must
+  be `N / M`. For example, since two `int8`s can be reinterpreted as a single `int16`,
+  a valid input tensor might then be something like `[[x1, x2], [x3, x4]]` where `xn` is
+  an `int8` value. This will then be reinterpreted as `[y1, y2]` where, on a little endian
+  system, `y1` is an `int16` containing the bits of `x2` as its first byte and the bits of
+  `x1` as its second. The same is done for `y2` using `x4` and `x3`.
+
+  Strings are also supported by viewing each character as a byte so that this operator supports the
+  same types as supported by `Cast`. In the same way that an `int64` is 8 bytes in size, a string of
+  8 characters is also treated as being 8 bytes in size and bitcasting ultimately would follow the
+  same steps when reinterpreting data both to and from the string type. This does not mean that lengths
+  are necessarily restricted to be powers of 2, however.
+
+#### Version
+
+This version of the operator has been available since version 24 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (required)</dt>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T1</dt>
+<dd>Input tensor to be cast</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T2</dt>
+<dd>Output tensor with the data of 'input'reinterpreted as the type specified by the 'to' attribute</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
+</dl>
+
 ### <a name="Cast-24"></a>**Cast-24**</a>
 
   The operator casts the elements of a given input tensor to a data type

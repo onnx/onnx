@@ -22,6 +22,8 @@ def typeof(data_type: TensorProto.DataType) -> np.dtype:
         TensorProto.FLOAT8E5M2: np.dtype("uint8"),
         TensorProto.FLOAT8E5M2FNUZ: np.dtype("uint8"),
         TensorProto.FLOAT4E2M1: np.dtype("uint8"),
+        TensorProto.INT4: np.dtype("uint8"),
+        TensorProto.UINT4: np.dtype("uint8"),
     }
 
     return custom_type_map.get(
