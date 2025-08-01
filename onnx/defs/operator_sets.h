@@ -1342,6 +1342,7 @@ class OpSet_Onnx_ver23 {
 };
 
 // Forward declarations for ai.onnx version 24
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, BitCast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike);
@@ -1358,14 +1359,19 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Reshape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Scan);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Shape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Size);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Swish);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SplitToSequence);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Squeeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TopK);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Transpose);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Unsqueeze);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter);
 
 // Iterate over schema from ai.onnx version 24
 class OpSet_Onnx_ver24 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, BitCast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike)>());
@@ -1382,9 +1388,13 @@ class OpSet_Onnx_ver24 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Scan)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Shape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Size)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Swish)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, SplitToSequence)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Squeeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TopK)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Transpose)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Unsqueeze)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter)>());
   }
 };
 

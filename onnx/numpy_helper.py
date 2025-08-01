@@ -796,12 +796,17 @@ def create_random_int(
         raise TypeError(f"{dtype} is not supported by create_random_int.")
 
 
-def saturating_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
-    """Saturating cast for float8 and float4 types.
+def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
+    """Saturate cast for numeric types.
 
     This function ensures that values outside the representable range
     of the target dtype are clamped to the maximum or minimum representable
     value of that dtype.
     """
-    finfo = ml_dtypes.finfo(dtype)
-    return np.clip(x, finfo.min, finfo.max).astype(dtype)
+    if np.issubdtype(dtype, np.integer) or dtype in (ml_dtypes.int4, ml_dtypes.uint4):
+        info = ml_dtypes.iinfo(dtype)
+        x = np.round(x)
+    else:
+        info = ml_dtypes.finfo(dtype)  # type: ignore[assignment]
+
+    return np.clip(x, info.min, info.max).astype(dtype)
