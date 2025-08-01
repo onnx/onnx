@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "onnx/version_converter/BaseConverter.h"
+#include "onnx/version_converter/adapters/Attention_24_23.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
 #include "onnx/version_converter/adapters/axis_attribute_to_input.h"
@@ -829,6 +830,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
 
     /******** 23 -> 24 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Attention", OpSetID(23), OpSetID(24)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(23), OpSetID(24)));
     registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(23), OpSetID(24)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(23), OpSetID(24)));
@@ -853,6 +855,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("SplitToSequence", OpSetID(23), OpSetID(24)));
 
     /******** 24 -> 23 ********/
+    registerAdapter(std::make_unique<Attention_24_23>());
     const std::vector<TensorProto_DataType> ir12_types_not_in_ir11 = {TensorProto_DataType_FLOAT8E8M0};
     registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
@@ -885,6 +888,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       const override;
 };
 
-ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
+ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
 } // namespace version_conversion
 } // namespace ONNX_NAMESPACE
