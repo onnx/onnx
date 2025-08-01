@@ -90,7 +90,7 @@ The Steering Committee consists of 5 individuals. No single Member Company may h
 
 The starting composition will be individuals from Microsoft, Facebook, Amazon, and 2 other Member Companies, who have been picked by the three founding members based on contributions and experience.
 
-After the initial term of each Steering Committee representative is completed, their seat will be open for any contributor in the community to be elected into the seat via a community vote. Only contributors may vote, but would be restricted to one vote per Member Company. 
+After the initial term of each Steering Committee representative is completed, their seat will be open for any contributor in the community to be elected into the seat via a community vote. Only contributors may vote, but would be restricted to one vote per Member Company.
 
 If a member of the Steering Committee changes companies, by default they retain and may continue on with the role. If the employment change results in a single Member Company having more than one representative, then one of them must resign. When there is a vacancy on the Steering Committee, the remaining members can appoint a new representative for the remainder of the term until the next election.
 
