@@ -114,6 +114,8 @@ Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/CONTRIB
 # Trademark
 Checkout [https://trademarks.justia.com](https://trademarks.justia.com/877/25/onnx-87725026.html) for the trademark.
 
+[General rules of the Linux Foundation on Trademark usage](https://www.linuxfoundation.org/legal/trademark-usage)
+
 # Code of Conduct
 
 [ONNX Open Source Code of Conduct](https://onnx.ai/codeofconduct.html)
