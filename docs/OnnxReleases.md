@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
-* Check whether the 'required checks' for the release branches are still up to date or need to be adjusted (hardcoded runner image version could be outdated for example): 'Branches' -> 'Branch protection rules'
+* Reach out to the SIG Arch/Infra leads to confirm whether the required status checks for the release branches are still valid and up to date, and whether any rely on outdated hardcoded runner image versions that may need updatingCheck whether the 'required checks' for the release branches are still up to date or need to be adjusted: 'Branches' -> 'Branch protection rules'
 * Determine version (X.Y.Z) for the new release
     * Discuss in Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
     * For (v.X.Y.Z), if release is to be 1.16.0,
