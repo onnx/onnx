@@ -215,6 +215,7 @@ __all__ = [
     "SoftmaxCrossEntropyLoss",
     "Softplus",
     "Softsign",
+    "Swish",
     "SpaceToDepth",
     "Split_2",
     "Split_11",
@@ -233,6 +234,7 @@ __all__ = [
     "Sum",
     "Tan",
     "Tanh",
+    "TensorScatter",
     "TfIdfVectorizer",
     "ThresholdedRelu",
     "Tile",
@@ -465,8 +467,10 @@ from onnx.reference.ops.op_string_normalizer import StringNormalizer
 from onnx.reference.ops.op_string_split import StringSplit
 from onnx.reference.ops.op_sub import Sub
 from onnx.reference.ops.op_sum import Sum
+from onnx.reference.ops.op_swish import Swish
 from onnx.reference.ops.op_tan import Tan
 from onnx.reference.ops.op_tanh import Tanh
+from onnx.reference.ops.op_tensor_scatter import TensorScatter
 from onnx.reference.ops.op_tfidf_vectorizer import TfIdfVectorizer
 from onnx.reference.ops.op_thresholded_relu import ThresholdedRelu
 from onnx.reference.ops.op_tile import Tile
