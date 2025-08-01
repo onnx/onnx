@@ -1341,17 +1341,6 @@ class OpSet_Onnx_ver23 {
   }
 };
 
-// Forward declarations for ai.onnx version 25
-
-// Iterate over schema from ai.onnx version 25
-class OpSet_Onnx_ver25 {
-  public:
-   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-     // TODO: Remove after introducing the first schema to opset 25
-     (void)fn;
-   }
-};
-
 // Forward declarations for ai.onnx version 24
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast);
@@ -1405,6 +1394,17 @@ class OpSet_Onnx_ver24 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Unsqueeze)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter)>());
   }
+};
+
+// Forward declarations for ai.onnx version 25
+
+// Iterate over schema from ai.onnx version 25
+class OpSet_Onnx_ver25 {
+  public:
+   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+     // TODO: Remove after introducing the first schema to opset 25
+     (void)fn;
+   }
 };
 
 inline void RegisterOnnxOperatorSetSchema() {
