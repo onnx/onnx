@@ -38,6 +38,7 @@ __all__ = [
     "BatchNormalization_9",
     "BatchNormalization_14",
     "Bernoulli",
+    "BitCast",
     "BitShift",
     "BitwiseAnd",
     "BitwiseNot",
