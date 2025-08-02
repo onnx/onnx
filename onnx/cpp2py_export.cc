@@ -216,6 +216,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("Differentiable", OpSchema::Differentiable)
       .value("NonDifferentiable", OpSchema::NonDifferentiable);
 
+  py::enum_<OpSchema::NodeDeterminism>(op_schema, "NodeDeterminism")
+      .value("Deterministic", OpSchema::NodeDeterminism::Deterministic)
+      .value("NonDeterministic", OpSchema::NodeDeterminism::NonDeterministic)
+      .value("Unknown", OpSchema::NodeDeterminism::Unknown);
+
   py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
       .value("FLOAT", AttributeProto::FLOAT)
       .value("INT", AttributeProto::INT)
@@ -328,10 +333,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                       std::vector<OpSchema::FormalParameter> inputs,
                       std::vector<OpSchema::FormalParameter> outputs,
                       std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
-                      std::vector<OpSchema::Attribute> attributes) {
+                      std::vector<OpSchema::Attribute> attributes,
+                      OpSchema::NodeDeterminism node_determinism) {
             auto self = OpSchema();
 
             self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
+            self.SetNodeDeterminism(node_determinism);
             // Add inputs and outputs
             for (auto i = 0; i < inputs.size(); ++i) {
               self.Input(i, std::move(inputs[i]));
@@ -367,7 +374,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               std::string /* type_str */,
               std::vector<std::string> /* constraints */,
               std::string /* description */>>{},
-          py::arg("attributes") = std::vector<OpSchema::Attribute>{})
+          py::arg("attributes") = std::vector<OpSchema::Attribute>{},
+          py::arg("node_determinism") = OpSchema::NodeDeterminism::Unknown)
       .def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
       .def_property(
           "domain", &OpSchema::domain, [](OpSchema& self, const std::string& domain) { self.SetDomain(domain); })
@@ -406,6 +414,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly("has_data_propagation_function", &OpSchema::has_data_propagation_function)
       .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
+      .def_property_readonly("node_determinism", &OpSchema::GetNodeDeterminism)
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
       .def(
           "_infer_node_outputs",
