@@ -11,10 +11,10 @@
 namespace ONNX_NAMESPACE {
 
 template <typename T>
-TensorProto ToTensor(const T& value);
+ONNX_API TensorProto ToTensor(const T& value);
 
 template <typename T>
-TensorProto ToTensor(const std::vector<T>& values);
+ONNX_API TensorProto ToTensor(const std::vector<T>& values);
 
 template <typename T>
 std::vector<T> ParseData(const TensorProto* tensor_proto);

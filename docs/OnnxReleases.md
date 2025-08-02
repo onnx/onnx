@@ -9,6 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 The ONNX project, going forward, will plan to release roughly on a four month cadence. We follow the [Semver](https://semver.org/) versioning approach and will make decisions as a community on a release by release basis on whether to do a major or minor release.
 
 ## Preparation
+* Reach out to the SIG Arch/Infra leads to confirm whether the required status checks for the release branches are still valid and up to date, and whether any rely on outdated hardcoded runner image versions that may need updatingCheck whether the 'required checks' for the release branches are still up to date or need to be adjusted: 'Branches' -> 'Branch protection rules'
 * Determine version (X.Y.Z) for the new release
     * Discuss in Slack channel for Releases (https://lfaifoundation.slack.com/archives/C018VGGJUGK)
     * For (v.X.Y.Z), if release is to be 1.16.0,
@@ -36,7 +37,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
     1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
         * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
-## Upload release candidate to TestPyPI without offline steps (onnx version 1.19)
+## Upload release candidate to TestPyPI without offline steps (starting with onnx version 1.19)
 
 * Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow", select the workflow
 

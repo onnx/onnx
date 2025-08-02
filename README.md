@@ -71,7 +71,7 @@ We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [
 
 # Follow Us
 
-Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
+Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter/X](https://twitter.com/onnxai)]
 
 # Roadmap
 
@@ -110,6 +110,11 @@ Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/CONTRIB
 # License
 
 [Apache License v2.0](LICENSE)
+
+# Trademark
+Checkout [https://trademarks.justia.com](https://trademarks.justia.com/877/25/onnx-87725026.html) for the trademark.
+
+[General rules of the Linux Foundation on Trademark usage](https://www.linuxfoundation.org/legal/trademark-usage)
 
 # Code of Conduct
 
