@@ -21,7 +21,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 * Before creating a release branch, it is highly recommended to have in mind to compile **preliminary release notes** — ideally maintained in a shared location such as the **release wiki page**. These notes should include a clear summary of the **new features**, a list of **bug fixes**, any **known issues**, and especially any **deprecations or removals**, with links to relevant tickets or documentation where applicable. Having this information ready ensures that the team can confidently and promptly create a `rc1` (release candidate 1) immediately after the branch is cut, without delays. Acting quickly at this stage also helps to **reduce the need for parallel work on both the main and release branches**, minimizing merge conflicts, duplicated effort, and coordination overhead. This practice supports a smoother, more transparent release process.
    *   To generate good release notes, it is helpful if pull requests have meaningful names and corresponding labels. Labels can also be added retrospectively to PRs that have already been merged.
    *   The labels used can be found [here](https://github.com/onnx/onnx/blob/main/.github/release.yml)
-   *   The preliminiary release notes one get's if one draft a release at the github.
+   *   The preliminary release notes one gets if one drafts a release on GitHub.
 
 ## Create Release Branch
 * In `main` branch, before creating the release branch:
