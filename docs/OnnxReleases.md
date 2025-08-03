@@ -18,6 +18,10 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
             * Branch protections rules are automatically applied to branches following this format.
         * The new tag will be `v1.16.0`
 * Create new page for the release in [Release logistics wiki](https://github.com/onnx/onnx/wiki)
+* Before creating a release branch, it is highly recommended to have in mind to compile **preliminary release notes** — ideally maintained in a shared location such as the **release wiki page**. These notes should include a clear summary of the **new features**, a list of **bug fixes**, any **known issues**, and especially any **deprecations or removals**, with links to relevant tickets or documentation where applicable. Having this information ready ensures that the team can confidently and promptly create a `rc1` (release candidate 1) immediately after the branch is cut, without delays. Acting quickly at this stage also helps to **reduce the need for parallel work on both the main and release branches**, minimizing merge conflicts, duplicated effort, and coordination overhead. This practice supports a smoother, more transparent release process.
+   *   To generate good release notes, it is helpful if pull requests have meaningful names and corresponding labels. Labels can also be added retrospectively to PRs that have already been merged.
+   *   The labels used can be found [here](https://github.com/onnx/onnx/blob/main/.github/release.yml)
+   *   The preliminary release notes one gets if one drafts a release on GitHub.
 
 ## Create Release Branch
 * In `main` branch, before creating the release branch:
@@ -116,11 +120,6 @@ RC-Candidates
     * Source install: `pip uninstall -y onnx && pip install -i https://test.pypi.org/simple --no-binary onnx --pre onnx`
 
 ## Package verification
-**Test ONNX itself**
-* Test the PyPI package installation with different combinations of various Python versions, Protobuf versions and platforms.
-  * After installing the TestPyPI package, run `pytest` in the release branch.
-  * Python versions : Applicable python versions for the release.
-  * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
 
 **Partner Validation**
 
@@ -221,8 +220,9 @@ Conda builds of ONNX are done via [conda-forge/onnx-feedstock](https://github.co
     * Note: Use the sha256 hash (`sha256sum onnx-X.Y.Z.tar.gz`) of the release's tar.gz file from https://github.com/onnx/onnx/releases.
 
 **Merge into main branch**
-* If urgent changes were made directly into the release branch, merge the release branch back into main branch.
-* If all PRs merged into the release branch (after it was cut) were cherry-picks from main, the merge PR will show as empty and this step is not needed.
+* Check which changes to the release branch are also relevant for main:
+   * If urgent changes were made directly into the release branch, merge the release branch back into main branch.
+   * If all PRs merged into the release branch (after it was cut) were cherry-picks from main, the merge PR will show as empty and this step is not needed.
 
 **Remove old onnx-weekly packages on PyPI**
 * Remove all [onnx-weekly packages](https://pypi.org/project/onnx-weekly/#history) from PyPI for the just released version to save space.
