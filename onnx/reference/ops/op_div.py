@@ -15,7 +15,7 @@ class Div(OpRunBinaryNumpy):
                 y.dtype, np.integer
             ):
                 return x // y
-            return np.divide / x, y
+            return np.divide(x, y)
 
         OpRunBinaryNumpy.__init__(self, func, onnx_node, run_params)
 
