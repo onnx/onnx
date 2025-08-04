@@ -10,7 +10,14 @@ from onnx.reference.ops._op import OpRunBinaryNumpy
 
 class Div(OpRunBinaryNumpy):
     def __init__(self, onnx_node, run_params):
-        OpRunBinaryNumpy.__init__(self, np.divide, onnx_node, run_params)
+        def func(x, y):
+            if np.issubdtype(x.dtype, np.integer) and np.issubdtype(
+                y.dtype, np.integer
+            ):
+                return x // y
+            return np.divide / x, y
+
+        OpRunBinaryNumpy.__init__(self, func, onnx_node, run_params)
 
     def _run(self, a, b):
         res = OpRunBinaryNumpy._run(self, a, b)
