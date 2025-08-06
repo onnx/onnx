@@ -11,9 +11,8 @@ from onnx.reference.ops._op import OpRunBinaryNumpy
 class Div(OpRunBinaryNumpy):
     def __init__(self, onnx_node, run_params):
         def func(x, y):
-            if np.issubdtype(x.dtype, np.integer) and np.issubdtype(
-                y.dtype, np.integer
-            ):
+            if np.issubdtype(x.dtype, np.integer):
+                assert np.issubtype(y.dtype, np.integer)
                 return x // y
             return np.divide(x, y)
 
