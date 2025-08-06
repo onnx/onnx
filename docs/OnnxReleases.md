@@ -122,7 +122,7 @@ RC-Candidates
 ## Package verification
 
 **Partner Validation**
-
+ * User should install the rc-packages with *pip install --no-deps -i https://test.pypi.org/simple/ onnx* (and manually install its dependencies so they are not obtained from test-pypi)
  * Test with onnxruntime package:
      * Run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
         * The scripts tests ONNX functions like `load`, `checker.check_model`, and `shape_inference.infer_shapes`, with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model.
