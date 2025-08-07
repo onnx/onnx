@@ -175,6 +175,7 @@ file(GLOB_RECURSE ONNX2_SOURCES
     "${ONNX_ROOT}/onnx/onnx2/cpu/onnx*.cpp"
     "${ONNX_ROOT}/onnx/onnx2/cpu/s*.cpp"
     "${ONNX_ROOT}/onnx/onnx2/cpu/t*.cpp"
+    "${ONNX_ROOT}/onnx/onnx2/cpu/c*.cpp"
     "${ONNX_ROOT}/onnx/onnx2/cpu/*.cc"
     "${ONNX_ROOT}/onnx/onnx2/cpu/*.hpp"
     "${ONNX_ROOT}/onnx/onnx2/cpu/*.h")
