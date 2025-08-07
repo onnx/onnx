@@ -169,6 +169,21 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+# ONNX2 -- 
+message(STATUS "Setting ONNX2 with ${ONNX_ROOT}/onnx/onnx2/...")
+file(GLOB_RECURSE ONNX2_SOURCES
+    "${ONNX_ROOT}/onnx/onnx2/cpu/onnx*.cpp"
+    "${ONNX_ROOT}/onnx/onnx2/cpu/s*.cpp"
+    "${ONNX_ROOT}/onnx/onnx2/cpu/t*.cpp"
+    "${ONNX_ROOT}/onnx/onnx2/cpu/*.cc"
+    "${ONNX_ROOT}/onnx/onnx2/cpu/*.hpp"
+    "${ONNX_ROOT}/onnx/onnx2/cpu/*.h")
+message(STATUS "  onnx2 source: ${ONNX2_SOURCES}")
+add_library(lib_onnx2_cpp STATIC ${ONNX2_SOURCES})
+set_target_properties(lib_onnx2_cpp PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(lib_onnx2_cpp PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+message(STATUS "Setting ONNX2 done.")
+
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
 if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
   if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
@@ -483,6 +498,10 @@ if(ONNX_BUILD_PYTHON)
   endif()
 
   pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+
+  # Adds python bindings for onnx2.
+  pybind11_add_module(_onnx2py MODULE "${ONNX_ROOT}/onnx/onnx2/cpu/_onnx2py.cpp")
+  target_link_libraries(_onnx2py PRIVATE lib_onnx2_cpp)
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
