@@ -107,7 +107,7 @@ class Renamer {
   /**
    * @brief Destructor.
    */
-  ~Renamer();
+  ~Renamer() = default;
 
   /**
    * @brief Binds a formal parameter name to an actual parameter name.

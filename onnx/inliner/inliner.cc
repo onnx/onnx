@@ -788,8 +788,6 @@ Renamer::Renamer(const std::string& prefix, const GraphProto& graph) : pImpl_(st
 Renamer::Renamer(const std::string& prefix, const FunctionProto& function)
     : pImpl_(std::make_unique<Impl>(prefix, function)) {}
 
-Renamer::~Renamer() = default;
-
 void Renamer::BindName(const std::string& formal_name, const std::string& actual_name) {
   pImpl_->BindName(formal_name, actual_name);
 }
