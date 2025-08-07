@@ -496,8 +496,8 @@ void TwoFilesStream::ReadDelayedBlock(DelayedBlock& block) {
   } else {
     thread_pool_.SubmitTask([this, block]() {
       std::ifstream file_stream(this->weights_file_path(), std::ios::binary);
-      weights_stream_.file_stream_.seekg(block.offset);
-      weights_stream_.file_stream_.read(reinterpret_cast<char*>(block.data), block.size);
+      file_stream.seekg(block.offset);
+      file_stream.read(reinterpret_cast<char*>(block.data), block.size);
     });
     weights_stream_.file_stream_.seekg(block.size, std::ios::cur);
   }
