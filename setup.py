@@ -278,7 +278,13 @@ class BuildExt(setuptools.command.build_ext.build_ext):
                 elif os.path.exists(release_lib_dir):
                     lib_dir = release_lib_dir
             src = os.path.join(lib_dir, filename)
-            dst = os.path.join(extension_dst_dir, filename)
+            if "onnx.onnx2.cpu._onnx2py" == fullname:
+                folder = os.path.join(extension_dst_dir, "onnx2", "cpu")
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                dst = os.path.join(folder, filename)
+            else:
+                dst = os.path.join(extension_dst_dir, filename)
             self.copy_file(src, dst)
 
         # Copy over the generated python files to build/source dir depending on editable mode
@@ -308,7 +314,10 @@ CMD_CLASS = {
 # Extensions
 ################################################################################
 
-EXT_MODULES = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
+EXT_MODULES = [
+    setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[]),
+    setuptools.Extension(name="onnx.onnx2.cpu._onnx2py", sources=[]),
+]
 
 
 ################################################################################

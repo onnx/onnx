@@ -13,7 +13,7 @@ print(f"The model has {len(proto.graph.node)} nodes.")
 ```
 
 The code is not perfect and can be surely improved but it already
-supports the serialization and parsing for all onnx classes.
+supports the serialization and parsing for all onnx classes (except TrainingInfoProto and Opaque).
 It is concrete enough to open a discussion on whether this could
 replace protobuf. Many tests were implemented to make sure
 this can be done (see tests in ``onnx/tests/test_onnx2_*`` and ``onnx/tests/cpp/test_onnx2_*``).
@@ -44,6 +44,7 @@ It currently provides the following features:
 
 The features which are not implemented yet:
 
+* TrainingInfoProto and Opaque, easy to add, skipped because rarely used
 * The python API still misses some unfrequent functions such as ``HasField`` (easy to fix).
 * The serialization is not yet implemented but that's an easy fix.
 * The C++ API is close to the existing one but this was not tested yet.

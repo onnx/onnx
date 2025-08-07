@@ -172,14 +172,11 @@ endif()
 # ONNX2 -- 
 message(STATUS "Setting ONNX2 with ${ONNX_ROOT}/onnx/onnx2/...")
 file(GLOB_RECURSE ONNX2_SOURCES
-    "${ONNX_ROOT}/onnx/onnx2/cpu/onnx*.cpp"
-    "${ONNX_ROOT}/onnx/onnx2/cpu/s*.cpp"
-    "${ONNX_ROOT}/onnx/onnx2/cpu/t*.cpp"
-    "${ONNX_ROOT}/onnx/onnx2/cpu/c*.cpp"
     "${ONNX_ROOT}/onnx/onnx2/cpu/*.cc"
+    "${ONNX_ROOT}/onnx/onnx2/cpu/*.cpp"
     "${ONNX_ROOT}/onnx/onnx2/cpu/*.hpp"
     "${ONNX_ROOT}/onnx/onnx2/cpu/*.h")
-message(STATUS "  onnx2 source: ${ONNX2_SOURCES}")
+list(REMOVE_ITEM ONNX2_SOURCES "${ONNX_ROOT}/onnx/onnx2/cpu/_onnx2py.cpp")
 add_library(lib_onnx2_cpp STATIC ${ONNX2_SOURCES})
 set_target_properties(lib_onnx2_cpp PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(lib_onnx2_cpp PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
