@@ -154,6 +154,63 @@ restored to its original state.
 However, this information is not really necessary as long as the model
 stores the weights in the same order.
 
+## Protobuf format
+
+Let's dig into the class OperatorSetIdProto with contains an integer (version) and a string (domain).
+
+```
+message OperatorSetIdProto {
+  optional string domain = 1;
+  optional int64 version = 2;
+}
+```
+
+Protobuf serializes this structure by aggregating the following information:
+
+- a varint containing the field number for the domain and its type,
+  because it is stored as a buffer of a fixed size (see function ``write_field_header``)
+- the size of the string
+- the string
+- again a varint the field number for the version and its type, variable,
+  because it is stored as a varint.
+
+A varint is a variable integer (see [Encoding](https://protobuf.dev/programming-guides/encoding/),
+any LLM usually gives a good implementation on how to encode or decode such a number,
+see function ``write_variant_uint64``).
+
+A varint or variable int is an ``uint64_t`` written with between 1 or 10 bytes.
+If it is in 0-127, then it is 1 byte, otherwise, at least two bytes are used.
+So a varint is represented as a the shortest sequence of groups of 7 bits.
+
+A more complex structure is stored as a sequence of the three information:
+
+- a varint containing the field number for the domain and its type (fixed)
+- the length of the buffer containing the length for the serialized attribute,
+  unless it is a standard numerical type
+- the buffer with the serialized attribute
+
+Protobuf is backward compatible in a way that any new attribute receives a new field number.
+An old version of protobuf can read a new format by ignoring the new type.
+A new version of protobuf can write an old format by ignoring the deprecated type.
+The compatibility is maintained as long as no old field number is reused for another
+type.
+
+Reading protobuf is very fast and the structure can be created while reading the serialized string.
+Writing protobuf is more complex. We need to serialize an attribute to know how many bytes
+it takes on disk. When it is serialized, the length of the buffer is known and can be stored as a
+variable integer. So we need to know the size in order to know how many bytes are needed to store
+the size and the buffer of any object. That's why the current implementation serializes a class
+in two steps.
+
+The first one consists in computing the size of every object and nested object.
+It caches them into the stream doing the serialization.
+Once it is done, we know where exactly every serialized object must be copied into
+the final string. That what allows us to efficiently parallelize the serialization
+of onnx models because most of the space is taken by tensors, easy to serialize.
+
+The second step consists in doing the serialization. It does not need any additional space
+in memory to store the serialized nested object: their size is already known.
+
 ## Script to measure the loading time
 
 The following script compares the python bindings of onnx and onnx2
