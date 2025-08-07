@@ -46,7 +46,7 @@ The features which are not implemented yet:
 
 * TrainingInfoProto and Opaque, easy to add, skipped because rarely used
 * The python API still misses some unfrequent functions such as ``HasField`` (easy to fix).
-* The serialization is not yet implemented but that's an easy fix.
+* The parallelized serialization is not yet implemented but that's an easy fix.
 * The C++ API is close to the existing one but this was not tested yet.
 * ``oneof`` rule: the implementation is not complete yet and could be improvoed.
   Right now, every *oneof* attribute does not share the same space in memory.
