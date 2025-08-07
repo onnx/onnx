@@ -1,4 +1,7 @@
-# source: https://github.com/onnx/onnx/blob/main/onnx/helper.py
+# Copyright (c) ONNX Project Contributors
+
+# SPDX-License-Identifier: Apache-2.0
+
 import collections
 import functools
 import math

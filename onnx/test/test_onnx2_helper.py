@@ -1,4 +1,7 @@
-# source: https://github.com/onnx/onnx/blob/main/onnx/test/helper_test.py
+# Copyright (c) ONNX Project Contributors
+
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 import random
