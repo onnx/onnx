@@ -427,7 +427,7 @@ void TensorProto::ParseFromStream(utils::BinaryStream& stream, ParseOptions& opt
       utils::DelayedBlock block;
       block.size = size;
       block.data = ref_raw_data().data();
-      block.offset = two_stream.weights_tell();
+      block.offset = offset;
       block.stream_id = 1; // The second stream is the weights stream.
       two_stream.ReadDelayedBlock(block);
     } else {
