@@ -173,6 +173,12 @@ std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   return iter->second;
 }
 
+// Helper to validate if a data type string maps to a known TensorProto data type.
+static bool IsValidDataTypeString(const std::string& type_str) {
+  TypesWrapper& t = TypesWrapper::GetTypesWrapper();
+  return t.TypeStrToTensorDataType().find(type_str) != t.TypeStrToTensorDataType().end();
+}
+
 void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
@@ -229,12 +235,6 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     t->mutable_shape();
   }
 } // namespace Utils
-
-bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
-  TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  const auto& allowedSet = t.GetAllowedDataTypes();
-  return (allowedSet.find(type_str) != allowedSet.end());
-}
 
 int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   if (!IsValidDataTypeString(type_str)) {
@@ -442,6 +442,8 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["uint4"] = TensorProto_DataType_UINT4;
   type_str_to_tensor_data_type_["int4"] = TensorProto_DataType_INT4;
   type_str_to_tensor_data_type_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
+  type_str_to_tensor_data_type_["float6e2m3"] = TensorProto_DataType_FLOAT6E2M3;
+  type_str_to_tensor_data_type_["float6e3m2"] = TensorProto_DataType_FLOAT6E3M2;
 
   for (auto& str_type_pair : type_str_to_tensor_data_type_) {
     tensor_data_type_to_type_str_[str_type_pair.second] = str_type_pair.first;

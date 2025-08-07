@@ -54,7 +54,8 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FNUZ:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E8M0:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E2M3:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E3M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1: {
       ret.int32s().reserve(tp.int32_data_size());
       for (int i = 0; i < tp.int32_data_size(); i++) {
@@ -462,6 +463,14 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
     case ONNX_NAMESPACE::TensorProto_DataType_INT32:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
     case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
+      for (int32_t x : tensor.int32s()) {
+        p->add_int32_data(x);
+      }
+      break;
+    }
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E2M3:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT6E3M2:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1: {
       for (int32_t x : tensor.int32s()) {
         p->add_int32_data(x);
       }

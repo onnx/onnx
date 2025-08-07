@@ -19,6 +19,10 @@ import typing_extensions
 
 import onnx
 from onnx import _mapping, defs, subbyte
+from onnx.reference.ops.op_cast import (
+    float32_to_float6e2m3,
+    float32_to_float6e3m2,
+)
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -749,6 +753,8 @@ def make_tensor(
         # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
         if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
             expected_size_bytes = 0.5
+        elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+            expected_size_bytes = 0.75
         else:
             expected_size_bytes = np_dtype.itemsize
         expected_size_bytes *= math.prod(dims)
@@ -781,11 +787,21 @@ def make_tensor(
         TensorProto.FLOAT8E5M2FNUZ,
     }:
         # Float8 values are by default casted using saturating cast.
-        vals = onnx.numpy_helper.saturating_cast(np.asarray(vals), np_dtype).flatten()
+        vals = onnx.numpy_helper.saturate_cast(np.asarray(vals), np_dtype).flatten()
     elif data_type == TensorProto.FLOAT8E8M0:
         vals = onnx.numpy_helper.to_float8e8m0(
             np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
+    elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
+        arr = np.asarray(vals, dtype=np.float32).ravel()
+        if data_type == TensorProto.FLOAT6E2M3:
+            fp6 = float32_to_float6e2m3(arr, saturate=True)
+        else:
+            fp6 = float32_to_float6e3m2(arr, saturate=True)
+        from onnx.numpy_helper import _pack_6bit  # local import to avoid cycle
+        packed = _pack_6bit(fp6)
+        tensor.raw_data = packed.tobytes()
+        return tensor
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
@@ -1057,19 +1073,19 @@ def get_attribute_value(attr: AttributeProto) -> Any:  # noqa: PLR0911
         return attr.g
     if attr.type == AttributeProto.TYPE_PROTO:
         return attr.tp
-    if attr.type == AttributeProto.FLOATS:
+    if attr.floats:
         return list(attr.floats)
-    if attr.type == AttributeProto.INTS:
+    if attr.ints:
         return list(attr.ints)
-    if attr.type == AttributeProto.STRINGS:
+    if attr.strings:
         return list(attr.strings)
-    if attr.type == AttributeProto.TENSORS:
+    if attr.tensors:
         return list(attr.tensors)
-    if attr.type == AttributeProto.SPARSE_TENSORS:
+    if attr.sparse_tensors:
         return list(attr.sparse_tensors)
-    if attr.type == AttributeProto.GRAPHS:
+    if attr.graphs:
         return list(attr.graphs)
-    if attr.type == AttributeProto.TYPE_PROTOS:
+    if attr.type_protos:
         return list(attr.type_protos)
     if attr.type == AttributeProto.UNDEFINED:
         return None

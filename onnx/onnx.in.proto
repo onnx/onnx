@@ -117,7 +117,11 @@ enum Version {
 
   // IR VERSION 12 published on TBD
   // Added FLOAT8E8M0.
-  IR_VERSION = 0x000000000000000C;
+  IR_VERSION_2025_XX_XX = 0x000000000000000C;
+
+  // IR VERSION 13 published on TBD
+  // Added FLOAT6E2M3, FLOAT6E3M2
+  IR_VERSION = 0x000000000000000D;
 }
 
 // Attributes
@@ -647,6 +651,12 @@ message TensorProto {
     // https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf
     FLOAT8E8M0 = 24;
 
+    // 6-bit floating point data types based on OCP MX spec
+    // FLOAT6E2M3: 1 sign, 2 exp, 3 mant
+    // FLOAT6E3M2: 1 sign, 3 exp, 2 mant
+    FLOAT6E2M3 = 25;
+    FLOAT6E3M2 = 26;
+
     // Future extensions go here.
   }
 
@@ -690,9 +700,10 @@ message TensorProto {
   // Consequently:
   // - For data types with a bit-width of 8 or greater, each `int32_data` stores one element.
   // - For 4-bit data types, each `int32_data` stores two elements.
+  // - For FLOAT6E2M3 and FLOAT6E3M2, packing is implementation-defined due to 6-bit size.
   //
   // When this field is present, the data_type field MUST be
-  // INT32, INT16, INT8, INT4, UINT16, UINT8, UINT4, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ, FLOAT8E8M0, FLOAT4E2M1
+  // INT32, INT16, INT8, INT4, UINT16, UINT8, UINT4, BOOL, FLOAT16, BFLOAT16, FLOAT8E4M3FN, FLOAT8E4M3FNUZ, FLOAT8E5M2, FLOAT8E5M2FNUZ, FLOAT8E8M0, FLOAT4E2M1, FLOAT6E2M3, FLOAT6E3M2
   repeated int32 int32_data = 5 [packed = true];
 
   // For strings.
