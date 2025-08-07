@@ -3,7 +3,9 @@
 namespace onnx2 {
 namespace utils {
 
-ThreadPool::ThreadPool() { is_started = false; }
+ThreadPool::ThreadPool() {
+  is_started = false;
+}
 
 void ThreadPool::Start(int32_t num_threads) {
   EXT_ENFORCE(workers.size() == 0, "ThreadPool already started");
@@ -65,7 +67,7 @@ void ThreadPool::Wait() {
   if (!workers.empty()) {
     condition.notify_all();
   }
-  for (std::thread &worker : workers) {
+  for (std::thread& worker : workers) {
     if (worker.joinable())
       worker.join();
   }
@@ -73,7 +75,9 @@ void ThreadPool::Wait() {
   is_started = false;
 }
 
-ThreadPool::~ThreadPool() { Wait(); }
+ThreadPool::~ThreadPool() {
+  Wait();
+}
 
 void ThreadPool::Clear() {
   EXT_ENFORCE(!IsStarted(), "Cannot clear the pool if threads are still running.");
