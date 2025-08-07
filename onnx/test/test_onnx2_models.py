@@ -18,7 +18,7 @@ from onnx import onnx2
 
 class TestOnnx2Helper(unittest.TestCase):
     def get_dump_file(
-        self, name, folder, clean = False
+        self, name, folder=None, clean=False
     ) -> str:
         """Returns a filename to dump a model."""
         if folder is None:
