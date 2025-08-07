@@ -1,3 +1,7 @@
+# Copyright (c) ONNX Project Contributors
+
+# SPDX-License-Identifier: Apache-2.0
+
 import os
 from pathlib import Path
 from typing import Optional

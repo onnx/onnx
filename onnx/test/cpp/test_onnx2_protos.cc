@@ -1,3 +1,9 @@
+// Copyright (c) ONNX Project Contributors
+
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #include "onnx/onnx2/cpu/onnx2.h"
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 #include "onnx/onnx2/cpu/common_helpers.h"
