@@ -473,7 +473,7 @@ if(ONNX_BUILD_PYTHON)
   if(NOT pybind11_FOUND)
     include(FetchContent)
     set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v3.0.0.tar.gz)
-    set(pybind11SHA1  8c7e3e8fec829ced31a495dec281153511f33c63)
+    set(pybind11SHA1  532baa7a79c5c65645bcce2f6971959925e40df4)
     FetchContent_Declare(
       pybind11
       URL ${pybind11URL}
