@@ -1,22 +1,23 @@
-#include "onnx2.h"
-#include "onnx2_helper.h"
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "onnx2.h"
+#include "onnx2_helper.h"
+
 namespace py = pybind11;
 using namespace onnx2;
 
-#define PYDEFINE_PROTO(m, cls)                                                                         \
-  py::class_<cls, Message> py_##cls(m, #cls, cls::DOC);                                                \
+#define PYDEFINE_PROTO(m, cls)                          \
+  py::class_<cls, Message> py_##cls(m, #cls, cls::DOC); \
   py_##cls.def(py::init<>())
 
-#define PYDEFINE_SUBPROTO(m, cls, subname)                                                             \
-  py::class_<cls::subname, Message> py_sub_##cls##subname(m, #subname, cls::subname::DOC);             \
+#define PYDEFINE_SUBPROTO(m, cls, subname)                                                 \
+  py::class_<cls::subname, Message> py_sub_##cls##subname(m, #subname, cls::subname::DOC); \
   py_sub_##cls##subname.def(py::init<>())
 
-#define PYDEFINE_PROTO_WITH_SUBTYPES(m, cls)                                                           \
-  py::class_<cls, Message> py_##cls(m, #cls, cls::DOC);                                                \
+#define PYDEFINE_PROTO_WITH_SUBTYPES(m, cls)            \
+  py::class_<cls, Message> py_##cls(m, #cls, cls::DOC); \
   py_##cls.def(py::init<>());
 
 #define _PYADD_PROTO_SERIALIZATION(cls, name_inst) pyadd_proto_serialization(name_inst);
@@ -24,144 +25,145 @@ using namespace onnx2;
 #define PYADD_PROTO_SERIALIZATION(cls) _PYADD_PROTO_SERIALIZATION(cls, py_##cls)
 #define PYADD_SUBPROTO_SERIALIZATION(cls, sub) _PYADD_PROTO_SERIALIZATION(cls::sub, py_sub_##cls##sub)
 
-#define PYFIELD(cls, name)                                                                             \
-  def_readwrite(#name, &cls::name##_, cls::DOC_##name)                                                 \
+#define PYFIELD(cls, name)                             \
+  def_readwrite(#name, &cls::name##_, cls::DOC_##name) \
       .def("has_" #name, &cls::has_##name, "Tells if '" #name "' has a value.")
 
-#define PYFIELD_STR(cls, name)                                                                         \
-  def_property(                                                                                        \
-      #name,                                                                                           \
-      [](const cls &self) -> std::string {                                                             \
-        std::string s = self.ref_##name().as_string();                                                 \
-        return s;                                                                                      \
-      },                                                                                               \
-      [](cls &self, py::object obj) {                                                                  \
-        if (py::isinstance<py::str>(obj)) {                                                            \
-          std::string st = obj.cast<std::string>();                                                    \
-          self.set_##name(st);                                                                         \
-        } else if (py::isinstance<py::bytes>(obj)) {                                                   \
-          std::string st = obj.cast<py::bytes>();                                                      \
-          self.set_##name(st);                                                                         \
-        } else {                                                                                       \
-          self.set_##name(obj.cast<cls::name##_t &>());                                                \
-        }                                                                                              \
-      },                                                                                               \
-      cls::DOC_##name)                                                                                 \
+#define PYFIELD_STR(cls, name)                         \
+  def_property(                                        \
+      #name,                                           \
+      [](const cls& self) -> std::string {             \
+        std::string s = self.ref_##name().as_string(); \
+        return s;                                      \
+      },                                               \
+      [](cls& self, py::object obj) {                  \
+        if (py::isinstance<py::str>(obj)) {            \
+          std::string st = obj.cast<std::string>();    \
+          self.set_##name(st);                         \
+        } else if (py::isinstance<py::bytes>(obj)) {   \
+          std::string st = obj.cast<py::bytes>();      \
+          self.set_##name(st);                         \
+        } else {                                       \
+          self.set_##name(obj.cast<cls::name##_t&>()); \
+        }                                              \
+      },                                               \
+      cls::DOC_##name)                                 \
       .def("has_" #name, &cls::has_##name, "Tells if '" #name "' has a value")
 
-#define PYFIELD_STR_AS_BYTES(cls, name)                                                                \
-  def_property(                                                                                        \
-      #name,                                                                                           \
-      [](const cls &self) -> py::bytes {                                                               \
-        std::string s = py::bytes(self.ref_##name().as_string());                                      \
-        return s;                                                                                      \
-      },                                                                                               \
-      [](cls &self, py::object obj) {                                                                  \
-        if (py::isinstance<py::str>(obj)) {                                                            \
-          std::string st = obj.cast<std::string>();                                                    \
-          self.set_##name(st);                                                                         \
-        } else if (py::isinstance<py::bytes>(obj)) {                                                   \
-          std::string st = obj.cast<py::bytes>();                                                      \
-          self.set_##name(st);                                                                         \
-        } else {                                                                                       \
-          self.set_##name(obj.cast<cls::name##_t &>());                                                \
-        }                                                                                              \
-      },                                                                                               \
-      cls::DOC_##name)                                                                                 \
+#define PYFIELD_STR_AS_BYTES(cls, name)                           \
+  def_property(                                                   \
+      #name,                                                      \
+      [](const cls& self) -> py::bytes {                          \
+        std::string s = py::bytes(self.ref_##name().as_string()); \
+        return s;                                                 \
+      },                                                          \
+      [](cls& self, py::object obj) {                             \
+        if (py::isinstance<py::str>(obj)) {                       \
+          std::string st = obj.cast<std::string>();               \
+          self.set_##name(st);                                    \
+        } else if (py::isinstance<py::bytes>(obj)) {              \
+          std::string st = obj.cast<py::bytes>();                 \
+          self.set_##name(st);                                    \
+        } else {                                                  \
+          self.set_##name(obj.cast<cls::name##_t&>());            \
+        }                                                         \
+      },                                                          \
+      cls::DOC_##name)                                            \
       .def("has_" #name, &cls::has_##name, "Tells if '" #name "' has a value")
 
-#define _PYFIELD_OPTIONAL_CTYPE(cls, name, ctype)                                                      \
-  def_property(                                                                                        \
-      #name,                                                                                           \
-      [](cls &self) -> py::object {                                                                    \
-        if (!self.has_##name())                                                                        \
-          return py::none();                                                                           \
-        return py::cast(self.ref_##name(), py::return_value_policy::reference);                        \
-      },                                                                                               \
-      [](cls &self, py::object obj) {                                                                  \
-        if (obj.is_none()) {                                                                           \
-          self.reset_##name();                                                                         \
-        } else if (py::isinstance<py::ctype##_>(obj)) {                                                \
-          self.set_##name(obj.cast<ctype>());                                                          \
-        } else {                                                                                       \
-          EXT_THROW("unexpected value type, unable to set '" #name "' for class '" #cls "'.");         \
-        }                                                                                              \
-      },                                                                                               \
-      cls::DOC_##name)                                                                                 \
+#define _PYFIELD_OPTIONAL_CTYPE(cls, name, ctype)                                              \
+  def_property(                                                                                \
+      #name,                                                                                   \
+      [](cls& self) -> py::object {                                                            \
+        if (!self.has_##name())                                                                \
+          return py::none();                                                                   \
+        return py::cast(self.ref_##name(), py::return_value_policy::reference);                \
+      },                                                                                       \
+      [](cls& self, py::object obj) {                                                          \
+        if (obj.is_none()) {                                                                   \
+          self.reset_##name();                                                                 \
+        } else if (py::isinstance<py::ctype##_>(obj)) {                                        \
+          self.set_##name(obj.cast<ctype>());                                                  \
+        } else {                                                                               \
+          EXT_THROW("unexpected value type, unable to set '" #name "' for class '" #cls "'."); \
+        }                                                                                      \
+      },                                                                                       \
+      cls::DOC_##name)                                                                         \
       .def("has_" #name, &cls::has_##name, "Tells if '" #name "' has a value.")
 
 #define PYFIELD_OPTIONAL_INT(cls, name) _PYFIELD_OPTIONAL_CTYPE(cls, name, int)
 #define PYFIELD_OPTIONAL_FLOAT(cls, name) _PYFIELD_OPTIONAL_CTYPE(cls, name, float)
 
-#define PYFIELD_OPTIONAL_PROTO(cls, name)                                                              \
-  def_property(                                                                                        \
-      #name,                                                                                           \
-      [](cls &self) -> py::object {                                                                    \
-        if (!self.name##_.has_value()) {                                                               \
-          if (self.has_oneof_##name())                                                                 \
-            return py::none();                                                                         \
-          self.name##_.set_empty_value();                                                              \
-        }                                                                                              \
-        return py::cast(*self.name##_, py::return_value_policy::reference);                            \
-      },                                                                                               \
-      [](cls &self, py::object obj) {                                                                  \
-        if (obj.is_none()) {                                                                           \
-          self.name##_.reset();                                                                        \
-        } else if (py::isinstance<cls::name##_t>(obj)) {                                               \
-          self.name##_ = obj.cast<cls::name##_t &>();                                                  \
-        } else {                                                                                       \
-          EXT_THROW("unexpected value type, unable to set '" #name "' for class '" #cls "'.");         \
-        }                                                                                              \
-      },                                                                                               \
-      cls::DOC_##name)                                                                                 \
-      .def("has_" #name, &cls::has_##name, "Tells if '" #name "' has a value.")                        \
-      .def(                                                                                            \
-          "add_" #name, [](cls & self) -> cls::name##_t & {                                            \
-            self.name##_.set_empty_value();                                                            \
-            return *self.name##_;                                                                      \
-          },                                                                                           \
-          py::return_value_policy::reference, "Sets an empty value.")
+#define PYFIELD_OPTIONAL_PROTO(cls, name)                                                      \
+  def_property(                                                                                \
+      #name,                                                                                   \
+      [](cls& self) -> py::object {                                                            \
+        if (!self.name##_.has_value()) {                                                       \
+          if (self.has_oneof_##name())                                                         \
+            return py::none();                                                                 \
+          self.name##_.set_empty_value();                                                      \
+        }                                                                                      \
+        return py::cast(*self.name##_, py::return_value_policy::reference);                    \
+      },                                                                                       \
+      [](cls& self, py::object obj) {                                                          \
+        if (obj.is_none()) {                                                                   \
+          self.name##_.reset();                                                                \
+        } else if (py::isinstance<cls::name##_t>(obj)) {                                       \
+          self.name##_ = obj.cast<cls::name##_t&>();                                           \
+        } else {                                                                               \
+          EXT_THROW("unexpected value type, unable to set '" #name "' for class '" #cls "'."); \
+        }                                                                                      \
+      },                                                                                       \
+      cls::DOC_##name)                                                                         \
+      .def("has_" #name, &cls::has_##name, "Tells if '" #name "' has a value.")                \
+      .def(                                                                                    \
+          "add_" #name,                                                                        \
+          [](cls & self) -> cls::name##_t& {                                                   \
+            self.name##_.set_empty_value();                                                    \
+            return *self.name##_;                                                              \
+          },                                                                                   \
+          py::return_value_policy::reference,                                                  \
+          "Sets an empty value.")
 
-#define SHORTEN_CODE(cls, dtype)                                                                       \
+#define SHORTEN_CODE(cls, dtype) \
   def_property_readonly_static(#dtype, [](py::object) -> int { return static_cast<int>(cls::dtype); })
 
-#define DECLARE_REPEATED_FIELD(T, inst_name)                                                           \
+#define DECLARE_REPEATED_FIELD(T, inst_name) \
   py::class_<utils::RepeatedField<T>> inst_name(m, "RepeatedField" #T, "RepeatedField" #T);
 
-#define DECLARE_REPEATED_FIELD_PROTO(T, inst_name)                                                     \
-  py::class_<utils::RepeatedField<T>> inst_name(m, "RepeatedField" #T, "RepeatedField" #T);            \
-  py::class_<utils::RepeatedProtoField<T>> inst_name##_proto(m, "RepeatedProtoField" #T,               \
-                                                             "RepeatedProtoField" #T);
+#define DECLARE_REPEATED_FIELD_PROTO(T, inst_name)                                          \
+  py::class_<utils::RepeatedField<T>> inst_name(m, "RepeatedField" #T, "RepeatedField" #T); \
+  py::class_<utils::RepeatedProtoField<T>> inst_name##_proto(m, "RepeatedProtoField" #T, "RepeatedProtoField" #T);
 
-#define DECLARE_REPEATED_FIELD_SUBPROTO(cls, T, inst_name)                                             \
-  py::class_<utils::RepeatedField<cls::T>> inst_name(m, "RepeatedField" #cls #T,                       \
-                                                     "RepeatedField" #cls #T);                         \
-  py::class_<utils::RepeatedProtoField<cls::T>> inst_name##_proto(m, "RepeatedProtoField" #cls #T,     \
-                                                                  "RepeatedProtoField" #cls #T);
+#define DECLARE_REPEATED_FIELD_SUBPROTO(cls, T, inst_name)                                                 \
+  py::class_<utils::RepeatedField<cls::T>> inst_name(m, "RepeatedField" #cls #T, "RepeatedField" #cls #T); \
+  py::class_<utils::RepeatedProtoField<cls::T>> inst_name##_proto(                                         \
+      m, "RepeatedProtoField" #cls #T, "RepeatedProtoField" #cls #T);
 
-template <typename cls> void pyadd_proto_serialization(py::class_<cls, Message> &name_inst) {
+template <typename cls>
+void pyadd_proto_serialization(py::class_<cls, Message>& name_inst) {
   name_inst
       .def(
           "ParseFromString",
-          [](cls &self, py::bytes data, py::object options) {
+          [](cls& self, py::bytes data, py::object options) {
             std::string raw = data.cast<std::string>();
-            if (py::isinstance<ParseOptions &>(options)) {
-              self.ParseFromString(raw, options.cast<ParseOptions &>());
+            if (py::isinstance<ParseOptions&>(options)) {
+              self.ParseFromString(raw, options.cast<ParseOptions&>());
             } else {
               self.ParseFromString(raw);
             }
           },
-          py::arg("data"), py::arg("options") = py::none(),
+          py::arg("data"),
+          py::arg("options") = py::none(),
           "Parses a sequence of bytes to fill this instance.")
       .def(
           "ParseFromFile",
-          [](cls &self, const std::string &file_path, py::object options,
-             const std::string &external_data_file) {
-            utils::FileStream *stream = external_data_file.empty()
-                                            ? new utils::FileStream(file_path)
-                                            : new utils::TwoFilesStream(file_path, external_data_file);
-            if (py::isinstance<ParseOptions &>(options)) {
-              ParseOptions &coptions = options.cast<ParseOptions &>();
+          [](cls& self, const std::string& file_path, py::object options, const std::string& external_data_file) {
+            utils::FileStream* stream = external_data_file.empty()
+                ? new utils::FileStream(file_path)
+                : new utils::TwoFilesStream(file_path, external_data_file);
+            if (py::isinstance<ParseOptions&>(options)) {
+              ParseOptions& coptions = options.cast<ParseOptions&>();
               if (coptions.parallel) {
                 stream->StartThreadPool(coptions.num_threads);
               }
@@ -175,66 +177,68 @@ template <typename cls> void pyadd_proto_serialization(py::class_<cls, Message> 
             }
             delete stream;
           },
-          py::arg("name"), py::arg("options") = py::none(), py::arg("external_data_file") = "",
+          py::arg("name"),
+          py::arg("options") = py::none(),
+          py::arg("external_data_file") = "",
           "Parses a binary file to fill this instance.")
       .def(
           "SerializeSize",
-          [](cls &self, py::object options) -> uint64_t {
-            if (py::isinstance<SerializeOptions &>(options)) {
+          [](cls& self, py::object options) -> uint64_t {
+            if (py::isinstance<SerializeOptions&>(options)) {
               utils::StringWriteStream out;
-              return self.SerializeSize(out, options.cast<SerializeOptions &>());
+              return self.SerializeSize(out, options.cast<SerializeOptions&>());
             } else {
               return self.SerializeSize();
             }
           },
-          py::arg("options") = py::none(), "Returns the size once serialized without serializing.")
+          py::arg("options") = py::none(),
+          "Returns the size once serialized without serializing.")
       .def(
           "SerializeToString",
-          [](cls &self, py::object options) {
+          [](cls& self, py::object options) {
             std::string out;
-            if (py::isinstance<SerializeOptions &>(options)) {
-              self.SerializeToString(out, options.cast<SerializeOptions &>());
+            if (py::isinstance<SerializeOptions&>(options)) {
+              self.SerializeToString(out, options.cast<SerializeOptions&>());
             } else {
               SerializeOptions opts;
               self.SerializeToString(out, opts);
             }
             return py::bytes(out);
           },
-          py::arg("options") = py::none(), "Serializes this instance into a sequence of bytes.")
+          py::arg("options") = py::none(),
+          "Serializes this instance into a sequence of bytes.")
       .def(
           "SerializeToFile",
-          [](cls &self, const std::string &file_path, py::object options,
-             std::string &external_data_file) {
-            utils::BinaryWriteStream *stream =
-                external_data_file.empty()
-                    ? new utils::FileWriteStream(file_path)
-                    : new utils::TwoFilesWriteStream(file_path, external_data_file);
-            if (py::isinstance<SerializeOptions &>(options)) {
-              SerializeProtoToStream(self, *stream, options.cast<SerializeOptions &>(),
-                                     !external_data_file.empty());
+          [](cls& self, const std::string& file_path, py::object options, std::string& external_data_file) {
+            utils::BinaryWriteStream* stream = external_data_file.empty()
+                ? new utils::FileWriteStream(file_path)
+                : new utils::TwoFilesWriteStream(file_path, external_data_file);
+            if (py::isinstance<SerializeOptions&>(options)) {
+              SerializeProtoToStream(self, *stream, options.cast<SerializeOptions&>(), !external_data_file.empty());
             } else {
               SerializeOptions opts;
               SerializeProtoToStream(self, *stream, opts, !external_data_file.empty());
             }
             delete stream;
           },
-          py::arg("name"), py::arg("options") = py::none(), py::arg("external_data_file") = "",
+          py::arg("name"),
+          py::arg("options") = py::none(),
+          py::arg("external_data_file") = "",
           "Serializes this instance into a file. If ``external_data_size`` is not empty, big weights "
           "are stored in this (depending on ``options.raw_data_threshold``.")
       .def(
           "__str__",
-          [](cls &self) -> std::string {
+          [](cls& self) -> std::string {
             utils::PrintOptions opts;
             std::vector<std::string> rows = self.PrintToVectorString(opts);
             return utils::join_string(rows);
           },
           "Creates a printable string for this class.")
       .def(
-          "CopyFrom", [](cls &self, const cls &src) { self.CopyFrom(src); },
-          "Copies one instance into this one.")
+          "CopyFrom", [](cls& self, const cls& src) { self.CopyFrom(src); }, "Copies one instance into this one.")
       .def(
           "__eq__",
-          [](const cls &self, const cls &other) -> bool {
+          [](const cls& self, const cls& other) -> bool {
             SerializeOptions opts1, opts2;
             std::string s1;
             self.SerializeToString(s1, opts1);
@@ -242,29 +246,30 @@ template <typename cls> void pyadd_proto_serialization(py::class_<cls, Message> 
             other.SerializeToString(s2, opts2);
             return s1 == s2;
           },
-          py::arg("other"), "Compares the serialized strings.");
+          py::arg("other"),
+          "Compares the serialized strings.");
 }
 
-template <typename T> void define_repeated_field_type(py::class_<utils::RepeatedField<T>> &pycls) {
+template <typename T>
+void define_repeated_field_type(py::class_<utils::RepeatedField<T>>& pycls) {
   pycls.def(py::init<>())
-      .def("add", &utils::RepeatedField<T>::add, py::return_value_policy::reference,
-           "Adds an empty element.")
+      .def("add", &utils::RepeatedField<T>::add, py::return_value_policy::reference, "Adds an empty element.")
       .def("clear", &utils::RepeatedField<T>::clear, "Removes every element.")
       .def("__len__", &utils::RepeatedField<T>::size, "Returns the number of elements.")
       .def(
           "__getitem__",
-          [](utils::RepeatedField<T> &self, int index) -> T & {
+          [](utils::RepeatedField<T>& self, int index) -> T& {
             if (index < 0)
               index += static_cast<int>(self.size());
-            EXT_ENFORCE(index >= 0 && index < static_cast<int>(self.size()), "index=", index,
-                        " out of boundary");
+            EXT_ENFORCE(index >= 0 && index < static_cast<int>(self.size()), "index=", index, " out of boundary");
             return self[index];
           },
-          py::return_value_policy::reference, py::arg("index"),
+          py::return_value_policy::reference,
+          py::arg("index"),
           "Returns the element at position index.")
       .def(
           "__delitem__",
-          [](utils::RepeatedField<T> &self, py::slice slice) {
+          [](utils::RepeatedField<T>& self, py::slice slice) {
             size_t start, stop, step, slicelength;
             if (slice.compute(self.size(), &start, &stop, &step, &slicelength)) {
               self.remove_range(start, stop, step);
@@ -273,45 +278,50 @@ template <typename T> void define_repeated_field_type(py::class_<utils::Repeated
           "Removes elements.")
       .def(
           "__iter__",
-          [](utils::RepeatedField<T> &self) { return py::make_iterator(self.begin(), self.end()); },
-          py::keep_alive<0, 1>(), "Iterates over the elements.");
+          [](utils::RepeatedField<T>& self) { return py::make_iterator(self.begin(), self.end()); },
+          py::keep_alive<0, 1>(),
+          "Iterates over the elements.");
 }
 
 template <typename T>
-void define_repeated_field_type_extend(py::class_<utils::RepeatedField<T>> &pycls) {
+void define_repeated_field_type_extend(py::class_<utils::RepeatedField<T>>& pycls) {
   pycls
       .def(
-          "append", [](utils::RepeatedField<T> &self, T v) { self.push_back(v); }, py::arg("item"),
+          "append",
+          [](utils::RepeatedField<T>& self, T v) { self.push_back(v); },
+          py::arg("item"),
           "Append one element to the list of values.")
       .def(
           "extend",
-          [](utils::RepeatedField<T> &self, py::iterable iterable) {
+          [](utils::RepeatedField<T>& self, py::iterable iterable) {
             if (py::isinstance<utils::RepeatedField<T>>(iterable)) {
-              self.extend(iterable.cast<utils::RepeatedField<T> &>());
+              self.extend(iterable.cast<utils::RepeatedField<T>&>());
             } else {
               self.extend(iterable.cast<std::vector<T>>());
             }
           },
-          py::arg("sequence"), "Extends the list of values.");
+          py::arg("sequence"),
+          "Extends the list of values.");
 }
 
 template <>
-void define_repeated_field_type_extend(py::class_<utils::RepeatedField<utils::String>> &pycls) {
+void define_repeated_field_type_extend(py::class_<utils::RepeatedField<utils::String>>& pycls) {
   pycls
       .def(
           "append",
-          [](utils::RepeatedField<utils::String> &self, const utils::String &v) { self.push_back(v); },
-          py::arg("item"), "Append one element to the list of values.")
+          [](utils::RepeatedField<utils::String>& self, const utils::String& v) { self.push_back(v); },
+          py::arg("item"),
+          "Append one element to the list of values.")
       .def(
           "extend",
-          [](utils::RepeatedField<utils::String> &self, py::iterable iterable) {
+          [](utils::RepeatedField<utils::String>& self, py::iterable iterable) {
             if (py::isinstance<utils::RepeatedField<utils::String>>(iterable)) {
-              self.extend(iterable.cast<utils::RepeatedField<utils::String> &>());
+              self.extend(iterable.cast<utils::RepeatedField<utils::String>&>());
             } else {
               std::vector<utils::String> values;
               for (auto it : iterable) {
                 if (py::isinstance<utils::String>(it)) {
-                  values.push_back(it.cast<utils::String &>());
+                  values.push_back(it.cast<utils::String&>());
                 } else {
                   values.emplace_back(utils::String(it.cast<std::string>()));
                 }
@@ -319,26 +329,30 @@ void define_repeated_field_type_extend(py::class_<utils::RepeatedField<utils::St
               self.extend(values);
             }
           },
-          py::arg("sequence"), "Extends the list of values.");
+          py::arg("sequence"),
+          "Extends the list of values.");
 }
 
 template <typename T>
-void define_repeated_field_type_proto(py::class_<utils::RepeatedField<T>> &pycls,
-                                      py::class_<utils::RepeatedProtoField<T>> &pycls_proto) {
+void define_repeated_field_type_proto(
+    py::class_<utils::RepeatedField<T>>& pycls,
+    py::class_<utils::RepeatedProtoField<T>>& pycls_proto) {
   define_repeated_field_type(pycls);
   pycls
       .def(
-          "append", [](utils::RepeatedField<T> &self, const T &v) { self.push_back(v); },
-          py::arg("item"), "Append one element to the list of values.")
+          "append",
+          [](utils::RepeatedField<T>& self, const T& v) { self.push_back(v); },
+          py::arg("item"),
+          "Append one element to the list of values.")
       .def(
           "extend",
-          [](utils::RepeatedField<T> &self, py::iterable iterable) {
+          [](utils::RepeatedField<T>& self, py::iterable iterable) {
             if (py::isinstance<utils::RepeatedField<T>>(iterable)) {
-              self.extend(iterable.cast<utils::RepeatedField<T> &>());
+              self.extend(iterable.cast<utils::RepeatedField<T>&>());
             } else {
               py::list els = iterable.cast<py::list>();
               for (auto it : els) {
-                if (py::isinstance<const T &>(it)) {
+                if (py::isinstance<const T&>(it)) {
                   self.push_back(it.cast<T>());
                 } else if (py::isinstance<T>(it)) {
                   self.push_back(it.cast<T>());
@@ -348,26 +362,26 @@ void define_repeated_field_type_proto(py::class_<utils::RepeatedField<T>> &pycls
               }
             }
           },
-          py::arg("sequence"), "Extends the list of values.");
+          py::arg("sequence"),
+          "Extends the list of values.");
   pycls_proto.def(py::init<>())
-      .def("add", &utils::RepeatedProtoField<T>::add, py::return_value_policy::reference,
-           "Adds an empty element.")
+      .def("add", &utils::RepeatedProtoField<T>::add, py::return_value_policy::reference, "Adds an empty element.")
       .def("clear", &utils::RepeatedProtoField<T>::clear, "Removes every element.")
       .def("__len__", &utils::RepeatedProtoField<T>::size, "Returns the number of elements.")
       .def(
           "__getitem__",
-          [](utils::RepeatedProtoField<T> &self, int index) -> T & {
+          [](utils::RepeatedProtoField<T>& self, int index) -> T& {
             if (index < 0)
               index += static_cast<int>(self.size());
-            EXT_ENFORCE(index >= 0 && index < static_cast<int>(self.size()), "index=", index,
-                        " out of boundary");
+            EXT_ENFORCE(index >= 0 && index < static_cast<int>(self.size()), "index=", index, " out of boundary");
             return self[index];
           },
-          py::return_value_policy::reference, py::arg("index"),
+          py::return_value_policy::reference,
+          py::arg("index"),
           "Returns the element at position index.")
       .def(
           "__delitem__",
-          [](utils::RepeatedProtoField<T> &self, py::slice slice) {
+          [](utils::RepeatedProtoField<T>& self, py::slice slice) {
             size_t start, stop, step, slicelength;
             if (slice.compute(self.size(), &start, &stop, &step, &slicelength)) {
               self.remove_range(start, stop, step);
@@ -376,21 +390,20 @@ void define_repeated_field_type_proto(py::class_<utils::RepeatedField<T>> &pycls
           "Removes elements.")
       .def(
           "__iter__",
-          [](utils::RepeatedProtoField<T> &self) {
-            return py::make_iterator(self.begin(), self.end());
-          },
-          py::keep_alive<0, 1>(), "Iterates over the elements.")
+          [](utils::RepeatedProtoField<T>& self) { return py::make_iterator(self.begin(), self.end()); },
+          py::keep_alive<0, 1>(),
+          "Iterates over the elements.")
       .def(
           "__eq__",
-          [](utils::RepeatedField<T> &self, py::list &obj) -> bool {
+          [](utils::RepeatedField<T>& self, py::list& obj) -> bool {
             if (self.size() != obj.size())
               return false;
             for (size_t i = 0; i < self.size(); ++i) {
-              if (!py::isinstance<T &>(obj[i]))
+              if (!py::isinstance<T&>(obj[i]))
                 return false;
               std::string s1, s2;
               self[i].SerializeToString(s1);
-              obj[i].cast<T &>().SerializeToString(s2);
+              obj[i].cast<T&>().SerializeToString(s2);
               if (s1 != s2)
                 return false;
             }
@@ -398,18 +411,20 @@ void define_repeated_field_type_proto(py::class_<utils::RepeatedField<T>> &pycls
           },
           "Compares the container to a list of objects.")
       .def(
-          "append", [](utils::RepeatedProtoField<T> &self, const T &v) { self.push_back(v); },
-          py::arg("item"), "Append one element to the list of values.")
+          "append",
+          [](utils::RepeatedProtoField<T>& self, const T& v) { self.push_back(v); },
+          py::arg("item"),
+          "Append one element to the list of values.")
       .def(
           "extend",
-          [](utils::RepeatedProtoField<T> &self, py::iterable iterable) {
+          [](utils::RepeatedProtoField<T>& self, py::iterable iterable) {
             if (py::isinstance<utils::RepeatedProtoField<T>>(iterable)) {
-              self.extend(iterable.cast<utils::RepeatedProtoField<T> &>());
+              self.extend(iterable.cast<utils::RepeatedProtoField<T>&>());
             } else {
               py::list els = iterable.cast<py::list>();
               for (auto it : els) {
-                if (py::isinstance<const T &>(it)) {
-                  self.push_back(it.cast<const T &>());
+                if (py::isinstance<const T&>(it)) {
+                  self.push_back(it.cast<const T&>());
                 } else if (py::isinstance<T>(it)) {
                   self.push_back(it.cast<T>());
                 } else {
@@ -418,7 +433,8 @@ void define_repeated_field_type_proto(py::class_<utils::RepeatedField<T>> &pycls
               }
             }
           },
-          py::arg("sequence"), "Extends the list of values.");
+          py::arg("sequence"),
+          "Extends the list of values.");
 }
 
 PYBIND11_MODULE(_onnx2py, m) {
@@ -434,7 +450,7 @@ PYBIND11_MODULE(_onnx2py, m) {
       "utils_onnx2_read_varint64",
       [](py::bytes data) -> py::tuple {
         std::string raw = data;
-        const uint8_t *ptr = reinterpret_cast<const uint8_t *>(raw.data());
+        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(raw.data());
         utils::StringStream st(ptr, raw.size());
         int64_t value = st.next_int64();
         return py::make_tuple(value, st.tell());
@@ -447,51 +463,63 @@ PYBIND11_MODULE(_onnx2py, m) {
 
   py::class_<ParseOptions>(m, "ParseOptions", "Parsing options for proto classes")
       .def(py::init<>())
-      .def_readwrite("skip_raw_data", &ParseOptions::skip_raw_data,
-                     "if true, raw data will not be read but skipped, tensors are not valid in that "
-                     "case  but the model structure is still available")
       .def_readwrite(
-          "raw_data_threshold", &ParseOptions::raw_data_threshold,
+          "skip_raw_data",
+          &ParseOptions::skip_raw_data,
+          "if true, raw data will not be read but skipped, tensors are not valid in that "
+          "case  but the model structure is still available")
+      .def_readwrite(
+          "raw_data_threshold",
+          &ParseOptions::raw_data_threshold,
           "if skip_raw_data is true, raw data will be read only if it is larger than the threshold")
       .def_readwrite("parallel", &ParseOptions::parallel, "parallelizes the reading of the big blocks")
-      .def_readwrite("num_threads", &ParseOptions::num_threads,
-                     "number of threads to run in parallel if parallel is true, -1 for as many threads "
-                     "as the number of cores");
+      .def_readwrite(
+          "num_threads",
+          &ParseOptions::num_threads,
+          "number of threads to run in parallel if parallel is true, -1 for as many threads "
+          "as the number of cores");
 
   py::class_<SerializeOptions>(m, "SerializeOptions", "Serializing options for proto classes")
       .def(py::init<>())
-      .def_readwrite("skip_raw_data", &SerializeOptions::skip_raw_data,
-                     "if true, raw data will not be written but skipped, tensors are not valid in that "
-                     "case  but the model structure is still available")
       .def_readwrite(
-          "raw_data_threshold", &SerializeOptions::raw_data_threshold,
+          "skip_raw_data",
+          &SerializeOptions::skip_raw_data,
+          "if true, raw data will not be written but skipped, tensors are not valid in that "
+          "case  but the model structure is still available")
+      .def_readwrite(
+          "raw_data_threshold",
+          &SerializeOptions::raw_data_threshold,
           "if skip_raw_data is true, raw data will be written only if it is larger than the threshold");
 
   py::class_<utils::PrintOptions>(m, "PrintOptions", "Printing options for proto classes")
       .def(py::init<>())
-      .def_readwrite("skip_raw_data", &utils::PrintOptions::skip_raw_data,
-                     "if true, raw data will not be printed but skipped, tensors are not valid in that "
-                     "case  but the model structure is still available")
       .def_readwrite(
-          "raw_data_threshold", &utils::PrintOptions::raw_data_threshold,
+          "skip_raw_data",
+          &utils::PrintOptions::skip_raw_data,
+          "if true, raw data will not be printed but skipped, tensors are not valid in that "
+          "case  but the model structure is still available")
+      .def_readwrite(
+          "raw_data_threshold",
+          &utils::PrintOptions::raw_data_threshold,
           "if skip_raw_data is true, raw data will be printed only if it is larger than the threshold");
 
   py::class_<utils::String>(m, "String", "Simplified string with no final null character.")
       .def(py::init<std::string>())
       .def(
-          "__str__", [](const utils::String &self) -> std::string { return self.as_string(); },
+          "__str__",
+          [](const utils::String& self) -> std::string { return self.as_string(); },
           "Converts this instance into a python string.")
       .def(
           "__repr__",
-          [](const utils::String &self) -> std::string {
+          [](const utils::String& self) -> std::string {
             return std::string("'") + self.as_string() + std::string("'");
           },
           "Represention with surrounding quotes.")
       .def(
-          "__len__", [](const utils::String &self) -> int { return self.size(); },
-          "Returns the length of the string.")
+          "__len__", [](const utils::String& self) -> int { return self.size(); }, "Returns the length of the string.")
       .def(
-          "__eq__", [](const utils::String &self, const std::string &s) -> int { return self == s; },
+          "__eq__",
+          [](const utils::String& self, const std::string& s) -> int { return self == s; },
           "Compares two strings.");
 
   DECLARE_REPEATED_FIELD(int64_t, rep_int64_t);
@@ -514,8 +542,7 @@ PYBIND11_MODULE(_onnx2py, m) {
   define_repeated_field_type(rep_double);
   define_repeated_field_type_extend(rep_double);
 
-  py::class_<utils::RepeatedField<utils::String>> rep_string(m, "RepeatedFieldString",
-                                                             "RepeatedFieldString");
+  py::class_<utils::RepeatedField<utils::String>> rep_string(m, "RepeatedFieldString", "RepeatedFieldString");
   define_repeated_field_type(rep_string);
   define_repeated_field_type_extend(rep_string);
 
@@ -533,9 +560,7 @@ PYBIND11_MODULE(_onnx2py, m) {
   DECLARE_REPEATED_FIELD_PROTO(StringStringEntryProto, rep_ssentry);
   define_repeated_field_type_proto(rep_ssentry, rep_ssentry_proto);
 
-  PYDEFINE_PROTO(m, OperatorSetIdProto)
-      .PYFIELD_STR(OperatorSetIdProto, domain)
-      .PYFIELD(OperatorSetIdProto, version);
+  PYDEFINE_PROTO(m, OperatorSetIdProto).PYFIELD_STR(OperatorSetIdProto, domain).PYFIELD(OperatorSetIdProto, version);
   PYADD_PROTO_SERIALIZATION(OperatorSetIdProto);
   DECLARE_REPEATED_FIELD_PROTO(OperatorSetIdProto, rep_osp);
   define_repeated_field_type_proto(rep_osp, rep_osp_proto);
@@ -545,9 +570,7 @@ PYBIND11_MODULE(_onnx2py, m) {
       .PYFIELD(TensorAnnotation, quant_parameter_tensor_names);
   PYADD_PROTO_SERIALIZATION(TensorAnnotation);
 
-  PYDEFINE_PROTO(m, IntIntListEntryProto)
-      .PYFIELD(IntIntListEntryProto, key)
-      .PYFIELD(IntIntListEntryProto, value);
+  PYDEFINE_PROTO(m, IntIntListEntryProto).PYFIELD(IntIntListEntryProto, key).PYFIELD(IntIntListEntryProto, value);
   PYADD_PROTO_SERIALIZATION(IntIntListEntryProto);
   DECLARE_REPEATED_FIELD_PROTO(IntIntListEntryProto, rep_iil);
   define_repeated_field_type_proto(rep_iil, rep_iil_proto);
@@ -566,9 +589,7 @@ PYBIND11_MODULE(_onnx2py, m) {
   DECLARE_REPEATED_FIELD_PROTO(SimpleShardedDimProto, rep_ssdp);
   define_repeated_field_type_proto(rep_ssdp, rep_ssdp_proto);
 
-  PYDEFINE_PROTO(m, ShardedDimProto)
-      .PYFIELD(ShardedDimProto, axis)
-      .PYFIELD(ShardedDimProto, simple_sharding);
+  PYDEFINE_PROTO(m, ShardedDimProto).PYFIELD(ShardedDimProto, axis).PYFIELD(ShardedDimProto, simple_sharding);
   PYADD_PROTO_SERIALIZATION(ShardedDimProto);
   DECLARE_REPEATED_FIELD_PROTO(ShardedDimProto, rep_sdp);
   define_repeated_field_type_proto(rep_sdp, rep_sdp_proto);
@@ -659,8 +680,9 @@ PYBIND11_MODULE(_onnx2py, m) {
       .SHORTEN_CODE(TensorProto::DataType, FLOAT8E8M0)
       .PYFIELD(TensorProto, dims)
       .def_property(
-          "data_type", [](const TensorProto &self) -> TensorProto::DataType { return self.data_type_; },
-          [](TensorProto &self, py::object obj) {
+          "data_type",
+          [](const TensorProto& self) -> TensorProto::DataType { return self.data_type_; },
+          [](TensorProto& self, py::object obj) {
             if (py::isinstance<py::int_>(obj)) {
               self.data_type_ = static_cast<TensorProto::DataType>(obj.cast<int>());
             } else {
@@ -670,10 +692,10 @@ PYBIND11_MODULE(_onnx2py, m) {
           TensorProto::DOC_data_type)
       .def_property(
           "data_location",
-          [](const TensorProto &self) -> TensorProto::DataLocation {
+          [](const TensorProto& self) -> TensorProto::DataLocation {
             return self.has_data_location() ? *self.data_location_ : TensorProto::DataLocation::DEFAULT;
           },
-          [](TensorProto &self, py::object obj) {
+          [](TensorProto& self, py::object obj) {
             if (py::isinstance<py::int_>(obj)) {
               self.data_location_ = static_cast<TensorProto::DataLocation>(obj.cast<int>());
             } else {
@@ -693,17 +715,17 @@ PYBIND11_MODULE(_onnx2py, m) {
       .PYFIELD(TensorProto, uint64_data)
       .def_property(
           "string_data",
-          [](const TensorProto &self) -> py::list {
+          [](const TensorProto& self) -> py::list {
             py::list result;
-            for (const auto &s : self.string_data_) {
+            for (const auto& s : self.string_data_) {
               result.append(py::bytes(std::string(s.data(), s.size())));
             }
             return result;
           },
-          [](TensorProto &self, py::list data) {
+          [](TensorProto& self, py::list data) {
             self.string_data_.reserve(py::len(data));
 
-            for (const auto &item : data) {
+            for (const auto& item : data) {
               if (py::isinstance<py::bytes>(item)) {
                 self.string_data_.emplace_back(item.cast<std::string>());
               } else if (py::isinstance<py::str>(item)) {
@@ -716,13 +738,12 @@ PYBIND11_MODULE(_onnx2py, m) {
           TensorProto::DOC_string_data)
       .def_property(
           "raw_data",
-          [](const TensorProto &self) -> py::bytes {
-            return py::bytes(reinterpret_cast<const char *>(self.raw_data_.data()),
-                             self.raw_data_.size());
+          [](const TensorProto& self) -> py::bytes {
+            return py::bytes(reinterpret_cast<const char*>(self.raw_data_.data()), self.raw_data_.size());
           },
-          [](TensorProto &self, py::bytes data) {
+          [](TensorProto& self, py::bytes data) {
             std::string raw = data;
-            const uint8_t *ptr = reinterpret_cast<const uint8_t *>(raw.data());
+            const uint8_t* ptr = reinterpret_cast<const uint8_t*>(raw.data());
             self.raw_data_.resize(raw.size());
             memcpy(self.raw_data_.data(), ptr, raw.size());
           },
@@ -748,11 +769,9 @@ PYBIND11_MODULE(_onnx2py, m) {
       .PYFIELD_OPTIONAL_INT(TypeProto::SparseTensor, elem_type)
       .PYFIELD_OPTIONAL_PROTO(TypeProto::SparseTensor, shape);
   PYADD_SUBPROTO_SERIALIZATION(TypeProto, SparseTensor);
-  PYDEFINE_SUBPROTO(py_TypeProto, TypeProto, Sequence)
-      .PYFIELD_OPTIONAL_PROTO(TypeProto::Sequence, elem_type);
+  PYDEFINE_SUBPROTO(py_TypeProto, TypeProto, Sequence).PYFIELD_OPTIONAL_PROTO(TypeProto::Sequence, elem_type);
   PYADD_SUBPROTO_SERIALIZATION(TypeProto, Sequence);
-  PYDEFINE_SUBPROTO(py_TypeProto, TypeProto, Optional)
-      .PYFIELD_OPTIONAL_PROTO(TypeProto::Optional, elem_type);
+  PYDEFINE_SUBPROTO(py_TypeProto, TypeProto, Optional).PYFIELD_OPTIONAL_PROTO(TypeProto::Optional, elem_type);
   PYADD_SUBPROTO_SERIALIZATION(TypeProto, Optional);
   PYDEFINE_SUBPROTO(py_TypeProto, TypeProto, Map)
       .PYFIELD(TypeProto::Map, key_type)
@@ -776,8 +795,7 @@ PYBIND11_MODULE(_onnx2py, m) {
   define_repeated_field_type_proto(rep_vip, rep_vip_proto);
 
   PYDEFINE_PROTO_WITH_SUBTYPES(m, AttributeProto);
-  py::enum_<AttributeProto::AttributeType> attribute_type(py_AttributeProto, "AttributeType",
-                                                          py::arithmetic());
+  py::enum_<AttributeProto::AttributeType> attribute_type(py_AttributeProto, "AttributeType", py::arithmetic());
   attribute_type.value("UNDEFINED", AttributeProto::AttributeType::UNDEFINED)
       .value("FLOAT", AttributeProto::AttributeType::FLOAT)
       .value("INT", AttributeProto::AttributeType::INT)
@@ -813,8 +831,17 @@ PYBIND11_MODULE(_onnx2py, m) {
           "keys",
           []() {
             return std::vector<std::string>{
-                "UNDEFINED", "FLOAT", "INT",     "STRING", "GRAPH",          "SPARSE_TENSOR",
-                "FLOATS",    "INTS",  "STRINGS", "GRAPHS", "SPARSE_TENSORS",
+                "UNDEFINED",
+                "FLOAT",
+                "INT",
+                "STRING",
+                "GRAPH",
+                "SPARSE_TENSOR",
+                "FLOATS",
+                "INTS",
+                "STRINGS",
+                "GRAPHS",
+                "SPARSE_TENSORS",
             };
           },
           "Returns the list of names.")
@@ -855,8 +882,8 @@ PYBIND11_MODULE(_onnx2py, m) {
       .PYFIELD_STR(AttributeProto, doc_string)
       .def_property(
           "type",
-          [](const AttributeProto &self) -> AttributeProto::AttributeType { return self.type_; },
-          [](AttributeProto &self, py::object obj) {
+          [](const AttributeProto& self) -> AttributeProto::AttributeType { return self.type_; },
+          [](AttributeProto& self, py::object obj) {
             if (py::isinstance<py::int_>(obj)) {
               self.type_ = static_cast<AttributeProto::AttributeType>(obj.cast<int>());
             } else {
