@@ -9,6 +9,9 @@ on:
     # run weekly on Sunday 23:59
     - cron:  '29 23 * * SUN'
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -34,7 +37,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.8.10
+        uses: prefix-dev/setup-pixi@v0.8.14
         with:
           environments: ${{ matrix.environment }}
       - name: Install repository

@@ -31,6 +31,7 @@ def _compute_attention(
     attn_mask: np.ndarray | None = None,
     past_key: np.ndarray | None = None,
     past_value: np.ndarray | None = None,
+    nonpad_kv_seqlen: np.ndarray | None = None,
     scale=None,
     is_causal=False,
     q_num_heads=None,
@@ -53,16 +54,25 @@ def _compute_attention(
         assert q_num_heads is not None and kv_num_heads is not None
 
         head_size_q = int(hidden_size_q / q_num_heads)
-        new_shape_q = [batch_size, q_num_heads, Q.shape[1], head_size_q]
-        Q = np.reshape(Q, new_shape_q)
+        # First reshape to [batch_size, q_sequence_length, q_num_heads, head_size]
+        intermediate_shape_q = [batch_size, Q.shape[1], q_num_heads, head_size_q]
+        Q = np.reshape(Q, intermediate_shape_q)
+        # Then transpose to [batch_size, q_num_heads, q_sequence_length, head_size]
+        Q = np.transpose(Q, (0, 2, 1, 3))
 
         head_size_k = int(hidden_size_k / kv_num_heads)
-        new_shape_k = [batch_size, kv_num_heads, K.shape[1], head_size_k]
-        K = np.reshape(K, new_shape_k)
+        # First reshape to [batch_size, kv_sequence_length, kv_num_heads, head_size]
+        intermediate_shape_k = [batch_size, K.shape[1], kv_num_heads, head_size_k]
+        K = np.reshape(K, intermediate_shape_k)
+        # Then transpose to [batch_size, kv_num_heads, kv_sequence_length, head_size]
+        K = np.transpose(K, (0, 2, 1, 3))
 
         head_size_v = int(hidden_size_v / kv_num_heads)
-        new_shape_v = [batch_size, kv_num_heads, V.shape[1], head_size_v]
-        V = np.reshape(V, new_shape_v)
+        # First reshape to [batch_size, kv_sequence_length, kv_num_heads, head_size]
+        intermediate_shape_v = [batch_size, V.shape[1], kv_num_heads, head_size_v]
+        V = np.reshape(V, intermediate_shape_v)
+        # Then transpose to [batch_size, kv_num_heads, kv_sequence_length, head_size]
+        V = np.transpose(V, (0, 2, 1, 3))
     assert len(Q.shape) == 4 and len(K.shape) == 4 and len(V.shape) == 4
 
     # Calculate Scaling Factor if not provided
@@ -87,6 +97,17 @@ def _compute_attention(
     q_sequence_length = Q.shape[2]
     kv_sequence_length = K.shape[2]
     attn_bias = np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
+
+    # The attn_mask can be less than kv_sequence_length, we need to pad it with -inf or 0
+    if attn_mask is not None:
+        pad_width = kv_sequence_length - attn_mask.shape[-1]
+        if pad_width > 0:
+            pad_shape = [(0, 0)] * (attn_mask.ndim - 1) + [(0, pad_width)]
+            pad_value = False if attn_mask.dtype == np.bool_ else -np.inf
+            attn_mask = np.pad(
+                attn_mask, pad_shape, mode="constant", constant_values=pad_value
+            )
+
     # First case: If is_causal is provided
     # If set to true, the attention masking is a lower triangular matrix when the mask
     # is a square matrix. The attention masking has the form of the upper left causal
@@ -110,6 +131,15 @@ def _compute_attention(
             attn_mask = (1 - attn_mask).astype(Q.dtype)
             attn_mask[attn_mask == 1] = -np.inf
         attn_bias = attn_bias + attn_mask
+
+    if nonpad_kv_seqlen is not None:
+        attn_bias = attn_bias.reshape(
+            (1,) * (4 - attn_bias.ndim) + attn_bias.shape
+        )  # broadcast to 4D
+        padding_mask = np.arange(kv_sequence_length) < nonpad_kv_seqlen[:, np.newaxis]
+        padding_mask = padding_mask.reshape(batch_size, 1, 1, kv_sequence_length)
+        padding_mask = np.where(padding_mask, 0, -np.inf)
+        attn_bias += padding_mask
 
     # Group Query Attention is applied if the following are satisfied
     # 1) q_num_heads != kv_num_heads
@@ -188,6 +218,7 @@ class Attention(OpRun):
         attn_mask: np.ndarray | None = None,
         past_key: np.ndarray | None = None,
         past_value: np.ndarray | None = None,
+        nonpad_kv_seqlen: np.ndarray | None = None,
         scale=None,
         is_causal=False,
         q_num_heads=None,
@@ -203,6 +234,7 @@ class Attention(OpRun):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
+            nonpad_kv_seqlen=nonpad_kv_seqlen,
             scale=scale,
             is_causal=is_causal,
             q_num_heads=q_num_heads,
