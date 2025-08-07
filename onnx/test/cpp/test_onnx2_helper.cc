@@ -462,8 +462,8 @@ TEST(onnx2_file, FileStream_ModelProto_WriteRead) {
   biasw2.ref_raw_data().push_back(4);
   biasw2.ref_raw_data().push_back(4);
 
-  std::string temp_filename = "test_tensor_file_stream_read.tmp";
-  std::string temp_weights = "test_tensor_file_stream_read.weight.tmp";
+  std::string temp_filename = "test_tensor_file_stream_read.0.tmp";
+  std::string temp_weights = "test_tensor_file_stream_read.0.weight.tmp";
 
   {
     utils::TwoFilesWriteStream wstream(temp_filename, temp_weights);
