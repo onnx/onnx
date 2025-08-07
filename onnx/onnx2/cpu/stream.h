@@ -101,7 +101,6 @@ class BinaryWriteStream {
   virtual ~BinaryWriteStream() {}
   // to overwrite
   virtual void write_raw_bytes(const uint8_t* data, offset_t n_bytes) = 0;
-  virtual void write_raw_bytes_in_second_stream(const uint8_t* data, offset_t n_bytes);
   virtual int64_t size() const = 0;
   virtual const uint8_t* data() const = 0;
   // defined from the previous ones
@@ -306,7 +305,7 @@ class TwoFilesWriteStream : public FileWriteStream {
   virtual bool ExternalWeights() const override {
     return true;
   }
-  virtual void write_raw_bytes_in_second_stream(const uint8_t* data, offset_t n_bytes) override;
+  virtual void write_raw_bytes_in_second_stream(const uint8_t* data, offset_t n_bytes);
   virtual int64_t weights_size() const {
     return weights_stream_.size();
   }

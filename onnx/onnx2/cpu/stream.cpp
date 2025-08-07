@@ -308,10 +308,6 @@ bool BinaryWriteStream::GetCachedSize(const void* ptr, uint64_t& size) {
   return false;
 }
 
-void BinaryWriteStream::write_raw_bytes_in_second_stream(const uint8_t*, offset_t) {
-  EXT_THROW("This method was not overriden.");
-}
-
 ////////////////////
 // StringWriteStream
 ////////////////////
