@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, onnx_ml=${{ matrix.onnx_ml }}, doc=${{ matrix.documentation }}
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, doc=${{ matrix.documentation }}
     continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
     strategy:
       fail-fast: false
@@ -40,42 +40,63 @@ jobs:
             debug_build: 1
             documentation: 0
             protobuf_type: 'Internal'
+          - python_version: '3.13'
+            onnx_ml: 1
+            debug_build: 1
+            unity_build: 1
+            documentation: 1
+            protobuf_type: 'Internal'            
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 1
+            unity_build: 0
             documentation: 0
             protobuf_type: 'Internal'
           - python_version: '3.13'
             onnx_ml: 1
             debug_build: 1
+            unity_build: 0
             documentation: 1
             protobuf_type: 'Internal'
           - python_version: '3.12'
             onnx_ml: 1
             debug_build: 1
+            unity_build: 0
             documentation: 1
             protobuf_type: 'Internal'
           - python_version: '3.11'
             onnx_ml: 1
             debug_build: 0
+            unity_build: 0
             documentation: 0
             protobuf_type: 'External'
           - python_version: '3.10'
             onnx_ml: 0
             debug_build: 0
+            unity_build: 0
             documentation: 0
             protobuf_type: 'Internal'
           - python_version: '3.9'
             onnx_ml: 1
             debug_build: 0
+            unity_build: 0
             documentation: 0
             protobuf_type: 'External'
         exclude:
           - os: windows-11-arm
             python_version: '3.10'
           - os: windows-11-arm
-            python_version: '3.9'          
-
+            python_version: '3.9'
+          - os: windows-latest # TODO: reevalute for final python 3.14 release: "Numpy built with MINGW-W64 on Windows 64 bits is experimental"
+            python_version: '3.14-dev'
+          # skip mac os 3.9, 3.11, 3.13
+          - os:  macos-latest
+            python_version: '3.9'
+          - os:  macos-latest
+            python_version: '3.11'
+          - os:  macos-latest
+            python_version: '3.13'
+            
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -142,7 +163,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_ASAN=${{ matrix.debug_build }}"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_ASAN=${{ matrix.debug_build }} -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
 
       - name: Build and install ONNX - MacOS
         if: matrix.os == 'macos-latest'
@@ -152,7 +173,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
 
       - name: Build and install ONNX - Windows
         if: startsWith(matrix.os,'windows')
@@ -162,7 +183,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
 
       - name: pip freeze
         run: |

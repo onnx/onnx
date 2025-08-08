@@ -54,6 +54,7 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E4M3FNUZ:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E5M2FNUZ:
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT8E8M0:
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT4E2M1: {
       ret.int32s().reserve(tp.int32_data_size());
       for (int i = 0; i < tp.int32_data_size(); i++) {
@@ -611,7 +612,7 @@ static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
 }
 
 void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
-  ONNX_ASSERT(p_g != nullptr);
+  ONNX_ASSERT(p_g != nullptr)
 
   if (g->has_name()) {
     p_g->set_name(g->name());
@@ -747,7 +748,7 @@ void assertNonNull(const std::shared_ptr<Graph>& g) {
   ONNX_ASSERTM(
       g.get() != nullptr,
       "Warning: onnx version converter is unable to parse input model. "
-      "(The IR version of the ONNX model may be too old.)");
+      "(The IR version of the ONNX model may be too old.)")
 }
 
 } // namespace ONNX_NAMESPACE

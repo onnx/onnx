@@ -9,16 +9,16 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver23_doc = R"DOC(
+static const char* Constant_ver24_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    23,
+    24,
     OpSchema()
-        .SetDoc(Constant_ver23_doc)
+        .SetDoc(Constant_ver24_doc)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -56,18 +56,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::STRINGS,
             false)
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
-        .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir12(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* ConstantOfShape_ver23_doc = R"DOC(
+static const char* ConstantOfShape_ver24_doc = R"DOC(
 Generate a tensor with given value and shape.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
-    23,
+    24,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver23_doc)
+        .SetDoc(ConstantOfShape_ver24_doc)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -95,7 +95,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int16)",          "tensor(int32)",      "tensor(int64)",          "tensor(uint8)",
              "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",         "tensor(uint4)",
              "tensor(int4)",           "tensor(bool)",       "tensor(bfloat16)",       "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(float4e2m1)"},
+             "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(float4e2m1)",
+             "tensor(float8e8m0)"},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
@@ -136,8 +137,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor. If not specified,"
-            "the data type of the input tensor T1 is used. If input tensor T1 is also not"
-            "specified, then type defaults to 'float'.",
+            " the data type of the input tensor T1 is used.",
             AttributeProto::INT,
             OPTIONAL_VALUE)
         .Input(0, "input", "2D input tensor to copy shape, and optionally, type information from.", "T1")

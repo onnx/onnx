@@ -9,5 +9,5 @@ from onnx.reference.op_run import OpRun
 
 
 class Range(OpRun):
-    def _run(self, starts, ends, steps):  # type: ignore
+    def _run(self, starts, ends, steps):
         return (np.arange(starts, ends, steps).astype(starts.dtype),)

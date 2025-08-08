@@ -116,8 +116,8 @@ class BoxInfo:
         self.score_ = score
         self.idx_ = idx
 
-    def __lt__(self, rhs) -> bool:  # type: ignore
-        return self.score_ < rhs.score_ or (  # type: ignore
+    def __lt__(self, rhs) -> bool:
+        return self.score_ < rhs.score_ or (
             self.score_ == rhs.score_ and self.idx_ > rhs.idx_
         )
 
@@ -144,7 +144,7 @@ class NonMaxSuppression(OpRun):
 
         return max_output_boxes_per_class, iou_threshold, score_threshold
 
-    def prepare_compute(  # type: ignore
+    def prepare_compute(
         self,
         pc: PrepareContext,
         boxes_tensor: np.ndarray,  # float
@@ -173,7 +173,7 @@ class NonMaxSuppression(OpRun):
         pc.num_classes_ = scores_dims[1]
         pc.num_boxes_ = boxes_dims[1]
 
-    def _run(  # type: ignore
+    def _run(
         self,
         boxes,
         scores,
@@ -212,13 +212,13 @@ class NonMaxSuppression(OpRun):
         for batch_index in range(pc.num_batches_):
             for class_index in range(pc.num_classes_):
                 box_score_offset = (batch_index, class_index)
-                batch_boxes = boxes_data[batch_index]  # type: ignore
+                batch_boxes = boxes_data[batch_index]
                 # std::vector<BoxInfo> candidate_boxes;
                 # candidate_boxes.reserve(pc.num_boxes_);
 
                 # Filter by score_threshold_
                 candidate_boxes = []
-                class_scores = scores_data[box_score_offset]  # type: ignore
+                class_scores = scores_data[box_score_offset]
                 if pc.score_threshold_ is not None:
                     for box_index in range(pc.num_boxes_):
                         if class_scores[box_index] > score_threshold:
@@ -233,7 +233,7 @@ class NonMaxSuppression(OpRun):
 
                 sorted_boxes = sorted(candidate_boxes)
 
-                selected_boxes_inside_class = []  # type: ignore
+                selected_boxes_inside_class = []
                 # Get the next box with top score, filter by iou_threshold.
                 while (
                     len(sorted_boxes) > 0

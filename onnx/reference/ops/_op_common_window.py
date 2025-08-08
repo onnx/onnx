@@ -11,7 +11,7 @@ from onnx.reference.op_run import OpRun
 
 class _CommonWindow(OpRun):
     @staticmethod
-    def _begin(size, periodic, output_datatype):  # type: ignore
+    def _begin(size, periodic, output_datatype):
         dtype = tensor_dtype_to_np_dtype(output_datatype)
         if periodic == 1:
             N_1 = size

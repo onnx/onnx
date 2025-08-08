@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
+  build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     
     strategy:
@@ -27,8 +27,8 @@ jobs:
         architecture: ['x64', 'arm64']
 
     env:
-      MANYLINUX_WHEEL_X64: "manylinux2014_x86_64"
-      MANYLINUX_WHEEL_ARM64: "manylinux2014_aarch64"
+      MANYLINUX_WHEEL_X64: "manylinux_2_28_x86_64"
+      MANYLINUX_WHEEL_ARM64: "manylinux_2_28_aarch64"
 
     runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
 
@@ -49,19 +49,18 @@ jobs:
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
       id: build_wheel_x86
-      uses: docker://quay.io/pypa/manylinux2014_x86_64:2025.05.28-1
+      uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.07.27-1
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_x86_64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
-
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_x86_64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
 
     - name: Build wheel for arm64
       if: matrix.architecture == 'arm64'
       id: build_wheel_arm64
-      uses: docker://quay.io/pypa/manylinux2014_aarch64:2025.05.28-1
+      uses: docker://quay.io/pypa/manylinux_2_28_aarch64:2025.07.27-1
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux2014_aarch64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_aarch64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
 
     - name: Set up Python ${{ matrix.python-version }}
       if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'

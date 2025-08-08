@@ -37,7 +37,7 @@ struct Scan_9_8 final : public Adapter {
     if (node->hasAttribute(output_dirs)) {
       const std::vector<int64_t> scan_output_directions(node->is(output_dirs));
       for (int64_t x : scan_output_directions) {
-        ONNX_ASSERTM(x == 0, "Unsupported output direction for Version 8");
+        ONNX_ASSERTM(x == 0, "Unsupported output direction for Version 8")
       }
       node->removeAttribute(output_dirs);
     }
@@ -46,7 +46,7 @@ struct Scan_9_8 final : public Adapter {
     if (node->hasAttribute(input_axes)) {
       const std::vector<int64_t> scan_input_axes(node->is(input_axes));
       for (int64_t x : scan_input_axes) {
-        ONNX_ASSERTM(x == 0, "Unsupported input axes for Version 8");
+        ONNX_ASSERTM(x == 0, "Unsupported input axes for Version 8")
       }
       node->removeAttribute(input_axes);
     }
@@ -55,7 +55,7 @@ struct Scan_9_8 final : public Adapter {
     if (node->hasAttribute(output_axes)) {
       const std::vector<int64_t> scan_output_axes(node->is(output_axes));
       for (int64_t x : scan_output_axes) {
-        ONNX_ASSERTM(x == 0, "Unsupported output axes for Version 8");
+        ONNX_ASSERTM(x == 0, "Unsupported output axes for Version 8")
       }
       node->removeAttribute(output_axes);
     }
