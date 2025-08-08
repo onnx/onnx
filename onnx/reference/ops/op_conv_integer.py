@@ -35,11 +35,15 @@ class ConvInteger(OpRun):
         strides = strides or self.strides
 
         X = X.astype(np.int32)
-        if x_zero_point:
+        if x_zero_point is not None:
             X -= x_zero_point
         W = W.astype(np.int32)
-        if w_zero_point:
-            W -= w_zero_point
+        if w_zero_point is not None:
+            W -= (
+                w_zero_point
+                if w_zero_point.ndim == 0
+                else np.expand_dims(w_zero_point, (1, 2, 3))
+            )
 
         return (
             _conv_implementation(
