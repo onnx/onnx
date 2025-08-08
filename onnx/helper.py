@@ -7,9 +7,7 @@ import collections.abc
 import functools
 import math
 import numbers
-import struct
 import typing
-from cmath import isnan
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
 
 import google.protobuf.message
@@ -18,7 +16,7 @@ import numpy.typing as npt
 import typing_extensions
 
 import onnx
-from onnx import _mapping, defs, subbyte
+from onnx import _mapping, defs
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
