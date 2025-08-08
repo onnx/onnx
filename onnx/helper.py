@@ -19,10 +19,6 @@ import typing_extensions
 
 import onnx
 from onnx import _mapping, defs, subbyte
-from onnx.reference.ops.op_cast import (
-    float32_to_float6e2m3,
-    float32_to_float6e3m2,
-)
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -795,11 +791,41 @@ def make_tensor(
         ).flatten()
     elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
         arr = np.asarray(vals, dtype=np.float32).ravel()
-        if data_type == TensorProto.FLOAT6E2M3:
-            fp6 = float32_to_float6e2m3(arr, saturate=True)
-        else:
-            fp6 = float32_to_float6e3m2(arr, saturate=True)
+        # Convert via ml_dtypes-compatible path: emit packed 6-bit bits through numpy_helper
+        # We reuse dequantize helpers only for fallback in numpy_helper.to_array, not here.
         from onnx.numpy_helper import _pack_6bit  # local import to avoid cycle
+        # Encode FP6 manually using the same rules as reference ops (RNE, saturate)
+        sign = (np.signbit(arr).astype(np.uint8) << 5)
+        abs_x = np.abs(arr)
+        if data_type == TensorProto.FLOAT6E2M3:
+            bias = 3; n_mant = 3; max_exp = 3
+        else:
+            bias = 4; n_mant = 2; max_exp = 7
+        e = np.floor(np.log2(np.where(abs_x == 0, 1.0, abs_x))).astype(np.int32)
+        exp_biased = e + bias
+        frac = abs_x / (2.0 ** e) - 1.0
+        mant_f = frac * (1 << n_mant)
+        mant_r = np.round(mant_f).astype(np.int32)
+        max_mant = (1 << n_mant) - 1
+        carry = mant_r > max_mant
+        mant_r = np.where(carry, 0, mant_r)
+        exp_biased = np.where(carry, exp_biased + 1, exp_biased)
+        is_sub = exp_biased <= 0
+        sub_scale = abs_x / (2.0 ** (1 - bias))
+        sub_mant_f = sub_scale * (1 << n_mant)
+        sub_mant_r = np.round(sub_mant_f).astype(np.int32)
+        promote = sub_mant_r > max_mant
+        sub_mant_r = np.where(promote, 0, sub_mant_r)
+        exp_biased = np.where(is_sub & promote, 1, exp_biased)
+        final_exp = np.clip(exp_biased, 0, max_exp)
+        final_mant = np.where(is_sub, sub_mant_r, mant_r)
+        final_mant = np.clip(final_mant, 0, max_mant)
+        if data_type == TensorProto.FLOAT6E2M3:
+            base = (final_exp.astype(np.uint8) << 3) | (final_mant.astype(np.uint8))
+        else:
+            base = (final_exp.astype(np.uint8) << 2) | (final_mant.astype(np.uint8))
+        fp6 = (sign | base).astype(np.uint8)
+        fp6 = np.where(abs_x == 0, 0, fp6).astype(np.uint8)
         packed = _pack_6bit(fp6)
         tensor.raw_data = packed.tobytes()
         return tensor
@@ -1074,19 +1100,19 @@ def get_attribute_value(attr: AttributeProto) -> Any:  # noqa: PLR0911
         return attr.g
     if attr.type == AttributeProto.TYPE_PROTO:
         return attr.tp
-    if attr.floats:
+    if attr.type == AttributeProto.FLOATS:
         return list(attr.floats)
-    if attr.ints:
+    if attr.type == AttributeProto.INTS:
         return list(attr.ints)
-    if attr.strings:
+    if attr.type == AttributeProto.STRINGS:
         return list(attr.strings)
-    if attr.tensors:
+    if attr.type == AttributeProto.TENSORS:
         return list(attr.tensors)
-    if attr.sparse_tensors:
+    if attr.type == AttributeProto.SPARSE_TENSORS:
         return list(attr.sparse_tensors)
-    if attr.graphs:
+    if attr.type == AttributeProto.GRAPHS:
         return list(attr.graphs)
-    if attr.type_protos:
+    if attr.type == AttributeProto.TYPE_PROTOS:
         return list(attr.type_protos)
     if attr.type == AttributeProto.UNDEFINED:
         return None
