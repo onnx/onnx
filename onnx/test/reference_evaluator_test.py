@@ -89,10 +89,6 @@ class TestFP6Reference(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-# Copyright (c) ONNX Project Contributors
-
-# SPDX-License-Identifier: Apache-2.0
-# type: ignore
 
 """You can run a specific test by using the following syntax.
 
