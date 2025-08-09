@@ -43,7 +43,9 @@ include = ["onnx*"]
 onnx = [
     "**/*.c",
     "**/*.cc",
+    "**/*.cpp",
     "**/*.h",
+    "**/*.hpp",
     "**/*.proto",
     "**/*.pyi",
     "backend/test/data/**/*",
