@@ -214,13 +214,18 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
             return _unpack_4bit(data, dims).view(np_dtype)
 
         if tensor_dtype in {onnx.TensorProto.FLOAT6E2M3, onnx.TensorProto.FLOAT6E3M2}:
-            # Unpack to 6-bit values, then decode to float32 when ml_dtypes is missing
+            # Two supported encodings for raw_data:
+            # 1) Per-element bytes (canonical): len(raw_data) == num_elements
+            # 2) Packed 6-bit stream: len(raw_data) == ceil(num_elements * 6 / 8)
+            num_elems = int(np.prod(dims))
+            if len(raw_data) == num_elems:
+                return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
             from onnx.reference.ops.op_dequantize_linear import (
                 float6e2m3_to_float32,
                 float6e3m2_to_float32,
             )
             data = np.frombuffer(raw_data, dtype=np.uint8)
-            unpacked = _unpack_6bit(data, int(np.prod(dims)), dims)
+            unpacked = _unpack_6bit(data, num_elems, dims)
             unpacked = np.where(unpacked == 0x20, 0, unpacked).astype(np.uint8)
             if np_dtype == np.dtype("uint8"):
                 # Fallback path: upcast to float32 so callers see numeric values
@@ -255,6 +260,8 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
         onnx.TensorProto.FLOAT8E5M2FNUZ,
         onnx.TensorProto.FLOAT8E8M0,
         onnx.TensorProto.BOOL,
+        onnx.TensorProto.FLOAT6E2M3,
+        onnx.TensorProto.FLOAT6E3M2,
     }:
         return (
             np.array(tensor.int32_data, dtype=np.int32)

@@ -401,11 +401,64 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
+        # Special-case FP6: allow passing float values and pack to raw_data.
+        if data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2} and not isinstance(vals, (bytes, bytearray)) and not (
+            isinstance(vals, np.ndarray) and vals.dtype == np.uint8
+        ):
+            arr = np.asarray(vals, dtype=np.float32).ravel()
+            from onnx.numpy_helper import _pack_6bit  # local import to avoid cycle
+            # Encode FP6 manually (round to nearest-even via numpy round, saturate, handle subnormals),
+            # then pack into 6-bit stream.
+            sign = (np.signbit(arr).astype(np.uint8) << 5)
+            abs_x = np.abs(arr)
+            if data_type == TensorProto.FLOAT6E2M3:
+                bias = 3
+                n_mant = 3
+                max_exp = 3
+            else:
+                bias = 4
+                n_mant = 2
+                max_exp = 7
+            e = np.floor(np.log2(np.where(abs_x == 0, 1.0, abs_x))).astype(np.int32)
+            exp_biased = e + bias
+            frac = abs_x / (2.0 ** e) - 1.0
+            mant_f = frac * (1 << n_mant)
+            mant_r = np.round(mant_f).astype(np.int32)
+            max_mant = (1 << n_mant) - 1
+            carry = mant_r > max_mant
+            mant_r = np.where(carry, 0, mant_r)
+            exp_biased = np.where(carry, exp_biased + 1, exp_biased)
+            is_sub = exp_biased <= 0
+            sub_scale = abs_x / (2.0 ** (1 - bias))
+            sub_mant_f = sub_scale * (1 << n_mant)
+            sub_mant_r = np.round(sub_mant_f).astype(np.int32)
+            promote = sub_mant_r > max_mant
+            sub_mant_r = np.where(promote, 0, sub_mant_r)
+            exp_biased = np.where(is_sub & promote, 1, exp_biased)
+            final_exp = np.clip(exp_biased, 0, max_exp)
+            final_mant = np.where(is_sub, sub_mant_r, mant_r)
+            final_mant = np.clip(final_mant, 0, max_mant)
+            if data_type == TensorProto.FLOAT6E2M3:
+                base = (final_exp.astype(np.uint8) << 3) | (final_mant.astype(np.uint8))
+            else:
+                base = (final_exp.astype(np.uint8) << 2) | (final_mant.astype(np.uint8))
+            fp6 = (sign | base).astype(np.uint8)
+            fp6 = np.where(abs_x == 0, 0, fp6).astype(np.uint8)
+            packed = _pack_6bit(fp6)
+            expected_size_bytes = math.ceil(0.75 * math.prod(dims))
+            if len(packed) != expected_size_bytes:
+                raise ValueError(
+                    f"Raw data size does not match tensor's size. Expected {expected_size_bytes} bytes, but got {len(packed)} bytes."
+                )
+            tensor.raw_data = packed.tobytes()
+            return tensor
+
+        # Default raw handling: expect pre-serialized content of proper size
         # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
         if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
             expected_size_bytes = 0.5
-        elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
-            expected_size_bytes = 0.75
+        # Do not special-case FP6 here; raw bytes may be either canonical per-element or packed 6-bit,
+        # both are validated by exact length below.
         else:
             expected_size_bytes = np_dtype.itemsize
         expected_size_bytes *= math.prod(dims)
@@ -444,45 +497,8 @@ def make_tensor(
             np.asarray(vals), saturate=True, round_mode="up"
         ).flatten()
     elif data_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}:
-        arr = np.asarray(vals, dtype=np.float32).ravel()
-        # Convert via ml_dtypes-compatible path: emit packed 6-bit bits through numpy_helper
-        # We reuse dequantize helpers only for fallback in numpy_helper.to_array, not here.
-        from onnx.numpy_helper import _pack_6bit  # local import to avoid cycle
-        # Encode FP6 manually using the same rules as reference ops (RNE, saturate)
-        sign = (np.signbit(arr).astype(np.uint8) << 5)
-        abs_x = np.abs(arr)
-        if data_type == TensorProto.FLOAT6E2M3:
-            bias = 3; n_mant = 3; max_exp = 3
-        else:
-            bias = 4; n_mant = 2; max_exp = 7
-        e = np.floor(np.log2(np.where(abs_x == 0, 1.0, abs_x))).astype(np.int32)
-        exp_biased = e + bias
-        frac = abs_x / (2.0 ** e) - 1.0
-        mant_f = frac * (1 << n_mant)
-        mant_r = np.round(mant_f).astype(np.int32)
-        max_mant = (1 << n_mant) - 1
-        carry = mant_r > max_mant
-        mant_r = np.where(carry, 0, mant_r)
-        exp_biased = np.where(carry, exp_biased + 1, exp_biased)
-        is_sub = exp_biased <= 0
-        sub_scale = abs_x / (2.0 ** (1 - bias))
-        sub_mant_f = sub_scale * (1 << n_mant)
-        sub_mant_r = np.round(sub_mant_f).astype(np.int32)
-        promote = sub_mant_r > max_mant
-        sub_mant_r = np.where(promote, 0, sub_mant_r)
-        exp_biased = np.where(is_sub & promote, 1, exp_biased)
-        final_exp = np.clip(exp_biased, 0, max_exp)
-        final_mant = np.where(is_sub, sub_mant_r, mant_r)
-        final_mant = np.clip(final_mant, 0, max_mant)
-        if data_type == TensorProto.FLOAT6E2M3:
-            base = (final_exp.astype(np.uint8) << 3) | (final_mant.astype(np.uint8))
-        else:
-            base = (final_exp.astype(np.uint8) << 2) | (final_mant.astype(np.uint8))
-        fp6 = (sign | base).astype(np.uint8)
-        fp6 = np.where(abs_x == 0, 0, fp6).astype(np.uint8)
-        packed = _pack_6bit(fp6)
-        tensor.raw_data = packed.tobytes()
-        return tensor
+        # For FP6 in non-raw mode, store per-element bytes in int32_data (like float8)
+        vals = np.asarray(vals, dtype=np_dtype).flatten().view(np.uint8)
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import numpy as np
+import ml_dtypes
 
 import onnx
 from onnx.reference.op_run import OpRun
@@ -32,9 +33,11 @@ def cast_to(
         return onnx.numpy_helper.to_float8e8m0(x, saturate, round_mode).astype(dtype)
 
     if to == onnx.TensorProto.FLOAT6E2M3:
-        return float32_to_float6e2m3(x.astype(np.float32), saturate)
+        bits = float32_to_float6e2m3(x.astype(np.float32), saturate)
+        return bits.view(ml_dtypes.float6_e2m3fn)
     if to == onnx.TensorProto.FLOAT6E3M2:
-        return float32_to_float6e3m2(x.astype(np.float32), saturate)
+        bits = float32_to_float6e3m2(x.astype(np.float32), saturate)
+        return bits.view(ml_dtypes.float6_e3m2fn)
 
     return x.astype(dtype)
 
