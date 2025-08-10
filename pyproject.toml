@@ -19,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 license = {text = "Apache License v2.0"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.urls]
 Homepage = "https://onnx.ai/"
@@ -113,7 +113,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py39"
+target-version = "py310"
 unsafe-fixes = true
 lint.select = [
     "A", # flake8-builtins
