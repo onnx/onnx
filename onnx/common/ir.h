@@ -33,6 +33,9 @@
 #define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete;           \
   TypeName& operator=(const TypeName&) = delete
+#define ONNX_DISALLOW_MOVE_AND_ASSIGN(TypeName) \
+  TypeName(TypeName&&) = delete;           \
+  TypeName& operator=(TypeName&&) = delete
 
 namespace ONNX_NAMESPACE {
 
@@ -303,15 +306,14 @@ using NodeKind = Symbol;
 
 struct Value final {
   ONNX_DISALLOW_COPY_AND_ASSIGN(Value);
+  ONNX_DISALLOW_MOVE_AND_ASSIGN(Value);
   Value(Node* node_, size_t offset_);
-  Value(Value&&) = default;
-  Value& operator=(Value&&) = default;
   ~Value() = default;
 
  private:
   friend struct Node;
   friend struct Graph;
-  Node* node_;
+  Node* const node_;
   size_t offset_;
   size_t unique_ = 0; // unique id
   size_t stage_ = 0; // 0-forward, 1-backward, 2-double-backward,...
@@ -402,6 +404,7 @@ struct Value final {
 
 struct Node : public Attributes<Node> {
   ONNX_DISALLOW_COPY_AND_ASSIGN(Node);
+  ONNX_DISALLOW_MOVE_AND_ASSIGN(Node);
   friend struct Graph;
   friend struct Value;
   friend graph_node_list;
@@ -435,7 +438,7 @@ struct Node : public Attributes<Node> {
   const NodeKind kind_;
   std::vector<Value*> inputs_;
   std::vector<Value*> outputs_;
-  Graph* graph_;
+  Graph* const graph_;
   size_t stage_;
   bool has_name_{false};
   std::string name_;
@@ -1171,10 +1174,14 @@ struct Graph final {
   }
 
   ~Graph() {
-    for (const Node* n : all_nodes)
+    for (const Node* n : all_nodes) {
+      ONNX_ASSERT(n->owningGraph() == this);
       delete n;
-    for (const Value* v : all_values)
+    }
+    for (const Value* v : all_values) {
+      ONNX_ASSERT(v->owningGraph() == this);
       delete v;
+    }
   }
 
   std::string toString() const {
@@ -1245,12 +1252,14 @@ struct Graph final {
   void freeNode(Node* n) {
     auto it = all_nodes.find(n);
     ONNX_ASSERT(it != all_nodes.end())
+    ONNX_ASSERT((*it)->owningGraph() == this);
     delete *it;
     all_nodes.erase(it);
   }
   void freeValue(Value* v) {
     auto it = all_values.find(v);
     ONNX_ASSERT(it != all_values.end())
+    ONNX_ASSERT((*it)->owningGraph() == this);
     delete *it;
     all_values.erase(it);
   }
