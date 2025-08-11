@@ -8,7 +8,7 @@ import functools
 import math
 import numbers
 import typing
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
@@ -33,11 +33,11 @@ from onnx.onnx_pb import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView, Sequence
+    from collections.abc import Callable, KeysView, Sequence
 
     from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
-VersionRowType = Union[tuple[str, int, int, int], tuple[str, int, int, int, int]]
+VersionRowType = tuple[str, int, int, int] | tuple[str, int, int, int, int]
 VersionTableType = list[VersionRowType]
 AssignmentBindingType = list[tuple[str, str]]
 
