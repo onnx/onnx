@@ -19,7 +19,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 license = {text = "Apache License v2.0"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [project.urls]
 Homepage = "https://onnx.ai/"
@@ -115,7 +115,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py39"
+target-version = "py310"
 unsafe-fixes = true
 lint.select = [
     "A", # flake8-builtins
@@ -151,6 +151,7 @@ lint.select = [
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
 lint.ignore = [
+    "B905", # TODO: We have many zip calls without an explicit strict parameter
     "D1", # D1 is for missing docstrings, which is not yet enforced.
     "D205", # D205 Too strict. "1 blank line required between summary line and description"
     "D400",
@@ -174,6 +175,7 @@ lint.ignore = [
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
     "TRY003", # Messages can be constructed in the exception
+    "UP038", # We don't want to update isinstance calls
 ]
 
 [tool.ruff.lint.flake8-builtins]
