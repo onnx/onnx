@@ -64,7 +64,7 @@ to be produced.
   references in build scripts or version checks are updated.
 
 - The release manager announces the initial commit for testing. The first
-  period lasts two week; any regressions found should be fixed, typically via
+  period lasts two weeks; any regressions found should be fixed, typically via
   the main branch. Incomplete features should be done or excised during this
   period. A distribution can be made available with an -RC1 suffix.
 
