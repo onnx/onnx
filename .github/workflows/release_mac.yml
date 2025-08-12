@@ -10,10 +10,10 @@ on:  # Specifies the event triggering the workflow
       os:
         required: true
         type: string
-      build_mode: 
+      build_mode:
         required: true
         type: string
-  
+
 
 # Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:
@@ -68,7 +68,7 @@ jobs:
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
-      
+
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist/*.whl
@@ -78,7 +78,7 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t'] # TODO: add '3.14-dev'
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.13t'] # TODO: add '3.14-dev'
         target-architecture: ['x86_64', 'arm64']
 
     steps:
@@ -123,7 +123,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: (matrix.target-architecture == 'x86_64' || (matrix.python-version != '3.9'))
+      if: ${{ always() }}
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
