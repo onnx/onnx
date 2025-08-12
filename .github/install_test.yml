@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-24.04]
-        python-version: ['3.9', '3.13']
+        python-version: ['3.13']
       fail-fast: false
 
     steps:
@@ -43,6 +43,6 @@ jobs:
           git submodule update --init --recursive
 
           source workflow_scripts/protobuf/build_protobuf_unix.sh 3
-                  
+
           pip install -e .
-   
+
