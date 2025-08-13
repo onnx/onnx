@@ -188,7 +188,7 @@ class Cast(Base):
                     "output",
                     to_dtype,
                     input_shape,
-                    vals=onnx.numpy_helper.saturate_cast(np_from, to_np_dtype),
+                    vals=onnx.numpy_helper.saturate_cast(np_from, to_np_dtype, True),
                     raw=True,
                 )
             elif to_type in FOUR_BIT_TYPES:

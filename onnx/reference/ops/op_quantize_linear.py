@@ -147,7 +147,7 @@ class _CommonQuantizeLinear(OpRun):
             if saturate:
                 return (
                     onnx.numpy_helper.saturate_cast(
-                        x, dtype=tensor_dtype_to_np_dtype(tensor_type)
+                        x, dtype=tensor_dtype_to_np_dtype(tensor_type), nan_as_zero=True
                     ),
                 )
             else:
