@@ -58,9 +58,10 @@ to be produced.
 - The trigger for the workflow will typically be a time-based trigger based on
   elapsed time (say every three months).
 
-- The release manager will announce the intent of the process (to produce 
-  major, minor or patch update) and the overall timeline (documented in our wiki: [example](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.19.0). A release branch is
-  created with the name rel-major#.minor#(.patch#), and any version
+- The release manager will announce the intent of the process (to produce
+  major, minor or patch update) and the overall timeline (documented in our
+  wiki: [example](https://github.com/onnx/onnx/wiki/Logistics-for-ONNX-Release-1.19.0).
+  A release branch is created with the name rel-major#.minor#(.patch#), and any version
   references in build scripts or version checks are updated.
 
 - The release manager announces the initial commit for testing. The first
