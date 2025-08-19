@@ -96,3 +96,17 @@ can help test if you care about one that's missing.
 The community is encouraged to perform additional testing during the test
 periods. Bugs and issues should be filed in the ONNX GitHub repo.
 
+# ONNX Weekly Builds on PyPI
+
+In addition to stable releases, we publish **weekly development builds** to a separate PyPI package: [`onnx-weekly`](https://pypi.org/project/onnx-weekly/).
+
+## Why a Separate Package?
+
+- **Avoid accidental installs:** Pre-release versions can be installed unintentionally; `onnx-weekly` ensures stable users are unaffected.
+- **Enable safe testing:** Try upcoming features without impacting stable installs. Both packages can coexist.
+- **Simplify automation:** Weekly builds are pushed automatically from `main` without polluting the main release history.
+
+## Installation
+
+```bash
+pip install onnx-weekly
