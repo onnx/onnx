@@ -3807,7 +3807,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             builder
                 .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
-                .Add("Range = Range(Zero1D, KVSeqLen, One1D)") // [KVSeqLen,]
+                .Add("KVSeqLen0D = Unsqueeze(KVSeqLen, Zero1D)")
+                .Const("Zero0D", (int64_t)(0))
+                .Const("One0D", (int64_t)(1))
+                .Add("Range = Range(Zero0D, KVSeqLen0D, One0D)") // [KVSeqLen,]
                 .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
