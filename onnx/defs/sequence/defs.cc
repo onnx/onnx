@@ -619,6 +619,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain to any tensor or sequence type.")
+        // Setting `NonDeterministic` since it needs to be evaluated after function inlining
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .SetContextDependentFunctionBodyBuilder(BuildSequenceMapBodyFunc)
         .TypeAndShapeInferenceFunction(SequenceMapInferenceFunction));
 
