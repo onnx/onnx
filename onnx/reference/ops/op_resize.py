@@ -3,12 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 import onnx
 from onnx.reference.op_run import OpRun
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.ndarray:
