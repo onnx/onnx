@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=4.25.1"]
+requires = ["setuptools>=77", "protobuf>=4.25.1"]
 backend-path = ["."]
 build-backend = "backend"
 
@@ -18,7 +18,7 @@ authors = [
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 requires-python = ">=3.10"
 
 [project.urls]
