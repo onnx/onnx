@@ -18,7 +18,7 @@ authors = [
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-license = {text = "Apache License v2.0"}
+license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
 
 [project.urls]
