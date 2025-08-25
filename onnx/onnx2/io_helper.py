@@ -53,9 +53,9 @@ def save(
     assert isinstance(proto, ModelProto), f"Unexpected type {type(proto)} for proto."
     assert isinstance(f, (str, Path)), f"Unexpected type {type(f)} for f."
     assert format == "protobuf", f"Unsupported format={format!r}"
-    assert (
-        all_tensors_to_one_file
-    ), f"all_tensors_to_one_file={all_tensors_to_one_file} is not implemented"
+    assert all_tensors_to_one_file, (
+        f"all_tensors_to_one_file={all_tensors_to_one_file} is not implemented"
+    )
     if save_as_external_data or location:
         opts = SerializeOptions()
         opts.raw_data_threshold = size_threshold
@@ -94,17 +94,17 @@ def load(
     assert isinstance(f, (str, bytes, Path)), f"Unexpected type {type(f)} for f."
     if load_external_data is None:
         load_external_data = bool(location)
-    assert (
-        not load_external_data or location
-    ), f"'external_data_file' must be specified if load_external_data={location}"
-    assert (
-        not location or load_external_data
-    ), f"'load_external_data' must be True if location={location!r}"
+    assert not load_external_data or location, (
+        f"'external_data_file' must be specified if load_external_data={location}"
+    )
+    assert not location or load_external_data, (
+        f"'load_external_data' must be True if location={location!r}"
+    )
     if isinstance(f, Path):
         f = str(f)
-    assert not isinstance(f, str) or os.path.splitext(f)[-1] in {
-        ".onnx"
-    }, f"File name must have the extension .onnx to be loaded but f={f!r}"
+    assert not isinstance(f, str) or os.path.splitext(f)[-1] in {".onnx"}, (
+        f"File name must have the extension .onnx to be loaded but f={f!r}"
+    )
     model = ModelProto()
     if skip_raw_data or parallel:
         opts = ParseOptions()

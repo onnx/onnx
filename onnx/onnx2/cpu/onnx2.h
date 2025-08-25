@@ -6,13 +6,13 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "onnx/onnx2/cpu/common_helpers.h"
 #include "onnx/onnx2/cpu/fields.h"
 #include "onnx/onnx2/cpu/stream.h"
 #include "onnx/onnx2/cpu/stream_class.h"
-
-#include <string>
-#include <vector>
 
 #define TensorProto_DataType_UNDEFINED UNDEFINED
 #define TensorProto_DataType_FLOAT FLOAT

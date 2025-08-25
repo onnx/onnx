@@ -986,7 +986,7 @@ TEST(onnx2_proto, TensorAnnotation_Basic) {
   EXPECT_EQ(annotation.ref_quant_parameter_tensor_names().size(), 0);
 
   annotation.set_tensor_name("my_tensor");
-  StringStringEntryProto &entry = annotation.add_quant_parameter_tensor_names();
+  StringStringEntryProto& entry = annotation.add_quant_parameter_tensor_names();
   entry.set_key("scale");
   entry.set_value("scale_tensor");
 
@@ -1039,7 +1039,7 @@ TEST(onnx2_proto, ShardedDimProto_Basic) {
   EXPECT_EQ(dim.ref_simple_sharding().size(), 0);
 
   dim.set_axis(1);
-  SimpleShardedDimProto &simple_dim = dim.add_simple_sharding();
+  SimpleShardedDimProto& simple_dim = dim.add_simple_sharding();
   simple_dim.set_dim_value(100);
   simple_dim.set_num_shards(4);
 
@@ -1062,11 +1062,11 @@ TEST(onnx2_proto, ShardingSpecProto_Basic) {
   spec.ref_device().push_back(0);
   spec.ref_device().push_back(1);
 
-  IntIntListEntryProto &map_entry = spec.add_index_to_device_group_map();
+  IntIntListEntryProto& map_entry = spec.add_index_to_device_group_map();
   map_entry.set_key(0);
   map_entry.ref_value().push_back(0);
 
-  ShardedDimProto &dim = spec.add_sharded_dim();
+  ShardedDimProto& dim = spec.add_sharded_dim();
   dim.set_axis(0);
 
   EXPECT_EQ(spec.ref_tensor_name(), "my_tensor");
@@ -1332,7 +1332,7 @@ TEST(onnx2_proto, TypeProto_Tensor) {
   type.add_tensor_type().set_elem_type(1); // FLOAT
   EXPECT_TRUE(type.has_tensor_type());
   EXPECT_FALSE(type.ref_tensor_type().has_shape());
-  TensorShapeProto &shape = type.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = type.ref_tensor_type().add_shape();
   EXPECT_TRUE(type.ref_tensor_type().has_shape());
   TensorShapeProto::Dimension &dim = shape.add_dim();
   dim.set_dim_value(3);
@@ -1400,7 +1400,7 @@ TEST(onnx2_proto, TypeProtoOperations) {
   type.add_tensor_type().set_elem_type(1); // FLOAT
   EXPECT_TRUE(type.has_tensor_type());
 
-  TensorShapeProto &shape = type.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = type.ref_tensor_type().add_shape();
 
   TensorShapeProto::Dimension &dim1 = shape.add_dim();
   dim1.set_dim_value(3);
@@ -2141,9 +2141,9 @@ TEST(onnx2_proto, ValueInfoProto_Basic) {
   value_info.set_name("input_1");
   value_info.set_doc_string("Input tensor documentation");
 
-  TypeProto &type = value_info.add_type();
+  TypeProto& type = value_info.add_type();
   type.add_tensor_type().set_elem_type(1); // FLOAT
-  TensorShapeProto &shape = type.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = type.ref_tensor_type().add_shape();
   TensorShapeProto::Dimension &dim = shape.add_dim();
   dim.set_dim_value(3);
 
@@ -2162,9 +2162,9 @@ TEST(onnx2_proto, ValueInfoProto_Serialization) {
   value_info1.set_name("output_1");
   value_info1.set_doc_string("Output tensor documentation");
 
-  TypeProto &type = value_info1.add_type();
+  TypeProto& type = value_info1.add_type();
   type.add_tensor_type().set_elem_type(7); // INT64
-  TensorShapeProto &shape = type.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = type.ref_tensor_type().add_shape();
   shape.add_dim().set_dim_value(2);
   shape.add_dim().set_dim_param("dynamic_dim");
 
@@ -2194,9 +2194,9 @@ TEST(onnx2_proto, ValueInfoProto_PrintToVectorString) {
   value_info.set_name("feature_vector");
   value_info.set_doc_string("Feature vector description");
 
-  TypeProto &type = value_info.add_type();
+  TypeProto& type = value_info.add_type();
   type.add_tensor_type().set_elem_type(1); // FLOAT
-  TensorShapeProto &shape = type.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = type.ref_tensor_type().add_shape();
   shape.add_dim().set_dim_value(1);
   shape.add_dim().set_dim_value(512);
 
@@ -2258,7 +2258,7 @@ TEST(onnx2_proto, CopyFrom_ValueInfoProto) {
   ValueInfoProto source;
   source.set_name("source_info");
   source.set_doc_string("Source documentation");
-  TypeProto &type = source.add_type();
+  TypeProto& type = source.add_type();
   type.add_tensor_type().set_elem_type(1);
 
   ValueInfoProto target;
@@ -2274,7 +2274,7 @@ TEST(onnx2_proto, CopyFrom_ValueInfoProto) {
 TEST(onnx2_proto, CopyFrom_TypeProto) {
   TypeProto source;
   source.add_tensor_type().set_elem_type(7);
-  TensorShapeProto &shape = source.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = source.ref_tensor_type().add_shape();
   shape.add_dim().set_dim_value(10);
   shape.add_dim().set_dim_param("N");
 
@@ -2429,7 +2429,7 @@ TEST(onnx2_proto, AttributeProto_TensorAttribute) {
   attribute.set_name("value");
   attribute.set_type(AttributeProto::AttributeType::TENSOR);
 
-  TensorProto &tensor = attribute.add_t();
+  TensorProto& tensor = attribute.add_t();
   tensor.set_name("const_tensor");
   tensor.set_data_type(TensorProto::DataType::FLOAT);
   tensor.ref_dims().push_back(2);
@@ -2588,19 +2588,19 @@ TEST(onnx2_proto, NodeProto_Attributes) {
   EXPECT_EQ(node.ref_attribute().size(), 0);
 
   // Add attributes
-  AttributeProto &attr1 = node.add_attribute();
+  AttributeProto& attr1 = node.add_attribute();
   attr1.set_name("kernel_shape");
   attr1.set_type(AttributeProto::AttributeType::INTS);
   attr1.ref_ints().push_back(3);
   attr1.ref_ints().push_back(3);
 
-  AttributeProto &attr2 = node.add_attribute();
+  AttributeProto& attr2 = node.add_attribute();
   attr2.set_name("strides");
   attr2.set_type(AttributeProto::AttributeType::INTS);
   attr2.ref_ints().push_back(1);
   attr2.ref_ints().push_back(1);
 
-  AttributeProto &attr3 = node.add_attribute();
+  AttributeProto& attr3 = node.add_attribute();
   attr3.set_name("pads");
   attr3.set_type(AttributeProto::AttributeType::INTS);
   attr3.ref_ints().push_back(1);
@@ -2628,7 +2628,7 @@ TEST(onnx2_proto, NodeProto_Serialization) {
 
   node1.add_output() = "Y";
 
-  AttributeProto &attr = node1.add_attribute();
+  AttributeProto& attr = node1.add_attribute();
   attr.set_name("kernel_shape");
   attr.set_type(AttributeProto::AttributeType::INTS);
   attr.ref_ints().push_back(3);
@@ -2715,7 +2715,7 @@ TEST(onnx2_proto, NodeProto_CopyFrom) {
   source.add_input() = "B";
   source.add_output() = "C";
 
-  AttributeProto &attr = source.add_attribute();
+  AttributeProto& attr = source.add_attribute();
   attr.set_name("axis");
   attr.set_type(AttributeProto::AttributeType::INT);
   attr.set_i(1);
@@ -2755,22 +2755,22 @@ TEST(onnx2_proto, NodeProto_ComplexModel) {
   node.add_output() = "Y";
 
   // Add attributes
-  AttributeProto &alpha = node.add_attribute();
+  AttributeProto& alpha = node.add_attribute();
   alpha.set_name("alpha");
   alpha.set_type(AttributeProto::AttributeType::FLOAT);
   alpha.set_f(0.5f);
 
-  AttributeProto &beta = node.add_attribute();
+  AttributeProto& beta = node.add_attribute();
   beta.set_name("beta");
   beta.set_type(AttributeProto::AttributeType::FLOAT);
   beta.set_f(0.8f);
 
-  AttributeProto &transA = node.add_attribute();
+  AttributeProto& transA = node.add_attribute();
   transA.set_name("transA");
   transA.set_type(AttributeProto::AttributeType::INT);
   transA.set_i(1);
 
-  AttributeProto &transB = node.add_attribute();
+  AttributeProto& transB = node.add_attribute();
   transB.set_name("transB");
   transB.set_type(AttributeProto::AttributeType::INT);
   transB.set_i(0);
@@ -2857,14 +2857,14 @@ TEST(onnx2_proto, GraphProto_Nodes) {
   graph.set_name("test_graph");
 
   // Add nodes
-  NodeProto &node1 = graph.add_node();
+  NodeProto& node1 = graph.add_node();
   node1.set_name("conv1");
   node1.set_op_type("Conv");
   node1.add_input() = "X";
   node1.add_input() = "W";
   node1.add_output() = "Y";
 
-  NodeProto &node2 = graph.add_node();
+  NodeProto& node2 = graph.add_node();
   node2.set_name("relu1");
   node2.set_op_type("Relu");
   node2.add_input() = "Y";
@@ -2880,19 +2880,19 @@ TEST(onnx2_proto, GraphProto_Nodes) {
 TEST(onnx2_proto, GraphProto_Inputs) {
   GraphProto graph;
 
-  ValueInfoProto &input1 = graph.add_input();
+  ValueInfoProto& input1 = graph.add_input();
   input1.set_name("X");
-  TypeProto &type1 = input1.add_type();
+  TypeProto& type1 = input1.add_type();
   type1.add_tensor_type().set_elem_type(1); // FLOAT
-  TensorShapeProto &shape1 = type1.ref_tensor_type().add_shape();
+  TensorShapeProto& shape1 = type1.ref_tensor_type().add_shape();
   shape1.add_dim().set_dim_value(1);
   shape1.add_dim().set_dim_value(3);
   shape1.add_dim().set_dim_value(224);
   shape1.add_dim().set_dim_value(224);
 
-  ValueInfoProto &input2 = graph.add_input();
+  ValueInfoProto& input2 = graph.add_input();
   input2.set_name("W");
-  TypeProto &type2 = input2.add_type();
+  TypeProto& type2 = input2.add_type();
   type2.add_tensor_type().set_elem_type(1); // FLOAT
 
   EXPECT_EQ(graph.ref_input().size(), 2);
@@ -2906,11 +2906,11 @@ TEST(onnx2_proto, GraphProto_Inputs) {
 TEST(onnx2_proto, GraphProto_Outputs) {
   GraphProto graph;
 
-  ValueInfoProto &output = graph.add_output();
+  ValueInfoProto& output = graph.add_output();
   output.set_name("Z");
-  TypeProto &type = output.add_type();
+  TypeProto& type = output.add_type();
   type.add_tensor_type().set_elem_type(1); // FLOAT
-  TensorShapeProto &shape = type.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = type.ref_tensor_type().add_shape();
   shape.add_dim().set_dim_value(1);
   shape.add_dim().set_dim_value(64);
   shape.add_dim().set_dim_value(112);
@@ -2927,9 +2927,9 @@ TEST(onnx2_proto, GraphProto_Outputs) {
 TEST(onnx2_proto, GraphProto_ValueInfo) {
   GraphProto graph;
 
-  ValueInfoProto &value_info = graph.add_value_info();
+  ValueInfoProto& value_info = graph.add_value_info();
   value_info.set_name("Y");
-  TypeProto &type = value_info.add_type();
+  TypeProto& type = value_info.add_type();
   type.add_tensor_type().set_elem_type(1); // FLOAT
 
   EXPECT_EQ(graph.ref_value_info().size(), 1);
@@ -2939,7 +2939,7 @@ TEST(onnx2_proto, GraphProto_ValueInfo) {
 TEST(onnx2_proto, GraphProto_Initializers) {
   GraphProto graph;
 
-  TensorProto &initializer = graph.add_initializer();
+  TensorProto& initializer = graph.add_initializer();
   initializer.set_name("W");
   initializer.set_data_type(TensorProto::DataType::FLOAT);
   initializer.ref_dims().push_back(64);
@@ -2962,16 +2962,16 @@ TEST(onnx2_proto, GraphProto_Serialization) {
   GraphProto graph1;
   graph1.set_name("serialization_test");
 
-  NodeProto &node = graph1.add_node();
+  NodeProto& node = graph1.add_node();
   node.set_name("node1");
   node.set_op_type("Identity");
   node.add_input() = "X";
   node.add_output() = "Y";
 
-  ValueInfoProto &input = graph1.add_input();
+  ValueInfoProto& input = graph1.add_input();
   input.set_name("X");
 
-  ValueInfoProto &output = graph1.add_output();
+  ValueInfoProto& output = graph1.add_output();
   output.set_name("Y");
 
   std::string serialized;
@@ -2998,7 +2998,7 @@ TEST(onnx2_proto, GraphProto_PrintToVectorString) {
   graph.set_name("vector_serialization_test");
   graph.set_doc_string("Test graph for vector serialization");
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("add_node");
   node.set_op_type("Add");
   node.add_input() = "A";
@@ -3039,17 +3039,17 @@ TEST(onnx2_proto, GraphProto_CopyFrom) {
   source.set_name("source_graph");
   source.set_doc_string("Source graph documentation");
 
-  NodeProto &node = source.add_node();
+  NodeProto& node = source.add_node();
   node.set_name("test_node");
   node.set_op_type("Test");
 
-  ValueInfoProto &input = source.add_input();
+  ValueInfoProto& input = source.add_input();
   input.set_name("input_tensor");
 
-  ValueInfoProto &output = source.add_output();
+  ValueInfoProto& output = source.add_output();
   output.set_name("output_tensor");
 
-  TensorProto &initializer = source.add_initializer();
+  TensorProto& initializer = source.add_initializer();
   initializer.set_name("weights");
   initializer.set_data_type(TensorProto::DataType::FLOAT);
 
@@ -3073,18 +3073,18 @@ TEST(onnx2_proto, GraphProto_ComplexModel) {
   graph.set_name("complex_model");
 
   // Create input
-  ValueInfoProto &input = graph.add_input();
+  ValueInfoProto& input = graph.add_input();
   input.set_name("data");
-  TypeProto &input_type = input.add_type();
+  TypeProto& input_type = input.add_type();
   input_type.add_tensor_type().set_elem_type(1); // FLOAT
-  TensorShapeProto &input_shape = input_type.ref_tensor_type().add_shape();
+  TensorShapeProto& input_shape = input_type.ref_tensor_type().add_shape();
   input_shape.add_dim().set_dim_value(1);
   input_shape.add_dim().set_dim_value(3);
   input_shape.add_dim().set_dim_value(224);
   input_shape.add_dim().set_dim_value(224);
 
   // Create weights initializer
-  TensorProto &weights = graph.add_initializer();
+  TensorProto& weights = graph.add_initializer();
   weights.set_name("conv1_weights");
   weights.set_data_type(TensorProto::DataType::FLOAT);
   weights.ref_dims().push_back(64);
@@ -3093,13 +3093,13 @@ TEST(onnx2_proto, GraphProto_ComplexModel) {
   weights.ref_dims().push_back(7);
 
   // Create bias initializer
-  TensorProto &bias = graph.add_initializer();
+  TensorProto& bias = graph.add_initializer();
   bias.set_name("conv1_bias");
   bias.set_data_type(TensorProto::DataType::FLOAT);
   bias.ref_dims().push_back(64);
 
   // Add Conv node
-  NodeProto &conv = graph.add_node();
+  NodeProto& conv = graph.add_node();
   conv.set_name("conv1");
   conv.set_op_type("Conv");
   conv.add_input() = "data";
@@ -3107,19 +3107,19 @@ TEST(onnx2_proto, GraphProto_ComplexModel) {
   conv.add_input() = "conv1_bias";
   conv.add_output() = "conv1_output";
 
-  AttributeProto &strides = conv.add_attribute();
+  AttributeProto& strides = conv.add_attribute();
   strides.set_name("strides");
   strides.set_type(AttributeProto::AttributeType::INTS);
   strides.ref_ints().push_back(2);
   strides.ref_ints().push_back(2);
 
-  AttributeProto &kernel_shape = conv.add_attribute();
+  AttributeProto& kernel_shape = conv.add_attribute();
   kernel_shape.set_name("kernel_shape");
   kernel_shape.set_type(AttributeProto::AttributeType::INTS);
   kernel_shape.ref_ints().push_back(7);
   kernel_shape.ref_ints().push_back(7);
 
-  AttributeProto &pads = conv.add_attribute();
+  AttributeProto& pads = conv.add_attribute();
   pads.set_name("pads");
   pads.set_type(AttributeProto::AttributeType::INTS);
   pads.ref_ints().push_back(3);
@@ -3128,22 +3128,22 @@ TEST(onnx2_proto, GraphProto_ComplexModel) {
   pads.ref_ints().push_back(3);
 
   // Add ReLU node
-  NodeProto &relu = graph.add_node();
+  NodeProto& relu = graph.add_node();
   relu.set_name("relu1");
   relu.set_op_type("Relu");
   relu.add_input() = "conv1_output";
   relu.add_output() = "relu1_output";
 
   // Add output
-  ValueInfoProto &output = graph.add_output();
+  ValueInfoProto& output = graph.add_output();
   output.set_name("relu1_output");
-  TypeProto &output_type = output.add_type();
+  TypeProto& output_type = output.add_type();
   output_type.add_tensor_type().set_elem_type(1); // FLOAT
 
   // Add intermediate value info
-  ValueInfoProto &intermediate = graph.add_value_info();
+  ValueInfoProto& intermediate = graph.add_value_info();
   intermediate.set_name("conv1_output");
-  TypeProto &intermediate_type = intermediate.add_type();
+  TypeProto& intermediate_type = intermediate.add_type();
   intermediate_type.add_tensor_type().set_elem_type(1); // FLOAT
 
   EXPECT_EQ(graph.ref_name(), "complex_model");
@@ -3200,14 +3200,14 @@ TEST(onnx2_proto, FunctionProto_Nodes) {
   function.set_name("custom_op");
 
   // Add nodes
-  NodeProto &node1 = function.add_node();
+  NodeProto& node1 = function.add_node();
   node1.set_name("mul");
   node1.set_op_type("Mul");
   node1.add_input() = "X";
   node1.add_input() = "W";
   node1.add_output() = "XW";
 
-  NodeProto &node2 = function.add_node();
+  NodeProto& node2 = function.add_node();
   node2.set_name("add");
   node2.set_op_type("Add");
   node2.add_input() = "XW";
@@ -3231,7 +3231,7 @@ TEST(onnx2_proto, FunctionProto_Serialization) {
   function1.add_output() = "Y";
   function1.add_attribute() = "param";
 
-  NodeProto &node = function1.add_node();
+  NodeProto& node = function1.add_node();
   node.set_name("op1");
   node.set_op_type("CustomOp");
   node.add_input() = "X";
@@ -3266,7 +3266,7 @@ TEST(onnx2_proto, FunctionProto_CopyFrom) {
   source.add_output() = "Y";
   source.add_attribute() = "attr1";
 
-  NodeProto &node = source.add_node();
+  NodeProto& node = source.add_node();
   node.set_op_type("Identity");
 
   source.set_doc_string("Source function documentation");
@@ -3298,7 +3298,7 @@ TEST(onnx2_string, FunctionProto) {
   function.add_attribute() = "attr";
   function.set_doc_string("Custom function implementation");
 
-  NodeProto &node = function.add_node();
+  NodeProto& node = function.add_node();
   node.set_name("operation");
   node.set_op_type("MatMul");
 
@@ -3348,10 +3348,10 @@ TEST(onnx2_proto, ModelProto_Basic) {
 TEST(onnx2_proto, ModelProto_Graph) {
   ModelProto model;
 
-  GraphProto &graph = model.add_graph();
+  GraphProto& graph = model.add_graph();
   graph.set_name("test_graph");
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("test_node");
   node.set_op_type("Add");
 
@@ -3365,11 +3365,11 @@ TEST(onnx2_proto, ModelProto_Graph) {
 TEST(onnx2_proto, ModelProto_OpsetImport) {
   ModelProto model;
 
-  OperatorSetIdProto &opset1 = model.add_opset_import();
+  OperatorSetIdProto& opset1 = model.add_opset_import();
   opset1.set_domain("ai.onnx");
   opset1.set_version(12);
 
-  OperatorSetIdProto &opset2 = model.add_opset_import();
+  OperatorSetIdProto& opset2 = model.add_opset_import();
   opset2.set_domain("ai.onnx.ml");
   opset2.set_version(2);
 
@@ -3383,11 +3383,11 @@ TEST(onnx2_proto, ModelProto_OpsetImport) {
 TEST(onnx2_proto, ModelProto_MetadataProps) {
   ModelProto model;
 
-  StringStringEntryProto &metadata1 = model.add_metadata_props();
+  StringStringEntryProto& metadata1 = model.add_metadata_props();
   metadata1.set_key("author");
   metadata1.set_value("test_author");
 
-  StringStringEntryProto &metadata2 = model.add_metadata_props();
+  StringStringEntryProto& metadata2 = model.add_metadata_props();
   metadata2.set_key("description");
   metadata2.set_value("test description");
 
@@ -3404,14 +3404,14 @@ TEST(onnx2_proto, ModelProto_Serialization) {
   model1.set_producer_name("serialization_test");
   model1.set_model_version(42);
 
-  GraphProto &graph = model1.add_graph();
+  GraphProto& graph = model1.add_graph();
   graph.set_name("serialized_graph");
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("test_node");
   node.set_op_type("Identity");
 
-  StringStringEntryProto &metadata = model1.add_metadata_props();
+  StringStringEntryProto& metadata = model1.add_metadata_props();
   metadata.set_key("test_key");
   metadata.set_value("test_value");
 
@@ -3464,11 +3464,11 @@ TEST(onnx2_proto, ModelProto_CopyFrom) {
   source.set_model_version(123);
   source.add_graph().set_name("source_graph");
 
-  OperatorSetIdProto &opset = source.add_opset_import();
+  OperatorSetIdProto& opset = source.add_opset_import();
   opset.set_domain("ai.onnx");
   opset.set_version(15);
 
-  StringStringEntryProto &metadata = source.add_metadata_props();
+  StringStringEntryProto& metadata = source.add_metadata_props();
   metadata.set_key("source_key");
   metadata.set_value("source_value");
 
@@ -3495,28 +3495,28 @@ TEST(onnx2_proto, ModelProto_ComplexModel) {
   model.set_producer_version("1.0.0");
   model.set_model_version(1);
 
-  OperatorSetIdProto &opset = model.add_opset_import();
+  OperatorSetIdProto& opset = model.add_opset_import();
   opset.set_domain("ai.onnx");
   opset.set_version(13);
 
-  GraphProto &graph = model.add_graph();
+  GraphProto& graph = model.add_graph();
   graph.set_name("complex_model_graph");
 
   // Add input
-  ValueInfoProto &input = graph.add_input();
+  ValueInfoProto& input = graph.add_input();
   input.set_name("input_tensor");
-  TypeProto &input_type = input.add_type();
+  TypeProto& input_type = input.add_type();
   input_type.add_tensor_type().set_elem_type(1); // FLOAT
 
   // Add initializer
-  TensorProto &weights = graph.add_initializer();
+  TensorProto& weights = graph.add_initializer();
   weights.set_name("weights");
   weights.set_data_type(TensorProto::DataType::FLOAT);
   weights.ref_dims().push_back(3);
   weights.ref_dims().push_back(3);
 
   // Add node
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("matmul_node");
   node.set_op_type("MatMul");
   node.add_input() = "input_tensor";
@@ -3524,11 +3524,11 @@ TEST(onnx2_proto, ModelProto_ComplexModel) {
   node.add_output() = "output_tensor";
 
   // Add output
-  ValueInfoProto &output = graph.add_output();
+  ValueInfoProto& output = graph.add_output();
   output.set_name("output_tensor");
 
   // Add metadata
-  StringStringEntryProto &metadata = model.add_metadata_props();
+  StringStringEntryProto& metadata = model.add_metadata_props();
   metadata.set_key("framework");
   metadata.set_value("test_framework");
 
@@ -3554,7 +3554,7 @@ TEST(onnx2_proto, AttributeProto_InNodeProto1) {
   NodeProto node;
   node.set_name("test_node");
   node.set_op_type("TestOp");
-  AttributeProto &attr1 = node.add_attribute();
+  AttributeProto& attr1 = node.add_attribute();
   attr1.set_type(AttributeProto::AttributeType::INT);
   attr1.ref_i() = 2;
   AttributeProto att2;
@@ -3573,10 +3573,10 @@ TEST(onnx2_proto, AttributeProto_InNodeProto2) {
   NodeProto node;
   node.set_name("test_node");
   node.set_op_type("TestOp");
-  AttributeProto &attr1 = node.add_attribute();
+  AttributeProto& attr1 = node.add_attribute();
   attr1.set_type(AttributeProto::AttributeType::INT);
   attr1.ref_i() = 2;
-  AttributeProto &att2 = node.add_attribute();
+  AttributeProto& att2 = node.add_attribute();
   att2.set_type(AttributeProto::AttributeType::INT);
   att2.ref_i() = 2;
   std::string s1 = node.ref_attribute()[0].PrintToVectorString(options)[0];
@@ -3730,7 +3730,7 @@ TEST(onnx2_proto, AttributeProto_TensorsAttribute) {
   attribute.set_name("weights");
   attribute.set_type(AttributeProto::AttributeType::TENSORS);
 
-  TensorProto &tensor1 = attribute.add_tensors();
+  TensorProto& tensor1 = attribute.add_tensors();
   tensor1.set_name("tensor1");
   tensor1.set_data_type(TensorProto::DataType::FLOAT);
   tensor1.ref_dims().push_back(2);
@@ -3742,7 +3742,7 @@ TEST(onnx2_proto, AttributeProto_TensorsAttribute) {
   tensor1.ref_float_data().push_back(5.0f);
   tensor1.ref_float_data().push_back(6.0f);
 
-  TensorProto &tensor2 = attribute.add_tensors();
+  TensorProto& tensor2 = attribute.add_tensors();
   tensor2.set_name("tensor2");
   tensor2.set_data_type(TensorProto::DataType::INT32);
   tensor2.ref_dims().push_back(2);
@@ -3764,15 +3764,15 @@ TEST(onnx2_proto, AttributeProto_GraphsAttribute) {
   attribute.set_name("branches");
   attribute.set_type(AttributeProto::AttributeType::GRAPHS);
 
-  GraphProto &graph1 = attribute.add_graphs();
+  GraphProto& graph1 = attribute.add_graphs();
   graph1.set_name("if_branch");
-  NodeProto &node1 = graph1.add_node();
+  NodeProto& node1 = graph1.add_node();
   node1.set_name("add_node");
   node1.set_op_type("Add");
 
-  GraphProto &graph2 = attribute.add_graphs();
+  GraphProto& graph2 = attribute.add_graphs();
   graph2.set_name("else_branch");
-  NodeProto &node2 = graph2.add_node();
+  NodeProto& node2 = graph2.add_node();
   node2.set_name("mul_node");
   node2.set_op_type("Mul");
 
@@ -4087,14 +4087,14 @@ TEST(onnx2_proto, AttributeProto_RefVersusAccessors) {
 
   // Test TENSOR
   attr.set_type(AttributeProto::AttributeType::TENSOR);
-  TensorProto &tensor = attr.add_t();
+  TensorProto& tensor = attr.add_t();
   tensor.set_name("tensor_name");
   EXPECT_EQ(attr.ref_t().ref_name(), "tensor_name");
   EXPECT_TRUE(attr.has_t());
 
   // Test GRAPH
   attr.set_type(AttributeProto::AttributeType::GRAPH);
-  GraphProto &graph = attr.add_g();
+  GraphProto& graph = attr.add_g();
   graph.set_name("graph_name");
   EXPECT_EQ(attr.ref_g().ref_name(), "graph_name");
   EXPECT_TRUE(attr.has_g());
@@ -4205,7 +4205,7 @@ TEST(onnx2_proto, SerializeSize_AttributeProto_IntFloatTensors) {
   attribute.set_name("complex_attribute");
   attribute.set_type(AttributeProto::AttributeType::TENSORS);
 
-  TensorProto &tensor1 = attribute.add_tensors();
+  TensorProto& tensor1 = attribute.add_tensors();
   tensor1.set_name("tensor1");
   tensor1.set_data_type(TensorProto::DataType::FLOAT);
   tensor1.ref_dims().push_back(2);
@@ -4213,20 +4213,20 @@ TEST(onnx2_proto, SerializeSize_AttributeProto_IntFloatTensors) {
   tensor1.ref_float_data().push_back(1.0f);
   tensor1.ref_float_data().push_back(2.0f);
 
-  TensorProto &tensor2 = attribute.add_tensors();
+  TensorProto& tensor2 = attribute.add_tensors();
   tensor2.set_name("tensor2");
   tensor2.set_data_type(TensorProto::DataType::INT32);
   tensor2.ref_dims().push_back(2);
   tensor2.ref_int32_data().push_back(10);
   tensor2.ref_int32_data().push_back(20);
 
-  TensorProto &tensor3 = attribute.add_tensors();
+  TensorProto& tensor3 = attribute.add_tensors();
   tensor3.set_name("tensor3");
   tensor3.set_data_type(TensorProto::DataType::INT64);
   tensor3.ref_dims().push_back(1);
   tensor3.ref_int64_data().push_back(10);
 
-  TensorProto &tensor4 = attribute.add_tensors();
+  TensorProto& tensor4 = attribute.add_tensors();
   tensor4.set_name("tensor4");
   tensor4.set_data_type(TensorProto::DataType::INT32);
   tensor4.ref_dims().push_back(1);
@@ -4282,7 +4282,7 @@ TEST(onnx2_proto, SerializeSize_ConsistencyAcrossTypes) {
   // Test with GraphProto
   GraphProto graph;
   graph.set_name("test_graph");
-  NodeProto &graph_node = graph.add_node();
+  NodeProto& graph_node = graph.add_node();
   graph_node.set_name("node_in_graph");
 
   std::string graph_serialized;
@@ -4294,7 +4294,7 @@ TEST(onnx2_proto, SerializeSize_ConsistencyAcrossTypes) {
   ModelProto model;
   model.set_ir_version(7);
   model.set_producer_name("test_model");
-  GraphProto &model_graph = model.add_graph();
+  GraphProto& model_graph = model.add_graph();
   model_graph.set_name("graph_in_model");
 
   std::string model_serialized;
@@ -4333,22 +4333,6 @@ TEST(onnx2_file, LoadOnnxFile_Expanded) {
   utils::PrintOptions pr;
   std::string text = utils::join_string(model.PrintToVectorString(pr), "\n");
   EXPECT_NE(text.find("ReduceSum"), std::string::npos);
-}
-
-TEST(onnx2_file, LoadOnnxFile_Constant) {
-  namespace fs = std::filesystem;
-  fs::path source_path = __FILE__;
-  fs::path source_dir = source_path.parent_path();
-  fs::path file_path = source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_softmax_example_expanded" / "model.onnx";
-
-  NodeProto node;
-  utils::FileStream stream(file_path.string());
-  onnx2::ParseOptions opts;
-  node.ParseFromStream(stream, opts);
-
-  utils::PrintOptions pr;
-  std::string text = utils::join_string(node.PrintToVectorString(pr), "\n");
-  EXPECT_NE(text.find("Constant"), std::string::npos);
 }
 
 TEST(onnx2_file, LoadOnnxFile_ConstantAsString) {
@@ -4421,9 +4405,9 @@ TEST(onnx2_proto, AttributeProto_TypeAttribute) {
   attribute.set_name("input_type");
   attribute.set_type(AttributeProto::AttributeType::TYPE_PROTO);
 
-  TypeProto &type = attribute.add_tp();
+  TypeProto& type = attribute.add_tp();
   type.add_tensor_type().set_elem_type(1); // FLOAT
-  TensorShapeProto &shape = type.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = type.ref_tensor_type().add_shape();
   TensorShapeProto::Dimension &dim1 = shape.add_dim();
   dim1.set_dim_value(3);
   TensorShapeProto::Dimension &dim2 = shape.add_dim();
@@ -4447,9 +4431,9 @@ TEST(onnx2_proto, AttributeProto_TypesAttribute) {
   attribute.set_type(AttributeProto::AttributeType::TYPE_PROTO);
 
   // Premier type
-  TypeProto &type1 = attribute.add_tp();
+  TypeProto& type1 = attribute.add_tp();
   type1.add_tensor_type().set_elem_type(1); // FLOAT
-  TensorShapeProto &shape1 = type1.ref_tensor_type().add_shape();
+  TensorShapeProto& shape1 = type1.ref_tensor_type().add_shape();
   shape1.add_dim().set_dim_value(2);
   shape1.add_dim().set_dim_value(3);
 
@@ -4466,9 +4450,9 @@ TEST(onnx2_proto, AttributeProto_Serialization_TypeProto) {
   type_attr.set_name("type_attr");
   type_attr.set_type(AttributeProto::AttributeType::TYPE_PROTO);
 
-  TypeProto &type = type_attr.add_tp();
+  TypeProto& type = type_attr.add_tp();
   type.add_tensor_type().set_elem_type(1); // FLOAT
-  TensorShapeProto &shape = type.ref_tensor_type().add_shape();
+  TensorShapeProto& shape = type.ref_tensor_type().add_shape();
   shape.add_dim().set_dim_value(4);
   shape.add_dim().set_dim_param("dynamic_dim");
 
@@ -4537,15 +4521,15 @@ TEST(onnx2_proto, TensorProto_ExternalData) {
   tensor.set_data_location(TensorProto::DataLocation::EXTERNAL);
 
   // Ajouter des informations sur les données externes
-  StringStringEntryProto &entry1 = tensor.add_external_data();
+  StringStringEntryProto& entry1 = tensor.add_external_data();
   entry1.set_key("location");
   entry1.set_value("weights.bin");
 
-  StringStringEntryProto &entry2 = tensor.add_external_data();
+  StringStringEntryProto& entry2 = tensor.add_external_data();
   entry2.set_key("offset");
   entry2.set_value("0");
 
-  StringStringEntryProto &entry3 = tensor.add_external_data();
+  StringStringEntryProto& entry3 = tensor.add_external_data();
   entry3.set_key("length");
   entry3.set_value("1024");
 
@@ -4579,7 +4563,7 @@ TEST(onnx2_proto, TensorProto_DataLocationPrintToVectorString) {
   tensor.set_data_type(TensorProto::DataType::FLOAT);
   tensor.set_data_location(TensorProto::DataLocation::EXTERNAL);
 
-  StringStringEntryProto &entry = tensor.add_external_data();
+  StringStringEntryProto& entry = tensor.add_external_data();
   entry.set_key("location");
   entry.set_value("external_file.bin");
 
@@ -4615,7 +4599,7 @@ TEST(onnx2_proto, TensorProto_CopyFromWithDataLocation) {
   source.set_data_type(TensorProto::DataType::FLOAT);
   source.set_data_location(TensorProto::DataLocation::EXTERNAL);
 
-  StringStringEntryProto &entry = source.add_external_data();
+  StringStringEntryProto& entry = source.add_external_data();
   entry.set_key("location");
   entry.set_value("source_file.bin");
 

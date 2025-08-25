@@ -325,9 +325,9 @@ def _attr_type_to_str(attr_type: int) -> str:
     """
     if attr_type in _ATTRIBUTE_TYPE_TO_STR:
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    if isinstance(attr_type, int) and attr_type in _ATTRIBUTE_TYPE_INT_TO_STR:
+    if isinstance(attr_type, int) and attr_type in _ATTRIBUTE_TYPE_INT_TO_STR:  # type: ignore[attr-defined]
         return _ATTRIBUTE_TYPE_INT_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]
+    return AttributeProto.AttributeType.keys()[0]  # type: ignore
 
 
 def _to_bytes(value: str | bytes) -> bytes:
