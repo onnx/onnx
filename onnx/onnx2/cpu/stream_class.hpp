@@ -6,11 +6,11 @@
 
 #pragma once
 
-#include "stream_class.h"
-#include "stream_class_print.hpp"
-#include "stream_class_read.hpp"
-#include "stream_class_size.hpp"
-#include "stream_class_write.hpp"
+#include "onnx/onnx2/cpu/stream_class.h"
+#include "onnx/onnx2/cpu/stream_class_print.hpp"
+#include "onnx/onnx2/cpu/stream_class_read.hpp"
+#include "onnx/onnx2/cpu/stream_class_size.hpp"
+#include "onnx/onnx2/cpu/stream_class_write.hpp"
 
 ////////////////
 // macro helpers

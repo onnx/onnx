@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "simple_string.h"
-#include "stream.h"
+#include "onnx/onnx2/cpu/simple_string.h"
+#include "onnx/onnx2/cpu/stream.h"
 
 #define FIELD_VARINT 0
 // #define FIELD_FIXED64 1

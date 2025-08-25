@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "onnx2.h"
+#include "onnx/onnx2/cpu/onnx2.h"
 
 namespace onnx2 {
 

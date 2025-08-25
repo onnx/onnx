@@ -9,7 +9,7 @@
 #include <cstring>
 #include <string>
 
-#include "common_helpers.h"
+#include "onnx/onnx2/cpu/common_helpers.h"
 
 namespace onnx2 {
 namespace utils {

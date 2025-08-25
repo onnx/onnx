@@ -4,11 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "stream.h"
-
-#include <stdint.h>
+#include "onnx/onnx2/cpu/stream.h"
 
 #include <cstddef>
+#include <stdint.h>
 #include <cstring>
 #include <stdexcept>
 #include <vector>

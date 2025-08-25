@@ -173,6 +173,9 @@ list(REMOVE_ITEM ONNX2_SOURCES "${ONNX_ROOT}/onnx/onnx2/cpu/_onnx2py.cpp")
 add_library(lib_onnx2_cpp STATIC ${ONNX2_SOURCES})
 set_target_properties(lib_onnx2_cpp PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(lib_onnx2_cpp PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+target_include_directories(lib_onnx2_cpp PUBLIC
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 message(STATUS "Setting ONNX2 done.")
 
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)

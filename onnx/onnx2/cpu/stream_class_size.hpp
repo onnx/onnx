@@ -17,7 +17,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "stream_class.h"
+#include "onnx/onnx2/cpu/stream_class.h"
 
 using namespace common_helpers;
 

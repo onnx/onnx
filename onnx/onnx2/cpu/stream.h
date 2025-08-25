@@ -6,18 +6,17 @@
 
 #pragma once
 
-#include <stdint.h>
-
 #include <cstddef>
+#include <stdint.h>
 #include <fstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "common_helpers.h"
-#include "simple_string.h"
-#include "thread_pool.h"
+#include "onnx/onnx2/cpu/common_helpers.h"
+#include "onnx/onnx2/cpu/simple_string.h"
+#include "onnx/onnx2/cpu/thread_pool.h"
 
 namespace onnx2 {
 namespace utils {
@@ -160,10 +159,16 @@ class StringStream : public BinaryStream {
   virtual uint64_t next_uint64() override;
   virtual const uint8_t* read_bytes(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr) override;
   void skip_bytes(offset_t n_bytes) override;
-  bool NotEnd() const override { return pos_ < size_; }
-  offset_t tell() const override { return static_cast<offset_t>(pos_); }
+  bool NotEnd() const override {
+    return pos_ < size_;
+  }
+  offset_t tell() const override {
+    return static_cast<offset_t>(pos_);
+  }
   std::string tell_around() const override;
-  int64_t size() const override { return size_; }
+  int64_t size() const override {
+    return size_;
+  }
 
   // parallelization of big blocks.
   bool HasParallelizationStarted() const override {
@@ -204,8 +209,12 @@ class BorrowedWriteStream : public BinaryWriteStream {
   explicit inline BorrowedWriteStream(const uint8_t* data, int64_t size)
       : BinaryWriteStream(), data_(data), size_(size) {}
   void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
-  int64_t size() const override { return size_; }
-  const uint8_t* data() const override { return data_; }
+  int64_t size() const override {
+    return size_;
+  }
+  const uint8_t* data() const override {
+    return data_;
+  }
 
  protected:
   const uint8_t* data_;
@@ -222,7 +231,9 @@ class FileWriteStream : public BinaryWriteStream {
   void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
   int64_t size() const override;
   const uint8_t* data() const override;
-  inline const std::string& file_path() const { return file_path_; }
+  inline const std::string& file_path() const {
+    return file_path_;
+  }
 
  protected:
   std::string file_path_;
@@ -238,7 +249,9 @@ class FileStream : public BinaryStream {
  public:
   explicit FileStream(const std::string& file_path);
   virtual ~FileStream();
-  inline const std::string& file_path() const { return file_path_; }
+  inline const std::string& file_path() const {
+    return file_path_;
+  }
   void CanRead(uint64_t len, const char* msg) override;
   uint64_t next_uint64() override;
   const uint8_t* read_bytes(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr) override;
@@ -252,7 +265,9 @@ class FileStream : public BinaryStream {
   offset_t tell() const override;
   std::string tell_around() const override;
   bool is_open() const;
-  int64_t size() const override { return size_; }
+  int64_t size() const override {
+    return size_;
+  }
 
   // parallelization of big blocks.
   virtual bool HasParallelizationStarted() const override {
@@ -302,13 +317,21 @@ class TwoFilesWriteStream : public FileWriteStream {
 class TwoFilesStream : public FileStream {
  public:
   explicit TwoFilesStream(const std::string& file_path, const std::string& weights_file);
-  inline const std::string& weights_file_path() const { return weights_stream_.file_path(); }
-  inline uint64_t weights_tell() const { return weights_stream_.tell(); }
-  bool ExternalWeights() const override { return true; }
+  inline const std::string& weights_file_path() const {
+    return weights_stream_.file_path();
+  }
+  inline uint64_t weights_tell() const {
+    return weights_stream_.tell();
+  }
+  bool ExternalWeights() const override {
+    return true;
+  }
   virtual void
   read_bytes_from_weights_stream(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr, offset_t offset = -1);
   void ReadDelayedBlock(DelayedBlock& block) override;
-  virtual int64_t weights_size() const { return weights_stream_.size(); }
+  virtual int64_t weights_size() const {
+    return weights_stream_.size();
+  }
 
  protected:
   FileStream weights_stream_;

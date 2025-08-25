@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "simple_string.h"
+#include "onnx/onnx2/cpu/simple_string.h"
 
 #include <sstream>
 

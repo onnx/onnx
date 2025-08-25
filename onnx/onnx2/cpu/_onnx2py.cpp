@@ -7,8 +7,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "onnx2.h"
-#include "onnx2_helper.h"
+#include "onnx/onnx2/cpu/onnx2.h"
+#include "onnx/onnx2/cpu/onnx2_helper.h"
 
 #include <string>
 #include <vector>

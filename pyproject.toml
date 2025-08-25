@@ -199,6 +199,8 @@ required-imports = ["from __future__ import annotations"]
 "**/*_test*" = ["N802"] # Function casing
 "onnx/backend/test/**" = ["PLR2004"] # Magic numbers allowed in tests
 "onnx/backend/test/case/**" = ["N802"] # Function casing
+"onnx/onnx2/**" = ["TID252"]  # use relative import
+"onnx/onnx2/__init__.py" = ["F401", "TID252"]  # use relative import
 "onnx/reference/ops/**" = [
     "N801", # Class casing
     "PLR2004", # Magic numbers
