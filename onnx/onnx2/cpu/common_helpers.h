@@ -23,22 +23,22 @@ class StringStream {
 public:
   StringStream();
   virtual ~StringStream();
-  virtual StringStream &append_uint16(const uint16_t& obj);
-  virtual StringStream &append_uint32(const uint32_t& obj);
-  virtual StringStream &append_uint64(const uint64_t& obj);
-  virtual StringStream &append_int16(const int16_t& obj);
-  virtual StringStream &append_int32(const int32_t& obj);
-  virtual StringStream &append_int64(const int64_t& obj);
-  virtual StringStream &append_float(const float& obj);
-  virtual StringStream &append_double(const double& obj);
-  virtual StringStream &append_char(const char& obj);
-  virtual StringStream &append_string(const std::string& obj);
-  virtual StringStream &append_charp(const char* obj);
+  virtual StringStream& append_uint16(const uint16_t& obj);
+  virtual StringStream& append_uint32(const uint32_t& obj);
+  virtual StringStream& append_uint64(const uint64_t& obj);
+  virtual StringStream& append_int16(const int16_t& obj);
+  virtual StringStream& append_int32(const int32_t& obj);
+  virtual StringStream& append_int64(const int64_t& obj);
+  virtual StringStream& append_float(const float& obj);
+  virtual StringStream& append_double(const double& obj);
+  virtual StringStream& append_char(const char& obj);
+  virtual StringStream& append_string(const std::string& obj);
+  virtual StringStream& append_charp(const char* obj);
   virtual std::string str();
   static StringStream *NewStream();
 };
 
-std::vector<std::string> SplitString(const std::string &input, char delimiter);
+std::vector<std::string> SplitString(const std::string& input, char delimiter);
 
 void MakeStringInternalElement(StringStream& ss, const char *t);
 
@@ -85,13 +85,13 @@ inline void MakeStringInternal(StringStream& ss, const T& t) {
 }
 
 template <typename T, typename... Args>
-inline void MakeStringInternal(StringStream& ss, const T& t, const Args &...args) {
+inline void MakeStringInternal(StringStream& ss, const T& t, const Args&...args) {
   MakeStringInternalElement(ss, t);
   MakeStringInternal(ss, args...);
 }
 
 template <typename... Args>
-inline std::string MakeString(const Args &...args) {
+inline std::string MakeString(const Args&...args) {
   StringStream* ss = StringStream::NewStream();
   MakeStringInternal(*ss, args...);
   std::string res = ss->str();

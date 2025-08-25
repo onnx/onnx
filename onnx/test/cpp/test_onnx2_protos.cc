@@ -3,6 +3,7 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
+// NOLINT(readability/check)
 
 #include <gtest/gtest.h>
 
@@ -11,9 +12,9 @@
 #include <string>
 #include <vector>
 
+#include "onnx/onnx2/cpu/common_helpers.h"
 #include "onnx/onnx2/cpu/onnx2.h"
 #include "onnx/onnx2/cpu/onnx2_helper.h"
-#include "onnx/onnx2/cpu/common_helpers.h"
 
 using namespace onnx2;
 
@@ -24,7 +25,7 @@ TEST(onnx2_string, RefString_Constructors) {
   EXPECT_EQ(copied.data(), original.data());
   EXPECT_EQ(copied, original);
 
-  const char *text = "hello";
+  const char* text = "hello";
   utils::RefString rs(text, 5);
   EXPECT_EQ(rs.size(), 5);
   EXPECT_EQ(rs.data(), text);
@@ -238,7 +239,7 @@ TEST(onnx2_string, RefString) {
 }
 
 TEST(onnx2_string, RefString_ConstructorFromConstCharPtr) {
-  const char *text = "hello world";
+  const char* text = "hello world";
   utils::RefString rs(text, 11);
   EXPECT_EQ(rs.size(), 11);
   EXPECT_EQ(rs.data(), text);
@@ -354,7 +355,7 @@ TEST(onnx2_string, String_CopyConstructor) {
 
 TEST(onnx2_string, String_MoveConstructor) {
   utils::String original("move this data", 14);
-  const char *original_data = original.data();
+  const char* original_data = original.data();
   utils::String moved(std::move(original));
 
   EXPECT_EQ(moved.size(), 14);
@@ -600,7 +601,9 @@ TEST(onnx2_proto, TensorProtoNameStringToString2) {
   }
 }
 
-TEST(onnx2_proto, TensorProtoName00) { TensorProto tp; }
+TEST(onnx2_proto, TensorProtoName00) {
+  TensorProto tp;
+}
 TEST(onnx2_proto, TensorProtoName01) {
   TensorProto tp;
   tp.set_name("rt");
@@ -645,7 +648,7 @@ TEST(onnx2_proto, TensorShapeProto1) {
   TensorShapeProto shape;
   TensorShapeProto::Dimension &dim = shape.add_dim();
   dim.set_dim_value(5);
-  TensorShapeProto::Dimension &dim2 = shape.ref_dim().add();
+  TensorShapeProto::Dimension& dim2 = shape.ref_dim().add();
   dim2.set_dim_param("dime");
   dim2.ref_denotation() = "jj";
   EXPECT_EQ(shape.ref_dim().size(), 2);
@@ -678,24 +681,25 @@ TEST(onnx2_stream, FieldNumber) {
 }
 
 class onnx2_stream_2 : public ::testing::Test {
-protected:
+ protected:
   void SetUp() override {
-    data = {0x96, 0x01,
-            // int64_t
-            0x2A,
-            // int32_t
-            0x18,
-            // float: 3.14
-            0xC3, 0xF5, 0x48, 0x40,
-            // double: 2.71828
-            0x4D, 0xFB, 0x21, 0x09, 0x40, 0x05, 0x5D, 0x40,
-            // field number: 10, wire_type: 2 -> (10 << 3) | 2 = 82
-            0x52,
-            // string length: 5
-            0x05,
-            // string "hello"
-            'h', 'e', 'l', 'l', 'o'};
-
+    data = {
+      0x96, 0x01,
+      // int64_t
+      0x2A,
+      // int32_t
+      0x18,
+      // float: 3.14
+      0xC3, 0xF5, 0x48, 0x40,
+      // double: 2.71828
+      0x4D, 0xFB, 0x21, 0x09, 0x40, 0x05, 0x5D, 0x40,
+      // field number: 10, wire_type: 2 -> (10 << 3) | 2 = 82
+      0x52,
+      // string length: 5
+      0x05,
+      // string "hello"
+      'h', 'e', 'l', 'l', 'o'
+    };
     stream.Setup(data.data(), data.size());
   }
 
@@ -868,10 +872,7 @@ TEST(onnx2_stream, NestedStringWriteStreams) {
 }
 
 TEST(onnx2_stream, NextPackedElement) {
-  std::vector<uint8_t> data = {// a float: 3.14
-                               0xC3, 0xF5, 0x48, 0x40,
-                               // int32: 42
-                               0x2A, 0x00, 0x00, 0x00};
+  std::vector<uint8_t> data = {0xC3, 0xF5, 0x48, 0x40, 0x2A, 0x00, 0x00, 0x00};  // float: 3.14, int32: 42
 
   utils::StringStream stream(data.data(), data.size());
 
@@ -1114,10 +1115,10 @@ TEST(onnx2_proto, TensorShapeProto_Basic) {
 
   EXPECT_EQ(shape.ref_dim().size(), 0);
 
-  TensorShapeProto::Dimension &dim1 = shape.add_dim();
+  TensorShapeProto::Dimension& dim1 = shape.add_dim();
   dim1.set_dim_value(5);
 
-  TensorShapeProto::Dimension &dim2 = shape.ref_dim().add();
+  TensorShapeProto::Dimension& dim2 = shape.ref_dim().add();
   dim2.set_dim_param("N");
   dim2.set_denotation("batch");
 
@@ -1249,7 +1250,7 @@ TEST(onnx2_proto, TensorProto_RawData) {
 
   EXPECT_EQ(tensor.ref_raw_data().size(), data.size() * sizeof(float));
 
-  const float *raw_data_ptr = reinterpret_cast<const float*>(tensor.ref_raw_data().data());
+  const float* raw_data_ptr = reinterpret_cast<const float*>(tensor.ref_raw_data().data());
   EXPECT_EQ(raw_data_ptr[0], 1.0f);
   EXPECT_EQ(raw_data_ptr[1], 2.0f);
   EXPECT_EQ(raw_data_ptr[2], 3.0f);
@@ -1402,10 +1403,10 @@ TEST(onnx2_proto, TypeProtoOperations) {
 
   TensorShapeProto& shape = type.ref_tensor_type().add_shape();
 
-  TensorShapeProto::Dimension &dim1 = shape.add_dim();
+  TensorShapeProto::Dimension& dim1 = shape.add_dim();
   dim1.set_dim_value(3);
 
-  TensorShapeProto::Dimension &dim2 = shape.add_dim();
+  TensorShapeProto::Dimension& dim2 = shape.add_dim();
   dim2.set_dim_param("batch_size");
 
   EXPECT_TRUE(type.has_tensor_type());
@@ -1455,7 +1456,7 @@ TEST(onnx2_proto, TensorProtoWithRawData) {
   EXPECT_EQ(tensor.ref_dims()[1], 2);
   EXPECT_EQ(tensor.ref_raw_data().size(), data.size() * sizeof(float));
 
-  const float *raw_data_ptr = reinterpret_cast<const float*>(tensor.ref_raw_data().data());
+  const float* raw_data_ptr = reinterpret_cast<const float*>(tensor.ref_raw_data().data());
   EXPECT_EQ(raw_data_ptr[0], 1.0f);
   EXPECT_EQ(raw_data_ptr[1], 2.0f);
   EXPECT_EQ(raw_data_ptr[2], 3.0f);
@@ -1512,10 +1513,10 @@ TEST(onnx2_proto, SparseTensorProtoOperations) {
 TEST(onnx2_proto, TensorShapeProtoOperations) {
   TensorShapeProto shape;
 
-  TensorShapeProto::Dimension &dim1 = shape.add_dim();
+  TensorShapeProto::Dimension& dim1 = shape.add_dim();
   dim1.set_dim_value(5);
 
-  TensorShapeProto::Dimension &dim2 = shape.add_dim();
+  TensorShapeProto::Dimension& dim2 = shape.add_dim();
   dim2.set_dim_param("N");
   dim2.set_denotation("batch");
 
@@ -1796,8 +1797,7 @@ TEST(onnx2_string, ShardingSpecProto) {
   bool foundShardedDim = false;
 
   for (const auto& item : result) {
-    if (item.find("tensor_name:") != std::string::npos &&
-        item.find("sharded_tensor") != std::string::npos) {
+    if (item.find("tensor_name:") != std::string::npos && item.find("sharded_tensor") != std::string::npos) {
       foundTensorName = true;
     }
     if (item.find("device:") != std::string::npos) {
@@ -1940,8 +1940,7 @@ TEST(onnx2_string, TensorProto) {
       foundName = true;
     }
     if (item.find("data_type:") != std::string::npos &&
-        item.find(std::to_string(static_cast<int>(TensorProto::DataType::FLOAT))) !=
-            std::string::npos) {
+        item.find(std::to_string(static_cast<int>(TensorProto::DataType::FLOAT))) != std::string::npos) {
       foundDataType = true;
     }
     if (item.find("dims:") != std::string::npos) {
@@ -2085,8 +2084,7 @@ TEST(onnx2_string, TensorProto_WithRawData) {
       foundName = true;
     }
     if (item.find("data_type:") != std::string::npos &&
-        item.find(std::to_string(static_cast<int>(TensorProto::DataType::FLOAT))) !=
-            std::string::npos) {
+        item.find(std::to_string(static_cast<int>(TensorProto::DataType::FLOAT))) != std::string::npos) {
       foundDataType = true;
     }
     if (item.find("raw_data:") != std::string::npos) {
@@ -2184,8 +2182,7 @@ TEST(onnx2_proto, ValueInfoProto_Serialization) {
   EXPECT_TRUE(value_info2.ref_type().ref_tensor_type().has_shape());
   EXPECT_EQ(value_info2.ref_type().ref_tensor_type().ref_shape().ref_dim().size(), 2);
   EXPECT_EQ(value_info2.ref_type().ref_tensor_type().ref_shape().ref_dim()[0].ref_dim_value(), 2);
-  EXPECT_EQ(value_info2.ref_type().ref_tensor_type().ref_shape().ref_dim()[1].ref_dim_param(),
-            "dynamic_dim");
+  EXPECT_EQ(value_info2.ref_type().ref_tensor_type().ref_shape().ref_dim()[1].ref_dim_param(), "dynamic_dim");
 }
 
 TEST(onnx2_proto, ValueInfoProto_PrintToVectorString) {
@@ -2208,12 +2205,10 @@ TEST(onnx2_proto, ValueInfoProto_PrintToVectorString) {
   bool foundType = false;
 
   std::string serialized = utils::join_string(result, "\n");
-  if (serialized.find("name:") != std::string::npos &&
-      serialized.find("feature_vector") != std::string::npos) {
+  if (serialized.find("name:") != std::string::npos && serialized.find("feature_vector") != std::string::npos) {
     foundName = true;
   }
-  if (serialized.find("doc_string:") != std::string::npos &&
-      serialized.find("Feature vector description") != std::string::npos) {
+  if (serialized.find("doc_string:") != std::string::npos && serialized.find("Feature vector description") != std::string::npos) {
     foundDocString = true;
   }
   if (serialized.find("type") != std::string::npos &&
@@ -3590,7 +3585,6 @@ TEST(onnx2_proto, TensorProto_SkipRawData) {
   tensor1.ref_dims().push_back(2);
   tensor1.ref_dims().push_back(2);
 
-  // Ajout de donn�es brutes
   std::vector<float> data = {1.0f, 2.0f, 3.0f, 4.0f};
   tensor1.ref_raw_data().resize(data.size() * sizeof(float));
   std::memcpy(tensor1.ref_raw_data().data(), data.data(), data.size() * sizeof(float));
@@ -3610,7 +3604,6 @@ TEST(onnx2_proto, TensorProto_SkipRawData) {
   EXPECT_EQ(serialized2.size(), 21);
   EXPECT_EQ(serialized2.size(), tensor1.SerializeSize(st, options2));
 
-  // Test avec skip_raw_data = false (comportement par d�faut)
   ParseOptions parse_options;
   parse_options.skip_raw_data = true;
   parse_options.raw_data_threshold = 0;
@@ -3698,7 +3691,7 @@ TEST(onnx2_stream, FileStream_TensorProto) {
 
     // Deserialize the TensorProto
     TensorProto tensor;
-    tensor.ParseFromString(std::string(reinterpret_cast<const char *>(buffer.data()), buffer.size()));
+    tensor.ParseFromString(std::string(reinterpret_cast<const char*>(buffer.data()), buffer.size()));
 
     // Check properties
     EXPECT_EQ(tensor.ref_name(), "test_tensor");
@@ -4302,7 +4295,8 @@ TEST(onnx2_file, LoadOnnxFile_OldProtobuf) {
   namespace fs = std::filesystem;
   fs::path source_path = __FILE__;
   fs::path source_dir = source_path.parent_path();
-  fs::path file_path = source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_ai_onnx_ml_binarizer" / "model.onnx";
+  fs::path file_path =
+    source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_ai_onnx_ml_binarizer" / "model.onnx";
 
   ModelProto model;
   utils::FileStream stream(file_path.string());
@@ -4318,7 +4312,8 @@ TEST(onnx2_file, LoadOnnxFile_Expanded) {
   namespace fs = std::filesystem;
   fs::path source_path = __FILE__;
   fs::path source_dir = source_path.parent_path();
-  fs::path file_path = source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_softmax_example_expanded" / "model.onnx";
+  fs::path file_path =
+    source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_softmax_example_expanded" / "model.onnx";
 
   ModelProto model;
   utils::FileStream stream(file_path.string());
@@ -4331,10 +4326,7 @@ TEST(onnx2_file, LoadOnnxFile_Expanded) {
 }
 
 TEST(onnx2_file, LoadOnnxFile_ConstantAsString) {
-  std::vector<uint8_t> data = {
-      18,  3,   65,  65, 65,  26,  2,   78, 78, 34,  8, 67, 111, 110, 115, 116, 97,  110, 116, 42,  39,
-      10,  5,   118, 97, 108, 117, 101, 42, 16, 8,   1, 16, 6,   58,  10,  255, 255, 255, 255, 255, 255,
-      255, 255, 255, 1,  106, 3,   68,  79, 67, 160, 1, 4,  170, 1,   3,   82,  69,  70,  58,  1,   77};
+  std::vector<uint8_t> data = {18, 3, 65, 65, 65, 26, 2, 78, 78, 34, 8, 67, 111, 110, 115, 116, 97, 110, 116, 42, 39, 10, 5, 118, 97, 108, 117, 101, 42, 16, 8, 1, 16, 6, 58, 10, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 106, 3, 68, 79, 67, 160, 1, 4, 170, 1, 3, 82, 69, 70, 58, 1, 77};
   std::string data_str(data.begin(), data.end());
   EXPECT_EQ(data_str.size(), data.size());
   NodeProto node;
@@ -4403,9 +4395,9 @@ TEST(onnx2_proto, AttributeProto_TypeAttribute) {
   TypeProto& type = attribute.add_tp();
   type.add_tensor_type().set_elem_type(1); // FLOAT
   TensorShapeProto& shape = type.ref_tensor_type().add_shape();
-  TensorShapeProto::Dimension &dim1 = shape.add_dim();
+  TensorShapeProto::Dimension& dim1 = shape.add_dim();
   dim1.set_dim_value(3);
-  TensorShapeProto::Dimension &dim2 = shape.add_dim();
+  TensorShapeProto::Dimension& dim2 = shape.add_dim();
   dim2.set_dim_param("N");
 
   EXPECT_EQ(attribute.ref_name(), "input_type");
@@ -4471,34 +4463,28 @@ TEST(onnx2_proto, AttributeProto_Serialization_TypeProto) {
 //
 
 TEST(onnx2_proto, TensorProto_DataLocation) {
-  // Créer un TensorProto avec une localisation externe
   TensorProto tensor;
   tensor.set_name("external_tensor");
   tensor.set_data_type(TensorProto::DataType::FLOAT);
   tensor.ref_dims().push_back(2);
   tensor.ref_dims().push_back(3);
 
-  // Par défaut, la localisation des données est ONNX2_DEFAULT
   EXPECT_EQ(tensor.ref_data_location(), TensorProto::DataLocation::DEFAULT);
 
-  // Définir la localisation comme externe
   tensor.set_data_location(TensorProto::DataLocation::EXTERNAL);
   EXPECT_EQ(tensor.ref_data_location(), TensorProto::DataLocation::EXTERNAL);
 
-  // Sérialiser et désérialiser
   std::string serialized;
   tensor.SerializeToString(serialized);
 
   TensorProto tensor2;
   tensor2.ParseFromString(serialized);
 
-  // Vérifier que la localisation des données est préservée
   EXPECT_EQ(tensor2.ref_data_location(), TensorProto::DataLocation::EXTERNAL);
   EXPECT_EQ(tensor2.ref_name(), "external_tensor");
   EXPECT_EQ(tensor2.ref_data_type(), TensorProto::DataType::FLOAT);
   EXPECT_EQ(tensor2.ref_dims().size(), 2);
 
-  // Tester toutes les valeurs possibles de DataLocation
   TensorProto tensor3;
   tensor3.set_data_location(TensorProto::DataLocation::DEFAULT);
   EXPECT_EQ(tensor3.ref_data_location(), TensorProto::DataLocation::DEFAULT);
@@ -4508,13 +4494,11 @@ TEST(onnx2_proto, TensorProto_DataLocation) {
 }
 
 TEST(onnx2_proto, TensorProto_ExternalData) {
-  // Créer un TensorProto avec données externes
   TensorProto tensor;
   tensor.set_name("external_data_tensor");
   tensor.set_data_type(TensorProto::DataType::FLOAT);
   tensor.set_data_location(TensorProto::DataLocation::EXTERNAL);
 
-  // Ajouter des informations sur les données externes
   StringStringEntryProto& entry1 = tensor.add_external_data();
   entry1.set_key("location");
   entry1.set_value("weights.bin");
@@ -4527,7 +4511,6 @@ TEST(onnx2_proto, TensorProto_ExternalData) {
   entry3.set_key("length");
   entry3.set_value("1024");
 
-  // Vérifier les entrées
   EXPECT_EQ(tensor.ref_external_data().size(), 3);
   EXPECT_EQ(tensor.ref_external_data()[0].ref_key(), "location");
   EXPECT_EQ(tensor.ref_external_data()[0].ref_value(), "weights.bin");
@@ -4536,14 +4519,12 @@ TEST(onnx2_proto, TensorProto_ExternalData) {
   EXPECT_EQ(tensor.ref_external_data()[2].ref_key(), "length");
   EXPECT_EQ(tensor.ref_external_data()[2].ref_value(), "1024");
 
-  // Sérialiser et désérialiser
   std::string serialized;
   tensor.SerializeToString(serialized);
 
   TensorProto tensor2;
   tensor2.ParseFromString(serialized);
 
-  // Vérifier que les informations externes sont préservées
   EXPECT_EQ(tensor2.ref_data_location(), TensorProto::DataLocation::EXTERNAL);
   EXPECT_EQ(tensor2.ref_external_data().size(), 3);
   EXPECT_EQ(tensor2.ref_external_data()[0].ref_key(), "location");
@@ -4561,24 +4542,20 @@ TEST(onnx2_proto, TensorProto_DataLocationPrintToVectorString) {
   entry.set_key("location");
   entry.set_value("external_file.bin");
 
-  // Générer la représentation textuelle
   std::vector<std::string> result = tensor.PrintToVectorString(options);
   ASSERT_FALSE(result.empty());
 
-  // Vérifier que la sortie contient les informations de localisation des données
   bool foundDataLocation = false;
   bool foundExternalData = false;
 
   std::string serialized = utils::join_string(result, "\n");
 
   if (serialized.find("data_location:") != std::string::npos &&
-      serialized.find(std::to_string(static_cast<int>(TensorProto::DataLocation::EXTERNAL))) !=
-          std::string::npos) {
+      serialized.find(std::to_string(static_cast<int>(TensorProto::DataLocation::EXTERNAL))) != std::string::npos) {
     foundDataLocation = true;
   }
 
-  if (serialized.find("external_data") != std::string::npos &&
-      serialized.find("location") != std::string::npos &&
+  if (serialized.find("external_data") != std::string::npos && serialized.find("location") != std::string::npos &&
       serialized.find("external_file.bin") != std::string::npos) {
     foundExternalData = true;
   }
@@ -4597,11 +4574,9 @@ TEST(onnx2_proto, TensorProto_CopyFromWithDataLocation) {
   entry.set_key("location");
   entry.set_value("source_file.bin");
 
-  // Copier les données vers une nouvelle instance
   TensorProto target;
   target.CopyFrom(source);
 
-  // Vérifier que toutes les propriétés liées à la localisation des données sont copiées
   EXPECT_EQ(target.ref_name(), "source_external_tensor");
   EXPECT_EQ(target.ref_data_location(), TensorProto::DataLocation::EXTERNAL);
   EXPECT_EQ(target.ref_external_data().size(), 1);

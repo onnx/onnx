@@ -26,7 +26,7 @@ std::string Version() {
 
 StringStream::StringStream() {}
 StringStream::~StringStream() {}
-StringStream &StringStream::append_string(const std::string &) { return *this; }
+StringStream &StringStream::append_string(const std::string&) { return *this; }
 StringStream &StringStream::append_uint16(const uint16_t&) { return *this; }
 StringStream &StringStream::append_uint32(const uint32_t&) { return *this; }
 StringStream &StringStream::append_uint64(const uint64_t&) { return *this; }
@@ -43,47 +43,47 @@ class StringStreamStd : public StringStream {
 public:
   StringStreamStd() : StringStream() {}
   virtual ~StringStreamStd() {}
-  virtual StringStream &append_uint16(const uint16_t &obj) {
+  virtual StringStream& append_uint16(const uint16_t &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_uint32(const uint32_t &obj) {
+  virtual StringStream& append_uint32(const uint32_t &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_uint64(const uint64_t &obj) {
+  virtual StringStream& append_uint64(const uint64_t &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_int16(const int16_t &obj) {
+  virtual StringStream& append_int16(const int16_t &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_int32(const int32_t &obj) {
+  virtual StringStream& append_int32(const int32_t &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_int64(const int64_t &obj) {
+  virtual StringStream& append_int64(const int64_t &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_float(const float &obj) {
+  virtual StringStream& append_float(const float &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_double(const double &obj) {
+  virtual StringStream& append_double(const double &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_char(const char &obj) {
+  virtual StringStream& append_char(const char &obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_string(const std::string &obj) {
+  virtual StringStream& append_string(const std::string& obj) {
     stream_ << obj;
     return *this;
   }
-  virtual StringStream &append_charp(const char* obj) {
+  virtual StringStream& append_charp(const char* obj) {
     stream_ << obj;
     return *this;
   }
@@ -95,7 +95,7 @@ private:
 
 StringStream *StringStream::NewStream() { return new StringStreamStd(); }
 
-std::vector<std::string> SplitString(const std::string &input, char delimiter) {
+std::vector<std::string> SplitString(const std::string& input, char delimiter) {
   std::vector<std::string> parts;
   std::string::size_type start = 0;
   std::string::size_type end = input.find(delimiter);

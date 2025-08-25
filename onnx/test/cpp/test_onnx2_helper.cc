@@ -13,11 +13,11 @@
 #include <thread>
 #include <vector>
 
-#include "onnx/onnx2/cpu/onnx2_helper.h"
 #include "onnx/onnx2/cpu/common_helpers.h"
+#include "onnx/onnx2/cpu/onnx2_helper.h"
 
-using namespace onnx2;
-using namespace onnx2::utils;
+using namespace onnx2;  // NOLINT(build/namespaces)
+using namespace onnx2::utils;  // NOLINT(build/namespaces)
 
 TEST(onnx2_helper, IteratorTensorProto) {
   ModelProto model;
