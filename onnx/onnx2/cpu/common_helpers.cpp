@@ -15,6 +15,7 @@
 #include <thread>
 #include <vector>
 
+namespace ONNX_NAMESPACE {
 namespace common_helpers {
 
 std::string Version() {
@@ -204,3 +205,4 @@ void MakeStringInternalElement(StringStream& ss, const std::vector<double>& t) {
 }
 
 } // namespace common_helpers
+} // namespace ONNX_NAMESPACE

@@ -29,9 +29,10 @@
 #define DEBUG_PRINT2(s1, s2)
 #endif
 
-using namespace common_helpers;
+using namespace ONNX_NAMESPACE::common_helpers;
 
-namespace onnx2 { // NOLINT(build/namespaces)
+namespace ONNX_NAMESPACE {
+namespace v2 {
 
 template <typename T>
 void read_next_field_in_shortended_stream(utils::BinaryStream& stream, const char*, ParseOptions& options, T& field) {
@@ -587,4 +588,5 @@ READ_REPEATED_FIELD_IMPL(uint64_t)
 READ_REPEATED_FIELD_IMPL(int64_t)
 READ_REPEATED_FIELD_IMPL(int32_t)
 
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

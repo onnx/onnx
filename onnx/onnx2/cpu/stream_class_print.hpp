@@ -19,9 +19,10 @@
 #include <type_traits>
 #include <vector>
 
-using namespace common_helpers;
+using namespace ONNX_NAMESPACE::common_helpers;
 
-namespace onnx2 { // NOLINT(build/namespaces)
+namespace ONNX_NAMESPACE {
+namespace v2 {
 
 template <typename T>
 struct name_exist_value {
@@ -395,4 +396,5 @@ std::vector<std::string> write_proto_into_vector_string(utils::PrintOptions& opt
   return rows;
 }
 
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

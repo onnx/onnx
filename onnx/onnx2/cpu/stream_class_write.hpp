@@ -19,9 +19,10 @@
 #include <type_traits>
 #include <vector>
 
-using namespace common_helpers;
+using namespace ONNX_NAMESPACE::common_helpers;
 
-namespace onnx2 { // NOLINT(build/namespaces)
+namespace ONNX_NAMESPACE {
+namespace v2 {
 
 template <typename T>
 void write_with_cache_size(utils::BinaryWriteStream& stream, const T& field, SerializeOptions& options) {
@@ -368,4 +369,5 @@ WRITE_REPEATED_FIELD_IMPL(uint64_t)
 WRITE_REPEATED_FIELD_IMPL(int64_t)
 WRITE_REPEATED_FIELD_IMPL(int32_t)
 
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

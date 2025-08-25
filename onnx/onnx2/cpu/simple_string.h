@@ -12,7 +12,8 @@
 
 #include "onnx/onnx2/cpu/common_helpers.h"
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
 namespace utils {
 
 class String;
@@ -136,4 +137,5 @@ inline RefString& RefString::operator=(const String& v) {
 std::string join_string(const std::vector<std::string>& rows, const char* delimiter = "\n");
 
 } // namespace utils
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

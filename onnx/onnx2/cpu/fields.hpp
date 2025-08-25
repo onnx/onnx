@@ -16,7 +16,8 @@
 
 #include "onnx/onnx2/cpu/common_helpers.h"
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
 namespace utils {
 
 template <typename T>
@@ -156,4 +157,5 @@ OptionalField<T>& OptionalField<T>::operator=(const OptionalField<T>& v) {
 }
 
 } // namespace utils
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

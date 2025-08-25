@@ -40,7 +40,8 @@
 #define TensorProto_DataType_FLOAT4E2M1 FLOAT4E2M1
 #define TensorProto_DataType_FLOAT8E8M0 FLOAT8E8M0
 
-namespace onnx2 { // NOLINT(build/namespaces)
+namespace ONNX_NAMESPACE {
+namespace v2 {
 
 enum OperatorStatus { EXPERIMENTAL = 0, STABLE = 1 };
 
@@ -735,7 +736,8 @@ FIELD_REPEATED(
     "describe multiple multi-device configurations for execution.")
 END_PROTO()
 
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE
 
 #include "fields.hpp"
 

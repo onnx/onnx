@@ -14,7 +14,8 @@
 #include <string>
 #include <vector>
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
 namespace utils {
 
 ///////////////
@@ -505,4 +506,5 @@ void TwoFilesStream::ReadDelayedBlock(DelayedBlock& block) {
 }
 
 } // namespace utils
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

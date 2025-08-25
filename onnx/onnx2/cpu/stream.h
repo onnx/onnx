@@ -20,8 +20,9 @@
 #include "onnx/onnx2/cpu/simple_string.h"
 #include "onnx/onnx2/cpu/thread_pool.h"
 
-namespace onnx2 { // NOLINT(build/namespaces)
-namespace utils { // NOLINT(build/namespaces)
+namespace ONNX_NAMESPACE {
+namespace v2 {
+namespace utils {
 
 typedef int64_t offset_t;
 
@@ -341,4 +342,5 @@ class TwoFilesStream : public FileStream {
 };
 
 } // namespace utils
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE
