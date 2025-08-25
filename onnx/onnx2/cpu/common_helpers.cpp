@@ -9,6 +9,7 @@
 #include <float.h>
 #include <iterator>
 #include <sstream>
+#include <string>
 #include <thread>
 #include <vector>
 

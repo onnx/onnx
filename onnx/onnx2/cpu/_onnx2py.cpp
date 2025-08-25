@@ -10,6 +10,9 @@
 #include "onnx2.h"
 #include "onnx2_helper.h"
 
+#include <string>
+#include <vector>
+
 namespace py = pybind11;
 using namespace onnx2;
 

@@ -8,10 +8,12 @@
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 #include "onnx/onnx2/cpu/thread_pool.h"
 #include "onnx/onnx2/cpu/common_helpers.h"
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <string>
 #include <thread>
 #include <vector>
 
