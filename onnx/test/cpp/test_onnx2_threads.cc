@@ -90,11 +90,11 @@ TEST(onnx2_threads, ParallelModelProcessing0) {
   model.set_ir_version(7);
   model.set_producer_name("test_parallel_model");
 
-  auto &graph = model.add_graph();
+  auto& graph = model.add_graph();
 
   const int num_tensors = 16;
   for (int i = 0; i < num_tensors; ++i) {
-    auto &tensor = graph.add_initializer();
+    auto& tensor = graph.add_initializer();
     std::vector<uint8_t> values(40, static_cast<uint8_t>(i));
     tensor.add_dims(1);
     tensor.add_dims(10);
@@ -121,8 +121,7 @@ TEST(onnx2_threads, ParallelModelProcessing0) {
     model_proto2.ParseFromStream(stream, options);
     stream.WaitForDelayedBlock();
     EXPECT_EQ(model_proto2.ref_ir_version(), model.ref_ir_version());
-    EXPECT_EQ(model.ref_graph().ref_initializer().size(),
-              model_proto2.ref_graph().ref_initializer().size());
+    EXPECT_EQ(model.ref_graph().ref_initializer().size(), model_proto2.ref_graph().ref_initializer().size());
   }
 
   std::remove(temp_filename.c_str());
@@ -133,11 +132,11 @@ TEST(onnx2_threads, ParallelModelProcessing4_File) {
   model.set_ir_version(7);
   model.set_producer_name("test_parallel_model");
 
-  auto &graph = model.add_graph();
+  auto& graph = model.add_graph();
 
   const int num_tensors = 16;
   for (int i = 0; i < num_tensors; ++i) {
-    auto &tensor = graph.add_initializer();
+    auto& tensor = graph.add_initializer();
     std::vector<uint8_t> values(40, static_cast<uint8_t>(i));
     tensor.add_dims(1);
     tensor.add_dims(10);
@@ -164,8 +163,7 @@ TEST(onnx2_threads, ParallelModelProcessing4_File) {
     model_proto2.ParseFromStream(stream, options);
     stream.WaitForDelayedBlock();
     EXPECT_EQ(model_proto2.ref_ir_version(), model.ref_ir_version());
-    EXPECT_EQ(model.ref_graph().ref_initializer().size(),
-              model_proto2.ref_graph().ref_initializer().size());
+    EXPECT_EQ(model.ref_graph().ref_initializer().size(), model_proto2.ref_graph().ref_initializer().size());
   }
 
   std::remove(temp_filename.c_str());
@@ -176,11 +174,11 @@ TEST(onnx2_threads, ParallelModelProcessing4_String) {
   model.set_ir_version(7);
   model.set_producer_name("test_parallel_model");
 
-  auto &graph = model.add_graph();
+  auto& graph = model.add_graph();
 
   const int num_tensors = 16;
   for (int i = 0; i < num_tensors; ++i) {
-    auto &tensor = graph.add_initializer();
+    auto& tensor = graph.add_initializer();
     std::vector<uint8_t> values(40, static_cast<uint8_t>(i));
     tensor.add_dims(1);
     tensor.add_dims(10);
@@ -203,11 +201,10 @@ TEST(onnx2_threads, ParallelModelProcessing4_String) {
     ModelProto model_proto2;
     model_proto2.ParseFromString(serialized, options);
     EXPECT_EQ(model_proto2.ref_ir_version(), model.ref_ir_version());
-    EXPECT_EQ(model.ref_graph().ref_initializer().size(),
-              model_proto2.ref_graph().ref_initializer().size());
+    EXPECT_EQ(model.ref_graph().ref_initializer().size(), model_proto2.ref_graph().ref_initializer().size());
     for (size_t i = 0; i < model.ref_graph().ref_initializer().size(); ++i) {
-      const auto &tensor1 = model.ref_graph().ref_initializer()[i];
-      const auto &tensor2 = model_proto2.ref_graph().ref_initializer()[i];
+      const auto& tensor1 = model.ref_graph().ref_initializer()[i];
+      const auto& tensor2 = model_proto2.ref_graph().ref_initializer()[i];
       EXPECT_EQ(tensor1.ref_raw_data(), tensor2.ref_raw_data());
       EXPECT_EQ(tensor1.ref_data_type(), tensor2.ref_data_type());
     }
@@ -403,7 +400,7 @@ TEST(onnx2_threads, ParallelModelProcessing4_FileExternalDataManyInitializers) {
   {
     std::ifstream file(temp_weights, std::ios::binary);
     std::vector<uint8_t> buffer(length);
-    file.read(reinterpret_cast<char *>(buffer.data()), length);
+    file.read(reinterpret_cast<char*>(buffer.data()), length);
     for (size_t i = 0; i < buffer.size(); ++i) {
       if (i < 4)
         EXPECT_EQ(buffer[i], static_cast<uint8_t>(232)) << " at index " << i;

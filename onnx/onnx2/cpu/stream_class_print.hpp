@@ -21,7 +21,7 @@
 
 using namespace common_helpers;
 
-namespace onnx2 {
+namespace onnx2 {  // NOLINT(build/namespaces)
 
 template <typename T>
 struct name_exist_value {

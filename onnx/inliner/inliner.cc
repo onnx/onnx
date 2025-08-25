@@ -578,7 +578,7 @@ struct InlinerImpl {
     // Move all nodes into original_nodes
     original_nodes.Swap(&nodes);
 
-    std::function<void(NodeProto& node)> append_node = [&](NodeProto& node) {
+    std::function<void(NodeProto & node)> append_node = [&](NodeProto& node) {
       FunctionProto callee;
       int64_t target_version = kNoConversion;
       if (GetCallee(node, callee, target_version)) {

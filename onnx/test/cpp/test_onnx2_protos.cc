@@ -757,7 +757,7 @@ TEST_F(onnx2_stream_2, NextString) {
 }
 
 TEST_F(onnx2_stream_2, ReadBytes) {
-  const uint8_t *bytes = stream.read_bytes(2);
+  const uint8_t* bytes = stream.read_bytes(2);
   EXPECT_EQ(bytes[0], 0x96);
   EXPECT_EQ(bytes[1], 0x01);
 }
@@ -1249,7 +1249,7 @@ TEST(onnx2_proto, TensorProto_RawData) {
 
   EXPECT_EQ(tensor.ref_raw_data().size(), data.size() * sizeof(float));
 
-  const float *raw_data_ptr = reinterpret_cast<const float *>(tensor.ref_raw_data().data());
+  const float *raw_data_ptr = reinterpret_cast<const float*>(tensor.ref_raw_data().data());
   EXPECT_EQ(raw_data_ptr[0], 1.0f);
   EXPECT_EQ(raw_data_ptr[1], 2.0f);
   EXPECT_EQ(raw_data_ptr[2], 3.0f);
@@ -1455,7 +1455,7 @@ TEST(onnx2_proto, TensorProtoWithRawData) {
   EXPECT_EQ(tensor.ref_dims()[1], 2);
   EXPECT_EQ(tensor.ref_raw_data().size(), data.size() * sizeof(float));
 
-  const float *raw_data_ptr = reinterpret_cast<const float *>(tensor.ref_raw_data().data());
+  const float *raw_data_ptr = reinterpret_cast<const float*>(tensor.ref_raw_data().data());
   EXPECT_EQ(raw_data_ptr[0], 1.0f);
   EXPECT_EQ(raw_data_ptr[1], 2.0f);
   EXPECT_EQ(raw_data_ptr[2], 3.0f);
@@ -1659,7 +1659,7 @@ TEST(onnx2_string, TensorAnnotation) {
   utils::PrintOptions options;
   onnx2::TensorAnnotation proto;
   proto.set_tensor_name("my_tensor");
-  auto &entry = proto.add_quant_parameter_tensor_names();
+  auto& entry = proto.add_quant_parameter_tensor_names();
   entry.set_key("scale");
   entry.set_value("scale_tensor");
   std::vector<std::string> result = proto.PrintToVectorString(options);
@@ -1718,7 +1718,7 @@ TEST(onnx2_string, SimpleShardedDimProto) {
   bool foundDimParam = false;
   bool foundNumShards = false;
 
-  for (const auto &item : result) {
+  for (const auto& item : result) {
     if (item.find("dim_value:") != std::string::npos && item.find("100") != std::string::npos) {
       foundDimValue = true;
     }
@@ -1740,11 +1740,11 @@ TEST(onnx2_string, ShardedDimProto) {
   onnx2::ShardedDimProto proto;
   proto.set_axis(2);
 
-  auto &simple_dim1 = proto.add_simple_sharding();
+  auto& simple_dim1 = proto.add_simple_sharding();
   simple_dim1.set_dim_value(100);
   simple_dim1.set_num_shards(4);
 
-  auto &simple_dim2 = proto.add_simple_sharding();
+  auto& simple_dim2 = proto.add_simple_sharding();
   simple_dim2.set_dim_param("height");
   simple_dim2.set_num_shards(2);
 
@@ -1754,7 +1754,7 @@ TEST(onnx2_string, ShardedDimProto) {
   bool foundAxis = false;
   bool foundSimpleSharding = false;
 
-  for (const auto &item : result) {
+  for (const auto& item : result) {
     if (item.find("axis:") != std::string::npos && item.find("2") != std::string::npos) {
       foundAxis = true;
     }
@@ -1776,14 +1776,14 @@ TEST(onnx2_string, ShardingSpecProto) {
   proto.ref_device().push_back(1);
   proto.ref_device().push_back(2);
 
-  auto &map_entry = proto.add_index_to_device_group_map();
+  auto& map_entry = proto.add_index_to_device_group_map();
   map_entry.set_key(0);
   map_entry.ref_value().push_back(0);
   map_entry.ref_value().push_back(1);
 
-  auto &dim = proto.add_sharded_dim();
+  auto& dim = proto.add_sharded_dim();
   dim.set_axis(1);
-  auto &simple_dim = dim.add_simple_sharding();
+  auto& simple_dim = dim.add_simple_sharding();
   simple_dim.set_dim_value(64);
   simple_dim.set_num_shards(4);
 
@@ -1795,7 +1795,7 @@ TEST(onnx2_string, ShardingSpecProto) {
   bool foundMapping = false;
   bool foundShardedDim = false;
 
-  for (const auto &item : result) {
+  for (const auto& item : result) {
     if (item.find("tensor_name:") != std::string::npos &&
         item.find("sharded_tensor") != std::string::npos) {
       foundTensorName = true;
@@ -1823,7 +1823,7 @@ TEST(onnx2_string, NodeDeviceConfigurationProto) {
   proto.set_configuration_id("node_config_1");
   proto.set_pipeline_stage(3);
 
-  auto &spec = proto.add_sharding_spec();
+  auto& spec = proto.add_sharding_spec();
   spec.set_tensor_name("input_tensor");
   spec.ref_device().push_back(0);
   spec.ref_device().push_back(1);
@@ -1835,7 +1835,7 @@ TEST(onnx2_string, NodeDeviceConfigurationProto) {
   bool foundPipelineStage = false;
   bool foundShardingSpec = false;
 
-  for (const auto &item : result) {
+  for (const auto& item : result) {
     if (item.find("configuration_id:") != std::string::npos &&
         item.find("node_config_1") != std::string::npos) {
       foundConfigId = true;
@@ -1865,7 +1865,7 @@ TEST(onnx2_string, OperatorSetIdProto) {
   bool foundDomain = false;
   bool foundVersion = false;
 
-  for (const auto &item : result) {
+  for (const auto& item : result) {
     if (item.find("domain:") != std::string::npos && item.find("ai.onnx") != std::string::npos) {
       foundDomain = true;
     }
@@ -1882,10 +1882,10 @@ TEST(onnx2_string, TensorShapeProto) {
   utils::PrintOptions options;
   onnx2::TensorShapeProto proto;
 
-  auto &dim1 = proto.add_dim();
+  auto& dim1 = proto.add_dim();
   dim1.set_dim_value(64);
 
-  auto &dim2 = proto.add_dim();
+  auto& dim2 = proto.add_dim();
   dim2.set_dim_param("batch");
   dim2.set_denotation("N");
 
@@ -1935,7 +1935,7 @@ TEST(onnx2_string, TensorProto) {
   bool foundDocString = false;
   bool foundData = false;
 
-  for (const auto &item : result) {
+  for (const auto& item : result) {
     if (item.find("name:") != std::string::npos && item.find("test_tensor") != std::string::npos) {
       foundName = true;
     }
@@ -1995,7 +1995,7 @@ TEST(onnx2_string, SparseTensorProto) {
   bool foundValues = false;
   bool foundIndices = false;
 
-  for (const auto &item : result) {
+  for (const auto& item : result) {
     if (item.find("dims:") != std::string::npos && item.find("5") != std::string::npos) {
       foundDims = true;
     }
@@ -2018,12 +2018,12 @@ TEST(onnx2_string, TypeProto) {
 
   proto.add_tensor_type().set_elem_type(1); // FLOAT
 
-  auto &shape = proto.ref_tensor_type().add_shape();
+  auto& shape = proto.ref_tensor_type().add_shape();
 
-  auto &dim1 = shape.add_dim();
+  auto& dim1 = shape.add_dim();
   dim1.set_dim_value(10);
 
-  auto &dim2 = shape.add_dim();
+  auto& dim2 = shape.add_dim();
   dim2.set_dim_param("batch");
   dim2.set_denotation("N");
 
@@ -2080,7 +2080,7 @@ TEST(onnx2_string, TensorProto_WithRawData) {
   bool foundDataType = false;
   bool foundRawData = false;
 
-  for (const auto &item : result) {
+  for (const auto& item : result) {
     if (item.find("name:") != std::string::npos && item.find("raw_data_tensor") != std::string::npos) {
       foundName = true;
     }
@@ -3014,18 +3014,15 @@ TEST(onnx2_proto, GraphProto_PrintToVectorString) {
 
   std::string serialized = utils::join_string(result, "\n");
 
-  if (serialized.find("name:") != std::string::npos &&
-      serialized.find("vector_serialization_test") != std::string::npos) {
+  if (serialized.find("name:") != std::string::npos && serialized.find("vector_serialization_test") != std::string::npos) {
     foundName = true;
   }
 
-  if (serialized.find("doc_string:") != std::string::npos &&
-      serialized.find("Test graph for vector serialization") != std::string::npos) {
+  if (serialized.find("doc_string:") != std::string::npos && serialized.find("Test graph for vector serialization") != std::string::npos) {
     foundDocString = true;
   }
 
-  if (serialized.find("node") != std::string::npos &&
-      serialized.find("add_node") != std::string::npos) {
+  if (serialized.find("node") != std::string::npos && serialized.find("add_node") != std::string::npos) {
     foundNode = true;
   }
 
@@ -3686,7 +3683,7 @@ TEST(onnx2_stream, FileStream_TensorProto) {
 
     // Write the size followed by the serialized data
     stream.write_variant_uint64(serialized.size());
-    stream.write_raw_bytes(reinterpret_cast<const uint8_t *>(serialized.data()), serialized.size());
+    stream.write_raw_bytes(reinterpret_cast<const uint8_t*>(serialized.data()), serialized.size());
   }
 
   // Read and deserialize the TensorProto from the file
@@ -3696,7 +3693,7 @@ TEST(onnx2_stream, FileStream_TensorProto) {
     // Read the size and data
     uint64_t size = stream.next_uint64();
     std::vector<uint8_t> buffer(size);
-    const uint8_t *data = stream.read_bytes(size);
+    const uint8_t* data = stream.read_bytes(size);
     std::memcpy(buffer.data(), data, size);
 
     // Deserialize the TensorProto
@@ -4152,8 +4149,7 @@ TEST(onnx2_proto, SerializeSize_String) {
   utils::StringStream read_stream(write_stream.data(), write_stream.size());
   utils::RefString read_string = read_stream.next_string();
 
-  EXPECT_EQ(write_stream.size(),
-            test_string.size() + write_stream.size_variant_uint64(test_string.size()));
+  EXPECT_EQ(write_stream.size(), test_string.size() + write_stream.size_variant_uint64(test_string.size()));
   EXPECT_EQ(read_string, test_string);
 }
 
@@ -4195,8 +4191,7 @@ TEST(onnx2_proto, SerializeSize_StringWithNulls) {
   utils::StringStream read_stream(write_stream.data(), write_stream.size());
   utils::RefString read_string = read_stream.next_string();
 
-  EXPECT_EQ(write_stream.size(),
-            string_with_nulls.size() + write_stream.size_variant_uint64(string_with_nulls.size()));
+  EXPECT_EQ(write_stream.size(), string_with_nulls.size() + write_stream.size_variant_uint64(string_with_nulls.size()));
   EXPECT_EQ(read_string.size(), string_with_nulls.size());
 }
 
@@ -4470,8 +4465,7 @@ TEST(onnx2_proto, AttributeProto_Serialization_TypeProto) {
   EXPECT_TRUE(deserialized.ref_tp().ref_tensor_type().has_shape());
   EXPECT_EQ(deserialized.ref_tp().ref_tensor_type().ref_shape().ref_dim().size(), 2);
   EXPECT_EQ(deserialized.ref_tp().ref_tensor_type().ref_shape().ref_dim()[0].ref_dim_value(), 4);
-  EXPECT_EQ(deserialized.ref_tp().ref_tensor_type().ref_shape().ref_dim()[1].ref_dim_param(),
-            "dynamic_dim");
+  EXPECT_EQ(deserialized.ref_tp().ref_tensor_type().ref_shape().ref_dim()[1].ref_dim_param(), "dynamic_dim");
 }
 
 //

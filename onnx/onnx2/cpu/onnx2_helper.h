@@ -6,6 +6,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "onnx/onnx2/cpu/onnx2.h"
 
 namespace onnx2 {

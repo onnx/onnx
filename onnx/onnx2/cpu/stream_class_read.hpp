@@ -31,7 +31,7 @@
 
 using namespace common_helpers;
 
-namespace onnx2 {
+namespace onnx2 {  // NOLINT(build/namespaces)
 
 template <typename T>
 void read_next_field_in_shortended_stream(utils::BinaryStream& stream, const char*, ParseOptions& options, T& field) {

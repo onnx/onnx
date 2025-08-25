@@ -8,6 +8,7 @@
 
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "onnx/onnx2/cpu/common_helpers.h"
 
