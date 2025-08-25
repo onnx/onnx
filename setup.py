@@ -278,7 +278,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
                 elif os.path.exists(release_lib_dir):
                     lib_dir = release_lib_dir
             src = os.path.join(lib_dir, filename)
-            if "onnx.onnx2.cpu._onnx2py" == fullname:
+            if fullname == "onnx.onnx2.cpu._onnx2py":
                 folder = os.path.join(extension_dst_dir, "onnx2", "cpu")
                 if not os.path.exists(folder):
                     os.makedirs(folder)
