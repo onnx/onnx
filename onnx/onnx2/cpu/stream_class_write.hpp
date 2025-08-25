@@ -17,7 +17,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "stream_class.h"
+#include "onnx/onnx2/cpu/stream_class.h"
 
 using namespace common_helpers;
 
@@ -161,7 +161,7 @@ void write_field_limit(
     SerializeOptions& options) {
   if (!options.skip_raw_data || field.size() < static_cast<size_t>(options.raw_data_threshold)) {
     if (stream.ExternalWeights() && static_cast<int64_t>(field.size()) >= options.raw_data_threshold) {
-      utils::TwoFilesWriteStream &two_stream = dynamic_cast<utils::TwoFilesWriteStream &>(stream);
+      utils::TwoFilesWriteStream& two_stream = dynamic_cast<utils::TwoFilesWriteStream &>(stream);
       two_stream.write_raw_bytes_in_second_stream(field.data(), field.size());
     } else {
       write_field(stream, order, field, options);

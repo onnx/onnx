@@ -6,17 +6,17 @@
 
 #pragma once
 
-#include <stdint.h>
 
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
+#include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "common_helpers.h"
-#include "simple_string.h"
+#include "onnx/onnx2/cpu/common_helpers.h"
+#include "onnx/onnx2/cpu/simple_string.h"
 
 namespace onnx2 {
 namespace utils {
@@ -71,7 +71,6 @@ class simple_unique_ptr {
   inline T* operator->() const {
     return ptr_;
   }
-  // inline T *release() { T *tmp = ptr_; ptr_ = nullptr; return tmp; }
   inline T& reset_and(T* new_ptr) {
     EXT_ENFORCE(new_ptr != nullptr, "cannot you simple_unique_ptr::reset_and with a null pointer.");
     reset(new_ptr);
@@ -81,7 +80,6 @@ class simple_unique_ptr {
     delete ptr_;
     ptr_ = new_ptr;
   }
-  // inline void swap(simple_unique_ptr &other) noexcept { std::swap(ptr_, other.ptr_); }
  private:
   T* ptr_;
 };

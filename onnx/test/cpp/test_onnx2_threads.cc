@@ -8,6 +8,7 @@
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 #include "onnx/onnx2/cpu/thread_pool.h"
 #include "onnx/onnx2/cpu/common_helpers.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -53,7 +54,6 @@ TEST(onnx2_threads, SubmitMultipleTasks) {
 }
 
 TEST(onnx2_threads, ParallelExecution) {
-  // Utiliser plus de threads que les c�urs physiques pour tester la r�partition
   ThreadPool pool;
   pool.Start(8);
 

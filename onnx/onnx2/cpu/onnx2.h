@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include "common_helpers.h"
-#include "fields.h"
-#include "stream.h"
-#include "stream_class.h"
+#include "onnx/onnx2/cpu/common_helpers.h"
+#include "onnx/onnx2/cpu/fields.h"
+#include "onnx/onnx2/cpu/stream.h"
+#include "onnx/onnx2/cpu/stream_class.h"
 
 #include <string>
 
