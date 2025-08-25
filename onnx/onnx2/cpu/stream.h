@@ -156,31 +156,25 @@ class StringStream : public BinaryStream {
   explicit inline StringStream() : BinaryStream(), pos_(0), size_(0), data_(nullptr) {}
   explicit inline StringStream(const uint8_t* data, int64_t size) : BinaryStream(), pos_(0), size_(size), data_(data) {}
   void Setup(const uint8_t* data, int64_t size);
-  virtual void CanRead(uint64_t len, const char* msg) override;
+  void CanRead(uint64_t len, const char* msg) override;
   virtual uint64_t next_uint64() override;
   virtual const uint8_t* read_bytes(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr) override;
-  virtual void skip_bytes(offset_t n_bytes) override;
-  virtual bool NotEnd() const override {
-    return pos_ < size_;
-  }
-  virtual offset_t tell() const override {
-    return static_cast<offset_t>(pos_);
-  }
-  virtual std::string tell_around() const override;
-  virtual inline int64_t size() const override {
-    return size_;
-  }
+  void skip_bytes(offset_t n_bytes) override;
+  bool NotEnd() const override { return pos_ < size_; }
+  offset_t tell() const override { return static_cast<offset_t>(pos_); }
+  std::string tell_around() const override;
+  int64_t size() const override { return size_; }
 
   // parallelization of big blocks.
-  virtual bool HasParallelizationStarted() const override {
+  bool HasParallelizationStarted() const override {
     return thread_pool_.IsStarted();
   }
-  virtual void StartThreadPool(size_t n_threads) override;
-  virtual void ReadDelayedBlock(DelayedBlock& block) override;
-  virtual void WaitForDelayedBlock() override;
+  void StartThreadPool(size_t n_threads) override;
+  void ReadDelayedBlock(DelayedBlock& block) override;
+  void WaitForDelayedBlock() override;
 
  protected:
-  virtual void LimitTo(uint64_t len) override;
+  void LimitTo(uint64_t len) override;
 
  protected:
   offset_t pos_;
@@ -196,9 +190,9 @@ class StringStream : public BinaryStream {
 class StringWriteStream : public BinaryWriteStream {
  public:
   explicit inline StringWriteStream() : BinaryWriteStream(), buffer_() {}
-  virtual void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
-  virtual int64_t size() const override;
-  virtual const uint8_t* data() const override;
+  void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
+  int64_t size() const override;
+  const uint8_t* data() const override;
 
  protected:
  protected:
@@ -209,13 +203,9 @@ class BorrowedWriteStream : public BinaryWriteStream {
  public:
   explicit inline BorrowedWriteStream(const uint8_t* data, int64_t size)
       : BinaryWriteStream(), data_(data), size_(size) {}
-  virtual void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
-  virtual int64_t size() const override {
-    return size_;
-  }
-  virtual const uint8_t* data() const override {
-    return data_;
-  }
+  void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
+  int64_t size() const override { return size_; }
+  const uint8_t* data() const override { return data_; }
 
  protected:
   const uint8_t* data_;
@@ -229,12 +219,10 @@ class BorrowedWriteStream : public BinaryWriteStream {
 class FileWriteStream : public BinaryWriteStream {
  public:
   explicit FileWriteStream(const std::string& file_path);
-  virtual void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
-  virtual int64_t size() const override;
-  virtual const uint8_t* data() const override;
-  inline const std::string& file_path() const {
-    return file_path_;
-  }
+  void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
+  int64_t size() const override;
+  const uint8_t* data() const override;
+  inline const std::string& file_path() const { return file_path_; }
 
  protected:
   std::string file_path_;
@@ -250,36 +238,32 @@ class FileStream : public BinaryStream {
  public:
   explicit FileStream(const std::string& file_path);
   virtual ~FileStream();
-  inline const std::string& file_path() const {
-    return file_path_;
-  }
-  virtual void CanRead(uint64_t len, const char* msg) override;
-  virtual uint64_t next_uint64() override;
-  virtual const uint8_t* read_bytes(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr) override;
-  virtual void skip_bytes(offset_t n_bytes) override;
+  inline const std::string& file_path() const { return file_path_; }
+  void CanRead(uint64_t len, const char* msg) override;
+  uint64_t next_uint64() override;
+  const uint8_t* read_bytes(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr) override;
+  void skip_bytes(offset_t n_bytes) override;
   /**
    * This is a dangerous zone. StreamStream points to the buffer_.data().
    * buffer_ changes everytime new bytes are read from the file.
    * So unlock() must be called or this class raises an exception.
    */
-  virtual bool NotEnd() const override;
-  virtual offset_t tell() const override;
-  virtual std::string tell_around() const override;
-  virtual bool is_open() const;
-  virtual int64_t size() const override {
-    return size_;
-  }
+  bool NotEnd() const override;
+  offset_t tell() const override;
+  std::string tell_around() const override;
+  bool is_open() const;
+  int64_t size() const override { return size_; }
 
   // parallelization of big blocks.
   virtual bool HasParallelizationStarted() const override {
     return thread_pool_.IsStarted();
   }
-  virtual void StartThreadPool(size_t n_threads) override;
-  virtual void ReadDelayedBlock(DelayedBlock& block) override;
-  virtual void WaitForDelayedBlock() override;
+  void StartThreadPool(size_t n_threads) override;
+  void ReadDelayedBlock(DelayedBlock& block) override;
+  void WaitForDelayedBlock() override;
 
  protected:
-  virtual void LimitTo(uint64_t len) override;
+  void LimitTo(uint64_t len) override;
 
  protected:
   bool lock_;
@@ -318,21 +302,13 @@ class TwoFilesWriteStream : public FileWriteStream {
 class TwoFilesStream : public FileStream {
  public:
   explicit TwoFilesStream(const std::string& file_path, const std::string& weights_file);
-  inline const std::string& weights_file_path() const {
-    return weights_stream_.file_path();
-  }
-  inline uint64_t weights_tell() const {
-    return weights_stream_.tell();
-  }
-  virtual bool ExternalWeights() const override {
-    return true;
-  }
+  inline const std::string& weights_file_path() const { return weights_stream_.file_path(); }
+  inline uint64_t weights_tell() const { return weights_stream_.tell(); }
+  bool ExternalWeights() const override { return true; }
   virtual void
   read_bytes_from_weights_stream(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr, offset_t offset = -1);
-  virtual void ReadDelayedBlock(DelayedBlock& block) override;
-  virtual int64_t weights_size() const {
-    return weights_stream_.size();
-  }
+  void ReadDelayedBlock(DelayedBlock& block) override;
+  virtual int64_t weights_size() const { return weights_stream_.size(); }
 
  protected:
   FileStream weights_stream_;

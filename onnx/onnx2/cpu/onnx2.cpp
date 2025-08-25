@@ -7,6 +7,8 @@
 #include "onnx2.h"
 
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "stream_class.hpp"
 
@@ -366,7 +368,6 @@ void TensorProto::SerializeToStream(utils::BinaryWriteStream& stream, SerializeO
         "must be present in external_data, name='",
         ref_name().as_string(),
         "'");
-    // TODO Checks sparse initializer as well.
   }
   WRITE_REPEATED_FIELD(options, stream, dims)
   WRITE_ENUM_FIELD(options, stream, data_type)

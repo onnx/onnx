@@ -7,6 +7,7 @@
 #include "onnx2_helper.h"
 
 #include <filesystem>
+#include <string>
 
 namespace onnx2 {
 bool IteratorTensorProto::next() {

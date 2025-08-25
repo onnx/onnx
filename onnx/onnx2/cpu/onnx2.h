@@ -11,6 +11,8 @@
 #include "stream.h"
 #include "stream_class.h"
 
+#include <string>
+
 #define TensorProto_DataType_UNDEFINED UNDEFINED
 #define TensorProto_DataType_FLOAT FLOAT
 #define TensorProto_DataType_UINT8 UINT8
