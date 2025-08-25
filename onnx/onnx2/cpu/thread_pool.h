@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "onnx/onnx2/cpu/common_helpers.h"
+
 #include <atomic>
 #include <condition_variable>
 #include <functional>
@@ -14,8 +16,6 @@
 #include <queue>
 #include <thread>
 #include <vector>
-
-#include "onnx/onnx2/cpu/common_helpers.h"
 
 namespace onnx2 {
 namespace utils {

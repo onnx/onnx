@@ -117,86 +117,86 @@ std::vector<std::string> SplitString(const std::string &input, char delimiter) {
   return parts;
 }
 
-void MakeStringInternal(StringStream &) {}
+void MakeStringInternal(StringStream&) {}
 
-void MakeStringInternalElement(StringStream &ss, const std::string& t) { ss.append_string(t); }
+void MakeStringInternalElement(StringStream& ss, const std::string& t) { ss.append_string(t); }
 
-void MakeStringInternalElement(StringStream &ss, const char *t) { ss.append_charp(t); }
+void MakeStringInternalElement(StringStream& ss, const char *t) { ss.append_charp(t); }
 
-void MakeStringInternalElement(StringStream &ss, const char& t) { ss.append_char(t); }
+void MakeStringInternalElement(StringStream& ss, const char& t) { ss.append_char(t); }
 
-void MakeStringInternalElement(StringStream &ss, const uint16_t& t) { ss.append_uint16(t); }
+void MakeStringInternalElement(StringStream& ss, const uint16_t& t) { ss.append_uint16(t); }
 
-void MakeStringInternalElement(StringStream &ss, const uint32_t& t) { ss.append_uint32(t); }
-void MakeStringInternalElement(StringStream &ss, const uint64_t& t) { ss.append_uint64(t); }
+void MakeStringInternalElement(StringStream& ss, const uint32_t& t) { ss.append_uint32(t); }
+void MakeStringInternalElement(StringStream& ss, const uint64_t& t) { ss.append_uint64(t); }
 
-void MakeStringInternalElement(StringStream &ss, const int16_t& t) { ss.append_int16(t); }
+void MakeStringInternalElement(StringStream& ss, const int16_t& t) { ss.append_int16(t); }
 
-void MakeStringInternalElement(StringStream &ss, const int32_t& t) { ss.append_int32(t); }
+void MakeStringInternalElement(StringStream& ss, const int32_t& t) { ss.append_int32(t); }
 
-void MakeStringInternalElement(StringStream &ss, const int64_t& t) { ss.append_int64(t); }
+void MakeStringInternalElement(StringStream& ss, const int64_t& t) { ss.append_int64(t); }
 
-void MakeStringInternalElement(StringStream &ss, const float& t) { ss.append_float(t); }
+void MakeStringInternalElement(StringStream& ss, const float& t) { ss.append_float(t); }
 
-void MakeStringInternalElement(StringStream &ss, const double& t) { ss.append_double(t); }
+void MakeStringInternalElement(StringStream& ss, const double& t) { ss.append_double(t); }
 
-void MakeStringInternalElement(StringStream &ss, const uint64_t*& t) {
+void MakeStringInternalElement(StringStream& ss, const uint64_t*& t) {
   ss.append_string(t == nullptr ? "(ui64*)null" : "(ui64*)");
 }
-void MakeStringInternalElement(StringStream &ss, const uint64_t* t) {
+void MakeStringInternalElement(StringStream& ss, const uint64_t* t) {
   ss.append_string(t == nullptr ? "(ui64*)null" : "(ui64*)");
 }
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<uint16_t>& t) {
+void MakeStringInternalElement(StringStream& ss, const std::vector<uint16_t>& t) {
   for (auto it : t) {
     ss.append_charp("x");
     ss.append_uint16(it);
   }
 }
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<uint32_t>& t) {
+void MakeStringInternalElement(StringStream& ss, const std::vector<uint32_t>& t) {
   for (auto it : t) {
     ss.append_charp("x");
     ss.append_uint32(it);
   }
 }
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<uint64_t>& t) {
+void MakeStringInternalElement(StringStream& ss, const std::vector<uint64_t>& t) {
   for (auto it : t) {
     ss.append_charp("x");
     ss.append_uint64(it);
   }
 }
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<int16_t>& t) {
+void MakeStringInternalElement(StringStream& ss, const std::vector<int16_t>& t) {
   for (auto it : t) {
     ss.append_charp("x");
     ss.append_int16(it);
   }
 }
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<int32_t>& t) {
+void MakeStringInternalElement(StringStream& ss, const std::vector<int32_t>& t) {
   for (auto it : t) {
     ss.append_charp("x");
     ss.append_int32(it);
   }
 }
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<int64_t>& t) {
+void MakeStringInternalElement(StringStream& ss, const std::vector<int64_t>& t) {
   for (auto it : t) {
     ss.append_charp("x");
     ss.append_int64(it);
   }
 }
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<float>& t) {
+void MakeStringInternalElement(StringStream& ss, const std::vector<float>& t) {
   for (auto it : t) {
     ss.append_charp("x");
     ss.append_float(it);
   }
 }
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<double>& t) {
+void MakeStringInternalElement(StringStream& ss, const std::vector<double>& t) {
   for (auto it : t) {
     ss.append_charp("x");
     ss.append_double(it);

@@ -40,58 +40,59 @@ public:
 
 std::vector<std::string> SplitString(const std::string &input, char delimiter);
 
-void MakeStringInternalElement(StringStream &ss, const char *t);
+void MakeStringInternalElement(StringStream& ss, const char *t);
 
-void MakeStringInternalElement(StringStream &ss, const std::string& t);
+void MakeStringInternalElement(StringStream& ss, const std::string& t);
 
-void MakeStringInternalElement(StringStream &ss, const char& t);
+void MakeStringInternalElement(StringStream& ss, const char& t);
 
-void MakeStringInternalElement(StringStream &ss, const uint16_t& t);
-void MakeStringInternalElement(StringStream &ss, const uint32_t& t);
-void MakeStringInternalElement(StringStream &ss, const uint64_t& t);
+void MakeStringInternalElement(StringStream& ss, const uint16_t& t);
+void MakeStringInternalElement(StringStream& ss, const uint32_t& t);
+void MakeStringInternalElement(StringStream& ss, const uint64_t& t);
 
-void MakeStringInternalElement(StringStream &ss, const int16_t& t);
-void MakeStringInternalElement(StringStream &ss, const int32_t& t);
-void MakeStringInternalElement(StringStream &ss, const int64_t& t);
+void MakeStringInternalElement(StringStream& ss, const int16_t& t);
+void MakeStringInternalElement(StringStream& ss, const int32_t& t);
+void MakeStringInternalElement(StringStream& ss, const int64_t& t);
 
-void MakeStringInternalElement(StringStream &ss, const uint64_t*& t);
-void MakeStringInternalElement(StringStream &ss, const uint64_t* t);
+void MakeStringInternalElement(StringStream& ss, const uint64_t*& t);
+void MakeStringInternalElement(StringStream& ss, const uint64_t* t);
 
-void MakeStringInternalElement(StringStream &ss, const float& t);
+void MakeStringInternalElement(StringStream& ss, const float& t);
 
-void MakeStringInternalElement(StringStream &ss, const double& t);
+void MakeStringInternalElement(StringStream& ss, const double& t);
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<uint16_t>& t);
+void MakeStringInternalElement(StringStream& ss, const std::vector<uint16_t>& t);
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<uint32_t>& t);
+void MakeStringInternalElement(StringStream& ss, const std::vector<uint32_t>& t);
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<uint64_t>& t);
+void MakeStringInternalElement(StringStream& ss, const std::vector<uint64_t>& t);
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<int16_t>& t);
+void MakeStringInternalElement(StringStream& ss, const std::vector<int16_t>& t);
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<int32_t>& t);
+void MakeStringInternalElement(StringStream& ss, const std::vector<int32_t>& t);
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<int64_t>& t);
+void MakeStringInternalElement(StringStream& ss, const std::vector<int64_t>& t);
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<float>& t);
+void MakeStringInternalElement(StringStream& ss, const std::vector<float>& t);
 
-void MakeStringInternalElement(StringStream &ss, const std::vector<double>& t);
+void MakeStringInternalElement(StringStream& ss, const std::vector<double>& t);
 
-void MakeStringInternal(StringStream &ss);
+void MakeStringInternal(StringStream& ss);
 
 template <typename T, typename... Args>
-inline void MakeStringInternal(StringStream &ss, const T& t) {
+inline void MakeStringInternal(StringStream& ss, const T& t) {
   MakeStringInternalElement(ss, t);
 }
 
 template <typename T, typename... Args>
-inline void MakeStringInternal(StringStream &ss, const T& t, const Args &...args) {
+inline void MakeStringInternal(StringStream& ss, const T& t, const Args &...args) {
   MakeStringInternalElement(ss, t);
   MakeStringInternal(ss, args...);
 }
 
-template <typename... Args> inline std::string MakeString(const Args &...args) {
-  StringStream *ss = StringStream::NewStream();
+template <typename... Args>
+inline std::string MakeString(const Args &...args) {
+  StringStream* ss = StringStream::NewStream();
   MakeStringInternal(*ss, args...);
   std::string res = ss->str();
   delete ss;
@@ -99,19 +100,20 @@ template <typename... Args> inline std::string MakeString(const Args &...args) {
 }
 
 #if !defined(_THROW_DEFINED)
-#define EXT_THROW(...)                                                                  \
-  throw std::runtime_error(common_helpers::MakeString(                                  \
-      "[onnx2] ", common_helpers::MakeString(__VA_ARGS__)));
+#define EXT_THROW(...)\
+  throw std::runtime_error(common_helpers::MakeString("[onnx2] ", common_helpers::MakeString(__VA_ARGS__)));
 #define _THROW_DEFINED
 #endif
 
 #if !defined(_ENFORCE_DEFINED)
-#define EXT_ENFORCE(cond, ...)                                                          \
-  if (!(cond))                                                                          \
-    throw std::runtime_error(common_helpers::MakeString(                                \
-        "`", #cond, "` failed. ",                                                       \
-        common_helpers::MakeString("[onnx2] ",                                          \
-                                          common_helpers::MakeString(__VA_ARGS__))));
+#define EXT_ENFORCE(cond, ...)                            \
+  if (!(cond))                                            \
+    throw std::runtime_error(common_helpers::MakeString(  \
+        "`",                                              \
+        #cond,                                            \
+        "` failed. ",                                     \
+        common_helpers::MakeString("[onnx2] ",            \
+        common_helpers::MakeString(__VA_ARGS__))));
 #define _ENFORCE_DEFINED
 #endif
 

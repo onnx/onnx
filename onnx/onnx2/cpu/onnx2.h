@@ -12,6 +12,7 @@
 #include "onnx/onnx2/cpu/stream_class.h"
 
 #include <string>
+#include <vector>
 
 #define TensorProto_DataType_UNDEFINED UNDEFINED
 #define TensorProto_DataType_FLOAT FLOAT
@@ -39,7 +40,7 @@
 #define TensorProto_DataType_FLOAT4E2M1 FLOAT4E2M1
 #define TensorProto_DataType_FLOAT8E8M0 FLOAT8E8M0
 
-namespace onnx2 {
+namespace onnx2 {  // NOLINT(namespace)
 
 enum OperatorStatus { EXPERIMENTAL = 0, STABLE = 1 };
 

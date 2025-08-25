@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "onnx/onnx2/cpu/stream_class.h"
+
 #include <stdint.h>
 
 #include <cstddef>
@@ -17,7 +19,6 @@
 #include <type_traits>
 #include <vector>
 
-#include "onnx/onnx2/cpu/stream_class.h"
 // #define DEBUG_READ
 
 #if defined(DEBUG_READ)

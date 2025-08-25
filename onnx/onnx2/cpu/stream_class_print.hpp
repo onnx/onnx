@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "onnx/onnx2/cpu/stream_class.h"
+
 #include <stdint.h>
 
 #include <cstddef>
@@ -16,8 +18,6 @@
 #include <tuple>
 #include <type_traits>
 #include <vector>
-
-#include "onnx/onnx2/cpu/stream_class.h"
 
 using namespace common_helpers;
 

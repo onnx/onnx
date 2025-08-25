@@ -4,19 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/onnx2/cpu/onnx2.h"
-#include "onnx/onnx2/cpu/onnx2_helper.h"
-#include "onnx/onnx2/cpu/thread_pool.h"
-#include "onnx/onnx2/cpu/common_helpers.h"
+#include <gtest/gtest.h>
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <filesystem>
-#include <gtest/gtest.h>
+#include <filesystem>  // NOLINT(build/c++17)
 #include <string>
 #include <thread>
 #include <vector>
+
+#include "onnx/onnx2/cpu/onnx2.h"
+#include "onnx/onnx2/cpu/onnx2_helper.h"
+#include "onnx/onnx2/cpu/thread_pool.h"
+#include "onnx/onnx2/cpu/common_helpers.h"
 
 using namespace onnx2;
 using namespace onnx2::utils;
