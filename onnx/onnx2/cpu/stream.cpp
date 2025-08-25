@@ -342,6 +342,11 @@ FileWriteStream::FileWriteStream(const std::string& file_path)
   written_bytes_ = 0;
 }
 
+FileWriteStream::FileWriteStream(const char* file_path)
+    : BinaryWriteStream(), file_path_(file_path), file_stream_(file_path, std::ios::binary) {
+  written_bytes_ = 0;
+}
+
 void FileWriteStream::write_raw_bytes(const uint8_t* data, offset_t n_bytes) {
   file_stream_.write(reinterpret_cast<const char*>(data), n_bytes);
   written_bytes_ += static_cast<uint64_t>(n_bytes);
@@ -360,6 +365,17 @@ const uint8_t* FileWriteStream::data() const {
 /////////////
 
 FileStream::FileStream(const std::string& file_path)
+    : lock_(false), file_path_(file_path), file_stream_(file_path, std::ios::binary) {
+  if (!file_stream_.is_open()) {
+    EXT_THROW("Unable to open file: ", file_path);
+  }
+  file_stream_.seekg(0, std::ios::end);
+  std::streampos end = file_stream_.tellg();
+  file_stream_.seekg(0);
+  size_ = static_cast<offset_t>(end);
+}
+
+FileStream::FileStream(const char* file_path)
     : lock_(false), file_path_(file_path), file_stream_(file_path, std::ios::binary) {
   if (!file_stream_.is_open()) {
     EXT_THROW("Unable to open file: ", file_path);
@@ -466,12 +482,18 @@ void FileStream::StartThreadPool(size_t n_threads) {
 TwoFilesWriteStream::TwoFilesWriteStream(const std::string& file_path, const std::string& weights_file)
     : FileWriteStream(file_path), weights_stream_(weights_file) {}
 
+TwoFilesWriteStream::TwoFilesWriteStream(const char* file_path, const char* weights_file)
+    : FileWriteStream(file_path), weights_stream_(weights_file) {}
+
 void TwoFilesWriteStream::write_raw_bytes_in_second_stream(const uint8_t* ptr, offset_t n_bytes) {
   position_cache_[ptr] = weights_stream_.size();
   weights_stream_.write_raw_bytes(ptr, n_bytes);
 }
 
 TwoFilesStream::TwoFilesStream(const std::string& file_path, const std::string& weights_file)
+    : FileStream(file_path), weights_stream_(weights_file) {}
+
+TwoFilesStream::TwoFilesStream(const char* file_path, const char* weights_file)
     : FileStream(file_path), weights_stream_(weights_file) {}
 
 void TwoFilesStream::read_bytes_from_weights_stream(offset_t n_bytes, uint8_t* pre_allocated_buffer, offset_t offset) {

@@ -231,6 +231,7 @@ class BorrowedWriteStream : public BinaryWriteStream {
 class FileWriteStream : public BinaryWriteStream {
  public:
   explicit FileWriteStream(const std::string& file_path);
+  explicit FileWriteStream(const char* file_path);
   void write_raw_bytes(const uint8_t* data, offset_t n_bytes) override;
   int64_t size() const override;
   const uint8_t* data() const override;
@@ -251,6 +252,7 @@ class FileStream : public BinaryStream {
 
  public:
   explicit FileStream(const std::string& file_path);
+  explicit FileStream(const char* file_path);
   virtual ~FileStream();
   inline const std::string& file_path() const {
     return file_path_;
@@ -300,6 +302,7 @@ class FileStream : public BinaryStream {
 
 class TwoFilesWriteStream : public FileWriteStream {
  public:
+  explicit TwoFilesWriteStream(const char* file_path, const char* weights_file);
   explicit TwoFilesWriteStream(const std::string& file_path, const std::string& weights_file);
   inline const std::string& weights_file_path() const {
     return weights_stream_.file_path();
@@ -320,6 +323,7 @@ class TwoFilesWriteStream : public FileWriteStream {
 class TwoFilesStream : public FileStream {
  public:
   explicit TwoFilesStream(const std::string& file_path, const std::string& weights_file);
+  explicit TwoFilesStream(const char* file_path, const char* weights_file);
   inline const std::string& weights_file_path() const {
     return weights_stream_.file_path();
   }
