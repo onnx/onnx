@@ -169,7 +169,7 @@ class FunctionBuilder {
   ONNX_API FunctionBuilder& Add(const char* node_txt, Args... args) {
     Add(node_txt);
     if constexpr (sizeof...(args) % 2 == 0) {
-      return AddAttributes(args...);
+      AddAttributes(args...);
     }
     return *this;
   }

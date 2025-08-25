@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import unittest
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -24,7 +24,7 @@ from onnx import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
 
 def _load_model(m_def: str) -> ModelProto:

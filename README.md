@@ -107,6 +107,21 @@ pytest
 
 Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md) for instructions.
 
+# Reproducible Builds (Linux)
+
+This project provides reproducible builds for Linux.
+
+A *reproducible build* means that the same source code will always produce identical binary outputs, no matter who builds it or where it is built.
+
+To achieve this, we use the [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/) standard. This ensures that build timestamps and other time-dependent information are fixed, making the output bit-for-bit identical across different environments.
+
+### Why this matters
+- **Transparency**: Anyone can verify that the distributed binaries were created from the published source code.
+- **Security**: Prevents tampering or hidden changes in the build process.
+- **Trust**: Users can be confident that the binaries they download are exactly what the maintainers intended.
+
+If you prefer, you can use the prebuilt reproducible binaries instead of building from source yourself.
+
 # License
 
 [Apache License v2.0](LICENSE)

@@ -8,7 +8,7 @@ import re
 import sys
 import uuid
 from itertools import chain
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx.onnx_pb import (
@@ -20,7 +20,7 @@ from onnx.onnx_pb import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
 
 class ExternalDataInfo:

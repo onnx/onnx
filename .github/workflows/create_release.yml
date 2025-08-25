@@ -101,15 +101,14 @@ jobs:
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
-      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-     
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}     
 
   check_for_publish_release_build_to_pypi:
     name: Check for Publish release build to pypi
     runs-on: ubuntu-latest
 
-    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]    
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_pypi_release == 'yes') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
 
     steps:
 
@@ -119,6 +118,11 @@ jobs:
             echo "Error: build_mode must be set to 'release' to proceed."
             exit 1
           fi
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          submodules: true          
 
       - name: Check if package_version matches branch
         run: |
@@ -130,7 +134,6 @@ jobs:
             echo "Error: Branch version ($branch_version) does not match package version ($package_version)."
             exit 1
           fi
-
 
   check_for_publish_preview_build_to_testpypi_weekly:
     name: Check for Publish preview build to test.pypi-weekly
