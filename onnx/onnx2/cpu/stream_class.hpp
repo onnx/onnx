@@ -3,10 +3,14 @@
 /*
  * SPDX-License-Identifier: Apache-2.0
  */
+// NOLINT(readability/braces)
 
 #pragma once
 
 #include "onnx/onnx2/cpu/stream_class.h"
+
+#include <string>
+
 #include "onnx/onnx2/cpu/stream_class_print.hpp"
 #include "onnx/onnx2/cpu/stream_class_read.hpp"
 #include "onnx/onnx2/cpu/stream_class_size.hpp"
