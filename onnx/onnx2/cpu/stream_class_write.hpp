@@ -21,7 +21,7 @@
 
 using namespace common_helpers;
 
-namespace onnx2 {  // NOLINT(build/namespaces)
+namespace onnx2 { // NOLINT(build/namespaces)
 
 template <typename T>
 void write_with_cache_size(utils::BinaryWriteStream& stream, const T& field, SerializeOptions& options) {

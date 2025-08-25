@@ -20,8 +20,8 @@
 #include "onnx/onnx2/cpu/simple_string.h"
 #include "onnx/onnx2/cpu/thread_pool.h"
 
-namespace onnx2 {  // NOLINT(build/namespaces)
-namespace utils {  // NOLINT(build/namespaces)
+namespace onnx2 { // NOLINT(build/namespaces)
+namespace utils { // NOLINT(build/namespaces)
 
 typedef int64_t offset_t;
 

@@ -8,7 +8,7 @@
 
 #include <atomic>
 #include <chrono>
-#include <filesystem>  // NOLINT(build/c++17)
+#include <filesystem> // NOLINT(build/c++17)
 #include <string>
 #include <thread>
 #include <vector>
@@ -16,8 +16,8 @@
 #include "onnx/onnx2/cpu/common_helpers.h"
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 
-using namespace onnx2;  // NOLINT(build/namespaces)
-using namespace onnx2::utils;  // NOLINT(build/namespaces)
+using namespace onnx2; // NOLINT(build/namespaces)
+using namespace onnx2::utils; // NOLINT(build/namespaces)
 
 TEST(onnx2_helper, IteratorTensorProto) {
   ModelProto model;
@@ -277,8 +277,7 @@ TEST(onnx2_helper, SerializeModelProtoToStream) {
 
   SerializeOptions options;
   options.raw_data_threshold = 2;
-  utils::TwoFilesWriteStream stream("SerializeModelProtoToStream.onnx",
-                                    "SerializeModelProtoToStream.data");
+  utils::TwoFilesWriteStream stream("SerializeModelProtoToStream.onnx", "SerializeModelProtoToStream.data");
   SerializeModelProtoToStream(model, stream, options);
 }
 
@@ -488,7 +487,8 @@ TEST(onnx2_file, FileStream_ModelProto_WriteRead) {
       model.ref_graph().ref_initializer()[i].ref_raw_data(), model2.ref_graph().ref_initializer()[i].ref_raw_data()
     );
     EXPECT_EQ(
-      model.ref_graph().ref_initializer()[i].ref_name().as_string(), model2.ref_graph().ref_initializer()[i].ref_name().as_string()
+      model.ref_graph().ref_initializer()[i].ref_name().as_string(),
+      model2.ref_graph().ref_initializer()[i].ref_name().as_string()
     );
   }
 
