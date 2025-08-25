@@ -6,9 +6,6 @@
 
 #pragma once
 
-#include "onnx/onnx2/cpu/common_helpers.h"
-#include "onnx/onnx2/cpu/simple_string.h"
-
 #include <stdint.h>
 
 #include <cstddef>
@@ -17,6 +14,9 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "onnx/onnx2/cpu/common_helpers.h"
+#include "onnx/onnx2/cpu/simple_string.h"
 
 namespace onnx2 {
 namespace utils {

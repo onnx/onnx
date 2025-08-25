@@ -134,7 +134,7 @@ class TestOnnxVsOnnx2(unittest.TestCase):
             with open(model_name, "rb") as f:
                 content = f.read()
             rows = [
-                f"{i:03d}: {content[i:min(i+10,len(content))]}"
+                f"{i:03d}: {content[i : min(i + 10,len(content))]}"
                 for i in range(0, len(content), 20)
             ]
             if len(rows) >= 20:

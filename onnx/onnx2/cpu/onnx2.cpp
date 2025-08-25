@@ -5,11 +5,12 @@
  */
 
 #include "onnx/onnx2/cpu/onnx2.h"
-#include "onnx/onnx2/cpu/stream_class.hpp"
 
 #include <sstream>
 #include <string>
 #include <vector>
+
+#include "onnx/onnx2/cpu/stream_class.hpp"
 
 namespace onnx2 {
 

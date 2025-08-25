@@ -6,10 +6,6 @@
 
 #pragma once
 
-#include "onnx/onnx2/cpu/common_helpers.h"
-#include "onnx/onnx2/cpu/simple_string.h"
-#include "onnx/onnx2/cpu/thread_pool.h"
-
 #include <stdint.h>
 
 #include <cstddef>
@@ -18,6 +14,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "onnx/onnx2/cpu/common_helpers.h"
+#include "onnx/onnx2/cpu/simple_string.h"
+#include "onnx/onnx2/cpu/thread_pool.h"
 
 namespace onnx2 {  // NOLINT(namespace)
 namespace utils {  // NOLINT(namespace)

@@ -22,10 +22,10 @@ using namespace onnx2::utils;
 TEST(onnx2_helper, IteratorTensorProto) {
   ModelProto model;
 
-  GraphProto &graph = model.add_graph();
+  GraphProto& graph = model.add_graph();
   graph.set_name("test_graph");
 
-  TensorProto &weights = graph.add_initializer();
+  TensorProto& weights = graph.add_initializer();
   weights.set_name("weights");
   weights.set_data_type(TensorProto::DataType::FLOAT);
   weights.ref_dims().push_back(1);
@@ -35,12 +35,12 @@ TEST(onnx2_helper, IteratorTensorProto) {
   weights.ref_raw_data().push_back(1);
   weights.ref_raw_data().push_back(1);
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("test_node");
   node.set_op_type("Add");
-  AttributeProto &attr = node.add_attribute();
+  AttributeProto& attr = node.add_attribute();
   attr.set_name("bias");
-  TensorProto &biasw = attr.ref_t();
+  TensorProto& biasw = attr.ref_t();
   biasw.set_name("biasw");
   biasw.set_data_type(TensorProto::DataType::FLOAT);
   biasw.ref_dims().push_back(1);
@@ -63,10 +63,10 @@ TEST(onnx2_helper, IteratorTensorProto) {
 TEST(onnx2_helper, IteratorTensorProto_NestedGraph) {
   ModelProto model;
 
-  GraphProto &graph = model.add_graph();
+  GraphProto& graph = model.add_graph();
   graph.set_name("test_graph");
 
-  TensorProto &weights = graph.add_initializer();
+  TensorProto& weights = graph.add_initializer();
   weights.set_name("weights");
   weights.set_data_type(TensorProto::DataType::FLOAT);
   weights.ref_dims().push_back(1);
@@ -76,12 +76,12 @@ TEST(onnx2_helper, IteratorTensorProto_NestedGraph) {
   weights.ref_raw_data().push_back(1);
   weights.ref_raw_data().push_back(1);
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("test_node");
   node.set_op_type("Add");
-  AttributeProto &attr = node.add_attribute();
+  AttributeProto& attr = node.add_attribute();
   attr.set_name("bias");
-  TensorProto &biasw = attr.ref_t();
+  TensorProto& biasw = attr.ref_t();
   biasw.set_name("biasw");
   biasw.set_data_type(TensorProto::DataType::FLOAT);
   biasw.ref_dims().push_back(1);
@@ -91,14 +91,14 @@ TEST(onnx2_helper, IteratorTensorProto_NestedGraph) {
   biasw.ref_raw_data().push_back(2);
   biasw.ref_raw_data().push_back(2);
 
-  NodeProto &nodeg = graph.add_node();
+  NodeProto& nodeg = graph.add_node();
   nodeg.set_name("test_graph");
   nodeg.set_op_type("If");
-  AttributeProto &attrg = nodeg.add_attribute();
+  AttributeProto& attrg = nodeg.add_attribute();
   attrg.set_name("bias");
-  GraphProto &nested = attrg.add_g();
+  GraphProto& nested = attrg.add_g();
 
-  TensorProto &weights2 = nested.add_initializer();
+  TensorProto& weights2 = nested.add_initializer();
   weights2.set_name("weights");
   weights2.set_data_type(TensorProto::DataType::FLOAT);
   weights2.ref_dims().push_back(1);
@@ -108,12 +108,12 @@ TEST(onnx2_helper, IteratorTensorProto_NestedGraph) {
   weights2.ref_raw_data().push_back(3);
   weights2.ref_raw_data().push_back(3);
 
-  NodeProto &node2 = nested.add_node();
+  NodeProto& node2 = nested.add_node();
   node2.set_name("test_node");
   node2.set_op_type("Add");
-  AttributeProto &attr2 = node2.add_attribute();
+  AttributeProto& attr2 = node2.add_attribute();
   attr2.set_name("bias");
-  TensorProto &biasw2 = attr2.ref_t();
+  TensorProto& biasw2 = attr2.ref_t();
   biasw.set_name("biasw");
   biasw2.set_data_type(TensorProto::DataType::FLOAT);
   biasw2.ref_dims().push_back(1);
@@ -138,10 +138,10 @@ TEST(onnx2_helper, IteratorTensorProto_NestedGraph) {
 TEST(onnx2_helper, IteratorTensorProto_ExternalData) {
   ModelProto model;
 
-  GraphProto &graph = model.add_graph();
+  GraphProto& graph = model.add_graph();
   graph.set_name("test_graph");
 
-  TensorProto &weights = graph.add_initializer();
+  TensorProto& weights = graph.add_initializer();
   weights.set_name("weights");
   weights.set_data_type(TensorProto::DataType::FLOAT);
   weights.ref_dims().push_back(1);
@@ -151,12 +151,12 @@ TEST(onnx2_helper, IteratorTensorProto_ExternalData) {
   weights.ref_raw_data().push_back(1);
   weights.ref_raw_data().push_back(1);
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("test_node");
   node.set_op_type("Add");
-  AttributeProto &attr = node.add_attribute();
+  AttributeProto& attr = node.add_attribute();
   attr.set_name("bias");
-  TensorProto &biasw = attr.ref_t();
+  TensorProto& biasw = attr.ref_t();
   biasw.set_name("biasw");
   biasw.set_data_type(TensorProto::DataType::FLOAT);
   biasw.ref_dims().push_back(1);
@@ -166,14 +166,14 @@ TEST(onnx2_helper, IteratorTensorProto_ExternalData) {
   biasw.ref_raw_data().push_back(2);
   biasw.ref_raw_data().push_back(2);
 
-  NodeProto &nodeg = graph.add_node();
+  NodeProto& nodeg = graph.add_node();
   nodeg.set_name("test_graph");
   nodeg.set_op_type("If");
-  AttributeProto &attrg = nodeg.add_attribute();
+  AttributeProto& attrg = nodeg.add_attribute();
   attrg.set_name("bias");
-  GraphProto &nested = attrg.add_g();
+  GraphProto& nested = attrg.add_g();
 
-  TensorProto &weights2 = nested.add_initializer();
+  TensorProto& weights2 = nested.add_initializer();
   weights2.set_name("weights");
   weights2.set_data_type(TensorProto::DataType::FLOAT);
   weights2.ref_dims().push_back(1);
@@ -183,12 +183,12 @@ TEST(onnx2_helper, IteratorTensorProto_ExternalData) {
   weights2.ref_raw_data().push_back(3);
   weights2.ref_raw_data().push_back(3);
 
-  NodeProto &node2 = nested.add_node();
+  NodeProto& node2 = nested.add_node();
   node2.set_name("test_node");
   node2.set_op_type("Add");
-  AttributeProto &attr2 = node2.add_attribute();
+  AttributeProto& attr2 = node2.add_attribute();
   attr2.set_name("bias");
-  TensorProto &biasw2 = attr2.ref_t();
+  TensorProto& biasw2 = attr2.ref_t();
   biasw.set_name("biasw");
   biasw2.set_data_type(TensorProto::DataType::FLOAT);
   biasw2.ref_dims().push_back(1);
@@ -215,10 +215,10 @@ TEST(onnx2_helper, IteratorTensorProto_ExternalData) {
 TEST(onnx2_helper, SerializeModelProtoToStream) {
   ModelProto model;
 
-  GraphProto &graph = model.add_graph();
+  GraphProto& graph = model.add_graph();
   graph.set_name("test_graph");
 
-  TensorProto &weights = graph.add_initializer();
+  TensorProto& weights = graph.add_initializer();
   weights.set_name("weights");
   weights.set_data_type(TensorProto::DataType::FLOAT);
   weights.ref_dims().push_back(1);
@@ -228,12 +228,12 @@ TEST(onnx2_helper, SerializeModelProtoToStream) {
   weights.ref_raw_data().push_back(1);
   weights.ref_raw_data().push_back(1);
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("test_node");
   node.set_op_type("Add");
-  AttributeProto &attr = node.add_attribute();
+  AttributeProto& attr = node.add_attribute();
   attr.set_name("bias");
-  TensorProto &biasw = attr.ref_t();
+  TensorProto& biasw = attr.ref_t();
   biasw.set_name("biasw");
   biasw.set_data_type(TensorProto::DataType::FLOAT);
   biasw.ref_dims().push_back(1);
@@ -243,14 +243,14 @@ TEST(onnx2_helper, SerializeModelProtoToStream) {
   biasw.ref_raw_data().push_back(2);
   biasw.ref_raw_data().push_back(2);
 
-  NodeProto &nodeg = graph.add_node();
+  NodeProto& nodeg = graph.add_node();
   nodeg.set_name("test_graph");
   nodeg.set_op_type("If");
-  AttributeProto &attrg = nodeg.add_attribute();
+  AttributeProto& attrg = nodeg.add_attribute();
   attrg.set_name("bias");
-  GraphProto &nested = attrg.add_g();
+  GraphProto& nested = attrg.add_g();
 
-  TensorProto &weights2 = nested.add_initializer();
+  TensorProto& weights2 = nested.add_initializer();
   weights2.set_name("weights2");
   weights2.set_data_type(TensorProto::DataType::FLOAT);
   weights2.ref_dims().push_back(1);
@@ -260,12 +260,12 @@ TEST(onnx2_helper, SerializeModelProtoToStream) {
   weights2.ref_raw_data().push_back(3);
   weights2.ref_raw_data().push_back(3);
 
-  NodeProto &node2 = nested.add_node();
+  NodeProto& node2 = nested.add_node();
   node2.set_name("test_node");
   node2.set_op_type("Add");
-  AttributeProto &attr2 = node2.add_attribute();
+  AttributeProto& attr2 = node2.add_attribute();
   attr2.set_name("bias");
-  TensorProto &biasw2 = attr2.ref_t();
+  TensorProto& biasw2 = attr2.ref_t();
   biasw.set_name("biasw2");
   biasw2.set_data_type(TensorProto::DataType::FLOAT);
   biasw2.ref_dims().push_back(1);
@@ -316,10 +316,10 @@ TEST(onnx2_external_ressource, SaveWithExternalData) {
 TEST(onnx2_file, FileStream_ModelProto_Write) {
   ModelProto model;
 
-  GraphProto &graph = model.add_graph();
+  GraphProto& graph = model.add_graph();
   graph.set_name("test_graph");
 
-  TensorProto &weights = graph.add_initializer();
+  TensorProto& weights = graph.add_initializer();
   weights.set_name("weights");
   weights.set_data_type(TensorProto::DataType::FLOAT);
   weights.ref_dims().push_back(1);
@@ -329,12 +329,12 @@ TEST(onnx2_file, FileStream_ModelProto_Write) {
   weights.ref_raw_data().push_back(1);
   weights.ref_raw_data().push_back(1);
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("test_node");
   node.set_op_type("Add");
-  AttributeProto &attr = node.add_attribute();
+  AttributeProto& attr = node.add_attribute();
   attr.set_name("bias");
-  TensorProto &biasw = attr.ref_t();
+  TensorProto& biasw = attr.ref_t();
   biasw.set_name("biasw");
   biasw.set_data_type(TensorProto::DataType::FLOAT);
   biasw.ref_dims().push_back(1);
@@ -344,14 +344,14 @@ TEST(onnx2_file, FileStream_ModelProto_Write) {
   biasw.ref_raw_data().push_back(2);
   biasw.ref_raw_data().push_back(2);
 
-  NodeProto &nodeg = graph.add_node();
+  NodeProto& nodeg = graph.add_node();
   nodeg.set_name("test_graph");
   nodeg.set_op_type("If");
-  AttributeProto &attrg = nodeg.add_attribute();
+  AttributeProto& attrg = nodeg.add_attribute();
   attrg.set_name("bias");
-  GraphProto &nested = attrg.add_g();
+  GraphProto& nested = attrg.add_g();
 
-  TensorProto &weights2 = nested.add_initializer();
+  TensorProto& weights2 = nested.add_initializer();
   weights2.set_name("weights2");
   weights2.set_data_type(TensorProto::DataType::FLOAT);
   weights2.ref_dims().push_back(1);
@@ -361,12 +361,12 @@ TEST(onnx2_file, FileStream_ModelProto_Write) {
   weights2.ref_raw_data().push_back(3);
   weights2.ref_raw_data().push_back(3);
 
-  NodeProto &node2 = nested.add_node();
+  NodeProto& node2 = nested.add_node();
   node2.set_name("test_node");
   node2.set_op_type("Add");
-  AttributeProto &attr2 = node2.add_attribute();
+  AttributeProto& attr2 = node2.add_attribute();
   attr2.set_name("bias");
-  TensorProto &biasw2 = attr2.ref_t();
+  TensorProto& biasw2 = attr2.ref_t();
   biasw.set_name("biasw2");
   biasw2.set_data_type(TensorProto::DataType::FLOAT);
   biasw2.ref_dims().push_back(1);
@@ -405,10 +405,10 @@ TEST(onnx2_file, FileStream_ModelProto_Write) {
 TEST(onnx2_file, FileStream_ModelProto_WriteRead) {
   ModelProto model;
 
-  GraphProto &graph = model.add_graph();
+  GraphProto& graph = model.add_graph();
   graph.set_name("test_graph");
 
-  TensorProto &weights = graph.add_initializer();
+  TensorProto& weights = graph.add_initializer();
   weights.set_name("weights");
   weights.set_data_type(TensorProto::DataType::FLOAT);
   weights.ref_dims().push_back(1);
@@ -418,12 +418,12 @@ TEST(onnx2_file, FileStream_ModelProto_WriteRead) {
   weights.ref_raw_data().push_back(1);
   weights.ref_raw_data().push_back(1);
 
-  NodeProto &node = graph.add_node();
+  NodeProto& node = graph.add_node();
   node.set_name("test_node");
   node.set_op_type("Add");
-  AttributeProto &attr = node.add_attribute();
+  AttributeProto& attr = node.add_attribute();
   attr.set_name("bias");
-  TensorProto &biasw = attr.ref_t();
+  TensorProto& biasw = attr.ref_t();
   biasw.set_name("biasw");
   biasw.set_data_type(TensorProto::DataType::FLOAT);
   biasw.ref_dims().push_back(1);
@@ -433,14 +433,14 @@ TEST(onnx2_file, FileStream_ModelProto_WriteRead) {
   biasw.ref_raw_data().push_back(2);
   biasw.ref_raw_data().push_back(2);
 
-  NodeProto &nodeg = graph.add_node();
+  NodeProto& nodeg = graph.add_node();
   nodeg.set_name("test_graph");
   nodeg.set_op_type("If");
-  AttributeProto &attrg = nodeg.add_attribute();
+  AttributeProto& attrg = nodeg.add_attribute();
   attrg.set_name("bias");
-  GraphProto &nested = attrg.add_g();
+  GraphProto& nested = attrg.add_g();
 
-  TensorProto &weights2 = nested.add_initializer();
+  TensorProto& weights2 = nested.add_initializer();
   weights2.set_name("weights2");
   weights2.set_data_type(TensorProto::DataType::FLOAT);
   weights2.ref_dims().push_back(1);
@@ -450,12 +450,12 @@ TEST(onnx2_file, FileStream_ModelProto_WriteRead) {
   weights2.ref_raw_data().push_back(3);
   weights2.ref_raw_data().push_back(3);
 
-  NodeProto &node2 = nested.add_node();
+  NodeProto& node2 = nested.add_node();
   node2.set_name("test_node");
   node2.set_op_type("Add");
-  AttributeProto &attr2 = node2.add_attribute();
+  AttributeProto& attr2 = node2.add_attribute();
   attr2.set_name("bias");
-  TensorProto &biasw2 = attr2.ref_t();
+  TensorProto& biasw2 = attr2.ref_t();
   biasw.set_name("biasw2");
   biasw2.set_data_type(TensorProto::DataType::FLOAT);
   biasw2.ref_dims().push_back(1);
@@ -484,10 +484,8 @@ TEST(onnx2_file, FileStream_ModelProto_WriteRead) {
 
   EXPECT_EQ(model.ref_graph().ref_initializer().size(), model2.ref_graph().ref_initializer().size());
   for (size_t i = 0; i < model.ref_graph().ref_initializer().size(); ++i) {
-    EXPECT_EQ(model.ref_graph().ref_initializer()[i].ref_raw_data(),
-              model2.ref_graph().ref_initializer()[i].ref_raw_data());
-    EXPECT_EQ(model.ref_graph().ref_initializer()[i].ref_name().as_string(),
-              model2.ref_graph().ref_initializer()[i].ref_name().as_string());
+    EXPECT_EQ(model.ref_graph().ref_initializer()[i].ref_raw_data(), model2.ref_graph().ref_initializer()[i].ref_raw_data());
+    EXPECT_EQ(model.ref_graph().ref_initializer()[i].ref_name().as_string(), model2.ref_graph().ref_initializer()[i].ref_name().as_string());
   }
 
   std::remove(temp_filename.c_str());

@@ -33,7 +33,7 @@ It currently provides the following features:
 * No limitation on file size (2 Gb for protobuf).
   The code has yet to be tested to support tensors bigger than 2 Gb.
 * Writing / Reading file with external data is directly handled in C++.
-* The parsing a file can be called parallelized. When the parser walks through the file, 
+* The parsing a file can be called parallelized. When the parser walks through the file,
   it skips every big tensor and pushes the loading of the field ``raw_data``
   in a queue. This queue is processed by as many threads as the user wants.
   This is the only implemented strategy but with 4 threads, a 1Gb model can be read twice faster.
@@ -59,10 +59,10 @@ The features we could easily implement:
 * New serialization format: it could be done elsewhere but this work offers
   a quick start easier to leverage.
 * Partial loading or writing of models, to load different parts of
-  a model on different machines for example. Even though a file has to be 
+  a model on different machines for example. Even though a file has to be
   read entirely, it is possible and easy to quickly go through the desired
   parts without parsing too much of the head of the file.
-* Research around a more compressed format (detects duplication of strings, 
+* Research around a more compressed format (detects duplication of strings,
   compressed strings, ...)
 * ...
 
