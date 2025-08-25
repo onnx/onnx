@@ -50,6 +50,7 @@ def save(
         If true, convert all tensors to external data
         If false, convert only non-attribute tensors to external data
     """
+    assert not convert_attribute, f"not implemented with convert_attribute={convert_attribute}"
     assert isinstance(proto, ModelProto), f"Unexpected type {type(proto)} for proto."
     assert isinstance(f, (str, Path)), f"Unexpected type {type(f)} for f."
     assert format == "protobuf", f"Unsupported format={format!r}"

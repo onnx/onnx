@@ -6,7 +6,7 @@
 
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 
-#include <filesystem>  // NOLINT(build/c++17)
+#include <filesystem> // NOLINT(build/c++17)
 #include <string>
 
 namespace onnx2 {

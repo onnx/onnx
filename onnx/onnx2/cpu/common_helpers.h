@@ -20,7 +20,7 @@ namespace common_helpers {
 std::string Version();
 
 class StringStream {
-public:
+ public:
   StringStream();
   virtual ~StringStream();
   virtual StringStream& append_uint16(const uint16_t& obj);
@@ -35,12 +35,12 @@ public:
   virtual StringStream& append_string(const std::string& obj);
   virtual StringStream& append_charp(const char* obj);
   virtual std::string str();
-  static StringStream *NewStream();
+  static StringStream* NewStream();
 };
 
 std::vector<std::string> SplitString(const std::string& input, char delimiter);
 
-void MakeStringInternalElement(StringStream& ss, const char *t);
+void MakeStringInternalElement(StringStream& ss, const char* t);
 
 void MakeStringInternalElement(StringStream& ss, const std::string& t);
 

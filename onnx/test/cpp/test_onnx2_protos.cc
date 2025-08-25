@@ -8,7 +8,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <filesystem>  // NOLINT(build/c++17)
+#include <filesystem> // NOLINT(build/c++17)
 #include <string>
 #include <vector>
 
@@ -401,7 +401,7 @@ TEST(onnx2_string, String_SelfAssignmentSafety) {
   EXPECT_EQ(s, "1234567890123456789");
   EXPECT_EQ(s, "1234567890123456789");
 
-  utils::String *ptr = &s;
+  utils::String* ptr = &s;
   *ptr = *ptr;
   EXPECT_EQ(*ptr, "1234567890123456789");
 }
@@ -646,7 +646,7 @@ TEST(onnx2_proto, serialization_StringStringEntryProto_Twice) {
 
 TEST(onnx2_proto, TensorShapeProto1) {
   TensorShapeProto shape;
-  TensorShapeProto::Dimension &dim = shape.add_dim();
+  TensorShapeProto::Dimension& dim = shape.add_dim();
   dim.set_dim_value(5);
   TensorShapeProto::Dimension& dim2 = shape.ref_dim().add();
   dim2.set_dim_param("dime");
@@ -1335,7 +1335,7 @@ TEST(onnx2_proto, TypeProto_Tensor) {
   EXPECT_FALSE(type.ref_tensor_type().has_shape());
   TensorShapeProto& shape = type.ref_tensor_type().add_shape();
   EXPECT_TRUE(type.ref_tensor_type().has_shape());
-  TensorShapeProto::Dimension &dim = shape.add_dim();
+  TensorShapeProto::Dimension& dim = shape.add_dim();
   dim.set_dim_value(3);
 
   EXPECT_TRUE(type.has_tensor_type());
@@ -1836,8 +1836,7 @@ TEST(onnx2_string, NodeDeviceConfigurationProto) {
   bool foundShardingSpec = false;
 
   for (const auto& item : result) {
-    if (item.find("configuration_id:") != std::string::npos &&
-        item.find("node_config_1") != std::string::npos) {
+    if (item.find("configuration_id:") != std::string::npos && item.find("node_config_1") != std::string::npos) {
       foundConfigId = true;
     }
     if (item.find("pipeline_stage:") != std::string::npos && item.find("3") != std::string::npos) {
@@ -2142,7 +2141,7 @@ TEST(onnx2_proto, ValueInfoProto_Basic) {
   TypeProto& type = value_info.add_type();
   type.add_tensor_type().set_elem_type(1); // FLOAT
   TensorShapeProto& shape = type.ref_tensor_type().add_shape();
-  TensorShapeProto::Dimension &dim = shape.add_dim();
+  TensorShapeProto::Dimension& dim = shape.add_dim();
   dim.set_dim_value(3);
 
   EXPECT_EQ(value_info.ref_name(), "input_1");
@@ -2676,8 +2675,7 @@ TEST(onnx2_string, NodeProto_PrintToVectorString) {
     foundName = true;
   }
 
-  if (serialized.find("op_type:") != std::string::npos &&
-      serialized.find("Relu") != std::string::npos) {
+  if (serialized.find("op_type:") != std::string::npos && serialized.find("Relu") != std::string::npos) {
     foundOpType = true;
   }
 
@@ -4326,7 +4324,10 @@ TEST(onnx2_file, LoadOnnxFile_Expanded) {
 }
 
 TEST(onnx2_file, LoadOnnxFile_ConstantAsString) {
-  std::vector<uint8_t> data = {18, 3, 65, 65, 65, 26, 2, 78, 78, 34, 8, 67, 111, 110, 115, 116, 97, 110, 116, 42, 39, 10, 5, 118, 97, 108, 117, 101, 42, 16, 8, 1, 16, 6, 58, 10, 255, 255, 255, 255, 255, 255, 255, 255, 255, 1, 106, 3, 68, 79, 67, 160, 1, 4, 170, 1, 3, 82, 69, 70, 58, 1, 77};
+  std::vector<uint8_t> data = {18, 3,   65,  65,  65,  26,  2,   78,  78,  34,  8,   67,  111, 110, 115, 116,
+                               97, 110, 116, 42,  39,  10,  5,   118, 97,  108, 117, 101, 42,  16,  8,   1,
+                               16, 6,   58,  10,  255, 255, 255, 255, 255, 255, 255, 255, 255, 1,   106, 3,
+                               68, 79,  67,  160, 1,   4,   170, 1,   3,   82,  69,  70,  58,  1,   77};
   std::string data_str(data.begin(), data.end());
   EXPECT_EQ(data_str.size(), data.size());
   NodeProto node;
