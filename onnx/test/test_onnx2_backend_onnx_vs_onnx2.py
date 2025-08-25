@@ -133,7 +133,10 @@ class TestOnnxVsOnnx2(unittest.TestCase):
                 f.write(str(onx))
             with open(model_name, "rb") as f:
                 content = f.read()
-            rows = [f"{i:03d}: {content[i:min(i+10,len(content))]}" for i in range(0, len(content), 20)]
+            rows = [
+                f"{i:03d}: {content[i:min(i+10,len(content))]}"
+                for i in range(0, len(content), 20)
+            ]
             if len(rows) >= 20:
                 rows[20] = "..."
                 del rows[21:-10]

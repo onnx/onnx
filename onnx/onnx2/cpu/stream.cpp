@@ -6,8 +6,9 @@
 
 #include "onnx/onnx2/cpu/stream.h"
 
-#include <cstddef>
 #include <stdint.h>
+
+#include <cstddef>
 #include <cstring>
 #include <stdexcept>
 #include <vector>

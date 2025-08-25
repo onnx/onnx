@@ -574,11 +574,11 @@ def make_tensor(
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
     if data_type == TensorProto.COMPLEX128:
-        vals = vals.view(np.float64)
+        vals = vals.view(np.float64)  # type: ignore[union-attr]
     elif data_type == TensorProto.COMPLEX64:
-        vals = vals.view(np.float32)
+        vals = vals.view(np.float32)  # type: ignore[union-attr]
     elif data_type in {TensorProto.BFLOAT16, TensorProto.FLOAT16}:
-        vals = vals.view(np.uint16)
+        vals = vals.view(np.uint16)  # type: ignore[union-attr]
     elif data_type in {
         TensorProto.FLOAT8E4M3FN,
         TensorProto.FLOAT8E4M3FNUZ,
@@ -586,9 +586,9 @@ def make_tensor(
         TensorProto.FLOAT8E5M2FNUZ,
         TensorProto.FLOAT8E8M0,
     }:
-        vals = vals.view(np.uint8)
+        vals = vals.view(np.uint8)  # type: ignore[union-attr]
     elif data_type == TensorProto.BOOL:
-        vals = vals.astype(np.uint8)
+        vals = vals.astype(np.uint8)  # type: ignore[union-attr]
     elif data_type >= 16:
         raise AssertionError(f"Unexpected data_type={data_type}.")
 

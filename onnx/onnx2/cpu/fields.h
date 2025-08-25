@@ -6,17 +6,17 @@
 
 #pragma once
 
+#include "onnx/onnx2/cpu/common_helpers.h"
+#include "onnx/onnx2/cpu/simple_string.h"
+
+#include <stdint.h>
 
 #include <cstddef>
 #include <optional>
 #include <stdexcept>
-#include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "onnx/onnx2/cpu/common_helpers.h"
-#include "onnx/onnx2/cpu/simple_string.h"
 
 namespace onnx2 {
 namespace utils {
@@ -80,6 +80,7 @@ class simple_unique_ptr {
     delete ptr_;
     ptr_ = new_ptr;
   }
+
  private:
   T* ptr_;
 };

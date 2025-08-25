@@ -36,8 +36,7 @@ if TYPE_CHECKING:
 
 class DummyBackend(onnx.backend.base.Backend):
     @classmethod
-    def prepare(
-        cls, model, device="CPU", **kwargs):
+    def prepare(cls, model, device="CPU", **kwargs):
         super().prepare(model, device, **kwargs)
 
         onnx.checker.check_model(model)

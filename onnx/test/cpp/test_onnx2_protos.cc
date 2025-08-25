@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/onnx2/cpu/onnx2.h"
-#include "onnx/onnx2/cpu/onnx2_helper.h"
-#include "onnx/onnx2/cpu/common_helpers.h"
+#include <gtest/gtest.h>
 
 #include <algorithm>
-#include <filesystem>
-#include <gtest/gtest.h>
+#include <filesystem>  // NOLINT(build/c++17)
 #include <string>
 #include <vector>
 
+#include "onnx/onnx2/cpu/onnx2.h"
+#include "onnx/onnx2/cpu/onnx2_helper.h"
+#include "onnx/onnx2/cpu/common_helpers.h"
 
 using namespace onnx2;
 
@@ -4307,7 +4307,7 @@ TEST(onnx2_file, LoadOnnxFile_OldProtobuf) {
   namespace fs = std::filesystem;
   fs::path source_path = __FILE__;
   fs::path source_dir = source_path.parent_path();
-  fs::path file_path = source_dir / "data" / "test_ai_onnx_ml_binarizer.onnx";
+  fs::path file_path = source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_ai_onnx_ml_binarizer" / "model.onnx";
 
   ModelProto model;
   utils::FileStream stream(file_path.string());
@@ -4323,7 +4323,7 @@ TEST(onnx2_file, LoadOnnxFile_Expanded) {
   namespace fs = std::filesystem;
   fs::path source_path = __FILE__;
   fs::path source_dir = source_path.parent_path();
-  fs::path file_path = source_dir / "data" / "test_softmax_example_expanded.onnx";
+  fs::path file_path = source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_softmax_example_expanded" / "model.onnx";
 
   ModelProto model;
   utils::FileStream stream(file_path.string());
@@ -4339,7 +4339,7 @@ TEST(onnx2_file, LoadOnnxFile_Constant) {
   namespace fs = std::filesystem;
   fs::path source_path = __FILE__;
   fs::path source_dir = source_path.parent_path();
-  fs::path file_path = source_dir / "data" / "test_softmax_example_expanded.Constant.onnx";
+  fs::path file_path = source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_softmax_example_expanded" / "model.onnx";
 
   NodeProto node;
   utils::FileStream stream(file_path.string());
