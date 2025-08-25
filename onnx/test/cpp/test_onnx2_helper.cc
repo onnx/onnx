@@ -484,8 +484,12 @@ TEST(onnx2_file, FileStream_ModelProto_WriteRead) {
 
   EXPECT_EQ(model.ref_graph().ref_initializer().size(), model2.ref_graph().ref_initializer().size());
   for (size_t i = 0; i < model.ref_graph().ref_initializer().size(); ++i) {
-    EXPECT_EQ(model.ref_graph().ref_initializer()[i].ref_raw_data(), model2.ref_graph().ref_initializer()[i].ref_raw_data());
-    EXPECT_EQ(model.ref_graph().ref_initializer()[i].ref_name().as_string(), model2.ref_graph().ref_initializer()[i].ref_name().as_string());
+    EXPECT_EQ(
+      model.ref_graph().ref_initializer()[i].ref_raw_data(), model2.ref_graph().ref_initializer()[i].ref_raw_data()
+    );
+    EXPECT_EQ(
+      model.ref_graph().ref_initializer()[i].ref_name().as_string(), model2.ref_graph().ref_initializer()[i].ref_name().as_string()
+    );
   }
 
   std::remove(temp_filename.c_str());

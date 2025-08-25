@@ -207,7 +207,7 @@ class RepeatedProtoField {
     size_t pos_;
 
    public:
-    iterator(RepeatedProtoField<T>* parent, size_t pos = 0) : parent_(parent), pos_(pos) {}
+    explicit iterator(RepeatedProtoField<T>* parent, size_t pos = 0) : parent_(parent), pos_(pos) {}
     iterator& operator++() {
       ++pos_;
       return *this;

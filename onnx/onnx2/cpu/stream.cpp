@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstring>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace onnx2 {

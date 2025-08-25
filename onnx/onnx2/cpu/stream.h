@@ -12,6 +12,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -19,8 +20,8 @@
 #include "onnx/onnx2/cpu/simple_string.h"
 #include "onnx/onnx2/cpu/thread_pool.h"
 
-namespace onnx2 {  // NOLINT(namespace)
-namespace utils {  // NOLINT(namespace)
+namespace onnx2 {  // NOLINT(build/namespaces)
+namespace utils {  // NOLINT(build/namespaces)
 
 typedef int64_t offset_t;
 
@@ -157,8 +158,8 @@ class StringStream : public BinaryStream {
   explicit inline StringStream(const uint8_t* data, int64_t size) : BinaryStream(), pos_(0), size_(size), data_(data) {}
   void Setup(const uint8_t* data, int64_t size);
   void CanRead(uint64_t len, const char* msg) override;
-  virtual uint64_t next_uint64() override;
-  virtual const uint8_t* read_bytes(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr) override;
+  uint64_t next_uint64() override;
+  const uint8_t* read_bytes(offset_t n_bytes, uint8_t* pre_allocated_buffer = nullptr) override;
   void skip_bytes(offset_t n_bytes) override;
   bool NotEnd() const override {
     return pos_ < size_;
@@ -271,7 +272,7 @@ class FileStream : public BinaryStream {
   }
 
   // parallelization of big blocks.
-  virtual bool HasParallelizationStarted() const override {
+  bool HasParallelizationStarted() const override {
     return thread_pool_.IsStarted();
   }
   void StartThreadPool(size_t n_threads) override;
@@ -302,7 +303,7 @@ class TwoFilesWriteStream : public FileWriteStream {
   inline const std::string& weights_file_path() const {
     return weights_stream_.file_path();
   }
-  virtual bool ExternalWeights() const override {
+  bool ExternalWeights() const override {
     return true;
   }
   virtual void write_raw_bytes_in_second_stream(const uint8_t* data, offset_t n_bytes);

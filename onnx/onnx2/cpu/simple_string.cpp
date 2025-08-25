@@ -7,6 +7,8 @@
 #include "onnx/onnx2/cpu/simple_string.h"
 
 #include <sstream>
+#include <string>
+#include <vector>
 
 namespace onnx2 {
 namespace utils {
