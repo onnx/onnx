@@ -15,6 +15,7 @@
 #include <thread>
 #include <vector>
 
+namespace ONNX_NAMESPACE {
 namespace common_helpers {
 
 std::string Version();
@@ -85,13 +86,13 @@ inline void MakeStringInternal(StringStream& ss, const T& t) {
 }
 
 template <typename T, typename... Args>
-inline void MakeStringInternal(StringStream& ss, const T& t, const Args&...args) {
+inline void MakeStringInternal(StringStream& ss, const T& t, const Args&... args) {
   MakeStringInternalElement(ss, t);
   MakeStringInternal(ss, args...);
 }
 
 template <typename... Args>
-inline std::string MakeString(const Args&...args) {
+inline std::string MakeString(const Args&... args) {
   StringStream* ss = StringStream::NewStream();
   MakeStringInternal(*ss, args...);
   std::string res = ss->str();
@@ -100,21 +101,25 @@ inline std::string MakeString(const Args&...args) {
 }
 
 #if !defined(_THROW_DEFINED)
-#define EXT_THROW(...)\
-  throw std::runtime_error(common_helpers::MakeString("[onnx2] ", common_helpers::MakeString(__VA_ARGS__)));
+#define EXT_THROW(...)                            \
+  throw std::runtime_error(                       \
+      ONNX_NAMESPACE::common_helpers::MakeString( \
+          "[onnx2] ", ONNX_NAMESPACE::common_helpers::MakeString(__VA_ARGS__)));
 #define _THROW_DEFINED
 #endif
 
 #if !defined(_ENFORCE_DEFINED)
-#define EXT_ENFORCE(cond, ...)                            \
-  if (!(cond))                                            \
-    throw std::runtime_error(common_helpers::MakeString(  \
-        "`",                                              \
-        #cond,                                            \
-        "` failed. ",                                     \
-        common_helpers::MakeString("[onnx2] ",            \
-        common_helpers::MakeString(__VA_ARGS__))));
+#define EXT_ENFORCE(cond, ...)                          \
+  if (!(cond))                                          \
+    throw std::runtime_error(                           \
+        ONNX_NAMESPACE::common_helpers::MakeString(     \
+            "`",                                        \
+            #cond,                                      \
+            "` failed. ",                               \
+            ONNX_NAMESPACE::common_helpers::MakeString( \
+                "[onnx2] ", ONNX_NAMESPACE::common_helpers::MakeString(__VA_ARGS__))));
 #define _ENFORCE_DEFINED
 #endif
 
 } // namespace common_helpers
+} // namespace ONNX_NAMESPACE

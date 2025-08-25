@@ -11,7 +11,8 @@
 
 #include "onnx/onnx2/cpu/onnx2.h"
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
 
 /**
  * The function propulates external data for every tensor.
@@ -122,4 +123,5 @@ ParseProtoFromStream(ModelProto& model, utils::BinaryStream& stream, ParseOption
   ParseModelProtoFromStream(model, stream, options, clear_external_data);
 }
 
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

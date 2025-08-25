@@ -6,7 +6,8 @@
 
 #include "onnx/onnx2/cpu/thread_pool.h"
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
 namespace utils {
 
 ThreadPool::ThreadPool() {
@@ -94,4 +95,5 @@ void ThreadPool::Clear() {
 }
 
 } // namespace utils
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

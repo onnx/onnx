@@ -19,8 +19,8 @@
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 #include "onnx/onnx2/cpu/thread_pool.h"
 
-using namespace onnx2; // NOLINT(build/namespaces)
-using namespace onnx2::utils; // NOLINT(build/namespaces)
+using namespace ONNX_NAMESPACE::v2;
+using namespace ONNX_NAMESPACE::v2::utils;
 
 TEST(onnx2_threads, CreateAndDestroy) {
   ThreadPool pool;
@@ -298,11 +298,10 @@ TEST(onnx2_threads, ParallelModelProcessing4_FileExternalData) {
   EXPECT_EQ(model.ref_graph().ref_initializer().size(), model2.ref_graph().ref_initializer().size());
   for (size_t i = 0; i < model.ref_graph().ref_initializer().size(); ++i) {
     EXPECT_EQ(
-      model.ref_graph().ref_initializer()[i].ref_raw_data(),
-      model2.ref_graph().ref_initializer()[i].ref_raw_data());
+        model.ref_graph().ref_initializer()[i].ref_raw_data(), model2.ref_graph().ref_initializer()[i].ref_raw_data());
     EXPECT_EQ(
-      model.ref_graph().ref_initializer()[i].ref_name().as_string(),
-      model2.ref_graph().ref_initializer()[i].ref_name().as_string());
+        model.ref_graph().ref_initializer()[i].ref_name().as_string(),
+        model2.ref_graph().ref_initializer()[i].ref_name().as_string());
   }
 
   std::remove(temp_filename.c_str());
@@ -429,11 +428,10 @@ TEST(onnx2_threads, ParallelModelProcessing4_FileExternalDataManyInitializers) {
   EXPECT_EQ(model.ref_graph().ref_initializer().size(), model2.ref_graph().ref_initializer().size());
   for (size_t i = 0; i < model.ref_graph().ref_initializer().size(); ++i) {
     EXPECT_EQ(
-      model.ref_graph().ref_initializer()[i].ref_raw_data(),
-      model2.ref_graph().ref_initializer()[i].ref_raw_data());
+        model.ref_graph().ref_initializer()[i].ref_raw_data(), model2.ref_graph().ref_initializer()[i].ref_raw_data());
     EXPECT_EQ(
-      model.ref_graph().ref_initializer()[i].ref_name().as_string(),
-      model2.ref_graph().ref_initializer()[i].ref_name().as_string());
+        model.ref_graph().ref_initializer()[i].ref_name().as_string(),
+        model2.ref_graph().ref_initializer()[i].ref_name().as_string());
   }
 
   std::remove(temp_filename.c_str());

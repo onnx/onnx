@@ -9,7 +9,9 @@
 #include <filesystem> // NOLINT(build/c++17)
 #include <string>
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
+
 bool IteratorTensorProto::next() {
   while (!positions_.empty()) {
     Position& pos = positions_.back();
@@ -136,4 +138,5 @@ void ParseModelProtoFromStream(
     ClearExternalData(model);
 }
 
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

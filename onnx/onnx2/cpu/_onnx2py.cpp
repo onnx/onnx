@@ -16,7 +16,7 @@
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 
 namespace py = pybind11;
-using namespace onnx2; // NOLINT(build/namespaces)
+using namespace ONNX_NAMESPACE::v2;
 
 #define PYDEFINE_PROTO(m, cls)                          \
   py::class_<cls, Message> py_##cls(m, #cls, cls::DOC); \

@@ -16,7 +16,7 @@
 #include "onnx/onnx2/cpu/onnx2.h"
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 
-using namespace onnx2;
+using namespace ONNX_NAMESPACE::v2;
 
 TEST(onnx2_string, RefString_Constructors) {
   utils::RefString original("test", 4);
@@ -684,22 +684,36 @@ class onnx2_stream_2 : public ::testing::Test {
  protected:
   void SetUp() override {
     data = {
-      0x96, 0x01,
-      // int64_t
-      0x2A,
-      // int32_t
-      0x18,
-      // float: 3.14
-      0xC3, 0xF5, 0x48, 0x40,
-      // double: 2.71828
-      0x4D, 0xFB, 0x21, 0x09, 0x40, 0x05, 0x5D, 0x40,
-      // field number: 10, wire_type: 2 -> (10 << 3) | 2 = 82
-      0x52,
-      // string length: 5
-      0x05,
-      // string "hello"
-      'h', 'e', 'l', 'l', 'o'
-    };
+        0x96,
+        0x01,
+        // int64_t
+        0x2A,
+        // int32_t
+        0x18,
+        // float: 3.14
+        0xC3,
+        0xF5,
+        0x48,
+        0x40,
+        // double: 2.71828
+        0x4D,
+        0xFB,
+        0x21,
+        0x09,
+        0x40,
+        0x05,
+        0x5D,
+        0x40,
+        // field number: 10, wire_type: 2 -> (10 << 3) | 2 = 82
+        0x52,
+        // string length: 5
+        0x05,
+        // string "hello"
+        'h',
+        'e',
+        'l',
+        'l',
+        'o'};
     stream.Setup(data.data(), data.size());
   }
 
@@ -872,7 +886,7 @@ TEST(onnx2_stream, NestedStringWriteStreams) {
 }
 
 TEST(onnx2_stream, NextPackedElement) {
-  std::vector<uint8_t> data = {0xC3, 0xF5, 0x48, 0x40, 0x2A, 0x00, 0x00, 0x00};  // float: 3.14, int32: 42
+  std::vector<uint8_t> data = {0xC3, 0xF5, 0x48, 0x40, 0x2A, 0x00, 0x00, 0x00}; // float: 3.14, int32: 42
 
   utils::StringStream stream(data.data(), data.size());
 
@@ -1609,14 +1623,14 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   TensorProto t;
   t.set_data_type(elem_type);
   switch (elem_type) {
-  case TensorProto_DataType::TensorProto_DataType_FLOAT:
-    t.add_float_data((float)value);
-    break;
-  case TensorProto_DataType::TensorProto_DataType_DOUBLE:
-    t.add_double_data(value);
-    break;
-  default:
-    assert(false);
+    case TensorProto_DataType::TensorProto_DataType_FLOAT:
+      t.add_float_data((float)value);
+      break;
+    case TensorProto_DataType::TensorProto_DataType_DOUBLE:
+      t.add_double_data(value);
+      break;
+    default:
+      assert(false);
   }
   return t;
 }
@@ -1630,7 +1644,7 @@ TEST(onnx2onnx, DataType) {
 
 TEST(onnx2_string, StringStringEntryProto) {
   utils::PrintOptions options;
-  onnx2::StringStringEntryProto proto;
+  StringStringEntryProto proto;
   proto.set_key("test_key");
   proto.set_value("test_value");
   std::vector<std::string> result = proto.PrintToVectorString(options);
@@ -1642,7 +1656,7 @@ TEST(onnx2_string, StringStringEntryProto) {
 
 TEST(onnx2_string, IntIntListEntryProto) {
   utils::PrintOptions options;
-  onnx2::IntIntListEntryProto proto;
+  IntIntListEntryProto proto;
   proto.set_key(42);
   proto.ref_value().push_back(1);
   proto.ref_value().push_back(2);
@@ -1658,7 +1672,7 @@ TEST(onnx2_string, IntIntListEntryProto) {
 
 TEST(onnx2_string, TensorAnnotation) {
   utils::PrintOptions options;
-  onnx2::TensorAnnotation proto;
+  TensorAnnotation proto;
   proto.set_tensor_name("my_tensor");
   auto& entry = proto.add_quant_parameter_tensor_names();
   entry.set_key("scale");
@@ -1707,7 +1721,7 @@ TEST(onnx2_string, DeviceConfigurationProto) {
 
 TEST(onnx2_string, SimpleShardedDimProto) {
   utils::PrintOptions options;
-  onnx2::SimpleShardedDimProto proto;
+  SimpleShardedDimProto proto;
   proto.set_dim_value(100);
   proto.set_dim_param("batch_size");
   proto.set_num_shards(4);
@@ -1738,7 +1752,7 @@ TEST(onnx2_string, SimpleShardedDimProto) {
 
 TEST(onnx2_string, ShardedDimProto) {
   utils::PrintOptions options;
-  onnx2::ShardedDimProto proto;
+  ShardedDimProto proto;
   proto.set_axis(2);
 
   auto& simple_dim1 = proto.add_simple_sharding();
@@ -1770,7 +1784,7 @@ TEST(onnx2_string, ShardedDimProto) {
 
 TEST(onnx2_string, ShardingSpecProto) {
   utils::PrintOptions options;
-  onnx2::ShardingSpecProto proto;
+  ShardingSpecProto proto;
   proto.set_tensor_name("sharded_tensor");
 
   proto.ref_device().push_back(0);
@@ -1819,7 +1833,7 @@ TEST(onnx2_string, ShardingSpecProto) {
 
 TEST(onnx2_string, NodeDeviceConfigurationProto) {
   utils::PrintOptions options;
-  onnx2::NodeDeviceConfigurationProto proto;
+  NodeDeviceConfigurationProto proto;
   proto.set_configuration_id("node_config_1");
   proto.set_pipeline_stage(3);
 
@@ -1854,7 +1868,7 @@ TEST(onnx2_string, NodeDeviceConfigurationProto) {
 
 TEST(onnx2_string, OperatorSetIdProto) {
   utils::PrintOptions options;
-  onnx2::OperatorSetIdProto proto;
+  OperatorSetIdProto proto;
   proto.set_domain("ai.onnx");
   proto.set_version(15);
 
@@ -1879,7 +1893,7 @@ TEST(onnx2_string, OperatorSetIdProto) {
 
 TEST(onnx2_string, TensorShapeProto) {
   utils::PrintOptions options;
-  onnx2::TensorShapeProto proto;
+  TensorShapeProto proto;
 
   auto& dim1 = proto.add_dim();
   dim1.set_dim_value(64);
@@ -1913,7 +1927,7 @@ TEST(onnx2_string, TensorShapeProto) {
 
 TEST(onnx2_string, TensorProto) {
   utils::PrintOptions options;
-  onnx2::TensorProto proto;
+  TensorProto proto;
   proto.set_name("test_tensor");
   proto.set_data_type(TensorProto::DataType::FLOAT);
   proto.ref_dims().push_back(3);
@@ -1945,8 +1959,7 @@ TEST(onnx2_string, TensorProto) {
     if (item.find("dims:") != std::string::npos) {
       foundDims = true;
     }
-    if (item.find("doc_string:") != std::string::npos &&
-        item.find("Un tenseur de test") != std::string::npos) {
+    if (item.find("doc_string:") != std::string::npos && item.find("Un tenseur de test") != std::string::npos) {
       foundDocString = true;
     }
     if (item.find("float_data") != std::string::npos) {
@@ -1963,7 +1976,7 @@ TEST(onnx2_string, TensorProto) {
 
 TEST(onnx2_string, SparseTensorProto) {
   utils::PrintOptions options;
-  onnx2::SparseTensorProto proto;
+  SparseTensorProto proto;
 
   proto.ref_dims().push_back(5);
   proto.ref_dims().push_back(5);
@@ -2012,7 +2025,7 @@ TEST(onnx2_string, SparseTensorProto) {
 
 TEST(onnx2_string, TypeProto) {
   utils::PrintOptions options;
-  onnx2::TypeProto proto;
+  TypeProto proto;
 
   proto.add_tensor_type().set_elem_type(1); // FLOAT
 
@@ -2060,7 +2073,7 @@ TEST(onnx2_string, TypeProto) {
 
 TEST(onnx2_string, TensorProto_WithRawData) {
   utils::PrintOptions options;
-  onnx2::TensorProto proto;
+  TensorProto proto;
   proto.set_name("raw_data_tensor");
   proto.set_data_type(TensorProto::DataType::FLOAT);
   proto.ref_dims().push_back(2);
@@ -2098,7 +2111,7 @@ TEST(onnx2_string, TensorProto_WithRawData) {
 
 TEST(onnx2_string, TensorProto_WithSegment) {
   utils::PrintOptions options;
-  onnx2::TensorProto proto;
+  TensorProto proto;
   proto.set_name("segmented_tensor");
   proto.set_data_type(TensorProto::DataType::FLOAT);
 
@@ -2207,11 +2220,11 @@ TEST(onnx2_proto, ValueInfoProto_PrintToVectorString) {
   if (serialized.find("name:") != std::string::npos && serialized.find("feature_vector") != std::string::npos) {
     foundName = true;
   }
-  if (serialized.find("doc_string:") != std::string::npos && serialized.find("Feature vector description") != std::string::npos) {
+  if (serialized.find("doc_string:") != std::string::npos &&
+      serialized.find("Feature vector description") != std::string::npos) {
     foundDocString = true;
   }
-  if (serialized.find("type") != std::string::npos &&
-      serialized.find("elem_type: 1") != std::string::npos) {
+  if (serialized.find("type") != std::string::npos && serialized.find("elem_type: 1") != std::string::npos) {
     foundType = true;
   }
 
@@ -3007,11 +3020,13 @@ TEST(onnx2_proto, GraphProto_PrintToVectorString) {
 
   std::string serialized = utils::join_string(result, "\n");
 
-  if (serialized.find("name:") != std::string::npos && serialized.find("vector_serialization_test") != std::string::npos) {
+  if (serialized.find("name:") != std::string::npos &&
+      serialized.find("vector_serialization_test") != std::string::npos) {
     foundName = true;
   }
 
-  if (serialized.find("doc_string:") != std::string::npos && serialized.find("Test graph for vector serialization") != std::string::npos) {
+  if (serialized.find("doc_string:") != std::string::npos &&
+      serialized.find("Test graph for vector serialization") != std::string::npos) {
     foundDocString = true;
   }
 
@@ -4294,11 +4309,11 @@ TEST(onnx2_file, LoadOnnxFile_OldProtobuf) {
   fs::path source_path = __FILE__;
   fs::path source_dir = source_path.parent_path();
   fs::path file_path =
-    source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_ai_onnx_ml_binarizer" / "model.onnx";
+      source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_ai_onnx_ml_binarizer" / "model.onnx";
 
   ModelProto model;
   utils::FileStream stream(file_path.string());
-  onnx2::ParseOptions opts;
+  ParseOptions opts;
   model.ParseFromStream(stream, opts);
 
   utils::PrintOptions pr;
@@ -4311,11 +4326,11 @@ TEST(onnx2_file, LoadOnnxFile_Expanded) {
   fs::path source_path = __FILE__;
   fs::path source_dir = source_path.parent_path();
   fs::path file_path =
-    source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_softmax_example_expanded" / "model.onnx";
+      source_dir / ".." / ".." / "backend" / "test" / "data" / "node" / "test_softmax_example_expanded" / "model.onnx";
 
   ModelProto model;
   utils::FileStream stream(file_path.string());
-  onnx2::ParseOptions opts;
+  ParseOptions opts;
   model.ParseFromStream(stream, opts);
 
   utils::PrintOptions pr;

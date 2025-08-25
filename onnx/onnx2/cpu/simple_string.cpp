@@ -10,7 +10,8 @@
 #include <string>
 #include <vector>
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
 namespace utils {
 
 bool RefString::operator==(const char* other) const {
@@ -196,4 +197,5 @@ String& String::operator=(const std::string& s) {
 }
 
 } // namespace utils
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

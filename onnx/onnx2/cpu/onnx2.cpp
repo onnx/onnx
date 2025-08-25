@@ -12,7 +12,8 @@
 
 #include "onnx/onnx2/cpu/stream_class.hpp"
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
 
 // StringStringEntryProto
 
@@ -1002,4 +1003,5 @@ void ModelProto::ParseFromStream(utils::BinaryStream& stream, ParseOptions& opti
       NAME_EXIST_VALUE(configuration));
 }
 
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE

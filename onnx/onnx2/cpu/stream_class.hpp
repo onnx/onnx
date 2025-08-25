@@ -176,9 +176,10 @@
     DEBUG_PRINT("  - repeat " #name)                                                               \
   }
 
-using namespace common_helpers;
+using namespace ONNX_NAMESPACE::common_helpers;
 
-namespace onnx2 {
+namespace ONNX_NAMESPACE {
+namespace v2 {
 
 template <typename cls>
 void _CopyFrom(cls& self, const cls& proto) {
@@ -206,7 +207,7 @@ void _ParseFromString(cls& self, const std::string& raw) {
 template <typename cls>
 void _ParseFromString(cls& self, const std::string& raw, ParseOptions& opts) {
   const uint8_t* ptr = reinterpret_cast<const uint8_t*>(raw.data());
-  onnx2::utils::StringStream st(ptr, raw.size());
+  utils::StringStream st(ptr, raw.size());
   if (opts.parallel)
     st.StartThreadPool(opts.num_threads);
   self.ParseFromStream(st, opts);
@@ -222,10 +223,11 @@ void _SerializeToString(cls& self, std::string& out) {
 
 template <typename cls>
 void _SerializeToString(cls& self, std::string& out, SerializeOptions& opts) {
-  onnx2::utils::StringWriteStream buf;
+  utils::StringWriteStream buf;
   auto& opts_ref = opts;
   self.SerializeToStream(buf, opts_ref);
   out = std::string(reinterpret_cast<const char*>(buf.data()), buf.size());
 }
 
-} // namespace onnx2
+} // namespace v2
+} // namespace ONNX_NAMESPACE
