@@ -602,6 +602,19 @@ static void encodeTypeProtoTensorType(ONNX_NAMESPACE::TypeProto_Tensor* tensor_t
   }
 }
 
+static void encodeSequenceValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
+  v->set_name(value_name(n));
+  ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
+  ONNX_NAMESPACE::TypeProto_Sequence* sequence_type = t->mutable_sequence_type();
+  ONNX_NAMESPACE::TypeProto* elem_type = sequence_type->mutable_elem_type();
+  ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = elem_type->mutable_tensor_type();
+  // Use FLOAT as default element type since we don't have the original type info
+  tensor_type->set_elem_type(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+  // Create a basic shape [3] as default
+  ONNX_NAMESPACE::TensorShapeProto* shape = tensor_type->mutable_shape();
+  shape->add_dim()->set_dim_value(3);
+}
+
 static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
   v->set_name(value_name(n));
   if (n->elemType() != 0 || n->has_sizes()) {
@@ -647,6 +660,39 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
         p_n->add_input(value_name(input));
       }
     }
+
+    // Special handling for SequenceInsert inputs - ensure they have value_info
+    if (node->kind().toString() == "SequenceInsert") {
+      for (size_t i = 0; i < node->inputs().size(); ++i) {
+        auto input = node->inputs()[i];
+        // Check if this input already has value_info (either as graph input or in value_info)
+        bool has_value_info = false;
+        for (const auto& vi : p_g->value_info()) {
+          if (vi.name() == value_name(input)) {
+            has_value_info = true;
+            break;
+          }
+        }
+        for (const auto& vi : p_g->input()) {
+          if (vi.name() == value_name(input)) {
+            has_value_info = true;
+            break;
+          }
+        }
+
+        if (!has_value_info) {
+          if (i == 0) {
+            // Input 0 is a sequence
+            ValueInfoProto* v = p_g->add_value_info();
+            encodeSequenceValueInfo(v, input);
+          } else if (i == 1) {
+            // Input 1 is a tensor
+            ValueInfoProto* v = p_g->add_value_info();
+            encodeValueInfo(v, input);
+          }
+        }
+      }
+    }
     for (auto output : node->outputs()) {
       p_n->add_output(value_name(output));
       // only save it if
@@ -656,6 +702,13 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
         continue;
       }
       if (output->elemType() == TensorProto_DataType_UNDEFINED && output->sizes().empty()) {
+        // Special handling for operations that produce sequence types
+        if (node->kind().toString() == "SequenceInsert") {
+          // SequenceInsert output is a sequence
+          ValueInfoProto* v = p_g->add_value_info();
+          encodeSequenceValueInfo(v, output);
+          continue;
+        }
         continue;
       }
       ValueInfoProto* v = p_g->add_value_info();
