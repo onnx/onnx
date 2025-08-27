@@ -43,9 +43,9 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 ## Upload release candidate to TestPyPI without offline steps (starting with onnx version 1.19)
 
-* Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow", select the workflow
+* Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow" with the following config:
 
-<img width="1557" height="743" alt="create_releases_run_workflow" src="https://github.com/user-attachments/assets/9281f94b-bfa8-425f-9c5e-ed2a73daf796" />
+<img width="1078" height="1584" alt="RunWorkflow" src="https://github.com/user-attachments/assets/59c89418-395e-4c52-b0c6-a75ed4a6333b" />
 
 RC-Candidates
 * Published to https://test.pypi.org/
@@ -175,7 +175,10 @@ Validation steps must be completed before this point! This is the point of new r
     * .tar.gz and .zip will be auto-generated after publishing the release.
 
 ## Upload to Official PyPI
-* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above)
+* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above). Use the following config for official release:
+
+<img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
+
 
 ### NOTES:
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
