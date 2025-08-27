@@ -673,7 +673,7 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
       }
       if (output->elemType() == TensorProto_DataType_UNDEFINED && output->sizes().empty()) {
         // Special handling for operations that produce sequence types
-        if (node->kind().toString() == "SequenceInsert") {
+        if (node->kind().toString() == std::string("SequenceInsert")) {
           // SequenceInsert output is a sequence
           ValueInfoProto* v = p_g->add_value_info();
           encodeSequenceValueInfo(v, output);
