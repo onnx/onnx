@@ -1902,9 +1902,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "SequenceInsert",
             11,
             [[3], [3]],  # input shapes: sequence and tensor
-            [[3]],       # output shape: sequence
-            seq_inputs=[0],    # first input is a sequence
-            seq_outputs=[0],   # output is a sequence
+            [[3]],  # output shape: sequence
+            seq_inputs=[0],  # first input is a sequence
+            seq_outputs=[0],  # output is a sequence
         )
 
     def test_StringConcat(self) -> None:
