@@ -903,7 +903,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 24);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 25);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
@@ -1336,7 +1336,11 @@ class DbgOperatorSetTracker {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
-#define ONNX_UNUSED [[maybe_unused]]
+#ifdef __GNUC__
+#define ONNX_UNUSED __attribute__((__unused__))
+#else
+#define ONNX_UNUSED
+#endif
 
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)

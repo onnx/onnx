@@ -38,14 +38,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 
-if(DEFINED BUILD_ONNX_PYTHON)
-  message(WARNING "'BUILD_ONNX_PYTHON' is deprecated. Please, use 'ONNX_BUILD_PYTHON' instead")
-  set(ONNX_BUILD_PYTHON_DEFAULT ${BUILD_ONNX_PYTHON})
-else()
-  set(ONNX_BUILD_PYTHON_DEFAULT OFF)
-endif()
-
-option(ONNX_BUILD_PYTHON "Build Python binaries" ${ONNX_BUILD_PYTHON_DEFAULT})
+option(ONNX_BUILD_PYTHON "Build Python binaries" OFF)
 option(ONNX_BUILD_CUSTOM_PROTOBUF "Build and use ONNX's own protobuf" OFF)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -472,8 +465,8 @@ if(ONNX_BUILD_PYTHON)
   find_package(pybind11)
   if(NOT pybind11_FOUND)
     include(FetchContent)
-    set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.tar.gz)
-    set(pybind11SHA1  8c7e3e8fec829ced31a495dec281153511f33c63)
+    set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v3.0.0.tar.gz)
+    set(pybind11SHA1  532baa7a79c5c65645bcce2f6971959925e40df4)
     FetchContent_Declare(
       pybind11
       URL ${pybind11URL}

@@ -18,6 +18,10 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
             * Branch protections rules are automatically applied to branches following this format.
         * The new tag will be `v1.16.0`
 * Create new page for the release in [Release logistics wiki](https://github.com/onnx/onnx/wiki)
+* Before creating a release branch, it is highly recommended to have in mind to compile **preliminary release notes** — ideally maintained in a shared location such as the **release wiki page**. These notes should include a clear summary of the **new features**, a list of **bug fixes**, any **known issues**, and especially any **deprecations or removals**, with links to relevant tickets or documentation where applicable. Having this information ready ensures that the team can confidently and promptly create a `rc1` (release candidate 1) immediately after the branch is cut, without delays. Acting quickly at this stage also helps to **reduce the need for parallel work on both the main and release branches**, minimizing merge conflicts, duplicated effort, and coordination overhead. This practice supports a smoother, more transparent release process.
+   *   To generate good release notes, it is helpful if pull requests have meaningful names and corresponding labels. Labels can also be added retrospectively to PRs that have already been merged.
+   *   The labels used can be found [here](https://github.com/onnx/onnx/blob/main/.github/release.yml)
+   *   The preliminary release notes one gets if one drafts a release on GitHub.
 
 ## Create Release Branch
 * In `main` branch, before creating the release branch:
@@ -39,9 +43,9 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 ## Upload release candidate to TestPyPI without offline steps (starting with onnx version 1.19)
 
-* Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow", select the workflow
+* Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow" with the following config:
 
-<img width="1557" height="743" alt="create_releases_run_workflow" src="https://github.com/user-attachments/assets/9281f94b-bfa8-425f-9c5e-ed2a73daf796" />
+<img width="1078" height="1584" alt="RunWorkflow" src="https://github.com/user-attachments/assets/59c89418-395e-4c52-b0c6-a75ed4a6333b" />
 
 RC-Candidates
 * Published to https://test.pypi.org/
@@ -116,14 +120,9 @@ RC-Candidates
     * Source install: `pip uninstall -y onnx && pip install -i https://test.pypi.org/simple --no-binary onnx --pre onnx`
 
 ## Package verification
-**Test ONNX itself**
-* Test the PyPI package installation with different combinations of various Python versions, Protobuf versions and platforms.
-  * After installing the TestPyPI package, run `pytest` in the release branch.
-  * Python versions : Applicable python versions for the release.
-  * Protobuf versions : Latest protobuf version at the time of the release + protobuf version used for previous release
 
 **Partner Validation**
-
+ * User should install the rc-packages with *pip install --no-deps -i https://test.pypi.org/simple/ onnx* (and manually install its dependencies so they are not obtained from test-pypi)
  * Test with onnxruntime package:
      * Run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
         * The scripts tests ONNX functions like `load`, `checker.check_model`, and `shape_inference.infer_shapes`, with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model.
@@ -176,7 +175,10 @@ Validation steps must be completed before this point! This is the point of new r
     * .tar.gz and .zip will be auto-generated after publishing the release.
 
 ## Upload to Official PyPI
-* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above)
+* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above). Use the following config for official release:
+
+<img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
+
 
 ### NOTES:
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
@@ -221,8 +223,9 @@ Conda builds of ONNX are done via [conda-forge/onnx-feedstock](https://github.co
     * Note: Use the sha256 hash (`sha256sum onnx-X.Y.Z.tar.gz`) of the release's tar.gz file from https://github.com/onnx/onnx/releases.
 
 **Merge into main branch**
-* If urgent changes were made directly into the release branch, merge the release branch back into main branch.
-* If all PRs merged into the release branch (after it was cut) were cherry-picks from main, the merge PR will show as empty and this step is not needed.
+* Check which changes to the release branch are also relevant for main:
+   * If urgent changes were made directly into the release branch, merge the release branch back into main branch.
+   * If all PRs merged into the release branch (after it was cut) were cherry-picks from main, the merge PR will show as empty and this step is not needed.
 
 **Remove old onnx-weekly packages on PyPI**
 * Remove all [onnx-weekly packages](https://pypi.org/project/onnx-weekly/#history) from PyPI for the just released version to save space.
