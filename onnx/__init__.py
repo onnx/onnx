@@ -76,7 +76,7 @@ __all__ = [
 
 import os
 import typing
-from typing import IO, Literal, Union
+from typing import IO, Literal
 
 
 from onnx import serialization
@@ -148,9 +148,7 @@ __version__ = onnx.version.version
 # Supported model formats that can be loaded from and saved to
 # The literals are formats with built-in support. But we also allow users to
 # register their own formats. So we allow str as well.
-_SupportedFormat = Union[
-    Literal["protobuf", "textproto", "onnxtxt", "json"], str  # noqa: PYI051
-]
+_SupportedFormat = Literal["protobuf", "textproto", "onnxtxt", "json"] | str  # noqa: PYI051
 # Default serialization format
 _DEFAULT_FORMAT = "protobuf"
 
@@ -159,7 +157,7 @@ def _load_bytes(f: IO[bytes] | str | os.PathLike) -> bytes:
     if hasattr(f, "read") and callable(typing.cast("IO[bytes]", f).read):
         content = typing.cast("IO[bytes]", f).read()
     else:
-        f = typing.cast("Union[str, os.PathLike]", f)
+        f = typing.cast("str | os.PathLike", f)
         with open(f, "rb") as readable:
             content = readable.read()
     return content
@@ -169,7 +167,7 @@ def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
     if hasattr(f, "write") and callable(typing.cast("IO[bytes]", f).write):
         typing.cast("IO[bytes]", f).write(content)
     else:
-        f = typing.cast("Union[str, os.PathLike]", f)
+        f = typing.cast("str | os.PathLike", f)
         with open(f, "wb") as writable:
             writable.write(content)
 

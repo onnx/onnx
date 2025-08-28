@@ -14,8 +14,6 @@ import version_utils
 
 import onnx.backend.base
 import onnx.backend.test
-import onnx.shape_inference
-import onnx.version_converter
 from onnx import ModelProto
 from onnx.backend.base import Device, DeviceType
 from onnx.reference import ReferenceEvaluator
@@ -140,21 +138,6 @@ backend_test.exclude(
 # The following tests cannot pass because they consists in generating random number.
 backend_test.exclude("(test_bernoulli)")
 
-# The following tests fail due to a bug in the backend test comparison.
-backend_test.exclude(
-    "(test_cast_FLOAT_to_STRING|test_castlike_FLOAT_to_STRING|test_strnorm)"
-)
-
-# The following tests fail due to a shape mismatch.
-backend_test.exclude(
-    "(test_center_crop_pad_crop_axes_hwc_expanded"
-    "|test_lppool_2d_dilations"
-    "|test_averagepool_2d_dilations)"
-)
-
-# The following tests fail due to a type mismatch.
-backend_test.exclude("(test_eyelike_without_dtype)")
-
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
 
@@ -165,9 +148,6 @@ if sys.platform == "win32":
     backend_test.exclude("test_regex_full_match_empty_cpu")
     backend_test.exclude("test_image_decoder_decode_")
 
-if sys.version_info < (3, 10):
-    #  AttributeError: module 'numpy.typing' has no attribute 'NDArray'
-    backend_test.exclude("test_image_decoder_decode_")
 
 if sys.platform == "darwin":
     # FIXME: https://github.com/onnx/onnx/issues/5792

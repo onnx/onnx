@@ -27,7 +27,7 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 13, OpSchema().FillUsing(ReduceOpDynamicAxes
 static const char* reduce_sum_square_func_body = R"ONNX(
   {
     data_square = Mul(data, data)
-    reduced = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
+    reduced = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_square, axes)
   }
   )ONNX";
 
@@ -42,7 +42,7 @@ ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 18, OpSchema().FillUsing(ReduceOpDynamicAxe
 
 static const char* reduce_log_sum_func_body = R"ONNX(
   {
-    reduced_sum = ReduceSum<keepdims: int = @keepdims>(data, axes)
+    reduced_sum = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data, axes)
     reduced = Log (reduced_sum)
   }
   )ONNX";
@@ -56,7 +56,7 @@ static const char* reduce_log_sum_exp_func_body = R"ONNX(
   {
     data_double = Cast<to = 11>(data)
     data_exp = Exp (data_double)
-    reduced_sum = ReduceSum<keepdims: int = @keepdims>(data_exp, axes)
+    reduced_sum = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_exp, axes)
     reduced_double = Log (reduced_sum)
     reduced = CastLike(reduced_double, data)
   }
@@ -70,7 +70,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* reduce_l1_func_body = R"ONNX(
   {
     data_abs = Abs(data)
-    reduced = ReduceSum<keepdims: int = @keepdims>(data_abs, axes)
+    reduced = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_abs, axes)
   }
   )ONNX";
 
@@ -82,7 +82,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* reduce_l2_func_body = R"ONNX(
   {
     data_square = Mul(data, data)
-    sum_square = ReduceSum<keepdims: int = @keepdims>(data_square, axes)
+    sum_square = ReduceSum<keepdims: int = @keepdims, noop_with_empty_axes: int = @noop_with_empty_axes>(data_square, axes)
     sum_square_dbl = Cast <to = 1>(sum_square)
     sqrt = Sqrt(sum_square_dbl)
     reduced = CastLike(sqrt, data)

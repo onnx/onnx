@@ -3311,7 +3311,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static const char* Attention_ver23_doc = R"DOC(
+static const char* Attention_ver24_doc = R"DOC(
 
 Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
 
@@ -3326,9 +3326,23 @@ This operator also covers the 3 following variants based on the number of heads:
 2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
 3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
-Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
-1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
-2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
+1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+
+With respect to KV cache update, this operator allows the following two use cases:
+
+1) Cache update happens inside the Attention operator. In this case, the `K` and `V` inputs contain only the incoming
+tokens for the current autoregressive step, and the four optional inputs/outputs past and present key and value are
+all needed. The Attention op performs a Concat operation on the past and incoming key and value to form the present
+key and value, respectively. Note that this only works correctly for the special case where the past key and value
+do not contain padded tokens.
+2) Cache update happens outside the Attention operator (for example, through the `TensorScatter` operator). In this
+case, the `K` and `V` inputs correspond to the entire cache tensor, so the four optional inputs/outputs past and
+present key and value should not be used. An additional input `nonpad_kv_seqlen` of shape (batch_size,) may be
+provided to indicate the number of non-padding tokens in each sample of the batch to save unnecessary computation.
+Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
+as the maximum value of `nonpad_kv_seqlen`.
 
 Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
 The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
@@ -3358,9 +3372,9 @@ Q*sqrt(scale) K*sqrt(scale) |
 
 ONNX_OPERATOR_SET_SCHEMA(
     Attention,
-    23,
+    24,
     OpSchema()
-        .SetDoc(Attention_ver23_doc)
+        .SetDoc(Attention_ver24_doc)
         .Attr(
             "is_causal",
             "If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. "
@@ -3428,11 +3442,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "attn_mask",
             "Attention mask. "
-            "Shape must be broadcastable to "
-            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
             "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
-            "Two types of masks are supported. A boolean mask where a value of `True` indicates that the element should take part in attention. "
-            "Also supports a float mask of the same type as query, key, value that is added to the attention score.",
+            "The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. "
+            "Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, "
+            "or a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
             OpSchema::Optional)
         .Input(
@@ -3446,6 +3460,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "past_value",
             "past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`",
             "T2",
+            OpSchema::Optional)
+        .Input(
+            6,
+            "nonpad_kv_seqlen",
+            "A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) "
+            "tokens in each sample. A padding mask can be derived from this. This should not be used together with "
+            "`past_key` and `past_value` inputs or `present_key` and `present_value` outputs "
+            "(See the KV cache use cases in the operator description).",
+            "tensor(int64)",
             OpSchema::Optional)
         .Output(
             0,
@@ -3658,7 +3681,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             tp.add_dims(1);
             return tp;
           };
-
           // If shape is 3D, q_num_heads and kv_num_heads is provided,
           // for 4D cases, set num_heads to zero for reshape purposes
           auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
@@ -3693,6 +3715,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
             builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
+            builder.Add("QSeqLen = Shape <start = -2, end = -1> (Q)");
           }
 
           builder
@@ -3707,6 +3730,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
               .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
               .Const1D("One1D", static_cast<int64_t>(1))
+              .Const1D("NegOne1D", static_cast<int64_t>(-1))
               .Const1D("One1DF", static_cast<float>(1))
               .Const1D("Zero1D", static_cast<int64_t>(0))
               .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
@@ -3735,46 +3759,67 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          // If attn_mask is provided
+          builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)");
+          builder.Add("AttnBiasShape = Concat <axis = 0> (QSeqLen, NewKVSeqLen)");
           float neg_inf = -std::numeric_limits<float>::infinity();
+          builder.Const1D("FloatNegInf", neg_inf);
+          builder.Const1D("ScalarZero", 0.f);
+
+          // If attn_mask is provided
           if (ctx.hasInput(3)) {
             auto* up = ctx.getInputType(3);
             if ((up == nullptr) || (!up->has_tensor_type()))
               return false;
             int64_t U = up->tensor_type().elem_type();
-            builder.Const1D("FloatInf", neg_inf);
-            builder.Const1D("ScalarZero", 0.f);
             builder.Add(
-                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL ? "AttnBias = Where(attn_mask, ScalarZero, FloatInf)"
-                                                               : "AttnBias = Identity(attn_mask)");
+                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL
+                    ? "AttnBiasShort = Where(attn_mask, ScalarZero, FloatNegInf)"
+                    : "AttnBiasShort = Identity(attn_mask)");
+            // If attn_mask has a shorter kv sequence length, we pad it to NewKVSeqLen with FloatNegInf
+            builder.Add("MaskKVSeqLen = Shape <start = -1> (attn_mask)")
+                .Add("PaddingKVSeqLen = Sub(NewKVSeqLen, MaskKVSeqLen)")
+                .Add("Pads = Concat <axis = 0> (Zero1D, PaddingKVSeqLen)")
+                .Add("FloatNegInfCast = CastLike(FloatNegInf, AttnBiasShort)")
+                .Add("AttnBias = Pad(AttnBiasShort, Pads, FloatNegInfCast, NegOne1D)");
           } else {
-            // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
-            // is a square matrix. The attention masking has the form of the upper left causal bias due to
-            // the alignment when the mask is a non-square matrix.
-            // An error is thrown if both attn_mask and is_causal are set.
-            auto* is_causal_attr = ctx.getAttribute("is_causal");
-            int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
-            if (!is_3d_input) {
-              builder.Add("QSeqLen = Shape <start = -2, end = -1> (Q)"); // q_sequence_length
-            }
-
-            if (is_causal == 1) {
-              builder.Const1D("FloatInf", neg_inf);
-              builder.Const1D("ScalarZero", 0.f);
-              builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
-                  .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
-                  .Add("AttnBiasZeros_ = ConstantOfShape(AttnBiasShape)")
-                  .Add("AttnBiasZeros = CastLike(AttnBiasZeros_, Q)")
-                  .Add("BoolMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
-                  .Add("BoolMaskTri = Trilu <upper = 0> (BoolMask, Zero1D)")
-                  .Add("AttnBias = Where(BoolMaskTri, ScalarZero, FloatInf)");
-            } else {
-              builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
-                  .Add("AttnBiasShape = Concat <axis = -1> (QSeqLen, NewKVSeqLen)")
-                  .Add("AttnBias = ConstantOfShape(AttnBiasShape)");
-            }
+            builder.Add("AttnBias = ConstantOfShape(AttnBiasShape)");
           }
-          builder.Add("AttnBiasT = Cast (AttnBias)", "to", T1);
+
+          // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
+          // is a square matrix. The attention masking has the form of the upper left causal bias due to
+          // the alignment when the mask is a non-square matrix.
+          // An error is thrown if both attn_mask and is_causal are set.
+          auto* is_causal_attr = ctx.getAttribute("is_causal");
+          int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+          if (is_causal == 1) {
+            builder.Add("BoolMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
+                .Add("BoolMaskTri = Trilu <upper = 0> (BoolMask, Zero1D)")
+                .Add("MaskTri = Where(BoolMaskTri, ScalarZero, FloatNegInf)")
+                .Add("AttnBiasCausal = Add(AttnBias, MaskTri)");
+          } else {
+            builder.Add("AttnBiasCausal = Identity(AttnBias)");
+          }
+
+          // Add padding mask if kv_nonpad_seqlen is provided
+          if (ctx.hasInput(6)) {
+            if (!is_3d_input) {
+              builder.Add("KVSeqLen = Shape <start = -2, end = -1> (K)");
+            }
+            builder
+                .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
+                .Add("KVSeqLen0D = Squeeze(KVSeqLen)")
+                .Const("Zero0D", static_cast<int64_t>(0))
+                .Const("One0D", static_cast<int64_t>(1))
+                .Add("Range = Range(Zero0D, KVSeqLen0D, One0D)") // [KVSeqLen,]
+                .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
+                .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
+                .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
+                .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("AttnBiasCausalPad = Add(AttnBiasCausal, PaddingMask4D)");
+          } else {
+            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausal)");
+          }
+          builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
 
           // Group Query Attention is applied if the following are satisfied
           // 1) q_num_heads != kv_num_heads
