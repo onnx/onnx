@@ -71,6 +71,31 @@ inline bool IsOnnxDomainOp(const NodeProto& node, const std::string& op_type) {
 
 } // namespace
 
+// Helper function to recursively clear shape information from TypeProto
+static void ClearShapeFromTypeProto(TypeProto* type_proto) {
+  if (!type_proto) return;
+
+  switch (type_proto->value_case()) {
+    case TypeProto::kTensorType:
+      type_proto->mutable_tensor_type()->clear_shape();
+      break;
+    case TypeProto::kSparseTensorType:
+      type_proto->mutable_sparse_tensor_type()->clear_shape();
+      break;
+    case TypeProto::kSequenceType:
+      ClearShapeFromTypeProto(type_proto->mutable_sequence_type()->mutable_elem_type());
+      break;
+    case TypeProto::kOptionalType:
+      ClearShapeFromTypeProto(type_proto->mutable_optional_type()->mutable_elem_type());
+      break;
+    case TypeProto::kMapType:
+      ClearShapeFromTypeProto(type_proto->mutable_map_type()->mutable_value_type());
+      break;
+    default:
+      break;
+  }
+}
+
 template <class T>
 static void CheckTensorShapesAndTypes(const T& inferred_type, const T& existing_type) {
   if (inferred_type.elem_type() != TensorProto::UNDEFINED && existing_type.elem_type() != TensorProto::UNDEFINED &&
@@ -493,6 +518,30 @@ class ShapeInferenceImplBase {
         has_unsupported_op = true;
         return;
       }
+      // If infer_types_only is true, clear shape information from output types
+      if (options.infer_types_only) {
+        for (int i = 0; i < n.output_size(); ++i) {
+          TypeProto* output_type = ctx.getOutputType(i);
+          if (output_type && output_type->has_tensor_type()) {
+            // Clear shape information but keep tensor type (elem_type)
+            output_type->mutable_tensor_type()->clear_shape();
+          } else if (output_type && output_type->has_sparse_tensor_type()) {
+            // Clear shape information but keep sparse tensor type (elem_type)
+            output_type->mutable_sparse_tensor_type()->clear_shape();
+          }
+          // For sequence and optional types, recursively clear shapes
+          if (output_type && output_type->has_sequence_type()) {
+            ClearShapeFromTypeProto(output_type->mutable_sequence_type()->mutable_elem_type());
+          }
+          if (output_type && output_type->has_optional_type()) {
+            ClearShapeFromTypeProto(output_type->mutable_optional_type()->mutable_elem_type());
+          }
+          if (output_type && output_type->has_map_type()) {
+            ClearShapeFromTypeProto(output_type->mutable_map_type()->mutable_value_type());
+          }
+        }
+      }
+
       for (int i = 0; i < n.output_size(); ++i) {
         // skip type and shape propagation for missing optional outputs.
         if (!n.output(i).empty())
@@ -502,7 +551,8 @@ class ShapeInferenceImplBase {
       ProcessConstant(n);
       // If data-propagation is enabled, partial-evaluation (aka data-propagation) is performed
       // to improve inference/checking for subsequent nodes.
-      if (options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
+      // Skip data propagation when infer_types_only is true as it may involve shape computation
+      if (!options.infer_types_only && options.enable_data_propagation && schema && schema->has_data_propagation_function()) {
         if (generated_shape_data_by_name == nullptr) {
           fail_shape_inference(
               "Container for generated shape data cannot be nullptr when enable_data_propagation option is set.");
@@ -843,6 +893,79 @@ void InferShapes(
   ModelProto model;
   LoadProtoFromPath(model_path, model);
   InferShapes(model, schema_registry, options, generated_shape_data_by_name);
+  // Save the inferred model to the original model path
+  // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
+  std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::string model_string;
+  ONNX_TRY {
+    model.SerializeToString(&model_string);
+    output << model_string;
+  }
+  ONNX_CATCH(...) {
+    fail_check("Unable to save inferred model to the target path:", save_path);
+  }
+}
+
+///
+/// Type inference functions - perform type inference without shape inference
+///
+void InferTypes(
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ISchemaRegistry* schema_registry,
+    const ShapeInferenceOptions& options,
+    const std::unordered_map<std::string, const FunctionProto*>& model_local_functions) {
+  // Create options with infer_types_only set to true
+  ShapeInferenceOptions types_only_options = options;
+  types_only_options.infer_types_only = true;
+
+  SymbolTableImpl symbol_table;
+  InferShapesImpl(
+      g,
+      std::unordered_map<std::string, TypeProto*>(0),
+      opset_imports,
+      types_only_options,
+      &symbol_table,
+      model_local_functions,
+      schema_registry);
+}
+
+void InferTypes(
+    ModelProto& m,
+    const ISchemaRegistry* schema_registry,
+    const ShapeInferenceOptions& options,
+    DataValueMap* generated_shape_data_by_name) {
+  // Create options with infer_types_only set to true
+  ShapeInferenceOptions types_only_options = options;
+  types_only_options.infer_types_only = true;
+
+  auto opset_imports = GetOpsetImportsFromProto(m);
+  SymbolTableImpl symbol_table;
+  ModelLocalFunctionsMap model_local_functions_by_id;
+  for (const auto& function_proto : m.functions()) {
+    model_local_functions_by_id.insert({GetFunctionIdentifier(function_proto), &function_proto});
+  }
+  InferShapesImpl(
+      m.mutable_graph(),
+      std::unordered_map<std::string, TypeProto*>(0),
+      opset_imports,
+      types_only_options,
+      &symbol_table,
+      model_local_functions_by_id,
+      schema_registry,
+      generated_shape_data_by_name,
+      m.ir_version());
+}
+
+void InferTypes(
+    const std::string& model_path,
+    const std::string& save_path,
+    const ISchemaRegistry* schema_registry,
+    const ShapeInferenceOptions& options,
+    DataValueMap* generated_shape_data_by_name) {
+  ModelProto model;
+  LoadProtoFromPath(model_path, model);
+  InferTypes(model, schema_registry, options, generated_shape_data_by_name);
   // Save the inferred model to the original model path
   // Use SerializeToString instead of SerializeToOstream due to LITE_PROTO
   std::fstream output(save_path, std::ios::out | std::ios::trunc | std::ios::binary);

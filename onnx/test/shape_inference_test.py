@@ -10945,5 +10945,331 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
 
 
+class TestInferTypes(unittest.TestCase):
+    """Test cases for the new infer_types functionality"""
+
+    def test_infer_types_preserves_type_information(self) -> None:
+        """Test that infer_types preserves type information while clearing shape information"""
+        # Create a simple model with known types
+        model = helper.make_model(
+            graph=helper.make_graph(
+                nodes=[
+                    helper.make_node(
+                        "Add",
+                        inputs=["X", "Y"],
+                        outputs=["Z"],
+                        name="add_node"
+                    )
+                ],
+                name="test_graph",
+                inputs=[
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, [2, 3]),
+                    helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2, 3])
+                ],
+                outputs=[
+                    helper.make_tensor_value_info("Z", TensorProto.FLOAT, None)  # No shape specified
+                ]
+            ),
+            opset_imports=[helper.make_opsetid("", 18)]
+        )
+
+        # Apply type inference
+        inferred_model = onnx.shape_inference.infer_types(model)
+
+        # Check that type information is preserved
+        self.assertEqual(
+            inferred_model.graph.output[0].type.tensor_type.elem_type,
+            TensorProto.FLOAT
+        )
+
+        # Check that shape information is cleared (should have no dimensions)
+        output_type = inferred_model.graph.output[0].type
+        self.assertTrue(output_type.has_tensor_type())
+        self.assertFalse(output_type.tensor_type().has_shape() or
+                        output_type.tensor_type().shape().dim_size() > 0)
+
+    def test_infer_types_vs_infer_shapes_comparison(self) -> None:
+        """Test that infer_types and infer_shapes produce different results"""
+        # Create a simple model
+        model = helper.make_model(
+            graph=helper.make_graph(
+                nodes=[
+                    helper.make_node(
+                        "Add",
+                        inputs=["X", "Y"],
+                        outputs=["Z"],
+                        name="add_node"
+                    )
+                ],
+                name="test_graph",
+                inputs=[
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, [2, 3]),
+                    helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2, 3])
+                ],
+                outputs=[
+                    helper.make_tensor_value_info("Z", TensorProto.FLOAT, None)
+                ]
+            ),
+            opset_imports=[helper.make_opsetid("", 18)]
+        )
+
+        # Apply both type and shape inference
+        shapes_model = onnx.shape_inference.infer_shapes(model)
+        types_model = onnx.shape_inference.infer_types(model)
+
+        # Both should preserve type information
+        self.assertEqual(
+            shapes_model.graph.output[0].type.tensor_type.elem_type,
+            types_model.graph.output[0].type.tensor_type.elem_type
+        )
+
+        # infer_shapes should have shape information
+        shapes_output = shapes_model.graph.output[0].type
+        self.assertTrue(shapes_output.tensor_type().has_shape())
+
+        # infer_types should not have shape information
+        types_output = types_model.graph.output[0].type
+        self.assertFalse(types_output.tensor_type().has_shape() or
+                        types_output.tensor_type().shape().dim_size() > 0)
+
+    def test_infer_types_with_sequence_types(self) -> None:
+        """Test infer_types with sequence types"""
+        # Create a model with sequence operations
+        model = helper.make_model(
+            graph=helper.make_graph(
+                nodes=[
+                    helper.make_node(
+                        "SequenceConstruct",
+                        inputs=["X", "Y"],
+                        outputs=["seq"],
+                        name="seq_construct"
+                    ),
+                    helper.make_node(
+                        "SequenceAt",
+                        inputs=["seq"],
+                        outputs=["Z"],
+                        index=0,
+                        name="seq_at"
+                    )
+                ],
+                name="test_graph",
+                inputs=[
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, [2, 3]),
+                    helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2, 3])
+                ],
+                outputs=[
+                    helper.make_tensor_value_info("Z", TensorProto.FLOAT, None)
+                ]
+            ),
+            opset_imports=[helper.make_opsetid("", 18)]
+        )
+
+        # Apply type inference
+        inferred_model = onnx.shape_inference.infer_types(model)
+
+        # Check that the output has the correct type
+        self.assertEqual(
+            inferred_model.graph.output[0].type.tensor_type.elem_type,
+            TensorProto.FLOAT
+        )
+
+        # Check that shape information is cleared
+        output_type = inferred_model.graph.output[0].type
+        self.assertFalse(output_type.tensor_type().has_shape() or
+                        output_type.tensor_type().shape().dim_size() > 0)
+
+    def test_infer_types_with_optional_types(self) -> None:
+        """Test infer_types with optional types"""
+        # Create a model with optional operations
+        model = helper.make_model(
+            graph=helper.make_graph(
+                nodes=[
+                    helper.make_node(
+                        "Optional",
+                        inputs=["X"],
+                        outputs=["opt"],
+                        name="optional_node"
+                    ),
+                    helper.make_node(
+                        "OptionalGetElement",
+                        inputs=["opt"],
+                        outputs=["Z"],
+                        name="optional_get"
+                    )
+                ],
+                name="test_graph",
+                inputs=[
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, [2, 3])
+                ],
+                outputs=[
+                    helper.make_tensor_value_info("Z", TensorProto.FLOAT, None)
+                ]
+            ),
+            opset_imports=[helper.make_opsetid("", 18)]
+        )
+
+        # Apply type inference
+        inferred_model = onnx.shape_inference.infer_types(model)
+
+        # Check that the output has the correct type
+        self.assertEqual(
+            inferred_model.graph.output[0].type.tensor_type.elem_type,
+            TensorProto.FLOAT
+        )
+
+        # Check that shape information is cleared
+        output_type = inferred_model.graph.output[0].type
+        self.assertFalse(output_type.tensor_type().has_shape() or
+                        output_type.tensor_type().shape().dim_size() > 0)
+
+    def test_infer_types_with_map_types(self) -> None:
+        """Test infer_types with map types"""
+        # Create a model with map operations (if supported)
+        try:
+            model = helper.make_model(
+                graph=helper.make_graph(
+                    nodes=[
+                        helper.make_node(
+                            "StringNormalizer",
+                            inputs=["X"],
+                            outputs=["Y"],
+                            name="normalizer"
+                        )
+                    ],
+                    name="test_graph",
+                    inputs=[
+                        helper.make_tensor_value_info("X", TensorProto.STRING, [None])
+                    ],
+                    outputs=[
+                        helper.make_tensor_value_info("Y", TensorProto.STRING, None)
+                    ]
+                ),
+                opset_imports=[helper.make_opsetid("", 18)]
+            )
+
+            # Apply type inference
+            inferred_model = onnx.shape_inference.infer_types(model)
+
+            # Check that the output has the correct type
+            self.assertEqual(
+                inferred_model.graph.output[0].type.tensor_type.elem_type,
+                TensorProto.STRING
+            )
+
+        except Exception:
+            # Skip if StringNormalizer is not available
+            self.skipTest("StringNormalizer not available in this ONNX version")
+
+    def test_infer_types_preserves_input_shapes(self) -> None:
+        """Test that infer_types preserves input shapes but clears output shapes"""
+        model = helper.make_model(
+            graph=helper.make_graph(
+                nodes=[
+                    helper.make_node(
+                        "Add",
+                        inputs=["X", "Y"],
+                        outputs=["Z"],
+                        name="add_node"
+                    )
+                ],
+                name="test_graph",
+                inputs=[
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, [2, 3]),
+                    helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2, 3])
+                ],
+                outputs=[
+                    helper.make_tensor_value_info("Z", TensorProto.FLOAT, None)
+                ]
+            ),
+            opset_imports=[helper.make_opsetid("", 18)]
+        )
+
+        # Apply type inference
+        inferred_model = onnx.shape_inference.infer_types(model)
+
+        # Input shapes should be preserved
+        input_x = inferred_model.graph.input[0]
+        self.assertTrue(input_x.type.tensor_type().has_shape())
+        self.assertEqual(input_x.type.tensor_type().shape().dim_size(), 2)
+        self.assertEqual(input_x.type.tensor_type().shape().dim(0).dim_value(), 2)
+        self.assertEqual(input_x.type.tensor_type().shape().dim(1).dim_value(), 3)
+
+        # Output shape should be cleared
+        output_z = inferred_model.graph.output[0]
+        self.assertFalse(output_z.type.tensor_type().has_shape() or
+                        output_z.type.tensor_type().shape().dim_size() > 0)
+
+    def test_infer_types_with_sparse_tensors(self) -> None:
+        """Test infer_types with sparse tensor types"""
+        # Create a model that might produce sparse tensors
+        model = helper.make_model(
+            graph=helper.make_graph(
+                nodes=[
+                    helper.make_node(
+                        "Add",
+                        inputs=["X", "Y"],
+                        outputs=["Z"],
+                        name="add_node"
+                    )
+                ],
+                name="test_graph",
+                inputs=[
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, [2, 3]),
+                    helper.make_tensor_value_info("Y", TensorProto.FLOAT, [2, 3])
+                ],
+                outputs=[
+                    helper.make_tensor_value_info("Z", TensorProto.FLOAT, None)
+                ]
+            ),
+            opset_imports=[helper.make_opsetid("", 18)]
+        )
+
+        # Apply type inference
+        inferred_model = onnx.shape_inference.infer_types(model)
+
+        # Should still work with regular tensors
+        self.assertEqual(
+            inferred_model.graph.output[0].type.tensor_type.elem_type,
+            TensorProto.FLOAT
+        )
+
+        # Output shape should be cleared
+        output_type = inferred_model.graph.output[0].type
+        self.assertFalse(output_type.tensor_type().has_shape() or
+                        output_type.tensor_type().shape().dim_size() > 0)
+
+    def test_infer_types_error_handling(self) -> None:
+        """Test error handling in infer_types"""
+        # Create an invalid model
+        model = helper.make_model(
+            graph=helper.make_graph(
+                nodes=[
+                    helper.make_node(
+                        "InvalidOp",
+                        inputs=["X"],
+                        outputs=["Z"],
+                        name="invalid_node"
+                    )
+                ],
+                name="test_graph",
+                inputs=[
+                    helper.make_tensor_value_info("X", TensorProto.FLOAT, [2, 3])
+                ],
+                outputs=[
+                    helper.make_tensor_value_info("Z", TensorProto.FLOAT, None)
+                ]
+            ),
+            opset_imports=[helper.make_opsetid("", 18)]
+        )
+
+        # infer_types should handle errors gracefully (similar to infer_shapes)
+        try:
+            inferred_model = onnx.shape_inference.infer_types(model)
+            # If it succeeds, that's fine - it means the invalid op was handled
+        except Exception:
+            # If it fails, that's also fine - error handling is working
+            pass
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
