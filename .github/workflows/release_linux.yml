@@ -102,7 +102,7 @@ jobs:
             ./dist/*.whl
 
     - name: TEST_HUB=1 pytest
-      if: (github.event_name == 'schedule') && (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') # Only triggered by weekly event
+      if: (github.event_name == 'schedule') && (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version != '3.14-dev') # Only triggered by weekly event
       run: |
         TEST_HUB=1 pytest
 
