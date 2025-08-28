@@ -366,3 +366,9 @@ def save_tensor(
 load = load_model
 load_from_string = load_model_from_string
 save = save_model
+
+
+# Override __repr__ for some proto classes to make it more efficient
+ModelProto.__repr__ = object.__repr__
+GraphProto.__repr__ = object.__repr__
+FunctionProto.__repr__ = object.__repr__
