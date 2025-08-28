@@ -1113,7 +1113,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 61 test cases, listed as following:
+There are 62 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -2021,6 +2021,39 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_3d_with_past_and_present_qk_matmul_softmax",
+)
+```
+
+</details>
+<details>
+<summary>attention_4d_diff_heads_mask4d_padded_kv</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 10).astype(np.float32)
+attn_mask = np.random.rand(2, 3, 4, 4).astype(np.float32)
+nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_diff_heads_mask4d_padded_kv",
 )
 ```
 
@@ -6365,25 +6398,61 @@ x = (
     .reshape((1, 1, 3, 3))
 )
 x_zero_point = np.uint8(1)
-w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
+w_zero_points = np.array([0, 1], dtype=np.uint8)
+w = np.array([1, 1, 1, 1, 1, 1, 1, 1]).astype(np.uint8).reshape((2, 1, 2, 2))
 
 y = (
-    np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9])
+    np.array(
+        [
+            1,
+            3,
+            5,
+            3,
+            5,
+            12,
+            16,
+            9,
+            11,
+            24,
+            28,
+            15,
+            7,
+            15,
+            17,
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+        ]
+    )
     .astype(np.int32)
-    .reshape((1, 1, 4, 4))
+    .reshape((1, 2, 4, 4))
 )
 
 # ConvInteger with padding
 convinteger_node_with_padding = onnx.helper.make_node(
     "ConvInteger",
-    inputs=["x", "w", "x_zero_point"],
+    inputs=["x", "w", "x_zero_point", "w_zero_points"],
     outputs=["y"],
     pads=[1, 1, 1, 1],
 )
 
 expect(
     convinteger_node_with_padding,
-    inputs=[x, w, x_zero_point],
+    inputs=[x, w, x_zero_point, w_zero_points],
     outputs=[y],
     name="test_convinteger_with_padding",
 )

@@ -1,7 +1,7 @@
 """Submodule containing all the ONNX schema definitions."""
 
-from collections.abc import Sequence
-from typing import Callable, overload
+from collections.abc import Callable, Sequence
+from typing import overload
 
 from onnx import AttributeProto, FunctionProto
 from onnx.shape_inference import InferenceContext

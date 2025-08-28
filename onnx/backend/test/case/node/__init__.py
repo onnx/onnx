@@ -7,7 +7,7 @@ import subprocess
 import sys
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import onnx
 from onnx.backend.test.case.test_case import TestCase
@@ -23,7 +23,7 @@ from onnx.onnx_pb import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
     import numpy as np
 

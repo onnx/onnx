@@ -20,7 +20,7 @@ class ReduceSum_1(OpRunReduceNumpy):
 
 class ReduceSum_13(OpRunReduceNumpy):
     def _run(self, x, axes=None, keepdims=None, noop_with_empty_axes=None):
-        if (axes is None or axes.shape == (0,)) and noop_with_empty_axes:
+        if self.is_axes_empty(axes) and noop_with_empty_axes:
             return (x,)
         axes = self.handle_axes(axes)
         try:

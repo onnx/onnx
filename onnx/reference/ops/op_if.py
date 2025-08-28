@@ -42,7 +42,7 @@ class If(OpRun):
             raise ValueError(
                 f"Operator If ({self.onnx_node.name!r}) expects a single element as condition, but the size of 'cond' is {len(cond)}."
             )
-        cond_ = cond.item(0)
+        cond_ = cond.item()
         if cond_:
             self._log("  -- then> {%r}", context)
             outputs = self._run_then_branch(context, attributes=attributes)

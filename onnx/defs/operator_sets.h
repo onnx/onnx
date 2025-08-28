@@ -1342,6 +1342,7 @@ class OpSet_Onnx_ver23 {
 };
 
 // Forward declarations for ai.onnx version 24
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Constant);
@@ -1369,6 +1370,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter);
 class OpSet_Onnx_ver24 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Constant)>());
@@ -1391,6 +1393,17 @@ class OpSet_Onnx_ver24 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Transpose)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Unsqueeze)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, TensorScatter)>());
+  }
+};
+
+// Forward declarations for ai.onnx version 25
+
+// Iterate over schema from ai.onnx version 25
+class OpSet_Onnx_ver25 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    // TODO: Remove after introducing the first schema to opset 25
+    (void)fn;
   }
 };
 
@@ -1419,6 +1432,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver22>();
   RegisterOpSetSchema<OpSet_Onnx_ver23>();
   RegisterOpSetSchema<OpSet_Onnx_ver24>();
+  RegisterOpSetSchema<OpSet_Onnx_ver25>();
   // 0 means all versions of ONNX schema have been loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
@@ -1428,6 +1442,7 @@ inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicat
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
   // Version-specific registration sees duplicate schema version request as error if fail_duplicate_schema
+  RegisterOpSetSchema<OpSet_Onnx_ver25>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver24>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver23>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver22>(target_version, fail_duplicate_schema);

@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from onnx import ModelProto, NodeProto
 
 # A container that hosts the test function and the associated
