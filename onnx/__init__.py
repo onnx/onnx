@@ -369,6 +369,6 @@ save = save_model
 
 
 # Override __repr__ for some proto classes to make it more efficient
-ModelProto.__repr__ = object.__repr__
-GraphProto.__repr__ = object.__repr__
-FunctionProto.__repr__ = object.__repr__
+ModelProto.__repr__ = object.__repr__  # type: ignore[method-assign]
+GraphProto.__repr__ = object.__repr__  # type: ignore[method-assign]
+FunctionProto.__repr__ = object.__repr__  # type: ignore[method-assign]
