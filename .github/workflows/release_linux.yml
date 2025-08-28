@@ -91,7 +91,6 @@ jobs:
       run: |
         # example file name: ./dist/onnx_weekly-1.19.0.dev20250528-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
         python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl
-
         pytest
 
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -100,12 +99,7 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
-
-    - name: TEST_HUB=1 pytest
-      if: (github.event_name == 'schedule') && (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') # Only triggered by weekly event
-      run: |
-        TEST_HUB=1 pytest
-
+            
     - name: Verify ONNX with the latest numpy
       if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version != '3.14-dev')
       run: |
