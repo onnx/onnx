@@ -43,7 +43,9 @@ include = ["onnx*"]
 onnx = [
     "**/*.c",
     "**/*.cc",
+    "**/*.cpp",
     "**/*.h",
+    "**/*.hpp",
     "**/*.proto",
     "**/*.pyi",
     "backend/test/data/**/*",
@@ -197,6 +199,8 @@ required-imports = ["from __future__ import annotations"]
 "**/*_test*" = ["N802"] # Function casing
 "onnx/backend/test/**" = ["PLR2004"] # Magic numbers allowed in tests
 "onnx/backend/test/case/**" = ["N802"] # Function casing
+"onnx/onnx2/**" = ["A002", "C401", "D300", "D212", "I001", "PLR2004", "PLR5501", "PLR0911", "TC001", "TID252", "UP035", "UP045"]  # use relative import, typing <-> collections.abc
+"onnx/onnx2/__init__.py" = ["F401", "TID252"]  # use relative import
 "onnx/reference/ops/**" = [
     "N801", # Class casing
     "PLR2004", # Magic numbers
