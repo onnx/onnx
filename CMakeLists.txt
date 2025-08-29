@@ -364,10 +364,11 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
         list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
     endif()
 
+    # Use add_custom_command to avoid re-generate of PROTO files
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
-                       COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
-                       DEPENDS ${INFILE}
-                       COMMENT "Running gen_proto.py on ${INFILE}")
+        COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
+        DEPENDS ${INFILE}
+        COMMENT "Running gen_proto.py on ${INFILE}")
     message("Generated: ${GENERATED_PROTO}")
 
     set(PROTOC_ARGS
