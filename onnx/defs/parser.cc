@@ -605,6 +605,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
     if ((expected == AttributeProto_AttributeType_FLOAT) && (attr.type() == AttributeProto_AttributeType_INT)) {
       attr.set_type(AttributeProto_AttributeType_FLOAT);
       attr.set_f(static_cast<float>(attr.i()));
+      attr.clear_i(); // Clear the int field to maintain union invariant
     } else {
       return ParseError(
           "Mismatch between expected type ",
