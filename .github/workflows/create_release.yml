@@ -124,11 +124,10 @@ jobs:
           persist-credentials: false
           submodules: true          
 
-      - name: Check if package_version matches branch        
+      - name: Check if package_version matches branch
         run: |
           branch_version=${GITHUB_REF#refs/heads/rel-}
           package_version=$(cat VERSION_NUMBER)
-          
           echo "Branch version: $branch_version"
           echo "Package version: $package_version"
       
