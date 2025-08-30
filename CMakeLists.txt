@@ -413,7 +413,7 @@ list(APPEND ONNX_SRCS ${__tmp_srcs})
 
 # Hide all symbols we don't need
 set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -429,7 +429,6 @@ foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
 endforeach()
 add_onnx_global_defines(onnx_proto)
 target_include_directories(onnx_proto PUBLIC
-  $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 if(MSVC)
   # For disabling Protobuf related warnings
@@ -445,18 +444,16 @@ if(MSVC)
   )
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-  # whole-archive linker option not available on AIX.
-  # So, create a object library
-  add_library(onnx OBJECT ${ONNX_SRCS})
-else()
-  add_library(onnx ${ONNX_SRCS})
-endif()
-set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-
-target_link_libraries(onnx PUBLIC onnx_proto)
-add_onnx_global_defines(onnx)
+# ONNX object library contains object files of our C++ sources
+add_library(onnx_object OBJECT ${ONNX_SRCS})
+set_target_properties(onnx_object PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx_object PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+target_link_libraries(onnx_object PUBLIC onnx_proto)
+target_include_directories(onnx_object PUBLIC $<BUILD_INTERFACE:${ONNX_ROOT}>)
+add_onnx_global_defines(onnx_object)
+file(WRITE ${CMAKE_BINARY_DIR}/onnx_lib_dummy.cc "")
+add_library(onnx ${CMAKE_BINARY_DIR}/onnx_lib_dummy.cc)
+target_link_libraries(onnx PUBLIC onnx_object)
 
 if(ONNX_BUILD_PYTHON)
   # find system pybind11
@@ -475,12 +472,7 @@ if(ONNX_BUILD_PYTHON)
 
   pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-  if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-    # whole-archive linker option not available on AIX
-    target_sources(onnx_cpp2py_export PRIVATE $<TARGET_OBJECTS:onnx>)
-  else()
-    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
-  endif()
+  target_link_libraries(onnx_cpp2py_export PRIVATE onnx_object)
   # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
   # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
@@ -490,20 +482,20 @@ endif()
 
 if(MSVC)
   add_msvc_runtime_flag(onnx_proto)
-  add_msvc_runtime_flag(onnx)
+  add_msvc_runtime_flag(onnx_object)
   if(TARGET onnx_cpp2py_export)
     add_msvc_runtime_flag(onnx_cpp2py_export)
   endif()
   if(ONNX_WERROR)
-    target_compile_options(onnx PRIVATE "/WX")
+    target_compile_options(onnx_object PRIVATE "/WX")
   endif()
 else()
-  target_compile_options(onnx PRIVATE -Wall -Wextra)
+  target_compile_options(onnx_object PRIVATE -Wall -Wextra)
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
-    target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
+    target_compile_options(onnx_object PRIVATE "-Wno-stringop-overflow")
   endif()
   if(ONNX_WERROR)
-    target_compile_options(onnx PRIVATE "-Werror")
+    target_compile_options(onnx_object PRIVATE "-Werror")
   endif()
 endif()
 if(ONNX_USE_ASAN AND NOT MSVC)
@@ -568,9 +560,6 @@ if(ONNX_USE_UNITY_BUILD)
 endif()
 
 if(ONNX_BUILD_TESTS)
-  if(BUILD_SHARED_LIBS)
-    message(FATAL_ERROR "Tests requires static build")
-  endif()
   find_package(GTest)
   if(NOT GTest_FOUND)
     include(googletest)
@@ -578,7 +567,7 @@ if(ONNX_BUILD_TESTS)
 endif()
 
 install(TARGETS
-  onnx onnx_proto
+  onnx onnx_proto onnx_object
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(EXPORT ONNXTargets
