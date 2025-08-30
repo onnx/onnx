@@ -51,6 +51,61 @@ The first argument is a `ModelProto` to perform shape inference on,
 which is annotated in-place with shape information. The second
 argument is optional.
 
+## Type Inference
+
+In addition to full shape inference, ONNX also provides type-only inference
+through the `infer_types` API. This functionality allows you to recover type
+information from models even when shape inference fails or is incomplete.
+
+### When to Use Type Inference
+
+Type inference is particularly useful in the following scenarios:
+
+* When working with operators that have complex shape logic (e.g., GridSample, Gather, Reshape, Where)
+* When you need to validate type consistency across a model
+* When shape inference fails but you still need to propagate type information
+* For model analysis and optimization tools that need type information but not shapes
+
+### Python API for Type Inference
+
+```python
+import onnx
+from onnx import shape_inference
+
+# Perform type inference only (no shape inference)
+model_with_types = shape_inference.infer_types(model)
+
+# Compare with full shape inference
+model_with_shapes = shape_inference.infer_shapes(model)
+```
+
+The `infer_types` function works similarly to `infer_shapes` but:
+- Preserves type information (tensor element types)
+- Clears shape information from outputs
+- Maintains input shapes for reference
+- Skips data propagation (since it focuses on shapes)
+
+### C++ API for Type Inference
+
+```cpp
+#include "onnx/shape_inference/implementation.h"
+
+// Perform type inference only
+shape_inference::InferTypes(
+    model_proto,
+    opset_imports,
+    schema_registry);
+```
+
+### Key Differences from Shape Inference
+
+| Aspect | `infer_shapes()` | `infer_types()` |
+|--------|---------------|---------------|
+| Type Information | ✅ Preserved | ✅ Preserved |
+| Shape Information | ✅ Inferred | ❌ Cleared |
+| Data Propagation | ✅ Enabled | ❌ Disabled |
+| Error Handling | Strict | More lenient |
+
 ## Limitations
 
 Shape inference is not guaranteed to be complete. In particular, some

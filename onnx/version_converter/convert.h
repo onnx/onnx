@@ -396,6 +396,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Pow", OpSetID(11), OpSetID(12)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(11), OpSetID(12)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMin", OpSetID(11), OpSetID(12)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("SequenceInsert", OpSetID(11), OpSetID(12)));
     registerAdapter(std::make_unique<Dropout_11_12>());
 
     /******** 12 -> 11 ********/
@@ -471,6 +472,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(12), OpSetID(13)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("SequenceInsert", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Sigmoid", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Sign", OpSetID(12), OpSetID(13)));
@@ -492,8 +494,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<Softmax_12_13>("LogSoftmax"));
 
     /******** 13 -> 12 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Mul", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSum", OpSetID(13), OpSetID(12)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("SequenceInsert", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<Split_13_12>());
@@ -515,6 +519,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<BatchNormalization_13_14>());
 
     /******** 14 -> 13 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Mul", OpSetID(14), OpSetID(13)));
     registerAdapter("GRU", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("LSTM", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("RNN", 14, 13, RemoveAttribute(klayout, 0));
@@ -585,6 +590,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
+
+    /******** 19 -> 18 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(19), OpSetID(18)));
 
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<AxisAttributeToInput>("DFT", OpSetID(19), OpSetID(20), 2, 1));
