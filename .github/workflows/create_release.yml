@@ -130,8 +130,9 @@ jobs:
           package_version=$(cat VERSION_NUMBER)
           echo "Branch version: $branch_version"
           echo "Package version: $package_version"
-          if [ "$branch_version" != "$package_version" ]; then
-            echo "Error: Branch version ($branch_version) does not match package version ($package_version)."
+      
+          if [[ "$package_version" != "$branch_version" && "$package_version" != "$branch_version"rc* ]]; then
+            echo "Error: Package version ($package_version) does not match branch version ($branch_version) or expected RC format."
             exit 1
           fi
 
