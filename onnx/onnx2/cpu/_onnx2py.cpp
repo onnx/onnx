@@ -5,6 +5,7 @@
  */
 
 // NOLINT(build/include_order)
+// NOLINT(readability/braces)
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -14,6 +15,12 @@
 
 #include "onnx/onnx2/cpu/onnx2.h"
 #include "onnx/onnx2/cpu/onnx2_helper.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic error "-Wnamespace-using"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic error "-Wnamespace-using"
+#endif
 
 namespace py = pybind11;
 using namespace ONNX_NAMESPACE::v2;
