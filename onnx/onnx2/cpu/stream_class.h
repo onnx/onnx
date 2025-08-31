@@ -6,6 +6,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "onnx/onnx2/cpu/simple_string.h"
 #include "onnx/onnx2/cpu/stream.h"
 

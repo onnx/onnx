@@ -176,6 +176,7 @@ set_target_properties(lib_onnx2_cpp PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 target_include_directories(lib_onnx2_cpp PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+add_onnx_global_defines(lib_onnx2_cpp)
 message(STATUS "Setting ONNX2 done.")
 
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
