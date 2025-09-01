@@ -20,8 +20,6 @@
 #include <type_traits>
 #include <vector>
 
-using namespace ONNX_NAMESPACE::common_helpers;
-
 namespace ONNX_NAMESPACE {
 namespace v2 {
 
@@ -139,7 +137,7 @@ void write_field(utils::BinaryWriteStream& stream, int order, const int32_t& fie
 
 template <>
 void write_field(utils::BinaryWriteStream& stream, int order, const double& field, SerializeOptions&) {
-  stream.write_field_header(order, FIELD_FIXED_SIZE); // FIELD_FIXED64);
+  stream.write_field_header(order, FIELD_FIXED_SIZE);
   stream.write_double(field);
 }
 

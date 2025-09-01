@@ -43,13 +43,11 @@ RefString BinaryStream::next_string() {
 
 int64_t BinaryStream::next_int64() {
   uint64_t value = next_uint64();
-  // return decodeZigZag64(value);
   return static_cast<int64_t>(value);
 }
 
 int32_t BinaryStream::next_int32() {
   uint64_t value = next_uint64();
-  // return decodeZigZag64(value);
   return static_cast<int32_t>(value);
 }
 

@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <filesystem> // NOLINT(build/c++17)
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "onnx/onnx2/cpu/common_helpers.h"
@@ -1624,7 +1625,7 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   t.set_data_type(elem_type);
   switch (elem_type) {
     case TensorProto_DataType::TensorProto_DataType_FLOAT:
-      t.add_float_data((float)value);
+      t.add_float_data(static_cast<float>(value));
       break;
     case TensorProto_DataType::TensorProto_DataType_DOUBLE:
       t.add_double_data(value);

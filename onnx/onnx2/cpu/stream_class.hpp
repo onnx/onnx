@@ -176,8 +176,6 @@
     DEBUG_PRINT("  - repeat " #name)                                                               \
   }
 
-using namespace ONNX_NAMESPACE::common_helpers;
-
 namespace ONNX_NAMESPACE {
 namespace v2 {
 

@@ -20,8 +20,6 @@
 #include <type_traits>
 #include <vector>
 
-using namespace ONNX_NAMESPACE::common_helpers;
-
 namespace ONNX_NAMESPACE {
 namespace v2 {
 

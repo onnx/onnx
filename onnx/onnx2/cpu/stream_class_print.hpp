@@ -20,8 +20,6 @@
 #include <type_traits>
 #include <vector>
 
-using namespace ONNX_NAMESPACE::common_helpers;
-
 namespace ONNX_NAMESPACE {
 namespace v2 {
 
@@ -35,7 +33,7 @@ struct name_exist_value {
 
 template <typename T>
 std::string write_as_string(utils::PrintOptions&, const T& field) {
-  return MakeString(field);
+  return common_helpers::MakeString(field);
 }
 
 template <>
@@ -197,14 +195,14 @@ std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const T& field) {
   std::vector<std::string> r = field.PrintToVectorString(options);
   if (r.size() <= 1) {
-    return {MakeString(field_name, ": ", r.back(), ",")};
+    return {common_helpers::MakeString(field_name, ": ", r.back(), ",")};
   } else {
-    std::vector<std::string> rows{MakeString(field_name, ": ")};
+    std::vector<std::string> rows{common_helpers::MakeString(field_name, ": ")};
     for (size_t i = 0; i < r.size(); ++i) {
       if (i == 0) {
         rows[0] += r[0];
       } else if (i + 1 == r.size()) {
-        rows.push_back(MakeString(r[i]));
+        rows.push_back(common_helpers::MakeString(r[i]));
       } else {
         rows.push_back(r[i]);
       }
@@ -216,43 +214,43 @@ write_into_vector_string(utils::PrintOptions& options, const char* field_name, c
 template <>
 std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const utils::String& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, field), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, field), ",")};
 }
 
 template <>
 std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const int64_t& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, field), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, field), ",")};
 }
 
 template <>
 std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const float& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, field), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, field), ",")};
 }
 
 template <>
 std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const uint64_t& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, field), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, field), ",")};
 }
 
 template <>
 std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const int32_t& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, field), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, field), ",")};
 }
 
 template <>
 std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const TensorProto::DataType& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, static_cast<int32_t>(field)), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, static_cast<int32_t>(field)), ",")};
 }
 
 template <>
 std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const TensorProto::DataLocation& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, static_cast<int32_t>(field)), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, static_cast<int32_t>(field)), ",")};
 }
 
 template <>
@@ -260,13 +258,13 @@ std::vector<std::string> write_into_vector_string(
     utils::PrintOptions& options,
     const char* field_name,
     const AttributeProto::AttributeType& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, static_cast<int32_t>(field)), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, static_cast<int32_t>(field)), ",")};
 }
 
 template <>
 std::vector<std::string>
 write_into_vector_string(utils::PrintOptions& options, const char* field_name, const std::vector<uint8_t>& field) {
-  return {MakeString(field_name, ": ", write_as_string(options, field), ",")};
+  return {common_helpers::MakeString(field_name, ": ", write_as_string(options, field), ",")};
 }
 
 template <>
@@ -275,11 +273,11 @@ std::vector<std::string> write_into_vector_string(
     const char* field_name,
     const utils::RepeatedField<utils::String>& field) {
   if (field.size() < 5)
-    return {MakeString(field_name, ": ", write_as_string(options, field), ",")};
-  std::vector<std::string> rows{MakeString(field_name, ": [")};
+    return {common_helpers::MakeString(field_name, ": ", write_as_string(options, field), ",")};
+  std::vector<std::string> rows{common_helpers::MakeString(field_name, ": [")};
   for (const auto& p : field) {
     auto r = p.as_string(true);
-    rows.push_back(MakeString("  ", r, ","));
+    rows.push_back(common_helpers::MakeString("  ", r, ","));
   }
   rows.push_back("],");
   return rows;
@@ -290,17 +288,17 @@ std::vector<std::string>
 write_into_vector_string_repeated(utils::PrintOptions&, const char* field_name, const utils::RepeatedField<T>& field) {
   std::vector<std::string> rows;
   if (field.size() >= 10) {
-    rows.push_back(MakeString(field_name, ": ["));
+    rows.push_back(common_helpers::MakeString(field_name, ": ["));
     for (const auto& p : field) {
-      rows.push_back(MakeString("  ", p, ","));
+      rows.push_back(common_helpers::MakeString("  ", p, ","));
     }
     rows.push_back("],");
   } else {
     std::vector<std::string> r;
     for (const auto& p : field) {
-      r.push_back(MakeString(p));
+      r.push_back(common_helpers::MakeString(p));
     }
-    rows.push_back(MakeString(field_name, ": [", utils::join_string(r, ", "), "],"));
+    rows.push_back(common_helpers::MakeString(field_name, ": [", utils::join_string(r, ", "), "],"));
   }
   return rows;
 }
@@ -351,9 +349,9 @@ std::vector<std::string> write_into_vector_string_optional(
     const char* field_name,
     const utils::OptionalField<T>& field) {
   if (field.has_value()) {
-    return {MakeString(field_name, ": ", write_as_string(options, *field), ",")};
+    return {common_helpers::MakeString(field_name, ": ", write_as_string(options, *field), ",")};
   } else {
-    return {MakeString(field_name, ": null,")};
+    return {common_helpers::MakeString(field_name, ": null,")};
   }
 }
 

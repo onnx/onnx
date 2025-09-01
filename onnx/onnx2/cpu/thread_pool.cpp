@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <utility>
+
 #include "onnx/onnx2/cpu/thread_pool.h"
 
 namespace ONNX_NAMESPACE {

@@ -16,14 +16,8 @@
 #include "onnx/onnx2/cpu/onnx2.h"
 #include "onnx/onnx2/cpu/onnx2_helper.h"
 
-#if defined(__clang__)
-#pragma clang diagnostic error "-Wnamespace-using"
-#elif defined(__GNUC__)
-#pragma GCC diagnostic error "-Wnamespace-using"
-#endif
-
 namespace py = pybind11;
-using namespace ONNX_NAMESPACE::v2;
+using namespace ONNX_NAMESPACE::v2;  // cppling: disable=build/namespaces/source/namespace/nonliterals
 
 #define PYDEFINE_PROTO(m, cls)                          \
   py::class_<cls, Message> py_##cls(m, #cls, cls::DOC); \

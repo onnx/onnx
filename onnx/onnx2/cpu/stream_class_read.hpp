@@ -30,8 +30,6 @@
 #define DEBUG_PRINT2(s1, s2)
 #endif
 
-using namespace ONNX_NAMESPACE::common_helpers;
-
 namespace ONNX_NAMESPACE {
 namespace v2 {
 

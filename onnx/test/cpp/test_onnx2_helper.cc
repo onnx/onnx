@@ -6,7 +6,7 @@
 
 // NOLINT(readability/braces)
 
- #include <gtest/gtest.h>
+#include <gtest/gtest.h>
 
 #include <atomic>
 #include <chrono>

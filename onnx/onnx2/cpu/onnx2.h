@@ -739,7 +739,7 @@ END_PROTO()
 } // namespace v2
 } // namespace ONNX_NAMESPACE
 
-#include "fields.hpp"
+#include "onnx/onnx2/cpu/fields.hpp"
 
 #if defined(FIELD)
 #undef FIELD

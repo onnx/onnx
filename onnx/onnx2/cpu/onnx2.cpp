@@ -727,19 +727,19 @@ void AttributeProto::ParseFromStream(utils::BinaryStream& stream, ParseOptions& 
 } std::vector<std::string> AttributeProto::PrintToVectorString(utils::PrintOptions& options) const {
   switch (type_) {
     case AttributeType::UNDEFINED:
-      return {MakeString("{", name_.as_string(), ": UNDEFINED }")};
+      return {common_helpers::MakeString("{", name_.as_string(), ": UNDEFINED }")};
     case AttributeType::FLOAT:
-      return {MakeString("{", name_.as_string(), ": ", has_f() ? MakeString(*f_) : "?", "}")};
+      return {common_helpers::MakeString("{", name_.as_string(), ": ", has_f() ? common_helpers::MakeString(*f_) : "?", "}")};
     case AttributeType::INT:
-      return {MakeString("{", name_.as_string(), ": ", has_i() ? MakeString(*i_) : "?", "}")};
+      return {common_helpers::MakeString("{", name_.as_string(), ": ", has_i() ? common_helpers::MakeString(*i_) : "?", "}")};
     case AttributeType::STRING:
-      return {MakeString("{", name_.as_string(), ": ", s_.as_string(), "}")};
+      return {common_helpers::MakeString("{", name_.as_string(), ": ", s_.as_string(), "}")};
     case AttributeType::FLOATS:
-      return {MakeString("{", name_.as_string(), ": ", write_as_string(options, floats_), "}")};
+      return {common_helpers::MakeString("{", name_.as_string(), ": ", write_as_string(options, floats_), "}")};
     case AttributeType::INTS:
-      return {MakeString("{", name_.as_string(), ": ", write_as_string(options, ints_), "}")};
+      return {common_helpers::MakeString("{", name_.as_string(), ": ", write_as_string(options, ints_), "}")};
     case AttributeType::STRINGS:
-      return {MakeString("{", name_.as_string(), ": ", write_as_string(options, strings_), "}")};
+      return {common_helpers::MakeString("{", name_.as_string(), ": ", write_as_string(options, strings_), "}")};
     default:
       return write_proto_into_vector_string(
           options,
