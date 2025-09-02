@@ -6398,61 +6398,25 @@ x = (
     .reshape((1, 1, 3, 3))
 )
 x_zero_point = np.uint8(1)
-w_zero_points = np.array([0, 1], dtype=np.uint8)
-w = np.array([1, 1, 1, 1, 1, 1, 1, 1]).astype(np.uint8).reshape((2, 1, 2, 2))
+w = np.array([1, 1, 1, 1]).astype(np.uint8).reshape((1, 1, 2, 2))
 
 y = (
-    np.array(
-        [
-            1,
-            3,
-            5,
-            3,
-            5,
-            12,
-            16,
-            9,
-            11,
-            24,
-            28,
-            15,
-            7,
-            15,
-            17,
-            9,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-        ]
-    )
+    np.array([1, 3, 5, 3, 5, 12, 16, 9, 11, 24, 28, 15, 7, 15, 17, 9])
     .astype(np.int32)
-    .reshape((1, 2, 4, 4))
+    .reshape((1, 1, 4, 4))
 )
 
 # ConvInteger with padding
 convinteger_node_with_padding = onnx.helper.make_node(
     "ConvInteger",
-    inputs=["x", "w", "x_zero_point", "w_zero_points"],
+    inputs=["x", "w", "x_zero_point"],
     outputs=["y"],
     pads=[1, 1, 1, 1],
 )
 
 expect(
     convinteger_node_with_padding,
-    inputs=[x, w, x_zero_point, w_zero_points],
+    inputs=[x, w, x_zero_point],
     outputs=[y],
     name="test_convinteger_with_padding",
 )
