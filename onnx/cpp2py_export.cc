@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
-#include <nanobind/stl/unordered_map.h>
-#include <nanobind/stl/tuple.h>
-#include <nanobind/stl/function.h>
 #include <nanobind/operators.h>
+#include <nanobind/stl/function.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/unordered_map.h>
+#include <nanobind/stl/vector.h>
 
 #include <climits>
 #include <limits>
@@ -50,11 +50,12 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
 #endif
 
 template <typename _ProtoType>
-struct nanobind::detail::type_caster<_ProtoType, std::enable_if_t<std::is_base_of<BASE_PROTO_TYPE, _ProtoType>::value>> {
+struct nanobind::detail::
+    type_caster<_ProtoType, std::enable_if_t<std::is_base_of<BASE_PROTO_TYPE, _ProtoType>::value>> {
  public:
   NB_TYPE_CASTER(_ProtoType, PythonProtoTypeMap<_ProtoType>::FullName);
-  
-  bool from_python(handle py_proto, uint8_t, cleanup_list *) noexcept {
+
+  bool from_python(handle py_proto, uint8_t, cleanup_list*) noexcept {
     try {
       if (!nanobind::hasattr(py_proto, "SerializeToString")) {
         return false;
@@ -69,8 +70,8 @@ struct nanobind::detail::type_caster<_ProtoType, std::enable_if_t<std::is_base_o
       return false;
     }
   }
-  
-  static handle from_cpp(const _ProtoType& cpp_proto, rv_policy /* policy */, cleanup_list * /* cleanup */) noexcept {
+
+  static handle from_cpp(const _ProtoType& cpp_proto, rv_policy /* policy */, cleanup_list* /* cleanup */) noexcept {
     try {
       auto py_proto = nanobind::module_::import_(PythonProtoTypeMap<_ProtoType>::ModuleName.text)
                           .attr(PythonProtoTypeMap<_ProtoType>::TypeName.text)();
@@ -101,7 +102,8 @@ static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
   std::string out;
   proto.SerializeToString(&out);
   std::string error_msg = status.ErrorMessage();
-  return std::make_tuple(status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), nb::bytes(out.c_str(), out.size()));
+  return std::make_tuple(
+      status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), nb::bytes(out.c_str(), out.size()));
 }
 
 template <typename ProtoType>
@@ -253,7 +255,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("name"),
           nb::arg("type"),
           nb::arg("description") = "",
-          
+
           nb::arg("required") = true)
       .def(
           [](std::string name, const nb::object& default_value, std::string description) {
@@ -292,12 +294,12 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def(
           [](std::string name,
-                      std::string type_str,
-                      const std::string& description,
-                      OpSchema::FormalParameterOption param_option,
-                      bool is_homogeneous,
-                      int min_arity,
-                      OpSchema::DifferentiationCategory differentiation_category) {
+             std::string type_str,
+             const std::string& description,
+             OpSchema::FormalParameterOption param_option,
+             bool is_homogeneous,
+             int min_arity,
+             OpSchema::DifferentiationCategory differentiation_category) {
             // Use a lambda to swap the order of the arguments to match the Python API
             return OpSchema::FormalParameter(
                 std::move(name),
@@ -311,7 +313,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("name"),
           nb::arg("type_str"),
           nb::arg("description") = "",
-          
+
           nb::arg("param_option") = OpSchema::Single,
           nb::arg("is_homogeneous") = true,
           nb::arg("min_arity") = 1,
@@ -329,13 +331,13 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   op_schema
       .def(
           [](std::string name,
-                      std::string domain,
-                      int since_version,
-                      const std::string& doc,
-                      std::vector<OpSchema::FormalParameter> inputs,
-                      std::vector<OpSchema::FormalParameter> outputs,
-                      std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
-                      std::vector<OpSchema::Attribute> attributes) {
+             std::string domain,
+             int since_version,
+             const std::string& doc,
+             std::vector<OpSchema::FormalParameter> inputs,
+             std::vector<OpSchema::FormalParameter> outputs,
+             std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
+             std::vector<OpSchema::Attribute> attributes) {
             auto self = OpSchema();
 
             self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
@@ -367,7 +369,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("domain"),
           nb::arg("since_version"),
           nb::arg("doc") = "",
-          
+
           nb::arg("inputs") = std::vector<OpSchema::FormalParameter>{},
           nb::arg("outputs") = std::vector<OpSchema::FormalParameter>{},
           nb::arg("type_constraints") = std::vector<std::tuple<
@@ -385,8 +387,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_prop_ro("since_version", &OpSchema::since_version)
       .def_prop_ro("deprecated", &OpSchema::deprecated)
       .def_prop_ro("function_opset_versions", &OpSchema::function_opset_versions)
-      .def_prop_ro(
-          "context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
+      .def_prop_ro("context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
       .def_prop_ro(
           "all_function_opset_versions",
           [](OpSchema* op) -> std::vector<int> {
