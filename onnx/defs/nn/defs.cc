@@ -3715,7 +3715,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
             builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
-            builder.Add("QSeqLen = Shape <start = -2, end = -1> (Q)");
+            builder
+                .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+                .Add("QSeqLen = Shape <start = -2, end = -1> (Q)");
           }
 
           builder
@@ -3728,6 +3730,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder
               .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
               .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
+              .Add("VHeadSize = Shape <start = 3, end = 4> (VReshaped)") // head_size for V
               .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
               .Const1D("One1D", static_cast<int64_t>(1))
               .Const1D("NegOne1D", static_cast<int64_t>(-1))
@@ -3832,10 +3835,25 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
               .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
               .Add("GQACond = And(GQACond1, GQACond2)")
-              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)")
-              .Add("InterleaveShape = Concat <axis = 0> (One1D, InterleaveDim, One1D, One1D)")
-              .Add("KAttentionInput = Tile(PresentKey, InterleaveShape)")
-              .Add("VAttentionInput = Tile(PresentValue, InterleaveShape)");
+              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)");
+
+          // repeat kv (repeat_interleave)
+          builder.Const1D("Two1D", static_cast<int64_t>(2))
+              .Add("KUnsqueezed = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
+              .Add("VUnsqueezed = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
+
+          // Build expand shape: [B, Hk, repeats, T, Dk]
+          builder
+              .Add("KExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, QKHeadSize)")
+              .Add("KExpanded = Expand(KUnsqueezed, KExpandShape)");
+          builder.Add("VExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, VHeadSize)")
+              .Add("VExpanded = Expand(VUnsqueezed, VExpandShape)");
+
+          // Reshape to [B, Hq, T, Dk] where Hq = Hk * repeats
+          builder.Add("KAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, QKHeadSize)")
+              .Add("VAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, VHeadSize)")
+              .Add("KAttentionInput = Reshape(KExpanded, KAttentionShape)")
+              .Add("VAttentionInput = Reshape(VExpanded, VAttentionShape)");
 
           // The following pattern is applied
           //      Q          K          V

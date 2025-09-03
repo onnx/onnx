@@ -158,10 +158,10 @@ def _compute_attention(
         and (q_num_heads % k_num_heads == 0)
         and (k_num_heads == v_num_heads)
     ):
-        seq_reps = int(q_num_heads / k_num_heads)
-        reps = [1, seq_reps, 1, 1]
-        K = np.tile(K, reps)
-        V = np.tile(V, reps)
+        seq_reps = q_num_heads // k_num_heads
+        # Interleave-repeat each KV head: [h0, h0, h1, h1, ...]
+        K = np.repeat(K, repeats=seq_reps, axis=1)
+        V = np.repeat(V, repeats=seq_reps, axis=1)
 
     # The following pattern is applied
     #      Q          K          V
