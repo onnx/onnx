@@ -370,8 +370,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             }
 
             self.Finalize();
-
-            return self;
           },
           nb::arg("name"),
           nb::arg("domain"),
