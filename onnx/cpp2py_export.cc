@@ -203,7 +203,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   );
 
   // Avoid Segmentation fault if we not free the python function in Custom Schema
-  onnx_cpp2py_export.attr("_cleanup") = nb::capsule([] { OpSchemaRegistry::OpSchemaDeregisterAll(); });
+  // onnx_cpp2py_export.attr("_cleanup") = nb::capsule(+[] { OpSchemaRegistry::OpSchemaDeregisterAll(); });
 
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
