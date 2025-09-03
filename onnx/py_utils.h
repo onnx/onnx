@@ -12,7 +12,7 @@ namespace ONNX_NAMESPACE {
 namespace nb = nanobind;
 
 template <typename Proto>
-bool ParseProtoFromNbBytes(Proto* proto, const nb::bytes& bytes) {
+bool ParseProtoFromPyBytes(Proto* proto, const nb::bytes& bytes) {
   // Get the buffer from Python bytes object
   auto buffer = static_cast<const char*>(bytes.data());
   size_t length = bytes.size();
