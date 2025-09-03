@@ -3728,6 +3728,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder
               .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
               .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
+              .Add("VHeadSize = Shape <start = 3, end = 4> (VReshaped)") // head_size for V
               .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
               .Const1D("One1D", static_cast<int64_t>(1))
               .Const1D("NegOne1D", static_cast<int64_t>(-1))
@@ -3836,18 +3837,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // repeat kv (repeat_interleave)
           builder.Const1D("Two1D", static_cast<int64_t>(2))
-              .Add("KUnsq = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
-              .Add("VUnsq = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
+              .Add("KUnsqueezed = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
+              .Add("VUnsqueezed = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
 
           // Build expand shape: [B, Hk, repeats, T, Dk]
-          builder.Add("ExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, KVHeadSize)")
-              .Add("KExpanded = Expand(KUnsq, ExpandShape)")
-              .Add("VExpanded = Expand(VUnsq, ExpandShape)");
+          builder
+              .Add("KExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, QKHeadSize)")
+              .Add("KExpanded = Expand(KUnsqueezed, KExpandShape)");
+          builder.Add("VExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, VHeadSize)")
+              .Add("VExpanded = Expand(VUnsqueezed, VExpandShape)");
 
           // Reshape to [B, Hq, T, Dk] where Hq = Hk * repeats
-          builder.Add("NewNumHeads = Mul(KVNumHeads, InterleaveDim)")
-              .Add("KAttentionShape = Concat <axis = 0> (BatchSize, NewNumHeads, NewKVSeqLen, KVHeadSize)")
-              .Add("VAttentionShape = Concat <axis = 0> (BatchSize, NewNumHeads, NewKVSeqLen, VHeadSize)")
+          builder.Add("KAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, QKHeadSize)")
+              .Add("VAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, VHeadSize)")
               .Add("KAttentionInput = Reshape(KExpanded, KAttentionShape)")
               .Add("VAttentionInput = Reshape(VExpanded, VAttentionShape)");
 
