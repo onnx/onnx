@@ -251,6 +251,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("name"),
           nb::arg("type"),
           nb::arg("description") = "",
+          nb::kw_only(),
 
           nb::arg("required") = true)
       .def(
