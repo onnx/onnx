@@ -310,7 +310,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("name"),
           nb::arg("type_str"),
           nb::arg("description") = "",
-
+          nb::kw_only(),
           nb::arg("param_option") = OpSchema::Single,
           nb::arg("is_homogeneous") = true,
           nb::arg("min_arity") = 1,
@@ -366,7 +366,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("domain"),
           nb::arg("since_version"),
           nb::arg("doc") = "",
-
+          nb::kw_only(),
           nb::arg("inputs") = std::vector<OpSchema::FormalParameter>{},
           nb::arg("outputs") = std::vector<OpSchema::FormalParameter>{},
           nb::arg("type_constraints") = std::vector<std::tuple<
@@ -460,7 +460,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               op->BuildContextDependentFunction(ctx, func_proto);
               func_proto.SerializeToString(&func_bytes);
             }
-            return nb::bytes(func_bytes.c_str(), func_bytes.size());
+            return nb::bytes(func_bytes);
           })
       .def(
           "get_context_dependent_function_with_opset_version",
@@ -482,7 +482,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               op->BuildContextDependentFunction(ctx, func_proto, opset_version);
               func_proto.SerializeToString(&func_bytes);
             }
-            return nb::bytes(func_bytes.c_str(), func_bytes.size());
+            return nb::bytes(func_bytes);
           })
       .def(
           "set_type_and_shape_inference_function",
