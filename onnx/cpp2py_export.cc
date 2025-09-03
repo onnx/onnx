@@ -245,14 +245,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def(
           "__init__",
-          [](OpSchema::Attribute* t,
+          [](OpSchema::Attribute* self,
              std::string name,
              AttributeProto::AttributeType type,
              std::string description,
              bool required) {
             // Construct an attribute.
             // Use a lambda to swap the order of the arguments to match the Python API
-            new (t) OpSchema::Attribute(std::move(name), std::move(description), type, required);
+            new (self) OpSchema::Attribute(std::move(name), std::move(description), type, required);
           },
           nb::arg("name"),
           nb::arg("type"),
@@ -261,13 +261,13 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("required") = true)
       .def(
           "__init__",
-          [](OpSchema::Attribute* t, std::string name, const nb::object& default_value, std::string description) {
+          [](OpSchema::Attribute* self, std::string name, const nb::object& default_value, std::string description) {
             // Construct an attribute with a default value.
             // Attributes with default values are not required
             auto bytes = nb::cast<nb::bytes>(default_value.attr("SerializeToString")());
             AttributeProto proto{};
             ParseProtoFromPyBytes(&proto, bytes);
-            new (t) OpSchema::Attribute(std::move(name), std::move(description), std::move(proto));
+            new (self) OpSchema::Attribute(std::move(name), std::move(description), std::move(proto));
           },
           nb::arg("name"),
           nb::arg("default_value"), // type: onnx.AttributeProto
@@ -297,7 +297,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def(
           "__init__",
-          [](OpSchema::FormalParameter* t,
+          [](OpSchema::FormalParameter* self,
              std::string name,
              std::string type_str,
              const std::string& description,
@@ -306,7 +306,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              int min_arity,
              OpSchema::DifferentiationCategory differentiation_category) {
             // Use a lambda to swap the order of the arguments to match the Python API
-            new (t) OpSchema::FormalParameter(
+            new (self) OpSchema::FormalParameter(
                 std::move(name),
                 description,
                 std::move(type_str),
@@ -336,7 +336,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   op_schema
       .def(
           "__init__",
-          [](OpSchema* t,
+          [](OpSchema* self,
              std::string name,
              std::string domain,
              int since_version,
@@ -345,16 +345,15 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              std::vector<OpSchema::FormalParameter> outputs,
              std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
              std::vector<OpSchema::Attribute> attributes) {
-            new (t) OpSchema();
-            OpSchema self = *t;
+            new (self) OpSchema();
 
-            self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
+            self->SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
             // Add inputs and outputs
             for (auto i = 0; i < inputs.size(); ++i) {
-              self.Input(i, std::move(inputs[i]));
+              self->Input(i, std::move(inputs[i]));
             }
             for (auto i = 0; i < outputs.size(); ++i) {
-              self.Output(i, std::move(outputs[i]));
+              self->Output(i, std::move(outputs[i]));
             }
             // Add type constraints
             for (auto& type_constraint : type_constraints) {
@@ -362,14 +361,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               std::vector<std::string> constraints;
               std::string description;
               tie(type_str, constraints, description) = std::move(type_constraint);
-              self.TypeConstraint(std::move(type_str), std::move(constraints), std::move(description));
+              self->TypeConstraint(std::move(type_str), std::move(constraints), std::move(description));
             }
             // Add attributes
             for (auto& attribute : attributes) {
-              self.Attr(std::move(attribute));
+              self->Attr(std::move(attribute));
             }
 
-            self.Finalize();
+            self->Finalize();
           },
           nb::arg("name"),
           nb::arg("domain"),
