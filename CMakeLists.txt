@@ -463,21 +463,21 @@ if(ONNX_BUILD_PYTHON)
   find_package(nanobind)
   if(NOT nanobind_FOUND)
     include(FetchContent)
-    
+
     # Set Python include directories for nanobind
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${Python3_INCLUDE_DIRS}")
-    
+
     FetchContent_Declare(
       nanobind
       GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      GIT_TAG v2.4.0
+      GIT_TAG v2.8.0
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
   endif()
 
   nanobind_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-  
+
   # Ensure Python headers are found
   target_include_directories(onnx_cpp2py_export PRIVATE ${Python3_INCLUDE_DIRS})
 

@@ -56,7 +56,7 @@ struct nanobind::detail::
       if (!nanobind::hasattr(py_proto, "SerializeToString")) {
         return false;
       }
-      nanobind::bytes serialized = py_proto.attr("SerializeToString")();
+      auto serialized = py_proto.attr("SerializeToString")();
       std::string serialized_str = nanobind::cast<std::string>(serialized);
       if (!value.ParseFromString(serialized_str)) {
         return false;
@@ -244,26 +244,25 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def(
           "__init__",
-          [](std::string name, AttributeProto::AttributeType type, std::string description, bool required) {
+          [](OpSchema::Attribute *t, std::string name, AttributeProto::AttributeType type, std::string description, bool required) {
             // Construct an attribute.
             // Use a lambda to swap the order of the arguments to match the Python API
-            return OpSchema::Attribute(std::move(name), std::move(description), type, required);
+            new (t) OpSchema::Attribute(std::move(name), std::move(description), type, required);
           },
           nb::arg("name"),
           nb::arg("type"),
           nb::arg("description") = "",
           nb::kw_only(),
-
           nb::arg("required") = true)
       .def(
           "__init__",
-          [](std::string name, const nb::object& default_value, std::string description) {
+          [](OpSchema::Attribute *t, std::string name, const nb::object& default_value, std::string description) {
             // Construct an attribute with a default value.
             // Attributes with default values are not required
-            auto bytes = default_value.attr("SerializeToString")().cast<nb::bytes>();
+            auto bytes = nb::cast<nb::bytes>(default_value.attr("SerializeToString")());
             AttributeProto proto{};
             ParseProtoFromPyBytes(&proto, bytes);
-            return OpSchema::Attribute(std::move(name), std::move(description), std::move(proto));
+            new (t) OpSchema::Attribute(std::move(name), std::move(description), std::move(proto));
           },
           nb::arg("name"),
           nb::arg("default_value"), // type: onnx.AttributeProto
@@ -276,7 +275,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](OpSchema::Attribute* attr) -> nb::bytes {
             std::string out;
             attr->default_value.SerializeToString(&out);
-            return out;
+            return nb::bytes(out.c_str(), out.size())
           })
       .def_ro("required", &OpSchema::Attribute::required);
 
@@ -293,7 +292,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def(
           "__init__",
-          [](std::string name,
+          [](OpSchema::FormalParameter* t, std::string name,
              std::string type_str,
              const std::string& description,
              OpSchema::FormalParameterOption param_option,
@@ -301,7 +300,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              int min_arity,
              OpSchema::DifferentiationCategory differentiation_category) {
             // Use a lambda to swap the order of the arguments to match the Python API
-            return OpSchema::FormalParameter(
+            new (t) OpSchema::FormalParameter(
                 std::move(name),
                 description,
                 std::move(type_str),
@@ -331,7 +330,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   op_schema
       .def(
           "__init__",
-          [](std::string name,
+          [](OpSchema* self, std::string name,
              std::string domain,
              int since_version,
              const std::string& doc,
@@ -339,7 +338,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              std::vector<OpSchema::FormalParameter> outputs,
              std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
              std::vector<OpSchema::Attribute> attributes) {
-            auto self = OpSchema();
+            new (self) OpSchema();
 
             self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
             // Add inputs and outputs
