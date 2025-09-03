@@ -3832,10 +3832,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
               .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
               .Add("GQACond = And(GQACond1, GQACond2)")
-              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)")
+              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)");
 
-              // repeat kv (repeat_interleave)
-              builder.Const1D("Two1D", static_cast<int64_t>(2))
+          // repeat kv (repeat_interleave)
+          builder.Const1D("Two1D", static_cast<int64_t>(2))
               .Add("KUnsq = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
               .Add("VUnsq = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
 
