@@ -3,7 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <nanobind/nanobind.h>
-#include <nanobind/stl.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/unordered_map.h>
+#include <nanobind/stl/tuple.h>
+#include <nanobind/stl/function.h>
 #include <nanobind/operators.h>
 
 #include <climits>
@@ -49,7 +53,8 @@ template <typename _ProtoType>
 struct nanobind::detail::type_caster<_ProtoType, std::enable_if_t<std::is_base_of<BASE_PROTO_TYPE, _ProtoType>::value>> {
  public:
   NB_TYPE_CASTER(_ProtoType, PythonProtoTypeMap<_ProtoType>::FullName);
-  bool from_python(handle py_proto, uint8_t, cleanup_list *) {
+  
+  bool from_python(handle py_proto, uint8_t, cleanup_list *) noexcept {
     try {
       if (!nanobind::hasattr(py_proto, "SerializeToString")) {
         return false;
@@ -64,12 +69,17 @@ struct nanobind::detail::type_caster<_ProtoType, std::enable_if_t<std::is_base_o
       return false;
     }
   }
-  static handle from_cpp(const _ProtoType& cpp_proto, rv_policy /* policy */, cleanup_list * /* cleanup */) {
-    auto py_proto = nanobind::module_::import_(PythonProtoTypeMap<_ProtoType>::ModuleName.text)
-                        .attr(PythonProtoTypeMap<_ProtoType>::TypeName.text)();
-    std::string serialized = cpp_proto.SerializeAsString();
-    py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size()));
-    return py_proto.release();
+  
+  static handle from_cpp(const _ProtoType& cpp_proto, rv_policy /* policy */, cleanup_list * /* cleanup */) noexcept {
+    try {
+      auto py_proto = nanobind::module_::import_(PythonProtoTypeMap<_ProtoType>::ModuleName.text)
+                          .attr(PythonProtoTypeMap<_ProtoType>::TypeName.text)();
+      std::string serialized = cpp_proto.SerializeAsString();
+      py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size()));
+      return py_proto.release();
+    } catch (...) {
+      return handle();
+    }
   }
 };
 
@@ -90,7 +100,8 @@ static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
   auto status = parser.Parse(proto);
   std::string out;
   proto.SerializeToString(&out);
-  return std::make_tuple(status.IsOK(), nb::bytes(status.ErrorMessage().c_str(), status.ErrorMessage().size()), nb::bytes(out.c_str(), out.size()));
+  std::string error_msg = status.ErrorMessage();
+  return std::make_tuple(status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), nb::bytes(out.c_str(), out.size()));
 }
 
 template <typename ProtoType>
@@ -192,12 +203,12 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   );
 
   // Avoid Segmentation fault if we not free the python function in Custom Schema
-  onnx_cpp2py_export.add_object("_cleanup", nb::capsule([] { OpSchemaRegistry::OpSchemaDeregisterAll(); }));
+  onnx_cpp2py_export.attr("_cleanup") = nb::capsule([] { OpSchemaRegistry::OpSchemaDeregisterAll(); });
 
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
   defs.doc() = "Schema submodule";
-  nb::register_exception<SchemaError>(defs, "SchemaError");
+  nb::exception<SchemaError>(defs, "SchemaError");
 
   nb::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
 
@@ -234,39 +245,39 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   nb::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def(
-          nb::init([](std::string name, AttributeProto::AttributeType type, std::string description, bool required) {
+          [](std::string name, AttributeProto::AttributeType type, std::string description, bool required) {
             // Construct an attribute.
             // Use a lambda to swap the order of the arguments to match the Python API
             return OpSchema::Attribute(std::move(name), std::move(description), type, required);
-          }),
+          },
           nb::arg("name"),
           nb::arg("type"),
           nb::arg("description") = "",
-          nb::kw_only(),
+          
           nb::arg("required") = true)
       .def(
-          nb::init([](std::string name, const nb::object& default_value, std::string description) {
+          [](std::string name, const nb::object& default_value, std::string description) {
             // Construct an attribute with a default value.
             // Attributes with default values are not required
             auto bytes = default_value.attr("SerializeToString")().cast<nb::bytes>();
             AttributeProto proto{};
             ParseProtoFromNbBytes(&proto, bytes);
             return OpSchema::Attribute(std::move(name), std::move(description), std::move(proto));
-          }),
+          },
           nb::arg("name"),
           nb::arg("default_value"), // type: onnx.AttributeProto
           nb::arg("description") = "")
-      .def_readonly("name", &OpSchema::Attribute::name)
-      .def_readonly("description", &OpSchema::Attribute::description)
-      .def_readonly("type", &OpSchema::Attribute::type)
-      .def_property_readonly(
+      .def_ro("name", &OpSchema::Attribute::name)
+      .def_ro("description", &OpSchema::Attribute::description)
+      .def_ro("type", &OpSchema::Attribute::type)
+      .def_prop_ro(
           "_default_value",
           [](OpSchema::Attribute* attr) -> nb::bytes {
             std::string out;
             attr->default_value.SerializeToString(&out);
             return out;
           })
-      .def_readonly("required", &OpSchema::Attribute::required);
+      .def_ro("required", &OpSchema::Attribute::required);
 
   nb::class_<OpSchema::TypeConstraintParam>(op_schema, "TypeConstraintParam")
       .def(
@@ -274,13 +285,13 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("type_param_str"),
           nb::arg("allowed_type_strs"),
           nb::arg("description") = "")
-      .def_readonly("type_param_str", &OpSchema::TypeConstraintParam::type_param_str)
-      .def_readonly("allowed_type_strs", &OpSchema::TypeConstraintParam::allowed_type_strs)
-      .def_readonly("description", &OpSchema::TypeConstraintParam::description);
+      .def_ro("type_param_str", &OpSchema::TypeConstraintParam::type_param_str)
+      .def_ro("allowed_type_strs", &OpSchema::TypeConstraintParam::allowed_type_strs)
+      .def_ro("description", &OpSchema::TypeConstraintParam::description);
 
   nb::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def(
-          nb::init([](std::string name,
+          [](std::string name,
                       std::string type_str,
                       const std::string& description,
                       OpSchema::FormalParameterOption param_option,
@@ -296,28 +307,28 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                 is_homogeneous,
                 min_arity,
                 differentiation_category);
-          }),
+          },
           nb::arg("name"),
           nb::arg("type_str"),
           nb::arg("description") = "",
-          nb::kw_only(),
+          
           nb::arg("param_option") = OpSchema::Single,
           nb::arg("is_homogeneous") = true,
           nb::arg("min_arity") = 1,
           nb::arg("differentiation_category") = OpSchema::DifferentiationCategory::Unknown)
 
-      .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
-      .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
-      .def_property_readonly("type_str", &OpSchema::FormalParameter::GetTypeStr)
-      .def_property_readonly("description", &OpSchema::FormalParameter::GetDescription)
-      .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
-      .def_property_readonly("is_homogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
-      .def_property_readonly("min_arity", &OpSchema::FormalParameter::GetMinArity)
-      .def_property_readonly("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory);
+      .def_prop_ro("name", &OpSchema::FormalParameter::GetName)
+      .def_prop_ro("types", &OpSchema::FormalParameter::GetTypes)
+      .def_prop_ro("type_str", &OpSchema::FormalParameter::GetTypeStr)
+      .def_prop_ro("description", &OpSchema::FormalParameter::GetDescription)
+      .def_prop_ro("option", &OpSchema::FormalParameter::GetOption)
+      .def_prop_ro("is_homogeneous", &OpSchema::FormalParameter::GetIsHomogeneous)
+      .def_prop_ro("min_arity", &OpSchema::FormalParameter::GetMinArity)
+      .def_prop_ro("differentiation_category", &OpSchema::FormalParameter::GetDifferentiationCategory);
 
   op_schema
       .def(
-          nb::init([](std::string name,
+          [](std::string name,
                       std::string domain,
                       int since_version,
                       const std::string& doc,
@@ -351,12 +362,12 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             self.Finalize();
 
             return self;
-          }),
+          },
           nb::arg("name"),
           nb::arg("domain"),
           nb::arg("since_version"),
           nb::arg("doc") = "",
-          nb::kw_only(),
+          
           nb::arg("inputs") = std::vector<OpSchema::FormalParameter>{},
           nb::arg("outputs") = std::vector<OpSchema::FormalParameter>{},
           nb::arg("type_constraints") = std::vector<std::tuple<
@@ -364,19 +375,19 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               std::vector<std::string> /* constraints */,
               std::string /* description */>>{},
           nb::arg("attributes") = std::vector<OpSchema::Attribute>{})
-      .def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
-      .def_property(
+      .def_prop_rw("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
+      .def_prop_rw(
           "domain", &OpSchema::domain, [](OpSchema& self, const std::string& domain) { self.SetDomain(domain); })
-      .def_property("doc", &OpSchema::doc, [](OpSchema& self, const std::string& doc) { self.SetDoc(doc); })
-      .def_property_readonly("file", &OpSchema::file)
-      .def_property_readonly("line", &OpSchema::line)
-      .def_property_readonly("support_level", &OpSchema::support_level)
-      .def_property_readonly("since_version", &OpSchema::since_version)
-      .def_property_readonly("deprecated", &OpSchema::deprecated)
-      .def_property_readonly("function_opset_versions", &OpSchema::function_opset_versions)
-      .def_property_readonly(
+      .def_prop_rw("doc", &OpSchema::doc, [](OpSchema& self, const std::string& doc) { self.SetDoc(doc); })
+      .def_prop_ro("file", &OpSchema::file)
+      .def_prop_ro("line", &OpSchema::line)
+      .def_prop_ro("support_level", &OpSchema::support_level)
+      .def_prop_ro("since_version", &OpSchema::since_version)
+      .def_prop_ro("deprecated", &OpSchema::deprecated)
+      .def_prop_ro("function_opset_versions", &OpSchema::function_opset_versions)
+      .def_prop_ro(
           "context_dependent_function_opset_versions", &OpSchema::context_dependent_function_opset_versions)
-      .def_property_readonly(
+      .def_prop_ro(
           "all_function_opset_versions",
           [](OpSchema* op) -> std::vector<int> {
             std::vector<int> all_function_opset_versions = op->function_opset_versions();
@@ -392,16 +403,16 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                 all_function_opset_versions.end());
             return all_function_opset_versions;
           })
-      .def_property_readonly("min_input", &OpSchema::min_input)
-      .def_property_readonly("max_input", &OpSchema::max_input)
-      .def_property_readonly("min_output", &OpSchema::min_output)
-      .def_property_readonly("max_output", &OpSchema::max_output)
-      .def_property_readonly("attributes", &OpSchema::attributes)
-      .def_property_readonly("inputs", &OpSchema::inputs)
-      .def_property_readonly("outputs", &OpSchema::outputs)
-      .def_property_readonly("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
-      .def_property_readonly("has_data_propagation_function", &OpSchema::has_data_propagation_function)
-      .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
+      .def_prop_ro("min_input", &OpSchema::min_input)
+      .def_prop_ro("max_input", &OpSchema::max_input)
+      .def_prop_ro("min_output", &OpSchema::min_output)
+      .def_prop_ro("max_output", &OpSchema::max_output)
+      .def_prop_ro("attributes", &OpSchema::attributes)
+      .def_prop_ro("inputs", &OpSchema::inputs)
+      .def_prop_ro("outputs", &OpSchema::outputs)
+      .def_prop_ro("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
+      .def_prop_ro("has_data_propagation_function", &OpSchema::has_data_propagation_function)
+      .def_prop_ro("type_constraints", &OpSchema::typeConstraintParams)
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
       .def(
           "_infer_node_outputs",
@@ -412,14 +423,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, nb::bytes>{},
           nb::arg("opsetImports") = std::unordered_map<std::string, int>{},
           nb::arg("irVersion") = int(IR_VERSION))
-      .def_property_readonly("has_function", &OpSchema::HasFunction)
-      .def_property_readonly(
+      .def_prop_ro("has_function", &OpSchema::HasFunction)
+      .def_prop_ro(
           "_function_body",
           [](OpSchema* op) -> nb::bytes {
             std::string bytes = "";
             if (op->HasFunction())
               op->GetFunction()->SerializeToString(&bytes);
-            return nb::bytes(bytes);
+            return nb::bytes(bytes.c_str(), bytes.size());
           })
       .def(
           "get_function_with_opset_version",
@@ -429,9 +440,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             if (function_proto) {
               function_proto->SerializeToString(&bytes);
             }
-            return nb::bytes(bytes);
+            return nb::bytes(bytes.c_str(), bytes.size());
           })
-      .def_property_readonly("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
+      .def_prop_ro("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
       .def(
           "get_context_dependent_function",
           [](OpSchema* op, const nb::bytes& bytes, const std::vector<nb::bytes>& input_types_bytes) -> nb::bytes {
@@ -451,7 +462,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               op->BuildContextDependentFunction(ctx, func_proto);
               func_proto.SerializeToString(&func_bytes);
             }
-            return nb::bytes(func_bytes);
+            return nb::bytes(func_bytes.c_str(), func_bytes.size());
           })
       .def(
           "get_context_dependent_function_with_opset_version",
@@ -473,7 +484,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               op->BuildContextDependentFunction(ctx, func_proto, opset_version);
               func_proto.SerializeToString(&func_bytes);
             }
-            return nb::bytes(func_bytes);
+            return nb::bytes(func_bytes.c_str(), func_bytes.size());
           })
       .def(
           "set_type_and_shape_inference_function",
@@ -481,7 +492,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
             return op.TypeAndShapeInferenceFunction(wrapper);
           },
-          nb::return_value_policy::reference_internal)
+          nb::rv_policy::reference_internal)
       .def("get_type_and_shape_inference_function", &OpSchema::GetTypeAndShapeInferenceFunction);
 
   defs.def(
@@ -573,14 +584,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   nb::class_<checker::CheckerContext> checker_context(checker, "CheckerContext");
   checker_context.def(nb::init<>())
-      .def_property("ir_version", &checker::CheckerContext::get_ir_version, &checker::CheckerContext::set_ir_version)
-      .def_property(
+      .def_prop_rw("ir_version", &checker::CheckerContext::get_ir_version, &checker::CheckerContext::set_ir_version)
+      .def_prop_rw(
           "opset_imports", &checker::CheckerContext::get_opset_imports, &checker::CheckerContext::set_opset_imports);
 
   nb::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
   lexical_scope_context.def(nb::init<>());
 
-  nb::register_exception<checker::ValidationError>(checker, "ValidationError");
+  nb::exception<checker::ValidationError>(checker, "ValidationError");
 
   checker.def("check_value_info", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     ValueInfoProto proto{};
@@ -670,16 +681,16 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
   version_converter.doc() = "VersionConverter submodule";
-  nb::register_exception<ConvertError>(version_converter, "ConvertError");
+  nb::exception<ConvertError>(version_converter, "ConvertError");
 
-  version_converter.def("convert_version", [](const nb::bytes& bytes, const nb::int_& target) {
+  version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
     ParseProtoFromNbBytes(&proto, bytes);
     shape_inference::InferShapes(proto);
     auto result = version_conversion::ConvertVersion(proto, target);
     std::string out;
     result.SerializeToString(&out);
-    return nb::bytes(out);
+    return nb::bytes(out.c_str(), out.size());
   });
 
   // Submodule `inliner`
@@ -692,7 +703,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     inliner::InlineLocalFunctions(model, convert_version);
     std::string out;
     model.SerializeToString(&out);
-    return nb::bytes(out);
+    return nb::bytes(out.c_str(), out.size());
   });
 
   // inline_selected_functions: Inlines all functions specified in function_ids, unless
@@ -707,7 +718,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         inliner::InlineSelectedLocalFunctions(model, *function_id_set);
         std::string out;
         model.SerializeToString(&out);
-        return nb::bytes(out);
+        return nb::bytes(out.c_str(), out.size());
       });
 
   inliner.def(
@@ -719,13 +730,13 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         inliner::InlineSelectedFunctions(model, *function_id_set, nullptr);
         std::string out;
         model.SerializeToString(&out);
-        return nb::bytes(out);
+        return nb::bytes(out.c_str(), out.size());
       });
 
   // Submodule `shape_inference`
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
-  nb::register_exception<InferenceError>(shape_inference, "InferenceError");
+  nb::exception<InferenceError>(shape_inference, "InferenceError");
 
   nb::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
@@ -748,7 +759,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   inference_context.def(
       "get_graph_attribute_inferencer",
       &InferenceContext::getGraphAttributeInferencer,
-      nb::return_value_policy::reference_internal);
+      nb::rv_policy::reference_internal);
   inference_context.def("get_input_sparse_data", &InferenceContext::getInputSparseData);
   inference_context.def("get_symbolic_input", &InferenceContext::getSymbolicInput);
   inference_context.def("get_display_name", &InferenceContext::getDisplayName);
@@ -778,7 +789,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         shape_inference::InferShapes(proto, OpSchemaRegistry::Instance(), options);
         std::string out;
         proto.SerializeToString(&out);
-        return nb::bytes(out);
+        return nb::bytes(out.c_str(), out.size());
       },
       "bytes"_a,
       "check_type"_a = false,
@@ -826,7 +837,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         for (auto& type_proto : output_types) {
           std::string out;
           type_proto.SerializeToString(&out);
-          result.emplace_back(out);
+          result.emplace_back(out.c_str(), out.size());
         }
         return result;
       });
