@@ -28,10 +28,6 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
-#ifndef NB_DETAILED_ERROR_MESSAGES
-#define NB_DETAILED_ERROR_MESSAGES
-#endif
-
 template <typename T>
 struct PythonProtoTypeMap {};
 
