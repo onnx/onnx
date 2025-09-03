@@ -107,7 +107,7 @@ static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
 template <typename ProtoType>
 static std::string ProtoBytesToText(const nb::bytes& bytes) {
   ProtoType proto{};
-  ParseProtoFromNbBytes(&proto, bytes);
+  ParseProtoFromPyBytes(&proto, bytes);
   return ProtoToString(proto);
 }
 
@@ -118,7 +118,7 @@ static std::pair<std::vector<Ts>, std::unordered_map<std::string, T*>> ParseProt
   std::unordered_map<std::string, T*> result;
   size_t i = 0;
   for (const auto& kv : bytesMap) {
-    ParseProtoFromNbBytes(&values[i], kv.second);
+    ParseProtoFromPyBytes(&values[i], kv.second);
     result[kv.first] = &values[i];
     i++;
   }
@@ -135,7 +135,7 @@ static std::unordered_map<std::string, nb::bytes> CallNodeInferenceFunction(
     std::unordered_map<std::string, int> opsetImports,
     const int irVersion) {
   NodeProto node{};
-  ParseProtoFromNbBytes(&node, nodeBytes);
+  ParseProtoFromPyBytes(&node, nodeBytes);
   // Early fail if node is badly defined - may throw ValidationError
   schema->Verify(node);
 
@@ -261,7 +261,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             // Attributes with default values are not required
             auto bytes = default_value.attr("SerializeToString")().cast<nb::bytes>();
             AttributeProto proto{};
-            ParseProtoFromNbBytes(&proto, bytes);
+            ParseProtoFromPyBytes(&proto, bytes);
             return OpSchema::Attribute(std::move(name), std::move(description), std::move(proto));
           },
           nb::arg("name"),
@@ -447,14 +447,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "get_context_dependent_function",
           [](OpSchema* op, const nb::bytes& bytes, const std::vector<nb::bytes>& input_types_bytes) -> nb::bytes {
             NodeProto proto{};
-            ParseProtoFromNbBytes(&proto, bytes);
+            ParseProtoFromPyBytes(&proto, bytes);
             std::string func_bytes = "";
             if (op->HasContextDependentFunction()) {
               std::vector<TypeProto> input_types;
               input_types.reserve(input_types_bytes.size());
               for (auto& type_bytes : input_types_bytes) {
                 TypeProto type_proto{};
-                ParseProtoFromNbBytes(&type_proto, type_bytes);
+                ParseProtoFromPyBytes(&type_proto, type_bytes);
                 input_types.push_back(type_proto);
               }
               FunctionBodyBuildContextImpl ctx(proto, input_types);
@@ -469,14 +469,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](OpSchema* op, int opset_version, const nb::bytes& bytes, const std::vector<nb::bytes>& input_types_bytes)
               -> nb::bytes {
             NodeProto proto{};
-            ParseProtoFromNbBytes(&proto, bytes);
+            ParseProtoFromPyBytes(&proto, bytes);
             std::string func_bytes = "";
             if (op->HasContextDependentFunctionWithOpsetVersion(opset_version)) {
               std::vector<TypeProto> input_types;
               input_types.reserve(input_types_bytes.size());
               for (auto& type_bytes : input_types_bytes) {
                 TypeProto type_proto{};
-                ParseProtoFromNbBytes(&type_proto, type_bytes);
+                ParseProtoFromPyBytes(&type_proto, type_bytes);
                 input_types.push_back(type_proto);
               }
               FunctionBodyBuildContextImpl ctx(proto, input_types);
@@ -595,19 +595,19 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   checker.def("check_value_info", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     ValueInfoProto proto{};
-    ParseProtoFromNbBytes(&proto, bytes);
+    ParseProtoFromPyBytes(&proto, bytes);
     checker::check_value_info(proto, ctx);
   });
 
   checker.def("check_tensor", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     TensorProto proto{};
-    ParseProtoFromNbBytes(&proto, bytes);
+    ParseProtoFromPyBytes(&proto, bytes);
     checker::check_tensor(proto, ctx);
   });
 
   checker.def("check_sparse_tensor", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     SparseTensorProto proto{};
-    ParseProtoFromNbBytes(&proto, bytes);
+    ParseProtoFromPyBytes(&proto, bytes);
     checker::check_sparse_tensor(proto, ctx);
   });
 
@@ -617,7 +617,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
          const checker::CheckerContext& ctx,
          const checker::LexicalScopeContext& lex_ctx) -> void {
         AttributeProto proto{};
-        ParseProtoFromNbBytes(&proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::check_attribute(proto, ctx, lex_ctx);
       });
 
@@ -627,7 +627,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
          const checker::CheckerContext& ctx,
          const checker::LexicalScopeContext& lex_ctx) -> void {
         NodeProto proto{};
-        ParseProtoFromNbBytes(&proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::check_node(proto, ctx, lex_ctx);
       });
 
@@ -637,7 +637,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
          const checker::CheckerContext& ctx,
          const checker::LexicalScopeContext& lex_ctx) -> void {
         FunctionProto proto{};
-        ParseProtoFromNbBytes(&proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::check_function(proto, ctx, lex_ctx);
       });
 
@@ -647,7 +647,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
          const checker::CheckerContext& ctx,
          const checker::LexicalScopeContext& lex_ctx) -> void {
         GraphProto proto{};
-        ParseProtoFromNbBytes(&proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::check_graph(proto, ctx, lex_ctx);
       });
 
@@ -656,7 +656,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](const nb::bytes& bytes, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)
           -> void {
         ModelProto proto{};
-        ParseProtoFromNbBytes(&proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::check_model(proto, full_check, skip_opset_compatibility_check, check_custom_domain);
       },
       "bytes"_a,
@@ -685,7 +685,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
-    ParseProtoFromNbBytes(&proto, bytes);
+    ParseProtoFromPyBytes(&proto, bytes);
     shape_inference::InferShapes(proto);
     auto result = version_conversion::ConvertVersion(proto, target);
     std::string out;
@@ -699,7 +699,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   inliner.def("inline_local_functions", [](const nb::bytes& bytes, bool convert_version) {
     ModelProto model{};
-    ParseProtoFromNbBytes(&model, bytes);
+    ParseProtoFromPyBytes(&model, bytes);
     inliner::InlineLocalFunctions(model, convert_version);
     std::string out;
     model.SerializeToString(&out);
@@ -713,7 +713,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "inline_selected_functions",
       [](const nb::bytes& bytes, std::vector<std::pair<std::string, std::string>> function_ids, bool exclude) {
         ModelProto model{};
-        ParseProtoFromNbBytes(&model, bytes);
+        ParseProtoFromPyBytes(&model, bytes);
         auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
         inliner::InlineSelectedLocalFunctions(model, *function_id_set);
         std::string out;
@@ -725,7 +725,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "inline_selected_functions2",
       [](const nb::bytes& bytes, std::vector<std::pair<std::string, std::string>> function_ids, bool exclude) {
         ModelProto model{};
-        ParseProtoFromNbBytes(&model, bytes);
+        ParseProtoFromPyBytes(&model, bytes);
         auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
         inliner::InlineSelectedFunctions(model, *function_id_set, nullptr);
         std::string out;
@@ -784,7 +784,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "infer_shapes",
       [](const nb::bytes& bytes, bool check_type, bool strict_mode, bool data_prop) {
         ModelProto proto{};
-        ParseProtoFromNbBytes(&proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, data_prop};
         shape_inference::InferShapes(proto, OpSchemaRegistry::Instance(), options);
         std::string out;
@@ -813,13 +813,13 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
          const std::vector<nb::bytes>& input_types_bytes,
          const std::vector<nb::bytes>& attributes_bytes) -> std::vector<nb::bytes> {
         FunctionProto proto{};
-        ParseProtoFromNbBytes(&proto, function_proto_bytes);
+        ParseProtoFromPyBytes(&proto, function_proto_bytes);
 
         std::vector<TypeProto> input_types;
         input_types.reserve(input_types_bytes.size());
         for (const nb::bytes& bytes : input_types_bytes) {
           TypeProto type;
-          ParseProtoFromNbBytes(&type, bytes);
+          ParseProtoFromPyBytes(&type, bytes);
           input_types.push_back(type);
         }
 
@@ -827,7 +827,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         attributes.reserve(attributes_bytes.size());
         for (const nb::bytes& bytes : attributes_bytes) {
           AttributeProto attr;
-          ParseProtoFromNbBytes(&attr, bytes);
+          ParseProtoFromPyBytes(&attr, bytes);
           attributes.push_back(attr);
         }
 
