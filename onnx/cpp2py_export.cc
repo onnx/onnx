@@ -243,6 +243,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   nb::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def(
+          "__init__",
           [](std::string name, AttributeProto::AttributeType type, std::string description, bool required) {
             // Construct an attribute.
             // Use a lambda to swap the order of the arguments to match the Python API
@@ -255,6 +256,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
           nb::arg("required") = true)
       .def(
+          "__init__",
           [](std::string name, const nb::object& default_value, std::string description) {
             // Construct an attribute with a default value.
             // Attributes with default values are not required
@@ -290,6 +292,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   nb::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def(
+          "__init__",
           [](std::string name,
              std::string type_str,
              const std::string& description,
@@ -327,6 +330,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   op_schema
       .def(
+          "__init__",
           [](std::string name,
              std::string domain,
              int since_version,
