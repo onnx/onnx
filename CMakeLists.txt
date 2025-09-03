@@ -459,21 +459,20 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
-  # find system pybind11
-  find_package(pybind11)
-  if(NOT pybind11_FOUND)
+  # find system nanobind
+  find_package(nanobind)
+  if(NOT nanobind_FOUND)
     include(FetchContent)
-    set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v3.0.0.tar.gz)
-    set(pybind11SHA1  532baa7a79c5c65645bcce2f6971959925e40df4)
     FetchContent_Declare(
-      pybind11
-      URL ${pybind11URL}
-      URL_HASH SHA1=${pybind11SHA1}
+      nanobind
+      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+      GIT_TAG v2.4.0
+      GIT_SHALLOW TRUE
     )
-    FetchContent_MakeAvailable(pybind11)
+    FetchContent_MakeAvailable(nanobind)
   endif()
 
-  pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  nanobind_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
