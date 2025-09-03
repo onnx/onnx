@@ -244,7 +244,11 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def(
           "__init__",
-          [](OpSchema::Attribute *t, std::string name, AttributeProto::AttributeType type, std::string description, bool required) {
+          [](OpSchema::Attribute* t,
+             std::string name,
+             AttributeProto::AttributeType type,
+             std::string description,
+             bool required) {
             // Construct an attribute.
             // Use a lambda to swap the order of the arguments to match the Python API
             new (t) OpSchema::Attribute(std::move(name), std::move(description), type, required);
@@ -256,7 +260,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("required") = true)
       .def(
           "__init__",
-          [](OpSchema::Attribute *t, std::string name, const nb::object& default_value, std::string description) {
+          [](OpSchema::Attribute* t, std::string name, const nb::object& default_value, std::string description) {
             // Construct an attribute with a default value.
             // Attributes with default values are not required
             auto bytes = nb::cast<nb::bytes>(default_value.attr("SerializeToString")());
@@ -275,7 +279,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](OpSchema::Attribute* attr) -> nb::bytes {
             std::string out;
             attr->default_value.SerializeToString(&out);
-            return nb::bytes(out.c_str(), out.size())
+            return nb::bytes(out.c_str(), out.size());
           })
       .def_ro("required", &OpSchema::Attribute::required);
 
@@ -292,7 +296,8 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def(
           "__init__",
-          [](OpSchema::FormalParameter* t, std::string name,
+          [](OpSchema::FormalParameter* t,
+             std::string name,
              std::string type_str,
              const std::string& description,
              OpSchema::FormalParameterOption param_option,
@@ -330,7 +335,8 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   op_schema
       .def(
           "__init__",
-          [](OpSchema* self, std::string name,
+          [](OpSchema* t,
+             std::string name,
              std::string domain,
              int since_version,
              const std::string& doc,
@@ -338,7 +344,8 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              std::vector<OpSchema::FormalParameter> outputs,
              std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
              std::vector<OpSchema::Attribute> attributes) {
-            new (self) OpSchema();
+            new (t) OpSchema();
+            OpSchema self = *t;
 
             self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
             // Add inputs and outputs
