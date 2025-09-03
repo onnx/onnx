@@ -460,7 +460,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               op->BuildContextDependentFunction(ctx, func_proto);
               func_proto.SerializeToString(&func_bytes);
             }
-            return nb::bytes(func_bytes);
+            return nb::bytes(func_bytes.c_str(), func_bytes.size());
           })
       .def(
           "get_context_dependent_function_with_opset_version",
@@ -482,7 +482,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               op->BuildContextDependentFunction(ctx, func_proto, opset_version);
               func_proto.SerializeToString(&func_bytes);
             }
-            return nb::bytes(func_bytes);
+            return nb::bytes(func_bytes.c_str(), func_bytes.size());
           })
       .def(
           "set_type_and_shape_inference_function",
