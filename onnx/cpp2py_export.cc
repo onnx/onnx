@@ -36,7 +36,7 @@ struct PythonProtoTypeMap {};
   template <>                                                                            \
   struct PythonProtoTypeMap<_ProtoType> {                                                \
     static constexpr auto FullName = nanobind::detail::const_name("onnx." PY_TYPE_NAME); \
-    static constexpr auto TypeName = nanobind::detail::const_name(PY_TYPE_NAME);         \
+    static constexpr auto TypeName = PY_TYPE_NAME;                                       \
   };
 
 #ifdef ONNX_USE_LITE_PROTO
@@ -70,8 +70,7 @@ struct nanobind::detail::
   static handle from_cpp(const _ProtoType& cpp_proto, rv_policy /* policy */, cleanup_list* /* cleanup */) noexcept {
     try {
       std::string serialized = cpp_proto.SerializeAsString();
-      auto py_proto = nanobind::module_::import_("onnx")
-                          .attr(PythonProtoTypeMap<_ProtoType>::TypeName.text)();
+      auto py_proto = nanobind::module_::import_("onnx").attr(PythonProtoTypeMap<_ProtoType>::TypeName)();
       py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size()));
       return py_proto.release();
     } catch (...) {
