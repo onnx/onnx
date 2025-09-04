@@ -32,12 +32,12 @@
 template <typename T>
 struct PythonProtoTypeMap {};
 
-#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_MODULE_NAME, PY_TYPE_NAME)                             \
-  template <>                                                                                       \
-  struct PythonProtoTypeMap<_ProtoType> {                                                           \
-    static constexpr auto FullName = nanobind::detail::const_name(PY_MODULE_NAME "." PY_TYPE_NAME); \
-    static constexpr auto TypeName = nanobind::detail::const_name(PY_TYPE_NAME);                    \
-    static constexpr auto ModuleName = nanobind::detail::const_name(PY_MODULE_NAME);                \
+#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_TYPE_NAME)                                  \
+  template <>                                                                            \
+  struct PythonProtoTypeMap<_ProtoType> {                                                \
+    static constexpr auto FullName = nanobind::detail::const_name("onnx." PY_TYPE_NAME); \
+    static constexpr auto TypeName = nanobind::detail::const_name(PY_TYPE_NAME);         \
+    static constexpr auto ModuleName = nanobind::detail::const_name("onnx");             \
   };
 
 #ifdef ONNX_USE_LITE_PROTO
@@ -70,9 +70,9 @@ struct nanobind::detail::
 
   static handle from_cpp(const _ProtoType& cpp_proto, rv_policy /* policy */, cleanup_list* /* cleanup */) noexcept {
     try {
+      std::string serialized = cpp_proto.SerializeAsString();
       auto py_proto = nanobind::module_::import_(PythonProtoTypeMap<_ProtoType>::ModuleName.text)
                           .attr(PythonProtoTypeMap<_ProtoType>::TypeName.text)();
-      std::string serialized = cpp_proto.SerializeAsString();
       py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size()));
       return py_proto.release();
     } catch (...) {
@@ -81,11 +81,11 @@ struct nanobind::detail::
   }
 };
 
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::AttributeProto, "onnx", "AttributeProto");
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TypeProto, "onnx", "TypeProto");
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorProto, "onnx", "TensorProto");
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::SparseTensorProto, "onnx", "SparseTensorProto");
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorShapeProto, "onnx", "TensorShapeProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::AttributeProto, "AttributeProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TypeProto, "TypeProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorProto, "TensorProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::SparseTensorProto, "SparseTensorProto");
+DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorShapeProto, "TensorShapeProto");
 
 namespace ONNX_NAMESPACE {
 namespace nb = nanobind;
