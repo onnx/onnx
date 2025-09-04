@@ -476,7 +476,10 @@ if(ONNX_BUILD_PYTHON)
     FetchContent_MakeAvailable(nanobind)
   endif()
 
-  nanobind_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  nanobind_add_module(
+    onnx_cpp2py_export
+    NB_STATIC STABLE_ABI FREE_THREADED LTO
+    "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   # Ensure Python headers are found
   target_include_directories(onnx_cpp2py_export PRIVATE ${Python3_INCLUDE_DIRS})
