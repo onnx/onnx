@@ -746,31 +746,13 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   nb::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
-  inference_context.def("get_attribute", [](InferenceContext& self, size_t idx) -> nb::object {
-    const AttributeProto* attr_ptr = self.getAttribute(idx);
-    if (attr_ptr == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*attr_ptr);  // Dereference the pointer to get the object
-  });
+  inference_context.def("get_attribute", &InferenceContext::getAttribute, nb::rv_policy::reference_internal);
   inference_context.def("get_num_inputs", &InferenceContext::getNumInputs);
-  inference_context.def("get_input_type", [](InferenceContext& self, size_t idx) -> nb::object {
-    const TypeProto* type_ptr = self.getInputType(idx);
-    if (type_ptr == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*type_ptr);  // Dereference the pointer to get the object
-  });
+  inference_context.def("get_input_type", &InferenceContext::getInputType, , nb::rv_policy::reference_internal);
   inference_context.def("has_input", &InferenceContext::hasInput);
-  inference_context.def("get_input_data", &InferenceContext::getInputData);
+  inference_context.def("get_input_data", &InferenceContext::getInputData, nb::rv_policy::reference_internal);
   inference_context.def("get_num_outputs", &InferenceContext::getNumOutputs);
-  inference_context.def("get_output_type", [](InferenceContext& self, size_t idx) -> nb::object {
-    const TypeProto* type_ptr = self.getOutputType(idx);
-    if (type_ptr == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*type_ptr);  // Dereference the pointer to get the object
-  });
+  inference_context.def("get_output_type", &InferenceContext::getOutputType, nb::rv_policy::reference_internal);
   inference_context.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
     auto* dst = self.getOutputType(idx);
     if (dst == nullptr) {
@@ -784,8 +766,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "get_graph_attribute_inferencer",
       &InferenceContext::getGraphAttributeInferencer,
       nb::rv_policy::reference_internal);
-  inference_context.def("get_input_sparse_data", &InferenceContext::getInputSparseData);
-  inference_context.def("get_symbolic_input", &InferenceContext::getSymbolicInput);
+  inference_context.def(
+      "get_input_sparse_data", &InferenceContext::getInputSparseData, nb::rv_policy::reference_internal);
+  inference_context.def("get_symbolic_input", &InferenceContext::getSymbolicInput, nb::rv_policy::reference_internal);
   inference_context.def("get_display_name", &InferenceContext::getDisplayName);
 
   nb::class_<GraphInferencer> graph_inferencer(shape_inference, "GraphInferencer", "Graph Inferencer");
