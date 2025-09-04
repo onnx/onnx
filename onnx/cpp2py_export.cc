@@ -74,15 +74,15 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
   };
 
 // Define type casters for common ONNX proto types
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::AttributeProto, "onnx.AttributeProto")
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::TypeProto, "onnx.TypeProto")
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::TensorProto, "onnx.TensorProto")
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::SparseTensorProto, "onnx.SparseTensorProto")
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::ValueInfoProto, "onnx.ValueInfoProto")
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::NodeProto, "onnx.NodeProto")
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::GraphProto, "onnx.GraphProto")
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::ModelProto, "onnx.ModelProto")
-ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::FunctionProto, "onnx.FunctionProto")
+ONNX_DEFINE_TYPE_CASTER(AttributeProto, "onnx.AttributeProto")
+ONNX_DEFINE_TYPE_CASTER(TypeProto, "onnx.TypeProto")
+ONNX_DEFINE_TYPE_CASTER(TensorProto, "onnx.TensorProto")
+ONNX_DEFINE_TYPE_CASTER(SparseTensorProto, "onnx.SparseTensorProto")
+ONNX_DEFINE_TYPE_CASTER(ValueInfoProto, "onnx.ValueInfoProto")
+ONNX_DEFINE_TYPE_CASTER(NodeProto, "onnx.NodeProto")
+ONNX_DEFINE_TYPE_CASTER(GraphProto, "onnx.GraphProto")
+ONNX_DEFINE_TYPE_CASTER(ModelProto, "onnx.ModelProto")
+ONNX_DEFINE_TYPE_CASTER(FunctionProto, "onnx.FunctionProto")
 
 namespace ONNX_NAMESPACE {
 namespace nb = nanobind;
