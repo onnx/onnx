@@ -745,13 +745,37 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   nb::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
-  inference_context.def("get_attribute", &InferenceContext::getAttribute, nb::rv_policy::reference_internal);
+  inference_context.def("get_attribute", [](InferenceContext& self, const std::string& name) -> nb::object {
+    const auto* attr = self.getAttribute(name);
+    if (attr == nullptr) {
+      return nb::none();
+    }
+    return nb::cast(*attr);
+  });
   inference_context.def("get_num_inputs", &InferenceContext::getNumInputs);
-  inference_context.def("get_input_type", &InferenceContext::getInputType, nb::rv_policy::reference_internal);
+  inference_context.def("get_input_type", [](InferenceContext& self, size_t idx) -> nb::object {
+    const auto* type = self.getInputType(idx);
+    if (type == nullptr) {
+      return nb::none();
+    }
+    return nb::cast(*type);
+  });
   inference_context.def("has_input", &InferenceContext::hasInput);
-  inference_context.def("get_input_data", &InferenceContext::getInputData, nb::rv_policy::reference_internal);
+  inference_context.def("get_input_data", [](InferenceContext& self, size_t idx) -> nb::object {
+    const auto* tensor = self.getInputData(idx);
+    if (tensor == nullptr) {
+      return nb::none();
+    }
+    return nb::cast(*tensor);
+  });
   inference_context.def("get_num_outputs", &InferenceContext::getNumOutputs);
-  inference_context.def("get_output_type", &InferenceContext::getOutputType, nb::rv_policy::reference_internal);
+  inference_context.def("get_output_type", [](InferenceContext& self, size_t idx) -> nb::object {
+    const auto* type = self.getOutputType(idx);
+    if (type == nullptr) {
+      return nb::none();
+    }
+    return nb::cast(*type);
+  });
   inference_context.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
     auto* dst = self.getOutputType(idx);
     if (dst == nullptr) {
@@ -765,9 +789,20 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "get_graph_attribute_inferencer",
       &InferenceContext::getGraphAttributeInferencer,
       nb::rv_policy::reference_internal);
-  inference_context.def(
-      "get_input_sparse_data", &InferenceContext::getInputSparseData, nb::rv_policy::reference_internal);
-  inference_context.def("get_symbolic_input", &InferenceContext::getSymbolicInput, nb::rv_policy::reference_internal);
+  inference_context.def("get_input_sparse_data", [](InferenceContext& self, size_t idx) -> nb::object {
+    const auto* sparse = self.getInputSparseData(idx);
+    if (sparse == nullptr) {
+      return nb::none();
+    }
+    return nb::cast(*sparse);
+  });
+  inference_context.def("get_symbolic_input", [](InferenceContext& self, size_t idx) -> nb::object {
+    const auto* shape = self.getSymbolicInput(idx);
+    if (shape == nullptr) {
+      return nb::none();
+    }
+    return nb::cast(*shape);
+  });
   inference_context.def("get_display_name", &InferenceContext::getDisplayName);
 
   nb::class_<GraphInferencer> graph_inferencer(shape_inference, "GraphInferencer", "Graph Inferencer");
@@ -864,9 +899,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   printer.def("model_to_text", ProtoBytesToText<ModelProto>);
   printer.def("function_to_text", ProtoBytesToText<FunctionProto>);
   printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
-}
-
-} // namespace ONNX_NAMESPACE
 }
 
 } // namespace ONNX_NAMESPACE
