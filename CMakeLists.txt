@@ -476,9 +476,10 @@ if(ONNX_BUILD_PYTHON)
     FetchContent_MakeAvailable(nanobind)
   endif()
 
+  # Configure nanobind: https://nanobind.readthedocs.io/en/latest/api_cmake.html
   nanobind_add_module(
     onnx_cpp2py_export
-    NB_STATIC STABLE_ABI FREE_THREADED LTO
+    NB_STATIC NB_DOMAIN STABLE_ABI FREE_THREADED LTO
     "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   # Ensure Python headers are found
