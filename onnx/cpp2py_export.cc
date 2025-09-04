@@ -212,17 +212,17 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
 
   // Define the class enums first because they are used as default values in function definitions
-  nb::enum_<OpSchema::FormalParameterOption>(op_schema, "FormalParameterOption")
+  nb::enum_<OpSchema::FormalParameterOption>(op_schema, "FormalParameterOption", nb::is_arithmetic())
       .value("Single", OpSchema::Single)
       .value("Optional", OpSchema::Optional)
       .value("Variadic", OpSchema::Variadic);
 
-  nb::enum_<OpSchema::DifferentiationCategory>(op_schema, "DifferentiationCategory")
+  nb::enum_<OpSchema::DifferentiationCategory>(op_schema, "DifferentiationCategory", nb::is_arithmetic())
       .value("Unknown", OpSchema::Unknown)
       .value("Differentiable", OpSchema::Differentiable)
       .value("NonDifferentiable", OpSchema::NonDifferentiable);
 
-  nb::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
+  nb::enum_<AttributeProto::AttributeType>(op_schema, "AttrType", nb::is_arithmetic())
       .value("FLOAT", AttributeProto::FLOAT)
       .value("INT", AttributeProto::INT)
       .value("STRING", AttributeProto::STRING)
@@ -238,7 +238,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("TYPE_PROTO", AttributeProto::TYPE_PROTO)
       .value("TYPE_PROTOS", AttributeProto::TYPE_PROTOS);
 
-  nb::enum_<OpSchema::SupportType>(op_schema, "SupportType")
+  nb::enum_<OpSchema::SupportType>(op_schema, "SupportType", nb::is_arithmetic())
       .value("COMMON", OpSchema::SupportType::COMMON)
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
