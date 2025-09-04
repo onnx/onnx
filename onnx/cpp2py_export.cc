@@ -32,12 +32,11 @@
 template <typename T>
 struct PythonProtoTypeMap {};
 
-#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_TYPE_NAME)                                  \
-  template <>                                                                            \
-  struct PythonProtoTypeMap<_ProtoType> {                                                \
-    static constexpr auto FullName = nanobind::detail::const_name("onnx." PY_TYPE_NAME); \
-    static constexpr auto TypeName = nanobind::detail::const_name(PY_TYPE_NAME);         \
-    static constexpr auto ModuleName = nanobind::detail::const_name("onnx");             \
+#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_TYPE_NAME)    \
+  template <>                                              \
+  struct PythonProtoTypeMap<_ProtoType> {                  \
+    static constexpr auto FullName = "onnx." PY_TYPE_NAME; \
+    static constexpr auto TypeName = PY_TYPE_NAME;         \
   };
 
 #ifdef ONNX_USE_LITE_PROTO
@@ -46,11 +45,10 @@ using BASE_PROTO_TYPE = ::google::protobuf::MessageLite;
 using BASE_PROTO_TYPE = ::google::protobuf::Message;
 #endif
 
-template <typename _ProtoType>
-struct nanobind::detail::
-    type_caster<_ProtoType, std::enable_if_t<std::is_base_of<BASE_PROTO_TYPE, _ProtoType>::value>> {
+template <typename TProto>
+struct nanobind::detail::type_caster<TProto, std::enable_if_t<std::is_base_of<BASE_PROTO_TYPE, TProto>::value>> {
  public:
-  NB_TYPE_CASTER(_ProtoType, PythonProtoTypeMap<_ProtoType>::FullName);
+  NB_TYPE_CASTER(TProto, PythonProtoTypeMap<TProto>::FullName);
 
   bool from_python(handle py_proto, uint8_t, cleanup_list*) noexcept {
     try {
@@ -68,11 +66,10 @@ struct nanobind::detail::
     }
   }
 
-  static handle from_cpp(const _ProtoType& cpp_proto, rv_policy /* policy */, cleanup_list* /* cleanup */) noexcept {
+  static handle from_cpp(const TProto& cpp_proto, rv_policy /* policy */, cleanup_list* /* cleanup */) noexcept {
     try {
       std::string serialized = cpp_proto.SerializeAsString();
-      auto py_proto = nanobind::module_::import_(PythonProtoTypeMap<_ProtoType>::ModuleName.text)
-                          .attr(PythonProtoTypeMap<_ProtoType>::TypeName.text)();
+      auto py_proto = nanobind::module_::import_("onnx").attr(PythonProtoTypeMap<TProto>::TypeName)();
       py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size()));
       return py_proto.release();
     } catch (...) {
@@ -748,7 +745,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   inference_context.def("get_attribute", &InferenceContext::getAttribute, nb::rv_policy::reference_internal);
   inference_context.def("get_num_inputs", &InferenceContext::getNumInputs);
-  inference_context.def("get_input_type", &InferenceContext::getInputType, , nb::rv_policy::reference_internal);
+  inference_context.def("get_input_type", &InferenceContext::getInputType, nb::rv_policy::reference_internal);
   inference_context.def("has_input", &InferenceContext::hasInput);
   inference_context.def("get_input_data", &InferenceContext::getInputData, nb::rv_policy::reference_internal);
   inference_context.def("get_num_outputs", &InferenceContext::getNumOutputs);
