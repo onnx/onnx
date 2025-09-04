@@ -37,7 +37,7 @@ ninja = "*"
 libdate = ">=3.0.1,<4"
 libprotobuf = "*"
 pip = ">=25.0"
-pybind11 = ">=2.13.6"
+nanobind = ">=2.8.0"
 [dependencies]
 packaging = ">=24.1"
 python = ">=3.9"
@@ -69,7 +69,7 @@ lintrunner-init = "lintrunner init"
 lintrunner-run = "lintrunner --all-files"
 [feature.lint.dependencies]
 # follows requirements-lintrunner.txt
-ruff = "==0.11.12"  
+ruff = "==0.11.12"
 mypy = "==1.16.0"
 types-protobuf = ">=5.29.1.20250403"
 clang-format = ">=20.1.5"
