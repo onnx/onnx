@@ -29,61 +29,60 @@
 #include "onnx/shape_inference/implementation.h"
 #include "onnx/version_converter/convert.h"
 
-template <typename T>
-struct PythonProtoTypeMap {};
-
-#define DEFINE_PROTO_TYPE_MAP(_ProtoType, PY_TYPE_NAME)                                  \
-  template <>                                                                            \
-  struct PythonProtoTypeMap<_ProtoType> {                                                \
-    static constexpr auto FullName = nanobind::detail::const_name("onnx." PY_TYPE_NAME); \
-    static constexpr auto TypeName = PY_TYPE_NAME;                                       \
-  };
-
 #ifdef ONNX_USE_LITE_PROTO
 using BASE_PROTO_TYPE = ::google::protobuf::MessageLite;
 #else
 using BASE_PROTO_TYPE = ::google::protobuf::Message;
 #endif
 
-template <typename _ProtoType>
-struct nanobind::detail::
-    type_caster<_ProtoType, std::enable_if_t<std::is_base_of<BASE_PROTO_TYPE, _ProtoType>::value>> {
- public:
-  NB_TYPE_CASTER(_ProtoType, PythonProtoTypeMap<_ProtoType>::FullName);
+// Generic type caster template for ONNX Proto classes
+#define ONNX_DEFINE_TYPE_CASTER(ProtoType, PythonClassName)                                       \
+  template <>                                                                                     \
+  struct nanobind::detail::type_caster<ONNX_NAMESPACE::ProtoType> {                               \
+   public:                                                                                        \
+    NB_TYPE_CASTER(ONNX_NAMESPACE::ProtoType, nanobind::detail::const_name(PythonClassName));     \
+                                                                                                  \
+    bool from_python(handle py_proto, uint8_t, cleanup_list*) noexcept {                          \
+      try {                                                                                       \
+        if (!nanobind::hasattr(py_proto, "SerializeToString")) {                                  \
+          return false;                                                                           \
+        }                                                                                         \
+        auto serialized = py_proto.attr("SerializeToString")();                                   \
+        std::string serialized_str = nanobind::cast<std::string>(serialized);                     \
+        if (!value.ParseFromString(serialized_str)) {                                             \
+          return false;                                                                           \
+        }                                                                                         \
+        return true;                                                                              \
+      } catch (const nanobind::python_error&) {                                                   \
+        return false;                                                                             \
+      }                                                                                           \
+    }                                                                                             \
+                                                                                                  \
+    static handle from_cpp(                                                                       \
+        const ONNX_NAMESPACE::ProtoType& cpp_proto,                                               \
+        rv_policy /* policy */,                                                                   \
+        cleanup_list* /* cleanup */) noexcept {                                                   \
+      try {                                                                                       \
+        std::string serialized = cpp_proto.SerializeAsString();                                   \
+        auto py_proto = nanobind::module_::import_("onnx").attr(#ProtoType)();                    \
+        py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size())); \
+        return py_proto.release();                                                                \
+      } catch (...) {                                                                             \
+        return handle();                                                                          \
+      }                                                                                           \
+    }                                                                                             \
+  };
 
-  bool from_python(handle py_proto, uint8_t, cleanup_list*) noexcept {
-    try {
-      if (!nanobind::hasattr(py_proto, "SerializeToString")) {
-        return false;
-      }
-      auto serialized = py_proto.attr("SerializeToString")();
-      std::string serialized_str = nanobind::cast<std::string>(serialized);
-      if (!value.ParseFromString(serialized_str)) {
-        return false;
-      }
-      return true;
-    } catch (const nanobind::python_error&) {
-      return false;
-    }
-  }
-
-  static handle from_cpp(const _ProtoType& cpp_proto, rv_policy /* policy */, cleanup_list* /* cleanup */) noexcept {
-    try {
-      std::string serialized = cpp_proto.SerializeAsString();
-      auto py_proto = nanobind::module_::import_("onnx").attr(PythonProtoTypeMap<_ProtoType>::TypeName)();
-      py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size()));
-      return py_proto.release();
-    } catch (...) {
-      return handle();
-    }
-  }
-};
-
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::AttributeProto, "AttributeProto");
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TypeProto, "TypeProto");
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorProto, "TensorProto");
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::SparseTensorProto, "SparseTensorProto");
-DEFINE_PROTO_TYPE_MAP(ONNX_NAMESPACE::TensorShapeProto, "TensorShapeProto");
+// Define type casters for common ONNX proto types
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::AttributeProto, "onnx.AttributeProto")
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::TypeProto, "onnx.TypeProto")
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::TensorProto, "onnx.TensorProto")
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::SparseTensorProto, "onnx.SparseTensorProto")
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::ValueInfoProto, "onnx.ValueInfoProto")
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::NodeProto, "onnx.NodeProto")
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::GraphProto, "onnx.GraphProto")
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::ModelProto, "onnx.ModelProto")
+ONNX_DEFINE_TYPE_CASTER(ONNX_NAMESPACE::FunctionProto, "onnx.FunctionProto")
 
 namespace ONNX_NAMESPACE {
 namespace nb = nanobind;
