@@ -88,6 +88,7 @@ static void RegisterCustomFuncFloatSchema() {
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)"}, "Type of the input and output values")
+      .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
       .SetContextDependentFunctionBodyBuilder(BuildFloatFunctionBody);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
@@ -148,6 +149,7 @@ static void RegisterCustomFunctionSchema() {
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
+      .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
       .SetContextDependentFunctionBodyBuilder(BuildFunctionBody);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;

@@ -333,6 +333,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input 'ratio' types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output 'mask' types to boolean tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasInputShape(ctx, 0)) {
@@ -1605,6 +1606,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input 'ratio' types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output 'mask' types to boolean tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasInputShape(ctx, 0)) {
@@ -3661,6 +3663,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Dropout_old_doc)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .Attr("ratio", "(float, default 0.5) the ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         // This attribute was added via AllowConsumed API in OpSchema.
         // After removing the API, we're now using the Attr API to simulate the
@@ -3689,6 +3692,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     6,
     OpSchema()
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .SetDoc(Dropout_old_doc)
         .Attr("ratio", "(float, default 0.5) the ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         .Attr(
@@ -3732,6 +3736,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Dropout_ver10_doc = R"DOC(
@@ -3756,6 +3761,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output mask types to boolean tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           if (ctx.getNumOutputs() == 2) {
@@ -4141,6 +4147,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
@@ -4521,6 +4528,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
