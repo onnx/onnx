@@ -305,7 +305,6 @@ class Attention(Base):
             V,
             attn_mask=attn_mask,
             is_causal=1,
-            opset_imports=[onnx.helper.make_opsetid("", 23)],
         )
 
         expect(
