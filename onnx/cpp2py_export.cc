@@ -17,6 +17,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "onnx/checker.h"
 #include "onnx/common/ir_pb_converter.h"
