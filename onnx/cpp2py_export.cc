@@ -66,7 +66,7 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
         std::string serialized = cpp_proto.SerializeAsString();                                   \
         auto py_proto = nanobind::module_::import_("onnx").attr(#ProtoType)();                    \
         py_proto.attr("ParseFromString")(nanobind::bytes(serialized.c_str(), serialized.size())); \
-        return py_proto.release();                                                                \
+        return py_proto;                                                                          \
       } catch (...) {                                                                             \
         return handle();                                                                          \
       }                                                                                           \
@@ -189,10 +189,6 @@ static std::tuple<std::vector<T>, std::vector<const T*>> ConvertPyObjToPtr(const
 
 NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   onnx_cpp2py_export.doc() = "Python interface to ONNX";
-
-  // Disable nanobind leak warnings to avoid noise for users
-  // TODO: Investigate and fix the underlying memory leaks in a future release
-  nb::set_leak_warnings(false);
 
   onnx_cpp2py_export.attr("ONNX_ML") = nb::bool_(
 #ifdef ONNX_ML
