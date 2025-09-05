@@ -1,5 +1,5 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.26)
 # Project
 project(onnx LANGUAGES CXX)
 
@@ -130,7 +130,7 @@ if(ONNX_DISABLE_EXCEPTIONS)
 endif()
 
 if(ONNX_BUILD_PYTHON)
-  set(python_dev_component Development.Module)
+  set(python_dev_component Development.Module Development.SABIModule)
 endif()
 
 if(CMAKE_CROSSCOMPILING)
