@@ -39,7 +39,7 @@ ninja = "*"
 libdate = ">=3.0.1,<4"
 libprotobuf = "*"
 pip = ">=25.0"
-pybind11 = ">=2.13.6"
+nanobind = ">=2.8.0"
 [dependencies]
 packaging = ">=24.1"
 python = ">=3.9"
