@@ -1,0 +1,32 @@
+# Copyright (c) ONNX Project Contributors
+
+# SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
+from .cpu._onnx2py import (
+    AttributeProto,
+    DeviceConfigurationProto,
+    FunctionProto,
+    GraphProto,
+    IntIntListEntryProto,
+    Message,
+    ModelProto,
+    NodeDeviceConfigurationProto,
+    NodeProto,
+    OperatorSetIdProto,
+    OperatorStatus,
+    ParseOptions,
+    PrintOptions,
+    SerializeOptions,
+    ShardedDimProto,
+    ShardingSpecProto,
+    SimpleShardedDimProto,
+    SparseTensorProto,
+    StringStringEntryProto,
+    TensorAnnotation,
+    TensorProto,
+    TensorShapeProto,
+    TypeProto,
+    ValueInfoProto,
+)
+from .io_helper import load, save

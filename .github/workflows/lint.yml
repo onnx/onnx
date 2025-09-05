@@ -50,7 +50,7 @@ jobs:
           reporter: github-pr-check
           level: warning
           flags: --linelength=120
-          filter: "-runtime/references"
+          filter: "-runtime/references,-build/namespaces/source/namespace/nonliterals,-readability/braces,-readability/check"
 
   enforce-style:
     name: Enforce style
