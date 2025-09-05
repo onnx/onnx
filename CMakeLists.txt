@@ -403,12 +403,12 @@ relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
-file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
+file(GLOB_RECURSE onnx_tests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
     "${ONNX_ROOT}/onnx/test/cpp/*.cc"
     "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
     "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
+list(REMOVE_ITEM __tmp_srcs ${onnx_tests_src})
 list(APPEND ONNX_SRCS ${__tmp_srcs})
 
 # Hide all symbols we don't need
@@ -568,13 +568,7 @@ if(ONNX_USE_UNITY_BUILD)
 endif()
 
 if(ONNX_BUILD_TESTS)
-  if(BUILD_SHARED_LIBS)
-    message(FATAL_ERROR "Tests requires static build")
-  endif()
-  find_package(GTest)
-  if(NOT GTest_FOUND)
-    include(googletest)
-  endif()
+  include(catch2)
 endif()
 
 install(TARGETS

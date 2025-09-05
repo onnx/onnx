@@ -7,7 +7,7 @@
 #include <iostream>
 #include <set>
 
-#include "gtest/gtest.h"
+#include "catch2/catch_test_macros.hpp"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
@@ -310,12 +310,15 @@ static void VerifyFunction(const OpSchema& op, const FunctionProto* function_pro
   FunctionTypeChecker type_checker(op, *function_proto);
   auto type_errors = type_checker.checkAll();
   auto success = (type_errors.empty());
-  ASSERT_TRUE(success) << type_errors;
+  if (!success) {
+    INFO(type_errors);
+  }
+  REQUIRE(success);
 }
 
 // Verify registered ops with function body has compatible
 // definition on TypeConstraints between ops and function body
-TEST(FunctionVerification, VerifyFunctionOps) {
+TEST_CASE("FunctionVerification", "[VerifyFunctionOps]") {
   const std::vector<OpSchema> schemas = OpSchemaRegistry::get_all_schemas();
   int function_counter = 0, verified_counter = 0;
   for (const auto& s : schemas) {
@@ -335,7 +338,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::checker::ValidationError& e) {
-      ONNX_HANDLE_EXCEPTION([&]() { FAIL() << e.what(); });
+      ONNX_HANDLE_EXCEPTION([&]() { FAIL(e.what()); });
     }
   }
   std::cerr << "[          ] Verified " << verified_counter << "/" << function_counter << " Functions." << '\n';
@@ -343,7 +346,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
 
 // Verify that FunctionExpandHelper obtains missing default attributes
 // from schema and adds them to ops in expanded subgraph.
-TEST(FunctionVerification, VerifyFunctionExpandHelper) {
+TEST_CASE("FunctionVerification", "[VerifyFunctionExpandHelper]") {
   GraphProto graph;
   NodeProto* new_node = graph.add_node();
   new_node->set_op_type("MeanVarianceNormalization");
@@ -357,17 +360,17 @@ TEST(FunctionVerification, VerifyFunctionExpandHelper) {
   for (const auto& node : graph.node()) {
     if (node.op_type() == "ReduceMean") {
       const auto& attr = node.attribute(0);
-      EXPECT_EQ(attr.name(), "axes");
-      EXPECT_EQ(attr.ints().size(), default_axes_attribute.ints().size());
+      REQUIRE(attr.name() == "axes");
+      REQUIRE(attr.ints().size() == default_axes_attribute.ints().size());
 
       for (int i = 0; i < default_axes_attribute.ints().size(); ++i) {
-        EXPECT_EQ(attr.ints(i), default_axes_attribute.ints(i));
+        REQUIRE(attr.ints(i) == default_axes_attribute.ints(i));
       }
       return;
     }
   }
-  FAIL() << "During expanding MeanVarianceNormalization function, "
-         << "the default attribute `axes` has not been assigned to ReduceMean op.";
+  FAIL(
+      "During expanding MeanVarianceNormalization function, the default attribute `axes` has not been assigned to ReduceMean op.");
 }
 
 static void RegisterFunctionSchema() {
@@ -418,16 +421,16 @@ static void RegisterFunctionSchema() {
   (void)unused;
 }
 
-TEST(FunctionVerification, VerifyFunctionBodyWithMultipleDomains) {
+TEST_CASE("FunctionVerification", "[VerifyFunctionBodyWithMultipleDomains]") {
   RegisterFunctionSchema();
 
   const auto* schema = OpSchemaRegistry::Schema("DynamicQuantizeLinear_Fake", 2, AI_ONNX_ML_DOMAIN);
-  EXPECT_TRUE(schema);
-  EXPECT_TRUE(schema->HasFunction());
-  EXPECT_FALSE(schema->HasContextDependentFunction());
+  REQUIRE(schema);
+  REQUIRE(schema->HasFunction());
+  REQUIRE_FALSE(schema->HasContextDependentFunction());
 
   const FunctionProto* fnProto = schema->GetFunction();
-  EXPECT_EQ(fnProto->node_size(), 16);
+  REQUIRE(fnProto->node_size() == 16);
 
   LexicalScopeContext lexicalScope;
   CheckerContext checkerCtx;
@@ -437,7 +440,7 @@ TEST(FunctionVerification, VerifyFunctionBodyWithMultipleDomains) {
   check_function(*fnProto, checkerCtx, lexicalScope);
 }
 
-TEST(FunctionVerification, VerifyModelLocalFunctions) {
+TEST_CASE("FunctionVerification", "[VerifyModelLocalFunctions]") {
   const char* code = R"ONNX(
 <
   ir_version: 8,
@@ -485,14 +488,17 @@ foo (x) => (y) {
 
   ModelProto model;
   auto status = OnnxParser::Parse(model, code);
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  if (!status.IsOK()) {
+    INFO(status.ErrorMessage());
+  }
+  REQUIRE(status.IsOK());
   check_model(model);
 
   ShapeInferenceOptions options{true, 1, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
 }
 
-TEST(FunctionVerification, VerifyNestedModelLocalFunctions) {
+TEST_CASE("FunctionVerification", "[VerifyNestedModelLocalFunctions]") {
   const char* code = R"ONNX(
 <
   ir_version: 8,
@@ -550,7 +556,10 @@ foo (x) => (y) {
 
   ModelProto model;
   auto status = OnnxParser::Parse(model, code);
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  if (!status.IsOK()) {
+    INFO(status.ErrorMessage());
+  }
+  REQUIRE(status.IsOK());
 
   check_model(model);
 

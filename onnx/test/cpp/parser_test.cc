@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "gtest/gtest.h"
+#include "catch2/catch_test_macros.hpp"
+#include "catch2/matchers/catch_matchers_floating_point.hpp"
 #include "onnx/checker.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
@@ -18,8 +19,10 @@ template <typename T>
 static void Parse(T& parsedData, const char* input) {
   OnnxParser parser(input);
   auto status = parser.Parse(parsedData);
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
+  INFO(status.ErrorMessage());
+  REQUIRE(status.IsOK());
+  INFO("Extra unparsed input unexpected.");
+  REQUIRE(parser.EndOfInput());
   // Extra checks for printer:
   // Check we can convert data back to text form.
   std::string text1 = ProtoToString(parsedData);
@@ -28,15 +31,16 @@ static void Parse(T& parsedData, const char* input) {
   // so, we convert it once more, and check for equality.
   T temp;
   status = OnnxParser::Parse(temp, text1.c_str());
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  INFO(status.ErrorMessage());
+  REQUIRE(status.IsOK());
   std::string text2 = ProtoToString(temp);
-  EXPECT_EQ(text1, text2);
+  REQUIRE(text1 == text2);
 }
 
 template <typename T>
 static void ExpectParseFailure(T& parsedData, const char* input) {
   auto status = OnnxParser::Parse(parsedData, input);
-  EXPECT_FALSE(status.IsOK());
+  REQUIRE_FALSE(status.IsOK());
 }
 
 static void CheckModel(const char* code) {
@@ -46,86 +50,88 @@ static void CheckModel(const char* code) {
   checker::check_model(model);
 }
 
-TEST(ParserTest, EscapeStringLiteral) {
+TEST_CASE("ParserTest", "[EscapeStringLiteral]") {
   OnnxParser parser(R"(
     "123\"56\\89"
   )");
 
   std::string s;
   auto status = parser.ParserBase::Parse(s);
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
-  EXPECT_EQ(s, std::string("123\"56\\89"));
+  INFO(status.ErrorMessage());
+  REQUIRE(status.IsOK());
+  INFO("Extra unparsed input unexpected.");
+  REQUIRE(parser.EndOfInput());
+  REQUIRE(s == std::string("123\"56\\89"));
 }
 
-TEST(ParserTest, TypeTest) {
+TEST_CASE("ParserTest", "[TypeTest]") {
   TypeProto type;
 
   // 1-dimensional tensor type with symbolic dimension:
   Parse(type, "float[N]");
-  EXPECT_TRUE(type.has_tensor_type());
+  REQUIRE(type.has_tensor_type());
   int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
   int int32_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_INT32);
-  EXPECT_EQ(type.tensor_type().elem_type(), float_type);
-  EXPECT_TRUE(type.tensor_type().has_shape());
-  EXPECT_EQ(type.tensor_type().shape().dim_size(), 1);
-  EXPECT_EQ(type.tensor_type().shape().dim(0).dim_param(), "N");
+  REQUIRE(type.tensor_type().elem_type() == float_type);
+  REQUIRE(type.tensor_type().has_shape());
+  REQUIRE(type.tensor_type().shape().dim_size() == 1);
+  REQUIRE(type.tensor_type().shape().dim(0).dim_param() == "N");
 
   // scalar type:
   Parse(type, "float");
-  EXPECT_TRUE(type.has_tensor_type());
-  EXPECT_EQ(type.tensor_type().elem_type(), float_type);
-  EXPECT_TRUE(type.tensor_type().has_shape());
-  EXPECT_EQ(type.tensor_type().shape().dim_size(), 0);
+  REQUIRE(type.has_tensor_type());
+  REQUIRE(type.tensor_type().elem_type() == float_type);
+  REQUIRE(type.tensor_type().has_shape());
+  REQUIRE(type.tensor_type().shape().dim_size() == 0);
 
   // tensor type with unknown rank:
   Parse(type, "float[]");
-  EXPECT_TRUE(type.has_tensor_type());
-  EXPECT_EQ(type.tensor_type().elem_type(), float_type);
-  EXPECT_FALSE(type.tensor_type().has_shape());
+  REQUIRE(type.has_tensor_type());
+  REQUIRE(type.tensor_type().elem_type() == float_type);
+  REQUIRE_FALSE(type.tensor_type().has_shape());
 
   // 3-dimensional tensor
   Parse(type, "float[N,M,K]");
-  EXPECT_EQ(type.tensor_type().shape().dim_size(), 3);
+  REQUIRE(type.tensor_type().shape().dim_size() == 3);
 
   // Unspecified dimension (neither symbolic nor constant)
   Parse(type, "float[N,?,K]");
-  EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_param());
-  EXPECT_FALSE(type.tensor_type().shape().dim(1).has_dim_value());
+  REQUIRE_FALSE(type.tensor_type().shape().dim(1).has_dim_param());
+  REQUIRE_FALSE(type.tensor_type().shape().dim(1).has_dim_value());
 
   // sequence type:
   Parse(type, "seq(float[])");
-  EXPECT_TRUE(type.has_sequence_type());
+  REQUIRE(type.has_sequence_type());
   auto& elttype = type.sequence_type().elem_type();
-  EXPECT_TRUE(elttype.has_tensor_type());
-  EXPECT_EQ(elttype.tensor_type().elem_type(), float_type);
-  EXPECT_FALSE(elttype.tensor_type().has_shape());
+  REQUIRE(elttype.has_tensor_type());
+  REQUIRE(elttype.tensor_type().elem_type() == float_type);
+  REQUIRE_FALSE(elttype.tensor_type().has_shape());
 
   // optional type:
   Parse(type, "optional(float)");
-  EXPECT_TRUE(type.has_optional_type());
+  REQUIRE(type.has_optional_type());
   auto& optelttype = type.optional_type().elem_type();
-  EXPECT_TRUE(optelttype.has_tensor_type());
-  EXPECT_EQ(optelttype.tensor_type().elem_type(), float_type);
-  EXPECT_TRUE(optelttype.tensor_type().has_shape());
+  REQUIRE(optelttype.has_tensor_type());
+  REQUIRE(optelttype.tensor_type().elem_type() == float_type);
+  REQUIRE(optelttype.tensor_type().has_shape());
 
   // optional type:
   Parse(type, "sparse_tensor(float[1000])");
-  EXPECT_TRUE(type.has_sparse_tensor_type());
-  EXPECT_EQ(type.sparse_tensor_type().elem_type(), float_type);
-  EXPECT_EQ(type.sparse_tensor_type().shape().dim_size(), 1);
+  REQUIRE(type.has_sparse_tensor_type());
+  REQUIRE(type.sparse_tensor_type().elem_type() == float_type);
+  REQUIRE(type.sparse_tensor_type().shape().dim_size() == 1);
 
   // map type:
   Parse(type, "map(int32, float[N])");
-  EXPECT_TRUE(type.has_map_type());
-  EXPECT_EQ(type.map_type().key_type(), int32_type);
+  REQUIRE(type.has_map_type());
+  REQUIRE(type.map_type().key_type() == int32_type);
   auto& valtype = type.map_type().value_type();
-  EXPECT_TRUE(valtype.has_tensor_type());
-  EXPECT_EQ(valtype.tensor_type().elem_type(), float_type);
-  EXPECT_EQ(valtype.tensor_type().shape().dim_size(), 1);
+  REQUIRE(valtype.has_tensor_type());
+  REQUIRE(valtype.tensor_type().elem_type() == float_type);
+  REQUIRE(valtype.tensor_type().shape().dim_size() == 1);
 }
 
-TEST(ParserTest, TensorProtoTest) {
+TEST_CASE("ParserTest", "[TensorProtoTest]") {
   TensorProto tensorProto;
 
   // Concrete tensor-type with numeric dimensions expected:
@@ -137,7 +143,7 @@ TEST(ParserTest, TensorProtoTest) {
   Parse(tensorProto, "int32[5] {1, 2, 3, 4, 5}");
 
   Parse(tensorProto, "int32[5] T {1, 2, 3, 4, 5}");
-  EXPECT_EQ(tensorProto.name(), "T");
+  REQUIRE(tensorProto.name() == "T");
 
   Parse(tensorProto, "float[5] {1, 2.0, 3.1, 4, 5.5}");
 
@@ -151,44 +157,44 @@ TEST(ParserTest, TensorProtoTest) {
   )");
 }
 
-TEST(ParserTest, AttributeTest) {
+TEST_CASE("ParserTest", "[AttributeTest]") {
   AttributeProto attr;
 
   Parse(attr, "x = 2");
-  EXPECT_EQ(attr.name(), "x");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
-  EXPECT_EQ(attr.i(), 2);
+  REQUIRE(attr.name() == "x");
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_INT);
+  REQUIRE(attr.i() == 2);
 
   Parse(attr, "x = 0.625");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
-  EXPECT_FLOAT_EQ(attr.f(), 0.625);
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  REQUIRE_THAT(attr.f(), Catch::Matchers::WithinULP(0.625, 1));
 
   Parse(attr, "x = [2, 4, 6]");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
-  EXPECT_EQ(attr.ints_size(), 3);
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
+  REQUIRE(attr.ints_size() == 3);
 
   Parse(attr, "x = [0.125, 0.625]");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS);
-  EXPECT_EQ(attr.floats_size(), 2);
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_FLOATS);
+  REQUIRE(attr.floats_size() == 2);
 
   Parse(attr, "x = float[3] {2.1, 4.1, 6.1}");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR);
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_TENSOR);
 
   Parse(attr, "x = \"astring\"");
-  EXPECT_EQ(attr.name(), "x");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
-  EXPECT_EQ(attr.s(), "astring");
+  REQUIRE(attr.name() == "x");
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
+  REQUIRE(attr.s() == "astring");
 
   Parse(attr, "x = [\"abc\", \"def\"]");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
 
   Parse(attr, "x : ints = @xyz");
-  EXPECT_EQ(attr.ref_attr_name(), "xyz");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
+  REQUIRE(attr.ref_attr_name() == "xyz");
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
 
   Parse(attr, "x : ints = []");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
-  EXPECT_EQ(attr.ints_size(), 0);
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
+  REQUIRE(attr.ints_size() == 0);
 
   Parse(attr, R"ONNX(
     body = somegraph (float[N] y, float[N] z) => (float[N] w)
@@ -197,17 +203,17 @@ TEST(ParserTest, AttributeTest) {
         w = bar(x, y)
       }
 )ONNX");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_GRAPH);
-  EXPECT_EQ(attr.g().node_size(), 2);
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_GRAPH);
+  REQUIRE(attr.g().node_size() == 2);
 
   Parse(attr, "type = float[3]");
-  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_TYPE_PROTO);
-  EXPECT_TRUE(attr.tp().has_tensor_type());
+  REQUIRE(attr.type() == AttributeProto_AttributeType::AttributeProto_AttributeType_TYPE_PROTO);
+  REQUIRE(attr.tp().has_tensor_type());
   int float_type = static_cast<int>(TensorProto_DataType::TensorProto_DataType_FLOAT);
-  EXPECT_EQ(attr.tp().tensor_type().elem_type(), float_type);
+  REQUIRE(attr.tp().tensor_type().elem_type() == float_type);
 }
 
-TEST(ParserTest, AttrListTest) {
+TEST_CASE("ParserTest", "[AttrListTest]") {
   const char* code = R"ONNX(
 <
     x = 2,
@@ -217,66 +223,66 @@ TEST(ParserTest, AttrListTest) {
 
   AttrList attributes;
   Parse(attributes, code);
-  EXPECT_EQ(attributes.size(), 2);
-  EXPECT_EQ(attributes.Get(0).name(), "x");
-  EXPECT_EQ(attributes.Get(1).name(), "w");
+  REQUIRE(attributes.size() == 2);
+  REQUIRE(attributes.Get(0).name() == "x");
+  REQUIRE(attributes.Get(1).name() == "w");
 }
 
-TEST(ParserTest, DomainOpCallTest) {
+TEST_CASE("ParserTest", "[DomainOpCallTest]") {
   const char* code = "x = somedomain.foo(y, z)";
   NodeProto n;
   Parse(n, code);
 }
 
-TEST(ParserTest, OptionalInputTest) {
+TEST_CASE("ParserTest", "[OptionalInputTest]") {
   const char* code = "x = SomeOp(y, , z)";
   NodeProto n;
   Parse(n, code);
-  EXPECT_EQ(n.input_size(), 3);
-  EXPECT_EQ(n.input(0), "y");
-  EXPECT_EQ(n.input(1), "");
-  EXPECT_EQ(n.input(2), "z");
+  REQUIRE(n.input_size() == 3);
+  REQUIRE(n.input(0) == "y");
+  REQUIRE(n.input(1) == "");
+  REQUIRE(n.input(2) == "z");
 }
 
-TEST(ParserTest, LeadingOptionalInputTest) {
+TEST_CASE("ParserTest", "[LeadingOptionalInputTest]") {
   const char* code = "x = SomeOp( , z)";
   NodeProto n;
   Parse(n, code);
-  EXPECT_EQ(n.input_size(), 2);
-  EXPECT_EQ(n.input(0), "");
-  EXPECT_EQ(n.input(1), "z");
+  REQUIRE(n.input_size() == 2);
+  REQUIRE(n.input(0) == "");
+  REQUIRE(n.input(1) == "z");
 }
 
-TEST(ParserTest, LeadingOptionalInputTest2) {
+TEST_CASE("ParserTest", "[LeadingOptionalInputTest2]") {
   const char* code = "x = SomeOp(\"\" , z)";
   NodeProto n;
   Parse(n, code);
-  EXPECT_EQ(n.input_size(), 2);
-  EXPECT_EQ(n.input(0), "");
-  EXPECT_EQ(n.input(1), "z");
+  REQUIRE(n.input_size() == 2);
+  REQUIRE(n.input(0) == "");
+  REQUIRE(n.input(1) == "z");
 }
 
-TEST(ParserTest, OptionalInputTest2) {
+TEST_CASE("ParserTest", "[OptionalInputTest2]") {
   const char* code = "x = SomeOp(y, \"\", z)";
   NodeProto n;
   Parse(n, code);
-  EXPECT_EQ(n.input_size(), 3);
-  EXPECT_EQ(n.input(0), "y");
-  EXPECT_EQ(n.input(1), "");
-  EXPECT_EQ(n.input(2), "z");
+  REQUIRE(n.input_size() == 3);
+  REQUIRE(n.input(0) == "y");
+  REQUIRE(n.input(1) == "");
+  REQUIRE(n.input(2) == "z");
 }
 
-TEST(ParserTest, NodeTest) {
+TEST_CASE("ParserTest", "[NodeTest]") {
   const char* code = "x = foo(y, z)";
   NodeProto n;
   Parse(n, code);
 
-  EXPECT_EQ(n.input_size(), 2);
-  EXPECT_EQ(n.input(0), "y");
-  EXPECT_EQ(n.input(1), "z");
-  EXPECT_EQ(n.output_size(), 1);
-  EXPECT_EQ(n.output(0), "x");
-  EXPECT_EQ(n.op_type(), "foo");
+  REQUIRE(n.input_size() == 2);
+  REQUIRE(n.input(0) == "y");
+  REQUIRE(n.input(1) == "z");
+  REQUIRE(n.output_size() == 1);
+  REQUIRE(n.output(0) == "x");
+  REQUIRE(n.op_type() == "foo");
 
   NodeList nl;
   Parse(nl, R"ONNX(
@@ -294,11 +300,11 @@ TEST(ParserTest, NodeTest) {
        )ONNX");
 }
 
-TEST(ParserTest, NodeLabelTest) {
+TEST_CASE("ParserTest", "[NodeLabelTest]") {
   const char* code = "[node1] x = foo(y, z)";
   NodeProto n;
   Parse(n, code);
-  EXPECT_EQ(n.name(), "node1");
+  REQUIRE(n.name() == "node1");
 
   NodeList nl;
   Parse(nl, R"ONNX( {
@@ -306,21 +312,21 @@ TEST(ParserTest, NodeLabelTest) {
      [node2] w = bar(x, y)
      s = foobar(x, w)
   } )ONNX");
-  EXPECT_EQ(nl.Get(0).name(), "node1");
-  EXPECT_EQ(nl.Get(1).name(), "node2");
-  EXPECT_FALSE(nl.Get(2).has_name());
+  REQUIRE(nl.Get(0).name() == "node1");
+  REQUIRE(nl.Get(1).name() == "node2");
+  REQUIRE_FALSE(nl.Get(2).has_name());
 }
 
-TEST(ParserTest, QualifiedOpNameTest) {
+TEST_CASE("ParserTest", "[QualifiedOpNameTest]") {
   const char* code = "x = com.example.foo(y, z)";
   NodeProto n;
   Parse(n, code);
 
-  EXPECT_EQ(n.domain(), "com.example");
-  EXPECT_EQ(n.op_type(), "foo");
+  REQUIRE(n.domain() == "com.example");
+  REQUIRE(n.op_type() == "foo");
 }
 
-TEST(ParserTest, NodeListTest) {
+TEST_CASE("ParserTest", "[NodeListTest]") {
   const char* code = R"ONNX(
 {
     x = foo(y, z)
@@ -331,30 +337,30 @@ TEST(ParserTest, NodeListTest) {
   GraphProto graph;
   Parse(*graph.mutable_node(), code);
 
-  EXPECT_EQ(graph.node_size(), 2);
-  EXPECT_EQ(graph.node(0).op_type(), "foo");
-  EXPECT_EQ(graph.node(1).op_type(), "bar");
+  REQUIRE(graph.node_size() == 2);
+  REQUIRE(graph.node(0).op_type() == "foo");
+  REQUIRE(graph.node(1).op_type() == "bar");
 }
 
-TEST(ParserTest, NodeAttrTest1) {
+TEST_CASE("ParserTest", "[NodeAttrTest1]") {
   const char* code = "x = foo <a = 100, b = 200.5, c = \"astring\"> (y, z)";
   NodeProto n;
   Parse(n, code);
 
-  EXPECT_EQ(n.attribute_size(), 3);
-  EXPECT_EQ(n.attribute(0).name(), "a");
-  EXPECT_EQ(n.attribute(1).name(), "b");
-  EXPECT_EQ(n.attribute(2).name(), "c");
+  REQUIRE(n.attribute_size() == 3);
+  REQUIRE(n.attribute(0).name() == "a");
+  REQUIRE(n.attribute(1).name() == "b");
+  REQUIRE(n.attribute(2).name() == "c");
 }
 
-TEST(ParserTest, NodeAttrTest2) {
+TEST_CASE("ParserTest", "[NodeAttrTest2]") {
   const char* code = "x = foo <d = [5, 10], e = [0.55, 0.66], f = [\"str1\", \"str2\"]> (y, z)";
   NodeProto n;
   Parse(n, code);
-  EXPECT_EQ(n.attribute_size(), 3);
+  REQUIRE(n.attribute_size() == 3);
 }
 
-TEST(ParserTest, GraphTest) {
+TEST_CASE("ParserTest", "[GraphTest]") {
   const char* code = R"ONNX(
 agraph (float[N] y, float[N] z) => (float[N] w)
 <float[2] w1 = {1.0, 2.0}, float[3] w2 = {4.0, 5.0, 6.0}, float[N] x>
@@ -368,15 +374,15 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   GraphProto graph;
   Parse(graph, code);
 
-  EXPECT_EQ(graph.name(), "agraph");
-  EXPECT_EQ(graph.input_size(), 2);
-  EXPECT_EQ(graph.output_size(), 1);
-  EXPECT_EQ(graph.node_size(), 2);
-  EXPECT_EQ(graph.initializer_size(), 2);
-  EXPECT_EQ(graph.value_info_size(), 1);
+  REQUIRE(graph.name() == "agraph");
+  REQUIRE(graph.input_size() == 2);
+  REQUIRE(graph.output_size() == 1);
+  REQUIRE(graph.node_size() == 2);
+  REQUIRE(graph.initializer_size() == 2);
+  REQUIRE(graph.value_info_size() == 1);
 }
 
-TEST(ParserTest, GraphPartialTypeTest) {
+TEST_CASE("ParserTest", "[GraphPartialTypeTest]") {
   const char* code = R"ONNX(
 agraph (float[N] y, z) => (float[N] w)
 {
@@ -388,12 +394,12 @@ agraph (float[N] y, z) => (float[N] w)
   GraphProto graph;
   Parse(graph, code);
 
-  EXPECT_EQ(graph.name(), "agraph");
-  EXPECT_EQ(graph.input_size(), 2);
-  EXPECT_EQ(graph.output_size(), 1);
+  REQUIRE(graph.name() == "agraph");
+  REQUIRE(graph.input_size() == 2);
+  REQUIRE(graph.output_size() == 1);
 }
 
-TEST(ParserTest, FunctionTest) {
+TEST_CASE("ParserTest", "[FunctionTest]") {
   const char* code = R"ONNX(
 <
   opset_import: [ "" : 10 ],
@@ -410,15 +416,15 @@ f (y, z) => (w)
   FunctionProto fp;
   Parse(fp, code);
 
-  EXPECT_EQ(fp.name(), "f");
-  EXPECT_EQ(fp.input_size(), 2);
-  EXPECT_EQ(fp.output_size(), 1);
-  EXPECT_EQ(fp.node_size(), 2);
-  EXPECT_EQ(fp.attribute_size(), 0);
-  EXPECT_EQ(fp.opset_import_size(), 1);
+  REQUIRE(fp.name() == "f");
+  REQUIRE(fp.input_size() == 2);
+  REQUIRE(fp.output_size() == 1);
+  REQUIRE(fp.node_size() == 2);
+  REQUIRE(fp.attribute_size() == 0);
+  REQUIRE(fp.opset_import_size() == 1);
 }
 
-TEST(ParserTest, FunctionValueInfoTest) {
+TEST_CASE("ParserTest", "[FunctionValueInfoTest]") {
   const char* code = R"ONNX(
 <
   opset_import: [ "" : 10 ],
@@ -435,15 +441,15 @@ f (float[N] y, float[N] z) => (float[N] w)
   FunctionProto fp;
   Parse(fp, code);
 
-  EXPECT_EQ(fp.input_size(), 2);
-  EXPECT_EQ(fp.output_size(), 1);
-  ASSERT_EQ(fp.value_info_size(), 3);
-  EXPECT_EQ(fp.value_info(0).name(), "y");
-  EXPECT_EQ(fp.value_info(1).name(), "z");
-  EXPECT_EQ(fp.value_info(2).name(), "w");
+  REQUIRE(fp.input_size() == 2);
+  REQUIRE(fp.output_size() == 1);
+  REQUIRE(fp.value_info_size() == 3);
+  REQUIRE(fp.value_info(0).name() == "y");
+  REQUIRE(fp.value_info(1).name() == "z");
+  REQUIRE(fp.value_info(2).name() == "w");
 }
 
-TEST(ParserTest, FunctionValueInfoTest2) {
+TEST_CASE("ParserTest", "[FunctionValueInfoTest2]") {
   const char* code = R"ONNX(
 <
   opset_import: [ "" : 10 ],
@@ -461,16 +467,16 @@ f (float[N] y, float[N] z) => (float[N] w)
   FunctionProto fp;
   Parse(fp, code);
 
-  EXPECT_EQ(fp.input_size(), 2);
-  EXPECT_EQ(fp.value_info_size(), 4);
-  ASSERT_EQ(fp.output_size(), 1);
-  EXPECT_EQ(fp.value_info(0).name(), "y");
-  EXPECT_EQ(fp.value_info(1).name(), "z");
-  EXPECT_EQ(fp.value_info(2).name(), "w");
-  EXPECT_EQ(fp.value_info(3).name(), "x");
+  REQUIRE(fp.input_size() == 2);
+  REQUIRE(fp.value_info_size() == 4);
+  REQUIRE(fp.output_size() == 1);
+  REQUIRE(fp.value_info(0).name() == "y");
+  REQUIRE(fp.value_info(1).name() == "z");
+  REQUIRE(fp.value_info(2).name() == "w");
+  REQUIRE(fp.value_info(3).name() == "x");
 }
 
-TEST(ParserTest, FunctionValueInfoTest3) {
+TEST_CASE("ParserTest", "[FunctionValueInfoTest3]") {
   const char* code = R"ONNX(
 <
   opset_import: [ "" : 10 ],
@@ -489,16 +495,16 @@ f (float[N] y, z) => (float[N] w)
   FunctionProto fp;
   Parse(fp, code);
 
-  EXPECT_EQ(fp.input_size(), 2);
-  ASSERT_EQ(fp.value_info_size(), 4);
-  EXPECT_EQ(fp.output_size(), 1);
-  EXPECT_EQ(fp.value_info(0).name(), "y");
-  EXPECT_EQ(fp.value_info(1).name(), "w");
-  EXPECT_EQ(fp.value_info(2).name(), "x");
-  EXPECT_EQ(fp.value_info(3).name(), "t");
+  REQUIRE(fp.input_size() == 2);
+  REQUIRE(fp.value_info_size() == 4);
+  REQUIRE(fp.output_size() == 1);
+  REQUIRE(fp.value_info(0).name() == "y");
+  REQUIRE(fp.value_info(1).name() == "w");
+  REQUIRE(fp.value_info(2).name() == "x");
+  REQUIRE(fp.value_info(3).name() == "t");
 }
 
-TEST(ParserTest, InitializerTest) {
+TEST_CASE("ParserTest", "[InitializerTest]") {
   const char* code = R"ONNX(
 agraph (float y = {1.0}, float[N] z) => (float[N] w)
 <float[2] w1 = {1.0, 2.0}, float[3] w2 = {4.0, 5.0, 6.0}, float[N] x>
@@ -511,13 +517,13 @@ agraph (float y = {1.0}, float[N] z) => (float[N] w)
   GraphProto graph;
   Parse(graph, code);
 
-  EXPECT_EQ(graph.input_size(), 2);
-  EXPECT_EQ(graph.output_size(), 1);
-  EXPECT_EQ(graph.initializer_size(), 3); // y, w1, w2
-  EXPECT_EQ(graph.value_info_size(), 1); // x
+  REQUIRE(graph.input_size() == 2);
+  REQUIRE(graph.output_size() == 1);
+  REQUIRE(graph.initializer_size() == 3); // y== w1== w2
+  REQUIRE(graph.value_info_size() == 1); // x
 }
 
-TEST(ParserTest, IfNodeTest) {
+TEST_CASE("ParserTest", "[IfNodeTest]") {
   const char* code = R"ONNX(
 z = If (b) <
     then_branch = g1 () => (float[N] z_then)
@@ -533,12 +539,12 @@ z = If (b) <
 
   NodeProto node;
   Parse(node, code);
-  EXPECT_EQ(node.input_size(), 1);
-  EXPECT_EQ(node.output_size(), 1);
-  EXPECT_EQ(node.attribute_size(), 2);
+  REQUIRE(node.input_size() == 1);
+  REQUIRE(node.output_size() == 1);
+  REQUIRE(node.attribute_size() == 2);
 }
 
-TEST(ParserTest, ModelTest) {
+TEST_CASE("ParserTest", "[ModelTest]") {
   const char* code = R"ONNX(
 <
   ir_version: 7,
@@ -560,12 +566,12 @@ agraph (float[N] y, float[N] z) => (float[N] w)
   ModelProto model;
   Parse(model, code);
 
-  EXPECT_EQ(model.graph().input_size(), 2);
-  EXPECT_EQ(model.graph().output_size(), 1);
-  EXPECT_EQ(model.graph().node_size(), 2);
+  REQUIRE(model.graph().input_size() == 2);
+  REQUIRE(model.graph().output_size() == 1);
+  REQUIRE(model.graph().node_size() == 2);
 }
 
-TEST(ParserTest, ModelCheckTest) {
+TEST_CASE("ParserTest", "[ModelCheckTest]") {
   const char* code = R"ONNX(
 <
   ir_version: 7,
@@ -582,7 +588,7 @@ agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
   CheckModel(code);
 }
 
-TEST(ParserTest, IfModelTest) {
+TEST_CASE("ParserTest", "[IfModelTest]") {
   const char* code = R"ONNX(
 <
   ir_version: 7,
@@ -600,7 +606,7 @@ iftest (bool b, float[128] X, float[128] Y) => (float[128] Z)
   CheckModel(code);
 }
 
-TEST(ParserTest, FunModelTest) {
+TEST_CASE("ParserTest", "[FunModelTest]") {
   const char* code = R"ONNX(
 <
   ir_version: 8,
@@ -664,7 +670,7 @@ doc_string: "function foo"
   CheckModel(code_function_with_attributes);
 }
 
-TEST(ParserTest, TypesModelTest1) {
+TEST_CASE("ParserTest", "[TypesModelTest1]") {
   const char* code = R"ONNX(
     <
     ir_version: 8,
@@ -678,7 +684,7 @@ TEST(ParserTest, TypesModelTest1) {
   CheckModel(code);
 }
 
-TEST(ParserTest, TypesModelTest2) {
+TEST_CASE("ParserTest", "[TypesModelTest2]") {
   const char* code = R"ONNX(
     <
     ir_version: 8,
@@ -692,7 +698,7 @@ TEST(ParserTest, TypesModelTest2) {
   CheckModel(code);
 }
 
-TEST(ParserTest, ExternalDataTest) {
+TEST_CASE("ParserTest", "[ExternalDataTest]") {
   const char* code = R"ONNX(
 agraph (float y = {1.0}, float[N] z) => (w) <
     float[3, 2] m1 = ["location": "weight_1.bin", "offset": "17"],
@@ -707,18 +713,18 @@ agraph (float y = {1.0}, float[N] z) => (w) <
   GraphProto graph;
   Parse(graph, code);
 
-  EXPECT_EQ(graph.input_size(), 2);
-  EXPECT_EQ(graph.output_size(), 1);
-  EXPECT_EQ(graph.initializer_size(), 3); // m1, m2
-  EXPECT_EQ(graph.value_info_size(), 0); // x
-  EXPECT_EQ(graph.initializer().Get(1).data_location(), TensorProto_DataLocation::TensorProto_DataLocation_EXTERNAL);
-  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).key(), "location");
-  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(0).value(), "weight_1.bin");
-  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).key(), "offset");
-  EXPECT_EQ(graph.initializer().Get(1).external_data().Get(1).value(), "17");
+  REQUIRE(graph.input_size() == 2);
+  REQUIRE(graph.output_size() == 1);
+  REQUIRE(graph.initializer_size() == 3); // m1== m2
+  REQUIRE(graph.value_info_size() == 0); // x
+  REQUIRE(graph.initializer().Get(1).data_location() == TensorProto_DataLocation::TensorProto_DataLocation_EXTERNAL);
+  REQUIRE(graph.initializer().Get(1).external_data().Get(0).key() == "location");
+  REQUIRE(graph.initializer().Get(1).external_data().Get(0).value() == "weight_1.bin");
+  REQUIRE(graph.initializer().Get(1).external_data().Get(1).key() == "offset");
+  REQUIRE(graph.initializer().Get(1).external_data().Get(1).value() == "17");
 }
 
-TEST(ParserTest, QuotedIdentifiersTest) {
+TEST_CASE("ParserTest", "[QuotedIdentifiersTest]") {
   const char* code = R"ONNX(
 "a graph name" (float[N, 128] "input/X", float[128,10] "input W", float[10] B) => (float[N] C)
 {
@@ -731,16 +737,16 @@ TEST(ParserTest, QuotedIdentifiersTest) {
   GraphProto graph;
   Parse(graph, code);
 
-  EXPECT_EQ(graph.name(), "a graph name");
-  EXPECT_EQ(graph.input_size(), 3);
-  EXPECT_EQ(graph.output_size(), 1);
-  EXPECT_EQ(graph.node_size(), 3);
-  EXPECT_EQ(graph.node(0).input(0), "input/X");
-  EXPECT_EQ(graph.node(0).input(1), "input W");
-  EXPECT_EQ(graph.node(0).output(0), "some/temp");
+  REQUIRE(graph.name() == "a graph name");
+  REQUIRE(graph.input_size() == 3);
+  REQUIRE(graph.output_size() == 1);
+  REQUIRE(graph.node_size() == 3);
+  REQUIRE(graph.node(0).input(0) == "input/X");
+  REQUIRE(graph.node(0).input(1) == "input W");
+  REQUIRE(graph.node(0).output(0) == "some/temp");
 }
 
-TEST(ParserTest, QuotedIdentifierTest2) {
+TEST_CASE("ParserTest", "[QuotedIdentifierTest2]") {
   const char* code = R"ONNX(
 <
   opset_import: [ "" : 10 ],

@@ -20,9 +20,9 @@ CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 depends-on = "build"
 cmd = "python onnx/defs/gen_doc.py"
 
-[tasks.gtest]
+[tasks.onnx_test]
 # Windows uses a different path
-cmd = "cp .setuptools-cmake-build/Release/onnx_gtests.exe .setuptools-cmake-build/onnx_gtests |& true && .setuptools-cmake-build/onnx_gtests"
+cmd = "cp .setuptools-cmake-build/Release/onnx_tests.exe .setuptools-cmake-build/onnx_tests |& true && .setuptools-cmake-build/onnx_tests"
 
 [tasks.pytest]
 cmd = "pytest"
@@ -69,7 +69,7 @@ lintrunner-init = "lintrunner init"
 lintrunner-run = "lintrunner --all-files"
 [feature.lint.dependencies]
 # follows requirements-lintrunner.txt
-ruff = "==0.11.12"  
+ruff = "==0.11.12"
 mypy = "==1.16.0"
 types-protobuf = ">=5.29.1.20250403"
 clang-format = ">=20.1.5"

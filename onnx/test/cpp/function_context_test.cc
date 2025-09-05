@@ -6,7 +6,7 @@
 
 #include <stdexcept>
 
-#include "gtest/gtest.h"
+#include "catch2/catch_test_macros.hpp"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
@@ -94,13 +94,13 @@ static void RegisterCustomFuncFloatSchema() {
 }
 
 // Test for Context dependent function without type context
-TEST(FunctionAPITest, ContextDependentFunctionTest) {
+TEST_CASE("FunctionAPITest", "[ContextDependentFunctionTest]") {
   RegisterCustomFuncFloatSchema();
 
   const auto* schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
-  EXPECT_TRUE(schema);
-  EXPECT_FALSE(schema->HasFunction());
-  EXPECT_TRUE(schema->HasContextDependentFunction());
+  REQUIRE(schema);
+  REQUIRE_FALSE(schema->HasFunction());
+  REQUIRE(schema->HasContextDependentFunction());
 
   NodeProto nodeProto;
   nodeProto.set_op_type("CustomFuncFloat");
@@ -109,8 +109,8 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
 
   FunctionBodyBuildContextImpl ctx(nodeProto);
   FunctionProto fnProto;
-  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
-  EXPECT_EQ(fnProto.node_size(), 2);
+  REQUIRE(schema->BuildContextDependentFunction(ctx, fnProto));
+  REQUIRE(fnProto.node_size() == 2);
 
   LexicalScopeContext lexicalScope;
   CheckerContext checkerCtx;
@@ -153,7 +153,7 @@ static void RegisterCustomFunctionSchema() {
   (void)unused;
 }
 
-TEST(FunctionAPITest, VersionedFunctionBodyTest) {
+TEST_CASE("FunctionAPITest", "[VersionedFunctionBodyTest]") {
   // This test illustrate issues of ONNX function ops.
   // It is over simplified in that only one primary op (Sub) is used in function body.
   // ONNX opset     1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18
@@ -216,44 +216,44 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   (void)unused9;
 
   const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
-  EXPECT_TRUE(schema2);
+  REQUIRE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
     ONNX_TRY {
       bool validate = true;
       const FunctionProto* function = schema2->GetFunction(model_opset_import, validate);
       if (model_opset_import >= 6) { // function body should be updated at opset 6 where Sub is updated
-        ASSERT_TRUE(function == nullptr);
+        REQUIRE(function == nullptr);
       } else {
-        ASSERT_TRUE(function);
+        REQUIRE(function);
       }
     }
     ONNX_CATCH(const std::runtime_error&) {
       ONNX_HANDLE_EXCEPTION(
-          [&]() { ASSERT_TRUE(model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8); });
+          [&]() { CHECK((model_opset_import == 6 || model_opset_import == 7 || model_opset_import == 8)); });
     }
   }
 
   const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
-  EXPECT_TRUE(schema9);
+  REQUIRE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
     ONNX_TRY {
       const FunctionProto* function = schema9->GetFunction(model_opset_import);
-      ASSERT_TRUE(function);
+      REQUIRE(function);
     }
     ONNX_CATCH(const std::runtime_error&) {
       ONNX_HANDLE_EXCEPTION(
-          [&]() { ASSERT_TRUE(model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15); });
+          [&]() { REQUIRE((model_opset_import == 13 || model_opset_import == 14 || model_opset_import == 15)); });
     }
   }
 }
 
-TEST(FunctionAPITest, TypeContextTest) {
+TEST_CASE("FunctionAPITest", "[TypeContextTest]") {
   RegisterCustomFunctionSchema();
 
   const auto* schema = OpSchemaRegistry::Schema("CustomFunction", 12, ONNX_DOMAIN);
-  EXPECT_TRUE(schema);
-  EXPECT_FALSE(schema->HasFunction());
-  EXPECT_TRUE(schema->HasContextDependentFunction());
+  REQUIRE(schema);
+  REQUIRE_FALSE(schema->HasFunction());
+  REQUIRE(schema->HasContextDependentFunction());
 
   NodeProto nodeProto;
   nodeProto.set_op_type("CustomFunction");
@@ -265,8 +265,8 @@ TEST(FunctionAPITest, TypeContextTest) {
 
   FunctionBodyBuildContextImpl ctx(nodeProto, {floatTypeProto});
   FunctionProto fnProto;
-  EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
-  EXPECT_EQ(fnProto.node_size(), 2);
+  REQUIRE(schema->BuildContextDependentFunction(ctx, fnProto));
+  REQUIRE(fnProto.node_size() == 2);
 
   LexicalScopeContext lexicalScope;
   CheckerContext checkerCtx;
