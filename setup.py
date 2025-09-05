@@ -308,9 +308,13 @@ CMD_CLASS = {
 # Extensions
 ################################################################################
 
+NO_GIL = hasattr(sys, '_is_gil_enabled') and not sys._is_gil_enabled()
+PY_312_OR_NEWER = sys.version_info >= (3, 12)
+USE_LIMITED_API = not NO_GIL and PY_312_OR_NEWER
+
 EXT_MODULES = [
     setuptools.Extension(
-        name="onnx.onnx_cpp2py_export", sources=[], py_limited_api=True
+        name="onnx.onnx_cpp2py_export", sources=[], py_limited_api=USE_LIMITED_API
     )
 ]
 
@@ -319,7 +323,11 @@ EXT_MODULES = [
 # Final
 ################################################################################
 # Enable limited ABI build
-bdist_wheel_options = {"py_limited_api": "cp312"}
+
+bdist_wheel_options = {}
+if USE_LIMITED_API:
+    bdist_wheel_options["py_limited_api"] = "cp312"
+
 if ONNX_WHEEL_PLATFORM_NAME is not None:
     bdist_wheel_options["plat_name"] = ONNX_WHEEL_PLATFORM_NAME
 
