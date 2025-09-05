@@ -482,9 +482,6 @@ if(ONNX_BUILD_PYTHON)
     NB_STATIC NB_DOMAIN STABLE_ABI FREE_THREADED LTO
     "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-  # Ensure Python headers are found
-  target_include_directories(onnx_cpp2py_export PRIVATE ${Python3_INCLUDE_DIRS})
-
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
     target_sources(onnx_cpp2py_export PRIVATE $<TARGET_OBJECTS:onnx>)
