@@ -482,7 +482,7 @@ if(ONNX_BUILD_PYTHON)
   # Configure nanobind: https://nanobind.readthedocs.io/en/latest/api_cmake.html
   nanobind_add_module(
     onnx_cpp2py_export
-    NB_STATIC NB_DOMAIN STABLE_ABI FREE_THREADED LTO
+    NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
     "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
