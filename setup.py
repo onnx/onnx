@@ -308,25 +308,41 @@ CMD_CLASS = {
 # Extensions
 ################################################################################
 
-NO_GIL = hasattr(sys, '_is_gil_enabled') and not sys._is_gil_enabled()
+# Enable limited ABI build
+# nanobind supports limited ABI for Python 3.12 and later.
+# https://blog.trailofbits.com/2022/11/15/python-wheels-abi-abi3audit/
+
+# 1. The Py_LIMITED_API macro is defined in the extension
+# 2. py_limited_api in Extension tags the extension as abi3
+# 3. bdist_wheel_options tags the wheel as abi3
+
+NO_GIL = hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled()
 PY_312_OR_NEWER = sys.version_info >= (3, 12)
 USE_LIMITED_API = not NO_GIL and PY_312_OR_NEWER
 
+macros = []
+if USE_LIMITED_API:
+    macros.append(("Py_LIMITED_API", "0x030C0000"))
+
 EXT_MODULES = [
     setuptools.Extension(
-        name="onnx.onnx_cpp2py_export", sources=[], py_limited_api=USE_LIMITED_API
+        name="onnx.onnx_cpp2py_export",
+        sources=[],
+        py_limited_api=USE_LIMITED_API,
+        define_macros=macros,
     )
 ]
-
 
 ################################################################################
 # Final
 ################################################################################
-# Enable limited ABI build
 
 bdist_wheel_options = {}
+
 if USE_LIMITED_API:
     bdist_wheel_options["py_limited_api"] = "cp312"
+    macros.append(("Py_LIMITED_API", "0x030C0000"))
+
 
 if ONNX_WHEEL_PLATFORM_NAME is not None:
     bdist_wheel_options["plat_name"] = ONNX_WHEEL_PLATFORM_NAME
