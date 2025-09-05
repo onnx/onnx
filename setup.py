@@ -341,8 +341,6 @@ bdist_wheel_options = {}
 
 if USE_LIMITED_API:
     bdist_wheel_options["py_limited_api"] = "cp312"
-    macros.append(("Py_LIMITED_API", "0x030C0000"))
-
 
 if ONNX_WHEEL_PLATFORM_NAME is not None:
     bdist_wheel_options["plat_name"] = ONNX_WHEEL_PLATFORM_NAME
