@@ -308,20 +308,24 @@ CMD_CLASS = {
 # Extensions
 ################################################################################
 
-EXT_MODULES = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
+EXT_MODULES = [
+    setuptools.Extension(
+        name="onnx.onnx_cpp2py_export", sources=[], py_limited_api=True
+    )
+]
 
 
 ################################################################################
 # Final
 ################################################################################
+# Enable limited ABI build
+bdist_wheel_options = {"py_limited_api": "cp312"}
+if ONNX_WHEEL_PLATFORM_NAME is not None:
+    bdist_wheel_options["plat_name"] = ONNX_WHEEL_PLATFORM_NAME
 
 setuptools.setup(
     ext_modules=EXT_MODULES,
     cmdclass=CMD_CLASS,
     version=VERSION_INFO["version"],
-    options=(
-        {"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
-        if ONNX_WHEEL_PLATFORM_NAME is not None
-        else {}
-    ),
+    options=({"bdist_wheel": bdist_wheel_options}),
 )
