@@ -48,7 +48,7 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
           return false;                                                                           \
         }                                                                                         \
         auto serialized = nanobind::cast<nanobind::bytes>(py_proto.attr("SerializeToString")());  \
-        if (!value.ParseFromArray(serialized.data(), serialized.size())) {                        \
+        if (!ParseProtoFromPyBytes(&value, serialized)) {                                         \
           return false;                                                                           \
         }                                                                                         \
         return true;                                                                              \
