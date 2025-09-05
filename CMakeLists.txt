@@ -136,20 +136,23 @@ if(NOT DEFINED Python3_FIND_STRATEGY)
   set(Python3_FIND_STRATEGY LOCATION)
 endif()
 
+if(ONNX_BUILD_PYTHON)
+  set(python_dev_component Development.Module)
+endif()
+
 if(CMAKE_CROSSCOMPILING)
   # When cross-compiling, the interpreter and the compiling/linking steps
   # must use a different package. See the discussion about this at
   # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
   if(ONNX_BUILD_PYTHON)
-    find_package(Python3 REQUIRED COMPONENTS Development.Module)
+    find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
 else()
-  if(ONNX_BUILD_PYTHON)
-    set(python_dev_component Development.Module)
-  endif()
   find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  # Find Python for nanobind
+  find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
   set(ONNX_PYTHON_INTERPRETER Python3::Interpreter)
 endif()
 
