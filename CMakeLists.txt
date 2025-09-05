@@ -6,6 +6,8 @@ project(onnx LANGUAGES CXX)
 include(cmake/Utils.cmake)
 # Honor visibility properties for all target types.
 cmake_policy(SET CMP0063 NEW)
+# Modules FindPython3 and FindPython use LOCATION for lookup strategy.
+cmake_policy(SET CMP0094 NEW)
 
 # Set default build type
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -125,15 +127,6 @@ if(ONNX_DISABLE_EXCEPTIONS)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
   endif()
-endif()
-
-# explicitly configure FindPython3.cmake to find python3 in virtual environment first
-if(NOT DEFINED Python3_FIND_VIRTUALENV)
-  set(Python3_FIND_VIRTUALENV FIRST)
-endif()
-
-if(NOT DEFINED Python3_FIND_STRATEGY)
-  set(Python3_FIND_STRATEGY LOCATION)
 endif()
 
 if(ONNX_BUILD_PYTHON)
@@ -466,9 +459,6 @@ if(ONNX_BUILD_PYTHON)
   find_package(nanobind)
   if(NOT nanobind_FOUND)
     include(FetchContent)
-
-    # Set Python include directories for nanobind
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${Python3_INCLUDE_DIRS}")
 
     FetchContent_Declare(
       nanobind
