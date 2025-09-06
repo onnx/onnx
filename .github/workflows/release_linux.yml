@@ -91,7 +91,7 @@ jobs:
         fi
         for whl in dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl; do
           echo "Checking abi3 compatibility for $whl"
-          python -m abi3audit "$whl"
+          python -m abi3audit -v "$whl"
         done        
 
     - name: Install protobuf in the GitHub Action environment for testing the wheel
