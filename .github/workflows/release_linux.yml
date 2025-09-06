@@ -81,6 +81,14 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release_test.txt
 
+    - name: Check abi3 compatibility with abi3audit
+      if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
+      run: |        
+        for whl in dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl; do
+          echo "Checking abi3 compatibility for $whl"
+          python -m abi3audit "$whl"
+        done        
+
     - name: Install protobuf in the GitHub Action environment for testing the wheel
       if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
       run: |
