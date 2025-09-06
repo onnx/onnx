@@ -91,7 +91,7 @@ Detailed install instructions, including Common Build Options and Common Errors 
 
 # Python ABI3 Compatibility
 
-This package provides [abi3](https://docs.python.org/3/c-api/stable.html)-compatible wheels, allowing a single binary wheel to work across multiple Python versions (from 3.X onwards).
+This package provides [abi3](https://docs.python.org/3/c-api/stable.html)-compatible wheels, allowing a single binary wheel to work across multiple Python versions (from 3.12 onwards).
 
 
 # Testing
