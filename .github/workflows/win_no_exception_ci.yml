@@ -58,8 +58,8 @@ jobs:
         cd .setuptools-cmake-build\
         cmake --build . --config Release
 
-        echo "Run gtests"
-        Release\onnx_gtests.exe
+        echo "Run onnx_tests"
+        Release\onnx_tests.exe
         if($lastexitcode -ne 0) {
           EXIT 1
         }
@@ -74,7 +74,7 @@ jobs:
         cmake --build . --config Release
 
         echo "Only test selective ONNX schema loading"
-        Release\onnx_gtests.exe --gtest_filter="SchemaRegistrationTest*"
+        Release\onnx_tests.exe "SchemaRegistrationTest*"
         if($lastexitcode -ne 0) {
           EXIT 1
         }

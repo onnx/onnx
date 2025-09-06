@@ -154,14 +154,14 @@ The cpp tests require dynamically linking to built libraries.
 
 ```sh
 export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
-.setuptools-cmake-build/onnx_gtests
+.setuptools-cmake-build/onnx_tests
 ```
 
 ##### Windows
 
 ```pwsh
-# If you set DEBUG=1, use `.setuptools-cmake-build\Debug\onnx_gtests.exe` instead
-.setuptools-cmake-build\Release\onnx_gtests.exe
+# If you set DEBUG=1, use `.setuptools-cmake-build\Debug\onnx_tests.exe` instead
+.setuptools-cmake-build\Release\onnx_tests.exe
 ```
 
 ### DCO

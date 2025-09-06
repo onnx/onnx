@@ -4,9 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
-
-#include "gtest/gtest.h"
+#include "catch2/catch_test_macros.hpp"
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/defs/printer.h"
@@ -29,7 +27,7 @@ static bool IsValidIdentifier(const std::string& name) {
   return true;
 }
 
-TEST(IR, ValidIdentifierTest) {
+TEST_CASE("IR", "[ValidIdentifierTest]") {
   Graph* g = new Graph();
   g->setName("test");
   Value* x = g->addInput();
@@ -51,7 +49,7 @@ TEST(IR, ValidIdentifierTest) {
 
   for (auto& node : model.graph().node()) {
     for (auto& name : node.output()) {
-      EXPECT_TRUE(IsValidIdentifier(name));
+      REQUIRE(IsValidIdentifier(name));
     }
   }
 }

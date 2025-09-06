@@ -4,44 +4,41 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
-
-#include "gtest/gtest.h"
-#include "onnx/common/constants.h"
+#include "catch2/catch_test_macros.hpp"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 namespace Test {
 
-TEST(FunctionAPITest, GetFunctionOpWithVersion) {
+TEST_CASE("FunctionAPITest", "[GetFunctionOpWithVersion]") {
   const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
-  EXPECT_TRUE(schema);
-  EXPECT_TRUE(schema->HasFunction());
+  REQUIRE(schema);
+  REQUIRE(schema->HasFunction());
   auto func = schema->GetFunction();
-  EXPECT_EQ(func->name(), "MeanVarianceNormalization");
+  REQUIRE(func->name() == "MeanVarianceNormalization");
 }
 
-TEST(FunctionAPITest, GetMeanVarianceNormalizationFunctionWithVersion) {
+TEST_CASE("FunctionAPITest", "[GetMeanVarianceNormalizationFunctionWithVersion]") {
   {
     const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 13, "");
-    EXPECT_TRUE(schema);
-    EXPECT_TRUE(schema->HasFunction());
+    REQUIRE(schema);
+    REQUIRE(schema->HasFunction());
     auto func = schema->GetFunction();
-    EXPECT_EQ(func->name(), "MeanVarianceNormalization");
+    REQUIRE(func->name() == "MeanVarianceNormalization");
   }
   {
     const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 17, "");
-    EXPECT_TRUE(schema);
-    EXPECT_TRUE(schema->HasFunction());
+    REQUIRE(schema);
+    REQUIRE(schema->HasFunction());
     auto func = schema->GetFunction();
-    EXPECT_EQ(func->name(), "MeanVarianceNormalization");
+    REQUIRE(func->name() == "MeanVarianceNormalization");
   }
   {
     const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 18, "");
-    EXPECT_TRUE(schema);
-    EXPECT_TRUE(schema->HasFunction());
+    REQUIRE(schema);
+    REQUIRE(schema->HasFunction());
     auto func = schema->GetFunction();
-    EXPECT_EQ(func->name(), "MeanVarianceNormalization");
+    REQUIRE(func->name() == "MeanVarianceNormalization");
   }
 }
 

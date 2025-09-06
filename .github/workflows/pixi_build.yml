@@ -42,7 +42,7 @@ jobs:
           environments: ${{ matrix.environment }}
       - name: Install repository
         run: pixi run -e ${{ matrix.environment }} install
-      - name: gtests
-        run: pixi run -e ${{ matrix.environment }} gtest
+      - name: cxx_tests
+        run: pixi run -e ${{ matrix.environment }} onnx_test
       - name: pytest
         run: pixi run -e ${{ matrix.environment }} pytest

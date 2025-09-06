@@ -20,9 +20,9 @@ CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 depends-on = "build"
 cmd = "python onnx/defs/gen_doc.py"
 
-[tasks.gtest]
+[tasks.onnx_test]
 # Windows uses a different path
-cmd = "cp .setuptools-cmake-build/Release/onnx_gtests.exe .setuptools-cmake-build/onnx_gtests |& true && .setuptools-cmake-build/onnx_gtests"
+cmd = "cp .setuptools-cmake-build/Release/onnx_tests.exe .setuptools-cmake-build/onnx_tests |& true && .setuptools-cmake-build/onnx_tests"
 
 [tasks.pytest]
 cmd = "pytest"

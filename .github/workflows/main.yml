@@ -45,7 +45,7 @@ jobs:
             debug_build: 1
             unity_build: 1
             documentation: 1
-            protobuf_type: 'Internal'            
+            protobuf_type: 'Internal'
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 1
@@ -75,18 +75,18 @@ jobs:
             debug_build: 0
             unity_build: 0
             documentation: 0
-            protobuf_type: 'Internal'          
+            protobuf_type: 'Internal'
         exclude:
           - os: windows-11-arm
-            python_version: '3.10'          
+            python_version: '3.10'
           - os: windows-latest # TODO: reevalute for final python 3.14 release: "Numpy built with MINGW-W64 on Windows 64 bits is experimental"
             python_version: '3.14-dev'
-          # skip mac os 3.11, 3.13          
+          # skip mac os 3.11, 3.13
           - os:  macos-latest
             python_version: '3.11'
           - os:  macos-latest
             python_version: '3.13'
-            
+
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -144,7 +144,7 @@ jobs:
           if [ "${{ matrix.python_version }}" == "3.14-dev" ]; then
             sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           fi
-        
+
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
@@ -187,13 +187,13 @@ jobs:
       - name: Install test dependencies
         run: |
           python -m pip install -r requirements-release_test.txt
-      
+
       - name: Install Pillow with JPEG 2000 support
         if: (matrix.python_version == '3.14-dev') && startsWith(matrix.os,'ubuntu')
         run: |
           sudo apt-get install -y libopenjp2-7-dev # TODO: integrate in test reqs
           python -m pip install --upgrade Pillow --no-binary :all:
-          
+
       - name: Run Python tests
         if: (matrix.python_version != '3.13t' ) && (matrix.python_version != '3.14-dev')
         run: |
@@ -203,7 +203,7 @@ jobs:
         if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
-          ./.setuptools-cmake-build/onnx_gtests
+          ./.setuptools-cmake-build/onnx_tests
 
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'
