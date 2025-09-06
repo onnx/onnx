@@ -1,5 +1,4 @@
 abi3audit
-ml_dtypes
 parameterized
 pytest
 pytest-cov
