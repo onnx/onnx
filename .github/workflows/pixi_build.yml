@@ -1,9 +1,16 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Pixi CI
+
 on:
-  push:
-  pull_request:
-    branches:
-      - main
+  schedule:
+    # run weekly on Sunday 23:59
+    - cron:  '29 23 * * SUN'
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,12 +32,12 @@ jobs:
           - oldies
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 0
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.8.8
+        uses: prefix-dev/setup-pixi@v0.9.0
         with:
           environments: ${{ matrix.environment }}
       - name: Install repository

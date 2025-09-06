@@ -1,11 +1,13 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.26)
 # Project
 project(onnx LANGUAGES CXX)
 
 include(cmake/Utils.cmake)
 # Honor visibility properties for all target types.
 cmake_policy(SET CMP0063 NEW)
+# Modules FindPython3 and FindPython use LOCATION for lookup strategy.
+cmake_policy(SET CMP0094 NEW)
 
 # Set default build type
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -38,14 +40,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 
-if(DEFINED BUILD_ONNX_PYTHON)
-  message(WARNING "'BUILD_ONNX_PYTHON' is deprecated. Please, use 'ONNX_BUILD_PYTHON' instead")
-  set(ONNX_BUILD_PYTHON_DEFAULT ${BUILD_ONNX_PYTHON})
-else()
-  set(ONNX_BUILD_PYTHON_DEFAULT OFF)
-endif()
-
-option(ONNX_BUILD_PYTHON "Build Python binaries" ${ONNX_BUILD_PYTHON_DEFAULT})
+option(ONNX_BUILD_PYTHON "Build Python binaries" OFF)
 option(ONNX_BUILD_CUSTOM_PROTOBUF "Build and use ONNX's own protobuf" OFF)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -117,6 +112,10 @@ if(MSVC)
     string(APPEND CMAKE_C_FLAGS " /EHsc /wd26812")
   endif()
   add_compile_options(/MP /utf-8 /nologo)
+  add_compile_options(
+    /wd5287  # https://developercommunity.visualstudio.com/t/warning-C5287:-operands-are-different-e/10877942?sort=newest
+    /Zc:lambda  # https://developercommunity.visualstudio.com/t/fatal--error-C1001:-Internal-compiler-er/10906076
+  )
 endif()
 
 if(ONNX_DISABLE_EXCEPTIONS)
@@ -131,19 +130,24 @@ if(ONNX_DISABLE_EXCEPTIONS)
 endif()
 
 if(ONNX_BUILD_PYTHON)
-  set(python_dev_component Development.Module)
+  set(python_dev_component Development.Module Development.SABIModule)
 endif()
 
-# explicitly configure FindPython3.cmake to find python3 in virtual environment first
-if(NOT DEFINED Python3_FIND_VIRTUALENV)
-  set(Python3_FIND_VIRTUALENV FIRST)
+if(CMAKE_CROSSCOMPILING)
+  # When cross-compiling, the interpreter and the compiling/linking steps
+  # must use a different package. See the discussion about this at
+  # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
+  if(ONNX_BUILD_PYTHON)
+    find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
+  endif()
+  find_package(Python REQUIRED COMPONENTS Interpreter)
+  set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
+else()
+  find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  # Find Python for nanobind
+  find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  set(ONNX_PYTHON_INTERPRETER Python3::Interpreter)
 endif()
-
-if(NOT DEFINED Python3_FIND_STRATEGY)
-  set(Python3_FIND_STRATEGY LOCATION)
-endif()
-
-find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
 
 if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
   set(CMAKE_NO_SYSTEM_FROM_IMPORTED 1)
@@ -271,8 +275,8 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.0/protobuf-31.0.tar.gz)
-    set(ProtobufSHA1 c0cecb7cfc881f56a5b09f00a965aae408265fd0)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz)
+    set(ProtobufSHA1 da10aaa3bf779735a8a9acde1256a47ce5d148be)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -282,7 +286,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.31.0")
+    set(Protobuf_VERSION "6.31.1")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -306,7 +310,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   set(${SRCS})
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
-  set(GENERATED_FILE_TARGETS)
+  set(GENERATED_FILES)
   foreach(INFILE ${ARGN})
     set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
@@ -356,12 +360,11 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
         list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
     endif()
 
-    add_custom_target("${GENERATED_FILE_WE}_proto_file"
-                       COMMAND Python3::Interpreter "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
-                       BYPRODUCTS "${GENERATED_PROTO}"
-                       DEPENDS ${INFILE}
-                       COMMENT "Running gen_proto.py on ${INFILE}"
-                       )
+    # Use add_custom_command to avoid re-generate of PROTO files
+    add_custom_command(OUTPUT "${GENERATED_PROTO}"
+        COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
+        DEPENDS ${INFILE}
+        COMMENT "Running gen_proto.py on ${INFILE}")
     message("Generated: ${GENERATED_PROTO}")
 
     set(PROTOC_ARGS
@@ -378,11 +381,10 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
         list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
-    list(APPEND GENERATED_FILE_TARGETS ${GENERATED_FILE_WE}_proto_file)
-    add_custom_target(${GENERATED_FILE_WE}_src
+    list(APPEND GENERATED_FILES "${GENERATED_PROTO}")
+    add_custom_command(OUTPUT "${OUTPUT_PB_SRC}"
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
-        BYPRODUCTS "${OUTPUT_PB_SRC}"
-        DEPENDS ${GENERATED_FILE_TARGETS}
+        DEPENDS ${GENERATED_FILES}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
@@ -428,14 +430,14 @@ target_include_directories(onnx_proto PUBLIC
 if(MSVC)
   # For disabling Protobuf related warnings
   target_compile_options(onnx_proto PUBLIC
-                      /wd4146 # unary minus operator applied to unsigned type,
-                              # result still unsigned
-                      /wd4244 # 'argument': conversion from 'google::
-                              # protobuf::uint64' to 'int', possible
-                              # loss of data
-                      /wd4267 # Conversion from 'size_t' to 'int',
-                              # possible loss of data
-                      /wd4141 # 'inline': used more than once
+    /wd4146 # unary minus operator applied to unsigned type,
+            # result still unsigned
+    /wd4244 # 'argument': conversion from 'google::
+            # protobuf::uint64' to 'int', possible
+            # loss of data
+    /wd4267 # Conversion from 'size_t' to 'int',
+            # possible loss of data
+    /wd4141 # 'inline': used more than once
   )
 endif()
 
@@ -453,21 +455,25 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
-  # find system pybind11
-  find_package(pybind11)
-  if(NOT pybind11_FOUND)
+  # find system nanobind
+  find_package(nanobind)
+  if(NOT nanobind_FOUND)
     include(FetchContent)
-    set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.tar.gz)
-    set(pybind11SHA1  8c7e3e8fec829ced31a495dec281153511f33c63)
+
     FetchContent_Declare(
-      pybind11
-      URL ${pybind11URL}
-      URL_HASH SHA1=${pybind11SHA1}
+      nanobind
+      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+      GIT_TAG v2.8.0
+      GIT_SHALLOW TRUE
     )
-    FetchContent_MakeAvailable(pybind11)
+    FetchContent_MakeAvailable(nanobind)
   endif()
 
-  pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  # Configure nanobind: https://nanobind.readthedocs.io/en/latest/api_cmake.html
+  nanobind_add_module(
+    onnx_cpp2py_export
+    NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
+    "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX

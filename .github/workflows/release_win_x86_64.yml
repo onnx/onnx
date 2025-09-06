@@ -22,16 +22,19 @@ jobs:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: windows-2022
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.13t']
+        python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
         architecture: ['x64', 'x86']
         exclude:
           - python-version: '3.13t'
+            architecture: 'x86'            
+          - python-version: '3.14-dev'
             architecture: 'x86'
 
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
          submodules: 'recursive'
          persist-credentials: false
@@ -79,20 +82,21 @@ jobs:
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
+      # dev-builds should not be uploaded when release-builds are created
+      with:
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
+        path: ./dist
+    
     - name: Test the installed wheel
-      if: steps.build_wheel.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev' # TODO: reevaluate 3.13t/3.14 for onnx 1.20 (3.13t was already working, but it's failing since a github runner update...)
       run: |
         python -m pip install -q -r requirements-release_test.txt
         pytest
 
-    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_wheel.outcome == 'success'
-      with:
-        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
-        path: ./dist
-
     - name: Verify ONNX with the latest numpy
-      if: steps.build_wheel.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev' # TODO: reevaluate 3.13t/3.14 for onnx 1.20 (3.13t was already working, but it's failing since a github runner update...)
       run: |
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
@@ -100,7 +104,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: steps.build_wheel.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev'
       run: |
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
@@ -108,7 +112,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev'
       run: |
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt

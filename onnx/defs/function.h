@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -16,7 +17,7 @@
 
 namespace ONNX_NAMESPACE {
 // Helper function to expand a function node given the function proto
-void FunctionExpandHelper(
+ONNX_API void FunctionExpandHelper(
     const NodeProto& node,
     const FunctionProto& func,
     GraphProto& g,
@@ -81,23 +82,23 @@ class FunctionBodyHelper {
 
   For more examples, please find the references of this function
   */
-  static std::vector<NodeProto> BuildNodes(const std::vector<NodeDef>& node_defs);
+  ONNX_API static std::vector<NodeProto> BuildNodes(const std::vector<NodeDef>& node_defs);
 
-  static void BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs);
+  ONNX_API static void BuildNodes(FunctionProto& functionProto, const std::vector<NodeDef>& node_defs);
 
-  static bool BuildFunctionProto(
+  ONNX_API static bool BuildFunctionProto(
       FunctionProto& functionProto,
       const OpSchema& schema,
       const std::vector<NodeDef>& node_defs,
       const std::vector<OperatorSetIdProto>& relied_opsets);
 
   template <typename T>
-  static NodeDef Const(const std::string& name, const T& value) {
+  ONNX_API static NodeDef Const(const std::string& name, const T& value) {
     return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(value)}}};
   }
 
   template <typename T>
-  static NodeDef Const(const std::string& name, const std::vector<T>& values) {
+  ONNX_API static NodeDef Const(const std::string& name, const std::vector<T>& values) {
     return NodeDef{{name}, "Constant", {}, {{"value", ToTensor<T>(values)}}};
   }
 };
@@ -106,7 +107,7 @@ class FunctionBuilder {
  public:
   explicit FunctionBuilder(FunctionProto& funProto_) : funProto(funProto_) {}
 
-  FunctionBuilder& Add(const char* nodes_txt) {
+  ONNX_API FunctionBuilder& Add(const char* nodes_txt) {
     OnnxParser parser(nodes_txt);
     auto& nodes = *funProto.mutable_node();
 
@@ -119,7 +120,7 @@ class FunctionBuilder {
     return *this;
   }
 
-  FunctionBuilder& Add(const char* node_txt, const AttributeProto& attr) {
+  ONNX_API FunctionBuilder& Add(const char* node_txt, const AttributeProto& attr) {
     OnnxParser parser(node_txt);
     auto& node = *funProto.add_node();
     auto status = parser.Parse(node);
@@ -137,12 +138,12 @@ class FunctionBuilder {
   }
 
   template <typename T>
-  FunctionBuilder& Add(const char* node_txt, const std::string& attr_name, const T& attr_value) {
+  ONNX_API FunctionBuilder& Add(const char* node_txt, const std::string& attr_name, const T& attr_value) {
     return Add(node_txt, MakeAttribute(attr_name, attr_value));
   }
 
   template <typename T>
-  FunctionBuilder& AddAttributeToNode(const std::string& attr_name, const T& attr_value) {
+  ONNX_API FunctionBuilder& AddAttributeToNode(const std::string& attr_name, const T& attr_value) {
     auto& nodes = *funProto.mutable_node();
     int nodes_size = nodes.size();
     if (nodes_size != 0) {
@@ -155,7 +156,7 @@ class FunctionBuilder {
   }
 
   template <typename T, typename... Args>
-  FunctionBuilder& AddAttributes(const std::string& attr_name, const T& attr_value, Args... args) {
+  ONNX_API FunctionBuilder& AddAttributes(const std::string& attr_name, const T& attr_value, Args... args) {
     AddAttributeToNode(attr_name, attr_value);
     if constexpr (sizeof...(args) > 0) {
       AddAttributes(args...);
@@ -165,15 +166,15 @@ class FunctionBuilder {
 
   // Adds variable number of attributes to a node
   template <typename... Args>
-  FunctionBuilder& Add(const char* node_txt, Args... args) {
+  ONNX_API FunctionBuilder& Add(const char* node_txt, Args... args) {
     Add(node_txt);
     if constexpr (sizeof...(args) % 2 == 0) {
-      return AddAttributes(args...);
+      AddAttributes(args...);
     }
     return *this;
   }
 
-  FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
+  ONNX_API FunctionBuilder& Const(const std::string& name, const TensorProto& tensor) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     return Add(constant_op.c_str(), MakeAttribute("value", tensor));
@@ -181,7 +182,7 @@ class FunctionBuilder {
 
   // Creates a scalar constant (a tensor of rank zero).
   template <typename T>
-  FunctionBuilder& Const(const std::string& name, T const_value) {
+  ONNX_API FunctionBuilder& Const(const std::string& name, T const_value) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     return Add(constant_op.c_str(), MakeAttribute("value", ToTensor(const_value)));
@@ -189,7 +190,7 @@ class FunctionBuilder {
 
   // Creates a 1D tensor constant consisting of a single value.
   template <typename T>
-  FunctionBuilder& Const1D(const std::string& name, T const_value) {
+  ONNX_API FunctionBuilder& Const1D(const std::string& name, T const_value) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     auto tensor = ToTensor(const_value);
@@ -199,7 +200,7 @@ class FunctionBuilder {
 
   // Creates a 1D tensor constant consisting of zero or more values.
   template <typename T>
-  FunctionBuilder& Const(const std::string& name, const std::vector<T>& values) {
+  ONNX_API FunctionBuilder& Const(const std::string& name, const std::vector<T>& values) {
     std::string constant_op(name);
     constant_op += " = Constant()";
     auto tensor = ToTensor(values);
@@ -208,12 +209,36 @@ class FunctionBuilder {
     return Add(constant_op.c_str(), MakeAttribute("value", tensor));
   }
 
-  FunctionBuilder& AddOpset(const char* domain, int version) {
+  ONNX_API FunctionBuilder& AddOpset(const char* domain, int version) {
     auto* opset = funProto.add_opset_import();
     opset->set_domain(domain);
     opset->set_version(version);
     return *this;
   }
+
+  /**
+   * @brief Adds an inlined call to a graph as a sequence of nodes in the function.
+   *
+   * This method effectively inlines the logic from the given graph into the function
+   * being constructed. It:
+   * - Adds a Constant node for every initializer in the graph
+   * - Adds a copy of every node in the graph
+   * - Renames formal input parameters to match actual inputs
+   * - Renames formal output parameters to match actual outputs
+   * - Renames all other intermediate values with a unique prefix
+   * - Leaves references to undefined names (outer scope variables) unchanged
+   *
+   * @param outputs List of output variable names for the inlined call
+   * @param graph The graph to inline
+   * @param inputs List of input variable names for the inlined call
+   * @param prefix Prefix to add to intermediate variable names for uniqueness
+   * @return Reference to this FunctionBuilder for method chaining
+   */
+  ONNX_API FunctionBuilder& AddInlinedCall(
+      std::initializer_list<std::string_view> outputs,
+      const GraphProto& graph,
+      std::initializer_list<std::string_view> inputs,
+      std::string_view prefix);
 
  private:
   FunctionProto& funProto;

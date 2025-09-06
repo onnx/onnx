@@ -37,7 +37,7 @@ ninja = "*"
 libdate = ">=3.0.1,<4"
 libprotobuf = "*"
 pip = ">=25.0"
-pybind11 = ">=2.13.6"
+nanobind = ">=2.8.0"
 [dependencies]
 packaging = ">=24.1"
 python = ">=3.9"
@@ -57,13 +57,6 @@ wheel = ">=0.45.1"
 [feature.reference.dependencies]
 # follows requirements-reference.txt
 pillow = ">=11.2.1,<12"
-[feature.reference.target.win-64.pypi-dependencies]
-# Not available for Windows on conda-forge, yet
-google-re2 = ">=1.1.20240702,<2"
-[feature.reference.target.linux-64.dependencies]
-google-re2 = ">=1.1.20240702,<2"
-[feature.reference.target.osx-arm64.dependencies]
-google-re2 = ">=1.1.20240702,<2"
 
 [feature.oldies.dependencies]
 # follows requirements-min.txt
@@ -76,7 +69,7 @@ lintrunner-init = "lintrunner init"
 lintrunner-run = "lintrunner --all-files"
 [feature.lint.dependencies]
 # follows requirements-lintrunner.txt
-ruff = "==0.11.12"  
+ruff = "==0.11.12"
 mypy = "==1.16.0"
 types-protobuf = ">=5.29.1.20250403"
 clang-format = ">=20.1.5"

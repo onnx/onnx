@@ -92,6 +92,7 @@ class PrimitiveTypeNameMap : public StringIntMap<PrimitiveTypeNameMap> {
     map_["float8e4m3fnuz"] = TensorProto_DataType_FLOAT8E4M3FNUZ;
     map_["float8e5m2"] = TensorProto_DataType_FLOAT8E5M2;
     map_["float8e5m2fnuz"] = TensorProto_DataType_FLOAT8E5M2FNUZ;
+    map_["float8e8m0"] = TensorProto_DataType_FLOAT8E8M0;
     map_["uint4"] = TensorProto_DataType_UINT4;
     map_["int4"] = TensorProto_DataType_INT4;
     map_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
@@ -416,29 +417,29 @@ class OnnxParser : public ParserBase {
  public:
   explicit OnnxParser(const char* cstr) : ParserBase(cstr) {}
 
-  Status Parse(TensorShapeProto& shape);
+  ONNX_API Status Parse(TensorShapeProto& shape);
 
-  Status Parse(TypeProto& typeProto);
+  ONNX_API Status Parse(TypeProto& typeProto);
 
-  Status Parse(StringStringList& stringStringList);
+  ONNX_API Status Parse(StringStringList& stringStringList);
 
-  Status Parse(TensorProto& tensorProto);
+  ONNX_API Status Parse(TensorProto& tensorProto);
 
-  Status Parse(AttributeProto& attr);
+  ONNX_API Status Parse(AttributeProto& attr);
 
-  Status Parse(AttributeProto& attr, std::string& name);
+  ONNX_API Status Parse(AttributeProto& attr, std::string& name);
 
-  Status Parse(AttrList& attrlist);
+  ONNX_API Status Parse(AttrList& attrlist);
 
-  Status Parse(NodeProto& node);
+  ONNX_API Status Parse(NodeProto& node);
 
-  Status Parse(NodeList& nodelist);
+  ONNX_API Status Parse(NodeList& nodelist);
 
-  Status Parse(GraphProto& graph);
+  ONNX_API Status Parse(GraphProto& graph);
 
-  Status Parse(FunctionProto& fn);
+  ONNX_API Status Parse(FunctionProto& fn);
 
-  Status Parse(ModelProto& model);
+  ONNX_API Status Parse(ModelProto& model);
 
   template <typename T>
   static Status Parse(T& parsedData, const char* input) {

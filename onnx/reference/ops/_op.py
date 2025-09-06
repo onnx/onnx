@@ -7,10 +7,6 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-from onnx.reference.custom_element_types import (
-    convert_from_ml_dtypes,
-    convert_to_ml_dtypes,
-)
 from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 if TYPE_CHECKING:
@@ -23,13 +19,12 @@ class OpRunUnary(OpRun):
     Checks that input and output types are the same.
     """
 
-    def run(self, x):  # type: ignore
+    def run(self, x):
         """Calls method ``_run``, catches exceptions, displays a longer error message.
 
         Supports only unary operators.
         """
         self._log("-- begin %s.run(1 input)", self.__class__.__name__)
-        x = convert_to_ml_dtypes(x)
         try:
             res = self._run(x)
         except TypeError as e:
@@ -37,7 +32,6 @@ class OpRunUnary(OpRun):
                 f"Issues with types {', '.join(str(type(_)) for _ in [x])} "
                 f"(unary operator {self.__class__.__name__!r})."
             ) from e
-        res = (convert_from_ml_dtypes(res[0]),)
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
         return self._check_and_fix_outputs(res)
 
@@ -48,7 +42,7 @@ class OpRunUnaryNum(OpRunUnary):
     Checks that input and output types are the same.
     """
 
-    def run(self, x):  # type: ignore
+    def run(self, x):
         """Calls method ``OpRunUnary.run``.
 
         Catches exceptions, displays a longer error message.
@@ -71,7 +65,7 @@ class OpRunBinary(OpRun):
     Checks that input and output types are the same.
     """
 
-    def run(self, x, y):  # type: ignore
+    def run(self, x, y):
         """Calls method ``_run``, catches exceptions, displays a longer error message.
 
         Supports only binary operators.
@@ -87,8 +81,6 @@ class OpRunBinary(OpRun):
                 f"(operator '{self.__class__.__name__!r}', "
                 f"shapes {x.shape}, {y.shape})."
             )
-        x = convert_to_ml_dtypes(x)
-        y = convert_to_ml_dtypes(y)
         try:
             res = self._run(x, y)
         except (TypeError, ValueError) as e:
@@ -96,7 +88,6 @@ class OpRunBinary(OpRun):
                 f"Issues with types {', '.join(str(type(_)) for _ in [x, y])} "
                 f"(binary operator {self.__class__.__name__!r})."
             ) from e
-        res = (convert_from_ml_dtypes(res[0]),)
         self._log("-- done %s.run -> %d outputs", self.__class__.__name__, len(res))
         return self._check_and_fix_outputs(res)
 
@@ -111,7 +102,7 @@ class OpRunBinaryNum(OpRunBinary):
     Checks that input oud output types are the same.
     """
 
-    def run(self, x, y):  # type: ignore
+    def run(self, x, y):
         """Calls method ``OpRunBinary.run``, catches exceptions, displays a longer error message."""
         res = OpRunBinary.run(self, x, y)
         if res[0].dtype != x.dtype:
@@ -134,15 +125,12 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
         self.numpy_fct = numpy_fct
 
-    def _run(self, a, b):  # type: ignore
-        a = convert_to_ml_dtypes(a)
-        b = convert_to_ml_dtypes(b)
+    def _run(self, a, b):
         res = (self.numpy_fct(a, b),)
-        res = (convert_from_ml_dtypes(res[0]),)
         return self._check_and_fix_outputs(res)
 
 
-class OpRunReduceNumpy(OpRun):  # type: ignore
+class OpRunReduceNumpy(OpRun):
     """Implements the reduce logic.
     It must have a parameter *axes*.
     """
@@ -150,8 +138,8 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
     def __init__(self, onnx_node: NodeProto, run_params: dict[str, Any]):
         OpRun.__init__(self, onnx_node, run_params)
         if hasattr(self, "axes"):
-            if isinstance(self.axes, np.ndarray):  # type: ignore
-                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:  # type: ignore
+            if isinstance(self.axes, np.ndarray):
+                if len(self.axes.shape) == 0 or self.axes.shape[0] == 0:
                     self.axes = None
                 else:
                     self.axes = tuple(self.axes)
@@ -161,7 +149,7 @@ class OpRunReduceNumpy(OpRun):  # type: ignore
                 self.axes = tuple(self.axes)
 
     def is_axes_empty(self, axes):
-        return axes is None
+        return axes is None or axes.shape == (0,)
 
     def handle_axes(self, axes):  # noqa: PLR0911
         if isinstance(axes, tuple):

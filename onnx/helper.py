@@ -5,45 +5,39 @@ from __future__ import annotations
 
 import collections.abc
 import functools
+import math
 import numbers
-import struct
 import typing
-from cmath import isnan
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
+import numpy.typing as npt
 import typing_extensions
 
 import onnx
-from onnx import (
+from onnx import _mapping, defs
+from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
+from onnx.onnx_pb import (
     AttributeProto,
     FunctionProto,
     GraphProto,
-    MapProto,
     ModelProto,
     NodeProto,
     OperatorSetIdProto,
-    OptionalProto,
-    SequenceProto,
-    SparseTensorProto,
     TensorProto,
     TensorShapeProto,
     TrainingInfoProto,
     TypeProto,
     ValueInfoProto,
-    _custom_element_types,
-    _mapping,
-    defs,
-    subbyte,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView, Sequence
+    from collections.abc import Callable, KeysView, Sequence
 
     from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
-VersionRowType = Union[tuple[str, int, int, int], tuple[str, int, int, int, int]]
+VersionRowType = tuple[str, int, int, int] | tuple[str, int, int, int, int]
 VersionTableType = list[VersionRowType]
 AssignmentBindingType = list[tuple[str, str]]
 
@@ -76,6 +70,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.16.0", 10, 21, 5, 1),
     ("1.17.0", 10, 22, 5, 1),
     ("1.18.0", 11, 23, 5, 1),
+    ("1.19.0", 12, 24, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -204,7 +199,7 @@ def make_graph(
     initializer: Sequence[TensorProto] | None = None,
     doc_string: str | None = None,
     value_info: Sequence[ValueInfoProto] | None = None,
-    sparse_initializer: Sequence[SparseTensorProto] | None = None,
+    sparse_initializer: Sequence[onnx.SparseTensorProto] | None = None,
 ) -> GraphProto:
     """Construct a GraphProto
 
@@ -216,7 +211,7 @@ def make_graph(
         initializer: list of TensorProto
         doc_string (string): graph documentation
         value_info: list of ValueInfoProto
-        sparse_initializer: list of SparseTensorProto
+        sparse_initializer: list of onnx.SparseTensorProto
     Returns:
         GraphProto
     """
@@ -358,379 +353,25 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
 
 
-def _split_complex_to_pairs(ca: Sequence[np.complex64]) -> Sequence[int]:
-    return [
-        (ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)  # type: ignore[misc]
-        for i in range(len(ca) * 2)
-    ]
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def float32_to_bfloat16(*args, **kwargs) -> int:
-    return _float32_to_bfloat16(*args, **kwargs)
-
-
-# convert a float32 value to a bfloat16 (as int)
-# By default, this conversion rounds-to-nearest-even and supports NaN
-# Setting `truncate` to True enables a simpler conversion. In this mode the
-# conversion is performed by simply dropping the 2 least significant bytes of
-# the significand. In this mode an error of up to 1 bit may be introduced and
-# preservation of NaN values is not be guaranteed.
-def _float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
-    ival = int.from_bytes(struct.pack("<f", fval), "little")
-    if truncate:
-        return ival >> 16
-    # NaN requires at least 1 significand bit set
-    if isnan(fval):
-        return 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
-    # drop bottom 16-bits
-    # round remaining bits using round-to-nearest-even
-    rounded = ((ival >> 16) & 1) + 0x7FFF
-    return (ival + rounded) >> 16
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def float32_to_float8e4m3(*args, **kwargs) -> int:
-    return _float32_to_float8e4m3(*args, **kwargs)
-
-
-def _float32_to_float8e4m3(  # noqa: PLR0911
-    fval: float,
-    scale: float = 1.0,
-    fn: bool = True,
-    uz: bool = False,
-    saturate: bool = True,
-) -> int:
-    """Convert a float32 value to a float8, e4m3 (as int).
-
-    See :ref:`onnx-detail-float8` for technical details.
-
-    Args:
-        fval: float to convert
-        scale: scale, divide *fval* by *scale* before casting it
-        fn: no infinite values
-        uz: no negative zero
-        saturate: if True, any value out of range included inf becomes
-            the maximum value, otherwise, it becomes NaN. The
-            description of operator Cast fully describes the
-            differences.
-
-    Returns:
-        converted float
-    """
-    if not fn:
-        raise NotImplementedError(
-            "float32_to_float8e4m3 not implemented with fn=False."
-        )
-    x = fval / scale
-    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
-    ret = (b & 0x80000000) >> 24  # sign
-    if uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x80
-        if np.isinf(x):
-            if saturate:
-                return ret | 127
-            return 0x80
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e < 116:  # noqa: PLR2004
-            ret = 0
-        elif e < 120:  # noqa: PLR2004
-            # denormalized number
-            ex = e - 119
-            if ex >= -2:  # noqa: PLR2004
-                ret |= 1 << (2 + ex)
-                ret |= m >> (21 - ex)
-            elif m > 0:
-                ret |= 1
-            else:
-                ret = 0
-            mask = 1 << (20 - ex)
-            if m & mask and (
-                ret & 1
-                or m & (mask - 1) > 0
-                or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-            ):
-                # rounding
-                ret += 1
-        elif e < 135:  # noqa: PLR2004
-            # normalized number
-            ex = e - 119  # 127 - 8
-            if ex == 0:
-                ret |= 0x4
-                ret |= m >> 21
-            else:
-                ret |= ex << 3
-                ret |= m >> 20
-            if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
-                if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                    # rounding
-                    ret += 1
-                elif not saturate:
-                    return 0x80
-        elif saturate:
-            ret |= 0x7F  # 01111110
-        else:
-            ret = 0x80
-        return int(ret)
-    else:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x7F | ret
-        if np.isinf(x):
-            if saturate:
-                return ret | 126
-            return 0x7F | ret
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e != 0:
-            if e < 117:  # noqa: PLR2004
-                pass
-            elif e < 121:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 120
-                if ex >= -2:  # noqa: PLR2004
-                    ret |= 1 << (2 + ex)
-                    ret |= m >> (21 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (20 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
-                    # rounding
-                    ret += 1
-            elif e < 136:  # noqa: PLR2004
-                # normalized number
-                ex = e - 120
-                if ex == 0:
-                    ret |= 0x4
-                    ret |= m >> 21
-                else:
-                    ret |= ex << 3
-                    ret |= m >> 20
-                    if (ret & 0x7F) == 0x7F:  # noqa: PLR2004
-                        ret &= 0xFE
-                if (m & 0x80000) and ((m & 0x100000) or (m & 0x7FFFF)):
-                    if (ret & 0x7F) < 0x7E:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        ret |= 0x7F
-            elif saturate:
-                ret |= 126  # 01111110
-            else:
-                ret |= 0x7F
-        return int(ret)
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def float32_to_float8e5m2(*args: Any, **kwargs: Any) -> int:
-    return _float32_to_float8e5m2(*args, **kwargs)
-
-
-def _float32_to_float8e5m2(  # noqa: PLR0911
-    fval: float,
-    scale: float = 1.0,
-    fn: bool = False,
-    uz: bool = False,
-    saturate: bool = True,
-) -> int:
-    """Convert a float32 value to a float8, e5m2 (as int).
-
-    Args:
-        fval: float to convert
-        scale: scale, divide *fval* by *scale* before casting it
-        fn: no infinite values
-        uz: no negative zero
-        saturate: if True, any value out of range included inf becomes
-            the maximum value, otherwise, it becomes NaN. The
-            description of operator Cast fully describes the
-            differences.
-
-    Returns:
-        converted float
-    """
-    x = fval / scale
-    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
-    ret = (b & 0x80000000) >> 24  # sign
-
-    if fn and uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x80
-        if (b & 0x7FFFFFFF) == 0x7F800000:  # noqa: PLR2004
-            # inf
-            if saturate:
-                return ret | 0x7F
-            return 0x80
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e < 109:  # noqa: PLR2004
-            ret = 0
-        elif e < 112:  # noqa: PLR2004
-            # denormalized number
-            ex = e - 111
-            if ex >= -1:
-                ret |= 1 << (1 + ex)
-                ret |= m >> (22 - ex)
-            elif m > 0:
-                ret |= 1
-            else:
-                ret = 0
-            mask = 1 << (21 - ex)
-            if m & mask and (
-                ret & 1
-                or m & (mask - 1) > 0
-                or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-            ):
-                # rounding
-                ret += 1
-        elif e < 143:  # noqa: PLR2004
-            # normalized number
-            ex = e - 111
-            ret |= ex << 2
-            ret |= m >> 21
-            if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                    # rounding
-                    ret += 1
-                elif not saturate:
-                    ret = 0x80
-        elif e == 255 and m == 0:  # inf  # noqa: PLR2004
-            ret = 0x80
-        elif saturate:
-            ret |= 0x7F  # last possible number
-        else:
-            ret = 0x80
-        return int(ret)
-    elif not fn and not uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x7F | ret
-        if np.isinf(x):
-            if saturate:
-                return 0x7B | ret
-            return 0x7C | ret
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e != 0:
-            if e < 110:  # noqa: PLR2004
-                pass
-            elif e < 113:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 112
-                if ex >= -1:
-                    ret |= 1 << (1 + ex)
-                    ret |= m >> (22 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (21 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
-                    # rounding
-                    ret += 1
-            elif e < 143:  # noqa: PLR2004
-                # normalized number
-                ex = e - 112
-                ret |= ex << 2
-                ret |= m >> 21
-                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                    if (ret & 0x7F) < 0x7B:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif saturate:
-                        ret |= 0x7B
-                    else:
-                        ret |= 0x7C
-            elif saturate:
-                ret |= 0x7B
-            else:
-                ret |= 0x7C
-        return int(ret)
-    else:
-        raise NotImplementedError("fn and uz must be both False or True.")
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
-    return _pack_float32_to_4bit(array, signed)
-
-
-def _pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
-    """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
-    See :ref:`onnx-detail-int4` for technical details.
-
-    Args:
-        array: array of float to convert and pack
-        signed: Whether the 4 bit variant is signed or unsigned
-
-    Returns:
-        Packed array with size `ceil(farray.size/2)` (single dimension).
-    """
-    if not isinstance(array, np.ndarray):
-        array = np.asarray(array, dtype=np.float32)
-
-    array_flat: np.ndarray = array.ravel()
-    is_odd_volume = np.prod(array.shape) % 2 == 1
-    if is_odd_volume:
-        array_flat = np.append(array_flat, np.array([0]))
-
-    def single_func(x, y) -> np.ndarray:
-        return subbyte._float32x2_to_4bitx2(x, y, signed)
-
-    func = np.frompyfunc(single_func, 2, 1)
-
-    arr: np.ndarray = func(array_flat[0::2], array_flat[1::2])
-    return arr.astype(np.uint8)
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
-    return _pack_float32_to_float4e2m1(array)
-
-
-def _pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
-    """Convert an array of float32 value to float4e2m1 and pack every two concecutive elements in a byte.
-    See :ref:`onnx-detail-float4` for technical details.
-
-    Args:
-        array: array of float to convert and pack
-
-    Returns:
-        Packed array of float4e2m1 (as uint8) with size `ceil(farray.size/2)` (single dimension).
-    """
-    if not isinstance(array, np.ndarray):
-        array = np.asarray(array, dtype=np.float32)
-
-    array_flat: np.ndarray = array.ravel()
-    is_odd_volume = np.prod(array.shape) % 2 == 1
-    if is_odd_volume:
-        array_flat = np.append(array_flat, np.array([0]))
-
-    arr = subbyte._float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
-    return arr.astype(np.uint8)
+def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    odd_sized = size % 2 == 1
+    if odd_sized:
+        array_flat.resize([size + 1], refcheck=False)
+    array_flat &= 0x0F
+    array_flat[1::2] <<= 4
+    return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
 
 
 def make_tensor(
-    name: str, data_type: int, dims: Sequence[int], vals: Any, raw: bool = False
+    name: str,
+    data_type: int,
+    dims: Sequence[int],
+    vals: Sequence[int | float] | bytes | np.ndarray,
+    raw: bool = False,
 ) -> TensorProto:
     """Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
@@ -739,12 +380,12 @@ def make_tensor(
     this case.
 
     Args:
-        name (string): tensor name
-        data_type (int): a value such as onnx.TensorProto.FLOAT
-        dims (List[int]): shape
+        name: tensor name
+        data_type: a value such as onnx.TensorProto.FLOAT
+        dims: shape
         vals: values
-        raw (bool): if True, vals contains the serialized content of the tensor,
-            otherwise, vals should be a list of values of the type defined by *data_type*
+        raw: if True, vals contains the serialized content of the tensor,
+            otherwise, vals should be a list of values of the type defined by ``data_type``.
 
     Returns:
         TensorProto
@@ -752,108 +393,85 @@ def make_tensor(
     tensor = TensorProto()
     tensor.data_type = data_type
     tensor.name = name
+    tensor.dims.extend(dims)
 
     if data_type == TensorProto.STRING and raw:
         raise TypeError("Can not use raw_data to store string type.")
 
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
-    # Check number of vals specified equals tensor size
-    expected_size: float = 1
     if raw:
-        # NumPy doesn't have BFLOAT16. TENSOR_TYPE_MAP maps it to float32, which has the wrong itemsize.
-        if data_type == TensorProto.BFLOAT16:
-            expected_size = 2
-        elif data_type in (
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-        ):
-            expected_size = 1
         # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
-        elif data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1):
-            expected_size = 0.5
+        if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+            expected_size_bytes = 0.5
         else:
-            expected_size = np_dtype.itemsize
-
-    if isinstance(vals, np.ndarray) and len(vals.shape) > 1:
-        vals = vals.flatten()
-    for d in dims:
-        expected_size *= d
-
-    if len(vals) != expected_size:
-        # padding of half a byte is acceptable for 4bit types
-        if not (
-            data_type in (TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1)
-            and len(vals) == expected_size + 0.5
-        ):
+            expected_size_bytes = np_dtype.itemsize
+        expected_size_bytes *= math.prod(dims)
+        expected_size_bytes = math.ceil(expected_size_bytes)
+        if isinstance(vals, np.ndarray):
+            raw_data = vals.tobytes()
+        elif isinstance(vals, bytes):
+            raw_data = vals
+        else:
+            raise TypeError(
+                f"Raw data must be bytes or numpy.ndarray, but got {type(vals)}."
+            )
+        if len(raw_data) != expected_size_bytes:
             raise ValueError(
-                f"Number of values does not match tensor's size. Expected {expected_size}, but it is {len(vals)}. "
+                f"Raw data size does not match tensor's size. Expected {expected_size_bytes} bytes, but got {len(raw_data)} bytes."
             )
+        tensor.raw_data = raw_data
+        return tensor
 
-    if raw:
-        tensor.raw_data = vals
+    assert not raw, "Bug: raw should be False at this point."
+
+    if data_type == TensorProto.STRING:
+        vals = np.array(vals).flatten()
+        if len(vals) != 0:
+            vals = np.vectorize(_to_bytes)(vals)  # Convert to bytes
+    elif data_type in {
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+    }:
+        # Float8 values are by default casted using saturating cast.
+        vals = onnx.numpy_helper.saturate_cast(np.asarray(vals), np_dtype).flatten()
+    elif data_type == TensorProto.FLOAT8E8M0:
+        vals = onnx.numpy_helper.to_float8e8m0(
+            np.asarray(vals), saturate=True, round_mode="up"
+        ).flatten()
     else:
-        if data_type in (TensorProto.COMPLEX64, TensorProto.COMPLEX128):
-            vals = _split_complex_to_pairs(vals)
-        elif data_type == TensorProto.FLOAT16:
-            vals = (
-                np.array(vals).astype(np_dtype).view(dtype=np.uint16).flatten().tolist()
-            )
-        elif data_type in (
-            TensorProto.BFLOAT16,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-        ):
-            fcast = {
-                TensorProto.BFLOAT16: _float32_to_bfloat16,
-                TensorProto.FLOAT8E4M3FN: _float32_to_float8e4m3,
-                TensorProto.FLOAT8E4M3FNUZ: lambda *args: _float32_to_float8e4m3(  # type: ignore[misc]
-                    *args, uz=True
-                ),
-                TensorProto.FLOAT8E5M2: _float32_to_float8e5m2,
-                TensorProto.FLOAT8E5M2FNUZ: lambda *args: _float32_to_float8e5m2(  # type: ignore[misc]
-                    *args, fn=True, uz=True
-                ),
-            }[
-                data_type  # type: ignore[index]
-            ]
-            vals = list(
-                map(  # type: ignore[call-overload]
-                    fcast,
-                    np.array(vals).astype(np_dtype).flatten().tolist(),
-                )
-            )
-        elif data_type in (
-            TensorProto.UINT4,
-            TensorProto.INT4,
-        ):
-            signed = data_type == TensorProto.INT4
+        vals = np.asarray(vals, dtype=np_dtype).flatten()
 
-            # Two packed 4-bit values must be represented as a single uint8 value.
-            # Therefore, pack_float32_to_4bit() sets the dtype of the output vals
-            # to uint8 regardless of the value of 'signed'. Using int8 would cause
-            # the size of int4 tensors to increase ~5x if the tensor contains negative values (due to
-            # the way negative values are serialized by protobuf).
-            vals = _pack_float32_to_4bit(vals, signed=signed).flatten().tolist()
-        elif data_type == TensorProto.FLOAT4E2M1:
-            vals = _pack_float32_to_float4e2m1(vals).flatten().tolist()
-        elif data_type == TensorProto.BOOL:
-            vals = np.array(vals).astype(int)
-        elif data_type == TensorProto.STRING:
-            vals = np.array(vals).astype(bytes)
-        field = tensor_dtype_to_field(data_type)
-        getattr(tensor, field).extend(vals)
-    tensor.dims.extend(dims)
+    if data_type == TensorProto.COMPLEX128:
+        vals = vals.view(np.float64)  # type: ignore[union-attr]
+    elif data_type == TensorProto.COMPLEX64:
+        vals = vals.view(np.float32)  # type: ignore[union-attr]
+    elif data_type in {TensorProto.BFLOAT16, TensorProto.FLOAT16}:
+        vals = vals.view(np.uint16)  # type: ignore[union-attr]
+    elif data_type in {
+        TensorProto.FLOAT8E4M3FN,
+        TensorProto.FLOAT8E4M3FNUZ,
+        TensorProto.FLOAT8E5M2,
+        TensorProto.FLOAT8E5M2FNUZ,
+        TensorProto.FLOAT8E8M0,
+    }:
+        vals = vals.view(np.uint8)  # type: ignore[union-attr]
+    elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
+        # Convert to packed 4-bit representation
+        vals = _pack_4bitx2(vals)  # type: ignore[union-attr,arg-type]
+    elif data_type == TensorProto.BOOL:
+        vals = vals.astype(np.uint8)  # type: ignore[union-attr]
+
+    field = tensor_dtype_to_field(data_type)
+    getattr(tensor, field).extend(vals)
     return tensor
 
 
 def make_sparse_tensor(
     values: TensorProto, indices: TensorProto, dims: Sequence[int]
-) -> SparseTensorProto:
+) -> onnx.SparseTensorProto:
     """Construct a SparseTensorProto
 
     Args:
@@ -864,7 +482,7 @@ def make_sparse_tensor(
     Returns:
         SparseTensorProto
     """
-    sparse = SparseTensorProto()
+    sparse = onnx.SparseTensorProto()
     sparse.values.CopyFrom(values)
     sparse.indices.CopyFrom(indices)
     sparse.dims.extend(dims)
@@ -997,7 +615,7 @@ def make_attribute(
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
         attr.type = AttributeProto.TENSOR
-    elif isinstance(value, SparseTensorProto):
+    elif isinstance(value, onnx.SparseTensorProto):
         attr.sparse_tensor.CopyFrom(value)
         attr.type = AttributeProto.SPARSE_TENSOR
     elif isinstance(value, GraphProto):
@@ -1020,11 +638,11 @@ def make_attribute(
                 (numbers.Real, AttributeProto.FLOATS),
                 ((str, bytes), AttributeProto.STRINGS),
                 (TensorProto, AttributeProto.TENSORS),
-                (SparseTensorProto, AttributeProto.SPARSE_TENSORS),
+                (onnx.SparseTensorProto, AttributeProto.SPARSE_TENSORS),
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):
-                if all(issubclass(t, exp_t) for t in types):
+                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
                     attr_type = exp_enum
                     break
             if attr_type is None:
@@ -1660,15 +1278,10 @@ def tensor_dtype_to_field(tensor_dtype: int) -> str:
         int(TensorProto.FLOAT): "float_data",
         int(TensorProto.INT32): "int32_data",
         int(TensorProto.INT64): "int64_data",
-        int(TensorProto.UINT8): "int32_data",
-        int(TensorProto.UINT16): "int32_data",
         int(TensorProto.DOUBLE): "double_data",
-        int(TensorProto.COMPLEX64): "float_data",
-        int(TensorProto.COMPLEX128): "double_data",
         int(TensorProto.UINT32): "uint64_data",
         int(TensorProto.UINT64): "uint64_data",
         int(TensorProto.STRING): "string_data",
-        int(TensorProto.BOOL): "int32_data",
     }
     return storage_tensor_type_to_field[
         _mapping.TENSOR_TYPE_MAP[tensor_dtype].storage_dtype
@@ -1686,36 +1299,12 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
         TensorsProto's data_type
     """
     _np_dtype_to_tensor_dtype = {
-        v.np_dtype: k
-        for k, v in _mapping.TENSOR_TYPE_MAP.items()
-        if k
-        not in {
-            TensorProto.BFLOAT16,
-            TensorProto.FLOAT8E4M3FN,
-            TensorProto.FLOAT8E4M3FNUZ,
-            TensorProto.FLOAT8E5M2,
-            TensorProto.FLOAT8E5M2FNUZ,
-            TensorProto.UINT4,
-            TensorProto.INT4,
-            TensorProto.FLOAT4E2M1,
-        }
+        v.np_dtype: k for k, v in _mapping.TENSOR_TYPE_MAP.items()
     }
     if np_dtype in _np_dtype_to_tensor_dtype:
         return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
     if np.issubdtype(np_dtype, np.str_):
         return TensorProto.STRING  # type: ignore[no-any-return]
-
-    if np_dtype in {
-        _custom_element_types.bfloat16,
-        _custom_element_types.float8e4m3fn,
-        _custom_element_types.float8e4m3fnuz,
-        _custom_element_types.float8e5m2,
-        _custom_element_types.float8e5m2fnuz,
-        _custom_element_types.int4,
-        _custom_element_types.uint4,
-        _custom_element_types.float4e2m1,
-    }:
-        return _custom_element_types.mapping_name_to_data_type[np_dtype.descr[0][0]]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."

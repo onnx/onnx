@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunBinaryComparison
 
 
 class Less(OpRunBinaryComparison):
-    def _run(self, a, b):  # type: ignore
+    def _run(self, a, b):
         return (np.less(a, b),)
