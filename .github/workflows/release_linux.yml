@@ -83,7 +83,12 @@ jobs:
 
     - name: Check abi3 compatibility with abi3audit
       if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
-      run: |        
+      run: |
+        if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then
+            echo "Exactly one wheel file found."
+        else
+            echo "Multiple or no wheel files found."
+        fi
         for whl in dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl; do
           echo "Checking abi3 compatibility for $whl"
           python -m abi3audit "$whl"
