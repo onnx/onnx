@@ -183,6 +183,21 @@ def convert_model_from_external_data(model: ModelProto) -> None:
             tensor.data_location = TensorProto.DEFAULT
 
 
+def _is_path_traversal(path: str) -> bool:
+    """Check if the path contains traversal sequences or is absolute.
+
+    Arguments:
+        path: The path to check.
+    """
+    # Check for absolute paths
+    if os.path.isabs(path):
+        return True
+    
+    # Check for path traversal patterns
+    parts = path.replace("\\", "/").split("/")
+    return ".." in parts
+
+
 def save_external_data(tensor: TensorProto, base_path: str) -> None:
     """Writes tensor data to an external file according to information in the `external_data` field.
 
@@ -191,6 +206,13 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
         base_path: System path of a folder where tensor data is to be stored
     """
     info = ExternalDataInfo(tensor)
+
+    # Validate the location path to prevent path traversal attacks
+    if _is_path_traversal(info.location):
+        raise ValueError(
+            f"Unsafe path in location: {info.location}. Absolute paths and path traversal are not allowed."
+        )
+
     external_data_file_path = os.path.join(base_path, info.location)
 
     # Retrieve the tensor's data from raw_data or load external file

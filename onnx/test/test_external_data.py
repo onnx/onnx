@@ -238,7 +238,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
                 traversal_external_data_dir, "tensors.bin"
             )
         else:
-            traversal_external_data_location = "../invlid_external_data/tensors.bin"
+            traversal_external_data_location = "invlid_external_data/tensors.bin"
 
         external_data_dir = os.path.join(self.temp_dir, "external_data")
         os.mkdir(external_data_dir)
