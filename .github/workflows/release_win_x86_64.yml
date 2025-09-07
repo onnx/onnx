@@ -99,6 +99,7 @@ jobs:
         fi
         for whl in dist/*.whl; do
           echo "Checking abi3 compatibility for $whl"
+          python -m pip install -q abi3audit
           python -m abi3audit "$whl"
         done
       shell: bash
