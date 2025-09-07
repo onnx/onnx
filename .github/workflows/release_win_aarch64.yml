@@ -23,7 +23,7 @@ jobs:
     runs-on: windows-11-arm
     strategy:
       matrix:
-        python-version: ['3.14-dev', '3.13', '3.12', '3.11']
+        python-version: ['3.13t', '3.12', '3.11', '3.10']
         architecture: ['arm64']
     steps:
     - name: Checkout ONNX
@@ -84,6 +84,7 @@ jobs:
         for whl in dist/*.whl; do
           echo "Checking abi3 compatibility for $whl"
           python -m pip install -q abi3audit
+          python -m pip install -q -r requirements-release_test.txt
           python -m abi3audit -v "$whl"
         done
       shell: bash
