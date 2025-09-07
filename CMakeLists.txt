@@ -145,6 +145,7 @@ if(CMAKE_CROSSCOMPILING)
 else()
   find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
   # Find Python for nanobind
+  set(Python_EXECUTABLE ${Python3_EXECUTABLE})
   find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
   set(ONNX_PYTHON_INTERPRETER Python3::Interpreter)
 endif()
@@ -217,7 +218,7 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       if(Protobuf_FOUND)
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
         set(Build_Protobuf OFF)
-        if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
+        if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0" AND "${Protobuf_VERSION}" VERSION_LESS "6.31.1")
           # There are extra dependencies for protobuf.
           find_package(absl REQUIRED)
           find_package(utf8_range)
@@ -555,7 +556,7 @@ if(ONNX_USE_UNITY_BUILD)
   set(NEW_LIST __unity_src_files)
   list(APPEND __unity_src_files ${ONNX_SRCS})
   # These files have an issue with template explicit specialization after instantiation:
-  #   We take them out of the unity group so they are compiled individually.
+  #   We take them out of the unity group so that they are compiled individually.
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
   set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
