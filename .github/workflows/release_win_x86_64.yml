@@ -88,6 +88,19 @@ jobs:
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist
+
+    - name: Check abi3 compatibility with abi3audit
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then
+            echo "Exactly one wheel file found."
+        else
+            echo "Multiple or no wheel files found."
+        fi
+        for whl in dist/*.whl; do
+          echo "Checking abi3 compatibility for $whl"
+          python -m abi3audit "$whl"
+        done   
     
     - name: Test the installed wheel
       if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev' # TODO: reevaluate 3.13t/3.14 for onnx 1.20 (3.13t was already working, but it's failing since a github runner update...)
