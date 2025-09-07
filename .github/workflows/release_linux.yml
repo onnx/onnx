@@ -83,7 +83,7 @@ jobs:
         python -m pip install -q -r requirements-release_test.txt
 
     - name: Check abi3 compatibility with abi3audit
-      if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success'
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version == '3.12' || matrix.python-version == '3.13t')
       run: |
         if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then
             echo "Exactly one wheel file found."

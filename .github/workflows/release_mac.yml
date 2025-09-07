@@ -4,8 +4,8 @@
 
 name: MacRelease
 
-on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
+on:
+  workflow_call:
     inputs:
       os:
         required: true
@@ -14,8 +14,6 @@ on:  # Specifies the event triggering the workflow
         required: true
         type: string
 
-
-# Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:
   MACOSX_DEPLOYMENT_TARGET: "12.0"
 
