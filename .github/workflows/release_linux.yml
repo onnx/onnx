@@ -64,14 +64,22 @@ jobs:
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_aarch64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
     
 
+    - name: Debug Python version and artifact name
+      run: |
+        echo "PYTHON VERSION: ${{ matrix.python-version }}"
+        if [ "${{ matrix.python-version }}" = "3.12" ]; then
+          echo "Artifact name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3"
+        else
+          echo "Artifact name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}"
+        fi
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && matrix.python-version == '3.12'
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && matrix.python-version != '3.12'
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |
