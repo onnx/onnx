@@ -11,7 +11,7 @@
 #include "onnx/common/path.h"
 namespace ONNX_NAMESPACE::Test {
 
-TEST(UTF8Test, WideStringConvertion) {
+TEST(UTF8Test, WideStringConversion) {
   std::string utf8_str(u8"世界，你好！");
   EXPECT_EQ(ONNX_NAMESPACE::wstring_to_utf8str(ONNX_NAMESPACE::utf8str_to_wstring(utf8_str)), utf8_str);
 }
