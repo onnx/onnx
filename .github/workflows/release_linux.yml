@@ -87,7 +87,7 @@ jobs:
   
    
 
-  test_wheel:
+  test:
     needs: build
     runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     env:
