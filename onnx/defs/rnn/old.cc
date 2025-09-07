@@ -527,7 +527,7 @@ static std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "Specify if the RNN is forward, reverse, or bidirectional. "
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
-        std::string("forward"));
+        std::string("foward"));
     schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
