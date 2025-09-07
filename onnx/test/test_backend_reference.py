@@ -167,7 +167,7 @@ if version_utils.numpy_older_than("2.0"):
 # The documentation does not explicitly say that is_causal=1 and attn_mask is not None
 # is not allowed. The expansion (based on the function definition in ONNX)
 # assumes this case never happens and behaves likes is_causal=0 even if it is 1.
-# The reference implementation and the backend tests have a different behabiour in that case.
+# The reference implementation and the backend tests have a different behaviour in that case.
 backend_test.exclude(
     "(test_attention_4d_with_past_and_present_qk_matmul_bias_4d_mask_causal_expanded"
     "|test_attention_4d_with_past_and_present_qk_matmul_bias_3d_mask_causal_expanded"

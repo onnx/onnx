@@ -4103,7 +4103,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto half_signal_size = (original_signal_size >> 1) + 1;
               result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
             } else {
-              // Clear the value and param (which would otherwie be inherited from the input).
+              // Clear the value and param (which would otherwise be inherited from the input).
               result_shape_proto.mutable_dim(axis_idx)->clear_dim_value();
               result_shape_proto.mutable_dim(axis_idx)->clear_dim_param();
             }
