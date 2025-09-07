@@ -766,7 +766,7 @@ bool OpSchema::BuildContextDependentFunction(
     //// default opset import may have been added to function_proto by OpSchema::BuildFunction
     //// we need to update its version with the specified opset_version
     UpdateFunctionProtoOpsetImportVersion(function_proto, requested_opset_version);
-    ValidateReferencedOpsInFuncton(&function_proto, requested_opset_version, it->first);
+    ValidateReferencedOpsInFunction(&function_proto, requested_opset_version, it->first);
     return true;
   }
 }
@@ -868,7 +868,7 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
     --it;
     int function_since_version = it->first;
     const FunctionProto* function = it->second.get();
-    if (!validate || ValidateReferencedOpsInFuncton(function, requested_opset_version, function_since_version)) {
+    if (!validate || ValidateReferencedOpsInFunction(function, requested_opset_version, function_since_version)) {
       return function;
     }
   }
@@ -881,7 +881,7 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
 // are not updated between function_since_version and requested_opset_version (include requested_opset_version).
 // this call only validate ops in the default domain.
 // TODO: validate ops in other domains.
-bool OpSchema::ValidateReferencedOpsInFuncton(
+bool OpSchema::ValidateReferencedOpsInFunction(
     const FunctionProto* function,
     int requested_opset_version,
     int function_since_version,

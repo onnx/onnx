@@ -383,7 +383,7 @@ class OpSchema final {
     return tensor_inference_function_ ? tensor_inference_function_ : dummyInferenceFunction;
   }
 
-  ONNX_API OpSchema& PartialDataPropagationFunction(DataPropagationFunction dataProgationFunction);
+  ONNX_API OpSchema& PartialDataPropagationFunction(DataPropagationFunction dataPropagationFunction);
   ONNX_API DataPropagationFunction GetDataPropagationFunction() const {
     return data_propagation_function_ ? data_propagation_function_ : dummyDataPropagationFunction;
   }
@@ -819,7 +819,7 @@ class OpSchema final {
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
-  bool ValidateReferencedOpsInFuncton(
+  bool ValidateReferencedOpsInFunction(
       const FunctionProto* function,
       int requested_opset_version,
       int function_since_version,
