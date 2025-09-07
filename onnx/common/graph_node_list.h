@@ -59,7 +59,7 @@ struct generic_graph_node_list_iterator final {
     return cur;
   }
   generic_graph_node_list_iterator& operator++() {
-    ONNX_ASSERT(cur);
+    ONNX_ASSERT(cur)
     cur = cur->next_in_graph[d];
     return *this;
   }
@@ -69,7 +69,7 @@ struct generic_graph_node_list_iterator final {
     return old;
   }
   generic_graph_node_list_iterator& operator--() {
-    ONNX_ASSERT(cur);
+    ONNX_ASSERT(cur)
     cur = cur->next_in_graph[reverseDir()];
     return *this;
   }

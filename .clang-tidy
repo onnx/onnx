@@ -1,11 +1,6 @@
-# `-allow-enabling-analyzer-alpha-checkers` should be passed to clang-tidy for CSA checkers named `clang-analyzer-alpha.*`
-# `aggressive-binary-operation-simplification` should be enabled (via `-Xclang -analyzer-config -Xclang aggressive-binary-operation-simplification=true` in clang)
-# there is some problem in `clang-analyzer-alpha.clone.*`, so do not enable it
-# `clang-analyzer-alpha.deadcode.*` is just too verbose to enable
 Checks: >-
   -*,
   bugprone-*,
-  -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
   -bugprone-lambda-function-name,
   -bugprone-macro-parentheses,
@@ -15,7 +10,6 @@ Checks: >-
   clang-analyzer-.*,
   cppcoreguidelines-avoid-goto,
   cppcoreguidelines-interfaces-global-init,
-  cppcoreguidelines-init-variables,
   cppcoreguidelines-no-malloc,
   cppcoreguidelines-prefer-member-initializer,
   cppcoreguidelines-pro-type-member-init,
@@ -34,7 +28,6 @@ Checks: >-
   -misc-use-anonymous-namespace,
   modernize-*,
   -modernize-concat-nested-namespaces,
-  -modernize-raw-string-literal,
   -modernize-return-braced-init-list,
   -modernize-use-auto,
   -modernize-use-trailing-return-type,
@@ -46,14 +39,12 @@ Checks: >-
   readability-non-const-parameter,
   readability-redundant*
   readability-simplify*,
-  readability-string-compare,
-  -readability-redundant-access-specifiers,
-  -readability-redundant-control-flow,
   readability-static-accessed-through-instance,
   readability-static-definition-in-anonymous-namespace,
   readability-string-compare,
   readability-suspicious-call-argument,
   readability-uniqueptr-delete-release,
+  -readability-redundant-access-specifiers,
 
 CheckOptions:
   # `cppcoreguidelines-special-member-functions` is enabled, refer to https://en.cppreference.com/w/cpp/language/rule_of_three

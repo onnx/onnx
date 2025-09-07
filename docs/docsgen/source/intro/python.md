@@ -1,5 +1,9 @@
 # ONNX with Python
 
+```{tip}
+Check out the [ir-py project](https://github.com/onnx/ir-py) for an alternative set of Python APIs for creating and manipulating ONNX models. The ir-py project provides a more modern and ergonomic interface compared to the ONNX Protobuf APIs described here.
+```
+
 Next sections highlight the main functions used to build
 an ONNX graph with the {ref}`Python API <l-python-onnx-api>`
 *onnx* offers.
@@ -148,8 +152,8 @@ of each object of the graph.
             node.name, node.op_type, node.input, node.output))
 ```
 
-The tensor type is an integer (= 1). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` gives the
-corresponding type with numpy.
+The tensor type is an integer value (=1 for `FLOAT`). The helper function {func}`onnx.helper.tensor_dtype_to_np_dtype` converts
+the integer to its corresponding numpy data type (float32 for 1).
 
 ```{eval-rst}
 .. exec_code::
@@ -228,7 +232,7 @@ overcome that limit.
 
 ### Data Serialization
 
-The serialization of tensor usually happens like the following:
+The serialization of tensors usually happens like the following:
 
 ```{eval-rst}
 .. exec_code::
@@ -378,7 +382,7 @@ how the initializers look like.
 The type is defined as integer as well with the same meaning.
 In this second example, there is only one input left.
 Input `A` and `B` were removed. They could be kept. In that case,
-they are optional: every initiliazer sharing the same name as input
+they are optional: every initializer sharing the same name as input
 is considered as a default value. It replaces the input if this one
 is not given.
 

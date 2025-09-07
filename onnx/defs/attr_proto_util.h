@@ -13,16 +13,18 @@
 
 namespace ONNX_NAMESPACE {
 
-AttributeProto MakeAttribute(const std::string& attr_name, const float& value);
-AttributeProto MakeAttribute(const std::string& attr_name, const int64_t& value);
-AttributeProto MakeAttribute(const std::string& attr_name, const std::string& value);
-AttributeProto MakeAttribute(const std::string& attr_name, const TensorProto& value);
-AttributeProto MakeAttribute(const std::string& attr_name, const GraphProto& value);
-AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<float>& values);
-AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<int64_t>& values);
-AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<std::string>& values);
-AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<TensorProto>& values);
-AttributeProto MakeAttribute(const std::string& attr_name, const std::vector<GraphProto>& values);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, float value);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, int64_t value);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, std::string value);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, TensorProto value);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, GraphProto value);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, TypeProto value);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, std::vector<float> values);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, std::vector<int64_t> values);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, std::vector<std::string> values);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, std::vector<TensorProto> values);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, std::vector<GraphProto> values);
+ONNX_API AttributeProto MakeAttribute(std::string attr_name, std::vector<TypeProto> values);
 
 // Make a "reference" attribute for a node in a function body.
 // <attr_name> specifies the attribute name of both the function node and its

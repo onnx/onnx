@@ -1,7 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# pylint: disable=C0415,R0912,R0913,R0914,R0915,W0611,W0603
 """Every class imported in this module defines an implementation of
 an operator of the main domain. Any class name uses `_` to specify a
 version defined in a specific opset. The class name without `_`
@@ -12,6 +11,246 @@ did not change the implementation.
 """
 
 from __future__ import annotations
+
+__all__ = [
+    "load_op",
+    "Abs",
+    "Acos",
+    "Acosh",
+    "Add",
+    "AffineGrid",
+    "And",
+    "ArgMax_1",
+    "ArgMax_12",
+    "ArgMin_1",
+    "ArgMin_12",
+    "Asin",
+    "Asinh",
+    "Atan",
+    "Atanh",
+    "Attention",
+    "AttributeHasValue",
+    "AveragePool_1",
+    "AveragePool_7",
+    "AveragePool_11",
+    "AveragePool_19",
+    "BatchNormalization_6",
+    "BatchNormalization_9",
+    "BatchNormalization_14",
+    "Bernoulli",
+    "BitShift",
+    "BitwiseAnd",
+    "BitwiseNot",
+    "BitwiseOr",
+    "BitwiseXor",
+    "BlackmanWindow",
+    "Cast_1",
+    "Cast_19",
+    "Cast_24",
+    "CastLike_15",
+    "CastLike_19",
+    "Ceil",
+    "Celu",
+    "CenterCropPad",
+    "Clip_6",
+    "Clip_11",
+    "Col2Im",
+    "Compress",
+    "Concat",
+    "ConcatFromSequence",
+    "Constant_1",
+    "Constant_9",
+    "Constant_11",
+    "Constant_12",
+    "ConstantOfShape",
+    "Conv",
+    "ConvInteger",
+    "ConvTranspose",
+    "Cos",
+    "Cosh",
+    "CumSum",
+    "DeformConv",
+    "DepthToSpace",
+    "DequantizeLinear_19",
+    "DequantizeLinear_21",
+    "Det",
+    "DFT_17",
+    "DFT_20",
+    "Div",
+    "Dropout_7",
+    "Dropout_12",
+    "DynamicQuantizeLinear",
+    "Einsum",
+    "Elu",
+    "Equal",
+    "Erf",
+    "Exp",
+    "Expand",
+    "EyeLike",
+    "Flatten",
+    "Floor",
+    "Gather",
+    "GatherElements",
+    "GatherND",
+    "Gemm_6",
+    "Gemm_7",
+    "GlobalAveragePool",
+    "GlobalMaxPool",
+    "Greater",
+    "GreaterOrEqual",
+    "GridSample",
+    "GRU",
+    "HammingWindow",
+    "HannWindow",
+    "HardSigmoid",
+    "Hardmax",
+    "Identity",
+    "If",
+    "ImageDecoder",
+    "InstanceNormalization",
+    "IsInf",
+    "IsNaN",
+    "LayerNormalization",
+    "LeakyRelu",
+    "Less",
+    "LessOrEqual",
+    "Log",
+    "LogSoftmax",
+    "Loop",
+    "LpNormalization",
+    "LpPool",
+    "LRN",
+    "LSTM",
+    "MatMul",
+    "MatMulInteger",
+    "Max",
+    "MaxPool",
+    "MaxUnpool",
+    "Mean",
+    "MelWeightMatrix",
+    "Min",
+    "Mod",
+    "Mul",
+    "Neg",
+    "NegativeLogLikelihoodLoss",
+    "NonMaxSuppression",
+    "NonZero",
+    "Not",
+    "OneHot",
+    "Optional",
+    "OptionalGetElement",
+    "OptionalHasElement",
+    "Or",
+    "Pad_1",
+    "Pad_2",
+    "Pad_11",
+    "Pad_18",
+    "Pow",
+    "PRelu",
+    "QLinearConv",
+    "QLinearMatMul",
+    "QuantizeLinear_10",
+    "QuantizeLinear_19",
+    "QuantizeLinear_21",
+    "RandomNormal",
+    "RandomNormalLike",
+    "RandomUniform",
+    "RandomUniformLike",
+    "Range",
+    "Reciprocal",
+    "ReduceL1_1",
+    "ReduceL1_18",
+    "ReduceL2_1",
+    "ReduceL2_18",
+    "ReduceLogSum_1",
+    "ReduceLogSum_18",
+    "ReduceLogSumExp_1",
+    "ReduceLogSumExp_18",
+    "ReduceMax_1",
+    "ReduceMax_18",
+    "ReduceMean_1",
+    "ReduceMean_18",
+    "ReduceMin_1",
+    "ReduceMin_18",
+    "ReduceProd_1",
+    "ReduceProd_18",
+    "ReduceSum_1",
+    "ReduceSum_13",
+    "ReduceSumSquare_1",
+    "ReduceSumSquare_18",
+    "RegexFullMatch",
+    "Relu",
+    "Reshape_5",
+    "Reshape_14",
+    "Resize",
+    "ReverseSequence",
+    "RMSNormalization",
+    "RNN_7",
+    "RNN_14",
+    "RoiAlign",
+    "RotaryEmbedding",
+    "Round",
+    "Scan",
+    "ScatterElements",
+    "ScatterND",
+    "Selu",
+    "SequenceAt",
+    "SequenceConstruct",
+    "SequenceEmpty",
+    "SequenceErase",
+    "SequenceInsert",
+    "SequenceLength",
+    "SequenceMap",
+    "Shape_1",
+    "Shape_15",
+    "Shrink",
+    "Sigmoid",
+    "Sign",
+    "Sin",
+    "Sinh",
+    "Size",
+    "Slice_1",
+    "Slice_10",
+    "Softmax",
+    "SoftmaxCrossEntropyLoss",
+    "Softplus",
+    "Softsign",
+    "Swish",
+    "SpaceToDepth",
+    "Split_2",
+    "Split_11",
+    "Split_13",
+    "Split_18",
+    "SplitToSequence",
+    "Sqrt",
+    "Squeeze_1",
+    "Squeeze_11",
+    "Squeeze_13",
+    "STFT",
+    "StringConcat",
+    "StringNormalizer",
+    "StringSplit",
+    "Sub",
+    "Sum",
+    "Tan",
+    "Tanh",
+    "TensorScatter",
+    "TfIdfVectorizer",
+    "ThresholdedRelu",
+    "Tile",
+    "TopK_1",
+    "TopK_10",
+    "TopK_11",
+    "Transpose",
+    "Trilu",
+    "Unique",
+    "Unsqueeze_1",
+    "Unsqueeze_11",
+    "Unsqueeze_13",
+    "Upsample",
+    "Where",
+    "Xor",
+]
 
 import textwrap
 from typing import Any
@@ -38,6 +277,7 @@ from onnx.reference.ops.op_asin import Asin
 from onnx.reference.ops.op_asinh import Asinh
 from onnx.reference.ops.op_atan import Atan
 from onnx.reference.ops.op_atanh import Atanh
+from onnx.reference.ops.op_attention import Attention
 from onnx.reference.ops.op_attribute_has_value import AttributeHasValue
 from onnx.reference.ops.op_average_pool import (
     AveragePool_1,
@@ -57,7 +297,7 @@ from onnx.reference.ops.op_bitwise_not import BitwiseNot
 from onnx.reference.ops.op_bitwise_or import BitwiseOr
 from onnx.reference.ops.op_bitwise_xor import BitwiseXor
 from onnx.reference.ops.op_blackman_window import BlackmanWindow
-from onnx.reference.ops.op_cast import Cast_1, Cast_19
+from onnx.reference.ops.op_cast import Cast_1, Cast_19, Cast_24
 from onnx.reference.ops.op_cast_like import CastLike_15, CastLike_19
 from onnx.reference.ops.op_ceil import Ceil
 from onnx.reference.ops.op_celu import Celu
@@ -188,8 +428,10 @@ from onnx.reference.ops.op_relu import Relu
 from onnx.reference.ops.op_reshape import Reshape_5, Reshape_14
 from onnx.reference.ops.op_resize import Resize
 from onnx.reference.ops.op_reverse_sequence import ReverseSequence
+from onnx.reference.ops.op_rms_normalization import RMSNormalization
 from onnx.reference.ops.op_rnn import RNN_7, RNN_14
 from onnx.reference.ops.op_roi_align import RoiAlign
+from onnx.reference.ops.op_rotary_embedding import RotaryEmbedding
 from onnx.reference.ops.op_round import Round
 from onnx.reference.ops.op_scan import Scan
 from onnx.reference.ops.op_scatter_elements import ScatterElements
@@ -225,8 +467,10 @@ from onnx.reference.ops.op_string_normalizer import StringNormalizer
 from onnx.reference.ops.op_string_split import StringSplit
 from onnx.reference.ops.op_sub import Sub
 from onnx.reference.ops.op_sum import Sum
+from onnx.reference.ops.op_swish import Swish
 from onnx.reference.ops.op_tan import Tan
 from onnx.reference.ops.op_tanh import Tanh
+from onnx.reference.ops.op_tensor_scatter import TensorScatter
 from onnx.reference.ops.op_tfidf_vectorizer import TfIdfVectorizer
 from onnx.reference.ops.op_thresholded_relu import ThresholdedRelu
 from onnx.reference.ops.op_tile import Tile
@@ -258,13 +502,13 @@ def load_op(
 
     Args:
         domain: domain
-        op_type: oprator type
+        op_type: operator type
         version: requested version
         custom: custom implementation (like a function)
         node: used if no implementation was found and the operator
-            defines a function which is context dependant
+            defines a function which is context dependent
         input_types: used if no implementation was found and the
-            operator defines a function which is context dependant
+            operator defines a function which is context dependent
         expand: use the function implemented in the schema instead of
             its reference implementation
         evaluator_cls: evaluator to use
@@ -278,52 +522,52 @@ def load_op(
         _registered_operators = _build_registered_operators()  # type: ignore[assignment]
     assert _registered_operators is not None
     if custom is not None:
-        return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
+        return lambda *args: OpFunction(*args, impl=custom)
     if version is None:
         version = onnx_opset_version()
     if domain != "":
         raise ValueError(f"Domain must be '' not {domain!r}.")
-    if op_type in _registered_operators and not expand:  # type: ignore
+    if op_type in _registered_operators and not expand:
         found = True
     else:
         # maybe the operator can be replaced by a function
         try:
-            schema = get_schema(op_type, version, domain)  # type: ignore
+            schema = get_schema(op_type, version, domain)
         except SchemaError:
             raise NotImplementedError(
                 f"No registered schema for operator {op_type!r} "
                 f"and domain {domain!r}. Did you recompile the sources after updating the repository?"
             ) from None
-        if schema.has_function:  # type: ignore
-            body = schema.function_body  # type: ignore
-            assert (
-                evaluator_cls is not None
-            ), f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
+        if schema.has_function:
+            body = schema.function_body
+            assert evaluator_cls is not None, (
+                f"evaluator_cls must be specified to implement operator {op_type!r} from domain {domain!r}"
+            )
             sess = evaluator_cls(body)
-            return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
-        if schema.has_context_dependent_function:  # type: ignore
+            return lambda *args, sess=sess: OpFunction(*args, impl=sess)
+        if schema.has_context_dependent_function:
             if node is None or input_types is None:
                 raise RuntimeContextError(
                     f"No registered implementation for operator {op_type!r} "
                     f"and domain {domain!r}, the operator has a context dependent function. "
                     f"but argument node or input_types is not defined (input_types={input_types})."
                 )
-            body = schema.get_context_dependent_function(  # type: ignore
+            body = schema.get_context_dependent_function(
                 node.SerializeToString(), [it.SerializeToString() for it in input_types]
             )
             proto = FunctionProto()
             proto.ParseFromString(body)
-            assert (
-                evaluator_cls is not None
-            ), f"evaluator_cls must be specified to evaluate function {proto.name!r}"
+            assert evaluator_cls is not None, (
+                f"evaluator_cls must be specified to evaluate function {proto.name!r}"
+            )
             sess = evaluator_cls(proto)
-            return lambda *args, sess=sess: OpFunction(*args, impl=sess)  # type: ignore
+            return lambda *args, sess=sess: OpFunction(*args, impl=sess)
         found = False
     if not found:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
-        has_function = schema.has_function if schema else None  # type: ignore
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
+        has_function = schema.has_function if schema else None
         has_context_dependent_function = (
-            schema.has_context_dependent_function if schema else None  # type: ignore
+            schema.has_context_dependent_function if schema else None
         )
         raise RuntimeImplementationError(
             f"No registered implementation for operator {op_type!r} "
@@ -356,7 +600,7 @@ def load_op(
             )
         cl = impl[best]
     if cl is None:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
         raise ValueError(
             f"Not registered implementation for operator {op_type!r}, "
             f"domain {domain!r}, and {version!r} in\n{available}"

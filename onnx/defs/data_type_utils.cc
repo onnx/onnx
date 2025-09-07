@@ -160,7 +160,7 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       return left + "sparse_tensor(" + ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" + right;
     }
     default:
-      ONNX_THROW_EX(std::invalid_argument("Unsuported type proto value case."));
+      ONNX_THROW_EX(std::invalid_argument("Unsupported type proto value case."));
   }
 }
 
@@ -238,8 +238,9 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
 
 int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   if (!IsValidDataTypeString(type_str)) {
-    ONNX_THROW_EX(std::invalid_argument(
-        "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
+    ONNX_THROW_EX(
+        std::invalid_argument(
+            "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
   }
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
@@ -437,6 +438,7 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["float8e4m3fnuz"] = TensorProto_DataType_FLOAT8E4M3FNUZ;
   type_str_to_tensor_data_type_["float8e5m2"] = TensorProto_DataType_FLOAT8E5M2;
   type_str_to_tensor_data_type_["float8e5m2fnuz"] = TensorProto_DataType_FLOAT8E5M2FNUZ;
+  type_str_to_tensor_data_type_["float8e8m0"] = TensorProto_DataType_FLOAT8E8M0;
   type_str_to_tensor_data_type_["uint4"] = TensorProto_DataType_UINT4;
   type_str_to_tensor_data_type_["int4"] = TensorProto_DataType_INT4;
   type_str_to_tensor_data_type_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;

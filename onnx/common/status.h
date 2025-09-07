@@ -6,21 +6,24 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <utility>
 
+#include "onnx/onnx_pb.h"
+
 namespace ONNX_NAMESPACE {
 namespace Common {
 
-enum class StatusCategory {
+enum class StatusCategory : std::uint8_t {
   NONE = 0,
   CHECKER = 1,
   OPTIMIZER = 2,
 };
 
-enum class StatusCode {
+enum class StatusCode : std::uint8_t {
   OK = 0,
   FAIL = 1,
   INVALID_ARGUMENT = 2,
@@ -54,15 +57,15 @@ class Status {
   Status& operator=(Status&&) = default;
   ~Status() = default;
 
-  bool IsOK() const noexcept;
+  ONNX_API bool IsOK() const noexcept;
 
-  StatusCode Code() const noexcept;
+  ONNX_API StatusCode Code() const noexcept;
 
-  StatusCategory Category() const noexcept;
+  ONNX_API StatusCategory Category() const noexcept;
 
-  const std::string& ErrorMessage() const;
+  ONNX_API const std::string& ErrorMessage() const;
 
-  std::string ToString() const;
+  ONNX_API std::string ToString() const;
 
   bool operator==(const Status& other) const {
     return (this->state_ == other.state_) || (ToString() == other.ToString());
@@ -72,7 +75,7 @@ class Status {
     return !(*this == other);
   }
 
-  static const Status& OK() noexcept;
+  ONNX_API static const Status& OK() noexcept;
 
  private:
   struct State {

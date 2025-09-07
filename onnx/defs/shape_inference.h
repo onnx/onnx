@@ -100,6 +100,9 @@ struct InferenceContext {
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
+  virtual bool hasOutput(size_t index) {
+    return (index < getNumOutputs() && (getOutputType(index) != nullptr));
+  }
   virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
   virtual ~InferenceContext() = default;
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;
@@ -250,11 +253,11 @@ inline void setTensorElementType(int32_t elem_type, TypeProto::ValueCase value_c
   }
 }
 
-void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type);
+ONNX_API void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type);
 
-void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
+ONNX_API void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
 
-void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
+ONNX_API void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
 
 inline void propagateElemTypeFromDtypeToOutput(
     InferenceContext& ctx,
@@ -448,7 +451,7 @@ inline void propagateShapeFromInputToOutput(InferenceContext& ctx, size_t inputI
   propagateShape(input_type, output_type);
 }
 
-inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
+ONNX_API inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;
@@ -519,9 +522,7 @@ inline void propagateElemTypeFromAttributeToOutput(
 }
 
 inline TensorShapeProto* getTensorMutableShape(TypeProto::ValueCase value_case, TypeProto& type) {
-  if (value_case == TypeProto::kTensorType) {
-    return type.mutable_tensor_type()->mutable_shape();
-  } else if (value_case == TypeProto::kSparseTensorType) {
+  if (value_case == TypeProto::kTensorType || value_case == TypeProto::kSparseTensorType) {
     return type.mutable_tensor_type()->mutable_shape();
   }
   return nullptr;
@@ -593,6 +594,11 @@ inline void updateOutputShape(
 // When one of above succeeds, `true` is stored in `found`.
 // Otherwise, `false` is stored, which means that returned TensorShapeProto does not make sense.
 TensorShapeProto getShapeInput(const InferenceContext& ctx, size_t input_index, bool& found);
+
+// Argument `fail_if_negative_value` is used to control whether negative values are allowed in the shape. The shape
+// check would fail if not.
+TensorShapeProto
+getShapeInput(const InferenceContext& ctx, size_t input_index, bool fail_if_negative_value, bool& found);
 
 // Infer shape of an output from the value of a specified attribute, which is
 // expected to be a list of integers specifying a valid shape.
@@ -714,9 +720,8 @@ inline void mergeInDimensionInfo(
     } else {
       target_dim.set_dim_value(source_value);
     }
-  } else if (target_dim.has_dim_value()) {
+  } else if (target_dim.has_dim_value() || target_dim.has_dim_param()) {
     // if target has a value we preserve it so do nothing
-  } else if (target_dim.has_dim_param()) {
     // prefer target param over source
   } else if (source_dim.has_dim_param()) {
     target_dim.set_dim_param(source_dim.dim_param());
@@ -831,10 +836,9 @@ inline void unifyDim(const Dim& source_dim, Dim& target_dim) {
     } else {
       target_dim.set_dim_value(source_value);
     }
-  } else if (target_dim.has_dim_value()) {
+  } else if (target_dim.has_dim_value() || target_dim.has_dim_param()) {
     // if target has a value we preserve it.
     // we cannot set source dim value.
-  } else if (target_dim.has_dim_param()) {
     // prefer target param over source
     // we cannot currently unify the dim_params
   } else if (source_dim.has_dim_param()) {
@@ -926,5 +930,18 @@ void checkDuplicateAxes(Axes& axes, int rank) {
     tmp[actual_axis] = true;
   }
 }
+
+// Shape inference functions for various ONNX operators.
+// Users can use these functions to implement shape inference for custom operators
+// by calling them in their own inference functions.
+ONNX_API void RNNShapeInference(InferenceContext& ctx);
+ONNX_API void convPoolShapeInference(
+    InferenceContext& ctx,
+    bool use_dilation,
+    bool require_kernel_shape,
+    int input1Idx,
+    int input2Idx);
+ONNX_API void convTransposeShapeInference(InferenceContext& ctx);
+ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx);
 
 } // namespace ONNX_NAMESPACE

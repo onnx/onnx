@@ -87,6 +87,7 @@ Each model has the following components:
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
 |training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
 |functions|FunctionProto[]|An optional list of functions local to the model.|
+|configuration|DeviceConfigurationProto[]|(IR version >= 11) An optional list of multi-device configurations for distributed execution.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
@@ -259,7 +260,7 @@ Graphs SHOULD be populated with documentation strings, which MAY be interpreted 
 
 ### Names Within a Graph
 
-All names MUST adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
+All names SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
 
 Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. Please see below for further clarification in the case where a graph contains nested subgraphs (as attribute values).
 
@@ -294,6 +295,7 @@ attribute|Attribute[]|Named attributes, another form of operator parameterizatio
 doc_string|string|Human-readable documentation for this value. Markdown is allowed.
 overload|string|Part of unique id of function (added in IR version 10)
 |metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
+|device_configurations|NodeDeviceConfigurationProto[]|(IR version >= 11) Multi-device execution configurations for this node.
 
 A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, a graph initializer, or as a node output is said to be a definition and the occurrence of a name as a node input or as a graph output is said to be a use.
 
@@ -305,7 +307,7 @@ Edges in the computation graph are established by outputs of one node being refe
 
 The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node. A node input in a nested subgraph MAY refer to names introduced in outer graphs (as node outputs, graph inputs, or graph initializers).
 
-The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name MUST be distinct from the names from the outer scopes that are visible in the nested subgraph.
+The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name and names of inputs and initializers of the subgraph MUST be distinct from the names from the outer scopes that are visible in the nested subgraph. That is, variable shadowing is not allowed.
 
 Node dependencies MUST NOT create cycles in the computation graph.
 
@@ -474,7 +476,7 @@ Each size in the list MAY be expressed as an integral value or as a "dimension v
 
 For example, a NxM matrix would have the shape list [N,M].
 
-The name of each dimension variable MUST adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
+The name of each dimension variable SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
 
 Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
 
@@ -513,6 +515,82 @@ The training step is similarly described using a Graph (TrainingInfoProto.algori
 Thus, the state variables of the training model consist of a subset of the initializers of the main inference graph (i.e., ModelProto.graph.initializer) and the training-algorithm graph (TrainingInfoProto.algorithm.initializer) as identified by the keys of the bindings (in TrainingInfoProto.initialization_binding and TrainingInfoProto.update_binding). Note that the state variables are not constant values in the context of training. They represent mutable variables shared by multiple graphs (implicitly declared in the top-level training model scope). This implicit declaration of shared mutable variables is used instead of an explicit declaration for purposes of backward compatibility with the inference graph representation.
 
 All state variables are pre-initialized to the value specified in the corresponding initializer. A subsequent call to perform the initialization step (using the appropriate API exposed by a runtime) updates the values of the state variables as described above. If the training model has more than one instance of TrainingInfoProto, the initialization step corresponding to each is performed in order. A TrainingInfoProto.initialization MAY be omitted (only if there are no initialization_bindings). For the training step, a runtime MAY allow users to invoke any one of the TrainingInfoProto.algorithm, allowing the training process to interleave the different algorithms as desired. The order in which the different TrainingProto.algorithms are called affects the training result, and it is the callers responsibility to call them in the correct order.
+
+## Multi-Device Configuration (IR version >= 11)
+
+ONNX supports multi-device execution through device configuration specifications that enable distributed inference and training. This includes support for tensor parallelism (sharding tensors across multiple devices) and pipeline parallelism (distributing different subgraphs to different devices).
+
+### Device Configurations
+
+A model MAY specify one or more multi-device configurations using _DeviceConfigurationProto_ contained in the model. Each configuration describes a specific arrangement of devices that can be used for model execution.
+
+The properties of a device configuration are:
+
+|Name|Type|Description|
+|---|---|---|
+|name|string|The name of the configuration. This field MUST be present for this version of the IR.|
+|num_devices|int32|Number of devices in this configuration. This field MUST be present for this version of the IR.|
+|device|string[]|Optional names of the devices. MUST be length of num_devices if provided.|
+
+### Node Device Configuration
+
+Individual nodes can specify device-specific execution information through _NodeDeviceConfigurationProto_. This allows fine-grained control over how computation is distributed across devices.
+
+The properties of a node device configuration are:
+
+|Name|Type|Description|
+|---|---|---|
+|configuration_id|string|ID of the configuration. MUST match the name of a DeviceConfigurationProto. This field MUST be present for this version of the IR.|
+|sharding_spec|ShardingSpecProto[]|Sharding specifications for the node's inputs and outputs.|
+|pipeline_stage|int32|Optional pipeline stage identifier for this node.|
+
+### Sharding Specification
+
+Sharding describes how tensors are partitioned or replicated across multiple devices. A _ShardingSpecProto_ defines the sharding behavior for a specific input or output tensor of a node.
+
+The properties of a sharding specification are:
+
+|Name|Type|Description|
+|---|---|---|
+|tensor_name|string|Identifies the input or output tensor being sharded. Must match a name in the node's input or output list. This field MUST be present for this version of the IR.|
+|device|int64[]|List of devices across which the tensor is sharded or replicated.|
+|index_to_device_group_map|IntIntListEntryProto[]|Optional map indicating device groups when a device ID represents multiple physical devices.|
+|sharded_dim|ShardedDimProto[]|Sharding specification for each axis of the tensor.|
+
+### Sharded Dimension
+
+A _ShardedDimProto_ describes how a single axis of a tensor is sharded across devices.
+
+The properties of a sharded dimension are:
+
+|Name|Type|Description|
+|---|---|---|
+|axis|int64|The tensor axis being sharded. Must be in range [-r, r-1] where r is tensor rank. This field MUST be present for this version of the IR.|
+|simple_sharding|SimpleShardedDimProto[]|Describes how the axis is divided into shards.|
+
+### Simple Sharded Dimension
+
+A _SimpleShardedDimProto_ specifies that N blocks are divided into M shards, where N may be symbolic but M must be constant.
+
+The properties of a simple sharded dimension are:
+
+|Name|Type|Description|
+|---|---|---|
+|dim_value|int64|Dimension value to be sharded (alternative to dim_param).|
+|dim_param|string|Symbolic dimension parameter to be sharded (alternative to dim_value).|
+|num_shards|int64|Number of shards to split the dimension into. This field MUST be present for this version of the IR.|
+
+### Multi-Device Execution Semantics
+
+The multi-device annotations are hints to execution backends and do not affect the computational semantics of the model. Backends MAY ignore these annotations if the specified configurations are not supported or available. All communication operations required for multi-device execution (such as data transfers between devices) are implicit and handled by the runtime.
+
+For tensor parallelism, tensors can be:
+- **Split** across devices along specified axes, distributing different portions of the data to different devices
+- **Replicated** across devices, where the same tensor data is duplicated on multiple devices
+
+Pipeline parallelism is indicated through optional pipeline stage identifiers that suggest how to distribute subgraphs across devices for pipelined execution.
+
+For more detailed information about multi-device execution patterns and examples, see the [Multi-Device Proposal](proposals/ONNXMultiDeviceProposal.md).
 
 ## Other Specification Documents
 

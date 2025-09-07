@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class AggregationFunction(IntEnum):

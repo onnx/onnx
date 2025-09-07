@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "onnx/version_converter/BaseConverter.h"
+#include "onnx/version_converter/adapters/Attention_24_23.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
 #include "onnx/version_converter/adapters/axis_attribute_to_input.h"
@@ -46,6 +47,7 @@
 #include "onnx/version_converter/adapters/scatter_10_11.h"
 #include "onnx/version_converter/adapters/slice_9_10.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
+#include "onnx/version_converter/adapters/softmax_13_12.h"
 #include "onnx/version_converter/adapters/split_12_13.h"
 #include "onnx/version_converter/adapters/split_13_12.h"
 #include "onnx/version_converter/adapters/split_17_18.h"
@@ -88,7 +90,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         version >= version_range.first && version <= version_range.second,
         "Warning: invalid version (must be between %d and %d)",
         version_range.first,
-        version_range.second);
+        version_range.second)
   }
 
   void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
@@ -96,8 +98,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         (initial_domain.empty() || initial_domain == "ai.onnx") &&
             (target_domain.empty() || target_domain == "ai.onnx"),
         "Warning: default onnx version converter can only convert "
-        " between default domain opset versions ('' or 'ai.onnx')\n");
-    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains");
+        " between default domain opset versions ('' or 'ai.onnx')\n")
+    ONNX_ASSERTM(initial_domain == target_domain, "initial_version and target_version must have the same domains")
   }
 
   void convert_graph(const std::shared_ptr<Graph>& g, const OpSetID& initial_version, const OpSetID& target_version)
@@ -126,8 +128,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
           }
         }
         if (min_version > 1) {
-          registerAdapter(std::make_unique<NoPreviousVersionAdapter>(
-              op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
+          registerAdapter(
+              std::make_unique<NoPreviousVersionAdapter>(
+                  op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
         }
       }
     }
@@ -494,6 +497,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<Split_13_12>());
+    registerAdapter(std::make_unique<Softmax_13_12>("Softmax"));
+    registerAdapter(std::make_unique<Softmax_13_12>("LogSoftmax"));
 
     /******** 13 -> 14 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Add", OpSetID(13), OpSetID(14)));
@@ -823,12 +828,66 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
     registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+
+    /******** 23 -> 24 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Attention", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("DequantizeLinear", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Flatten", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("If", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Squeeze", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(23), OpSetID(24)));
+
+    // TopK and SplitToSequence 23=>24 update adds bfloat16 support
+    registerAdapter(std::make_unique<CompatibleAdapter>("TopK", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("SplitToSequence", OpSetID(23), OpSetID(24)));
+
+    /******** 24 -> 23 ********/
+    registerAdapter(std::make_unique<Attention_24_23>());
+    const std::vector<TensorProto_DataType> ir12_types_not_in_ir11 = {TensorProto_DataType_FLOAT8E8M0};
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("ConstantOfShape", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Flatten", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+
+    registerAdapter(std::make_unique<TypeRestriction>("TopK", OpSetID(24), OpSetID(23), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("SplitToSequence", OpSetID(24), OpSetID(23), bfloat16_not_allowed));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
       const override;
 };
 
-ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
+ONNX_API ModelProto ConvertVersion(const ModelProto& mp_in, int target_version);
 } // namespace version_conversion
 } // namespace ONNX_NAMESPACE

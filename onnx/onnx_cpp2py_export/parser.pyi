@@ -1,4 +1,3 @@
-
 def parse_model(model: str) -> tuple[bool, bytes, bytes]:
     """Returns (success-flag, error-message, serialized-proto).
 

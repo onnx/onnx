@@ -8,10 +8,8 @@ from typing import Any
 
 import numpy as np
 
-from onnx import load
-from onnx.defs import onnx_opset_version
-from onnx.external_data_helper import ExternalDataInfo, uses_external_data
-from onnx.model_container import ModelContainer
+import onnx
+import onnx.model_container
 from onnx.onnx_pb import (
     FunctionProto,
     GraphProto,
@@ -20,13 +18,7 @@ from onnx.onnx_pb import (
     TensorProto,
     TypeProto,
 )
-from onnx.reference.op_run import (
-    OpFunctionContextDependant,
-    OpRun,
-    OpRunExpand,
-    RuntimeContextError,
-    to_array_extended,
-)
+from onnx.reference import op_run
 from onnx.reference.ops_optimized import optimized_operators
 
 
@@ -114,7 +106,7 @@ class ReferenceEvaluator:
 
             op_domain = "custom"
 
-            def _run(self, x, alpha=None):  # type: ignore
+            def _run(self, x, alpha=None):
                 # None must be the default value, it is automatically
                 # replaced by class OpRun with either the default value
                 # specified in the NodeProto or an attribute value defined
@@ -200,15 +192,15 @@ class ReferenceEvaluator:
             implementation a schema may define.
     """
 
-    def __init__(  # type: ignore
+    def __init__(
         self,
         proto: Any,
         opsets: dict[str, int] | None = None,
-        functions: list[ReferenceEvaluator | FunctionProto] | None = None,  # type: ignore
+        functions: list[ReferenceEvaluator | FunctionProto] | None = None,
         verbose: int = 0,
-        new_ops: list[OpRun] | None = None,
+        new_ops: list[type[op_run.OpRun]] | None = None,
         optimized: bool = True,
-    ):
+    ) -> None:
         if optimized:
             if new_ops is None:
                 new_ops = optimized_operators.copy()
@@ -220,17 +212,17 @@ class ReferenceEvaluator:
         self.output_types_ = None
         self.input_types_ = None
 
-        if isinstance(proto, ModelContainer):
-            self.container_ = proto
+        if isinstance(proto, onnx.model_container.ModelContainer):
+            self.container_: onnx.model_container.ModelContainer | None = proto
             proto = self.container_.model_proto
         else:
             self.container_ = None
 
         if isinstance(proto, str):
             with open(proto, "rb") as f:
-                proto = load(f)
+                proto = onnx.load(f)
         elif isinstance(proto, bytes):
-            proto = load(BytesIO(proto))
+            proto = onnx.load(BytesIO(proto))
         self.proto_ = proto
         self.functions_: dict[tuple[str, str], ReferenceEvaluator] = {}
         self.attributes_: list[str] = []
@@ -248,15 +240,17 @@ class ReferenceEvaluator:
                 raise TypeError("opsets must be a dictionary if proto is GraphProto.")
             self.opsets_ = opsets
         elif isinstance(proto, FunctionProto):
-            self.onnx_graph_ = None  # type: ignore
+            self.onnx_graph_ = None
             self.opsets_ = {d.domain: d.version for d in proto.opset_import}
             if opsets is not None:
                 raise ValueError("opsets must be None if proto is FunctionProto.")
             self.attributes_ = list(proto.attribute)
         elif isinstance(proto, NodeProto):
-            self.onnx_graph_ = None  # type: ignore
+            self.onnx_graph_ = None
             self.opsets_ = {
-                proto.domain: 1 if proto.domain != "" else onnx_opset_version()
+                proto.domain: 1
+                if proto.domain != ""
+                else onnx.defs.onnx_opset_version()
             }
         else:
             raise TypeError(f"Unexpected type {type(proto)} for proto.")
@@ -266,7 +260,7 @@ class ReferenceEvaluator:
             self.output_names_ = [o.name for o in self.onnx_graph_.output]
             self.output_types_ = [i.type for i in self.onnx_graph_.output]
             self.inits_ = list(self.onnx_graph_.initializer) + list(
-                self.onnx_graph_.sparse_initializer  # type: ignore
+                self.onnx_graph_.sparse_initializer
             )
             self.nodes_ = self.onnx_graph_.node
             all_types = {i.name: i.type for i in self.onnx_graph_.input}
@@ -283,36 +277,36 @@ class ReferenceEvaluator:
             else:
                 self.nodes_ = proto.node
         if functions is not None:
-            for f in functions:  # type: ignore
+            for f in functions:
                 if isinstance(f, FunctionProto):
                     self.functions_[f.domain, f.name] = self.__class__(
                         f, verbose=verbose, functions=list(self.functions_.values())
                     )
                 elif isinstance(f, ReferenceEvaluator):
-                    onx = f.proto_  # type: ignore
+                    onx = f.proto_
                     self.functions_[onx.domain, onx.name] = f
                 else:
                     raise TypeError(f"Unexpected type {type(f)!r} for a function.")
         self.verbose = verbose
-        self.new_ops_: dict[tuple[str, str], type[OpRun]] = {}
+        self.new_ops_: dict[tuple[str, str], type[op_run.OpRun]] = {}
         if new_ops is not None:
             for cl in new_ops:
                 if not hasattr(cl, "op_domain"):
                     raise AttributeError(
                         f"Class {cl} must define attribute 'op_domain'."
                     )
-                if not issubclass(cl, OpRun):  # type: ignore
+                if not issubclass(cl, op_run.OpRun):
                     raise TypeError(f"Class {cl} must inherit from OpRun (in new_ops).")
-                key = cl.op_domain, cl.__name__  # type: ignore
+                key = cl.op_domain, cl.__name__
                 if key in self.new_ops_:
                     # Already an implementation, the first one is used.
                     continue
                 self.new_ops_[key] = cl
         self._init()
 
-    def retrieve_external_data(self, initializer: TensorProto) -> np.array:
+    def retrieve_external_data(self, initializer: TensorProto) -> np.ndarray:
         """Returns a tensor saved as external."""
-        info = ExternalDataInfo(initializer)
+        info = onnx.external_data_helper.ExternalDataInfo(initializer)
         location = info.location
         if self.container_ and self.container_.is_in_memory_external_initializer(
             location
@@ -349,27 +343,27 @@ class ReferenceEvaluator:
             print(pattern % tuple(new_args))
 
     @property
-    def input_names(self):  # type: ignore
+    def input_names(self):
         """Returns the input names."""
         return self.input_names_
 
     @property
-    def input_types(self):  # type: ignore
+    def input_types(self):
         """Returns the input types if any specified."""
         return self.input_types_
 
     @property
-    def output_names(self):  # type: ignore
+    def output_names(self):
         """Returns the output names."""
         return self.output_names_
 
     @property
-    def output_types(self):  # type: ignore
+    def output_types(self):
         """Returns the output types."""
         return self.output_types_
 
     @property
-    def opsets(self):  # type: ignore
+    def opsets(self):
         """Returns the opsets."""
         return self.opsets_
 
@@ -403,8 +397,8 @@ class ReferenceEvaluator:
         for init in self.inits_:
             self.rt_inits_[init.name] = (
                 self.retrieve_external_data(init)
-                if uses_external_data(init)
-                else to_array_extended(init)
+                if onnx.external_data_helper.uses_external_data(init)
+                else onnx.numpy_helper.to_array(init)
             )
         run_params = {
             "log": lambda pattern, *args: self._log(10, pattern, *args),
@@ -421,25 +415,26 @@ class ReferenceEvaluator:
                     all_types[shape_type.name] = shape_type.type
             self.all_types_ = all_types
         else:
-            self.all_types_ = None  # type: ignore
+            self.all_types_ = None
 
         for node in self.nodes_:
             try:
                 cl = self._load_impl(node)
-            except RuntimeContextError as e:
+            except op_run.RuntimeContextError as e:
                 # A node has a context dependent implementation.
                 # Shape inference must be run to get the input types.
                 if self.all_types_:
                     it = [self.get_result_types(i, exc=False) for i in node.input]
                     if None in it:
                         # One input does not exist. It must be done while executing the graph.
-                        cl = lambda *args, parent=self: OpFunctionContextDependant(  # noqa: E731
-                            *args, parent=parent
-                        )
+                        def cl(*args, parent=self):
+                            return op_run.OpFunctionContextDependant(
+                                *args, parent=parent
+                            )
                     else:
-                        cl = self._load_impl(node, it)  # type: ignore
+                        cl = self._load_impl(node, it)
                 else:
-                    raise RuntimeContextError(
+                    raise op_run.RuntimeContextError(
                         f"No implementation was found for node type {node.op_type!r} from domain {node.domain!r}. "
                         f"If this node has a context dependent implementation, you should run function infer_shapes "
                         f"before calling ReferenceEvaluator."
@@ -470,13 +465,13 @@ class ReferenceEvaluator:
             # This mechanism can be used to implement a custom onnx node
             # or to overwrite an existing one.
             cl = self.new_ops_[key]
-            if not issubclass(cl, OpRunExpand):
+            if not issubclass(cl, op_run.OpRunExpand):
                 return cl
             # It must be replaced by its implementation defined in its schema.
             expand = True
 
         if node.domain == "":
-            from onnx.reference.ops import load_op
+            from onnx.reference.ops import load_op  # noqa: PLC0415
 
             try:
                 return load_op(
@@ -486,7 +481,7 @@ class ReferenceEvaluator:
                     expand=expand,
                     evaluator_cls=self.__class__,
                 )
-            except RuntimeContextError:
+            except op_run.RuntimeContextError:
                 if input_types is None:
                     raise
                 return load_op(
@@ -506,23 +501,29 @@ class ReferenceEvaluator:
                 f"{node.domain},{node.op_type} from the list of inlined operator."
             )
         if node.domain == "ai.onnx.preview.training":
-            from onnx.reference.ops.aionnx_preview_training import load_op as load_op_pt
+            from onnx.reference.ops.aionnx_preview_training import (  # noqa: PLC0415
+                load_op as load_op_pt,
+            )
 
             return load_op_pt(node.domain, node.op_type, version)
 
         if node.domain == "experimental":
-            from onnx.reference.ops.experimental import load_op as load_op_exp
+            from onnx.reference.ops.experimental import (  # noqa: PLC0415
+                load_op as load_op_exp,
+            )
 
             return load_op_exp(node.domain, node.op_type, version)
 
         if node.domain == "ai.onnx.ml":
-            from onnx.reference.ops.aionnxml import load_op as load_op_ml
+            from onnx.reference.ops.aionnxml import (  # noqa: PLC0415
+                load_op as load_op_ml,
+            )
 
             return load_op_ml(node.domain, node.op_type, version)
 
         # It has to be a function.
         if key in self.functions_:
-            from onnx.reference.ops import load_op
+            from onnx.reference.ops import load_op  # noqa: PLC0415
 
             impl = self.functions_[key]
             return load_op(
@@ -543,7 +544,7 @@ class ReferenceEvaluator:
         feed_inputs: dict[str, Any],
         attributes: dict[str, Any] | None = None,
         intermediate: bool = False,
-    ) -> dict[str, Any] | list[Any]:  # type: ignore
+    ) -> dict[str, Any] | list[Any]:
         """Executes the onnx model.
 
         Args:

@@ -710,7 +710,7 @@ class ShapeInferenceImplBase {
   void FinalizeShapeInference() {
     auto& errors = getErrors();
     // Throw shape inference error if any. Error mode right now only supports 0 and 1.
-    // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatiblity
+    // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatibility
     // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
     // TODO: Add a more granular way for exception handling.
     if (!errors.empty() && options.error_mode > 0) {

@@ -44,15 +44,16 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
 static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
 (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
@@ -93,19 +94,23 @@ ONNX_OPERATOR_SET_SCHEMA(
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Sub"); }));
 
 static const char* Mod_doc = R"DOC(
-  Performs element-wise binary modulus (with Numpy-style broadcasting support).
-  The sign of the remainder is the same as that of the Divisor.
+Performs an element-wise binary modulo operation.
+The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
 
-  Mod operator can also behave like C fmod() or numpy.fmod. In this case, the sign of the remainder however, will be the same as the Dividend
-  (in contrast to integer mod). To force a behavior like numpy.fmod() an 'fmod' Attribute is provided.
-  This attribute is set to 0 by default causing the behavior to be like integer mod.
-  Setting this attribute to 1 causes the remainder to be calculated similar to that of numpy.fmod().
+If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
+The sign of the result is that of the divisor.
 
-  If the input type is floating point, then `fmod` attribute must be set to 1.
+If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.
+The result of this operator is the remainder of the division operation `x / y` where `x` and `y` are respective elements of `A` and `B`. The result is exactly the value `x - n * y`, where `n` is `x / y` with its fractional part truncated.
+The returned value has the same sign as `x` (except if `x` is `-0`) and is less or equal to `|y|` in magnitude.
+The following special cases apply when `fmod` is set to `1`:
+- If `x` is `-0` and `y` is greater than zero, either `+0` or `-0` may be returned.
+- If `x` is `±∞` and `y` is not `NaN`, `NaN` is returned.
+- If `y` is `±0` and `x` is not `NaN`, `NaN` should be returned.
+- If `y` is `±∞` and `x` is finite, `x` is returned.
+- If either argument is `NaN`, `NaN` is returned.
 
-  In case of dividend being zero, the results will be platform dependent.
-
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+This operator supports **multidirectional (i.e., NumPy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -420,8 +425,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
         .SetDoc(Elu_ver22_doc)
-        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "1D output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
         .FunctionBody(
@@ -596,6 +601,35 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Swish_ver24_doc = R"DOC(
+Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
+where $Swish(x) = x * sigmoid(alpha * x)$.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Swish,
+    24,
+    OpSchema()
+        .Attr("alpha", "Coefficient to multiply with input before sigmoid.", AttributeProto::FLOAT, 1.0f)
+        .SetDoc(Swish_ver24_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(bfloat16)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .FunctionBody(
+            R"ONNX(
+            {
+                Alpha = Constant <value_float: float = @alpha>()
+                AlphaCast = CastLike (Alpha, X)
+                AlphaMulX = Mul (AlphaCast, X)
+                SigmoidAlphaMulX = Sigmoid(AlphaMulX)
+                Y = Mul (X, SigmoidAlphaMulX)
+            }
+            )ONNX"));
 
 static const char* Exp_ver13_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
@@ -852,13 +886,14 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
 {broadcast_doc}
 )DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1017,7 +1052,8 @@ static std::function<void(OpSchema&)>
 SoftmaxFamilyDocGenerator(const char* name, const char* description, const char* equation) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 The operator computes the {description} values for the given input:
 
  {equation}
@@ -1026,16 +1062,17 @@ The "axis" attribute indicates the dimension along which {name}
 will be performed. The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 )DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{description}", description);
-                        ReplaceAll(doc, "{equation}", equation););
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{description}", description);
+        ReplaceAll(doc, "{equation}", equation););
     std::string axis_attr;
-    POPULATE_OP_DOC_STR(axis_attr = R"DOC(
+    POPULATE_OP_DOC_STR(
+        axis_attr = R"DOC(
 Describes the dimension {name} will be performed on.
 Negative value means counting dimensions
 from the back. Accepted range is [-r, r-1] where r = rank(input).
 )DOC";
-                        ReplaceAll(axis_attr, "{name}", name););
+        ReplaceAll(axis_attr, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("axis", axis_attr, AttributeProto::INT, static_cast<int64_t>(-1));
     schema.Input(
@@ -1219,8 +1256,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     22,
     OpSchema()
         .SetDoc(Softplus_ver22_doc)
-        .Input(0, "X", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(0, "Y", "1D input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
         .FunctionBody(
@@ -1350,141 +1387,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           defs::math::utils::MatMulShapeInference(ctx, 0, 1);
         }));
 
-static const char* TopK_ver11_doc = R"DOC(
-Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
-shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
-
-* Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
-  which contains the values of the top k elements along the specified axis
-* Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
-  contains the indices of the top k elements (original indices from the input
-  tensor).
-
-* If "largest" is 1 (the default value) then the k largest elements are returned.
-* If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
-* If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
-
-Given two equivalent values, this operator uses the indices along the axis as
-a tiebreaker. That is, the element with the lower index will appear first.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     TopK,
-    11,
-    OpSchema()
-        .SetDoc(TopK_ver11_doc)
-        .Input(
-            0,
-            "X",
-            "Tensor of shape [a_0, a_1, ..., a_{n-1}]",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Input(
-            1,
-            "K",
-            "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve",
-            "tensor(int64)",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Output(
-            0,
-            "Values",
-            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
-            "containing top K values from the input tensor",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(
-            1,
-            "Indices",
-            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
-            "containing the corresponding input tensor indices for the top K "
-            "values.",
-            "I",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
-        .Attr(
-            "axis",
-            "Dimension on which to do the sort. Negative value means counting dimensions "
-            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
-            AttributeProto::INT,
-            static_cast<int64_t>(-1))
-        .Attr(
-            "largest",
-            "Whether to return the top-K largest or smallest elements.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
-        .Attr("sorted", "Whether to return the elements in sorted order.", AttributeProto::INT, static_cast<int64_t>(1))
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference:
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          updateOutputElemType(ctx, 1, TensorProto::INT64);
-          // Shape inference:
-          if (!hasInputShape(ctx, 0))
-            return;
-          auto& input_shape = getInputShape(ctx, 0);
-          int64_t rank = input_shape.dim_size();
-          int64_t axis = getAttribute(ctx, "axis", -1);
-          if (axis < 0)
-            axis += rank;
-          if (axis < 0 || axis >= rank) {
-            fail_shape_inference("Invalid value for attribute axis");
-          }
-
-          const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
-          const auto* k = ctx.getInputData(1);
-
-          // Infer output shape if:
-          // (1) 'K' is available
-          // (2) axis_dim has dim value
-          // Otherwise cannot reliably compute output shape as axis dim value is
-          // unknown and hence cannot determine if axis dim value >= k (which
-          // should be enforced)
-          if (nullptr != k && axis_dim.has_dim_value()) {
-            int64_t k_value = 0;
-            if (k->dims_size() != 1 || k->dims(0) != 1) {
-              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
-            }
-            if (k->data_type() == TensorProto::INT64) {
-              const auto data = ParseData<int64_t>(k);
-              k_value = data[0];
-            } else {
-              fail_shape_inference("K input must be of type int64.");
-            }
-            if (axis_dim.dim_value() < k_value) {
-              fail_shape_inference("Axis has less than the requested k elements.");
-            }
-
-            TensorShapeProto result_shape = input_shape;
-            result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
-
-            updateOutputShape(ctx, 0, result_shape);
-            updateOutputShape(ctx, 1, result_shape);
-
-            return;
-          }
-
-          // Infer output shapes' rank in any case
-          auto* output_shape_0 = getOutputShape(ctx, 0);
-          auto* output_shape_1 = getOutputShape(ctx, 1);
-          for (int i = 0; i < input_shape.dim_size(); ++i) {
-            output_shape_0->add_dim();
-            output_shape_1->add_dim();
-          }
-
-          return;
-        }));
+    24,
+    OpSchema().FillUsing(defs::math::utils::TopKOpGenerator(OpSchema::all_numeric_types_ir4())));
 
 static const char* Sin_ver22_doc = R"DOC(
 Calculates the sine of the given input tensor, element-wise.
@@ -2521,6 +2427,27 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       }
     }
 
+    // Validate that term_size is compatible with rank before accessing dimensions
+    if (ellipsis_index != std::string::npos) {
+      // For ellipsis case, rank must be at least term_size
+      if (rank < term_size) {
+        fail_shape_inference(
+            "Ellipsis represents incompatible dimensions for input ",
+            num_operands,
+            ". Rank ",
+            rank,
+            " is less than term size ",
+            term_size,
+            ".");
+      }
+    } else {
+      // For non-ellipsis case, rank must equal term_size
+      if (rank != term_size) {
+        fail_shape_inference(
+            "Rank of input ", num_operands, " (", rank, ") does not match the equation indices (", term_size, ").");
+      }
+    }
+
     for (size_t index = 0; index < term.size(); ++index) {
       if (index == ellipsis_index) {
         // find ellipsis and record the dims represented by ellipsis
@@ -2562,9 +2489,6 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
       // If there is an ellipsis, the number of dimensions it represents
       // must be total dim - letter dimensions
       if (num_ellipsis == 0) {
-        if (rank < term_size) {
-          fail_shape_inference("Ellipsis represents incompatible dimensions.");
-        }
         num_ellipsis_indices = rank - term_size;
       } else { // ellipsis has been seen before. Check that if dimensions
                // are compatible
@@ -2573,10 +2497,6 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         }
       }
       num_ellipsis++;
-    } else {
-      if (rank != term_size) {
-        fail_shape_inference("Rank of input ", num_operands, " does not match the equation indices.");
-      }
     }
     num_operands++;
   }
@@ -2998,9 +2918,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis = -2;
           } else {
             const TensorProto* axis_tensor = ctx.getInputData(axis_arg_index);
-            ONNX_ASSERTM(axis_tensor != nullptr, "axis should not be nullptr at this point");
+            ONNX_ASSERTM(axis_tensor != nullptr, "axis should not be nullptr at this point")
             // TODO(justinchuby): Create invariance checking functions to ensure shapes and sizes
-            // to abstrct the following logic out.
+            // to abstract the following logic out.
             if (axis_tensor->dims_size() != 0) {
               fail_shape_inference("axis input must be a scalar.");
             }
@@ -3064,10 +2984,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> CosineSumWindowOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Generates a {name} window as described in the paper https://ieeexplore.ieee.org/document/1455106.
 )DOC";
-                        ReplaceAll(doc, "{name}", name););
+        ReplaceAll(doc, "{name}", name););
 
     schema.SetDoc(doc);
     schema.Attr(

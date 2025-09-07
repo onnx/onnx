@@ -27,7 +27,6 @@ __all__ = [
     "gen_proto",
     "helper",
     "hub",
-    "mapping",
     "numpy_helper",
     "parser",
     "printer",
@@ -36,10 +35,13 @@ __all__ = [
     "version_converter",
     # Proto classes
     "AttributeProto",
+    "DeviceConfigurationProto",
     "FunctionProto",
     "GraphProto",
+    "IntIntListEntryProto",
     "MapProto",
     "ModelProto",
+    "NodeDeviceConfigurationProto",
     "NodeProto",
     "OperatorProto",
     "OperatorSetIdProto",
@@ -47,6 +49,9 @@ __all__ = [
     "OperatorStatus",
     "OptionalProto",
     "SequenceProto",
+    "SimpleShardedDimProto",
+    "ShardedDimProto",
+    "ShardingSpecProto",
     "SparseTensorProto",
     "StringStringEntryProto",
     "TensorAnnotation",
@@ -71,7 +76,7 @@ __all__ = [
 
 import os
 import typing
-from typing import IO, Literal, Union
+from typing import IO, Literal
 
 
 from onnx import serialization
@@ -83,9 +88,11 @@ from onnx.external_data_helper import (
 )
 from onnx.onnx_pb import (
     AttributeProto,
+    DeviceConfigurationProto,
     EXPERIMENTAL,
     FunctionProto,
     GraphProto,
+    IntIntListEntryProto,
     IR_VERSION,
     IR_VERSION_2017_10_10,
     IR_VERSION_2017_10_30,
@@ -98,10 +105,14 @@ from onnx.onnx_pb import (
     IR_VERSION_2023_5_5,
     IR_VERSION_2024_3_25,
     ModelProto,
+    NodeDeviceConfigurationProto,
     NodeProto,
     OperatorSetIdProto,
     OperatorStatus,
     STABLE,
+    SimpleShardedDimProto,
+    ShardedDimProto,
+    ShardingSpecProto,
     SparseTensorProto,
     StringStringEntryProto,
     TensorAnnotation,
@@ -114,7 +125,7 @@ from onnx.onnx_pb import (
 )
 from onnx.onnx_operators_pb import OperatorProto, OperatorSetProto
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
-from onnx.version import version as __version__
+import onnx.version
 
 # Import common subpackages so they're available when you 'import onnx'
 from onnx import (
@@ -124,7 +135,6 @@ from onnx import (
     gen_proto,
     helper,
     hub,
-    mapping,
     numpy_helper,
     parser,
     printer,
@@ -133,31 +143,31 @@ from onnx import (
     version_converter,
 )
 
+__version__ = onnx.version.version
+
 # Supported model formats that can be loaded from and saved to
 # The literals are formats with built-in support. But we also allow users to
 # register their own formats. So we allow str as well.
-_SupportedFormat = Union[
-    Literal["protobuf", "textproto", "onnxtxt", "json"], str  # noqa: PYI051
-]
+_SupportedFormat = Literal["protobuf", "textproto", "onnxtxt", "json"] | str  # noqa: PYI051
 # Default serialization format
 _DEFAULT_FORMAT = "protobuf"
 
 
 def _load_bytes(f: IO[bytes] | str | os.PathLike) -> bytes:
-    if hasattr(f, "read") and callable(typing.cast(IO[bytes], f).read):
-        content = typing.cast(IO[bytes], f).read()
+    if hasattr(f, "read") and callable(typing.cast("IO[bytes]", f).read):
+        content = typing.cast("IO[bytes]", f).read()
     else:
-        f = typing.cast(Union[str, os.PathLike], f)
+        f = typing.cast("str | os.PathLike", f)
         with open(f, "rb") as readable:
             content = readable.read()
     return content
 
 
 def _save_bytes(content: bytes, f: IO[bytes] | str | os.PathLike) -> None:
-    if hasattr(f, "write") and callable(typing.cast(IO[bytes], f).write):
-        typing.cast(IO[bytes], f).write(content)
+    if hasattr(f, "write") and callable(typing.cast("IO[bytes]", f).write):
+        typing.cast("IO[bytes]", f).write(content)
     else:
-        f = typing.cast(Union[str, os.PathLike], f)
+        f = typing.cast("str | os.PathLike", f)
         with open(f, "wb") as writable:
             writable.write(content)
 
@@ -356,3 +366,9 @@ def save_tensor(
 load = load_model
 load_from_string = load_model_from_string
 save = save_model
+
+
+# Override __repr__ for some proto classes to make it more efficient
+ModelProto.__repr__ = object.__repr__  # type: ignore[method-assign]
+GraphProto.__repr__ = object.__repr__  # type: ignore[method-assign]
+FunctionProto.__repr__ = object.__repr__  # type: ignore[method-assign]

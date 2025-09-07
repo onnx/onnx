@@ -2,8 +2,29 @@
 
 # Operator ZipMap is not implemented. Its use should
 # be discouraged. It is just a different way to output
-# probabilites not consumed by any operator.
+# probabilities not consumed by any operator.
 from __future__ import annotations
+
+__all__ = [
+    "load_op",
+    "ArrayFeatureExtractor",
+    "Binarizer",
+    "DictVectorizer",
+    "FeatureVectorizer",
+    "Imputer",
+    "LabelEncoder",
+    "LinearClassifier",
+    "LinearRegressor",
+    "Normalizer",
+    "OneHotEncoder",
+    "Scaler",
+    "SVMClassifier",
+    "SVMRegressor",
+    "TreeEnsemble",
+    "TreeEnsembleClassifier",
+    "TreeEnsembleRegressor",
+    "OpRunAiOnnxMl",
+]
 
 import textwrap
 from typing import Any
@@ -45,7 +66,7 @@ def load_op(
 
     Args:
         domain: domain
-        op_type: oprator type
+        op_type: operator type
         version: requested version
         custom: custom implementation (like a function)
 
@@ -56,16 +77,16 @@ def load_op(
     if _registered_operators is None:
         _registered_operators = _build_registered_operators()
     if custom is not None:
-        return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
+        return lambda *args: OpFunction(*args, impl=custom)
     if domain != "ai.onnx.ml":
         raise ValueError(f"Domain must be '' not {domain!r}.")
     if op_type not in _registered_operators:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
         raise NotImplementedError(
             f"No registered implementation for operator {op_type!r} "
             f"and domain {domain!r} in\n{available}"
         )
-    impl = _registered_operators[op_type]  # type: ignore
+    impl = _registered_operators[op_type]
     if None not in impl:
         raise RuntimeError(
             f"No default implementation for operator {op_type!r} "
@@ -89,7 +110,7 @@ def load_op(
             )
         cl = impl[best]
     if cl is None:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
         raise ValueError(
             f"Not registered implementation for operator {op_type!r}, "
             f"domain {domain!r}, and {version!r} in\n{available}"

@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def softmaxcrossentropy(  # type: ignore
+def softmaxcrossentropy(
     x, target, weight=None, reduction="mean", ignore_index=None, get_log_prob=None
 ):
     input_shape = x.shape
@@ -82,8 +82,8 @@ def softmaxcrossentropy(  # type: ignore
 
 
 class SoftmaxCrossEntropyLoss(OpRun):
-    def _run(self, x, target, weight=None, ignore_index=None, reduction=None):  # type: ignore
-        n_outputs = len(self.onnx_node.output)  # type: ignore
+    def _run(self, x, target, weight=None, ignore_index=None, reduction=None):
+        n_outputs = len(self.onnx_node.output)
         return softmaxcrossentropy(
             x,
             target,

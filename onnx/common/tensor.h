@@ -41,6 +41,9 @@ struct Tensor final {
   bool is_raw_data_{false};
   std::string raw_data_;
 
+  std::vector<std::pair<std::string, std::string>> external_data_;
+  ONNX_NAMESPACE::TensorProto_DataLocation data_location_{ONNX_NAMESPACE::TensorProto_DataLocation_DEFAULT};
+
  public:
   const std::vector<int64_t>& sizes() const {
     return sizes_;
@@ -57,7 +60,7 @@ struct Tensor final {
     if (dim < 0) {
       dim += (int)sizes_.size();
     }
-    ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size());
+    ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size())
     return std::accumulate(sizes_.begin() + dim, sizes_.end(), (int64_t)1, std::multiplies<int64_t>{});
   }
 
@@ -166,6 +169,26 @@ struct Tensor final {
   bool is_raw_data() const {
     return is_raw_data_;
   }
+
+  const std::vector<std::pair<std::string, std::string>>& external_data() const {
+    return external_data_;
+  }
+
+  std::vector<std::pair<std::string, std::string>>& external_data() {
+    return external_data_;
+  }
+
+  bool has_data_location() const {
+    return data_location_ != ONNX_NAMESPACE::TensorProto_DataLocation_DEFAULT;
+  }
+
+  const ONNX_NAMESPACE::TensorProto_DataLocation& data_location() const {
+    return data_location_;
+  }
+
+  ONNX_NAMESPACE::TensorProto_DataLocation& data_location() {
+    return data_location_;
+  }
 };
 
 template <>
@@ -173,7 +196,7 @@ inline std::string* Tensor::data<std::string>() {
   ONNX_ASSERTM(
       !is_raw_data(),
       "data type is string. string content is required to be stored in repeated bytes string_data field."
-      "raw_data type cannot be string.");
+      "raw_data type cannot be string.")
   return string_data_.data();
 }
 template <>
@@ -181,7 +204,7 @@ inline const std::string* Tensor::data<std::string>() const {
   ONNX_ASSERTM(
       !is_raw_data(),
       "data type is string. string content is required to be stored in repeated bytes string_data field."
-      "raw_data type cannot be string.");
+      "raw_data type cannot be string.")
   return string_data_.data();
 }
 

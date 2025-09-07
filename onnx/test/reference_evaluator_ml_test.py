@@ -4,19 +4,17 @@
 # type: ignore
 from __future__ import annotations
 
+import importlib
 import itertools
+import os
 import unittest
-from functools import wraps
-from os import getenv
 
-import numpy as np  # type: ignore
-from numpy.testing import assert_allclose  # type: ignore
+import numpy as np
+from numpy.testing import assert_allclose
 from parameterized import parameterized
 
 import onnx
 from onnx import ONNX_ML, TensorProto, TypeProto, ValueInfoProto
-from onnx.checker import check_model
-from onnx.defs import onnx_ml_opset_version, onnx_opset_version
 from onnx.helper import (
     make_graph,
     make_model_gen_version,
@@ -34,68 +32,53 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble import (
 
 # TODO (https://github.com/microsoft/onnxruntime/issues/14932): Get max supported version from onnxruntime directly
 # For now, bump the version in CIs whenever there is a new onnxruntime release
-ORT_MAX_IR_SUPPORTED_VERSION = int(getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
+ORT_MAX_IR_SUPPORTED_VERSION = int(os.getenv("ORT_MAX_IR_SUPPORTED_VERSION", "8"))
 ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION = int(
-    getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
+    os.getenv("ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION", "18")
 )
 ORT_MAX_ML_OPSET_SUPPORTED_VERSION = int(
-    getenv("ORT_MAX_ML_OPSET_SUPPORTED_VERSION", "3")
+    os.getenv("ORT_MAX_ML_OPSET_SUPPORTED_VERSION", "3")
 )
 
-TARGET_OPSET = onnx_opset_version() - 2
-TARGET_OPSET_ML = onnx_ml_opset_version()
+TARGET_OPSET = onnx.defs.onnx_opset_version() - 2
+TARGET_OPSET_ML = onnx.defs.onnx_ml_opset_version()
 OPSETS = [make_opsetid("", TARGET_OPSET), make_opsetid("ai.onnx.ml", TARGET_OPSET_ML)]
 
 
 def has_onnxruntime():
-    try:
-        import onnxruntime
-
-        del onnxruntime
-    except ImportError:
-        return False
-    return True
-
-
-def skip_if_no_onnxruntime(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if not has_onnxruntime():
-            raise unittest.SkipTest("onnxruntime not installed")
-        fn(*args, **kwargs)
-
-    return wrapper
+    return importlib.util.find_spec("onnxruntime") is not None
 
 
 class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
     @staticmethod
-    def _check_ort(onx, feeds, atol=0, rtol=0, equal=False, rev=False):
+    def _check_ort(model, feeds, atol=0, rtol=0, equal=False, rev=False):
         if not has_onnxruntime():
-            return
-        from onnxruntime import InferenceSession
+            raise unittest.SkipTest("onnxruntime not installed")
+
+        from onnxruntime import InferenceSession  # noqa: PLC0415
 
         onnx_domain_opset = ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
         ml_domain_opset = ORT_MAX_ML_OPSET_SUPPORTED_VERSION
-        for opset in onx.opset_import:
+        for opset in model.opset_import:
             if opset.domain in ("", "ai.onnx"):
                 onnx_domain_opset = opset.version
                 break
-        for opset in onx.opset_import:
+        for opset in model.opset_import:
             if opset.domain == "ai.onnx.ml":
                 ml_domain_opset = opset.version
                 break
         # The new IR or opset version is not supported by onnxruntime yet
         if (
-            onx.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
+            model.ir_version > ORT_MAX_IR_SUPPORTED_VERSION
             or onnx_domain_opset > ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION
             or ml_domain_opset > ORT_MAX_ML_OPSET_SUPPORTED_VERSION
         ):
             return
 
         ort = InferenceSession(
-            onx.SerializeToString(), providers=["CPUExecutionProvider"]
+            model.SerializeToString(), providers=["CPUExecutionProvider"]
         )
-        sess = ReferenceEvaluator(onx)
+        sess = ReferenceEvaluator(model)
         expected = ort.run(None, feeds)
         got = sess.run(None, feeds)
         if len(expected) != len(got):
@@ -131,16 +114,16 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None])
         node1 = make_node("Binarizer", ["X"], ["Y"], threshold=5.5, domain="ai.onnx.ml")
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.arange(12).reshape((3, 4)).astype(np.float32)
         expected = np.array(
             [[0, 0, 0, 0], [0, 0, 1, 1], [1, 1, 1, 1]], dtype=np.float32
         )
-        self._check_ort(onx, {"X": x})
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x})
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_scaler(self):
@@ -150,8 +133,8 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "Scaler", ["X"], ["Y"], scale=[0.5], offset=[-4.5], domain="ai.onnx.ml"
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.arange(12).reshape((3, 4)).astype(np.float32)
         expected = np.array(
             [
@@ -161,10 +144,10 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
             dtype=np.float32,
         )
-        self._check_ort(onx, {"X": x})
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x})
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_array_feature_extractor(self):
@@ -175,33 +158,33 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "ArrayFeatureExtractor", ["X", "A"], ["Y"], domain="ai.onnx.ml"
         )
         graph = make_graph([node1], "ml", [X, A], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.arange(12).reshape((3, 4)).astype(np.float32)
 
         expected = np.array([[0, 4, 8]], dtype=np.float32).T
         feeds = {"X": x, "A": np.array([0], dtype=np.int64)}
-        self._check_ort(onx, feeds)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, feeds)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, feeds)[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
         expected = np.array([[0, 4, 8], [1, 5, 9]], dtype=np.float32).T
         feeds = {"X": x, "A": np.array([0, 1], dtype=np.int64)}
-        self._check_ort(onx, feeds)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, feeds)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, feeds)[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
         expected = np.array(
             [[0, 4, 8], [1, 5, 9], [0, 4, 8], [1, 5, 9], [0, 4, 8], [1, 5, 9]],
             dtype=np.float32,
         ).T
         feeds = {"X": x, "A": np.array([0, 1, 0, 1, 0, 1], dtype=np.int64)}
-        self._check_ort(onx, feeds)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, feeds)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, feeds)[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_normalizer(self):
@@ -219,14 +202,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     "Normalizer", ["X"], ["Y"], norm=norm, domain="ai.onnx.ml"
                 )
                 graph = make_graph([node1], "ml", [X], [Y])
-                onx = make_model_gen_version(graph, opset_imports=OPSETS)
-                check_model(onx)
+                model = make_model_gen_version(graph, opset_imports=OPSETS)
+                onnx.checker.check_model(model)
 
                 feeds = {"X": x}
-                self._check_ort(onx, feeds, atol=1e-6)
-                sess = ReferenceEvaluator(onx)
+                self._check_ort(model, feeds, atol=1e-6)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, feeds)[0]
-                assert_allclose(value, got, atol=1e-6)
+                assert_allclose(got, value, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_feature_vectorizer(self):
@@ -263,14 +246,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     domain="ai.onnx.ml",
                 )
                 graph = make_graph([node1], "ml", X[: len(att)], [Y])
-                onx = make_model_gen_version(graph, opset_imports=OPSETS)
-                check_model(onx)
+                model = make_model_gen_version(graph, opset_imports=OPSETS)
+                onnx.checker.check_model(model)
 
                 feeds = {f"X{i}": v for i, v in enumerate(x[: len(att)])}
-                self._check_ort(onx, feeds, atol=1e-6)
-                sess = ReferenceEvaluator(onx)
+                self._check_ort(model, feeds, atol=1e-6)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, feeds)[0]
-                assert_allclose(value, got, atol=1e-6)
+                assert_allclose(got, value, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_float(self):
@@ -285,14 +268,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             replaced_value_float=np.nan,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.array([[0, 1, np.nan, 3]], dtype=np.float32).T
         expected = np.array([[0, 1, 0, 3]], dtype=np.float32).T
-        self._check_ort(onx, {"X": x})
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x})
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_float_2d(self):
@@ -307,14 +290,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             replaced_value_float=np.nan,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.array([[0, 1, np.nan, 3], [0, 1, np.nan, 3]], dtype=np.float32).T
         expected = np.array([[0, 1, 0, 3], [0, 1, 0.1, 3]], dtype=np.float32).T
-        self._check_ort(onx, {"X": x})
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x})
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_imputer_int(self):
@@ -329,14 +312,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             replaced_value_int64=-1,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.array([[0, 1, -1, 3]], dtype=np.int64).T
         expected = np.array([[0, 1, 0, 3]], dtype=np.int64).T
-        self._check_ort(onx, {"X": x})
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x})
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_float_int(self):
@@ -352,14 +335,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             values_int64s=[0, 1, 2, 3],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.array([[0, 1, np.nan, 3, 4]], dtype=np.float32).T
         expected = np.array([[-5, 1, -5, 3, 0]], dtype=np.int64).T
-        self._check_ort(onx, {"X": x})
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x})
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        assert_allclose(expected, got)
+        assert_allclose(got, expected)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_int_string(self):
@@ -375,12 +358,12 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             values_strings=["a", "b", "cc", "ddd"],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.array([[0, 1, 3, 4]], dtype=np.int64).T
         expected = np.array([["NONE"], ["a"], ["cc"], ["ddd"]])
-        self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())
 
@@ -405,7 +388,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         )
         graph = make_graph([node], "ml", [X], [Y])
         model = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(model)
+        onnx.checker.check_model(model)
         x = np.array([[0, 1, 3, 4]], dtype=np.int64).T
         expected = np.array([["NONE"], ["a"], ["cc"], ["ddd"]])
         self._check_ort(model, {"X": x}, equal=True)
@@ -434,13 +417,13 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             string_vocabulary=["a", "c", "b", "z"],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = {"a": np.array(4, dtype=np.int64), "c": np.array(8, dtype=np.int64)}
         expected = np.array([4, 8, 0, 0], dtype=np.int64)
         # Unexpected input data type. Actual: ((map(string,tensor(float)))) , expected: ((map(string,tensor(int64))))
-        # self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        # self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())
 
@@ -457,15 +440,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             cats_int64s=[1, 2, 3],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.array([[5, 1, 3], [2, 1, 3]], dtype=np.int64)
         expected = np.array(
             [[[0, 0, 0], [1, 0, 0], [0, 0, 1]], [[0, 1, 0], [1, 0, 0], [0, 0, 1]]],
             dtype=np.float32,
         )
-        self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())
 
@@ -482,15 +465,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             cats_strings=["c1", "c2", "c3"],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.array([["c5", "c1", "c3"], ["c2", "c1", "c3"]])
         expected = np.array(
             [[[0, 0, 0], [1, 0, 0], [0, 0, 1]], [[0, 1, 0], [1, 0, 0], [0, 0, 1]]],
             dtype=np.float32,
         )
-        self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())
 
@@ -507,15 +490,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             cats_int64s=[1, 2, 3],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.array([[2, 1, 3], [2, 1, 3]], dtype=np.int64)
         expected = np.array(
             [[[0, 1, 0], [1, 0, 0], [0, 0, 1]], [[0, 1, 0], [1, 0, 0], [0, 0, 1]]],
             dtype=np.float32,
         )
-        self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
         self.assertEqual(expected.tolist(), got.tolist())
 
@@ -534,14 +517,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             targets=1,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.arange(6).reshape((-1, 2)).astype(np.float32)
         expected = np.array([[-0.27], [-1.21], [-2.15]], dtype=np.float32)
-        self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})
-        assert_allclose(expected, got[0], atol=1e-6)
+        assert_allclose(got[0], expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_regressor_2(self):
@@ -558,16 +541,16 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             targets=2,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
         x = np.arange(6).reshape((-1, 2)).astype(np.float32)
         expected = np.array(
             [[-0.27, -0.07], [-1.21, -1.01], [-2.15, -1.95]], dtype=np.float32
         )
-        self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})
-        assert_allclose(expected, got[0], atol=1e-6)
+        assert_allclose(got[0], expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_classifier_multi(self):
@@ -647,15 +630,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     post_transform=post,
                 )
                 graph = make_graph([node1], "ml", [X], [In, Y])
-                onx = make_model_gen_version(graph, opset_imports=OPSETS)
-                check_model(onx)
+                model = make_model_gen_version(graph, opset_imports=OPSETS)
+                onnx.checker.check_model(model)
                 x = np.arange(6).reshape((-1, 2)).astype(np.float32)
-                self._check_ort(onx, {"X": x}, rev=True, atol=1e-4)
-                sess = ReferenceEvaluator(onx)
+                self._check_ort(model, {"X": x}, rev=True, atol=1e-4)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
                 expected = expected_post[post]
-                assert_allclose(expected[1], got[1], atol=1e-4)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-4)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_classifier_binary(self):
@@ -705,14 +688,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     post_transform=post,
                 )
                 graph = make_graph([node1], "ml", [X], [In, Y])
-                onx = make_model_gen_version(graph, opset_imports=OPSETS)
-                check_model(onx)
+                model = make_model_gen_version(graph, opset_imports=OPSETS)
+                onnx.checker.check_model(model)
                 # onnxruntime answer seems odd.
-                # self._check_ort(onx, {"X": x}, rev=True)
-                sess = ReferenceEvaluator(onx)
+                # self._check_ort(model, {"X": x}, rev=True)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_classifier_unary(self):
@@ -753,14 +736,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                     post_transform=post,
                 )
                 graph = make_graph([node1], "ml", [X], [In, Y])
-                onx = make_model_gen_version(graph, opset_imports=OPSETS)
-                check_model(onx)
+                model = make_model_gen_version(graph, opset_imports=OPSETS)
+                onnx.checker.check_model(model)
                 # onnxruntime answer seems odd.
-                # self._check_ort(onx, {"X": x}, rev=True)
-                sess = ReferenceEvaluator(onx)
+                # self._check_ort(model, {"X": x}, rev=True)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_tree_ensemble_opset_latest(
@@ -903,9 +886,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             target_weights=targets,
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=opsets)
-        check_model(onx)
-        return onx
+        model = make_model_gen_version(graph, opset_imports=opsets)
+        onnx.checker.check_model(model)
+        return model
 
     @parameterized.expand(
         tuple(
@@ -957,7 +940,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         )
         sess = ReferenceEvaluator(model_proto)
         (actual,) = sess.run(None, {"X": x})
-        assert_allclose(expected_result, actual, atol=1e-6)
+        assert_allclose(actual, expected_result, atol=1e-6)
 
     @parameterized.expand(
         tuple(
@@ -1017,7 +1000,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         model_proto = model_factory(aggregate_function, rule)
         sess = ReferenceEvaluator(model_proto)
         (actual,) = sess.run(None, {"X": x})
-        assert_allclose(expected, actual, atol=1e-6)
+        assert_allclose(actual, expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_2_targets_opset3(self):
@@ -1108,16 +1091,16 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=opsets)
-        check_model(onx)
+        model = make_model_gen_version(graph, opset_imports=opsets)
+        onnx.checker.check_model(model)
         x = np.arange(9).reshape((-1, 3)).astype(np.float32) / 10 - 0.5
         expected = np.array(
             [[0.027778, 5.027778], [1.0, 6.0], [1.0, 6.0]], dtype=np.float32
         )
-        self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})
-        assert_allclose(expected, got[0], atol=1e-6)
+        assert_allclose(got[0], expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_missing_opset3(self):
@@ -1125,11 +1108,11 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         x[2, 0] = 5
         x[1, :] = np.nan
         expected = np.array([[100001.0], [100100.0], [100100.0]], dtype=np.float32)
-        onx = self._get_test_tree_ensemble_regressor("SUM", unique_targets=True)
-        self._check_ort(onx, {"X": x}, equal=True)
-        sess = ReferenceEvaluator(onx)
+        model = self._get_test_tree_ensemble_regressor("SUM", unique_targets=True)
+        self._check_ort(model, {"X": x}, equal=True)
+        sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})
-        assert_allclose(expected, got[0], atol=1e-6)
+        assert_allclose(got[0], expected, atol=1e-6)
         self.assertIn("op_type=TreeEnsembleRegressor", str(sess.rt_nodes_[0]))
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
@@ -1147,7 +1130,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         expected = np.array([[100001.0], [100100.0], [100100.0]], dtype=np_dtype)
         session = ReferenceEvaluator(model)
         (actual,) = session.run(None, {"X": x})
-        assert_allclose(expected, actual, atol=1e-6)
+        assert_allclose(actual, expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_regressor_missing_opset5_float16(self):
@@ -1161,7 +1144,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         expected = np.array([[0.577], [1.0], [1.0]], dtype=np_dtype)
         session = ReferenceEvaluator(model)
         (actual,) = session.run(None, {"X": x})
-        assert_allclose(expected, actual, atol=1e-6)
+        assert_allclose(actual, expected, atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_single_tree_ensemble(self):
@@ -1212,7 +1195,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 make_opsetid("ai.onnx.ml", 5),
             ],
         )
-        check_model(model)
+        onnx.checker.check_model(model)
         session = ReferenceEvaluator(model)
         (output,) = session.run(
             None,
@@ -1274,7 +1257,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             graph,
             opset_imports=OPSETS,
         )
-        check_model(model)
+        onnx.checker.check_model(model)
         session = ReferenceEvaluator(model)
         X = np.array([1.2, 3.4, -0.12, np.nan, 12, 7], np.float32).reshape(-1, 1)
         expected = np.array(
@@ -1339,9 +1322,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ],
         )
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
-        return onx
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        return model
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_regressor(self):
@@ -1366,11 +1349,11 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for kernel, (params, expected) in expected_kernel.items():
             with self.subTest(kernel=kernel):
-                onx = self._get_test_svm_regressor(kernel, params)
-                self._check_ort(onx, {"X": x}, atol=1e-6)
-                sess = ReferenceEvaluator(onx)
+                model = self._get_test_svm_regressor(kernel, params)
+                self._check_ort(model, {"X": x}, atol=1e-6)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected, got[0], atol=1e-6)
+                assert_allclose(got[0], expected, atol=1e-6)
 
     @staticmethod
     def _get_test_tree_ensemble_classifier_binary(post_transform):
@@ -1433,15 +1416,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             post_transform=post_transform,
         )
         graph = make_graph([node1], "ml", [X], [In, Y])
-        onx = make_model_gen_version(
+        model = make_model_gen_version(
             graph,
             opset_imports=[
                 make_opsetid("", TARGET_OPSET),
                 make_opsetid("ai.onnx.ml", 3),
             ],
         )
-        check_model(onx)
-        return onx
+        onnx.checker.check_model(model)
+        return model
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_classifier_binary(self):
@@ -1485,13 +1468,13 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_tree_ensemble_classifier_binary(post)
+                model = self._get_test_tree_ensemble_classifier_binary(post)
                 if post in ("NONE",):
-                    self._check_ort(onx, {"X": x})
-                sess = ReferenceEvaluator(onx)
+                    self._check_ort(model, {"X": x})
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_tree_ensemble_classifier_multi(post_transform):
@@ -1561,15 +1544,15 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             post_transform=post_transform,
         )
         graph = make_graph([node1], "ml", [X], [In, Y])
-        onx = make_model_gen_version(
+        model = make_model_gen_version(
             graph,
             opset_imports=[
                 make_opsetid("", TARGET_OPSET),
                 make_opsetid("ai.onnx.ml", 3),
             ],
         )
-        check_model(onx)
-        return onx
+        onnx.checker.check_model(model)
+        return model
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_tree_ensemble_classifier_multi(self):
@@ -1633,13 +1616,13 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_tree_ensemble_classifier_multi(post)
+                model = self._get_test_tree_ensemble_classifier_multi(post)
                 if post != "PROBIT":
-                    self._check_ort(onx, {"X": x}, atol=1e-5)
-                sess = ReferenceEvaluator(onx)
+                    self._check_ort(model, {"X": x}, atol=1e-5)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_classifier_binary(post_transform, probability=True, linear=False):
@@ -1716,9 +1699,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "SVMClassifier", ["X"], ["I", "Y"], domain="ai.onnx.ml", **kwargs
         )
         graph = make_graph([node1], "ml", [X], [In, Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
-        return onx
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        return model
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_binary(self):
@@ -1762,12 +1745,12 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_svm_classifier_binary(post)
-                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(onx)
+                model = self._get_test_svm_classifier_binary(post)
+                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-5)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-5)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_binary_noprob(self):
@@ -1808,13 +1791,13 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_svm_classifier_binary(post, probability=False)
+                model = self._get_test_svm_classifier_binary(post, probability=False)
                 if post not in {"LOGISTIC", "SOFTMAX", "SOFTMAX_ZERO", "PROBIT"}:
-                    self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(onx)
+                    self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_noprob_linear(self):
@@ -1879,14 +1862,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_svm_classifier_binary(
+                model = self._get_test_svm_classifier_binary(
                     post, probability=False, linear=True
                 )
-                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(onx)
+                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_linear(self):
@@ -1952,14 +1935,14 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_svm_classifier_binary(
+                model = self._get_test_svm_classifier_binary(
                     post, probability=True, linear=True
                 )
-                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(onx)
+                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_classifier_linear_sv(post_transform, probability=True):
@@ -2004,9 +1987,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             "SVMClassifier", ["X"], ["I", "Y"], domain="ai.onnx.ml", **kwargs
         )
         graph = make_graph([node1], "ml", [X], [In, Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
-        return onx
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        return model
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_classifier_binary_noprob_linear_sv(self):
@@ -2043,13 +2026,13 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_svm_classifier_linear_sv(post, probability=False)
+                model = self._get_test_svm_classifier_linear_sv(post, probability=False)
                 if post not in {"LOGISTIC", "SOFTMAX", "SOFTMAX_ZERO"}:
-                    self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(onx)
+                    self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[1], got[1], atol=1e-6)
-                assert_allclose(expected[0], got[0])
+                assert_allclose(got[1], expected[1], atol=1e-6)
+                assert_allclose(got[0], expected[0])
 
     @staticmethod
     def _get_test_svm_regressor_linear(post_transform, one_class=0):
@@ -2067,9 +2050,9 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
         node1 = make_node("SVMRegressor", ["X"], ["Y"], domain="ai.onnx.ml", **kwargs)
         graph = make_graph([node1], "ml", [X], [Y])
-        onx = make_model_gen_version(graph, opset_imports=OPSETS)
-        check_model(onx)
-        return onx
+        model = make_model_gen_version(graph, opset_imports=OPSETS)
+        onnx.checker.check_model(model)
+        return model
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_regressor_linear(self):
@@ -2084,11 +2067,11 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_svm_regressor_linear(post)
-                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(onx)
+                model = self._get_test_svm_regressor_linear(post)
+                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[0], got[0], atol=1e-6)
+                assert_allclose(got[0], expected[0], atol=1e-6)
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_svm_regressor_linear_one_class(self):
@@ -2103,11 +2086,11 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         }
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
-                onx = self._get_test_svm_regressor_linear(post, one_class=1)
-                self._check_ort(onx, {"X": x}, rev=True, atol=1e-5)
-                sess = ReferenceEvaluator(onx)
+                model = self._get_test_svm_regressor_linear(post, one_class=1)
+                self._check_ort(model, {"X": x}, rev=True, atol=1e-5)
+                sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})
-                assert_allclose(expected[0], got[0], atol=1e-6)
+                assert_allclose(got[0], expected[0], atol=1e-6)
 
     def test_onnxrt_tfidf_vectorizer_ints(self):
         inputi = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int64)

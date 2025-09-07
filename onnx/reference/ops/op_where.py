@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Where(OpRun):
-    def _run(self, condition, x, y):  # type: ignore
+    def _run(self, condition, x, y):
         if (
             x.dtype != y.dtype
             and x.dtype not in (object,)
