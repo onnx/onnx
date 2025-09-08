@@ -11,9 +11,9 @@ on:
   push:
     paths:
       - '.github/workflows/pixi_build.yml'
-      - 'pixi.toml'
+      - 'CMakeLists.txt'
       - 'pixi.lock'
-      
+      - 'pixi.toml'
 
 permissions:
   contents: read
