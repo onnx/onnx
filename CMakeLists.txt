@@ -218,7 +218,7 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       if(Protobuf_FOUND)
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
         set(Build_Protobuf OFF)
-        if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0" AND "${Protobuf_VERSION}" VERSION_LESS "6.31.1")
+        if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0" AND "${Protobuf_VERSION}" VERSION_LESS_EQUAL "6.31.1")
           # There are extra dependencies for protobuf.
           find_package(absl REQUIRED)
           find_package(utf8_range)
