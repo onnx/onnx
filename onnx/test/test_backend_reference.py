@@ -19,6 +19,7 @@ from onnx.backend.base import Device, DeviceType
 from onnx.reference import ReferenceEvaluator
 
 # The following just executes a backend based on ReferenceEvaluator through the backend test
+VERBOSE = int(os.environ.get("VERBOSE", "0"))
 
 
 class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
@@ -63,7 +64,7 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
 
     @classmethod
     def create_inference_session(cls, model):
-        return ReferenceEvaluator(model)
+        return ReferenceEvaluator(model, verbose=VERBOSE)
 
     @classmethod
     def prepare(
