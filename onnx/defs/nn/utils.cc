@@ -208,9 +208,8 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
         .Add("RangeRow2D = Unsqueeze(RangeRow, One)")
         .Add("RangeCol = Range(ZeroNoDim, TotalSequenceLength, One)")
         .Add("RangeCol2D = Unsqueeze(RangeCol, Zero)")
-        .Add("RangeRow2Da = Add(RangeRow2D, TotalSequenceLength)")
-        .Add("RangeRow2Db = Sub(RangeRow2Da, SequenceLength)")
-        .Add("BoolMaskTri = Less(RangeRow2Db, RangeCol2D)")
+        .Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
+        .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)")
         .Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
         .Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
   } else {

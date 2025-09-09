@@ -137,8 +137,11 @@ def function_testcase_helper(
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
     if opset_imports is None:
+        # No opset in the model. We take the most recent definition.
         schema = onnx.defs.get_schema(test_op, domain=node.domain)
     else:
+        # We take the function coming defined in the specific version mentioned
+        # in the model.
         if len(opset_imports) != 1:
             raise ValueError(
                 f"Only one domain is allowed but {len(opset_imports)} found."

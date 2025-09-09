@@ -24,11 +24,14 @@ def _softcap(X, softcap):
     return X
 
 
-def apply_causal(mask, inplace=False):
+def _apply_causal(mask, past_sequence_length, inplace=False):
     q_sequence_length, total_sequence_length = mask.shape[-2:]
-    past_sequence_length = total_sequence_length - q_sequence_length
     triu = np.triu(
-        np.ones((q_sequence_length, q_sequence_length), dtype=mask.dtype), k=1
+        np.ones(
+            (q_sequence_length, total_sequence_length - past_sequence_length),
+            dtype=mask.dtype,
+        ),
+        k=1,
     )
     triu[triu == 1] = -np.inf
     if not inplace:
@@ -128,11 +131,19 @@ def _compute_attention(
     if is_causal:
         if attn_mask is None:
             temp_mask = np.zeros((q_sequence_length, kv_sequence_length), dtype=bool)
-            attn_bias = apply_causal(temp_mask, inplace=True)
+            attn_bias = _apply_causal(
+                temp_mask,
+                past_sequence_length=past_key.shape[2] if past_key is not None else 0,
+                inplace=True,
+            )
         else:
             if attn_mask.dtype == np.bool_:
                 attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
-            attn_bias = apply_causal(attn_mask, inplace=False)
+            attn_bias = _apply_causal(
+                attn_mask,
+                past_sequence_length=past_key.shape[2] if past_key is not None else 0,
+                inplace=False,
+            )
     elif attn_mask is not None:
         if attn_mask.dtype == np.bool_:
             attn_mask = (1 - attn_mask).astype(Q.dtype)

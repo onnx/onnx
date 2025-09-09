@@ -4459,8 +4459,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (ctx.hasInput(4)) {
             builder.Add("PresentKey = Concat <axis = 2> (past_key, KReshaped)");
+            builder.Add("PastKVSeqLen =  Shape <start = -2, end = -1> (past_key)");
           } else {
             builder.Add("PresentKey = Identity (KReshaped)");
+            builder.Const1D("PastKVSeqLen", static_cast<int64_t>(0));
           }
           if (ctx.hasOutput(1)) {
             builder.Add("present_key = Identity (PresentKey)");
