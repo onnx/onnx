@@ -130,7 +130,7 @@ def _compute_attention(
     # bias due to the alignment when the mask is a non-square matrix.
     if is_causal:
         if attn_mask is None:
-            temp_mask = np.zeros((q_sequence_length, kv_sequence_length), dtype=bool)
+            temp_mask = np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
             attn_bias = _apply_causal(
                 temp_mask,
                 past_sequence_length=past_key.shape[2] if past_key is not None else 0,
@@ -203,7 +203,7 @@ def _compute_attention(
     qk_matmul_output = np.matmul(Q * scale, k_transpose * scale)
     qk_with_bias = qk_matmul_output + attn_bias
     if qk_matmul_output_mode == 1:
-        qk_matmul_output = qk_matmul_output + attn_bias
+        qk_matmul_output = qk_with_bias.copy()
 
     # Apply softcap
     if softcap is not None:
