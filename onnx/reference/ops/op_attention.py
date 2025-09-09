@@ -24,6 +24,19 @@ def _softcap(X, softcap):
     return X
 
 
+def apply_causal(mask, inplace=False):
+    q_sequence_length, total_sequence_length = mask.shape[-2:]
+    past_sequence_length = total_sequence_length - q_sequence_length
+    triu = np.triu(
+        np.ones((q_sequence_length, q_sequence_length), dtype=mask.dtype), k=1
+    )
+    triu[triu == 1] = -np.inf
+    if not inplace:
+        mask = mask.copy()
+    mask[..., :, past_sequence_length:] += triu
+    return mask
+
+
 def _compute_attention(
     Q: np.ndarray,
     K: np.ndarray,
@@ -114,18 +127,12 @@ def _compute_attention(
     # bias due to the alignment when the mask is a non-square matrix.
     if is_causal:
         if attn_mask is None:
-            temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=bool)
-            temp_mask = np.tril(temp_mask, k=0)
-            temp_mask = np.logical_not(temp_mask)
-            attn_bias_ma = np.ma.array(attn_bias, mask=temp_mask)
-            attn_bias = attn_bias_ma.filled(fill_value=float("-inf"))
+            temp_mask = np.zeros((q_sequence_length, kv_sequence_length), dtype=bool)
+            attn_bias = apply_causal(temp_mask, inplace=True)
         else:
             if attn_mask.dtype == np.bool_:
                 attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
-            temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
-            temp_mask = 1 - np.tril(temp_mask, k=0)
-            temp_mask[temp_mask == 1] = -np.inf
-            attn_bias = attn_mask + temp_mask
+            attn_bias = apply_causal(attn_mask, inplace=False)
     elif attn_mask is not None:
         if attn_mask.dtype == np.bool_:
             attn_mask = (1 - attn_mask).astype(Q.dtype)
