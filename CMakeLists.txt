@@ -1,11 +1,13 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.26)
 # Project
 project(onnx LANGUAGES CXX)
 
 include(cmake/Utils.cmake)
 # Honor visibility properties for all target types.
 cmake_policy(SET CMP0063 NEW)
+# Modules FindPython3 and FindPython use LOCATION for lookup strategy.
+cmake_policy(SET CMP0094 NEW)
 
 # Set default build type
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -127,13 +129,8 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
-# explicitly configure FindPython3.cmake to find python3 in virtual environment first
-if(NOT DEFINED Python3_FIND_VIRTUALENV)
-  set(Python3_FIND_VIRTUALENV FIRST)
-endif()
-
-if(NOT DEFINED Python3_FIND_STRATEGY)
-  set(Python3_FIND_STRATEGY LOCATION)
+if(ONNX_BUILD_PYTHON)
+  set(python_dev_component Development.Module Development.SABIModule)
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -141,15 +138,15 @@ if(CMAKE_CROSSCOMPILING)
   # must use a different package. See the discussion about this at
   # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
   if(ONNX_BUILD_PYTHON)
-    find_package(Python3 REQUIRED COMPONENTS Development.Module)
+    find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
 else()
-  if(ONNX_BUILD_PYTHON)
-    set(python_dev_component Development.Module)
-  endif()
   find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  # Find Python for nanobind
+  set(Python_EXECUTABLE ${Python3_EXECUTABLE})
+  find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
   set(ONNX_PYTHON_INTERPRETER Python3::Interpreter)
 endif()
 
@@ -459,21 +456,25 @@ target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
-  # find system pybind11
-  find_package(pybind11)
-  if(NOT pybind11_FOUND)
+  # find system nanobind
+  find_package(nanobind)
+  if(NOT nanobind_FOUND)
     include(FetchContent)
-    set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v3.0.0.tar.gz)
-    set(pybind11SHA1  532baa7a79c5c65645bcce2f6971959925e40df4)
+
     FetchContent_Declare(
-      pybind11
-      URL ${pybind11URL}
-      URL_HASH SHA1=${pybind11SHA1}
+      nanobind
+      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+      GIT_TAG v2.8.0
+      GIT_SHALLOW TRUE
     )
-    FetchContent_MakeAvailable(pybind11)
+    FetchContent_MakeAvailable(nanobind)
   endif()
 
-  pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  # Configure nanobind: https://nanobind.readthedocs.io/en/latest/api_cmake.html
+  nanobind_add_module(
+    onnx_cpp2py_export
+    NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
+    "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
     # whole-archive linker option not available on AIX
@@ -555,7 +556,7 @@ if(ONNX_USE_UNITY_BUILD)
   set(NEW_LIST __unity_src_files)
   list(APPEND __unity_src_files ${ONNX_SRCS})
   # These files have an issue with template explicit specialization after instantiation:
-  #   We take them out of the unity group so they are compiled individually.
+  #   We take them out of the unity group so that they are compiled individually.
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
   set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )

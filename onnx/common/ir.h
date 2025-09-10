@@ -1272,7 +1272,7 @@ inline const Graph* Value::owningGraph() const {
 // `captured` nodes in subgraph determines which value it captures
 // by storing the value's unique name, so old unique names in `captured` nodes
 // should also be updated.
-// Initializer names are also storaged in graph.initializer_names_, it should be
+// Initializer names are also stored in graph.initializer_names_, it should be
 // updated too.
 inline Value* Value::setUniqueName(const std::string& name, bool update_related_names) {
   if (has_unique_name() && update_related_names) {

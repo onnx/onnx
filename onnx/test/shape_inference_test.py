@@ -8099,7 +8099,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
         onnx.shape_inference.infer_shapes(original_model, strict_mode=True)
 
-    def test_infer_initializer_input_consistency_differnt_rank(self) -> None:
+    def test_infer_initializer_input_consistency_different_rank(self) -> None:
         initializer_shape = (8, 7, 9)
         input_shape = (None, 7)  # acceptable
         original_model = self.prepare_input_initializer_tensors(

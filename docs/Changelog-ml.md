@@ -609,7 +609,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
 <dd>The input must be a tensor of a numeric type, either [C] or [N,C].</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd>The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used. Its size will match the bactch size of the input.</dd>
+<dd>The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used. Its size will match the batch size of the input.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.SVMRegressor-1"></a>**ai.onnx.ml.SVMRegressor-1**</a>

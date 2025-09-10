@@ -66,7 +66,7 @@ struct Upsample_9_8 final : public Adapter {
       }
     }
 
-    ONNX_ASSERTM(false, "Unsuppported conversion due to unavailable input: scale")
+    ONNX_ASSERTM(false, "Unsupported conversion due to unavailable input: scale")
   }
 
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {

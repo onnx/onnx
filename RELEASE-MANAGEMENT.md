@@ -72,7 +72,7 @@ to be produced.
 - The release manager announces a second round of testing (unless it's only a
   patch update with no regressions found). Only critical bugs are fixed at
   this point, or those introduced by patches from the first week. A third
-  weeek may be introduced at the release manager's discretion if significant
+  week may be introduced at the release manager's discretion if significant
   fixes need to be taken. Distributions with -RCn suffixes can be made
   available if convenient.
 

@@ -4,8 +4,8 @@
 
 name: MacRelease
 
-on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
+on:
+  workflow_call:
     inputs:
       os:
         required: true
@@ -14,8 +14,6 @@ on:  # Specifies the event triggering the workflow
         required: true
         type: string
 
-
-# Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:
   MACOSX_DEPLOYMENT_TARGET: "12.0"
 
@@ -28,11 +26,11 @@ jobs:
     runs-on: macos-14
     strategy:
       matrix:
-        python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ['3.13t', '3.12', '3.11', '3.10']
       fail-fast: true
 
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
           persist-credentials: false
           submodules: true
@@ -65,10 +63,21 @@ jobs:
         fi
         python -m build --wheel
 
-    - name: Upload wheel artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
-
+    - name: Debug Python version and artifact name
+      run: |
+        echo "PYTHON VERSION: ${{ matrix.python-version }}"
+        if [ "${{ matrix.python-version }}" = "3.12" ]; then
+          echo "Artifact name: wheels-${{ inputs.os }}-3.12-abi3"
+        else
+          echo "Artifact name: wheels-${{ inputs.os }}-${{ matrix.python-version }}"
+        fi
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version == '3.12')
+      with:
+        name: wheels-${{ inputs.os }}-3.12-abi3
+        path: dist/*.whl
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist/*.whl
@@ -78,11 +87,12 @@ jobs:
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.13t'] # TODO: add '3.14-dev'
+        python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
         target-architecture: ['x86_64', 'arm64']
+      fail-fast: false
 
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         persist-credentials: false
 
@@ -96,7 +106,13 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
-    - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+    - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14-dev'
+      with:
+        name: wheels-${{ inputs.os }}-3.12-abi3
+        path: dist
+    - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      if: matrix.python-version != '3.12' && matrix.python-version != '3.13' && matrix.python-version != '3.14-dev'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist
@@ -107,7 +123,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest numpy
-      if: ${{ always() }}
+      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
         arch -${{ matrix.target-architecture }} python -m pip install numpy
@@ -115,7 +131,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: ${{ always() }}
+      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install protobuf
@@ -123,7 +139,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: ${{ always() }}
+      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
