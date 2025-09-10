@@ -3631,7 +3631,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
                 .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4D)");
           } else {
-            builder.Add("AttnBiasCausalPad = Identity(AttnBias)");
+            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalOrNot)");
           }
           builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
 
