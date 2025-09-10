@@ -24,9 +24,11 @@ def _softcap(X, softcap):
     return X
 
 
-def _apply_causal(mask, past_sequence_length, inplace=False):
+def _apply_causal(mask, past_sequence_length):
     """Applies a causal mask on the input `mask`:
-    ``mask[i, j] = -inf if past_sequence + i > j``.
+    ``mask[i, j] = -inf if past_sequence_length + i > j else 0``.
+    Because a softmax is applied on the mask, -inf becomes 0 and 0 becomes 1.
+    The modification is done inplace.
     """
     q_sequence_length, total_sequence_length = mask.shape[-2:]
     triu = np.triu(
@@ -37,8 +39,6 @@ def _apply_causal(mask, past_sequence_length, inplace=False):
         k=1,
     )
     triu[triu == 1] = -np.inf
-    if not inplace:
-        mask = mask.copy()
     mask[..., :, past_sequence_length:] += triu
     return mask
 
@@ -137,15 +137,13 @@ def _compute_attention(
             attn_bias = _apply_causal(
                 temp_mask,
                 past_sequence_length=past_key.shape[2] if past_key is not None else 0,
-                inplace=True,
             )
         else:
             if attn_mask.dtype == np.bool_:
                 attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
             attn_bias = _apply_causal(
-                attn_mask,
+                attn_mask.copy(),
                 past_sequence_length=past_key.shape[2] if past_key is not None else 0,
-                inplace=False,
             )
     elif attn_mask is not None:
         if attn_mask.dtype == np.bool_:
