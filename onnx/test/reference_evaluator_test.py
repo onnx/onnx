@@ -62,7 +62,7 @@ from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Cast_19, Celu
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
-from onnx.reference.ops.op_attention import apply_causal
+from onnx.reference.ops.op_attention import _apply_causal
 from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
@@ -6121,7 +6121,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     def test_apply_causal(self):
         m = np.ones((3, 3), dtype=np.float16)
-        apply_causal(m, inplace=True)
+        _apply_causal(m, 0, inplace=True)
         self.assertEqual(m.dtype, np.float16)
         assert_allclose(
             np.array(
@@ -6131,7 +6131,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
         m = np.zeros((3, 4), dtype=np.float16)
-        apply_causal(m, inplace=True)
+        _apply_causal(m, 1, inplace=True)
         self.assertEqual(m.dtype, np.float16)
         assert_allclose(
             np.array(
@@ -6142,7 +6142,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
         m = np.zeros((3, 4), dtype=np.float16)
-        m2 = apply_causal(m, inplace=False)
+        m2 = _apply_causal(m, 1, inplace=False)
         self.assertEqual(m.dtype, np.float16)
         assert_allclose(
             np.array(

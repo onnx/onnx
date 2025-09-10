@@ -25,6 +25,9 @@ def _softcap(X, softcap):
 
 
 def _apply_causal(mask, past_sequence_length, inplace=False):
+    """Applies a causal mask on the input `mask`:
+    ``mask[i, j] = -inf if past_sequence + i > j``.
+    """
     q_sequence_length, total_sequence_length = mask.shape[-2:]
     triu = np.triu(
         np.ones(
