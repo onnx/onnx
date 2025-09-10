@@ -60,6 +60,31 @@ def _reshape_input(
     return value
 
 
+def float6e2m3_to_float32(x: np.ndarray) -> np.ndarray:
+    x = x.astype(np.uint8)
+    sign = (x >> 5) & 1
+    exp = (x >> 3) & 0x03
+    mant = x & 0x07
+    # normalized when exp != 0
+    norm = exp != 0
+    norm_val = (1.0 + mant.astype(np.float32) / 8.0) * (2.0 ** (exp.astype(np.int16) - 3))
+    sub_val = (mant.astype(np.float32) / 8.0) * (2.0 ** (1 - 3))  # 1 - bias = -2
+    val = np.where(norm, norm_val, sub_val).astype(np.float32)
+    return np.where(sign == 1, -val, val)
+
+
+def float6e3m2_to_float32(x: np.ndarray) -> np.ndarray:
+    x = x.astype(np.uint8)
+    sign = (x >> 5) & 1
+    exp = (x >> 2) & 0x07
+    mant = x & 0x03
+    norm = exp != 0
+    norm_val = (1.0 + mant.astype(np.float32) / 4.0) * (2.0 ** (exp.astype(np.int16) - 4))
+    sub_val = (mant.astype(np.float32) / 4.0) * (2.0 ** (1 - 4))  # 1 - bias = -3
+    val = np.where(norm, norm_val, sub_val).astype(np.float32)
+    return np.where(sign == 1, -val, val)
+
+
 class _CommonDequantizeLinear(OpRun):
     def _run(
         self,
@@ -77,6 +102,7 @@ class _CommonDequantizeLinear(OpRun):
             TensorProto.FLOAT8E5M2,
             TensorProto.FLOAT8E5M2FNUZ,
         }
+        fp6_type = x_type in {TensorProto.FLOAT6E2M3, TensorProto.FLOAT6E3M2}
         if (
             x_zero_point is not None
             and not fp8_type
@@ -90,6 +116,13 @@ class _CommonDequantizeLinear(OpRun):
 
             dx = x.astype(np.float32) - _reshape_input(
                 x_zero_point, x.shape, axis, block_size
+            )
+        elif fp6_type:
+            xb = x.view(np.uint8)
+            dx = (
+                float6e2m3_to_float32(xb)
+                if x_type == TensorProto.FLOAT6E2M3
+                else float6e3m2_to_float32(xb)
             )
         else:
             if fp8_type and x_zero_point is not None:
