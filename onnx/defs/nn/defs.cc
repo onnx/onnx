@@ -3617,9 +3617,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Add padding mask if kv_nonpad_seqlen is provided
           if (ctx.hasInput(6)) {
-            if (!is_3d_input) {
-              builder.Add("KVSeqLen = Shape <start = -2, end = -1> (K)");
-            }
             builder
                 .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
                 .Add("KVSeqLen0D = Squeeze(KVSeqLen)")
