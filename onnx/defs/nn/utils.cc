@@ -160,9 +160,7 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
 }
 
 bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, FunctionBuilder& builder, bool padding) {
-  builder
-      .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
-      .Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
+  builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)")
       .Add("AttnBiasShape = Concat <axis = 0> (QSeqLen, NewKVSeqLen)");
   float neg_inf = -std::numeric_limits<float>::infinity();
   builder.Const1D("FloatNegInf", neg_inf);

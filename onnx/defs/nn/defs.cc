@@ -3541,7 +3541,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
 
           FunctionBuilder builder(functionProto);
-          builder.Add("BatchSize = Shape <start = 0, end = 1> (Q)"); // batch size
+          builder
+              .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+              .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
+              .Add("KVSeqLen = Shape <start = -2, end = -1> (K)"); // kv_sequence_length
 
           if (is_3d_input) {
             // For 3D inputs: First reshape to [batch_size, seq_length, num_heads, head_size]
@@ -3549,12 +3552,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder
                 .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
                 .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
-                .Add("QSeqLen0 = Shape <start = -2, end = -1> (Q)") // q_sequence_length
-                .Add("KVSeqLen0 = Shape <start = -2, end = -1> (K)") // kv_sequence_length
                 .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
 
-            builder.Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen0, QNumHeadsAttr, NegOne)")
-                .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen0, KVNumHeadsAttr, NegOne)")
+            builder.Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, NegOne)")
+                .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, NegOne)")
                 .Add("QIntermediate = Reshape (Q, QIntermediateShape)")
                 .Add("KIntermediate = Reshape (K, KVIntermediateShape)")
                 .Add("VIntermediate = Reshape (V, KVIntermediateShape)")
