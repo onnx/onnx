@@ -105,6 +105,7 @@ class Attention(Base):
             inputs=[Q, K, V],
             outputs=[Y],
             name="test_attention_4d_scaled",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
         )
 
     @staticmethod
