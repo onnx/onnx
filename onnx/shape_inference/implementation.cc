@@ -76,19 +76,19 @@ static void ClearShapeFromTypeProto(TypeProto* type_proto) {
   if (!type_proto) return;
 
   switch (type_proto->value_case()) {
-    case TypeProto::kTensorType:
+    case TypeProto::ValueCase::kTensorType:
       type_proto->mutable_tensor_type()->clear_shape();
       break;
-    case TypeProto::kSparseTensorType:
+    case TypeProto::ValueCase::kSparseTensorType:
       type_proto->mutable_sparse_tensor_type()->clear_shape();
       break;
-    case TypeProto::kSequenceType:
+    case TypeProto::ValueCase::kSequenceType:
       ClearShapeFromTypeProto(type_proto->mutable_sequence_type()->mutable_elem_type());
       break;
-    case TypeProto::kOptionalType:
+    case TypeProto::ValueCase::kOptionalType:
       ClearShapeFromTypeProto(type_proto->mutable_optional_type()->mutable_elem_type());
       break;
-    case TypeProto::kMapType:
+    case TypeProto::ValueCase::kMapType:
       ClearShapeFromTypeProto(type_proto->mutable_map_type()->mutable_value_type());
       break;
     default:
