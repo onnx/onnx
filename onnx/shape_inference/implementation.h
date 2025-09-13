@@ -498,6 +498,29 @@ ONNX_API void InferShapes(
     DataValueMap* generated_shape_data_by_name = nullptr);
 
 ///
+/// Type inference functions - perform type inference without shape inference
+///
+ONNX_API void InferTypes(
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const ShapeInferenceOptions& options = ShapeInferenceOptions(),
+    const ModelLocalFunctionsMap& in_model_functions = {});
+
+ONNX_API void InferTypes(
+    ModelProto& m,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const ShapeInferenceOptions& options = ShapeInferenceOptions(),
+    DataValueMap* generated_shape_data_by_name = nullptr);
+
+ONNX_API void InferTypes(
+    const std::string& model_path,
+    const std::string& save_path = "",
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const ShapeInferenceOptions& options = ShapeInferenceOptions(),
+    DataValueMap* generated_shape_data_by_name = nullptr);
+
+///
 /// ModelLocalFunctionsMap is a map of function id -> model local function proto
 /// All the ONNX helper utilities expect the function id == <function_proto.domain>:<function_proto.name>
 ///
