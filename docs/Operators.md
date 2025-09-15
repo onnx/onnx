@@ -30769,8 +30769,8 @@ node = onnx.helper.make_node(
 )
 
 input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
-sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
-cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+sin_cache_data = np.random.rand(2, 3, 2).astype(np.float32)
+cos_cache_data = np.random.rand(2, 3, 2).astype(np.float32)
 
 expected_output = rotary_embedding(
     input_data,
@@ -30804,8 +30804,8 @@ node = onnx.helper.make_node(
 
 input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
-sin_cache_data = np.random.rand(50, 4).astype(np.float32)
-cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+sin_cache_data = np.random.rand(50, 2).astype(np.float32)
+cos_cache_data = np.random.rand(50, 2).astype(np.float32)
 
 expected_output = rotary_embedding(
     input_data,
@@ -30840,8 +30840,8 @@ node = onnx.helper.make_node(
 
 input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
-sin_cache_data = np.random.rand(50, 4).astype(np.float32)
-cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+sin_cache_data = np.random.rand(50, 2).astype(np.float32)
+cos_cache_data = np.random.rand(50, 2).astype(np.float32)
 
 expected_output = rotary_embedding(
     input_data,
