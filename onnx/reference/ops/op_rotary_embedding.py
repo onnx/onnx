@@ -55,11 +55,11 @@ def rotary_embedding(
     # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
     if cos.shape[-1] != rotary_embedding_dim_half:
         raise ValueError(
-            f"Last dimension of cos cache {cos.shape[-1]} does not match rotary_embedding_dim/2 {rotary_embedding_dim_half}."
+            f"Last dimension of cos cache ({cos.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
         )
     if sin.shape[-1] != rotary_embedding_dim_half:
         raise ValueError(
-            f"Last dimension of sin cache {sin.shape[-1]} does not match rotary_embedding_dim/2 {rotary_embedding_dim_half}."
+            f"Last dimension of sin cache ({sin.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
         )
 
     cos = np.expand_dims(
