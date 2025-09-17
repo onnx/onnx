@@ -567,7 +567,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) 
  ```
  output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
  ```
- if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+ if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
