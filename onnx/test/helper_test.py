@@ -900,9 +900,19 @@ class TestPrintableGraph(unittest.TestCase):
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
-    np_array = np.random.randn(2, 3).astype(
-        helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    )
+    np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
+    if tensor_dtype in {
+        TensorProto.UINT8,
+        TensorProto.UINT16,
+        TensorProto.UINT32,
+        TensorProto.UINT64,
+    }:
+        # Avoid "RuntimeWarning: invalid value encountered in cast" when using
+        # astype() for negative floats.
+        np_array = numpy_helper.create_random_int((2, 3), np_type)
+    else:
+        np_array = np.random.randn(2, 3)
+    np_array = np_array.astype(np_type)
     tensor = helper.make_tensor(
         name="test", data_type=tensor_dtype, dims=np_array.shape, vals=np_array
     )
@@ -930,10 +940,19 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_raw(tensor_dtype: int) -> None:
-    np_array = np.random.randn(2, 3).astype(
-        helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    )
-
+    np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
+    if tensor_dtype in {
+        TensorProto.UINT8,
+        TensorProto.UINT16,
+        TensorProto.UINT32,
+        TensorProto.UINT64,
+    }:
+        # Avoid "RuntimeWarning: invalid value encountered in cast" when using
+        # astype() for negative floats.
+        np_array = numpy_helper.create_random_int((2, 3), np_type)
+    else:
+        np_array = np.random.randn(2, 3)
+    np_array = np_array.astype(np_type)
     np_array_intermediate = np_array
 
     if tensor_dtype in {
