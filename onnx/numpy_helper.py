@@ -16,9 +16,6 @@ from onnx import helper
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-# System is little endian
-_IS_LITTLE_ENDIAN = sys.byteorder == "little"
-
 
 def to_float8e8m0(
     x: np.ndarray,
@@ -277,8 +274,10 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     }:
         # Pack the array into int4
         array = _pack_4bitx2(array)
-    if not _IS_LITTLE_ENDIAN:
-        array = array.view(array.dtype.newbyteorder("<"))
+
+    if sys.byteorder == "big":
+        # Convert endian from big to little
+        array = array.byteswap()
 
     tensor.raw_data = array.tobytes()
     tensor.data_type = dtype
