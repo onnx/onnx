@@ -939,7 +939,12 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
-def test_make_tensor_raw(tensor_dtype: int) -> None:
+@pytest.mark.parametrize(
+    "vals_as_bytes",
+    [True, False],
+    ids=["vals_as_bytes", "vals_as_nparray"],
+)
+def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
     np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
     if tensor_dtype in {
         TensorProto.UINT8,
@@ -953,22 +958,26 @@ def test_make_tensor_raw(tensor_dtype: int) -> None:
     else:
         np_array = np.random.randn(2, 3)
     np_array = np_array.astype(np_type)
-    np_array_intermediate = np_array
 
-    if tensor_dtype in {
-        TensorProto.FLOAT4E2M1,
-        TensorProto.INT4,
-        TensorProto.UINT4,
-    }:
-        np_array_intermediate = _pack_4bit(np_array)
+    if vals_as_bytes:
+        np_array_intermediate = np_array
 
-    if sys.byteorder == "big":
-        # Convert endian from big to little as numpy_helper.to_array() assumes
-        # that the raw bytes within the tensor are in little endian order and
-        # performs a byteswap on big-endian machines.
-        np_array_intermediate = np_array_intermediate.byteswap()
+        if tensor_dtype in {
+            TensorProto.FLOAT4E2M1,
+            TensorProto.INT4,
+            TensorProto.UINT4,
+        }:
+            np_array_intermediate = _pack_4bit(np_array)
 
-    vals = np_array_intermediate.tobytes()
+        if sys.byteorder == "big":
+            # Convert endian from big to little as numpy_helper.to_array() assumes
+            # that the raw bytes within the tensor are in little endian order and
+            # performs a byteswap on big-endian machines.
+            np_array_intermediate = np_array_intermediate.byteswap()
+
+        vals = np_array_intermediate.tobytes()
+    else:
+        vals = np_array
 
     tensor = helper.make_tensor(
         name="test",

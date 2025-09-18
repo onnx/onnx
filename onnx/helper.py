@@ -7,6 +7,7 @@ import collections.abc
 import functools
 import math
 import numbers
+import sys
 import typing
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -409,6 +410,17 @@ def make_tensor(
         expected_size_bytes *= math.prod(dims)
         expected_size_bytes = math.ceil(expected_size_bytes)
         if isinstance(vals, np.ndarray):
+            if data_type in {
+                TensorProto.INT4,
+                TensorProto.UINT4,
+                TensorProto.FLOAT4E2M1,
+            }:
+                vals = onnx.numpy_helper._pack_4bitx2(vals)
+
+            if sys.byteorder == "big":
+                # Convert endian from big to little
+                vals = vals.byteswap()
+
             raw_data = vals.tobytes()
         elif isinstance(vals, bytes):
             raw_data = vals
