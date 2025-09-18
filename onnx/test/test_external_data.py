@@ -6,6 +6,7 @@ from __future__ import annotations
 import itertools
 import os
 import pathlib
+import sys
 import tempfile
 import unittest
 import uuid
@@ -592,13 +593,19 @@ class TestExternalDataToArray(unittest.TestCase):
     def tearDown(self) -> None:
         self._temp_dir_obj.cleanup()
 
+    def convert_ndarray_to_bytes(self, array: np.ndarray) -> bytes:
+        if sys.byteorder == "big":
+            # Convert endian from bit to little
+            array = array.byteswap()
+        return array.tobytes()
+
     def create_test_model(self) -> ModelProto:
         X = helper.make_tensor_value_info("X", TensorProto.FLOAT, self.large_data.shape)
         input_init = helper.make_tensor(
             name="X",
             data_type=TensorProto.FLOAT,
             dims=self.large_data.shape,
-            vals=self.large_data.tobytes(),
+            vals=self.convert_ndarray_to_bytes(self.large_data),
             raw=True,
         )
 
@@ -607,7 +614,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="Shape",
             data_type=TensorProto.INT64,
             dims=shape_data.shape,
-            vals=shape_data.tobytes(),
+            vals=self.convert_ndarray_to_bytes(shape_data),
             raw=True,
         )
         C = helper.make_tensor_value_info("C", TensorProto.INT64, self.small_data)
