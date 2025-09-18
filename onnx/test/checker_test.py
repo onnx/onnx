@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import tempfile
 import unittest
 from typing import TYPE_CHECKING
@@ -319,7 +320,11 @@ class TestChecker(unittest.TestCase):
         tensor = self._sample_float_tensor
         checker.check_tensor(tensor)
 
-        tensor.raw_data = np.random.randn(2, 3).astype(np.float32).tobytes()
+        input_np = np.random.randn(2, 3).astype(np.float32)
+        if sys.byteorder == "big":
+            # Convert endian from big to little
+            input_np = input_np.byteswap()
+        tensor.raw_data = input_np.tobytes()
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
     def test_check_string_tensor(self) -> None:
