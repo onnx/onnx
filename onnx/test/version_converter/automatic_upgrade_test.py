@@ -293,7 +293,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade("Constant", 1, [], attrs={"value": value})
@@ -577,7 +577,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         then_node = helper.make_node("Constant", [], ["out"], value=then_tensor)
@@ -586,7 +586,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         else_node = helper.make_node("Constant", [], ["out"], value=else_tensor)
@@ -1038,7 +1038,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "a",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade(
@@ -1055,7 +1055,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "a",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade(

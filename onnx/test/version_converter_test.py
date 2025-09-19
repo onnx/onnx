@@ -2196,7 +2196,7 @@ class TestVersionConverter(unittest.TestCase):
                 name="initializer_tensor",
                 data_type=onnx.TensorProto.FLOAT,
                 dims=list(shape),
-                vals=random_data.tobytes(),
+                vals=random_data,
                 raw=True,
             )
             initializer_scalar = onnx.helper.make_tensor(

@@ -214,11 +214,8 @@ class ModelContainer:
                 )
             np_tensor = self.large_initializers[prop.value]
 
-            if sys.byteorder == "big":
-                # Convert endian from little to big
-                tensor_bytes = np_tensor.byteswap().tobytes()
-            else:
-                tensor_bytes = np_tensor.tobytes()
+            tensor_bytes = onnx.numpy_helper.tobytes_little_endian(np_tensor)
+
             if all_tensors_to_one_file:
                 _set_external_data(
                     tensor,
