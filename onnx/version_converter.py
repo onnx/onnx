@@ -41,17 +41,17 @@ def convert_version(model: ModelProto, target_version: int) -> ModelProto:
 
     # Preserve sequence types from graph inputs
     for input_proto in model.graph.input:
-        if input_proto.type.HasField('sequence_type'):
+        if input_proto.type.HasField("sequence_type"):
             preserved_sequence_types[input_proto.name] = input_proto.type
 
     # Preserve sequence types from graph outputs
     for output_proto in model.graph.output:
-        if output_proto.type.HasField('sequence_type'):
+        if output_proto.type.HasField("sequence_type"):
             preserved_sequence_types[output_proto.name] = output_proto.type
 
     # Preserve sequence types from value_info
     for value_info in model.graph.value_info:
-        if value_info.type.HasField('sequence_type'):
+        if value_info.type.HasField("sequence_type"):
             preserved_sequence_types[value_info.name] = value_info.type
 
     model_str = model.SerializeToString()
