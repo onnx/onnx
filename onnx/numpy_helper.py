@@ -228,6 +228,14 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
+def tobytes_little_endian(array: np.ndarray) -> bytes:
+    if sys.byteorder == "big":
+        # Convert endian from big to little
+        array = array.byteswap()
+
+    return array.tobytes()
+
+
 def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProto:
     """Converts an array into a TensorProto including
 
@@ -275,11 +283,7 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
         # Pack the array into int4
         array = _pack_4bitx2(array)
 
-    if sys.byteorder == "big":
-        # Convert endian from big to little
-        array = array.byteswap()
-
-    tensor.raw_data = array.tobytes()
+    tensor.raw_data = tobytes_little_endian(array)
     tensor.data_type = dtype
     return tensor
 

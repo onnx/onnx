@@ -6,7 +6,6 @@ from __future__ import annotations
 import itertools
 import math
 import random
-import sys
 import unittest
 from typing import Any
 
@@ -525,19 +524,11 @@ class TestHelperTensorFunctions(unittest.TestCase):
             dtype=ml_dtypes.bfloat16,
         ).view(np.uint16)
 
-        if sys.byteorder == "big":
-            # Convert endian from big to little as numpy_helper.to_array()
-            # assumes that the raw bytes within the tensor are in little endian
-            # order and performs a byteswap on big-endian machines.
-            np_array_intermediate = array.byteswap()
-        else:
-            np_array_intermediate = array
-
         tensor = helper.make_tensor(
             name="test",
             data_type=TensorProto.BFLOAT16,
             dims=array.shape,
-            vals=np_array_intermediate.tobytes(),
+            vals=numpy_helper.tobytes_little_endian(array),
             raw=True,
         )
         np.testing.assert_allclose(numpy_helper.to_array(tensor).view(np.uint16), array)
@@ -969,13 +960,7 @@ def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
         }:
             np_array_intermediate = _pack_4bit(np_array)
 
-        if sys.byteorder == "big":
-            # Convert endian from big to little as numpy_helper.to_array() assumes
-            # that the raw bytes within the tensor are in little endian order and
-            # performs a byteswap on big-endian machines.
-            np_array_intermediate = np_array_intermediate.byteswap()
-
-        vals = np_array_intermediate.tobytes()
+        vals = numpy_helper.tobytes_little_endian(np_array_intermediate)
     else:
         vals = np_array
 

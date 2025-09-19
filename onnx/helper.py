@@ -7,7 +7,6 @@ import collections.abc
 import functools
 import math
 import numbers
-import sys
 import typing
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -417,11 +416,7 @@ def make_tensor(
             }:
                 vals = onnx.numpy_helper._pack_4bitx2(vals)
 
-            if sys.byteorder == "big":
-                # Convert endian from big to little
-                vals = vals.byteswap()
-
-            raw_data = vals.tobytes()
+            raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
             raw_data = vals
         else:
