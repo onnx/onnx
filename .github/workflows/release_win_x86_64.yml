@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ['3.13t', '3.12', '3.11', '3.10']
         architecture: ['x64', 'x86']
         exclude:
           - python-version: '3.13t'
@@ -34,7 +34,7 @@ jobs:
 
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
          submodules: 'recursive'
          persist-credentials: false
@@ -88,6 +88,21 @@ jobs:
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
         path: ./dist
+
+    - name: Check abi3 compatibility with abi3audit
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then
+            echo "Exactly one wheel file found."
+        else
+            echo "Multiple or no wheel files found."
+        fi
+        for whl in dist/*.whl; do
+          echo "Checking abi3 compatibility for $whl"
+          python -m pip install -q abi3audit
+          python -m abi3audit -v "$whl"
+        done
+      shell: bash
     
     - name: Test the installed wheel
       if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev' # TODO: reevaluate 3.13t/3.14 for onnx 1.20 (3.13t was already working, but it's failing since a github runner update...)

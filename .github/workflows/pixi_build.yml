@@ -8,9 +8,16 @@ on:
   schedule:
     # run weekly on Sunday 23:59
     - cron:  '29 23 * * SUN'
+  push:
+    paths:
+      - '.github/workflows/pixi_build.yml'
+      - 'CMakeLists.txt'
+      - 'pixi.lock'
+      - 'pixi.toml'
 
 permissions:
   contents: read
+  issues: write  # Needed to create an issue on failure
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -32,12 +39,12 @@ jobs:
           - oldies
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
           fetch-depth: 0
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.8.14
+        uses: prefix-dev/setup-pixi@v0.9.0
         with:
           environments: ${{ matrix.environment }}
       - name: Install repository
@@ -46,3 +53,25 @@ jobs:
         run: pixi run -e ${{ matrix.environment }} gtest
       - name: pytest
         run: pixi run -e ${{ matrix.environment }} pytest
+      - name: Issue on failure
+        uses: actions/github-script@v7
+        if: ${{ failure() && github.ref == 'refs/heads/main' }}
+        with:
+          script: |
+            github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "[bot] pixi CI"
+            }).then((issues) => {
+              if (issues.data.length === 0){
+                github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: "Scheduled pixi CI failed",
+                  body: "The scheduled pixi-based CI failed. See https://github.com/${{ github.repository }}/actions/runs/${{github.run_id}} for details.",
+                  assignees: ["cbourjau"],
+                  labels: ["[bot] pixi CI"]
+                })
+              }
+            });

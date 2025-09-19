@@ -697,7 +697,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(string)", "tensor(int64)"},
             "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
-            "attributes is used. Its size will match the bactch size of the input.")
+            "attributes is used. Its size will match the batch size of the input.")
         .Attr(
             "kernel_type",
             "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.",

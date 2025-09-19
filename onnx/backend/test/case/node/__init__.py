@@ -18,6 +18,7 @@ from onnx.onnx_pb import (
     GraphProto,
     ModelProto,
     NodeProto,
+    OperatorSetIdProto,
     TensorProto,
     TypeProto,
 )
@@ -128,11 +129,25 @@ def function_expand_helper(
 
 
 def function_testcase_helper(
-    node: NodeProto, input_types: list[TypeProto], name: str
+    node: NodeProto,
+    input_types: list[TypeProto],
+    name: str,
+    opset_imports: Sequence[OperatorSetIdProto] | None = None,
 ) -> tuple[list[tuple[list[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, domain=node.domain)
+    if opset_imports is None:
+        # No opset in the model. We take the most recent definition.
+        schema = onnx.defs.get_schema(test_op, domain=node.domain)
+    else:
+        # We take the function coming defined in the specific version mentioned
+        # in the model.
+        if len(opset_imports) != 1:
+            raise ValueError(
+                f"Only one domain is allowed but {len(opset_imports)} found."
+            )
+        version = opset_imports[0].version
+        schema = onnx.defs.get_schema(test_op, version, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
@@ -327,7 +342,9 @@ def expect(
     (
         expanded_tests,
         since_version,
-    ) = function_testcase_helper(node, merged_types, name)
+    ) = function_testcase_helper(
+        node, merged_types, name, opset_imports=kwargs.get("opset_imports")
+    )
     for expanded_function_nodes, func_opset_import in expanded_tests:
         kwargs["producer_name"] = "backend-test"
 
