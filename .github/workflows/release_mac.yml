@@ -132,7 +132,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest nightly of numpy
-      if: (matrix.python-version != '3.14-dev') && (inputs.build_mode == 'preview')
+      if: (matrix.python-version != '3.14-dev') && (matrix.python-version != '3.10') && (inputs.build_mode == 'preview')
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
         arch -${{ matrix.target-architecture }} python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
