@@ -258,25 +258,25 @@ class LpPool(Base):
 
     @staticmethod
     def export_lppool_2d_ceil_last_window_starts_on_pad() -> None:
-        """input_shape: [1, 1, 5, 5]
-        output_shape: [1, 1, 3, 3]
+        """input_shape: [1, 1, 1, 3]
+        output_shape: [1, 1, 1, 2]
         """
         p = 2
         node = onnx.helper.make_node(
             "LpPool",
             inputs=["x"],
             outputs=["y"],
-            kernel_shape=[2, 2],
-            pads=[1, 1, 1, 1],
-            strides=[2, 2],
+            kernel_shape=[1, 2],
+            pads=[0, 1, 0, 1],
+            strides=[1, 2],
             ceil_mode=1,
             p=p,
         )
-        x = np.arange(1, 26, dtype=np.float32).reshape(1, 1, 5, 5)
+        x = np.arange(1, 4, dtype=np.float32).reshape(1, 1, 1, 3)
         x_shape = np.shape(x)
-        kernel_shape = (2, 2)
-        strides = (2, 2)
-        pads = [1, 1, 1, 1]
+        kernel_shape = (1, 2)
+        strides = (1, 2)
+        pads = [0, 1, 0, 1]
         out_shape, pads_required = get_output_shape_explicit_padding(
             pads,
             x_shape[2:],
@@ -286,7 +286,7 @@ class LpPool(Base):
         )
         padded = np.pad(
             x,
-            (
+           (
                 (0, 0),
                 (0, 0),
                 (pads_required[0], pads_required[2]),
@@ -306,6 +306,9 @@ class LpPool(Base):
             pads=pads,
             p=p,
         )
+
+        # Expected width positions: (0,1) collects [0, 1] due to left pad, (2,3) collects [2, 3];
+        # the stride position starting on the right pad is ignored when ceil_mode trims the count.
 
         expect(
             node,

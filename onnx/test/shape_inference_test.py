@@ -3832,22 +3832,22 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_lppool_with_padding_stride_and_ceil_mode(self) -> None:
         graph = self._make_graph(
-            [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
+            [("X", TensorProto.FLOAT, (1, 1, 1, 3))],
             [
                 make_node(
                     "LpPool",
                     ["X"],
                     ["Y"],
-                    kernel_shape=[2, 2],
-                    pads=[1, 1, 1, 1],
-                    strides=[2, 2],
+                    kernel_shape=[1, 2],
+                    pads=[0, 1, 0, 1],
+                    strides=[1, 2],
                     ceil_mode=1,
                 )
             ],
             [],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 3, 3))]
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 1, 2))]
         )
 
     def test_lppool_with_dilations(self) -> None:
