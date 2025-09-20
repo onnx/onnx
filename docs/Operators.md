@@ -17926,7 +17926,7 @@ expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_1")
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
@@ -18015,6 +18015,70 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_1d_default")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_2d_ceil_last_window_starts_on_pad</summary>
+
+```python
+"""input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 3, 3]
+"""
+p = 2
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[2, 2],
+    pads=[1, 1, 1, 1],
+    strides=[2, 2],
+    ceil_mode=1,
+    p=p,
+)
+x = np.arange(1, 26, dtype=np.float32).reshape(1, 1, 5, 5)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (2, 2)
+pads = [1, 1, 1, 1]
+out_shape, pads_required = get_output_shape_explicit_padding(
+    pads,
+    x_shape[2:],
+    kernel_shape,
+    strides,
+    ceil_mode=True,
+)
+padded = np.pad(
+    x,
+    (
+        (0, 0),
+        (0, 0),
+        (pads_required[0], pads_required[2]),
+        (pads_required[1], pads_required[3]),
+    ),
+    mode="constant",
+    constant_values=0,
+)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "LPPOOL",
+    pads_required=pads_required,
+    pads=pads,
+    p=p,
+)
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_lppool_2d_ceil_last_window_starts_on_pad",
+)
 ```
 
 </details>
