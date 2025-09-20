@@ -107,10 +107,11 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
     - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
-      if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14-dev'
+      if: matrix.python-version == '3.14-dev' || matrix.python-version == '3.13' || matrix.python-version == '3.12' 
       with:
         name: wheels-${{ inputs.os }}-3.12-abi3
         path: dist
+
     - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
       if: matrix.python-version != '3.12' && matrix.python-version != '3.13' && matrix.python-version != '3.14-dev'
       with:
@@ -127,6 +128,14 @@ jobs:
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
         arch -${{ matrix.target-architecture }} python -m pip install numpy
+        arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
+        arch -${{ matrix.target-architecture }} pytest
+
+    - name: Verify ONNX with the latest nightly of numpy
+      if: m(atrix.python-version != '3.14-dev') && (inputs.build_mode == 'preview')
+      run: |
+        arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
+        arch -${{ matrix.target-architecture }} python -m pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 

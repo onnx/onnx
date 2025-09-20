@@ -157,6 +157,13 @@ jobs:
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
           pytest
 
+      - name: Verify ONNX with the latest nightly of numpy 
+        if: matrix.python-version != '3.10'
+        run: |
+          python -m pip uninstall -y numpy onnx && python -m  pip install -i https://pypi.anaconda.org/scientific-python-nightly-wheels/simple numpy
+          python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
+          pytest
+
       - name: Verify ONNX with the latest protobuf
         if: matrix.python-version != '3.14-dev'
         run: |
