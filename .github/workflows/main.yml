@@ -136,6 +136,7 @@ jobs:
           }
 
           workflow_scripts/protobuf/build_protobuf_win.ps1 -cmake_arch $cmake_arch
+        shell: pwsh
 
       - name: Build and install ONNX - Linux
         if: startsWith(matrix.os,'ubuntu')
