@@ -107,12 +107,14 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
     - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      id: download_abi3_wheel
       if: matrix.python-version == '3.14-dev' || matrix.python-version == '3.13' || matrix.python-version == '3.12' 
       with:
         name: wheels-${{ inputs.os }}-3.12-abi3
         path: dist
 
     - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      id: download_wheel_nonabi3
       if: matrix.python-version != '3.12' && matrix.python-version != '3.13' && matrix.python-version != '3.14-dev'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
