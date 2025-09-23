@@ -1777,6 +1777,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -1813,6 +1814,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -1851,6 +1853,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_3d_attn_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -1889,6 +1892,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -1925,6 +1929,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_diff_heads_sizes",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -1963,6 +1968,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_3d_diff_heads_sizes_attn_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2001,6 +2007,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_diff_heads_sizes_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2040,6 +2047,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_diff_heads_sizes_scaled",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2078,6 +2086,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_diff_heads_sizes_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2121,6 +2130,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_3d_diff_heads_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2157,6 +2167,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_gqa",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2195,6 +2206,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_3d_gqa_attn_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2233,6 +2245,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_gqa_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2272,6 +2285,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_gqa_scaled",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2310,6 +2324,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_gqa_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2353,6 +2368,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_3d_gqa_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2392,6 +2408,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_scaled",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2430,6 +2447,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2490,6 +2508,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_3d_transpose_verification",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2533,6 +2552,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_3d_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2576,6 +2596,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_3d_with_past_and_present_qk_matmul",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2621,6 +2642,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_3d_with_past_and_present_qk_matmul_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2668,6 +2690,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_3d_with_past_and_present_qk_matmul_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2713,6 +2736,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_3d_with_past_and_present_qk_matmul_softmax",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2748,6 +2772,7 @@ expect(
     inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
     outputs=[Y],
     name="test_attention_4d_diff_heads_mask4d_padded_kv",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -2781,6 +2806,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_attn_mask_3d",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2816,6 +2842,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_attn_mask_3d_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2849,6 +2876,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_attn_mask_4d",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2884,6 +2912,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_attn_mask_4d_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2917,6 +2946,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_attn_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2950,6 +2980,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_attn_mask_bool",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -2983,6 +3014,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_attn_mask_bool_4d",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3011,6 +3043,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3034,6 +3067,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_diff_heads_sizes",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3067,6 +3101,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_diff_heads_sizes_attn_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3100,6 +3135,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_diff_heads_sizes_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3129,6 +3165,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_diff_heads_sizes_scaled",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3162,6 +3199,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_diff_heads_sizes_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3200,6 +3238,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_diff_heads_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3238,6 +3277,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_diff_heads_with_past_and_present_mask3d",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3276,6 +3316,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_diff_heads_with_past_and_present_mask4d",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3299,6 +3340,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3322,6 +3364,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_gqa",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3355,6 +3398,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_4d_gqa_attn_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3383,6 +3427,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_gqa_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3412,6 +3457,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_gqa_scaled",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3440,6 +3486,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_gqa_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3478,6 +3525,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_gqa_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3516,6 +3564,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_gqa_with_past_and_present_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3545,6 +3594,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_scaled",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3573,6 +3623,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3611,6 +3662,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3649,6 +3701,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_4d_with_past_and_present_qk_matmul",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3689,6 +3742,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_4d_with_past_and_present_qk_matmul_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3729,6 +3783,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_4d_with_past_and_present_qk_matmul_bias_3d_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3771,6 +3826,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_4d_with_past_and_present_qk_matmul_bias_3d_mask_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3811,6 +3867,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_4d_with_past_and_present_qk_matmul_bias_4d_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3853,6 +3910,7 @@ expect(
     inputs=[Q, K, V, attn_mask, past_key, past_value],
     outputs=[Y, present_key, present_value, qk_matmul_output],
     name="test_attention_4d_with_past_and_present_qk_matmul_bias_4d_mask_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3880,6 +3938,7 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y, qk_matmul_output],
     name="test_attention_4d_with_qk_matmul",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3915,6 +3974,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y, qk_matmul_output],
     name="test_attention_4d_with_qk_matmul_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3952,6 +4012,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y, qk_matmul_output],
     name="test_attention_4d_with_qk_matmul_softcap",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -3987,6 +4048,7 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y, qk_matmul_output],
     name="test_attention_4d_with_qk_matmul_softmax",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
 
@@ -30379,15 +30441,16 @@ expect(
   Rotary embeddings are defined using the following algorithm:
 
   ```python
-  def compute_rotary_embedding(
-      input,
-      position_ids,
-      sin_cache,
-      cos_cache,
-      interleaved=0,
-      rotary_embedding_dim=0,
-      num_heads=0,
-  ):
+  def rotary_embedding(
+      input: np.ndarray,
+      cos_cache: np.ndarray,
+      sin_cache: np.ndarray,
+      position_ids: np.ndarray | None = None,
+      interleaved=None,
+      rotary_embedding_dim=None,
+      num_heads=None,
+  ) -> np.ndarray:
+      original_input_shape = input.shape
       # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
       if len(input.shape) == 4:
           input = np.transpose(input, (0, 2, 1, 3))
@@ -30403,7 +30466,7 @@ expect(
       head_size = input.shape[3]
 
       # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-      if rotary_embedding_dim == 0:
+      if rotary_embedding_dim is None or rotary_embedding_dim == 0:
           # If rotary_embedding_dim not provided, perform full rotation by using head_size
           rotary_embedding_dim = head_size
       x_rotate = input[:, :, :, :rotary_embedding_dim]
@@ -30412,15 +30475,29 @@ expect(
 
       # Retrieve sin and cos caches using position ids
       if position_ids is not None:
-          cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-          sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-      else:
-          cos = cos_cache
-          sin = sin_cache
-      cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-      sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-      cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-      sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+          cos_cache = cos_cache[
+              position_ids
+          ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+          sin_cache = sin_cache[
+              position_ids
+          ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+
+      # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      if cos_cache.shape[-1] != rotary_embedding_dim_half:
+          raise ValueError(
+              f"Last dimension of cos cache ({cos_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+          )
+      if sin_cache.shape[-1] != rotary_embedding_dim_half:
+          raise ValueError(
+              f"Last dimension of sin cache ({sin_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+          )
+
+      cos_cache = np.expand_dims(
+          cos_cache, axis=2
+      )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+      sin_cache = np.expand_dims(
+          sin_cache, axis=2
+      )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
 
       # Either divide the input in halves or interleave (based on interleaved attribute)
       if interleaved:
@@ -30430,8 +30507,8 @@ expect(
           x1, x2 = np.split(x_rotate, 2, axis=-1)
 
       # Calculate real and imaginary values
-      real = cos * x1 - sin * x2
-      imag = sin * x1 + cos * x2
+      real = (cos_cache * x1) - (sin_cache * x2)
+      imag = (sin_cache * x1) + (cos_cache * x2)
 
       # Inserted rotated embeddings back to the original input
       if interleaved:
@@ -30445,7 +30522,7 @@ expect(
           x_rotate = np.concatenate((real, imag), axis=-1)
       output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
       if len(original_input_shape) == 3:
-          output = np.reshape(output, input.shape)
+          output = np.reshape(output, original_input_shape)
       else:
           output = np.transpose(output, (0, 2, 1, 3))
       return output
@@ -30671,8 +30748,8 @@ node = onnx.helper.make_node(
 )
 
 input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
-sin_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
-cos_cache_data = np.random.rand(2, 3, 4).astype(np.float32)
+sin_cache_data = np.random.rand(2, 3, 2).astype(np.float32)
+cos_cache_data = np.random.rand(2, 3, 2).astype(np.float32)
 
 expected_output = rotary_embedding(
     input_data,
@@ -30706,8 +30783,8 @@ node = onnx.helper.make_node(
 
 input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
-sin_cache_data = np.random.rand(50, 4).astype(np.float32)
-cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+sin_cache_data = np.random.rand(50, 2).astype(np.float32)
+cos_cache_data = np.random.rand(50, 2).astype(np.float32)
 
 expected_output = rotary_embedding(
     input_data,
@@ -30742,8 +30819,8 @@ node = onnx.helper.make_node(
 
 input_data = np.random.rand(2, 4, 3, 8).astype(np.float32)
 position_ids_data = np.random.uniform(0, 50, (2, 3)).astype(np.int64)
-sin_cache_data = np.random.rand(50, 4).astype(np.float32)
-cos_cache_data = np.random.rand(50, 4).astype(np.float32)
+sin_cache_data = np.random.rand(50, 2).astype(np.float32)
+cos_cache_data = np.random.rand(50, 2).astype(np.float32)
 
 expected_output = rotary_embedding(
     input_data,

@@ -24,6 +24,25 @@ def _softcap(X, softcap):
     return X
 
 
+def _apply_causal(mask, past_sequence_length):
+    """Applies a causal mask on the input `mask`:
+    ``mask[i, j] = -inf if past_sequence_length + i > j else 0``.
+    Because a softmax is applied on the mask, -inf becomes 0 and 0 becomes 1.
+    The modification is done inplace.
+    """
+    q_sequence_length, total_sequence_length = mask.shape[-2:]
+    triu = np.triu(
+        np.ones(
+            (q_sequence_length, total_sequence_length - past_sequence_length),
+            dtype=mask.dtype,
+        ),
+        k=1,
+    )
+    triu[triu == 1] = -np.inf
+    mask[..., :, past_sequence_length:] += triu
+    return mask
+
+
 def _compute_attention(
     Q: np.ndarray,
     K: np.ndarray,
@@ -114,18 +133,18 @@ def _compute_attention(
     # bias due to the alignment when the mask is a non-square matrix.
     if is_causal:
         if attn_mask is None:
-            temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=bool)
-            temp_mask = np.tril(temp_mask, k=0)
-            temp_mask = np.logical_not(temp_mask)
-            attn_bias_ma = np.ma.array(attn_bias, mask=temp_mask)
-            attn_bias = attn_bias_ma.filled(fill_value=float("-inf"))
+            temp_mask = np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
+            attn_bias = _apply_causal(
+                temp_mask,
+                past_sequence_length=past_key.shape[2] if past_key is not None else 0,
+            )
         else:
             if attn_mask.dtype == np.bool_:
                 attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
-            temp_mask = np.ones((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
-            temp_mask = 1 - np.tril(temp_mask, k=0)
-            temp_mask[temp_mask == 1] = -np.inf
-            attn_bias = attn_mask + temp_mask
+            attn_bias = _apply_causal(
+                attn_mask.copy(),
+                past_sequence_length=past_key.shape[2] if past_key is not None else 0,
+            )
     elif attn_mask is not None:
         if attn_mask.dtype == np.bool_:
             attn_mask = (1 - attn_mask).astype(Q.dtype)
@@ -158,10 +177,10 @@ def _compute_attention(
         and (q_num_heads % k_num_heads == 0)
         and (k_num_heads == v_num_heads)
     ):
-        seq_reps = int(q_num_heads / k_num_heads)
-        reps = [1, seq_reps, 1, 1]
-        K = np.tile(K, reps)
-        V = np.tile(V, reps)
+        seq_reps = q_num_heads // k_num_heads
+        # Interleave-repeat each KV head: [h0, h0, h1, h1, ...]
+        K = np.repeat(K, repeats=seq_reps, axis=1)
+        V = np.repeat(V, repeats=seq_reps, axis=1)
 
     # The following pattern is applied
     #      Q          K          V
@@ -185,7 +204,7 @@ def _compute_attention(
     qk_matmul_output = np.matmul(Q * scale, k_transpose * scale)
     qk_with_bias = qk_matmul_output + attn_bias
     if qk_matmul_output_mode == 1:
-        qk_matmul_output = qk_matmul_output + attn_bias
+        qk_matmul_output = qk_with_bias.copy()
 
     # Apply softcap
     if softcap is not None:

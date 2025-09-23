@@ -8,6 +8,7 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/nn/utils.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
@@ -2992,15 +2993,16 @@ The rotation ensures that the model captures both absolute and relative position
 Rotary embeddings are defined using the following algorithm:
 
 ```python
-def compute_rotary_embedding(
-    input,
-    position_ids,
-    sin_cache,
-    cos_cache,
-    interleaved=0,
-    rotary_embedding_dim=0,
-    num_heads=0,
-):
+def rotary_embedding(
+    input: np.ndarray,
+    cos_cache: np.ndarray,
+    sin_cache: np.ndarray,
+    position_ids: np.ndarray | None = None,
+    interleaved=None,
+    rotary_embedding_dim=None,
+    num_heads=None,
+) -> np.ndarray:
+    original_input_shape = input.shape
     # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
     if len(input.shape) == 4:
         input = np.transpose(input, (0, 2, 1, 3))
@@ -3016,7 +3018,7 @@ def compute_rotary_embedding(
     head_size = input.shape[3]
 
     # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-    if rotary_embedding_dim == 0:
+    if rotary_embedding_dim is None or rotary_embedding_dim == 0:
         # If rotary_embedding_dim not provided, perform full rotation by using head_size
         rotary_embedding_dim = head_size
     x_rotate = input[:, :, :, :rotary_embedding_dim]
@@ -3025,15 +3027,29 @@ def compute_rotary_embedding(
 
     # Retrieve sin and cos caches using position ids
     if position_ids is not None:
-        cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-        sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-    else:
-        cos = cos_cache
-        sin = sin_cache
-    cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-    sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-    cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-    sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+        cos_cache = cos_cache[
+            position_ids
+        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+        sin_cache = sin_cache[
+            position_ids
+        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+
+    # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    if cos_cache.shape[-1] != rotary_embedding_dim_half:
+        raise ValueError(
+            f"Last dimension of cos cache ({cos_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+        )
+    if sin_cache.shape[-1] != rotary_embedding_dim_half:
+        raise ValueError(
+            f"Last dimension of sin cache ({sin_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+        )
+
+    cos_cache = np.expand_dims(
+        cos_cache, axis=2
+    )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+    sin_cache = np.expand_dims(
+        sin_cache, axis=2
+    )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
 
     # Either divide the input in halves or interleave (based on interleaved attribute)
     if interleaved:
@@ -3043,8 +3059,8 @@ def compute_rotary_embedding(
         x1, x2 = np.split(x_rotate, 2, axis=-1)
 
     # Calculate real and imaginary values
-    real = cos * x1 - sin * x2
-    imag = sin * x1 + cos * x2
+    real = (cos_cache * x1) - (sin_cache * x2)
+    imag = (sin_cache * x1) + (cos_cache * x2)
 
     # Inserted rotated embeddings back to the original input
     if interleaved:
@@ -3058,7 +3074,7 @@ def compute_rotary_embedding(
         x_rotate = np.concatenate((real, imag), axis=-1)
     output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
     if len(original_input_shape) == 3:
-        output = np.reshape(output, input.shape)
+        output = np.reshape(output, original_input_shape)
     else:
         output = np.transpose(output, (0, 2, 1, 3))
     return output
@@ -3505,154 +3521,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "U",
             OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
             "Constrain output 'mask' types to boolean tensors and input types.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-          int64_t kv_sequence_length = -1;
-          ONNX_NAMESPACE::TensorShapeProto output_shape;
-          ONNX_NAMESPACE::TensorShapeProto qk_matmul_shape;
-          if (hasInputShape(ctx, 0)) {
-            auto& query_shape = getInputShape(ctx, 0);
-            auto& query_dims = query_shape.dim();
-            if ((query_dims.size() != 3) && (query_dims.size() != 4)) {
-              fail_shape_inference("Inputs 0 (query) shall be 3 or 4 dimensions");
-            }
-
-            if (query_dims.size() == 3) {
-              auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
-              if (q_num_heads_attr == nullptr) {
-                fail_type_inference("3D inputs expected to have q_num_heads attribute.");
-              }
-              auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
-              if (kv_num_heads_attr == nullptr) {
-                fail_type_inference("3D inputs expected to have q_num_heads attribute.");
-              }
-            }
-
-            *output_shape.add_dim() = query_dims[0]; // batch_size
-            *output_shape.add_dim() = query_dims[1]; // num_heads for 4D, sequence_length for 3D
-
-            *qk_matmul_shape.add_dim() = query_dims[0]; // batch_size
-
-            if (hasInputShape(ctx, 1)) {
-              auto& key_shape = getInputShape(ctx, 1);
-              auto& key_dims = key_shape.dim();
-              if ((key_dims.size() != 3) && (key_dims.size() != 4)) {
-                fail_shape_inference("Inputs 1 (key) shall be 3 or 4 dimensions");
-              }
-            }
-
-            if (hasInputShape(ctx, 2)) {
-              auto& value_shape = getInputShape(ctx, 2);
-              auto& value_dims = value_shape.dim();
-              if ((value_dims.size() != 3) && (value_dims.size() != 4)) {
-                fail_shape_inference("Inputs 2 (value) shall be 3 or 4 dimensions");
-              }
-
-              // Update Output Shape for 4D inputs
-              // Input 0 (query) has shape (batch_size, q_num_heads, q_sequence_length, head_size)
-              // Input 1 (key) has shape (batch_size, kv_num_heads, kv_sequence_length, head_size)
-              // Input 2 (value) has shape (batch_size, kv_num_heads, kv_sequence_length, v_head_size)
-              // Output 0 has shape (batch_size, q_num_heads, q_sequence_length, v_head_size)
-              if (value_dims.size() == 4 && query_dims.size() == 4) {
-                kv_sequence_length = value_dims[2].dim_value();
-                *output_shape.add_dim() = query_dims[2]; // sequence_length
-                *output_shape.add_dim() = value_dims[3]; // head_size
-                updateOutputShape(ctx, 0, output_shape);
-                // Update qk_matmul_shape
-                *qk_matmul_shape.add_dim() = query_dims[1]; // q_num_heads
-                *qk_matmul_shape.add_dim() = query_dims[2]; // q_sequence_length
-                qk_matmul_shape.add_dim()->set_dim_value(kv_sequence_length);
-              }
-
-              // Update Output Shape for 3D inputs
-              // Input 0 (query) has shape (batch_size, q_sequence_length, q_hidden_size),
-              // q_hidden_size = q_num_heads * head_size
-              // Input 1 (key) has shape (batch_size, kv_sequence_length, k_hidden_size),
-              // k_hidden_size = kv_num_heads * head_size
-              // Input 2 (value) has shape (batch_size, kv_sequence_length, v_hidden_size),
-              // v_hidden_size = kv_num_heads * v_head_size
-              // Output 0 has shape (batch_size, q_sequence_length, hidden_size),
-              // hidden_size = q_num_heads * v_head_size
-              if (value_dims.size() == 3 && query_dims.size() == 3) {
-                kv_sequence_length = value_dims[1].dim_value();
-                auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
-                if (q_num_heads_attr == nullptr) {
-                  fail_type_inference("3D inputs expected to have q_num_heads attribute.");
-                }
-                auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
-                if (kv_num_heads_attr == nullptr) {
-                  fail_type_inference("3D inputs expected to have kv_num_heads attribute.");
-                }
-                int64_t q_num_heads = q_num_heads_attr->i();
-                int64_t kv_num_heads = kv_num_heads_attr->i();
-                // Calculate v_head_size
-                int64_t v_head_size = value_dims[2].dim_value() / kv_num_heads;
-                output_shape.add_dim()->set_dim_value(v_head_size * q_num_heads);
-                updateOutputShape(ctx, 0, output_shape);
-                // Update qk_matmul_shape
-                qk_matmul_shape.add_dim()->set_dim_value(q_num_heads);
-                *qk_matmul_shape.add_dim() = query_dims[1];
-                qk_matmul_shape.add_dim()->set_dim_value(kv_sequence_length);
-              }
-            }
-          }
-
-          if (ctx.hasOutput(3)) { // has qk_matmul_output
-            propagateElemTypeFromInputToOutput(ctx, 0, 3);
-            updateOutputShape(ctx, 3, qk_matmul_shape);
-          }
-
-          if (ctx.hasOutput(1) && ctx.hasOutput(2)) { // has present outputs
-            if (ctx.hasInput(4) && ctx.hasInput(5)) { // has past_key
-              // copy the type from query to present key and value
-              propagateElemTypeFromInputToOutput(ctx, 4, 1);
-              propagateElemTypeFromInputToOutput(ctx, 5, 2);
-
-              if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
-                auto& past_key_shape = getInputShape(ctx, 4);
-                auto& past_key_dims = past_key_shape.dim();
-                auto& past_value_shape = getInputShape(ctx, 5);
-                auto& past_value_dims = past_value_shape.dim();
-
-                // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
-                if (past_key_dims.size() != 4) {
-                  fail_shape_inference("The past_key input shall be 4 dimensions");
-                }
-                // past value has shape (batch_size, kv_num_heads, past_sequence_length, v_head_size)
-                if (past_value_dims.size() != 4) {
-                  fail_shape_inference("The past_value input shall be 4 dimensions");
-                }
-
-                if (kv_sequence_length > 0 && past_key_dims[2].has_dim_value()) {
-                  int64_t total_sequence_length = kv_sequence_length + past_key_dims[2].dim_value();
-
-                  ONNX_NAMESPACE::TensorShapeProto present_key_shape;
-                  for (auto& dim : past_key_dims) {
-                    *present_key_shape.add_dim() = dim;
-                  }
-
-                  ONNX_NAMESPACE::TensorShapeProto present_value_shape;
-                  for (auto& dim : past_value_dims) {
-                    *present_value_shape.add_dim() = dim;
-                  }
-
-                  if (ctx.hasOutput(3)) { // has qk_matmul_output with bias
-                    qk_matmul_shape.mutable_dim(3)->set_dim_value(total_sequence_length);
-                    updateOutputShape(ctx, 3, qk_matmul_shape);
-                  }
-
-                  // shape of present key/value is (batch_size, kv_num_heads, total_sequence_length, head_size)
-                  present_key_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
-                  present_value_shape.mutable_dim(2)->set_dim_value(total_sequence_length);
-
-                  updateOutputShape(ctx, 1, present_key_shape);
-                  updateOutputShape(ctx, 2, present_value_shape);
-                }
-              }
-            }
-          }
-        })
+        .TypeAndShapeInferenceFunction(defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
@@ -3676,11 +3545,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
             return false; // Error
 
-          auto mkbooltensor = [](bool val) -> ONNX_NAMESPACE::TensorProto {
-            auto tp = ONNX_NAMESPACE::ToTensor(std::vector<bool>{val});
-            tp.add_dims(1);
-            return tp;
-          };
           // If shape is 3D, q_num_heads and kv_num_heads is provided,
           // for 4D cases, set num_heads to zero for reshape purposes
           auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
@@ -3692,15 +3556,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
 
           FunctionBuilder builder(functionProto);
+          builder
+              .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+              .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
+              .Add("KVSeqLen = Shape <start = -2, end = -1> (K)"); // kv_sequence_length
+
           if (is_3d_input) {
             // For 3D inputs: First reshape to [batch_size, seq_length, num_heads, head_size]
             // then transpose to [batch_size, num_heads, seq_length, head_size]
             builder
-                .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
                 .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
                 .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
-                .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
-                .Add("KVSeqLen = Shape <start = -2, end = -1> (K)") // kv_sequence_length
                 .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
 
             builder.Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, NegOne)")
@@ -3715,7 +3581,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
             builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
-            builder.Add("QSeqLen = Shape <start = -2, end = -1> (Q)");
           }
 
           builder
@@ -3728,6 +3593,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder
               .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
               .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
+              .Add("VHeadSize = Shape <start = 3, end = 4> (VReshaped)") // head_size for V
               .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
               .Const1D("One1D", static_cast<int64_t>(1))
               .Const1D("NegOne1D", static_cast<int64_t>(-1))
@@ -3743,8 +3609,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (ctx.hasInput(4)) {
             builder.Add("PresentKey = Concat <axis = 2> (past_key, KReshaped)");
+            builder.Add("PastKVSeqLen =  Shape <start = -2, end = -1> (past_key)");
           } else {
             builder.Add("PresentKey = Identity (KReshaped)");
+            builder.Const1D("PastKVSeqLen", static_cast<int64_t>(0));
           }
           if (ctx.hasOutput(1)) {
             builder.Add("present_key = Identity (PresentKey)");
@@ -3759,52 +3627,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             builder.Add("present_value = Identity (PresentValue)");
           }
 
-          builder.Add("NewKVSeqLen =  Shape <start = -2, end = -1> (PresentKey)");
-          builder.Add("AttnBiasShape = Concat <axis = 0> (QSeqLen, NewKVSeqLen)");
-          float neg_inf = -std::numeric_limits<float>::infinity();
-          builder.Const1D("FloatNegInf", neg_inf);
-          builder.Const1D("ScalarZero", 0.f);
-
-          // If attn_mask is provided
-          if (ctx.hasInput(3)) {
-            auto* up = ctx.getInputType(3);
-            if ((up == nullptr) || (!up->has_tensor_type()))
-              return false;
-            int64_t U = up->tensor_type().elem_type();
-            builder.Add(
-                U == ONNX_NAMESPACE::TensorProto_DataType_BOOL
-                    ? "AttnBiasShort = Where(attn_mask, ScalarZero, FloatNegInf)"
-                    : "AttnBiasShort = Identity(attn_mask)");
-            // If attn_mask has a shorter kv sequence length, we pad it to NewKVSeqLen with FloatNegInf
-            builder.Add("MaskKVSeqLen = Shape <start = -1> (attn_mask)")
-                .Add("PaddingKVSeqLen = Sub(NewKVSeqLen, MaskKVSeqLen)")
-                .Add("Pads = Concat <axis = 0> (Zero1D, PaddingKVSeqLen)")
-                .Add("FloatNegInfCast = CastLike(FloatNegInf, AttnBiasShort)")
-                .Add("AttnBias = Pad(AttnBiasShort, Pads, FloatNegInfCast, NegOne1D)");
-          } else {
-            builder.Add("AttnBias = ConstantOfShape(AttnBiasShape)");
-          }
-
-          // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
-          // is a square matrix. The attention masking has the form of the upper left causal bias due to
-          // the alignment when the mask is a non-square matrix.
-          // An error is thrown if both attn_mask and is_causal are set.
-          auto* is_causal_attr = ctx.getAttribute("is_causal");
-          int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
-          if (is_causal == 1) {
-            builder.Add("BoolMask = ConstantOfShape(AttnBiasShape)", "value", mkbooltensor(1))
-                .Add("BoolMaskTri = Trilu <upper = 0> (BoolMask, Zero1D)")
-                .Add("MaskTri = Where(BoolMaskTri, ScalarZero, FloatNegInf)")
-                .Add("AttnBiasCausal = Add(AttnBias, MaskTri)");
-          } else {
-            builder.Add("AttnBiasCausal = Identity(AttnBias)");
-          }
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true))
+            return false;
 
           // Add padding mask if kv_nonpad_seqlen is provided
           if (ctx.hasInput(6)) {
-            if (!is_3d_input) {
-              builder.Add("KVSeqLen = Shape <start = -2, end = -1> (K)");
-            }
             builder
                 .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
                 .Add("KVSeqLen0D = Squeeze(KVSeqLen)")
@@ -3815,9 +3642,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
                 .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
-                .Add("AttnBiasCausalPad = Add(AttnBiasCausal, PaddingMask4D)");
+                .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4D)");
           } else {
-            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausal)");
+            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalOrNot)");
           }
           builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
 
@@ -3832,10 +3659,25 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
               .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
               .Add("GQACond = And(GQACond1, GQACond2)")
-              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)")
-              .Add("InterleaveShape = Concat <axis = 0> (One1D, InterleaveDim, One1D, One1D)")
-              .Add("KAttentionInput = Tile(PresentKey, InterleaveShape)")
-              .Add("VAttentionInput = Tile(PresentValue, InterleaveShape)");
+              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)");
+
+          // repeat kv (repeat_interleave)
+          builder.Const1D("Two1D", static_cast<int64_t>(2))
+              .Add("KUnsqueezed = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
+              .Add("VUnsqueezed = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
+
+          // Build expand shape: [B, Hk, repeats, T, Dk]
+          builder
+              .Add("KExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, QKHeadSize)")
+              .Add("KExpanded = Expand(KUnsqueezed, KExpandShape)");
+          builder.Add("VExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, VHeadSize)")
+              .Add("VExpanded = Expand(VUnsqueezed, VExpandShape)");
+
+          // Reshape to [B, Hq, T, Dk] where Hq = Hk * repeats
+          builder.Add("KAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, QKHeadSize)")
+              .Add("VAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, VHeadSize)")
+              .Add("KAttentionInput = Reshape(KExpanded, KAttentionShape)")
+              .Add("VAttentionInput = Reshape(VExpanded, VAttentionShape)");
 
           // The following pattern is applied
           //      Q          K          V
