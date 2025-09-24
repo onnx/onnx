@@ -74,7 +74,6 @@ __all__ = [
 ]
 # isort:skip_file
 
-from collections.abc import Sequence
 import os
 import typing
 from typing import IO, Literal
@@ -143,6 +142,9 @@ from onnx import (
     utils,
     version_converter,
 )
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __version__ = onnx.version.version
 
@@ -383,15 +385,15 @@ def _model_proto_repr(self: ModelProto) -> str:
     else:
         producer_version = ""
     if self.graph:
-        graph = f", graph={self.graph}"
+        graph = f", graph={self.graph!r}"
     else:
         graph = ""
     if self.functions:
-        functions = f", functions=[...<{len(self.functions)} functions>...]"
+        functions = f", functions=<{len(self.functions)} functions>"
     else:
         functions = ""
     if self.opset_import:
-        opset_import = _operator_set_protos_repr(self.opset_import)
+        opset_import = f", opset_import={_operator_set_protos_repr(self.opset_import)}"
     else:
         opset_import = ""
     return f"ModelProto(ir_version={self.ir_version}{opset_import}{domain}{producer_name}{producer_version}{graph}{functions})"
@@ -399,18 +401,26 @@ def _model_proto_repr(self: ModelProto) -> str:
 
 def _graph_proto_repr(self: GraphProto) -> str:
     if self.initializer:
-        initializer = f", initializer=[...<{len(self.initializer)} initializers>...]"
+        initializer = f", initializer=<{len(self.initializer)} initializers>"
     else:
         initializer = ""
     if self.node:
-        node = f", node=[...<{len(self.node)} nodes>...]"
+        node = f", node=<{len(self.node)} nodes>"
     else:
         node = ""
     if self.value_info:
-        value_info = f", value_info=[...<{len(self.value_info)} value_info>...]"
+        value_info = f", value_info=<{len(self.value_info)} value_info>"
     else:
         value_info = ""
-    return f"GraphProto('{self.name}', input={self.input}, output={self.output}{initializer}{node}{value_info})"
+    if self.input:
+        input = f", input=<{len(self.input)} inputs>"
+    else:
+        input = ""
+    if self.output:
+        output = f", output=<{len(self.output)} outputs>"
+    else:
+        output = ""
+    return f"GraphProto('{self.name}'{input}{output}{initializer}{node}{value_info})"
 
 
 def _function_proto_repr(self: FunctionProto) -> str:
@@ -423,7 +433,7 @@ def _function_proto_repr(self: FunctionProto) -> str:
     else:
         overload = ""
     if self.node:
-        node = f", node=[...<{len(self.node)} nodes>...]"
+        node = f", node=<{len(self.node)} nodes>"
     else:
         node = ""
     if self.attribute:
@@ -431,10 +441,18 @@ def _function_proto_repr(self: FunctionProto) -> str:
     else:
         attribute = ""
     if self.opset_import:
-        opset_import = _operator_set_protos_repr(self.opset_import)
+        opset_import = f", opset_import={_operator_set_protos_repr(self.opset_import)}"
     else:
         opset_import = ""
-    return f"FunctionProto('{self.name}'{domain}{overload}input={self.input}, output={self.output}{attribute}{opset_import}{node})"
+    if self.input:
+        input = f", input=<{len(self.input)} inputs>"
+    else:
+        input = ""
+    if self.output:
+        output = f", output=<{len(self.output)} outputs>"
+    else:
+        output = ""
+    return f"FunctionProto('{self.name}'{domain}{overload}{opset_import}{input}{output}{attribute}{node})"
 
 
 def _operator_set_protos_repr(protos: Sequence[OperatorSetIdProto]) -> str:
