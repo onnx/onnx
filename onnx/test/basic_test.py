@@ -253,7 +253,7 @@ class TestBasicFunctions(unittest.TestCase):
         model_repr = repr(model)
         self.assertEqual(
             model_repr,
-            "ModelProto(ir_version=10{'': 19}, graph=GraphProto('agraph', input=<1 inputs>, output=<1 outputs>, initializer=<1 initializers>, node=<1 nodes>))",
+            "ModelProto(ir_version=10, opset_import={'': 19}, graph=GraphProto('agraph', input=<1 inputs>, output=<1 outputs>, initializer=<1 initializers>, node=<1 nodes>))",
         )
 
         graph_repr = repr(model.graph)
