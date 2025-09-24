@@ -461,6 +461,6 @@ def _operator_set_protos_repr(protos: Sequence[OperatorSetIdProto]) -> str:
 
 
 # Override __repr__ for some proto classes to make it more efficient
-ModelProto.__repr__ = _model_proto_repr  # type: ignore[method-assign]
-GraphProto.__repr__ = _graph_proto_repr  # type: ignore[method-assign]
-FunctionProto.__repr__ = _function_proto_repr  # type: ignore[method-assign]
+ModelProto.__repr__ = _model_proto_repr  # type: ignore[method-assign,assignment]
+GraphProto.__repr__ = _graph_proto_repr  # type: ignore[method-assign,assignment]
+FunctionProto.__repr__ = _function_proto_repr  # type: ignore[method-assign,assignment]
