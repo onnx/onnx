@@ -227,6 +227,90 @@ class TestBasicFunctions(unittest.TestCase):
         # Check if the version is correct.
         self.assertEqual(model.ir_version, onnx.IR_VERSION)
 
+    def test_model_and_graph_repr(self) -> None:
+        # Check if the __repr__ methods work without error
+        model = _simple_model()
+        model_repr = repr(model)
+        self.assertEqual(
+            model_repr,
+            "ModelProto(ir_version=12, producer_name='onnx-test', graph=GraphProto('test'))",
+        )
+
+        text_model = """
+           <
+             ir_version: 10,
+             opset_import: [ "" : 19]
+           >
+           agraph (float[N] X) => (float[N] C)
+           <
+             float[1] weight = {1}
+           >
+           {
+              C = Cast<to=1>(X)
+           }
+        """
+        model = onnx.parser.parse_model(text_model)
+        model_repr = repr(model)
+        self.assertEqual(
+            model_repr,
+            "ModelProto(ir_version=10, opset_import={'': 19}, graph=GraphProto('agraph', input=<1 inputs>, output=<1 outputs>, initializer=<1 initializers>, node=<1 nodes>))",
+        )
+
+        graph_repr = repr(model.graph)
+        self.assertEqual(
+            graph_repr,
+            "GraphProto('agraph', input=<1 inputs>, output=<1 outputs>, initializer=<1 initializers>, node=<1 nodes>)",
+        )
+
+    def test_function_repr(self) -> None:
+        text = """
+            <
+            ir_version: 9,
+            opset_import: [ "" : 15, "custom_domain" : 1],
+            producer_name: "FunctionProtoTest",
+            producer_version: "1.0",
+            model_version: 1,
+            doc_string: "A test model for model local functions."
+          >
+         agraph (float[N] x) => (float[N] out)
+         {
+            out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x)
+         }
+         <
+         domain: "custom_domain",
+         opset_import: [ "" : 15],
+         doc_string: "Test function proto"
+         >
+           Selu
+           <alpha: float=1.67326319217681884765625, gamma: float=1.05070102214813232421875>
+           (X) => (C)
+           {
+               constant_alpha = Constant<value_float: float=@alpha>()
+               constant_gamma = Constant<value_float: float=@gamma>()
+               alpha_x = CastLike(constant_alpha, X)
+               gamma_x = CastLike(constant_gamma, X)
+               exp_x = Exp(X)
+               alpha_x_exp_x = Mul(alpha_x, exp_x)
+               alpha_x_exp_x_ = Sub(alpha_x_exp_x, alpha_x)
+               neg = Mul(gamma_x, alpha_x_exp_x_)
+               pos = Mul(gamma_x, X)
+               _zero = Constant<value_float=0.0>()
+               zero = CastLike(_zero, X)
+               less_eq = LessOrEqual(X, zero)
+               C = Where(less_eq, neg, pos)
+           }
+        """
+        model = onnx.parser.parse_model(text)
+        self.assertEqual(
+            repr(model),
+            "ModelProto(ir_version=9, opset_import={'': 15, 'custom_domain': 1}, producer_name='FunctionProtoTest', producer_version='1.0', graph=GraphProto('agraph', input=<1 inputs>, output=<1 outputs>, node=<1 nodes>), functions=<1 functions>)",
+        )
+        function_repr = repr(model.functions[0])
+        self.assertEqual(
+            function_repr,
+            "FunctionProto('Selu', domain='custom_domain', opset_import={'': 15}, input=<1 inputs>, output=<1 outputs>, node=<13 nodes>)",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

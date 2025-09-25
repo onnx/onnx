@@ -143,6 +143,9 @@ from onnx import (
     version_converter,
 )
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Sequence
+
 __version__ = onnx.version.version
 
 # Supported model formats that can be loaded from and saved to
@@ -370,7 +373,96 @@ load_from_string = load_model_from_string
 save = save_model
 
 
+def _model_proto_repr(self: ModelProto) -> str:
+    if self.domain:
+        domain = f", domain='{self.domain}'"
+    else:
+        domain = ""
+    if self.producer_name:
+        producer_name = f", producer_name='{self.producer_name}'"
+    else:
+        producer_name = ""
+    if self.producer_version:
+        producer_version = f", producer_version='{self.producer_version}'"
+    else:
+        producer_version = ""
+    if self.graph:
+        graph = f", graph={self.graph!r}"
+    else:
+        graph = ""
+    if self.functions:
+        functions = f", functions=<{len(self.functions)} functions>"
+    else:
+        functions = ""
+    if self.opset_import:
+        opset_import = f", opset_import={_operator_set_protos_repr(self.opset_import)}"
+    else:
+        opset_import = ""
+    return f"ModelProto(ir_version={self.ir_version}{opset_import}{domain}{producer_name}{producer_version}{graph}{functions})"
+
+
+def _graph_proto_repr(self: GraphProto) -> str:
+    if self.initializer:
+        initializer = f", initializer=<{len(self.initializer)} initializers>"
+    else:
+        initializer = ""
+    if self.node:
+        node = f", node=<{len(self.node)} nodes>"
+    else:
+        node = ""
+    if self.value_info:
+        value_info = f", value_info=<{len(self.value_info)} value_info>"
+    else:
+        value_info = ""
+    if self.input:
+        input = f", input=<{len(self.input)} inputs>"
+    else:
+        input = ""
+    if self.output:
+        output = f", output=<{len(self.output)} outputs>"
+    else:
+        output = ""
+    return f"GraphProto('{self.name}'{input}{output}{initializer}{node}{value_info})"
+
+
+def _function_proto_repr(self: FunctionProto) -> str:
+    if self.domain:
+        domain = f", domain='{self.domain}'"
+    else:
+        domain = ""
+    if self.overload:
+        overload = f", overload='{self.overload}'"
+    else:
+        overload = ""
+    if self.node:
+        node = f", node=<{len(self.node)} nodes>"
+    else:
+        node = ""
+    if self.attribute:
+        attribute = f", attribute={self.attribute}"
+    else:
+        attribute = ""
+    if self.opset_import:
+        opset_import = f", opset_import={_operator_set_protos_repr(self.opset_import)}"
+    else:
+        opset_import = ""
+    if self.input:
+        input = f", input=<{len(self.input)} inputs>"
+    else:
+        input = ""
+    if self.output:
+        output = f", output=<{len(self.output)} outputs>"
+    else:
+        output = ""
+    return f"FunctionProto('{self.name}'{domain}{overload}{opset_import}{input}{output}{attribute}{node})"
+
+
+def _operator_set_protos_repr(protos: Sequence[OperatorSetIdProto]) -> str:
+    opset_imports = {proto.domain: proto.version for proto in protos}
+    return repr(opset_imports)
+
+
 # Override __repr__ for some proto classes to make it more efficient
-ModelProto.__repr__ = object.__repr__  # type: ignore[method-assign]
-GraphProto.__repr__ = object.__repr__  # type: ignore[method-assign]
-FunctionProto.__repr__ = object.__repr__  # type: ignore[method-assign]
+ModelProto.__repr__ = _model_proto_repr  # type: ignore[method-assign,assignment]
+GraphProto.__repr__ = _graph_proto_repr  # type: ignore[method-assign,assignment]
+FunctionProto.__repr__ = _function_proto_repr  # type: ignore[method-assign,assignment]
