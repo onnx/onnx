@@ -239,9 +239,11 @@ def tobytes_little_endian(array: np.ndarray) -> bytes:
 
     .. versionadded:: 1.20
     """
-    if sys.byteorder == "big":
-        # Convert endian from big to little
-        array = array.byteswap()
+    if array.dtype.byteorder == ">" or (
+        sys.byteorder == "big" and array.dtype.byteorder == "="
+    ):
+        # Ensure that the bytes will be in little-endian byte-order.
+        array = array.astype(array.dtype.newbyteorder("<"))
 
     return array.tobytes()
 
