@@ -6135,6 +6135,8 @@ for from_type, to_type in test_cases:
     elif from_type in FOUR_BIT_TYPES:
         np_from = np_fp32.astype(from_np_dtype)
         packed = onnx.numpy_helper._pack_4bitx2(np_from)
+        # No byteswap needed on big-endian machines as _pack_4bitx2()
+        # returns a numpy array with uint8 datatype.
         input = make_tensor(
             "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
@@ -6154,6 +6156,8 @@ for from_type, to_type in test_cases:
         )
     elif to_type in FOUR_BIT_TYPES:
         packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
+        # No byteswap needed on big-endian machines as _pack_4bitx2()
+        # returns a numpy array with uint8 datatype.
         output = make_tensor(
             "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
@@ -6231,14 +6235,14 @@ for from_type, to_type in test_cases:
         "input",
         getattr(TensorProto, from_type),
         [2, 4],
-        input_np.tobytes(),
+        input_np,
         raw=True,
     )
     output = make_tensor(
         "output",
         getattr(TensorProto, to_type),
         [2, 4],
-        output_np.tobytes(),
+        output_np,
         raw=True,
     )
     if to_type == "FLOAT8E8M0":
@@ -6550,6 +6554,8 @@ for from_type, to_type in test_cases:
     elif from_type in FOUR_BIT_TYPES:
         np_from = np_fp32.astype(from_np_dtype)
         packed = onnx.numpy_helper._pack_4bitx2(np_from)
+        # No byteswap needed on big-endian machines as _pack_4bitx2()
+        # returns a numpy array with uint8 datatype.
         input = make_tensor(
             "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
@@ -6569,6 +6575,8 @@ for from_type, to_type in test_cases:
         )
     elif to_type in FOUR_BIT_TYPES:
         packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
+        # No byteswap needed on big-endian machines as _pack_4bitx2()
+        # returns a numpy array with uint8 datatype.
         output = make_tensor(
             "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
