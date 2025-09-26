@@ -173,7 +173,6 @@ lint.ignore = [
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
     "TRY003", # Messages can be constructed in the exception
-    "UP038", # We don't want to update isinstance calls
 ]
 
 [tool.ruff.lint.flake8-builtins]
@@ -201,6 +200,5 @@ required-imports = ["from __future__ import annotations"]
     "N801", # Class casing
     "PLR2004", # Magic numbers
 ]
-"onnx/test/reference_evaluator_test.py"= ["C408"]  # dict(...) -> { ... }
 "onnx/test/**" = ["PLR2004"] # Magic numbers allowed in tests
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]
