@@ -32,6 +32,7 @@ CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
 WINDOWS = os.name == "nt"
 
 CMAKE = shutil.which("cmake3") or shutil.which("cmake")
+NINJA = shutil.which("ninja")
 
 ################################################################################
 # Global variables for controlling the build variant
@@ -174,6 +175,16 @@ class CmakeBuild(setuptools.Command):
                 "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
             ]
+
+            # Add ninja generator support if requested and available
+            cmake_generator = os.getenv("CMAKE_GENERATOR")
+            if cmake_generator == "Ninja" and NINJA:
+                cmake_args.extend(["-G", "Ninja"])
+                logging.info("Using Ninja generator for CMake build")  # noqa: LOG015
+            elif cmake_generator == "Ninja" and not NINJA:
+                logging.warning(
+                    "CMAKE_GENERATOR=Ninja requested but ninja not found in PATH"
+                )  # noqa: LOG015
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
             if COVERAGE or DEBUG:
