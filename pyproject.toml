@@ -173,7 +173,6 @@ lint.ignore = [
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
     "TRY003", # Messages can be constructed in the exception
-    "UP038", # We don't want to update isinstance calls
 ]
 
 [tool.ruff.lint.flake8-builtins]

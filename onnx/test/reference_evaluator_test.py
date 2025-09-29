@@ -1230,7 +1230,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
             def _run(self, x, alpha=None):
                 del x, alpha
-                return tuple()
+                return ()
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
@@ -4290,7 +4290,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         x = np.array(1, dtype=np.float32)
         got = ref.run(None, {"X": x})[0]
-        self.assertEqual(got.shape, tuple())
+        self.assertEqual(got.shape, ())
         self.assertEqual(got.dtype, np.uint16)
         assert_allclose(np.array(1, dtype=np.uint16), got)
 
@@ -4318,7 +4318,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         x = np.array(1, dtype=np.float32)
         got = ref.run(None, {"X": x})[0]
-        self.assertEqual(got.shape, tuple())
+        self.assertEqual(got.shape, ())
         self.assertEqual(got.dtype, np.uint16)
         assert_allclose(np.array(1, dtype=np.uint16), got)
 

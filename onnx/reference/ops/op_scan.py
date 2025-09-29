@@ -110,11 +110,11 @@ class Scan(OpRun):
         # TODO: support overridden attributes.
         (
             num_loop_state_vars,
-            num_scan_outputs,
-            output_directions,
-            max_dir_out,
-            output_axes,
-            max_axe_out,
+            _num_scan_outputs,
+            _output_directions,
+            _max_dir_out,
+            _output_axes,
+            _max_axe_out,
             state_names_in,
             state_names_out,
             scan_names_in,
