@@ -184,7 +184,7 @@ class CmakeBuild(setuptools.Command):
             elif cmake_generator == "Ninja" and not NINJA:
                 logging.warning(
                     "CMAKE_GENERATOR=Ninja requested but ninja not found in PATH"
-                )  # noqa: LOG015
+                )
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
             if COVERAGE or DEBUG:

@@ -230,6 +230,19 @@ For full list refer to CMakeLists.txt
 * `DEBUG` should be 0 or 1. When set to 1 ONNX is built in debug mode. For debug versions of the dependencies, you need to open the [CMakeLists file](https://github.com/onnx/onnx/blob/main/CMakeLists.txt) and append a letter `d` at the end of the package name lines. For example, `NAMES protobuf-lite` would become `NAMES protobuf-lited`.
 **Default**: `Debug=0`
 
+* `CMAKE_GENERATOR` can be set to `Ninja` to use the Ninja build system instead of the default generator (e.g., make on Unix systems). This can provide faster builds. Requires ninja to be installed and available in PATH.
+**Default**: System default generator (e.g., Unix Makefiles)
+
+```sh
+# Linux/Mac - Use ninja for faster builds
+export CMAKE_GENERATOR=Ninja
+pip install -e . -v
+
+# Windows
+set CMAKE_GENERATOR=Ninja
+pip install -e . -v
+```
+
 ### CMake variables
 
 * `ONNX_USE_PROTOBUF_SHARED_LIBS` should be `ON` or `OFF`.
