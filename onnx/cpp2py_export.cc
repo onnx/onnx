@@ -188,6 +188,10 @@ static std::tuple<std::vector<T>, std::vector<const T*>> ConvertPyObjToPtr(const
 }
 
 NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+  // Disabling nanobind leak warnings
+  // TODO(#7283): Avoid leaks if possible
+  nb::set_leak_warnings(false);
+
   onnx_cpp2py_export.doc() = "Python interface to ONNX";
 
   onnx_cpp2py_export.attr("ONNX_ML") = nb::bool_(
