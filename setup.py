@@ -182,7 +182,7 @@ class CmakeBuild(setuptools.Command):
                 cmake_args.extend(["-G", "Ninja"])
                 logging.info("Using Ninja generator for CMake build")  # noqa: LOG015
             elif cmake_generator == "Ninja" and not NINJA:
-                logging.warning(
+                logging.warning(  # noqa: LOG015
                     "CMAKE_GENERATOR=Ninja requested but ninja not found in PATH"
                 )
             if COVERAGE:
