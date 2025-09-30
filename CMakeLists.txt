@@ -438,8 +438,8 @@ file(WRITE ${CMAKE_BINARY_DIR}/onnx_proto_dummy.cc "")
 add_library(onnx_proto ${CMAKE_BINARY_DIR}/onnx_proto_dummy.cc)
 target_link_libraries(onnx_proto PUBLIC onnx_proto_object)
 
-# ONNX object library contains object files of our C++ sources.
-# It is introduced to help onnx_cpp2py_export link with C++ code with private symbols.
+# onnx_object and onnx_proto_object are collections of C++ object files.
+# They are introduced to help onnx_cpp2py_export link with C++ code with private symbols.
 add_library(onnx_object OBJECT ${ONNX_SRCS})
 add_dependencies(onnx_object onnx_proto_object)
 target_include_directories(onnx_object PUBLIC
