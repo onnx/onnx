@@ -184,16 +184,10 @@ class CmakeBuild(setuptools.Command):
             if WINDOWS:
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append("-DONNX_USE_MSVC_STATIC_RUNTIME=ON")
-                if platform.architecture()[0] == "64bit":
-                    if "arm" in platform.machine().lower():
-                        cmake_args.extend(["-A", "ARM64"])
-                    else:
-                        cmake_args.extend(["-A", "x64", "-T", "host=x64"])
-                else:  # noqa: PLR5501
-                    if "arm" in platform.machine().lower():
-                        cmake_args.extend(["-A", "ARM"])
-                    else:
-                        cmake_args.extend(["-A", "Win32", "-T", "host=x86"])
+                if "arm" in platform.machine().lower():
+                    cmake_args.extend(["-A", "ARM64"])
+                else:
+                    cmake_args.extend(["-A", "x64", "-T", "host=x64"])
             if ONNX_ML:
                 cmake_args.append("-DONNX_ML=1")
             if ONNX_VERIFY_PROTO3:
