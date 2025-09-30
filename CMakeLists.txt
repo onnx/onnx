@@ -435,7 +435,7 @@ if(MSVC)
   )
 endif()
 add_library(onnx_proto)
-target_link_libraries(onnx_proto PUBLIC onnx_proto_object)
+target_link_libraries(onnx_proto PUBLIC $<BUILD_INTERFACE:onnx_proto_object>)
 
 # onnx_object and onnx_proto_object are collections of C++ object files.
 # They are introduced to help onnx_cpp2py_export bypass library boundaries and use ONNX private symbols.
@@ -456,7 +456,7 @@ foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
   endif()
 endforeach()
 add_library(onnx)
-target_link_libraries(onnx PUBLIC onnx_object)
+target_link_libraries(onnx PUBLIC $<BUILD_INTERFACE:onnx_object>)
 target_link_libraries(onnx PUBLIC onnx_proto)
 target_compile_options(onnx_object PUBLIC ${protobuf_warnings})
 target_compile_options(onnx_proto_object PUBLIC ${protobuf_warnings})
@@ -482,7 +482,7 @@ if(ONNX_BUILD_PYTHON)
     NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
     "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-  target_link_libraries(onnx_cpp2py_export PRIVATE onnx_object onnx_proto_object)
+  target_link_libraries(onnx_cpp2py_export PRIVATE $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
   # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
   # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
@@ -577,7 +577,7 @@ if(ONNX_BUILD_TESTS)
 endif()
 
 install(TARGETS
-  onnx onnx_proto onnx_object onnx_proto_object
+  onnx onnx_proto
   EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(EXPORT ONNXTargets
