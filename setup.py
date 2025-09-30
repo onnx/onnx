@@ -188,7 +188,6 @@ class CmakeBuild(setuptools.Command):
             if WINDOWS:
                 if USE_MSVC_STATIC_RUNTIME:
                     cmake_args.append("-DONNX_USE_MSVC_STATIC_RUNTIME=ON")
-            if WINDOWS and not USE_NINJA:
                 if platform.architecture()[0] == "64bit":
                     if "arm" in platform.machine().lower():
                         cmake_args.extend(["-A", "ARM64"])
