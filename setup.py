@@ -175,7 +175,7 @@ class CmakeBuild(setuptools.Command):
                 "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
             ]
-            if USE_NINJA and shutil.which("ninja"):
+            if USE_NINJA and not WINDOWS and shutil.which("ninja"):
                 cmake_args.append("-DCMAKE_GENERATOR=Ninja")
 
             if COVERAGE:
