@@ -18,6 +18,7 @@ The ONNX Model Hub is capable of downloading, listing, and querying trained mode
  and defaults to the official [ONNX Model Zoo](https://github.com/onnx/models). In this section we demonstrate some of the basic functionality.
 
 First please import the hub using:
+
 ```python
 from onnx import hub
 ```
@@ -31,7 +32,6 @@ The `load` function will default to searching the model zoo for the latest model
 ```python
 model = hub.load("resnet50")
 ```
-
 
 #### Downloading from custom repositories:
 
@@ -63,7 +63,9 @@ One can also inspect the metadata of a model prior to download with the `get_mod
 ```python
 print(hub.get_model_info(model="mnist", opset=8))
 ```
+
 This will print something like:
+
 ```
 ModelInfo(
     model=MNIST,
@@ -81,7 +83,6 @@ ModelInfo(
      'model_with_data_bytes': 25962}
 )
 ```
-
 
 ## Local Caching
 
@@ -193,6 +194,7 @@ The ONNX Hub consists of two main components, the client and the server.
     }
 }
 ```
+
 These important fields are:
 
 - `model`: The name of the model used for querying
@@ -205,7 +207,6 @@ These important fields are:
 All other fields in the `metadata` field are optional for the client but provide important details for users.
 
 ## Adding to the ONNX Model Hub
-
 
 #### Contributing an official model
 
@@ -234,5 +235,6 @@ To host your own model hub, add an `ONNX_HUB_MANIFEST.json` to the top level of 
  using the "Downloading from custom repositories" section of this doc.
 
 ## Raise issue if any
+
 - For ONNX model problem or SHA mismatch issue, please raise issue in [Model Zoo]/(https://github.com/onnx/models/issues).
 - Other questions/issues regarding the usage of ONNX Model Hub, please raise issue in [this repo](https://github.com/onnx/onnx/issues).
