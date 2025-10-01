@@ -27,6 +27,7 @@ from onnx import (
     defs,
     helper,
     numpy_helper,
+    printer,
 )
 
 
@@ -835,11 +836,9 @@ class TestPrintableGraph(unittest.TestCase):
             value_info=value_info,
         )
 
-        graph_str = helper.printable_graph(graph)
-        self.assertTrue(
-            """) optional inputs with matching initializers (
-  %Y_Initializer[FLOAT, 1]"""
-            in graph_str,
+        graph_str = printer.to_text(graph)
+        self.assertIn(
+            "test (float[1] X, float[1] Y_Initializer) => (float[1] Z)",
             graph_str,
         )
 
@@ -859,13 +858,8 @@ class TestPrintableGraph(unittest.TestCase):
             value_info=value_info,
         )
 
-        graph_str = helper.printable_graph(graph)
-        self.assertTrue(
-            """) initializers (
-  %Y_Initializer[FLOAT, 1]"""
-            in graph_str,
-            graph_str,
-        )
+        graph_str = printer.to_text(graph)
+        self.assertIn("test (float[1] X) => (float[1] Z)", graph_str)
 
     def test_unknown_dimensions(self) -> None:
         graph = helper.make_graph(
@@ -881,8 +875,8 @@ class TestPrintableGraph(unittest.TestCase):
         model = helper.make_model(graph)
         checker.check_model(model)
 
-        graph_str = helper.printable_graph(graph)
-        self.assertIn("X[FLOAT, ?]", graph_str)
+        graph_str = printer.to_text(graph)
+        self.assertIn("test (float[?] X) => (float[?] Z)", graph_str)
 
 
 @pytest.mark.parametrize(
