@@ -65,8 +65,7 @@ def compute_negative_log_likelihood_loss(
     if gather_weight is not None:
         loss = gather_weight * loss
         if reduction == "mean":
-            loss = loss.sum() / gather_weight.sum()
-            return loss
+            return loss.sum() / gather_weight.sum()
 
     if reduction == "mean":
         loss = np.mean(loss)

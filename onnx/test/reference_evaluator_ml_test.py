@@ -812,8 +812,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ),
         )
         graph = make_graph([node], "ml", [X], [Y])
-        model = make_model_gen_version(graph, opset_imports=OPSETS)
-        return model
+        return make_model_gen_version(graph, opset_imports=OPSETS)
 
     @staticmethod
     def _get_test_tree_ensemble_regressor(

@@ -317,30 +317,29 @@ class CommonPool(OpRun):
                 p,
             )
             return (y,)
-        else:
-            out_shape, extra_pads = get_output_shape_explicit_padding(
-                pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode
-            )
-            # convert pads from [x1_begin, x2_begin,...,x1_end, x2_end,...] to [(x1_begin, x1_end), (x2_begin, x2_end),...]
-            n_dims = len(extra_pads) // 2
-            pads_np = [(extra_pads[i], extra_pads[i + n_dims]) for i in range(n_dims)]
-            padded = np.pad(
-                x,
-                ((0, 0), (0, 0), *pads_np),
-                mode="constant",
-                constant_values=pading_value,
-            )
-            y = pool(
-                padded,
-                x_shape,
-                kernel_shape,
-                strides,
-                out_shape,
-                pooling_type,
-                extra_pads,
-                pads,
-                dilations,
-                count_include_pad,
-                p,
-            )
-            return (y,)
+        out_shape, extra_pads = get_output_shape_explicit_padding(
+            pads, x_shape[2:], kernel_shape, strides, dilations, ceil_mode
+        )
+        # convert pads from [x1_begin, x2_begin,...,x1_end, x2_end,...] to [(x1_begin, x1_end), (x2_begin, x2_end),...]
+        n_dims = len(extra_pads) // 2
+        pads_np = [(extra_pads[i], extra_pads[i + n_dims]) for i in range(n_dims)]
+        padded = np.pad(
+            x,
+            ((0, 0), (0, 0), *pads_np),
+            mode="constant",
+            constant_values=pading_value,
+        )
+        y = pool(
+            padded,
+            x_shape,
+            kernel_shape,
+            strides,
+            out_shape,
+            pooling_type,
+            extra_pads,
+            pads,
+            dilations,
+            count_include_pad,
+            p,
+        )
+        return (y,)

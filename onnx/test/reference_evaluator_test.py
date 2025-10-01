@@ -3001,8 +3001,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         graph = make_graph(nodes, "dummy", inputs, outputs, initializers)
 
         # model
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
-        return onnx_model
+        return make_model(graph, opset_imports=[make_opsetid("", opset)])
 
     @parameterized.parameterized.expand(
         itertools.product(
@@ -3207,10 +3206,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
             graph = make_graph(nodes, "numpyx", inputs, outputs)
 
-            onnx_model = make_model(
-                graph, opset_imports=opset_imports, functions=functions
-            )
-            return onnx_model
+            return make_model(graph, opset_imports=opset_imports, functions=functions)
 
         onnx_model = create_model()
         x1 = np.array([[-5, 6], [15, 3]], dtype=np.float64)
@@ -4058,8 +4054,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                     ]
                     ** 2
                 )
-            y = x / ((bias + (alpha / size) * square_sum) ** beta)
-            return y
+            return x / ((bias + (alpha / size) * square_sum) ** beta)
 
         # keepdims is ignored in that case
         alpha = 0.0002

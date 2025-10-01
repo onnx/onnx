@@ -104,8 +104,7 @@ class Node:
     def predict(self, x: np.ndarray) -> float:
         if self.compare(x):
             return self.true_branch.predict(x)
-        else:
-            return self.false_branch.predict(x)
+        return self.false_branch.predict(x)
 
     def _print(self, prefix: list, indent: int = 0) -> None:
         prefix.append(

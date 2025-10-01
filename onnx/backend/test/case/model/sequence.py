@@ -93,7 +93,7 @@ class Sequence(Base):
             output_types: list[TensorProto.DataType],
             initializers: list[TensorProto] | None = None,
         ) -> onnx.helper.GraphProto:
-            graph = onnx.helper.make_graph(
+            return onnx.helper.make_graph(
                 nodes=nodes,
                 name="Sequence",
                 inputs=[
@@ -110,7 +110,6 @@ class Sequence(Base):
                 ],
                 initializer=initializers,
             )
-            return graph
 
         # 1st testcase - insert and at.
         # 1. SequenceEmpty:         -> []

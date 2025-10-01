@@ -400,8 +400,7 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
             map_proto.name,
             ") are not the same.",
         )
-    dictionary = dict(zip(key_list, value_list))
-    return dictionary
+    return dict(zip(key_list, value_list))
 
 
 def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
@@ -561,8 +560,7 @@ def create_random_int(
         end = min(np.iinfo(dtype).max, np.iinfo(np.int32).max)
         start = max(np.iinfo(dtype).min, np.iinfo(np.int32).min)
         return np.random.randint(start, end, size=input_shape).astype(dtype)
-    else:
-        raise TypeError(f"{dtype} is not supported by create_random_int.")
+    raise TypeError(f"{dtype} is not supported by create_random_int.")
 
 
 def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
