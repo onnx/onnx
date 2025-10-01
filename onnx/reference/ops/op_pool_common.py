@@ -150,7 +150,7 @@ def get_output_shape_auto_pad(
                 )
                 + 1
             )
-        # if auto_pad is NOTSET, explicite padding should be used
+        # if auto_pad is NOTSET, explicit padding should be used
         else:
             raise ValueError(
                 "auto_pad can only be NOTSET, SAME_UPPER, SAME_LOWER, or VALID"
@@ -282,7 +282,7 @@ class CommonPool(OpRun):
         p=None,
     ):
         x_shape = np.shape(x)
-        pading_value = np.nan if pooling_type == "MAX" or count_include_pad == 0 else 0
+        padding_value = np.nan if pooling_type == "MAX" or count_include_pad == 0 else 0
 
         if auto_pad in ["SAME_UPPER", "SAME_LOWER", "VALID"]:
             assert ceil_mode is None or ceil_mode == 0, (
@@ -301,7 +301,7 @@ class CommonPool(OpRun):
                 x,
                 ((0, 0), (0, 0), *pads_np),
                 mode="constant",
-                constant_values=pading_value,
+                constant_values=padding_value,
             )
             y = pool(
                 padded,
@@ -327,7 +327,7 @@ class CommonPool(OpRun):
             x,
             ((0, 0), (0, 0), *pads_np),
             mode="constant",
-            constant_values=pading_value,
+            constant_values=padding_value,
         )
         y = pool(
             padded,

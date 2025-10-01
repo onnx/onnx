@@ -802,7 +802,7 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
             sequence_value_info.type,
         )
 
-    def test_make_seuence_value_info(self) -> None:
+    def test_make_sequence_value_info(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=2, shape=None)
         sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
         sequence_val_info = helper.make_value_info(

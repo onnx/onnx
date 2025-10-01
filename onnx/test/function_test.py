@@ -181,42 +181,42 @@ class TestFunction(unittest.TestCase):
         model = onnx.helper.make_model(graph, **meta)
 
         checker.check_model(model)
-        extracted_with_no_funcion = utils.Extractor(model).extract_model(
+        extracted_with_no_function = utils.Extractor(model).extract_model(
             ["i0", "i1", "i2"], ["o_no_func"]
         )
-        self._verify_function_set(extracted_with_no_funcion, {}, func_domain)
+        self._verify_function_set(extracted_with_no_function, {}, func_domain)
 
-        extracted_with_add_funcion = utils.Extractor(model).extract_model(
+        extracted_with_add_function = utils.Extractor(model).extract_model(
             ["i0", "i1", "i2"], ["o_func_add"]
         )
         self._verify_function_set(
-            extracted_with_add_funcion, {func_add_name}, func_domain
+            extracted_with_add_function, {func_add_name}, func_domain
         )
 
-        extracted_with_o_all_funcion0 = utils.Extractor(model).extract_model(
+        extracted_with_o_all_function0 = utils.Extractor(model).extract_model(
             ["i0", "i1", "i2"], ["o_all_func0"]
         )
         self._verify_function_set(
-            extracted_with_o_all_funcion0,
+            extracted_with_o_all_function0,
             {func_add_name, func_identity_name, func_nested_identity_add_name},
             func_domain,
         )
 
-        extracted_with_o_all_funcion1 = utils.Extractor(model).extract_model(
+        extracted_with_o_all_function1 = utils.Extractor(model).extract_model(
             ["i0", "i1", "i2"], ["o_all_func1"]
         )
         self._verify_function_set(
-            extracted_with_o_all_funcion1,
+            extracted_with_o_all_function1,
             {func_add_name, func_identity_name, func_nested_identity_add_name},
             func_domain,
         )
 
-        extracted_with_o_all_funcion2 = utils.Extractor(model).extract_model(
+        extracted_with_o_all_function2 = utils.Extractor(model).extract_model(
             ["i0", "i1", "i2"],
             ["o_no_func", "o_func_add", "o_all_func0", "o_all_func1"],
         )
         self._verify_function_set(
-            extracted_with_o_all_funcion2,
+            extracted_with_o_all_function2,
             {func_add_name, func_identity_name, func_nested_identity_add_name},
             func_domain,
         )

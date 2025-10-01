@@ -250,7 +250,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # Instead of creating model with latest version, it now generates models for since_version by default.
 # Thus it can make every model uses the same opset version after every opset change.
 # Besides, user can specify "use_max_opset_version" to generate models for
-# the latest opset vesion that supports before targeted opset version
+# the latest opset version that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
     inputs: Sequence[np.ndarray | TensorProto],
