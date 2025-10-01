@@ -14,8 +14,8 @@ or to define shape inference implementations to go along with your
 custom operators (or both!). Shape inference functions are stored as a
 member of the OpSchema objects.
 
-In ONNX 1.10 release, symbol generation and propagation along with shape 
-data propagation was added to ONNX graph level shape inference. 
+In ONNX 1.10 release, symbol generation and propagation along with shape
+data propagation was added to ONNX graph level shape inference.
 Detailed proposal is [here](proposals/SymbolicShapeInfProposal.md)
 
 ## Background
@@ -125,6 +125,7 @@ These utilities handle missing shapes and dimensions safely.
 _Example_: Consider a simple matrix-multiplication op that expects inputs of shape
 `[M,K]` and `[K,N]` and returns an output of shape `[M,N]`. This can be coded
 up as below:
+
 ```cpp
    // Check that input 0 has rank 2 (if its rank is known).
    checkInputRank(ctx, 0, 2);
@@ -138,4 +139,3 @@ up as below:
    unifyInputDim(ctx, 1, 1, N);
    updateOutputShape(ctx, 0, {M. N});
 ```
-
