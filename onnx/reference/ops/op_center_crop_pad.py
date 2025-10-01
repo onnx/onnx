@@ -19,7 +19,7 @@ class CenterCropPad(OpRun):
         pad_slices = [slice(0, s) for s in input_data.shape]
         crop_slices = [slice(0, s) for s in input_data.shape]
         new_shape = list(input_data.shape)
-        for a, sh in zip(axes, shape):
+        for a, sh in zip(axes, shape, strict=False):
             dim = input_data.shape[a]
             if sh == a:
                 pass

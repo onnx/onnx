@@ -99,13 +99,13 @@ class Sequence(Base):
                 inputs=[
                     onnx.helper.make_tensor_value_info(name, input_type, input_shape)
                     for name, input_type, input_shape in zip(
-                        input_names, input_types, input_shapes
+                        input_names, input_types, input_shapes, strict=False
                     )
                 ],
                 outputs=[
                     onnx.helper.make_tensor_value_info(name, output_type, output_shape)
                     for name, output_type, output_shape in zip(
-                        output_names, output_types, output_shapes
+                        output_names, output_types, output_shapes, strict=False
                     )
                 ],
                 initializer=initializers,

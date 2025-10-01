@@ -169,7 +169,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         vis = sorted(vis, key=lambda x: x.name)
         inferred_vis = sorted(inferred_vis, key=lambda x: x.name)
         assert len(vis) == len(inferred_vis)
-        for v, inferred_v in zip(vis, inferred_vis):
+        for v, inferred_v in zip(vis, inferred_vis, strict=True):
             self._compare_value_infos(v.type, inferred_v.type)
 
     def _compare_value_infos(

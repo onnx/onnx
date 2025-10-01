@@ -44,7 +44,7 @@ class Loop(OpRun):
         if args:
             begin = len(loop_inputs) - len(args)
             all_inputs = loop_inputs[begin:]
-            for name, val in zip(all_inputs, args):
+            for name, val in zip(all_inputs, args, strict=False):
                 inputs[name] = val
         if context is not None:
             for a in context:
@@ -70,7 +70,7 @@ class Loop(OpRun):
                 raise RuntimeError(
                     f"Condition {cond_name!r} returned by the subgraph cannot be None."
                 )
-            for i, o in zip(body.input_names[2:], body.output_names[1:]):
+            for i, o in zip(body.input_names[2:], body.output_names[1:], strict=False):
                 inputs[i] = outputs[self.output_index[o]]
             it += 1
             self._log("  -- loop<")

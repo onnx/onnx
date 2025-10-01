@@ -283,12 +283,14 @@ def expect(
         del kwargs["output_type_protos"]
     inputs_vi = [
         _extract_value_info(arr, arr_name, input_type)
-        for arr, arr_name, input_type in zip(inputs, present_inputs, input_type_protos)
+        for arr, arr_name, input_type in zip(
+            inputs, present_inputs, input_type_protos, strict=False
+        )
     ]
     outputs_vi = [
         _extract_value_info(arr, arr_name, output_type)
         for arr, arr_name, output_type in zip(
-            outputs, present_outputs, output_type_protos
+            outputs, present_outputs, output_type_protos, strict=False
         )
     ]
     graph = onnx.helper.make_graph(

@@ -400,7 +400,7 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
             map_proto.name,
             ") are not the same.",
         )
-    return dict(zip(key_list, value_list))
+    return dict(zip(key_list, value_list, strict=False))
 
 
 def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
