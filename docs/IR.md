@@ -26,11 +26,11 @@ __Notes on language in this and all related documents__:
 
 ONNX is an open specification that consists of the following components:
 
-1)  A definition of an extensible computation graph model.
+1) A definition of an extensible computation graph model.
 
-2)  Definitions of standard data types.
+2) Definitions of standard data types.
 
-3)  Definitions of built-in operators.
+3) Definitions of built-in operators.
 
 #1 and #2 together make up the ONNX Intermediate Representation, or 'IR', specification which is covered herein; the built-in operators are covered in documents listed at the end. Specifically, built-in operators are divided into a set of primitive operators and functions. A function is an operator whose semantics is formally expressed via expansion into a sub-graph (called the function body) using other operators (and functions). Functionality-wise, an ONNX compatible framework or runtime may inline a function body to execute it if it does not have corresponding implementation of the function.
 
@@ -275,7 +275,6 @@ Graph|The names of graphs within a domain, unique within the model domain.
 Operator|The names of operators within a domain.
 Shape|The names of tensor shape variables – scoped to the value information records of a graph, which is where shape variables occur.
 
-
 ### Nodes
 
 Computation nodes are comprised of a name, the name of an operator that it invokes, a list of named inputs, a list of named outputs, and a list of attributes.
@@ -349,7 +348,6 @@ ref_attr_name|string|The name of a parent function's attribute.
 The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
 
 In case ‘ref_attr_name’ is set, this attribute does not contain data, and instead it's a reference to the parent function's attribute of the given name. Can only be used within the function body.
-
 
 #### Variadic Inputs and Outputs
 
@@ -458,6 +456,7 @@ message TensorShapeProto {
   repeated Dimension dim = 1;
 }
 ```
+
 Which is referenced by the Tensor type message:
 
 ```
@@ -487,6 +486,7 @@ For example, a graph that performs matrix cross-product may be defined as taking
 Shapes MAY be defined using a combination of integers and variables.
 
 _Historical Notes_: The following extensions were considered early on, but were never implemented or supported.
+
 * The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set.
 * The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
 * A scoping mechanism to allow dimension variables that are local to a sub-graph (such as the body of a loop) may be useful, but is not currently supported.
@@ -585,6 +585,7 @@ The properties of a simple sharded dimension are:
 The multi-device annotations are hints to execution backends and do not affect the computational semantics of the model. Backends MAY ignore these annotations if the specified configurations are not supported or available. All communication operations required for multi-device execution (such as data transfers between devices) are implicit and handled by the runtime.
 
 For tensor parallelism, tensors can be:
+
 - **Split** across devices along specified axes, distributing different portions of the data to different devices
 - **Replicated** across devices, where the same tensor data is duplicated on multiple devices
 

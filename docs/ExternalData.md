@@ -28,6 +28,7 @@ load_external_data_for_model(onnx_model, "data/directory/path/")
 ```
 
 ## Converting an ONNX Model to External Data
+
 ```python
 import onnx
 from onnx.external_data_helper import convert_model_to_external_data

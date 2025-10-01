@@ -17,6 +17,7 @@ So far, ONNX format targets the problem of offline conversion of neural network 
 We should strive for consensus on a library API to interface with optimized backends and offload parts of ONNX graphs to these high-performance hardware and software implementation. The API should enable wide interoperability between high-level deep learning frameworks, software implementations of optimized graph runtimes, and existing and upcoming neural network acceleration hardware.
 
 The standardized API should reduce friction in deploying neural network models for all involved parties:
+
 - Applications would be able to ship only one version of a neural network model (either in ONNX format, or in the format of their deep learning framework, and convert it on the fly to ONNX).
 - Deep learning frameworks would be able to integrate with many hardware vendors by using only a single interface.
 - Hardware vendors would be able to implement only one interface and get integration with many deep learning frameworks.
@@ -56,7 +57,6 @@ We propose a small C-based API, which includes the following functionality:
     c. The user additionally estimates time to transfer subgraph inputs to the backend using `ONNX_BACKEND_CPU_MEMORY_READ_BANDWIDTH` information query and to transfer subgraph outputs from the backend using `ONNX_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH`.
 
     d. If predicted time to transfer inputs to the backend, do inference, and transfer outputs from the backend exceeds predicted time to do the inference on default engine (e.g. CPU), the user falls back to a different ONNX backend, or to the default engine.
-
 
 4. The user initialized the backend, and offloads the subgraph execution to the ONNX backend by calling `onnxInitGraph`, `onnxSetGraphIO` and `onnxRunGraph`
 
@@ -103,6 +103,7 @@ Magic is an arbitrary 32-bit integer unique for a library implementing the API. 
 ### Library initialization
 
 During one-time library initialization, the implementation of the API would detect `n` supported devices and map them to backend indices in `0...(n-1)` range. The implementation of device discovery and checking required device characteristics is highly vendor- and platform-specific, e.g.:
+
 - A CPU implementation may always expose 1 device.
 - A CUDA-based implementation may call `cudaGetDeviceCount` to get the number of CUDA-enabled devices, then
  call `cudaGetDeviceProperties` for each device, and map CUDA devices which satisfy the minimum required functionality, such as compute capability, to backend indices.
