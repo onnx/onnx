@@ -7,7 +7,8 @@ Copyright (c) ONNX Project Contributors
 ## Proposal Adding Function into ONNX
 
 Motivation:
-1.  Reduce number of primitive operators in ONNX
+
+1. Reduce number of primitive operators in ONNX
 To make it easier for hardware vendors to follow ONNX, we want to make it possible to define composite operators in terms of more primitive operators, reducing the number of kernels which must be directly implemented. For example, FC should be declared to be a composition MatMul and Add.
 
 2. Expose customize function capability for graph optimization.
@@ -17,6 +18,7 @@ To provide a mechanism of doing graph optimization, say, kernel fusion (merge a 
 To define a library of RNN cells and allow the user to write a custom one.
 
 MAJOR CHANGES:
+
 1.	FunctionProto added to represent a function.
 2.	FunctionSetProto added to represent a function set.
 3.	AttributeProto updated to support function attribute type and allow attribute reference.
