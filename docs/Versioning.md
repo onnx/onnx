@@ -134,6 +134,7 @@ B|-     |**2**  |2      |2
 C|-     |-      |**3**  |**4**
 
 Notes:
+
 - Values that are new or updated from a previous OpSet version are in **bold**.
 
 ## Model versioning
