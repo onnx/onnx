@@ -1,0 +1,20 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: GitHub Actions Security Analysis with zizmor
+
+on:  # yamllint disable-line rule:truthy
+  push:
+  pull_request:
+
+jobs:
+  zizmor:
+    name: zizmor
+
+    permissions:
+      security-events: write
+
+    # yamllint disable-line rule:line-length
+    uses: zizmorcore/workflow/.github/workflows/reusable-zizmor.yml@3bb5e95068d0f44b6d2f3f7e91379bed1d2f96a8
+
