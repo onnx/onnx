@@ -86,7 +86,11 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 f"onnxruntime returns a different number of output "
                 f"{len(expected)} != {len(sess)} (ReferenceEvaluator)."
             )
-        look = zip(reversed(expected), reversed(got)) if rev else zip(expected, got)
+        look = (
+            zip(reversed(expected), reversed(got), strict=True)
+            if rev
+            else zip(expected, got, strict=True)
+        )
         for i, (e, g) in enumerate(look):
             if e.shape != g.shape:
                 raise AssertionError(

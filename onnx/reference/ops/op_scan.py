@@ -127,9 +127,12 @@ class Scan(OpRun):
         results = [[] for _ in scan_names_out]
 
         for it in range(max_iter):
-            inputs = dict(zip(state_names_in, states))
+            inputs = dict(zip(state_names_in, states, strict=False))
             inputs.update(
-                {name: value[it] for name, value in zip(scan_names_in, scan_values)}
+                {
+                    name: value[it]
+                    for name, value in zip(scan_names_in, scan_values, strict=False)
+                }
             )
 
             try:
@@ -139,7 +142,7 @@ class Scan(OpRun):
                     f"Unable to call 'run' for type '{type(self.body)}'."
                 ) from e
 
-            outputs = dict(zip(self.output_names, outputs_list))
+            outputs = dict(zip(self.output_names, outputs_list, strict=False))
             states = [outputs[name] for name in state_names_out]
             for i, name in enumerate(scan_names_out):
                 results[i].append(np.expand_dims(outputs[name], axis=0))

@@ -642,7 +642,7 @@ class OpFunction(OpRun):
                 f"and the expected number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
-        feeds = dict(zip(impl.input_names, inputs))
+        feeds = dict(zip(impl.input_names, inputs, strict=False))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
         results = impl.run(None, feeds, attributes=attributes)

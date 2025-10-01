@@ -472,7 +472,9 @@ def load_composite_model(
 
     io_map = [
         (out_entry.name, in_entry.name)
-        for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input)
+        for out_entry, in_entry in zip(
+            preprocessing.graph.output, network.graph.input, strict=False
+        )
     ]
 
     return onnx.compose.merge_models(preprocessing, network, io_map=io_map)

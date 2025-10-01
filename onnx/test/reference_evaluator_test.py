@@ -3122,7 +3122,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
         baseline = "constant"
         for k, v in results.items():
-            for a, b in zip(reversed(expected), reversed(v)):
+            for a, b in zip(reversed(expected), reversed(v), strict=True):
                 if a.shape != b.shape:
                     raise AssertionError(
                         f"Shape mismatch for {reduce_op!r}, {baseline}:{a.shape} != {k}:{b.shape}."
@@ -3275,7 +3275,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             ]
         ]
         self.assertEqual(len(expected[0]), len(got[0]))
-        for a, b in zip(expected[0], got[0]):
+        for a, b in zip(expected[0], got[0], strict=True):
             assert_allclose(a, b)
 
     def test_split_to_sequence_1d(self):
@@ -3296,7 +3296,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             ]
         ]
         self.assertEqual(len(expected[0]), len(got[0]))
-        for a, b in zip(expected[0], got[0]):
+        for a, b in zip(expected[0], got[0], strict=True):
             assert_allclose(a, b)
 
     def test_split_to_sequence_nokeepdims_noinput(self):
@@ -3310,7 +3310,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": data})
         expected = [[data[:, :, i] for i in range(data.shape[2])]]
         self.assertEqual(len(expected[0]), len(got[0]))
-        for a, b in zip(expected[0], got[0]):
+        for a, b in zip(expected[0], got[0], strict=True):
             assert_allclose(a, b)
 
     def test_cast_float8(self):

@@ -150,7 +150,6 @@ lint.select = [
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
 lint.ignore = [
-    "B905", # TODO: We have many zip calls without an explicit strict parameter
     "D1", # D1 is for missing docstrings, which is not yet enforced.
     "D205", # D205 Too strict. "1 blank line required between summary line and description"
     "D400",

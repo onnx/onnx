@@ -82,7 +82,9 @@ def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
         del release_version  # Unused
-        for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args):
+        for pair in zip(
+            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args, strict=False
+        ):
             if pair not in result:
                 result[pair] = ir_version
                 if pair[0] == "ai.onnx.training":

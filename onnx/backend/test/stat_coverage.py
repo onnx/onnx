@@ -127,7 +127,7 @@ def gen_node_test_coverage(
     for t in titles:
         f.write(f"* [{t[9:]}](#{t[9:].lower().replace(' ', '-')})\n")
     f.write("\n")
-    for t, l in zip(titles, all_lists):  # noqa: E741
+    for t, l in zip(titles, all_lists, strict=False):  # noqa: E741
         f.write(f"## {t}\n")
         for s in l:
             f.write(f"### {s}")
