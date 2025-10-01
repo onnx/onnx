@@ -17,6 +17,7 @@ input_in_NCHW -> data_0 -> SqueezeNet() -> output_softmaxout_1
 ```
 
 In order to run this model the user needs a lot of information.    In this case the user needs to know:
+
 * the input is an image
 * the image is in the format of NCHW
 * the color channels are in the order of bgr
@@ -24,6 +25,7 @@ In order to run this model the user needs a lot of information.    In this case 
 * the pixel data is normalized as values 0-255
 
 This proposal consists of three key components to provide all of this information:
+
 * Type Denotation,
 * [Dimension Denotation](DimensionDenotation.md),
 * [Model Metadata](MetadataProps.md).
