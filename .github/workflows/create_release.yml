@@ -183,7 +183,7 @@ jobs:
         if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
         id: upload_preview_build_to_testpypi_weekly
         
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
@@ -234,7 +234,7 @@ jobs:
         - name: Upload release build to test.pypi
           id: upload_release_build_to_testpypi
 
-          uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+          uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
           with:
             repository-url: https://test.pypi.org/legacy/
             verbose: true
@@ -285,7 +285,7 @@ jobs:
       - name: Upload preview_build to pypi-weekly
         id: upload_preview_build_to_pypi_weekly
         if: (github.ref == 'refs/heads/main') 
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:   
           repository-url: https://upload.pypi.org/legacy/
           verbose: true     
@@ -320,7 +320,7 @@ jobs:
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:   
           repository-url: https://upload.pypi.org/legacy/
           verbose: true     
