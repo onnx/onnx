@@ -28,6 +28,7 @@ load_external_data_for_model(onnx_model, "data/directory/path/")
 ```
 
 ## Converting an ONNX Model to External Data
+
 ```python
 import onnx
 from onnx.external_data_helper import convert_model_to_external_data
@@ -73,6 +74,7 @@ There are two fields related to the external data in TensorProto message type.
 ### data_location field
 
 `data_location` field stores the location of data for this tensor. Value MUST be one of:
+
 * `MESSAGE` - data stored in type-specific fields inside the protobuf message.
 * `RAW` - data stored in raw_data field.
 * `EXTERNAL` - data stored in an external location as described by external_data field.

@@ -28,7 +28,7 @@ For example, consider the addition operator `Add(A,B)`, where both inputs are
 two dimensional tensors of shapes `[32, 1024]`. Sharding the first input between
 two devices along axis 0 and the second input between the same two devices
 along axis 1 does not make sense. In fact, we typically expect both inputs to be
-sharded the same way. 
+sharded the same way.
 
 A sharding-checker to check if a given input sharding spec makes sense would be
 useful and we recommend building one. The correctness requirements, however, vary from
@@ -82,9 +82,11 @@ List of operations:
 _Abs, Acos, Acosh, Asin, Asinh, Atan, Atanh, Cast, Ceil, Cos, Cosh, Dropout, Erf, Exp, Floor, Identity, IsInf, IsNaN, Log, Max, Min, Neg, Not, Reciprocal, Round, Sigmoid, Sign, Sin, Sinh, Tan, Tanh, ConstantOfShape_.
 
 **Constraints on input sharding**
+
 * No constraints on input sharding.
 
 **Inference of output sharding**
+
 * If not specified, the output sharding is the same as input sharding
 
 ### Broadcast n-ary elementwise ops
@@ -93,6 +95,7 @@ List of operations:
 _Add, And, BitShift, BitwiseAnd, BitwiseNot, BitwiseOr, BitwiseXor, Equal, Greater, Less, Mod, Mul, Or, Pow, Sub, Sum, Where, Xor_.
 
 **Constraints on input sharding**
+
 * For any non-broadcast axis, the sharding spec of the two (or more) inputs must be identical
 * Any broadcast axis of size 1 (in the unsharded original tensor) must be replicated across all devices
 that participate in the parallel computation (that is, all devices identified in the node's sharding spec).
@@ -102,6 +105,7 @@ The constraint is that the sharding specs of the multiple broadcast axes must be
 which is illustrated down below.
 
 **Inference of output sharding**
+
 * The sharding spec for any axis of the output is the same as the sharding spec for the corresponding
 input axes in the case of non-broadcast.
 * In the case of a single broadcast axis, the output axis derives the sharding spec from the corresponding
@@ -127,6 +131,7 @@ Note that in this example, both the `M` and `N` axes are split into two shards e
 This means that the output itself has 4 shards, as shown in the figure.
 In this example, we want each output-shard to be on one device, as described by
 the sharding spec
+
 ```
 {
     device = [0, 1, 2, 3]
@@ -152,6 +157,7 @@ the sharding spec
     ]
 }
 ```
+
 To produce this output, however, we need to ensure that the input-shards are
 each available in two devices each, as shown in the figure above. In particular,
 the first shard of `Input1` is needed by both devices 0 and 1, as it is used
@@ -177,19 +183,22 @@ Thus, the sharding spec for `Input1` is as below:
     ]
 }
 ```
+
 The sharding spec for `Input2` is analogous, as explained and shown in figure above.
 
 This leads to the following constraint for input-sharding and inference rule
 for output-sharding in the presence of two broadcast axes:
+
 * The (inferred) devices for `output-shard[i,j]` is the intersection of the set of devices
 for `input-1-shard[i]` and `input-2-shard[j]`. If this set is empty, then the input
 sharding specs are not compatible (for broadcast composition).
 
-This rule is extended to the case of more than two broadcast axes accordingly. 
+This rule is extended to the case of more than two broadcast axes accordingly.
 
 ### Reduction ops
 
 **Constraints on input sharding**
+
 * No constraints on input sharding.
 * Sharding along non-reduction axes is straightforward. It indicates
 parallelization of the iteration over the non-reduction axes.
@@ -199,6 +208,7 @@ reduction is done locally on the shard, and in the second step the reduction is 
 across the different shards. This can be typically mapped to a collective-reduce operation.
 
 **Inference of output sharding**
+
 * Non-reduction axes inherit the sharding of the corresponding axes of the input.
 * Since the size of the reduction axis is one after the reduction, it can't be used
 for any meaningful sharding. The axis may even be omitted from the output shape,
