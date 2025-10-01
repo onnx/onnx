@@ -77,8 +77,7 @@ def softmaxcrossentropy(
             loss = loss.sum() / gather_weight.sum()
             if get_log_prob is True:
                 return loss, log_prob
-            else:
-                return loss
+            return loss
 
     if reduction == "mean":
         loss = np.mean(loss)

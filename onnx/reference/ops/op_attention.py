@@ -246,7 +246,7 @@ class Attention(OpRun):
         softcap=None,
         qk_matmul_output_mode=None,
     ) -> np.ndarray:
-        res = _compute_attention(
+        return _compute_attention(
             Q,
             K,
             V,
@@ -262,4 +262,3 @@ class Attention(OpRun):
             softcap=softcap,
             qk_matmul_output_mode=qk_matmul_output_mode,
         )
-        return res

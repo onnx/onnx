@@ -372,13 +372,11 @@ def download_model_with_test_data(
     onnx.utils._extract_model_safe(
         local_model_with_data_path, local_model_with_data_dir_path
     )
-    model_with_data_path = (
+    return (
         local_model_with_data_dir_path
         + "/"
         + os.listdir(local_model_with_data_dir_path)[0]
     )
-
-    return model_with_data_path
 
 
 def load_composite_model(
@@ -477,7 +475,4 @@ def load_composite_model(
         for out_entry, in_entry in zip(preprocessing.graph.output, network.graph.input)
     ]
 
-    model_with_preprocessing = onnx.compose.merge_models(
-        preprocessing, network, io_map=io_map
-    )
-    return model_with_preprocessing
+    return onnx.compose.merge_models(preprocessing, network, io_map=io_map)

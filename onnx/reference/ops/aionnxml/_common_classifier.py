@@ -65,8 +65,7 @@ def erf_inv(x: float) -> float:
     v = 2.0 / (np.pi * 0.147) + 0.5 * log
     v2 = 1.0 / 0.147 * log
     v3 = -v + np.sqrt(v * v - v2)
-    x = sgn * np.sqrt(v3)
-    return x
+    return sgn * np.sqrt(v3)
 
 
 def compute_probit(val: float) -> float:

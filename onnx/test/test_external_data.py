@@ -628,8 +628,7 @@ class TestExternalDataToArray(unittest.TestCase):
             [C],
             initializer=[input_init, shape_init],
         )
-        model = helper.make_model(graph_def, producer_name="onnx-example")
-        return model
+        return helper.make_model(graph_def, producer_name="onnx-example")
 
     @unittest.skipIf(
         serialization_format != "protobuf",

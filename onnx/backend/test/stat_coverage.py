@@ -184,8 +184,7 @@ def gen_model_test_coverage(
                     ml_present = True
             if not ml_present:
                 continue
-            else:
-                model_written = True
+            model_written = True
         f.write(f"## {model.graph.name}\n")
         # Deconstruct model
         num_covered = 0
