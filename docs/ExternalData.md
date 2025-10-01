@@ -75,10 +75,10 @@ There are two fields related to the external data in TensorProto message type.
 
 `data_location` field stores the location of data for this tensor. Value MUST be one of:
 
-* `MESSAGE` - data stored in type-specific fields inside the protobuf message.
-* `RAW` - data stored in raw_data field.
+* `DEFAULT` - data stored inside the protobuf message. Data is stored in raw_data (if set) otherwise in type-specific field.
 * `EXTERNAL` - data stored in an external location as described by external_data field.
-* `value` not set - legacy value. Assume data is stored in raw_data (if set) otherwise in message.
+
+If not set, behaves as if the value was `DEFAULT`.
 
 ### external_data field
 
