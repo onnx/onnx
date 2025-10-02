@@ -38070,7 +38070,7 @@ expect(
 ```python
 axis = 1
 largest = 0
-_sorted = 1
+sorted_ = 1
 k = 3
 
 node = onnx.helper.make_node(
@@ -38079,7 +38079,7 @@ node = onnx.helper.make_node(
     outputs=["values", "indices"],
     axis=axis,
     largest=largest,
-    sorted=_sorted,
+    sorted=sorted_,
 )
 
 X = np.array(
