@@ -151,7 +151,7 @@ __version__ = onnx.version.version
 # Supported model formats that can be loaded from and saved to
 # The literals are formats with built-in support. But we also allow users to
 # register their own formats. So we allow str as well.
-_SupportedFormat = Literal["protobuf", "textproto", "onnxtxt", "json"] | str  # noqa: PYI051
+_SupportedFormat = Literal["protobuf", "textproto", "onnxtxt", "json"] | str # noqa PYI051
 # Default serialization format
 _DEFAULT_FORMAT = "protobuf"
 

@@ -244,7 +244,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
         for node in onx.node:
             if node.op_type == "Constant":
                 cst_nodes = _replace_constant(node, threshold, value_constant_of_shape)
-                if len(cst_nodes) == 2:  # noqa: PLR2004
+                if len(cst_nodes) == 2:
                     modified = True
                 new_nodes.extend(cst_nodes)
                 continue
@@ -306,11 +306,11 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
         del model.opset_import[:]
         for oimp in onx.opset_import:
             op_set = model.opset_import.add()
-            if oimp.domain == "" and oimp.version < 11 and use_range:  # noqa: PLR2004
+            if oimp.domain == "" and oimp.version < 11 and use_range:
                 raise RuntimeError(
                     f"Range was introduced in opset 11 but opset is {oimp.version}."
                 )
-            if oimp.domain == "" and oimp.version < 9:  # noqa: PLR2004
+            if oimp.domain == "" and oimp.version < 9:
                 raise RuntimeError(
                     f"ConstantOfShape was introduced in "
                     f"opset 9 but opset is {oimp.version}."
@@ -348,7 +348,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
         )
         new_nodes.append(node)
         removed.add(init.name)
-        if ir_version is not None and ir_version <= 3:  # noqa: PLR2004
+        if ir_version is not None and ir_version <= 3:
             additional_inputs.append(
                 make_tensor_value_info(new_name, TensorProto.INT64, [len(dims)])
             )
@@ -369,7 +369,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
     for node in onx.node:
         if node.op_type == "Constant":
             shape_nodes = _replace_constant(node, threshold, value_constant_of_shape)
-            if len(shape_nodes) == 2:  # noqa: PLR2004
+            if len(shape_nodes) == 2:
                 n_modifications += 1
             new_nodes.extend(shape_nodes)
             continue
