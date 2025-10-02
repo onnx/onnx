@@ -92,7 +92,7 @@ class TopK_11(_CommonTopK):
         ink,
         axis=None,
         largest=None,
-        sorted=None,  # noqa: A002
+        sorted=None,
     ):
         """Runtime for operator *TopK*.
 
