@@ -34,9 +34,9 @@ Experimental ops that are being worked on that do not have consensus yet can be 
 2. If a fork/branch is not workable (for example due to complexity of mapping different branches between multiple repos), put the experimental ops in a custom namespace in the main branch.
 The specific process for this is:
 
- * Submit an Issue with a proposal explaining the motivation and plan. It does not need to include detailed technical design. Issues will be tagged as "experimental op".
- * Reviewers will generally approve by default unless the proposal directly conflicts with existing ops or somehow goes against general ONNX strategy. Approval is indicated by adding the "experiment approved" tag.
- * The approval is good for 3 months, but can be renewed if needed.
- * Experimental ops should be submitted in a PR in a custom namespace that is the name of the proposal, i.e. “proposal.controlflow”. The name should be descriptive rather than a company or entity name. These PRs will be approved by default as long as the parent proposal is approved and active.
- * Once experimentation is done, the ops can be submitted for addition to the ONNX namespace via the regular process. The owner can also choose to end the experiment without promoting the ops.
- * Either way, the custom namespace is deleted once experimentation is complete or when the approval expires.
+* Submit an Issue with a proposal explaining the motivation and plan. It does not need to include detailed technical design. Issues will be tagged as "experimental op".
+* Reviewers will generally approve by default unless the proposal directly conflicts with existing ops or somehow goes against general ONNX strategy. Approval is indicated by adding the "experiment approved" tag.
+* The approval is good for 3 months, but can be renewed if needed.
+* Experimental ops should be submitted in a PR in a custom namespace that is the name of the proposal, i.e. “proposal.controlflow”. The name should be descriptive rather than a company or entity name. These PRs will be approved by default as long as the parent proposal is approved and active.
+* Once experimentation is done, the ops can be submitted for addition to the ONNX namespace via the regular process. The owner can also choose to end the experiment without promoting the ops.
+* Either way, the custom namespace is deleted once experimentation is complete or when the approval expires.
