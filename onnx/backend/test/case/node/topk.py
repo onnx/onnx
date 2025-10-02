@@ -195,7 +195,7 @@ class TopK(Base):
             outputs=["values", "indices"],
             axis=axis,
             largest=largest,
-            sorted=_sorted,
+            sorted=sorted_,
         )
 
         X = np.array(
