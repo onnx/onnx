@@ -41,7 +41,7 @@ API is described, with example,
 
 The C++ API consists of a single function
 
-```
+```cpp
 shape_inference::InferShapes(
     ModelProto& m,
     const ISchemaRegistry* schema_registry);
@@ -75,7 +75,7 @@ advanced, do let us know!
 
 You can add a shape inference function to your operator's Schema with
 
-```
+```cpp
 OpSchema& Opschema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
 ```
 
