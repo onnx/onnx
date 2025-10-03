@@ -19,9 +19,9 @@ To define a library of RNN cells and allow the user to write a custom one.
 
 MAJOR CHANGES:
 
-1.	FunctionProto added to represent a function.
-2.	FunctionSetProto added to represent a function set.
-3.	AttributeProto updated to support function attribute type and allow attribute reference.
-4.	ModelProto updated to contain customized function set.
+1. FunctionProto added to represent a function.
+2. FunctionSetProto added to represent a function set.
+3. AttributeProto updated to support function attribute type and allow attribute reference.
+4. ModelProto updated to contain customized function set.
 
 Prototype details can be found [here](https://github.com/linkerzhang/onnx/blob/kezhan/add_function_private/onnx/onnx.in.proto)

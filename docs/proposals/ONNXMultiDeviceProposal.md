@@ -18,8 +18,8 @@ See [this commit](https://github.com/kevinch-nv/onnx/commit/07e97452096b28ba7c46
 
 The key point of this design is that all multi-device specific annotations are at the node level, and do not affect the main computational graph. This means:
 
- - All communication operations required for multi-device execution are implicit
- - A backend may choose to ignore the annotations if the provided configurations are either not supported or not available
+- All communication operations required for multi-device execution are implicit
+- A backend may choose to ignore the annotations if the provided configurations are either not supported or not available
 
 ### Sharding Specification
 
