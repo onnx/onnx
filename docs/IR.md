@@ -401,21 +401,21 @@ Tensors are a generalization of vectors and matrices; whereas vectors have one d
 
 Mathematically, a tensor can be defined as a pair of sequences/lists (V, S) where S is the shape of the tensor (a list of non-negative integers) and V is a list of values with length equal to the product of the dimensions in S. Two tensors (V, S) and (V', S') are equal if and only if V = V' and S = S'. The length of S is referred to as the rank.
 
- - If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
- - S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
- - If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
- - A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
+- If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
+- S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
+- If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
+- A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
 
 A tensor's shape S is a list but can be represented as a tensor with values S and shape [R] where R is the rank of the tensor.
 
- - For a tensor (V, S), the tensor representing its shape is (S, [R]).
- - The shape of a scalar is []. Represented as a tensor, [] has shape [0].
+- For a tensor (V, S), the tensor representing its shape is (S, [R]).
+- The shape of a scalar is []. Represented as a tensor, [] has shape [0].
 
 #### Representation
 
 It is common to represent a tensor as a nested list. This generally works fine, but is problematic when zero dimensions are involved. A tensor of shape (5, 0) can be represented as [[], [], [], [], []], but (0, 5) is represented as [] which loses the information that the second dimension is 5.
 
- - A nested list is not a complete representation of a tensor with dimensions of value zero.
+- A nested list is not a complete representation of a tensor with dimensions of value zero.
 
 ### Tensor Element Types
 

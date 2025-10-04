@@ -168,7 +168,6 @@ lint.ignore = [
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "RUF022", # We may want to keep __all__ unsorted for better readability
     "SIM102", # We don't prefer always combining if branches
-    "SIM103", # We don't always prefer combining if branches
     "SIM108", # We don't always encourage ternary operators
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
