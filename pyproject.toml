@@ -146,6 +146,7 @@ lint.select = [
     "W", # pycodestyle
     "YTT", # flake8-2020
     "RET", # flake8-return
+  "RUF100"
 ]
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
@@ -175,7 +176,7 @@ lint.ignore = [
 ]
 
 [tool.ruff.lint.flake8-builtins]
-builtins-ignorelist = ["id", "input"]
+builtins-ignorelist = ["format", "id", "input", "max", "min", "sorted", "type"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 # Disallow all relative imports.
@@ -188,7 +189,6 @@ convention = "google"
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/*.pyi" = ["I002"] # from __future__ import annotations` has no effect in stub files
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Prefer inline ignores with `noqa: xxx`.
 # Eventually this list should become empty.
@@ -197,6 +197,9 @@ required-imports = ["from __future__ import annotations"]
 "onnx/backend/test/case/**" = ["N802"] # Function casing
 "onnx/reference/ops/**" = [
     "N801", # Class casing
+    "PLR2004", # Magic numbers
+]
+"onnx/tools/replace_constants.py" = [
     "PLR2004", # Magic numbers
 ]
 "onnx/test/reference_evaluator_test.py"= ["C408"]  # dict(...) -> { ... }
