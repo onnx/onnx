@@ -90,7 +90,7 @@ jobs:
       matrix:
         python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
         target-architecture: ['x86_64', 'arm64']
-      fail-fast: false      
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
