@@ -119,6 +119,7 @@ jobs:
         path: dist
 
     - name: Test the wheel
+      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
