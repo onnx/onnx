@@ -29,12 +29,12 @@ jobs:
         # back to this branch.
         ref: ${{ github.event.pull_request.head.sha }}
         persist-credentials: true # cmd_tools contains git commands
-        
+
     - name: Setup Python
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
       with:
         python-version: "3.11"
-        
+
     - name: Install ONNX from source and update documentation
       run: |
         source workflow_scripts/protobuf/build_protobuf_unix.sh 3

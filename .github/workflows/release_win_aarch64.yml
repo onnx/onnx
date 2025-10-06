@@ -10,7 +10,7 @@ on:
       os:
         required: true
         type: string
-      build_mode: 
+      build_mode:
         required: true
         type: string
 
@@ -83,7 +83,7 @@ jobs:
         fi
         for whl in dist/*.whl; do
           echo "Checking abi3 compatibility for $whl"
-          python -m pip install -q abi3audit          
+          python -m pip install -q abi3audit
           python -m abi3audit -v "$whl"
         done
       shell: bash
