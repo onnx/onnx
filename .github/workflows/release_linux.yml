@@ -20,7 +20,7 @@ permissions:
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    
+
     strategy:
       matrix:
         python-version: ['3.13t', '3.12', '3.11', '3.10']
@@ -44,7 +44,7 @@ jobs:
         git config --global --add safe.directory /github/workspace
 
     - name: Set source date epoch variable
-      run: |        
+      run: |
         echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
     - name: Build wheel for x86_64
@@ -84,8 +84,8 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
-  
-   
+
+
 
   test:
     needs: build
@@ -129,7 +129,7 @@ jobs:
           python -m pip install -q --upgrade pip
           python -m pip install -q -r requirements-release_test.txt
 
-      - name: Check abi3 compatibility with abi3audit        
+      - name: Check abi3 compatibility with abi3audit
         run: |
           if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then
               echo "Exactly one wheel file found."
@@ -139,7 +139,7 @@ jobs:
           for whl in dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl; do
             echo "Checking abi3 compatibility for $whl"
             python -m abi3audit -v "$whl"
-          done        
+          done
 
       - name: Install protobuf in the GitHub Action environment for testing the wheel
         run: |

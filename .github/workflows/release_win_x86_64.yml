@@ -10,7 +10,7 @@ on:
       os:
         required: true
         type: string
-      build_mode: 
+      build_mode:
         required: true
         type: string
 
@@ -28,7 +28,7 @@ jobs:
         architecture: ['x64', 'x86']
         exclude:
           - python-version: '3.13t'
-            architecture: 'x86'            
+            architecture: 'x86'
           - python-version: '3.14-dev'
             architecture: 'x86'
 
@@ -103,7 +103,7 @@ jobs:
           python -m abi3audit -v "$whl"
         done
       shell: bash
-    
+
     - name: Test the installed wheel
       if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev' # TODO: reevaluate 3.13t/3.14 for onnx 1.20 (3.13t was already working, but it's failing since a github runner update...)
       run: |
