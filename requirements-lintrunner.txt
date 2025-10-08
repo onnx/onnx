@@ -6,6 +6,6 @@ ruff==0.13.3
 mypy==1.18.2
 types-protobuf==6.30.2.20250822
 # CLANG-FORMAT
-clang-format==21.1.0
+clang-format==21.1.2
 # EDITORCONFIG-CHECKER
 editorconfig-checker==3.4.0
