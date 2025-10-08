@@ -146,6 +146,7 @@ lint.select = [
     "W", # pycodestyle
     "YTT", # flake8-2020
     "RET", # flake8-return
+  "RUF100"
 ]
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
