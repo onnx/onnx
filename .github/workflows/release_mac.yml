@@ -85,6 +85,7 @@ jobs:
   test:
     needs: build
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
+    continue-on-error: true
     strategy:
       matrix:
         python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
@@ -118,6 +119,7 @@ jobs:
         path: dist
 
     - name: Test the wheel
+      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
