@@ -563,13 +563,29 @@ def create_random_int(
     raise TypeError(f"{dtype} is not supported by create_random_int.")
 
 
-def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
+def saturate_cast(x: np.ndarray, dtype: np.dtype, nan_as_zero: bool = True) -> np.ndarray:
     """Saturate cast for numeric types.
 
     This function ensures that values outside the representable range
     of the target dtype are clamped to the maximum or minimum representable
-    value of that dtype.
+    value of that dtype. For float8 types, it can optionally handle NaN values.
+    
+    Args:
+        x: Input array to cast
+        dtype: Target data type
+        nan_as_zero: Whether to convert NaN values to 0 for float8 types.
+                    If False, NaN values are preserved as NaN in the result.
     """
+    # Handle NaN values explicitly for float8 types to prevent them from becoming NaN in the result
+    if nan_as_zero and dtype in {
+        ml_dtypes.float8_e4m3fn,
+        ml_dtypes.float8_e4m3fnuz,
+        ml_dtypes.float8_e5m2,
+        ml_dtypes.float8_e5m2fnuz,
+    }:
+        # Replace NaN values with 0 before clipping
+        x = np.where(np.isnan(x), 0, x)
+    
     if np.issubdtype(dtype, np.integer) or dtype in (ml_dtypes.int4, ml_dtypes.uint4):
         info = ml_dtypes.iinfo(dtype)
         x = np.round(x)
