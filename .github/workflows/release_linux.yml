@@ -50,7 +50,7 @@ jobs:
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
       id: build_wheel_x86
-      uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.07.27-1
+      uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.10.10-1
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_x86_64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
@@ -58,7 +58,7 @@ jobs:
     - name: Build wheel for arm64
       if: matrix.architecture == 'arm64'
       id: build_wheel_arm64
-      uses: docker://quay.io/pypa/manylinux_2_28_aarch64:2025.07.27-1
+      uses: docker://quay.io/pypa/manylinux_2_28_aarch64:2025.10.10-1
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_aarch64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
