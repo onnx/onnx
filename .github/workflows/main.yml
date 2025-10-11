@@ -137,7 +137,7 @@ jobs:
         if: startsWith(matrix.os,'ubuntu')
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
-          if [ "${{ matrix.python_version }}" == "3.14-dev" ]; then
+          if [ "${{ matrix.python_version }}" == "3.14" ]; then
             sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           fi
 
@@ -210,7 +210,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t') && (matrix.python_version != '3.14-dev')
+        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t') && (matrix.python_version != '3.14')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
