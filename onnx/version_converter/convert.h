@@ -586,6 +586,14 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
 
+    /******** 19 -> 18 ********/
+    const std::vector<TensorProto_DataType> float8_types = {
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ};
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(19), OpSetID(18), float8_types));
+
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<AxisAttributeToInput>("DFT", OpSetID(19), OpSetID(20), 2, 1));
     registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
