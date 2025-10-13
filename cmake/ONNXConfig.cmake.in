@@ -4,7 +4,7 @@
 # library version information
 set(ONNX_VERSION "@ONNX_VERSION@")
 
-if((NOT @@ONNX_USE_PROTOBUF_SHARED_LIBS@@) AND @@Build_Protobuf@@)
+if((NOT @ONNX_USE_PROTOBUF_SHARED_LIBS@) AND @Build_Protobuf@)
   find_package(Protobuf REQUIRED CONFIG)
 endif()
 
