@@ -24,13 +24,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.13t', '3.12', '3.11', '3.10']
+        python-version: ['3.14', '3.13', '3.13t', '3.12', '3.11', '3.10']
         architecture: ['x64', 'x86']
-        exclude:
-          - python-version: '3.13t'
-            architecture: 'x86'
-          - python-version: '3.14-dev'
-            architecture: 'x86'
 
     steps:
     - name: Checkout ONNX
@@ -40,7 +35,7 @@ jobs:
          persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -90,7 +85,7 @@ jobs:
         path: ./dist
 
     - name: Check abi3 compatibility with abi3audit
-      if: steps.build_wheel.outcome == 'success'
+      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.14'
       run: |
         if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then
             echo "Exactly one wheel file found."
@@ -105,13 +100,13 @@ jobs:
       shell: bash
 
     - name: Test the installed wheel
-      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev' # TODO: reevaluate 3.13t/3.14 for onnx 1.20 (3.13t was already working, but it's failing since a github runner update...)
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip install -q -r requirements-release_test.txt
         pytest
 
     - name: Verify ONNX with the latest numpy
-      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev' # TODO: reevaluate 3.13t/3.14 for onnx 1.20 (3.13t was already working, but it's failing since a github runner update...)
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
@@ -119,7 +114,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev'
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
@@ -127,7 +122,7 @@ jobs:
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: steps.build_wheel.outcome == 'success' && matrix.python-version != '3.13t' && matrix.python-version != '3.14-dev'
+      if: steps.build_wheel.outcome == 'success'
       run: |
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
