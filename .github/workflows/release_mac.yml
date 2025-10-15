@@ -88,7 +88,7 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         target-architecture: ['x86_64', 'arm64']
       fail-fast: false
 
@@ -119,13 +119,13 @@ jobs:
         path: dist
 
     - name: Test the wheel
-      if: matrix.python-version != '3.14-dev'
+      #if: matrix.python-version != '3.14'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest numpy
-      if: matrix.python-version != '3.14-dev'
+      #if: matrix.python-version != '3.14'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
         arch -${{ matrix.target-architecture }} python -m pip install numpy
@@ -133,7 +133,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: matrix.python-version != '3.14-dev'
+      #if: matrix.python-version != '3.14'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install protobuf
@@ -141,7 +141,7 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: matrix.python-version != '3.14-dev'
+      #if: matrix.python-version != '3.14'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
