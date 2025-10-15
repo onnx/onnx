@@ -1,5 +1,6 @@
 #include <onnx/onnx_pb.h>
-#include <stdio.h>
+
+#include <cstdio>
 int main() {
   puts("Link ONNX successfully!");
   return 0;

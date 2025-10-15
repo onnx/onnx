@@ -1,6 +1,5 @@
-# Minimum CMake required
+# This minimal CMake file is used to test finding and linking ONNX from a main project
 cmake_minimum_required(VERSION 3.26)
-# Project
 project(onnx_test LANGUAGES CXX)
 
 find_package(ONNX REQUIRED CONFIG)
