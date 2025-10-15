@@ -195,6 +195,18 @@ jobs:
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
 
+      - name: Run C++ extension test
+        if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.python_version != '3.10'
+        run: |
+          cd ./.setuptools-cmake-build/
+          sudo cmake --build . --target install
+          cd .././onnx/test/cmake
+          mkdir build
+          cd build
+          cmake -DONNX_ML=${{ matrix.onnx_ml }} ..
+          cmake --build .
+          ./main
+
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7

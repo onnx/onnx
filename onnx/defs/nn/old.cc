@@ -179,7 +179,7 @@ static void convPoolShapeInference_opset19(
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+  for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
@@ -193,8 +193,8 @@ static void convPoolShapeInference_opset19(
     pads.assign(n_input_dims * 2, 0);
     const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
-      int input_dims_size = static_cast<int>(n_input_dims);
-      for (int i = 0; i < input_dims_size; ++i) {
+      auto input_dims_size = n_input_dims;
+      for (size_t i = 0; i < input_dims_size; ++i) {
         int64_t residual = 0;
         int64_t stride = strides[i];
         if (stride > 1) {
@@ -206,7 +206,7 @@ static void convPoolShapeInference_opset19(
             residual -= stride;
           }
         }
-        if (i >= static_cast<int>(effective_kernel_shape.size())) {
+        if (i >= effective_kernel_shape.size()) {
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
         }
         int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
@@ -505,8 +505,8 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
       if (output_shape.dim_size() != 1) {
         fail_type_inference("'output_shape' must be rank 1 tensor.");
       }
-      if (output_shape.dim(static_cast<int>(0)).has_dim_value() &&
-          static_cast<int>(output_shape.dim(static_cast<int>(0)).dim_value()) != input_shape.dim_size()) {
+      if (output_shape.dim(0).has_dim_value() &&
+          static_cast<int>(output_shape.dim(0).dim_value()) != input_shape.dim_size()) {
         fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
@@ -670,7 +670,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+  for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
@@ -2005,7 +2005,7 @@ static void convPoolShapeInference1(
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+  for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
@@ -2606,8 +2606,8 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
       if (output_shape.dim_size() != 1) {
         fail_type_inference("'output_shape' must be rank 1 tensor.");
       }
-      if (output_shape.dim(static_cast<int>(0)).has_dim_value() &&
-          static_cast<int>(output_shape.dim(static_cast<int>(0)).dim_value()) != input_shape.dim_size()) {
+      if (output_shape.dim(0).has_dim_value() &&
+          static_cast<int>(output_shape.dim(0).dim_value()) != input_shape.dim_size()) {
         fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
@@ -3016,7 +3016,7 @@ static void convTransposeShapeInference1(InferenceContext& ctx) {
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+  for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }

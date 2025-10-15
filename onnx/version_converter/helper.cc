@@ -19,7 +19,7 @@ int check_numpy_unibroadcastable_and_require_broadcast(
   // Check that axis is input1_sizes.size()-input2_sizes.size()
   bool broadcast = false;
   int axis = (int)(input1_sizes.size() - input2_sizes.size());
-  for (int i = 0; i < (int)input2_sizes.size(); i++) {
+  for (size_t i = 0; i < input2_sizes.size(); i++) {
     if (input2_sizes[i].dim != input1_sizes[axis + i].dim && input2_sizes[i].dim != 1)
       return -1;
     if (input2_sizes[i].dim != input1_sizes[axis + i].dim)
@@ -49,7 +49,7 @@ void assert_numpy_multibroadcastable(
   const std::vector<Dimension>& A_sizes = *A_ptr;
   const std::vector<Dimension>& B_sizes = *B_ptr;
   int axis = (int)(A_sizes.size() - B_sizes.size());
-  for (int i = 0; i < (int)B_sizes.size(); i++) {
+  for (size_t i = 0; i < B_sizes.size(); i++) {
     ONNX_ASSERTM(
         B_sizes[i].dim == A_sizes[axis + i].dim || B_sizes[i].dim == 1 || A_sizes[axis + i].dim == 1,
         "Dimension %d of input %d does not match "
@@ -74,7 +74,7 @@ void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uin
       " between %d inputs",
       name,
       num_inputs)
-  for (int i = 0; i < (int)num_inputs; i++) {
+  for (size_t i = 0; i < num_inputs; i++) {
     ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs)
     assertNotParams(inputs[i]->sizes());
   }
