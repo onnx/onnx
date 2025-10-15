@@ -166,7 +166,10 @@ class OpRunReduceNumpy(OpRun):
             raise TypeError(f"axes must be an array, not {type(axes)}.")
         if len(axes.shape) == 0:
             return int(axes)
+        # np.array of shape (0,)
         if 0 in axes.shape:
+            if noop_with_empty_axes:
+                return ()
             return None
         return tuple(axes.ravel().tolist())
 
