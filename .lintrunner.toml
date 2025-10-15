@@ -190,12 +190,15 @@ include_patterns=[
     '**/*.h',
     '**/*.md',
     '**/*.cpp',
+    '**/*.yml',
 ]
 exclude_patterns = [
     '*_pb2*',
     '.setuptools-cmake-build/*',
     'cmake/**',
-    'docs/**',
+    'docs/Changelog*',
+    'docs/Operators*',
+    'docs/TestCoverage*',
     'community/sc-election-guidelines.md',
 ]
 command = [

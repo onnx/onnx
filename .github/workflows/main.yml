@@ -33,9 +33,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
-        python_version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python_version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         include:
-          - python_version: '3.14-dev'
+          - python_version: '3.14'
             onnx_ml: 1
             debug_build: 1
             documentation: 0
@@ -79,9 +79,6 @@ jobs:
         exclude:
           - os: windows-11-arm
             python_version: '3.10'
-          - os: windows-latest # TODO: reevalute for final python 3.14 release: "Numpy built with MINGW-W64 on Windows 64 bits is experimental"
-            python_version: '3.14-dev'
-          # skip mac os 3.11
           - os:  macos-latest
             python_version: '3.11'
 
@@ -140,7 +137,7 @@ jobs:
         if: startsWith(matrix.os,'ubuntu')
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
-          if [ "${{ matrix.python_version }}" == "3.14-dev" ]; then
+          if [ "${{ matrix.python_version }}" == "3.14" ]; then
             sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           fi
 
@@ -188,7 +185,7 @@ jobs:
           python -m pip install -r requirements-release_test.txt
 
       - name: Run Python tests
-        if: (matrix.python_version != '3.13t' ) && (matrix.python_version != '3.14-dev')
+        if: (matrix.python_version != '3.13t' ) && (matrix.python_version != '3.14')
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
@@ -213,7 +210,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t') && (matrix.python_version != '3.14-dev')
+        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t') && (matrix.python_version != '3.14')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status

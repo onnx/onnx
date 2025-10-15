@@ -88,26 +88,26 @@ jobs:
         os: "win_arm64"
         build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
-  
+
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-  
+
   call-sdist:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
-      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}     
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   check_for_publish_release_build_to_pypi:
     name: Check for Publish release build to pypi
     runs-on: ubuntu-latest
 
-    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]    
+    needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_pypi_release == 'yes') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -122,7 +122,7 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
-          submodules: true          
+          submodules: true
 
       - name: Check if package_version matches branch
         run: |
@@ -130,7 +130,7 @@ jobs:
           package_version=$(cat VERSION_NUMBER)
           echo "Branch version: $branch_version"
           echo "Package version: $package_version"
-      
+
           if [[ "$package_version" != "$branch_version" && "$package_version" != "$branch_version"rc* ]]; then
             echo "Error: Package version ($package_version) does not match branch version ($branch_version) or expected RC format."
             exit 1
@@ -182,7 +182,7 @@ jobs:
       - name: Upload preview build to test.pypi
         if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
         id: upload_preview_build_to_testpypi_weekly
-        
+
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
         with:
           repository-url: https://test.pypi.org/legacy/
@@ -205,10 +205,10 @@ jobs:
   publish_release_build_to_testpypi:
       name: Publish release build to test.pypi
       runs-on: ubuntu-latest
-      needs: [check_for_publish_release_build_to_testpypi] 
+      needs: [check_for_publish_release_build_to_testpypi]
 
       environment:
-        name: testpypi-release 
+        name: testpypi-release
         url: https://test.pypi.org/p/onnx
 
       permissions:
@@ -239,7 +239,7 @@ jobs:
             repository-url: https://test.pypi.org/legacy/
             verbose: true
             print-hash: true
-  
+
 
   check_for_publish_preview_build_to_pypi_weekly:
     name: Check for Publish preview build to pypi-weekly
@@ -284,12 +284,12 @@ jobs:
 
       - name: Upload preview_build to pypi-weekly
         id: upload_preview_build_to_pypi_weekly
-        if: (github.ref == 'refs/heads/main') 
+        if: (github.ref == 'refs/heads/main')
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
-        with:   
+        with:
           repository-url: https://upload.pypi.org/legacy/
-          verbose: true     
-          print-hash: true  
+          verbose: true
+          print-hash: true
 
 
   publish_release_build_to_pypi:
@@ -306,13 +306,13 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0        
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0        
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           pattern: sdist
           path: dist
@@ -321,10 +321,10 @@ jobs:
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
-        with:   
+        with:
           repository-url: https://upload.pypi.org/legacy/
-          verbose: true     
-          print-hash: true        
+          verbose: true
+          print-hash: true
 
   test_source_dist:
     name: test source distribution
