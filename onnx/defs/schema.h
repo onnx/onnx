@@ -427,11 +427,7 @@ class OpSchema final {
 
   struct Attribute final {
     Attribute(std::string name_, std::string description_, AttributeProto::AttributeType type_, bool required_)
-        : name(std::move(name_)),
-          description(std::move(description_)),
-          type(type_),
-          required(required_),
-          default_value() {}
+        : name(std::move(name_)), description(std::move(description_)), type(type_), required(required_) {}
 
     Attribute(std::string name_, std::string description_, AttributeProto default_value_)
         : name(std::move(name_)),
@@ -729,11 +725,11 @@ class OpSchema final {
   }
 
   ONNX_API bool has_type_and_shape_inference_function() const {
-    return tensor_inference_function_ ? true : false;
+    return static_cast<bool>(tensor_inference_function_);
   }
 
   ONNX_API bool has_data_propagation_function() const {
-    return data_propagation_function_ ? true : false;
+    return static_cast<bool>(data_propagation_function_);
   }
 
   ONNX_API std::vector<int> function_opset_versions() const {
@@ -852,7 +848,7 @@ class OpSchema final {
   std::string doc_;
   // Default domain value ("") means it's ONNX domain.
   std::string domain_ = ONNX_DOMAIN;
-  std::unordered_map<std::string, Attribute> attributes_{};
+  std::unordered_map<std::string, Attribute> attributes_;
   bool allows_unchecked_attributes_ = false;
   std::vector<FormalParameter> inputs_;
   std::vector<FormalParameter> outputs_;
@@ -1091,7 +1087,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       }
       auto lower_bound_incl = ver_range_it->second.first;
       auto upper_bound_incl = ver_range_it->second.second;
-      if (!(lower_bound_incl <= ver && upper_bound_incl >= ver)) {
+      if (lower_bound_incl > ver || upper_bound_incl < ver) {
         std::stringstream err;
         err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
             << ") from file " << op_schema.file() << " line " << op_schema.line() << ", but its version is not "
@@ -1348,9 +1344,6 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
 #define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                      \
   static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce(op_schema_register_once##name##Counter) ONNX_UNUSED = \
       OpSchema(#name, __FILE__, __LINE__)
-
-// Helper function
-size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
 ONNX_API inline std::string GenerateOptionalArgumentsDoc() {
   return "This operator has **optional** inputs/outputs. "

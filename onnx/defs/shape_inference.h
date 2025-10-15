@@ -326,7 +326,7 @@ inline bool hasShape(const TypeProto& type) {
 
 template <typename Context>
 inline bool hasInputShape(const Context& ctx, size_t n) {
-  return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
+  return ctx.getNumInputs() > n && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
 }
 
 template <typename Context>
