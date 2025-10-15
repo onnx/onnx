@@ -182,7 +182,7 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["cmake/ONNXConfig**.in", "CMakeLists.txt", "cmake/**cmake", "cmake/"]
+path = ["cmake/ONNXConfig**.in", "CMakeLists.txt", "cmake/**cmake", "cmake/", "onnx/test/cmake/CMakeLists.txt"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
