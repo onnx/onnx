@@ -28,8 +28,6 @@ namespace ONNX_NAMESPACE {
 // Other positive integer means the ONNX schemas for the specified version have been loaded
 int OpSchemaRegistry::loaded_schema_version = -1;
 
-constexpr int OpSchema::kUninitializedSinceVersion;
-
 // By default if opset_version_to_load=0, it registers all opset schema for all opset versions
 // Otherwise, it only registers the latest schema according to opset_version_to_load
 void RegisterSchema(

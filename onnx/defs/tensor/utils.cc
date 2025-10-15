@@ -149,7 +149,7 @@ void resizeShapeInferenceHelper(
               ").");
         }
       } else {
-        dim->set_dim_value(static_cast<int64_t>(dim_value));
+        dim->set_dim_value(dim_value);
       } // dim->has_dim_value()
     } // input_shape.dim(i).has_dim_value()
   }
@@ -348,7 +348,7 @@ void resizeShapeInferenceHelper_opset7_to_10(
               ").");
         }
       } else {
-        dim->set_dim_value(static_cast<int64_t>(dim_value));
+        dim->set_dim_value(dim_value);
       } // dim->has_dim_value()
     } // input_shape.dim(i).has_dim_value()
   }

@@ -1552,7 +1552,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
           std::vector<bool> unresolvedZeros(targetShape.size(), false);
           int64_t outputProduct = 1;
-          for (int i = 0; i < static_cast<int>(targetShape.size()); ++i) {
+          for (size_t i = 0; i < targetShape.size(); ++i) {
             // Add a new dimension to outputShape
             auto* new_dim = outputShape->add_dim();
             if (targetShape[i] == -1) {
@@ -1569,7 +1569,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // inferred, set the corresponding  unresolvedZeros flag to true.
               unresolvedZeros[i] = true;
               if (dataInputTensorType.has_shape()) {
-                if (i >= dataInputTensorType.shape().dim_size()) {
+                if (i >= static_cast<size_t>(dataInputTensorType.shape().dim_size())) {
                   fail_shape_inference("Invalid position of 0");
                 }
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
@@ -2324,7 +2324,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
             const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
             // we can infer the output rank - it never changes
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             }
             return;
@@ -2386,7 +2386,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+          for (int i = 0; i < input_rank; ++i) {
             // first update rank of output dim
             auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             const auto& input_dim = input_shape.dim((int)i);
@@ -4381,7 +4381,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "to the number of input dimensions.");
             }
 
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
@@ -4392,7 +4392,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Infer output shape's rank in any case (if repeats data is not
             // available)
             auto* output_shape_0 = getOutputShape(ctx, 0);
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               output_shape_0->add_dim();
             }
           }
@@ -5456,7 +5456,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
@@ -5468,7 +5468,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // Infer output shapes' rank in any case
             auto* output_shape_0 = getOutputShape(ctx, 0);
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               output_shape_0->add_dim();
             }
           }
@@ -6144,7 +6144,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
             const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
             // we can infer the output rank - it never changes
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             }
             return;
@@ -6206,10 +6206,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+          for (int i = 0; i < input_rank; ++i) {
             // first update rank of output dim
             auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-            const auto& input_dim = input_shape.dim((int)i);
+            const auto& input_dim = input_shape.dim(i);
             if (input_dim.has_dim_value()) {
               output_dim->set_dim_value(input_dim.dim_value());
             } else if (input_dim.has_dim_param()) {
@@ -6832,7 +6832,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("The input is not evenly splittable");
             }
             int chunk_size = split_dim_value / num_outputs;
-            for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
+            for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
               split.push_back(chunk_size);
             }
           }
@@ -6902,7 +6902,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-          for (size_t i = 0; (int64_t)i < input_shape.dim_size(); ++i) {
+          for (int i = 0; i < input_shape.dim_size(); ++i) {
             auto* newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             if (ctx.getInputType(0)->tensor_type().shape().dim((int)i).has_dim_value()) {
               newdim->set_dim_value(
@@ -7260,7 +7260,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
@@ -7272,7 +7272,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // Infer output shapes' rank in any case
             auto* output_shape_0 = getOutputShape(ctx, 0);
-            for (size_t i = 0; static_cast<int64_t>(i) < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               output_shape_0->add_dim();
             }
           }
