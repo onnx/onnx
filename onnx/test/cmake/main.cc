@@ -6,23 +6,22 @@
 #include <onnx/onnx_pb.h>
 
 #include <cstdio>
-using namespace ONNX_NAMESPACE;
+#include <string>
 int main() {
   puts("Link ONNX successfully!");
-  std::vector<std::string> all_fixed_size_types;
 
-    std::vector<std::string> all_tensor_types = OpSchema::all_tensor_types_ir9();
-    all_fixed_size_types.insert(all_fixed_size_types.end(), all_tensor_types.begin(), all_tensor_types.end());
+  auto all_tensor_types = ONNX_NAMESPACE::OpSchema::all_tensor_types_ir9();
 
-    ONNX_OPERATOR_SCHEMA(MemcpyToHost)
-        .Input(0, "X", "input", "T")
-        .Output(0, "Y", "output", "T")
-        .TypeConstraint(
-            "T",
-            all_fixed_size_types,
-            "Constrain to all fixed size tensor and sequence types. If the dtype attribute is not provided this must be a valid output type.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
-        .SetDoc(R"DOC(
+  // Test ONNX_OPERATOR_SCHEMA macro, which is borrowed from onnxruntime
+  ONNX_OPERATOR_SCHEMA(MemcpyToHost)
+      .Input(0, "X", "input", "T")
+      .Output(0, "Y", "output", "T")
+      .TypeConstraint(
+          "T",
+          all_tensor_types,
+          "Constrain to all fixed size tensor and sequence types. If the dtype attribute is not provided this must be a valid output type.")
+      .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput)
+      .SetDoc(R"DOC(
 Internal copy node
 )DOC");
 
