@@ -223,7 +223,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("Differentiable", OpSchema::Differentiable)
       .value("NonDifferentiable", OpSchema::NonDifferentiable);
 
-  py::enum_<OpSchema::NodeDeterminism>(op_schema, "NodeDeterminism")
+  nb::enum_<OpSchema::NodeDeterminism>(op_schema, "NodeDeterminism")
       .value("Deterministic", OpSchema::NodeDeterminism::Deterministic)
       .value("NonDeterministic", OpSchema::NodeDeterminism::NonDeterministic)
       .value("Unknown", OpSchema::NodeDeterminism::Unknown);
@@ -341,7 +341,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   op_schema
       .def(
-<<<<<<< HEAD
           "__init__",
           [](OpSchema* self,
              std::string name,
@@ -351,39 +350,12 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              std::vector<OpSchema::FormalParameter> inputs,
              std::vector<OpSchema::FormalParameter> outputs,
              std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
-             std::vector<OpSchema::Attribute> attributes) {
+             std::vector<OpSchema::Attribute> attributes,
+             OpSchema::NodeDeterminism node_determinism) {
             new (self) OpSchema();
-||||||| parent of b56b0cef (Add node determinism attribute to operator schemas)
-          py::init([](std::string name,
-                      std::string domain,
-                      int since_version,
-                      const std::string& doc,
-                      std::vector<OpSchema::FormalParameter> inputs,
-                      std::vector<OpSchema::FormalParameter> outputs,
-                      std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
-                      std::vector<OpSchema::Attribute> attributes) {
-            auto self = OpSchema();
-=======
-          py::init([](std::string name,
-                      std::string domain,
-                      int since_version,
-                      const std::string& doc,
-                      std::vector<OpSchema::FormalParameter> inputs,
-                      std::vector<OpSchema::FormalParameter> outputs,
-                      std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
-                      std::vector<OpSchema::Attribute> attributes,
-                      OpSchema::NodeDeterminism node_determinism) {
-            auto self = OpSchema();
->>>>>>> b56b0cef (Add node determinism attribute to operator schemas)
 
-<<<<<<< HEAD
             self->SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
-||||||| parent of b56b0cef (Add node determinism attribute to operator schemas)
-            self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
-=======
-            self.SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
-            self.SetNodeDeterminism(node_determinism);
->>>>>>> b56b0cef (Add node determinism attribute to operator schemas)
+            self->SetNodeDeterminism(node_determinism);
             // Add inputs and outputs
             for (auto i = 0; i < inputs.size(); ++i) {
               self->Input(i, std::move(inputs[i]));
@@ -417,20 +389,10 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               std::string /* type_str */,
               std::vector<std::string> /* constraints */,
               std::string /* description */>>{},
-<<<<<<< HEAD
-          nb::arg("attributes") = std::vector<OpSchema::Attribute>{})
+          nb::arg("attributes") = std::vector<OpSchema::Attribute>{},
+          nb::arg("node_determinism") = OpSchema::NodeDeterminism::Unknown)
       .def_prop_rw("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
       .def_prop_rw(
-||||||| parent of b56b0cef (Add node determinism attribute to operator schemas)
-          py::arg("attributes") = std::vector<OpSchema::Attribute>{})
-      .def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
-      .def_property(
-=======
-          py::arg("attributes") = std::vector<OpSchema::Attribute>{},
-          py::arg("node_determinism") = OpSchema::NodeDeterminism::Unknown)
-      .def_property("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
-      .def_property(
->>>>>>> b56b0cef (Add node determinism attribute to operator schemas)
           "domain", &OpSchema::domain, [](OpSchema& self, const std::string& domain) { self.SetDomain(domain); })
       .def_prop_rw("doc", &OpSchema::doc, [](OpSchema& self, const std::string& doc) { self.SetDoc(doc); })
       .def_prop_ro("file", &OpSchema::file)
@@ -456,7 +418,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                 all_function_opset_versions.end());
             return all_function_opset_versions;
           })
-<<<<<<< HEAD
       .def_prop_ro("min_input", &OpSchema::min_input)
       .def_prop_ro("max_input", &OpSchema::max_input)
       .def_prop_ro("min_output", &OpSchema::min_output)
@@ -467,30 +428,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_prop_ro("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
       .def_prop_ro("has_data_propagation_function", &OpSchema::has_data_propagation_function)
       .def_prop_ro("type_constraints", &OpSchema::typeConstraintParams)
-||||||| parent of b56b0cef (Add node determinism attribute to operator schemas)
-      .def_property_readonly("min_input", &OpSchema::min_input)
-      .def_property_readonly("max_input", &OpSchema::max_input)
-      .def_property_readonly("min_output", &OpSchema::min_output)
-      .def_property_readonly("max_output", &OpSchema::max_output)
-      .def_property_readonly("attributes", &OpSchema::attributes)
-      .def_property_readonly("inputs", &OpSchema::inputs)
-      .def_property_readonly("outputs", &OpSchema::outputs)
-      .def_property_readonly("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
-      .def_property_readonly("has_data_propagation_function", &OpSchema::has_data_propagation_function)
-      .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
-=======
-      .def_property_readonly("min_input", &OpSchema::min_input)
-      .def_property_readonly("max_input", &OpSchema::max_input)
-      .def_property_readonly("min_output", &OpSchema::min_output)
-      .def_property_readonly("max_output", &OpSchema::max_output)
-      .def_property_readonly("attributes", &OpSchema::attributes)
-      .def_property_readonly("inputs", &OpSchema::inputs)
-      .def_property_readonly("outputs", &OpSchema::outputs)
-      .def_property_readonly("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
-      .def_property_readonly("has_data_propagation_function", &OpSchema::has_data_propagation_function)
-      .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
-      .def_property_readonly("node_determinism", &OpSchema::GetNodeDeterminism)
->>>>>>> b56b0cef (Add node determinism attribute to operator schemas)
+      .def_prop_ro("node_determinism", &OpSchema::GetNodeDeterminism)
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
       .def(
           "_infer_node_outputs",
