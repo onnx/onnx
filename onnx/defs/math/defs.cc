@@ -1957,7 +1957,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::numeric_types_for_math_reduction_ir4(),
-            "Constrain input and output types to high-precision numeric tensors.")
+            "Constrain input and output types to numeric tensors.")
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 
@@ -2031,7 +2031,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::numeric_types_for_math_reduction_ir4(),
-            "Constrain input and output types to high-precision numeric tensors.")
+            "Constrain input and output types to numeric tensors.")
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 

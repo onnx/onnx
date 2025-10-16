@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 185/197 (93.91%, 5 generators excluded) common operators.
+Node tests have covered 185/198 (93.43%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -28106,6 +28106,9 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 
 ## &#x1F494;No Cover Common Operators
 ### ConcatFromSequence (call for test cases)
+
+
+### CumProd (call for test cases)
 
 
 ### GlobalLpPool (call for test cases)
