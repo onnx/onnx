@@ -357,7 +357,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_CumProd(self) -> None:
         self._test_op_upgrade(
             "CumProd",
-            23,
+            24,
             [[3, 4, 5], []],
             [[3, 4, 5]],
             [TensorProto.FLOAT, TensorProto.INT64],
