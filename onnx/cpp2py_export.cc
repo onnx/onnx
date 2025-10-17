@@ -223,6 +223,11 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("Differentiable", OpSchema::Differentiable)
       .value("NonDifferentiable", OpSchema::NonDifferentiable);
 
+  nb::enum_<OpSchema::NodeDeterminism>(op_schema, "NodeDeterminism")
+      .value("Deterministic", OpSchema::NodeDeterminism::Deterministic)
+      .value("NonDeterministic", OpSchema::NodeDeterminism::NonDeterministic)
+      .value("Unknown", OpSchema::NodeDeterminism::Unknown);
+
   nb::enum_<AttributeProto::AttributeType>(op_schema, "AttrType", nb::is_arithmetic())
       .value("FLOAT", AttributeProto::FLOAT)
       .value("INT", AttributeProto::INT)
@@ -345,10 +350,12 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
              std::vector<OpSchema::FormalParameter> inputs,
              std::vector<OpSchema::FormalParameter> outputs,
              std::vector<std::tuple<std::string, std::vector<std::string>, std::string>> type_constraints,
-             std::vector<OpSchema::Attribute> attributes) {
+             std::vector<OpSchema::Attribute> attributes,
+             OpSchema::NodeDeterminism node_determinism) {
             new (self) OpSchema();
 
             self->SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
+            self->SetNodeDeterminism(node_determinism);
             // Add inputs and outputs
             for (auto i = 0; i < inputs.size(); ++i) {
               self->Input(i, std::move(inputs[i]));
@@ -382,7 +389,8 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               std::string /* type_str */,
               std::vector<std::string> /* constraints */,
               std::string /* description */>>{},
-          nb::arg("attributes") = std::vector<OpSchema::Attribute>{})
+          nb::arg("attributes") = std::vector<OpSchema::Attribute>{},
+          nb::arg("node_determinism") = OpSchema::NodeDeterminism::Unknown)
       .def_prop_rw("name", &OpSchema::Name, [](OpSchema& self, const std::string& name) { self.SetName(name); })
       .def_prop_rw(
           "domain", &OpSchema::domain, [](OpSchema& self, const std::string& domain) { self.SetDomain(domain); })
@@ -420,6 +428,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_prop_ro("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
       .def_prop_ro("has_data_propagation_function", &OpSchema::has_data_propagation_function)
       .def_prop_ro("type_constraints", &OpSchema::typeConstraintParams)
+      .def_prop_ro("node_determinism", &OpSchema::GetNodeDeterminism)
       .def_static("is_infinite", [](int v) { return v == std::numeric_limits<int>::max(); })
       .def(
           "_infer_node_outputs",

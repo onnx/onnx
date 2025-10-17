@@ -174,6 +174,11 @@ class OpSchema final {
     // parameter can not be differentiable input of Gradient operator.
     NonDifferentiable = 2
   };
+  enum class NodeDeterminism : uint8_t {
+    Unknown = 0,
+    NonDeterministic = 1,
+    Deterministic = 2,
+  };
 
   // Formal parameter representation, including input/output name, typeStr,
   // description, and type constraints.
@@ -812,6 +817,9 @@ class OpSchema final {
   // Build function with information stored in opschema
   ONNX_API void BuildFunction(FunctionProto& function_body) const;
 
+  NodeDeterminism GetNodeDeterminism() const;
+  OpSchema& SetNodeDeterminism(NodeDeterminism node_determinism);
+
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
@@ -870,6 +878,8 @@ class OpSchema final {
 
   std::map<int, std::shared_ptr<FunctionProto>> opset_version_to_function_body_;
   std::map<int, ContextDependentFunctionBodyBuilder> opset_version_to_function_builder_;
+
+  NodeDeterminism node_determinism_ = NodeDeterminism::Unknown;
 };
 
 // Map type to store operator schemas. The format is,

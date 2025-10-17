@@ -194,6 +194,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr("shape", "The shape of the output tensor.", AttributeProto::INTS)
         .Output(0, "output", "Output tensor of random values drawn from uniform distribution", "T")
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
@@ -229,6 +230,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr("shape", "The shape of the output tensor.", AttributeProto::INTS)
         .Output(0, "output", "Output tensor of random values drawn from normal distribution", "T")
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
@@ -269,6 +271,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
         .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr)
             propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
@@ -315,6 +318,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
         .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr)
             propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
@@ -359,6 +363,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2")
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input types to float tensors.")
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain output types to integral tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto dtype = ctx.getAttribute("dtype");
           auto dataType = TensorProto_DataType::TensorProto_DataType_INT32;
@@ -552,6 +557,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           propagateShapeFromInputToOutput(ctx, 0, 0);
         })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               if (ctx.getInputType(0) == nullptr) {
