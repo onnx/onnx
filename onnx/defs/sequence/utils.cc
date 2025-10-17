@@ -13,7 +13,7 @@ namespace sequence {
 namespace utils {
 
 // Common documentation for SplitToSequence operator, versions 11 and 24
-static const char* SplitToSequence_ver11_doc =
+static constexpr const char* SplitToSequence_ver11_doc =
     R"DOC(
 Split a tensor into a sequence of tensors, along the specified 'axis'.
 Lengths of the parts can be specified using the optional argument 'split'.

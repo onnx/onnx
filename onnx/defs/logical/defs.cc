@@ -125,7 +125,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to all (non-complex) tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor."));
 
-static const char* Not_ver1_doc = R"DOC(
+static constexpr const char* Not_ver1_doc = R"DOC(
 Returns the negation of the input tensor element-wise.
 )DOC";
 
@@ -139,7 +139,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", {"tensor(bool)"}, "Constrain input/output to boolean tensors.")
         .TypeAndShapeInferenceFunction(unaryLogicalOpInference));
 
-static const char* BitShift_ver11_doc = R"DOC(
+static constexpr const char* BitShift_ver11_doc = R"DOC(
 Bitwise shift operator performs element-wise operation. For each input element, if the
 attribute "direction" is "RIGHT", this operator moves its binary representation toward
 the right side so that the input value is effectively decreased. If the attribute "direction"
@@ -221,7 +221,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
-static const char* BitwiseNot_ver18_doc = R"DOC(
+static constexpr const char* BitwiseNot_ver18_doc = R"DOC(
 Returns the bitwise not of the input tensor element-wise.
 )DOC";
 
