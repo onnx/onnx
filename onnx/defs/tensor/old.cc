@@ -2467,17 +2467,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Transpose_ver23_doc = R"DOC(
-Transpose the input tensor similar to numpy.transpose. For example, when
-perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-will be (2, 1, 3).
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
     23,
     OpSchema()
-        .SetDoc(Transpose_ver23_doc)
+        .SetDoc(Transpose_doc)
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions, "
@@ -2538,17 +2532,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Transpose_ver13_doc = R"DOC(
-Transpose the input tensor similar to numpy.transpose. For example, when
-perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-will be (2, 1, 3).
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
     21,
     OpSchema()
-        .SetDoc(Transpose_ver13_doc)
+        .SetDoc(Transpose_doc)
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions, "
@@ -2613,7 +2601,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
     13,
     OpSchema()
-        .SetDoc(Transpose_ver13_doc)
+        .SetDoc(Transpose_doc)
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions, "
@@ -2673,17 +2661,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Transpose_ver1_doc = R"DOC(
-Transpose the input tensor similar to numpy.transpose. For example, when
-perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-will be (2, 1, 3).
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
     1,
     OpSchema()
-        .SetDoc(Transpose_ver1_doc)
+        .SetDoc(Transpose_doc)
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions, "
