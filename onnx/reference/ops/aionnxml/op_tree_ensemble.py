@@ -104,8 +104,7 @@ class Node:
     def predict(self, x: np.ndarray) -> float:
         if self.compare(x):
             return self.true_branch.predict(x)
-        else:
-            return self.false_branch.predict(x)
+        return self.false_branch.predict(x)
 
     def _print(self, prefix: list, indent: int = 0) -> None:
         prefix.append(
@@ -221,7 +220,9 @@ class TreeEnsemble(OpRunAiOnnxMl):
         raw_values = [
             np.apply_along_axis(tree.predict, axis=1, arr=X) for tree in trees
         ]
-        weights, target_ids = zip(*[np.split(x, 2, axis=1) for x in raw_values])
+        weights, target_ids = zip(
+            *[np.split(x, 2, axis=1) for x in raw_values], strict=False
+        )
         weights = np.concatenate(weights, axis=1)
         target_ids = np.concatenate(target_ids, axis=1).astype(np.int64)
         if aggregate_function in (
@@ -237,20 +238,20 @@ class TreeEnsemble(OpRunAiOnnxMl):
             raise NotImplementedError(
                 f"aggregate_transform={aggregate_function!r} not supported yet."
             )
-        for batch_num, (w, t) in enumerate(zip(weights, target_ids)):
+        for batch_num, (w, t) in enumerate(zip(weights, target_ids, strict=False)):
             weight = w.reshape(-1)
             target_id = t.reshape(-1)
             if aggregate_function == AggregationFunction.SUM:
-                for value, tid in zip(weight, target_id):
+                for value, tid in zip(weight, target_id, strict=False):
                     result[batch_num, tid] += value
             elif aggregate_function == AggregationFunction.AVERAGE:
-                for value, tid in zip(weight, target_id):
+                for value, tid in zip(weight, target_id, strict=False):
                     result[batch_num, tid] += value / len(trees)
             elif aggregate_function == AggregationFunction.MIN:
-                for value, tid in zip(weight, target_id):
+                for value, tid in zip(weight, target_id, strict=False):
                     result[batch_num, tid] = min(result[batch_num, tid], value)
             elif aggregate_function == AggregationFunction.MAX:
-                for value, tid in zip(weight, target_id):
+                for value, tid in zip(weight, target_id, strict=False):
                     result[batch_num, tid] = max(result[batch_num, tid], value)
             else:
                 raise NotImplementedError(

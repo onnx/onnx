@@ -3222,8 +3222,6 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 )DOC";
 
-extern void ScanInferenceFunction(InferenceContext& ctx);
-
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     11,

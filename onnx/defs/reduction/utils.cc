@@ -63,7 +63,8 @@ to `False` instead of `True`.)DOC";
           "noop_with_empty_axes",
           "Defines behavior when axes is not provided or is empty. "
           "If false (default), reduction happens over all axes. "
-          "If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.",
+          "When axes is empty and this attribute is set to true, input tensor will not be reduced, "
+          "and the output tensor would be equivalent to reducing each input element separately.",
           AttributeProto::INT,
           static_cast<int64_t>(0));
       schema.Input(
@@ -73,7 +74,7 @@ to `False` instead of `True`.)DOC";
           "The default is to reduce over empty axes. "
           "When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': "
           "reduction over all axes if 'noop_with_empty_axes' is false, "
-          "or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). "
+          "else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. "
           "Accepted range is [-r, r-1] where r = rank(data).",
           "tensor(int64)",
           OpSchema::Optional,

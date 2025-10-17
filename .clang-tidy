@@ -30,14 +30,16 @@ Checks: >-
   -modernize-concat-nested-namespaces,
   -modernize-return-braced-init-list,
   -modernize-use-auto,
+  -modernize-use-integer-sign-comparison,
+  -modernize-use-ranges,
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
   readability-container-size-empty,
   readability-delete-null-pointer,
-  readability-duplicate-include
+  readability-duplicate-include,
   readability-misplaced-array-index,
   readability-non-const-parameter,
-  readability-redundant*
+  readability-redundant*,
   readability-simplify*,
   readability-static-accessed-through-instance,
   readability-static-definition-in-anonymous-namespace,

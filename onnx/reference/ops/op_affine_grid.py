@@ -64,22 +64,21 @@ def apply_affine_transform(theta_n, original_grid_homo):
         # transpose to (N, H * W, dim_2d) and then reshape to (N, H, W, dim_2d)
         grid = np.reshape(np.transpose(grid_n, (0, 2, 1)), (N, H, W, dim_2d))
         return grid.astype(np.float32)
-    else:
-        assert original_grid_homo.ndim == 4
-        N, dim_3d, dim_homo = theta_n.shape
-        assert dim_3d == 3 and dim_homo == 4
-        D, H, W, dim_homo = original_grid_homo.shape
-        assert dim_homo == 4
-        # reshape to [D * H * W, dim_homo] and then transpose to [dim_homo, D * H * W]
-        original_grid_transposed = np.transpose(
-            np.reshape(original_grid_homo, (D * H * W, dim_homo))
-        )
-        grid_n = np.matmul(
-            theta_n, original_grid_transposed
-        )  # shape (N, dim_3d, D * H * W)
-        # transpose to (N, D * H * W, dim_3d) and then reshape to (N, D, H, W, dim_3d)
-        grid = np.reshape(np.transpose(grid_n, (0, 2, 1)), (N, D, H, W, dim_3d))
-        return grid.astype(np.float32)
+    assert original_grid_homo.ndim == 4
+    N, dim_3d, dim_homo = theta_n.shape
+    assert dim_3d == 3 and dim_homo == 4
+    D, H, W, dim_homo = original_grid_homo.shape
+    assert dim_homo == 4
+    # reshape to [D * H * W, dim_homo] and then transpose to [dim_homo, D * H * W]
+    original_grid_transposed = np.transpose(
+        np.reshape(original_grid_homo, (D * H * W, dim_homo))
+    )
+    grid_n = np.matmul(
+        theta_n, original_grid_transposed
+    )  # shape (N, dim_3d, D * H * W)
+    # transpose to (N, D * H * W, dim_3d) and then reshape to (N, D, H, W, dim_3d)
+    grid = np.reshape(np.transpose(grid_n, (0, 2, 1)), (N, D, H, W, dim_3d))
+    return grid.astype(np.float32)
 
 
 class AffineGrid(OpRun):

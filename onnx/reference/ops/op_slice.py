@@ -29,17 +29,19 @@ def _slice(
         ends = np.array([ends])
     if axes is None:
         if steps is None:
-            slices = [slice(s, e) for s, e in zip(starts, ends)]
+            slices = [slice(s, e) for s, e in zip(starts, ends, strict=False)]
         else:
-            slices = [slice(s, e, d) for s, e, d in zip(starts, ends, steps)]
+            slices = [
+                slice(s, e, d) for s, e, d in zip(starts, ends, steps, strict=False)
+            ]
     else:  # noqa: PLR5501
         if steps is None:
             slices = [slice(0, a) for a in data.shape]
-            for s, e, a in zip(starts, ends, axes):
+            for s, e, a in zip(starts, ends, axes, strict=False):
                 slices[a] = slice(s, e)
         else:
             slices = [slice(0, a) for a in data.shape]
-            for s, e, a, d in zip(starts, ends, axes, steps):
+            for s, e, a, d in zip(starts, ends, axes, steps, strict=False):
                 slices[a] = slice(s, e, d)
     try:
         return data[tuple(slices)]

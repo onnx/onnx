@@ -215,6 +215,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
         })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
               auto target_type = ctx.getInputType(1);
@@ -682,7 +683,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             false)
         .SetDoc(Split_ver18_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
+          for (size_t i = 0; i < ctx.getNumOutputs(); ++i) {
             propagateElemTypeFromInputToOutput(ctx, 0, i);
           }
           if (!hasNInputShapes(ctx, 1)) {
@@ -928,7 +929,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               (hasInputShape(ctx, 4) && !ctx.getInputData(4))) {
             const auto input_rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
             // we can infer the output rank - it never changes
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             }
             return;
@@ -984,7 +985,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+          for (int i = 0; i < input_rank; ++i) {
             // first update rank of output dim
             auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             const auto& input_dim = input_shape.dim((int)i);
@@ -2126,7 +2127,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "to the number of input dimensions.");
             }
 
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim((int)i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
@@ -2137,7 +2138,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Infer output shape's rank in any case (if repeats data is not
             // available)
             auto* output_shape_0 = getOutputShape(ctx, 0);
-            for (size_t i = 0; (int64_t)i < input_rank; ++i) {
+            for (int i = 0; i < input_rank; ++i) {
               output_shape_0->add_dim();
             }
           }
@@ -3836,6 +3837,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getNumInputs() != 2) {
             fail_type_inference("CenterCropPad op must have 2 inputs.");

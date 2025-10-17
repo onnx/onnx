@@ -40,7 +40,7 @@ def softmaxcrossentropy(
         gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
         # set `ignore_index`'s loss weight to 0.
         # The loss tensor will be multiplied by this weight tensor,
-        # so `ingore_index`'s loss value will be eliminated.
+        # so `ignore_index`'s loss value will be eliminated.
         if ignore_index is not None:
             gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
                 dtype=np.float32
@@ -77,8 +77,7 @@ def softmaxcrossentropy(
             loss = loss.sum() / gather_weight.sum()
             if get_log_prob is True:
                 return loss, log_prob
-            else:
-                return loss
+            return loss
 
     if reduction == "mean":
         loss = np.mean(loss)

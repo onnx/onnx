@@ -70,5 +70,4 @@ class LayerNormalization(OpRun):
             raise NotImplementedError(
                 f"LayerNormalization not implemented for stash_type={stash_type} != 1."
             )
-        res = _layer_normalization(X, Scale, B, axis=axis, epsilon=epsilon)
-        return res
+        return _layer_normalization(X, Scale, B, axis=axis, epsilon=epsilon)

@@ -101,7 +101,7 @@ ONNX_API void convPoolShapeInference(
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+  for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
@@ -427,8 +427,8 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
       if (output_shape.dim_size() != 1) {
         fail_type_inference("'output_shape' must be rank 1 tensor.");
       }
-      if (output_shape.dim((int)0).has_dim_value() &&
-          static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
+      if (output_shape.dim(0).has_dim_value() &&
+          static_cast<int>(output_shape.dim(0).dim_value()) != input_shape.dim_size()) {
         fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
@@ -1158,7 +1158,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+  for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
@@ -1906,6 +1906,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir10(), "Constrain input and output types to float tensors.")
         .TypeConstraint("T1", OpSchema::all_float_types_ir10(), "Constrain input 'ratio' types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output 'mask' types to boolean tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasInputShape(ctx, 0)) {
@@ -2359,7 +2360,6 @@ static void col2imShapeInference(InferenceContext& ctx) {
     }
     *final_image_shape->add_dim() = image_dim_i;
   }
-  return;
 }
 
 static const char* Col2Im_ver18_doc = R"DOC(
@@ -2637,6 +2637,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input types and output Y type to float tensors.")
         .TypeConstraint("U", {"tensor(float)", "tensor(bfloat16)"}, "Type of Mean and InvStdDev tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer17, 17)
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer18, 18)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -2761,6 +2762,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
@@ -2931,6 +2933,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ".");
           }
         })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
@@ -2993,15 +2996,16 @@ The rotation ensures that the model captures both absolute and relative position
 Rotary embeddings are defined using the following algorithm:
 
 ```python
-def compute_rotary_embedding(
-    input,
-    position_ids,
-    sin_cache,
-    cos_cache,
-    interleaved=0,
-    rotary_embedding_dim=0,
-    num_heads=0,
-):
+def rotary_embedding(
+    input: np.ndarray,
+    cos_cache: np.ndarray,
+    sin_cache: np.ndarray,
+    position_ids: np.ndarray | None = None,
+    interleaved=None,
+    rotary_embedding_dim=None,
+    num_heads=None,
+) -> np.ndarray:
+    original_input_shape = input.shape
     # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
     if len(input.shape) == 4:
         input = np.transpose(input, (0, 2, 1, 3))
@@ -3017,7 +3021,7 @@ def compute_rotary_embedding(
     head_size = input.shape[3]
 
     # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-    if rotary_embedding_dim == 0:
+    if rotary_embedding_dim is None or rotary_embedding_dim == 0:
         # If rotary_embedding_dim not provided, perform full rotation by using head_size
         rotary_embedding_dim = head_size
     x_rotate = input[:, :, :, :rotary_embedding_dim]
@@ -3026,15 +3030,29 @@ def compute_rotary_embedding(
 
     # Retrieve sin and cos caches using position ids
     if position_ids is not None:
-        cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-        sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-    else:
-        cos = cos_cache
-        sin = sin_cache
-    cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-    sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-    cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-    sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+        cos_cache = cos_cache[
+            position_ids
+        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+        sin_cache = sin_cache[
+            position_ids
+        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+
+    # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    if cos_cache.shape[-1] != rotary_embedding_dim_half:
+        raise ValueError(
+            f"Last dimension of cos cache ({cos_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+        )
+    if sin_cache.shape[-1] != rotary_embedding_dim_half:
+        raise ValueError(
+            f"Last dimension of sin cache ({sin_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+        )
+
+    cos_cache = np.expand_dims(
+        cos_cache, axis=2
+    )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+    sin_cache = np.expand_dims(
+        sin_cache, axis=2
+    )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
 
     # Either divide the input in halves or interleave (based on interleaved attribute)
     if interleaved:
@@ -3044,8 +3062,8 @@ def compute_rotary_embedding(
         x1, x2 = np.split(x_rotate, 2, axis=-1)
 
     # Calculate real and imaginary values
-    real = cos * x1 - sin * x2
-    imag = sin * x1 + cos * x2
+    real = (cos_cache * x1) - (sin_cache * x2)
+    imag = (sin_cache * x1) + (cos_cache * x2)
 
     # Inserted rotated embeddings back to the original input
     if interleaved:
@@ -3059,7 +3077,7 @@ def compute_rotary_embedding(
         x_rotate = np.concatenate((real, imag), axis=-1)
     output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
     if len(original_input_shape) == 3:
-        output = np.reshape(output, input.shape)
+        output = np.reshape(output, original_input_shape)
     else:
         output = np.transpose(output, (0, 2, 1, 3))
     return output
@@ -3143,6 +3161,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Input shape is 3D, num_heads attribute must be provided");
           }
         })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {
@@ -3507,6 +3526,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
             "Constrain output 'mask' types to boolean tensors and input types.")
         .TypeAndShapeInferenceFunction(defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {

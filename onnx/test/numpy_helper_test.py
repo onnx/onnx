@@ -128,7 +128,10 @@ class TestNumpyHelper(unittest.TestCase):
             )
         )
         ref = onnx.reference.ReferenceEvaluator(onnx_model)
-        start = ref.run(None, {"X": np.array([0, 1, -2, 3], dtype=np.float32)})
+        if "UINT" in onnx.TensorProto.DataType.Name(value):
+            start = ref.run(None, {"X": np.array([0, 1, 2, 3], dtype=np.float32)})
+        else:
+            start = ref.run(None, {"X": np.array([0, 1, -2, 3], dtype=np.float32)})
         tp = numpy_helper.from_array(start[0], name="check")
         self.assertEqual(tp.data_type, value)
         back = numpy_helper.to_array(tp)

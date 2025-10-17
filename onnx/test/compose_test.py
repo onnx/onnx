@@ -563,21 +563,21 @@ class TestComposeFunctions(unittest.TestCase):
                 for value_info in g_in.output:
                     name_mapping[value_info.name] = _prefixed(prefix, value_info.name)
 
-            for n1, n0 in zip(g_out.node, g_in.node):
-                for e1, e0 in zip(n1.input, n0.input):
+            for n1, n0 in zip(g_out.node, g_in.node, strict=True):
+                for e1, e0 in zip(n1.input, n0.input, strict=True):
                     self.assertEqual(name_mapping.get(e0, e0), e1)
-                for e1, e0 in zip(n1.output, n0.output):
+                for e1, e0 in zip(n1.output, n0.output, strict=True):
                     self.assertEqual(name_mapping.get(e0, e0), e1)
-            for i1, i0 in zip(g_out.input, g_in.input):
+            for i1, i0 in zip(g_out.input, g_in.input, strict=True):
                 self.assertEqual(name_mapping.get(i0.name, i0.name), i1.name)
-            for o1, o0 in zip(g_out.output, g_in.output):
+            for o1, o0 in zip(g_out.output, g_in.output, strict=True):
                 self.assertEqual(name_mapping.get(o0.name, o0.name), o1.name)
 
-            for init1, init0 in zip(g_out.initializer, g_in.initializer):
+            for init1, init0 in zip(g_out.initializer, g_in.initializer, strict=True):
                 self.assertEqual(name_mapping.get(init0.name, init0.name), init1.name)
 
             for sparse_init1, sparse_init0 in zip(
-                g_out.sparse_initializer, g_in.sparse_initializer
+                g_out.sparse_initializer, g_in.sparse_initializer, strict=True
             ):
                 self.assertEqual(
                     name_mapping.get(
@@ -592,11 +592,11 @@ class TestComposeFunctions(unittest.TestCase):
                     sparse_init1.indices.name,
                 )
 
-            for vi1, vi0 in zip(g_out.value_info, g_in.value_info):
+            for vi1, vi0 in zip(g_out.value_info, g_in.value_info, strict=True):
                 self.assertEqual(name_mapping.get(vi0.name, vi0.name), vi1.name)
 
             if rename_nodes:
-                for n1, n0 in zip(g_out.node, g_in.node):
+                for n1, n0 in zip(g_out.node, g_in.node, strict=True):
                     self.assertEqual(_prefixed(prefix, n0.name), n1.name)
 
     def test_add_prefix_nodes(self) -> None:
@@ -646,19 +646,19 @@ class TestComposeFunctions(unittest.TestCase):
         prefix = "prefix."
         prefixed_graph = compose.add_prefix_graph(graph, prefix)
         checker.check_graph(prefixed_graph)
-        for n1, n0 in zip(prefixed_graph.node, graph.node):
+        for n1, n0 in zip(prefixed_graph.node, graph.node, strict=True):
             self.assertEqual(_prefixed(prefix, n0.name), n1.name)
-            for attribute1, attribute0 in zip(n1.attribute, n0.attribute):
+            for attribute1, attribute0 in zip(n1.attribute, n0.attribute, strict=True):
                 if attribute1.g:
                     for subgraph_n1, subgraph_n0 in zip(
-                        attribute1.g.node, attribute0.g.node
+                        attribute1.g.node, attribute0.g.node, strict=True
                     ):
                         for input_n1, input_n0 in zip(
-                            subgraph_n1.input, subgraph_n0.input
+                            subgraph_n1.input, subgraph_n0.input, strict=True
                         ):
                             self.assertEqual(_prefixed(prefix, input_n0), input_n1)
                         for output_n1, output_n0 in zip(
-                            subgraph_n1.output, subgraph_n0.output
+                            subgraph_n1.output, subgraph_n0.output, strict=True
                         ):
                             self.assertEqual(_prefixed(prefix, output_n0), output_n1)
 
@@ -677,7 +677,7 @@ class TestComposeFunctions(unittest.TestCase):
         m1 = _load_model(M1_DEF)
 
         def _check_model(m1: ModelProto, m2: ModelProto, dim_idx: int) -> None:
-            for out_g2, out_g1 in zip(m2.graph.output, m1.graph.output):
+            for out_g2, out_g1 in zip(m2.graph.output, m1.graph.output, strict=True):
                 self.assertEqual(out_g2.name, out_g1.name)
                 self.assertEqual(
                     out_g2.type.tensor_type.elem_type, out_g1.type.tensor_type.elem_type

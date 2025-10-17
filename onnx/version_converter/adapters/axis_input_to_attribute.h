@@ -87,7 +87,7 @@ class AxisInputToAttribute : public Adapter {
     }
   }
 
-  inline Node* EnsureAndReturnNode(Node* node) const {
+  Node* EnsureAndReturnNode(Node* node) const {
     ONNX_ASSERTM(node->hasAttribute(kaxis), "Axis attribute not created. This may be a bug.")
     return node;
   }

@@ -43,7 +43,7 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):
 
     if len(data.shape) == 1 and axis == 0:
         scattered = np.copy(data)
-        for pos, up in zip(indices, updates):
+        for pos, up in zip(indices, updates, strict=True):
             scattered[pos] = f(scattered[pos], up)
         return scattered
 

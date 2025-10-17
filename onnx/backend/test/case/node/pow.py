@@ -11,8 +11,7 @@ from onnx.backend.test.case.node import expect
 
 
 def pow(x, y):  # type: ignore  # noqa: A001
-    z = np.power(x, y).astype(x.dtype)
-    return z
+    return np.power(x, y).astype(x.dtype)
 
 
 class Pow(Base):

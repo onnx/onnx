@@ -569,7 +569,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         Literal literal;
         PARSE_TOKEN(literal);
         attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(static_cast<float>(std::stof(literal.value)));
+        attr.set_f(std::stof(literal.value));
       } else {
         attr.set_type(AttributeProto_AttributeType_GRAPH);
         PARSE(*attr.mutable_g());
@@ -591,7 +591,7 @@ Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, AttributeProt
         break;
       case LiteralType::FLOAT_LITERAL:
         attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(static_cast<float>(std::stof(literal.value)));
+        attr.set_f(std::stof(literal.value));
         break;
       case LiteralType::STRING_LITERAL:
         attr.set_type(AttributeProto_AttributeType_STRING);

@@ -151,12 +151,14 @@ class OpRunReduceNumpy(OpRun):
     def is_axes_empty(self, axes):
         return axes is None or axes.shape == (0,)
 
-    def handle_axes(self, axes):  # noqa: PLR0911
+    def handle_axes(self, axes, noop_with_empty_axes=False):  # noqa: PLR0911
         if isinstance(axes, tuple):
-            if len(axes) == 0:
+            if len(axes) == 0 and not noop_with_empty_axes:
                 return None
             return axes
         if axes is None:
+            if noop_with_empty_axes:
+                return ()
             return None
         if isinstance(axes, (int, tuple)):
             return axes
@@ -164,7 +166,10 @@ class OpRunReduceNumpy(OpRun):
             raise TypeError(f"axes must be an array, not {type(axes)}.")
         if len(axes.shape) == 0:
             return int(axes)
+        # np.array of shape (0,)
         if 0 in axes.shape:
+            if noop_with_empty_axes:
+                return ()
             return None
         return tuple(axes.ravel().tolist())
 

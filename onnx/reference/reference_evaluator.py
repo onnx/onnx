@@ -592,7 +592,7 @@ class ReferenceEvaluator:
                 outputs = node.run(*inputs, context=results, **linked_attributes)
             else:
                 outputs = node.run(*inputs, **linked_attributes)
-            for name, value in zip(node.output, outputs):
+            for name, value in zip(node.output, outputs, strict=False):
                 self._log(2, " + %s: %s", name, value)  # type: ignore[arg-type]
                 results[name] = value
 

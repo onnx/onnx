@@ -121,8 +121,8 @@ There are a lot of reasons for removing existing ONNX operator or function, such
 Any operator in ONNX was added because it was required by a model and/or framework. In order to deprecate such an operator we need to do the following.
 
 - Operator can’t be deprecated unless there is a replacement.
-    - Replacement can be a more general operator that supersedes the old one.
-    - Or a set of primitive operators that together can implement the same functionality and behavior of the deprecated operator (Function).
+  - Replacement can be a more general operator that supersedes the old one.
+  - Or a set of primitive operators that together can implement the same functionality and behavior of the deprecated operator (Function).
 - If the deprecated operator can be decomposed by existing operators then it must be converted to a function.
 - If replacement isn’t in ONNX standard yet, then add the replacement operator or set of operators first.
 - Add a version adapter which turns the operator into its replacement for the version converter. Example: [onnx/version_converter/adapters/upsample_9_10.h](/onnx/version_converter/adapters/upsample_9_10.h)
@@ -138,7 +138,7 @@ To make sure everyone is aware of the deprecation, the following need to happen:
 
 - Any removed operator or function from ONNX need to be mentioned in the release note.
 - Their old documentation needs to be updated to show the new replacement and the mapping between the old to the new.
-    - Only `def.cc` need to be remove, `old.cc` will remain.
-    - `old.cc` need to be updated with the mapping to the replacement.
+  - Only `def.cc` need to be remove, `old.cc` will remain.
+  - `old.cc` need to be updated with the mapping to the replacement.
 - ONNX checker need to be updated to error with a proper message.
 - All removed operators need to be appended at the end of the `operator.md` file.

@@ -62,7 +62,9 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
         n_trees = len(set(tr.atts.nodes_treeids))
 
         target_index = {}
-        for i, (tid, nid) in enumerate(zip(target_treeids, target_nodeids)):
+        for i, (tid, nid) in enumerate(
+            zip(target_treeids, target_nodeids, strict=False)
+        ):
             if (tid, nid) not in target_index:
                 target_index[tid, nid] = []
             target_index[tid, nid].append(i)

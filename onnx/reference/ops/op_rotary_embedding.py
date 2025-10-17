@@ -42,26 +42,28 @@ def rotary_embedding(
 
     # Retrieve sin and cos caches using position ids
     if position_ids is not None:
-        cos = cos_cache[
+        cos_cache = cos_cache[
             position_ids
-        ]  # Shape: [batch_size, sequence_length, head_size/2]
-        sin = sin_cache[
+        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+        sin_cache = sin_cache[
             position_ids
-        ]  # Shape: [batch_size, sequence_length, head_size/2]
-    else:
-        cos = cos_cache
-        sin = sin_cache
-    cos = cos[
-        :, :, :rotary_embedding_dim_half
-    ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-    sin = sin[
-        :, :, :rotary_embedding_dim_half
-    ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-    cos = np.expand_dims(
-        cos, axis=2
+        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+
+    # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    if cos_cache.shape[-1] != rotary_embedding_dim_half:
+        raise ValueError(
+            f"Last dimension of cos cache ({cos_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+        )
+    if sin_cache.shape[-1] != rotary_embedding_dim_half:
+        raise ValueError(
+            f"Last dimension of sin cache ({sin_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+        )
+
+    cos_cache = np.expand_dims(
+        cos_cache, axis=2
     )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-    sin = np.expand_dims(
-        sin, axis=2
+    sin_cache = np.expand_dims(
+        sin_cache, axis=2
     )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
 
     # Either divide the input in halves or interleave (based on interleaved attribute)
@@ -72,8 +74,8 @@ def rotary_embedding(
         x1, x2 = np.split(x_rotate, 2, axis=-1)
 
     # Calculate real and imaginary values
-    real = (cos * x1) - (sin * x2)
-    imag = (sin * x1) + (cos * x2)
+    real = (cos_cache * x1) - (sin_cache * x2)
+    imag = (sin_cache * x1) + (cos_cache * x2)
 
     # Inserted rotated embeddings back to the original input
     if interleaved:

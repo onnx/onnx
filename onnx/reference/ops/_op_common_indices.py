@@ -20,7 +20,7 @@ def _get_indices(i, shape):
 
 
 def _is_out(ind, shape):
-    for i, s in zip(ind, shape):
+    for i, s in zip(ind, shape, strict=True):
         if i < 0:
             return True
         if i >= s:
@@ -31,7 +31,7 @@ def _is_out(ind, shape):
 def _get_index(indices, shape):
     ind = 0
     mul = 1
-    for pos, sh in zip(reversed(indices), reversed(shape)):
+    for pos, sh in zip(reversed(indices), reversed(shape), strict=True):
         ind += pos * mul
         mul *= sh
     return ind

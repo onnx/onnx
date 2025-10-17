@@ -10,17 +10,17 @@ class SequenceMap(OpRun):
     def _run(self, input_sequence, *additional_inputs, body=None, attributes=None):
         if len(additional_inputs) == 1 and isinstance(additional_inputs[0], list):
             res = None
-            for obj1, obj2 in zip(input_sequence, additional_inputs[0]):
+            for obj1, obj2 in zip(input_sequence, additional_inputs[0], strict=False):
                 feeds = {body.input_names[0]: obj1, body.input_names[1]: obj2}
                 r = body.run(None, feeds)
                 if res is None:
                     res = [[i] for i in r]
                 else:
-                    for s, i in zip(res, r):
+                    for s, i in zip(res, r, strict=False):
                         s.append(i)
             return tuple(res)
 
-        feeds = dict(zip(body.input_names[1:], additional_inputs))
+        feeds = dict(zip(body.input_names[1:], additional_inputs, strict=False))
         res = None
         for obj in input_sequence:
             feeds[body.input_names[0]] = obj
@@ -28,6 +28,6 @@ class SequenceMap(OpRun):
             if res is None:
                 res = [[i] for i in r]
             else:
-                for s, i in zip(res, r):
+                for s, i in zip(res, r, strict=False):
                     s.append(i)
         return tuple(res)

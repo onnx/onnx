@@ -21,9 +21,7 @@ class Unsqueeze_1(OpRun):
             for a in axes:
                 sq = np.expand_dims(sq, axis=a)
         else:
-            raise RuntimeError(  # noqa: TRY004
-                "axes cannot be None for operator Unsqueeze (Unsqueeze_1)."
-            )
+            raise TypeError("axes cannot be None for operator Unsqueeze (Unsqueeze_1).")
         return (sq,)
 
 

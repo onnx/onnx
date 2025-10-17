@@ -89,7 +89,7 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void print(const T& prim) {
+  void print(const T& prim) {
     output_ << prim;
   }
 
@@ -104,21 +104,21 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void printKeyValuePair(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
+  void printKeyValuePair(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
     if (addsep)
       output_ << "," << '\n';
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     print(val);
   }
 
-  inline void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
+  void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
     output_ << "," << '\n';
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     printQuoted(val);
   }
 
   template <typename Collection>
-  inline void printSet(const char* open, const char* separator, const char* close, const Collection& coll) {
+  void printSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {
@@ -130,7 +130,7 @@ class ProtoPrinter {
   }
 
   template <typename Collection>
-  inline void printIdSet(const char* open, const char* separator, const char* close, const Collection& coll) {
+  void printIdSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {

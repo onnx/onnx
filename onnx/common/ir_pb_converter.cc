@@ -112,7 +112,7 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   }
 
   for (int i = 0; i < tp.external_data_size(); i++) {
-    ret.external_data().push_back(std::make_pair(tp.external_data(i).key(), tp.external_data(i).value()));
+    ret.external_data().emplace_back(tp.external_data(i).key(), tp.external_data(i).value());
   }
   if (tp.has_data_location()) {
     ret.data_location() = tp.data_location();

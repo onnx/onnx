@@ -34,8 +34,7 @@ def should_render_domain(domain: str, output: str) -> bool:
     is_ml = "-ml" in output
     if domain == ONNX_ML_DOMAIN:
         return is_ml
-    else:
-        return not is_ml
+    return not is_ml
 
 
 def format_name_with_domain(domain: str, schema_name: str) -> str:

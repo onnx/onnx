@@ -20,16 +20,16 @@ class ReduceSum_1(OpRunReduceNumpy):
 
 class ReduceSum_13(OpRunReduceNumpy):
     def _run(self, x, axes=None, keepdims=None, noop_with_empty_axes=None):
-        if self.is_axes_empty(axes) and noop_with_empty_axes:
-            return (x,)
-        axes = self.handle_axes(axes)
+        axes = self.handle_axes(axes, noop_with_empty_axes)
+
         try:
             res = np.sum(x, axis=axes, keepdims=keepdims, dtype=x.dtype)
             if keepdims == 0 and not isinstance(res, np.ndarray):
                 # The runtime must return a numpy array of a single float.
                 res = np.array(res)
-            return (res,)  # type: ignore  # noqa: TRY300
         except TypeError as e:
             raise TypeError(
                 f"Unable to reduce shape {x.shape!r} with axes={axes!r} and keepdims={keepdims}."
             ) from e
+        else:
+            return (res,)

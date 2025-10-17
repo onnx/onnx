@@ -186,10 +186,9 @@ class Extractor:
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
         local_functions = self._collect_referred_local_functions(nodes)
-        model = self._make_model(
+        return self._make_model(
             nodes, inputs, outputs, initializer, value_info, local_functions
         )
-        return model
 
 
 def extract_model(

@@ -21,9 +21,7 @@ class Scan(Base):
         sum_in = onnx.helper.make_tensor_value_info(
             "sum_in", onnx.TensorProto.FLOAT, [2]
         )
-        next = onnx.helper.make_tensor_value_info(  # noqa: A001
-            "next", onnx.TensorProto.FLOAT, [2]
-        )
+        next_ = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
         sum_out = onnx.helper.make_tensor_value_info(
             "sum_out", onnx.TensorProto.FLOAT, [2]
         )
@@ -37,7 +35,7 @@ class Scan(Base):
             "Identity", inputs=["sum_out"], outputs=["scan_out"]
         )
         scan_body = onnx.helper.make_graph(
-            [add_node, id_node], "scan_body", [sum_in, next], [sum_out, scan_out]
+            [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
         )
         # create scan op node
         no_sequence_lens = ""  # optional input, not supplied
@@ -74,9 +72,7 @@ class Scan(Base):
         sum_in = onnx.helper.make_tensor_value_info(
             "sum_in", onnx.TensorProto.FLOAT, [2]
         )
-        next = onnx.helper.make_tensor_value_info(  # noqa: A001
-            "next", onnx.TensorProto.FLOAT, [2]
-        )
+        next_ = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
         sum_out = onnx.helper.make_tensor_value_info(
             "sum_out", onnx.TensorProto.FLOAT, [2]
         )
@@ -90,7 +86,7 @@ class Scan(Base):
             "Identity", inputs=["sum_out"], outputs=["scan_out"]
         )
         scan_body = onnx.helper.make_graph(
-            [add_node, id_node], "scan_body", [sum_in, next], [sum_out, scan_out]
+            [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
         )
         # create scan op node
         node = onnx.helper.make_node(

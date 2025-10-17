@@ -48,6 +48,7 @@ ONNX_DISABLE_STATIC_REGISTRATION = os.getenv("ONNX_DISABLE_STATIC_REGISTRATION")
 ONNX_PREVIEW_BUILD = os.getenv("ONNX_PREVIEW_BUILD") == "1"
 
 USE_MSVC_STATIC_RUNTIME = os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1"
+USE_NINJA = os.getenv("USE_NINJA", "1") != "0"
 DEBUG = os.getenv("DEBUG", "0") == "1"
 COVERAGE = os.getenv("COVERAGE", "0") == "1"
 
@@ -174,6 +175,9 @@ class CmakeBuild(setuptools.Command):
                 "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
             ]
+            if USE_NINJA and not WINDOWS and shutil.which("ninja"):
+                cmake_args.append("-DCMAKE_GENERATOR=Ninja")
+
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
             if COVERAGE or DEBUG:

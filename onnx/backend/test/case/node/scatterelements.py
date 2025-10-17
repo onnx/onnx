@@ -63,18 +63,18 @@ def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type:
             make_indices_for_duplicate(idx),
             make_indices_for_duplicate(updates_idx),
         )
-        for iter, idx_set in enumerate(idx):  # noqa: A001
+        for iter_, idx_set in enumerate(idx):
             if reduction == "add":
-                scattered[idx_set] += updates[updates_idx[iter]]
+                scattered[idx_set] += updates[updates_idx[iter_]]
             elif reduction == "mul":
-                scattered[idx_set] *= updates[updates_idx[iter]]
+                scattered[idx_set] *= updates[updates_idx[iter_]]
             elif reduction == "max":
                 scattered[idx_set] = np.maximum(
-                    scattered[idx_set], updates[updates_idx[iter]]
+                    scattered[idx_set], updates[updates_idx[iter_]]
                 )
             elif reduction == "min":
                 scattered[idx_set] = np.minimum(
-                    scattered[idx_set], updates[updates_idx[iter]]
+                    scattered[idx_set], updates[updates_idx[iter_]]
                 )
     return scattered
 

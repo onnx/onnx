@@ -68,18 +68,23 @@ with open('model.onnx', 'wb') as f:
 The second way is formally proving the existence of the Jacobian matrix (or tensor) from outputs to inputs with at least two numerical examples. In this case, the reviewer should go through the math and confirm if the numerical result is correct. The author should add enough details so that any STEM graduated student can easily review it.
 
 For example, to show the differentiability of Add, the author may first write down its equation:
+
 ```
 C = A + B
 ```
+
 For the sake of simplicity, assume `A` and `B` are same-shape vector.
+
 ```
 A = [a1, a2]^T
 B = [b1, b2]^T
 C = [c1, c2]^T
 ```
+
 Here we use the symbol `^T` to denote transpose of the attached matrix or vector.
 Let `X = [a1, a2, b1, b2]^T` and `Y = [c1, c2]^T` and consider Add as a function which maps `X` to `Y`.
 Then, this function's Jacobian matrix is a 4-by-2 matrix,
+
 ```
 J = [[dc1/da1, dc2/da1],
      [dc1/da2, dc2/da2],
@@ -90,16 +95,21 @@ J = [[dc1/da1, dc2/da1],
      [1, 0],
      [0, 1]]
 ```
+
 If
+
 ```
 dL/dC = [dL/dc1, dL/dc2]^T,
 ```
+
 then `dL/dA = [dL/da1, dL/da2]^T` and `dL/dB = [dL/db1, dL/db2]^T` can be computed from elements in
+
 ```
   [[dL/da1], [dL/da2], [dL/db1], [dL/db2]]
 = J * dL/dC
 = [[dL/dc1], [dL/dc2], [dL/dc1], [dL/dc2]]
 ```
+
 where `*` is standard matrix multiplication.
 If `dL/dC = [0.2, 0.8]^T`, then `dL/dA = [0.2, 0.8]^T` and `dL/dB = [0.2, 0.8]^T`.
 Notice that the procedure to compute `dL/dA` and `dL/dB` from `dL/dC` is usually called backward of an operator.

@@ -12,11 +12,11 @@ ONNX supports two types of broadcasting: multidirectional broadcasting and
 unidirectional broadcasting. We will introduce these two types of broadcasting
 respectively in the following sections.
 
-
 ## Multidirectional Broadcasting
 
 In ONNX, a set of tensors are multidirectional broadcastable to the same shape
 if one of the following is true:
+
 - The tensors all have exactly the same shape.
 - The tensors all have the same number of dimensions and the length of
 each dimensions is either a common length or 1.
@@ -34,6 +34,7 @@ For example, the following tensor shapes are supported by multidirectional broad
 Multidirectional broadcasting is the same as [Numpy's broadcasting](https://docs.scipy.org/doc/numpy/user/basics.broadcasting.html#general-broadcasting-rules).
 
 Multidirectional broadcasting is supported by the following operators in ONNX:
+
 - [Add](Operators.md#Add)
 - [And](Operators.md#And)
 - [Div](Operators.md#Div)
@@ -55,6 +56,7 @@ Multidirectional broadcasting is supported by the following operators in ONNX:
 
 In ONNX, tensor B is unidirectional broadcastable to tensor A
 if one of the following is true:
+
 - Tensor A and B both have exactly the same shape.
 - Tensor A and B all have the same number of dimensions and the length of
 each dimensions is either a common length or B's length is 1.
@@ -72,5 +74,6 @@ In the following examples, tensor B is unidirectional broadcastable to tensor A:
 - shape(A) = (2, 3, 4, 5), shape(B) = (1, 3, 1, 5), ==> shape(result) = (2, 3, 4, 5)
 
 Unidirectional broadcasting is supported by the following operators in ONNX:
+
 - [Gemm](Operators.md#Gemm)
 - [PRelu](Operators.md#PRelu)

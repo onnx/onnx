@@ -31,12 +31,12 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             inputs = [inputs]
         if isinstance(inputs, list):
             if len(inputs) == len(self._session.input_names):
-                feeds = dict(zip(self._session.input_names, inputs))
+                feeds = dict(zip(self._session.input_names, inputs, strict=True))
             else:
                 feeds = {}
                 pos_inputs = 0
                 for inp, tshape in zip(
-                    self._session.input_names, self._session.input_types
+                    self._session.input_names, self._session.input_types, strict=True
                 ):
                     shape = tuple(d.dim_value for d in tshape.tensor_type.shape.dim)
                     if shape == inputs[pos_inputs].shape:
@@ -48,8 +48,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             feeds = inputs
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
-        outs = self._session.run(None, feeds)
-        return outs
+        return self._session.run(None, feeds)
 
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):

@@ -93,24 +93,23 @@ class Sequence(Base):
             output_types: list[TensorProto.DataType],
             initializers: list[TensorProto] | None = None,
         ) -> onnx.helper.GraphProto:
-            graph = onnx.helper.make_graph(
+            return onnx.helper.make_graph(
                 nodes=nodes,
                 name="Sequence",
                 inputs=[
                     onnx.helper.make_tensor_value_info(name, input_type, input_shape)
                     for name, input_type, input_shape in zip(
-                        input_names, input_types, input_shapes
+                        input_names, input_types, input_shapes, strict=False
                     )
                 ],
                 outputs=[
                     onnx.helper.make_tensor_value_info(name, output_type, output_shape)
                     for name, output_type, output_shape in zip(
-                        output_names, output_types, output_shapes
+                        output_names, output_types, output_shapes, strict=False
                     )
                 ],
                 initializer=initializers,
             )
-            return graph
 
         # 1st testcase - insert and at.
         # 1. SequenceEmpty:         -> []

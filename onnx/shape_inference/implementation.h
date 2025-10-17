@@ -121,7 +121,7 @@ struct GraphInferenceContext {
 
 class GraphInferencerImpl : public GraphInferencer {
  public:
-  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context) : g_{&g}, context_{&context}, options_() {}
+  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context) : g_{&g}, context_{&context} {}
   GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context, const ShapeInferenceOptions& options)
       : g_{&g}, context_{&context}, options_(options) {}
 
