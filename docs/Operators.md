@@ -38157,7 +38157,7 @@ expect(
 
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
 
-  Returns a transpose of the input tensor. (Similar to 1numpy.transpose1).
+  Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
   The optional attribute `perm` must be a permutation of the dimensions of
   the input tensor. Axis `i` of the output tensor corresponds to the axis
   `perm[i]` of the input tensor.
