@@ -3,8 +3,6 @@
  */
 
 #include <algorithm>
-#include <cmath>
-#include <limits>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
