@@ -134,7 +134,7 @@ def _replace_constant_of_shape_with_range(
     nodes.insert(1, cst1)
 
     if isinstance(onx, GraphProto):
-        graph = make_graph(
+        return make_graph(
             nodes,
             onx.name,
             onx.input,
@@ -142,9 +142,8 @@ def _replace_constant_of_shape_with_range(
             initializer=onx.initializer,
             sparse_initializer=onx.sparse_initializer,
         )
-        return graph
     if isinstance(onx, FunctionProto):
-        new_onx = make_function(
+        return make_function(
             onx.domain,
             onx.name,
             onx.input,
@@ -152,7 +151,6 @@ def _replace_constant_of_shape_with_range(
             nodes,
             opset_imports=onx.opset_import,
         )
-        return new_onx
     raise TypeError(f"Not implemented for type {type(onx)}.")
 
 
@@ -189,7 +187,7 @@ def _replace_constant_of_shape_value(
         nodes[inode] = up
 
     if isinstance(onx, GraphProto):
-        graph = make_graph(
+        return make_graph(
             nodes,
             onx.name,
             onx.input,
@@ -197,9 +195,8 @@ def _replace_constant_of_shape_value(
             initializer=onx.initializer,
             sparse_initializer=onx.sparse_initializer,
         )
-        return graph
     if isinstance(onx, FunctionProto):
-        new_onx = make_function(
+        return make_function(
             onx.domain,
             onx.name,
             onx.input,
@@ -207,7 +204,6 @@ def _replace_constant_of_shape_value(
             nodes,
             opset_imports=onx.opset_import,
         )
-        return new_onx
     raise TypeError(f"Not implemented for type {type(onx)}.")
 
 

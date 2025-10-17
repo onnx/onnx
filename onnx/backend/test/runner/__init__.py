@@ -51,6 +51,7 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
                     if i == times:
                         raise
                     time.sleep(5 * i)
+            return None
 
         return wrapped
 

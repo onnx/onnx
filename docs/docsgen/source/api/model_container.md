@@ -1,6 +1,5 @@
 # onnx.model_container
 
-
 ## ModelContainer
 
 ```{eval-rst}

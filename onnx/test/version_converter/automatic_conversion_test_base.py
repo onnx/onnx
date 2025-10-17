@@ -84,7 +84,7 @@ class TestAutomaticConversion(unittest.TestCase):
         letters = list(string.ascii_lowercase)[:n_inputs]
         input_names = [
             letter if shape != "" else ""
-            for (letter, shape) in zip(letters, input_shapes)
+            for (letter, shape) in zip(letters, input_shapes, strict=True)
         ]
         if input_types is None:
             input_types = [TensorProto.FLOAT] * n_inputs
@@ -98,7 +98,12 @@ class TestAutomaticConversion(unittest.TestCase):
         )
         inputs: list[ValueInfoProto] = []
         for name, ttype, shape, is_seq, is_opt in zip(
-            input_names, input_types, input_shapes_cast, is_sequence, is_optional
+            input_names,
+            input_types,
+            input_shapes_cast,
+            is_sequence,
+            is_optional,
+            strict=False,
         ):
             if name != "":
                 if is_seq:
@@ -126,7 +131,12 @@ class TestAutomaticConversion(unittest.TestCase):
         )
         outputs: list[ValueInfoProto] = []
         for name, ttype, shape, is_seq, is_opt in zip(
-            output_names, output_types, output_shapes_cast, is_sequence, is_optional
+            output_names,
+            output_types,
+            output_shapes_cast,
+            is_sequence,
+            is_optional,
+            strict=True,
         ):
             if is_seq:
                 outputs += [helper.make_tensor_sequence_value_info(name, ttype, shape)]

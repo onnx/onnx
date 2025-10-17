@@ -36,7 +36,6 @@ seq2seq with attention can roughly be broken down into these constituent parts:
     * This network weights the Encoder contexts based on the Decoder's generation state, and provides a focused Encoder context to the decoder. The Decoder “focuses” on a certain part of the input sequence at each timestep via this mechanism.
     * Many classes of attention mechanism: some examples are here https://arxiv.org/pdf/1508.04025.pdf
 
-
 Vanilla seq2seq with attention and non-backtracking beam search does NOT include things such as auxiliary data-structures (e.g. stacks), thus it does not require us to implement the full semantics of a programming language. It is an architecture that we can break down into incremental improvements to ONNX without compromising ONNX's fundamental goal.
 
 [1] https://arxiv.org/abs/1409.0473
@@ -56,7 +55,6 @@ Once we move beyond the domain of standard LSTM and GRU operations, we need a mo
 Of course, the dynamic control flow constructs can be used for more general use cases. For example, consider the [beam search](https://en.wikipedia.org/wiki/Beam_search) used often in NLP for sequence generation. This algorithm has several tricky aspects: a (potentially) dynamic stopping condition, a desired maximum trip count (so we don't fall into an infinite loop), loop-carried dependencies, and the desire to preserve the outputs at every time-step, not just the final time-step. Inherently, this is an imperative algorithm that operates on mutable state. The proposed control flow operators in ONNX, however, fulfill all of these requirements, and thus we can represent many instances of sequence generation in ONNX graphs.
 
 Note that there are more general forms of beam search, such as those including backtracking, but we are not considering these forms for this focused proposal.
-
 
 ## End-to-end Example : seq2seq with attention
 

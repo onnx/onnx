@@ -598,7 +598,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="X",
             data_type=TensorProto.FLOAT,
             dims=self.large_data.shape,
-            vals=self.large_data.tobytes(),
+            vals=onnx.numpy_helper.tobytes_little_endian(self.large_data),
             raw=True,
         )
 
@@ -607,7 +607,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="Shape",
             data_type=TensorProto.INT64,
             dims=shape_data.shape,
-            vals=shape_data.tobytes(),
+            vals=onnx.numpy_helper.tobytes_little_endian(shape_data),
             raw=True,
         )
         C = helper.make_tensor_value_info("C", TensorProto.INT64, self.small_data)
@@ -628,8 +628,7 @@ class TestExternalDataToArray(unittest.TestCase):
             [C],
             initializer=[input_init, shape_init],
         )
-        model = helper.make_model(graph_def, producer_name="onnx-example")
-        return model
+        return helper.make_model(graph_def, producer_name="onnx-example")
 
     @unittest.skipIf(
         serialization_format != "protobuf",

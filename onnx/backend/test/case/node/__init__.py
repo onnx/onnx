@@ -117,15 +117,14 @@ def function_expand_helper(
     def rename_helper(internal_name: str) -> Any:
         if internal_name in io_names_map:
             return io_names_map[internal_name]
-        elif internal_name == "":
+        if internal_name == "":
             return ""
         return op_prefix + internal_name
 
-    new_node_list = [
+    return [
         _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
         for internal_node in function_proto.node
     ]
-    return new_node_list
 
 
 def function_testcase_helper(
@@ -193,7 +192,7 @@ def _extract_value_info(
             raise NotImplementedError(
                 "_extract_value_info: both input and type_proto arguments cannot be None."
             )
-        elif isinstance(input, list):
+        if isinstance(input, list):
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input[0].dtype)
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
@@ -251,7 +250,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # Instead of creating model with latest version, it now generates models for since_version by default.
 # Thus it can make every model uses the same opset version after every opset change.
 # Besides, user can specify "use_max_opset_version" to generate models for
-# the latest opset vesion that supports before targeted opset version
+# the latest opset version that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
     inputs: Sequence[np.ndarray | TensorProto],
@@ -284,12 +283,14 @@ def expect(
         del kwargs["output_type_protos"]
     inputs_vi = [
         _extract_value_info(arr, arr_name, input_type)
-        for arr, arr_name, input_type in zip(inputs, present_inputs, input_type_protos)
+        for arr, arr_name, input_type in zip(
+            inputs, present_inputs, input_type_protos, strict=False
+        )
     ]
     outputs_vi = [
         _extract_value_info(arr, arr_name, output_type)
         for arr, arr_name, output_type in zip(
-            outputs, present_outputs, output_type_protos
+            outputs, present_outputs, output_type_protos, strict=False
         )
     ]
     graph = onnx.helper.make_graph(
@@ -334,8 +335,7 @@ def expect(
                     present_value_info[0].type,
                     *merge(node_inputs[1:], present_value_info[1:]),
                 ]
-            else:
-                return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
+            return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
         return []
 
     merged_types = merge(list(node.input), inputs_vi)

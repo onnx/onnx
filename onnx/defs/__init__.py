@@ -56,6 +56,15 @@ OpSchema = C.OpSchema
 OpSchema.function_body = _function_proto  # type: ignore
 
 
+@property  # type: ignore[misc]
+def _non_deterministic(self):
+    """Check if the operator is non-deterministic."""
+    return self.node_determinism != OpSchema.NodeDeterminism.Deterministic  # type: ignore[no-any-return]
+
+
+OpSchema.non_deterministic = _non_deterministic  # type: ignore
+
+
 @property  # type: ignore
 def _attribute_default_value(self):
     attr = onnx.AttributeProto()

@@ -186,7 +186,7 @@ class TopK(Base):
     def export_top_k_smallest() -> None:
         axis = 1
         largest = 0
-        sorted = 1  # noqa: A001
+        sorted_ = 1
         k = 3
 
         node = onnx.helper.make_node(
@@ -195,7 +195,7 @@ class TopK(Base):
             outputs=["values", "indices"],
             axis=axis,
             largest=largest,
-            sorted=sorted,
+            sorted=sorted_,
         )
 
         X = np.array(

@@ -150,8 +150,7 @@ class _CommonQuantizeLinear(OpRun):
                         x, dtype=tensor_dtype_to_np_dtype(tensor_type)
                     ),
                 )
-            else:
-                return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
+            return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         if tensor_type == TensorProto.FLOAT4E2M1:
             x += zero_point

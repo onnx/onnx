@@ -26,11 +26,11 @@ __Notes on language in this and all related documents__:
 
 ONNX is an open specification that consists of the following components:
 
-1)  A definition of an extensible computation graph model.
+1) A definition of an extensible computation graph model.
 
-2)  Definitions of standard data types.
+2) Definitions of standard data types.
 
-3)  Definitions of built-in operators.
+3) Definitions of built-in operators.
 
 #1 and #2 together make up the ONNX Intermediate Representation, or 'IR', specification which is covered herein; the built-in operators are covered in documents listed at the end. Specifically, built-in operators are divided into a set of primitive operators and functions. A function is an operator whose semantics is formally expressed via expansion into a sub-graph (called the function body) using other operators (and functions). Functionality-wise, an ONNX compatible framework or runtime may inline a function body to execute it if it does not have corresponding implementation of the function.
 
@@ -275,7 +275,6 @@ Graph|The names of graphs within a domain, unique within the model domain.
 Operator|The names of operators within a domain.
 Shape|The names of tensor shape variables – scoped to the value information records of a graph, which is where shape variables occur.
 
-
 ### Nodes
 
 Computation nodes are comprised of a name, the name of an operator that it invokes, a list of named inputs, a list of named outputs, and a list of attributes.
@@ -350,7 +349,6 @@ The properties ‘name’ and ‘type’ are required on all attributes, and ‘
 
 In case ‘ref_attr_name’ is set, this attribute does not contain data, and instead it's a reference to the parent function's attribute of the given name. Can only be used within the function body.
 
-
 #### Variadic Inputs and Outputs
 
 The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values. A variadic operator has a minimum arity, which specifies the minimum number of operands that must be specified.
@@ -391,7 +389,7 @@ More details can be found in [External Data](ExternalData.md).
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the supported operators.
 
-With respect to supported types, both __ONNX__ and __ONNX-ML__ definition recognize tensors, sparse tensors, sequences, maps, and optionals as input and output types. Sequences and maps were supported from the IR version 6 (ONNX 1.6.0 release). Optional type was supported from IR vesion 8 (ONNX 1.10.0 release).
+With respect to supported types, both __ONNX__ and __ONNX-ML__ definition recognize tensors, sparse tensors, sequences, maps, and optionals as input and output types. Sequences and maps were supported from the IR version 6 (ONNX 1.6.0 release). Optional type was supported from IR version 8 (ONNX 1.10.0 release).
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the initializers of a graph.
 
@@ -403,21 +401,21 @@ Tensors are a generalization of vectors and matrices; whereas vectors have one d
 
 Mathematically, a tensor can be defined as a pair of sequences/lists (V, S) where S is the shape of the tensor (a list of non-negative integers) and V is a list of values with length equal to the product of the dimensions in S. Two tensors (V, S) and (V', S') are equal if and only if V = V' and S = S'. The length of S is referred to as the rank.
 
- - If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
- - S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
- - If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
- - A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
+- If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
+- S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
+- If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
+- A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
 
 A tensor's shape S is a list but can be represented as a tensor with values S and shape [R] where R is the rank of the tensor.
 
- - For a tensor (V, S), the tensor representing its shape is (S, [R]).
- - The shape of a scalar is []. Represented as a tensor, [] has shape [0].
+- For a tensor (V, S), the tensor representing its shape is (S, [R]).
+- The shape of a scalar is []. Represented as a tensor, [] has shape [0].
 
 #### Representation
 
 It is common to represent a tensor as a nested list. This generally works fine, but is problematic when zero dimensions are involved. A tensor of shape (5, 0) can be represented as [[], [], [], [], []], but (0, 5) is represented as [] which loses the information that the second dimension is 5.
 
- - A nested list is not a complete representation of a tensor with dimensions of value zero.
+- A nested list is not a complete representation of a tensor with dimensions of value zero.
 
 ### Tensor Element Types
 
@@ -458,6 +456,7 @@ message TensorShapeProto {
   repeated Dimension dim = 1;
 }
 ```
+
 Which is referenced by the Tensor type message:
 
 ```
@@ -487,6 +486,7 @@ For example, a graph that performs matrix cross-product may be defined as taking
 Shapes MAY be defined using a combination of integers and variables.
 
 _Historical Notes_: The following extensions were considered early on, but were never implemented or supported.
+
 * The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set.
 * The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
 * A scoping mechanism to allow dimension variables that are local to a sub-graph (such as the body of a loop) may be useful, but is not currently supported.
@@ -585,6 +585,7 @@ The properties of a simple sharded dimension are:
 The multi-device annotations are hints to execution backends and do not affect the computational semantics of the model. Backends MAY ignore these annotations if the specified configurations are not supported or available. All communication operations required for multi-device execution (such as data transfers between devices) are implicit and handled by the runtime.
 
 For tensor parallelism, tensors can be:
+
 - **Split** across devices along specified axes, distributing different portions of the data to different devices
 - **Replicated** across devices, where the same tensor data is duplicated on multiple devices
 

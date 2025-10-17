@@ -44,7 +44,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.9.0
+        uses: prefix-dev/setup-pixi@v0.9.1
         with:
           environments: ${{ matrix.environment }}
       - name: Install repository
@@ -54,7 +54,7 @@ jobs:
       - name: pytest
         run: pixi run -e ${{ matrix.environment }} pytest
       - name: Issue on failure
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: ${{ failure() && github.ref == 'refs/heads/main' }}
         with:
           script: |

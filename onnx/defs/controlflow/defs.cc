@@ -68,7 +68,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* Loop_ver23_doc = R"DOC(
+static constexpr const char* Loop_ver23_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -259,7 +259,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* scan_24_doc = R"DOC(
+static constexpr const char* scan_24_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip, and is intended to enable

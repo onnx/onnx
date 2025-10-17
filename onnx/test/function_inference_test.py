@@ -38,7 +38,7 @@ class TestFunctionInference(TestShapeInferenceHelper):
             function, input_types, attributes
         )
         self.assertEqual(len(expected_output_types), len(result))
-        for expected, actual in zip(expected_output_types, result):
+        for expected, actual in zip(expected_output_types, result, strict=True):
             self._compare_value_infos(expected, actual)
 
     def _check_fails(

@@ -82,7 +82,9 @@ def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
         del release_version  # Unused
-        for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args):
+        for pair in zip(
+            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args, strict=False
+        ):
             if pair not in result:
                 result[pair] = ir_version
                 if pair[0] == "ai.onnx.training":
@@ -409,7 +411,14 @@ def make_tensor(
         expected_size_bytes *= math.prod(dims)
         expected_size_bytes = math.ceil(expected_size_bytes)
         if isinstance(vals, np.ndarray):
-            raw_data = vals.tobytes()
+            if data_type in {
+                TensorProto.INT4,
+                TensorProto.UINT4,
+                TensorProto.FLOAT4E2M1,
+            }:
+                vals = onnx.numpy_helper._pack_4bitx2(vals)
+
+            raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
             raw_data = vals
         else:

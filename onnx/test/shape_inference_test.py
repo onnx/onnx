@@ -169,7 +169,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         vis = sorted(vis, key=lambda x: x.name)
         inferred_vis = sorted(inferred_vis, key=lambda x: x.name)
         assert len(vis) == len(inferred_vis)
-        for v, inferred_v in zip(vis, inferred_vis):
+        for v, inferred_v in zip(vis, inferred_vis, strict=True):
             self._compare_value_infos(v.type, inferred_v.type)
 
     def _compare_value_infos(
@@ -10838,10 +10838,9 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         node = make_node(
             self.custom_op_type, ["a", "b"], [v.name for v in outs], out_len=out_len
         )
-        graph = make_graph(
+        return make_graph(
             [node], "test", [a, b], outs if mark_output else [], value_info=outs
         )
-        return graph
 
     def gen_dummy_graph_graph(self, N, La, Lb, out_len):
         subgraph = self.gen_custom_op_graph(N, La, Lb, out_len, True)
@@ -10854,8 +10853,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         node = make_node(
             self.dummy_graph_op_type, ["a", "b"], [v.name for v in outs], graph=subgraph
         )
-        graph = make_graph([node], "test", [a, b], [], value_info=outs)
-        return graph
+        return make_graph([node], "test", [a, b], [], value_info=outs)
 
     def shape_infer_once(self, graph, N, La, Lb, out_len):
         self._assert_inferred(

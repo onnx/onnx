@@ -16,9 +16,6 @@ from onnx import helper
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-# System is little endian
-_IS_LITTLE_ENDIAN = sys.byteorder == "little"
-
 
 def to_float8e8m0(
     x: np.ndarray,
@@ -231,6 +228,26 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
+def tobytes_little_endian(array: np.ndarray) -> bytes:
+    """Converts an array into bytes in little endian byte order.
+
+    Args:
+        array: a numpy array.
+
+    Returns:
+        bytes: Byte representation of passed array in little endian byte order.
+
+    .. versionadded:: 1.20
+    """
+    if array.dtype.byteorder == ">" or (
+        sys.byteorder == "big" and array.dtype.byteorder == "="
+    ):
+        # Ensure that the bytes will be in little-endian byte-order.
+        array = array.astype(array.dtype.newbyteorder("<"))
+
+    return array.tobytes()
+
+
 def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProto:
     """Converts an array into a TensorProto including
 
@@ -277,10 +294,8 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     }:
         # Pack the array into int4
         array = _pack_4bitx2(array)
-    if not _IS_LITTLE_ENDIAN:
-        array = array.view(array.dtype.newbyteorder("<"))
 
-    tensor.raw_data = array.tobytes()
+    tensor.raw_data = tobytes_little_endian(array)
     tensor.data_type = dtype
     return tensor
 
@@ -385,8 +400,7 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
             map_proto.name,
             ") are not the same.",
         )
-    dictionary = dict(zip(key_list, value_list))
-    return dictionary
+    return dict(zip(key_list, value_list, strict=False))
 
 
 def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
@@ -546,8 +560,7 @@ def create_random_int(
         end = min(np.iinfo(dtype).max, np.iinfo(np.int32).max)
         start = max(np.iinfo(dtype).min, np.iinfo(np.int32).min)
         return np.random.randint(start, end, size=input_shape).astype(dtype)
-    else:
-        raise TypeError(f"{dtype} is not supported by create_random_int.")
+    raise TypeError(f"{dtype} is not supported by create_random_int.")
 
 
 def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <climits>
 #include <cstring>
 #include <functional>
 #include <initializer_list>
@@ -173,6 +172,11 @@ class OpSchema final {
     // This formal parameter is not differentiable. That is, this formal
     // parameter can not be differentiable input of Gradient operator.
     NonDifferentiable = 2
+  };
+  enum class NodeDeterminism : uint8_t {
+    Unknown = 0,
+    NonDeterministic = 1,
+    Deterministic = 2,
   };
 
   // Formal parameter representation, including input/output name, typeStr,
@@ -427,11 +431,7 @@ class OpSchema final {
 
   struct Attribute final {
     Attribute(std::string name_, std::string description_, AttributeProto::AttributeType type_, bool required_)
-        : name(std::move(name_)),
-          description(std::move(description_)),
-          type(type_),
-          required(required_),
-          default_value() {}
+        : name(std::move(name_)), description(std::move(description_)), type(type_), required(required_) {}
 
     Attribute(std::string name_, std::string description_, AttributeProto default_value_)
         : name(std::move(name_)),
@@ -729,11 +729,11 @@ class OpSchema final {
   }
 
   ONNX_API bool has_type_and_shape_inference_function() const {
-    return tensor_inference_function_ ? true : false;
+    return static_cast<bool>(tensor_inference_function_);
   }
 
   ONNX_API bool has_data_propagation_function() const {
-    return data_propagation_function_ ? true : false;
+    return static_cast<bool>(data_propagation_function_);
   }
 
   ONNX_API std::vector<int> function_opset_versions() const {
@@ -816,6 +816,9 @@ class OpSchema final {
   // Build function with information stored in opschema
   ONNX_API void BuildFunction(FunctionProto& function_body) const;
 
+  NodeDeterminism GetNodeDeterminism() const;
+  OpSchema& SetNodeDeterminism(NodeDeterminism node_determinism);
+
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
@@ -852,7 +855,7 @@ class OpSchema final {
   std::string doc_;
   // Default domain value ("") means it's ONNX domain.
   std::string domain_ = ONNX_DOMAIN;
-  std::unordered_map<std::string, Attribute> attributes_{};
+  std::unordered_map<std::string, Attribute> attributes_;
   bool allows_unchecked_attributes_ = false;
   std::vector<FormalParameter> inputs_;
   std::vector<FormalParameter> outputs_;
@@ -874,6 +877,8 @@ class OpSchema final {
 
   std::map<int, std::shared_ptr<FunctionProto>> opset_version_to_function_body_;
   std::map<int, ContextDependentFunctionBodyBuilder> opset_version_to_function_builder_;
+
+  NodeDeterminism node_determinism_ = NodeDeterminism::Unknown;
 };
 
 // Map type to store operator schemas. The format is,
@@ -998,8 +1003,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    // Export to cpp custom register macro
-    explicit OpSchemaRegisterOnce(
+    // Export to cpp custom register macro.
+    // DO NOT decorate the constructor as "explicit" because that breaks the macro ONNX_OPERATOR_SCHEMA_UNIQ.
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    OpSchemaRegisterOnce( // NOSONAR
         OpSchema op_schema,
         int opset_version_to_load = 0,
         bool fail_duplicate_schema = true) {
@@ -1091,7 +1098,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       }
       auto lower_bound_incl = ver_range_it->second.first;
       auto upper_bound_incl = ver_range_it->second.second;
-      if (!(lower_bound_incl <= ver && upper_bound_incl >= ver)) {
+      if (lower_bound_incl > ver || upper_bound_incl < ver) {
         std::stringstream err;
         err << "Trying to register schema with name " << op_name << " (domain: " << op_domain << " version: " << ver
             << ") from file " << op_schema.file() << " line " << op_schema.line() << ", but its version is not "
@@ -1345,12 +1352,9 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                      \
-  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce(op_schema_register_once##name##Counter) ONNX_UNUSED = \
-      OpSchema(#name, __FILE__, __LINE__)
-
-// Helper function
-size_t ReplaceAll(std::string& s, const char* from, const char* to);
+#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                     \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce op_schema_register_once##name##Counter ONNX_UNUSED = \
+      ONNX_NAMESPACE::OpSchema(#name, __FILE__, __LINE__)
 
 ONNX_API inline std::string GenerateOptionalArgumentsDoc() {
   return "This operator has **optional** inputs/outputs. "
