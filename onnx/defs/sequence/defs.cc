@@ -3,7 +3,6 @@
  */
 
 #include <algorithm>
-#include <numeric>
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"

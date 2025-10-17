@@ -17,7 +17,6 @@
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/shape_inference/attribute_binder.h"
-#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {

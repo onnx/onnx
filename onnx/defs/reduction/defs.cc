@@ -2,13 +2,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
 #include <functional>
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/reduction/utils.h"
 #include "onnx/defs/schema.h"
-#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
