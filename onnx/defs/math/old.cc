@@ -2328,7 +2328,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-const static constexpr char* reduction_doc_sce_opset12 =
+static constexpr const char* reduction_doc_sce_opset12 =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
     "'sum': the output will be summed. "
