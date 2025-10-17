@@ -196,7 +196,7 @@ jobs:
           ./.setuptools-cmake-build/onnx_gtests
 
       - name: Run C++ extension test
-        if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.python_version != '3.10'
+        if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'Internal'
         run: |
           cd ./.setuptools-cmake-build/
           sudo cmake --build . --target install
