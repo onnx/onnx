@@ -26,9 +26,9 @@ static bool BuildContextDependentFunctionBody_opset13(
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
 
   FunctionBuilder builder(functionProto);
-  builder.Const1D("const_zero", int64_t(0))
-      .Const1D("const_one", int64_t(1))
-      .Const1D("axes", int64_t(1))
+  builder.Const1D("const_zero", static_cast<int64_t>(0))
+      .Const1D("const_one", static_cast<int64_t>(1))
+      .Const1D("axes", static_cast<int64_t>(1))
       .Add("expanded_target = Unsqueeze (target, axes)");
 
   if (ctx.getAttribute("ignore_index") == nullptr) {
@@ -2141,7 +2141,7 @@ static bool BuildContextDependentFunctionBody_opset12(
         {{"expanded_target_int64"},
          "Cast",
          {"expanded_target"},
-         {MakeAttribute("to", (int64_t)TensorProto_DataType::TensorProto_DataType_INT64)}});
+         {MakeAttribute("to", static_cast<int64_t>(TensorProto_DataType::TensorProto_DataType_INT64))}});
 
     body.push_back({{"mask"}, "Equal", {"expanded_target_int64", "const_ignore_index"}});
     body.push_back({{"transform_targets"}, "Where", {"mask", "const_zero_target_typed", "expanded_target"}});
