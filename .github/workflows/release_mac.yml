@@ -26,7 +26,7 @@ jobs:
     runs-on: macos-14
     strategy:
       matrix:
-        python-version: ['3.13t', '3.12', '3.11', '3.10']
+        python-version: ['3.14', '3.13t', '3.12', '3.11', '3.10']
       fail-fast: true
 
     steps:
@@ -66,18 +66,18 @@ jobs:
     - name: Debug Python version and artifact name
       run: |
         echo "PYTHON VERSION: ${{ matrix.python-version }}"
-        if [ "${{ matrix.python-version }}" = "3.12" ]; then
+        if [ "${{ matrix.python-version }}" = "3.12" ] || [ "${{ matrix.python-version }}" = "3.14" ]; then
           echo "Artifact name: wheels-${{ inputs.os }}-3.12-abi3"
         else
           echo "Artifact name: wheels-${{ inputs.os }}-${{ matrix.python-version }}"
         fi
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version == '3.12')
+      if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-3.12-abi3
         path: dist/*.whl
     - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version != '3.12')
+      if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.10' || matrix.python-version == '3.11')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist/*.whl
@@ -88,7 +88,7 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         target-architecture: ['x86_64', 'arm64']
       fail-fast: false
 
@@ -108,24 +108,22 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
     - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
-      if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14-dev'
+      if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14'
       with:
         name: wheels-${{ inputs.os }}-3.12-abi3
         path: dist
     - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
-      if: matrix.python-version != '3.12' && matrix.python-version != '3.13' && matrix.python-version != '3.14-dev'
+      if: matrix.python-version == '3.10' && matrix.python-version == '3.11' && matrix.python-version == '3.13t'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist
 
     - name: Test the wheel
-      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest numpy
-      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
         arch -${{ matrix.target-architecture }} python -m pip install numpy
@@ -133,7 +131,6 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install protobuf
@@ -141,7 +138,6 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: matrix.python-version != '3.14-dev'
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt
