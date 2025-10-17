@@ -7,10 +7,8 @@ import collections.abc
 import functools
 import math
 import numbers
-import struct
 import typing
-from cmath import isnan
-from typing import TYPE_CHECKING, Any, Callable, TypeVar, Union
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
@@ -18,7 +16,7 @@ import numpy.typing as npt
 import typing_extensions
 
 import onnx
-from onnx import _mapping, defs, subbyte
+from onnx import _mapping, defs
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
 from onnx.onnx_pb import (
     AttributeProto,
@@ -35,11 +33,11 @@ from onnx.onnx_pb import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView, Sequence
+    from collections.abc import Callable, KeysView, Sequence
 
     from google.protobuf.internal.containers import RepeatedCompositeFieldContainer
 
-VersionRowType = Union[tuple[str, int, int, int], tuple[str, int, int, int, int]]
+VersionRowType = tuple[str, int, int, int] | tuple[str, int, int, int, int]
 VersionTableType = list[VersionRowType]
 AssignmentBindingType = list[tuple[str, str]]
 
@@ -72,6 +70,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.16.0", 10, 21, 5, 1),
     ("1.17.0", 10, 22, 5, 1),
     ("1.18.0", 11, 23, 5, 1),
+    ("1.19.0", 12, 24, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -83,7 +82,9 @@ def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
 
     def process(release_version: str, ir_version: int, *args: Any) -> None:
         del release_version  # Unused
-        for pair in zip(["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args):
+        for pair in zip(
+            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args, strict=False
+        ):
             if pair not in result:
                 result[pair] = ir_version
                 if pair[0] == "ai.onnx.training":
@@ -354,350 +355,6 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
 
 
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def float32_to_bfloat16(fval: float, truncate: bool = False) -> int:
-    # convert a float32 value to a bfloat16 (as int)
-    # By default, this conversion rounds-to-nearest-even and supports NaN
-    # Setting `truncate` to True enables a simpler conversion. In this mode the
-    # conversion is performed by simply dropping the 2 least significant bytes of
-    # the significand. In this mode an error of up to 1 bit may be introduced and
-    # preservation of NaN values is not be guaranteed.
-    ival = int.from_bytes(struct.pack("<f", fval), "little")
-    if truncate:
-        return ival >> 16
-    # NaN requires at least 1 significand bit set
-    if isnan(fval):
-        return 0x7FC0  # sign=0, exp=all-ones, sig=0b1000000
-    # drop bottom 16-bits
-    # round remaining bits using round-to-nearest-even
-    rounded = ((ival >> 16) & 1) + 0x7FFF
-    return (ival + rounded) >> 16
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def float32_to_float8e4m3(  # noqa: PLR0911
-    fval: float,
-    scale: float = 1.0,
-    fn: bool = True,
-    uz: bool = False,
-    saturate: bool = True,
-) -> int:
-    """Convert a float32 value to a float8, e4m3 (as int).
-
-    See :ref:`onnx-detail-float8` for technical details.
-
-    Args:
-        fval: float to convert
-        scale: scale, divide *fval* by *scale* before casting it
-        fn: no infinite values
-        uz: no negative zero
-        saturate: if True, any value out of range included inf becomes
-            the maximum value, otherwise, it becomes NaN. The
-            description of operator Cast fully describes the
-            differences.
-
-    Returns:
-        converted float
-    """
-    if not fn:
-        raise NotImplementedError(
-            "float32_to_float8e4m3 not implemented with fn=False."
-        )
-    x = fval / scale
-    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
-    ret = (b & 0x80000000) >> 24  # sign
-    if uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x80
-        if np.isinf(x):
-            if saturate:
-                return ret | 127
-            return 0x80
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e < 116:  # noqa: PLR2004
-            ret = 0
-        elif e < 120:  # noqa: PLR2004
-            # denormalized number
-            ex = e - 119
-            if ex >= -2:  # noqa: PLR2004
-                ret |= 1 << (2 + ex)
-                ret |= m >> (21 - ex)
-            elif m > 0:
-                ret |= 1
-            else:
-                ret = 0
-            mask = 1 << (20 - ex)
-            if m & mask and (
-                ret & 1
-                or m & (mask - 1) > 0
-                or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-            ):
-                # rounding
-                ret += 1
-        elif e < 135:  # noqa: PLR2004
-            # normalized number
-            ex = e - 119  # 127 - 8
-            if ex == 0:
-                ret |= 0x4
-                ret |= m >> 21
-            else:
-                ret |= ex << 3
-                ret |= m >> 20
-            if m & 0x80000 and ((m & 0x100000) or (m & 0x7FFFF)):
-                if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                    # rounding
-                    ret += 1
-                elif not saturate:
-                    return 0x80
-        elif saturate:
-            ret |= 0x7F  # 01111110
-        else:
-            ret = 0x80
-        return int(ret)
-    else:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x7F | ret
-        if np.isinf(x):
-            if saturate:
-                return ret | 126
-            return 0x7F | ret
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e != 0:
-            if e < 117:  # noqa: PLR2004
-                pass
-            elif e < 121:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 120
-                if ex >= -2:  # noqa: PLR2004
-                    ret |= 1 << (2 + ex)
-                    ret |= m >> (21 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (20 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
-                    # rounding
-                    ret += 1
-            elif e < 136:  # noqa: PLR2004
-                # normalized number
-                ex = e - 120
-                if ex == 0:
-                    ret |= 0x4
-                    ret |= m >> 21
-                else:
-                    ret |= ex << 3
-                    ret |= m >> 20
-                    if (ret & 0x7F) == 0x7F:  # noqa: PLR2004
-                        ret &= 0xFE
-                if (m & 0x80000) and ((m & 0x100000) or (m & 0x7FFFF)):
-                    if (ret & 0x7F) < 0x7E:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif not saturate:
-                        ret |= 0x7F
-            elif saturate:
-                ret |= 126  # 01111110
-            else:
-                ret |= 0x7F
-        return int(ret)
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def float32_to_float8e5m2(  # noqa: PLR0911
-    fval: float,
-    scale: float = 1.0,
-    fn: bool = False,
-    uz: bool = False,
-    saturate: bool = True,
-) -> int:
-    """Convert a float32 value to a float8, e5m2 (as int).
-
-    Args:
-        fval: float to convert
-        scale: scale, divide *fval* by *scale* before casting it
-        fn: no infinite values
-        uz: no negative zero
-        saturate: if True, any value out of range included inf becomes
-            the maximum value, otherwise, it becomes NaN. The
-            description of operator Cast fully describes the
-            differences.
-
-    Returns:
-        converted float
-    """
-    x = fval / scale
-    b = int.from_bytes(struct.pack("<f", np.float32(x)), "little")
-    ret = (b & 0x80000000) >> 24  # sign
-
-    if fn and uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x80
-        if (b & 0x7FFFFFFF) == 0x7F800000:  # noqa: PLR2004
-            # inf
-            if saturate:
-                return ret | 0x7F
-            return 0x80
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e < 109:  # noqa: PLR2004
-            ret = 0
-        elif e < 112:  # noqa: PLR2004
-            # denormalized number
-            ex = e - 111
-            if ex >= -1:
-                ret |= 1 << (1 + ex)
-                ret |= m >> (22 - ex)
-            elif m > 0:
-                ret |= 1
-            else:
-                ret = 0
-            mask = 1 << (21 - ex)
-            if m & mask and (
-                ret & 1
-                or m & (mask - 1) > 0
-                or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-            ):
-                # rounding
-                ret += 1
-        elif e < 143:  # noqa: PLR2004
-            # normalized number
-            ex = e - 111
-            ret |= ex << 2
-            ret |= m >> 21
-            if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                if (ret & 0x7F) < 0x7F:  # noqa: PLR2004
-                    # rounding
-                    ret += 1
-                elif not saturate:
-                    ret = 0x80
-        elif e == 255 and m == 0:  # inf  # noqa: PLR2004
-            ret = 0x80
-        elif saturate:
-            ret |= 0x7F  # last possible number
-        else:
-            ret = 0x80
-        return int(ret)
-    elif not fn and not uz:
-        if (b & 0x7FC00000) == 0x7FC00000:  # noqa: PLR2004
-            return 0x7F | ret
-        if np.isinf(x):
-            if saturate:
-                return 0x7B | ret
-            return 0x7C | ret
-        e = (b & 0x7F800000) >> 23  # exponent
-        m = b & 0x007FFFFF  # mantissa
-
-        if e != 0:
-            if e < 110:  # noqa: PLR2004
-                pass
-            elif e < 113:  # noqa: PLR2004
-                # denormalized number
-                ex = e - 112
-                if ex >= -1:
-                    ret |= 1 << (1 + ex)
-                    ret |= m >> (22 - ex)
-                elif m > 0:
-                    ret |= 1
-                mask = 1 << (21 - ex)
-                if m & mask and (
-                    ret & 1
-                    or m & (mask - 1) > 0
-                    or (m & mask and m & (mask << 1) and m & (mask - 1) == 0)
-                ):
-                    # rounding
-                    ret += 1
-            elif e < 143:  # noqa: PLR2004
-                # normalized number
-                ex = e - 112
-                ret |= ex << 2
-                ret |= m >> 21
-                if m & 0x100000 and ((m & 0xFFFFF) or (m & 0x200000)):
-                    if (ret & 0x7F) < 0x7B:  # noqa: PLR2004
-                        # rounding
-                        ret += 1
-                    elif saturate:
-                        ret |= 0x7B
-                    else:
-                        ret |= 0x7C
-            elif saturate:
-                ret |= 0x7B
-            else:
-                ret |= 0x7C
-        return int(ret)
-    else:
-        raise NotImplementedError("fn and uz must be both False or True.")
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def pack_float32_to_4bit(array: np.ndarray | Sequence, signed: bool) -> np.ndarray:
-    """Convert an array of float32 value to a 4bit data-type and pack every two concecutive elements in a byte.
-    See :ref:`onnx-detail-int4` for technical details.
-
-    Args:
-        array: array of float to convert and pack
-        signed: Whether the 4 bit variant is signed or unsigned
-
-    Returns:
-        Packed array with size `ceil(farray.size/2)` (single dimension).
-    """
-    if not isinstance(array, np.ndarray):
-        array = np.asarray(array, dtype=np.float32)
-
-    array_flat: np.ndarray = array.ravel()
-    is_odd_volume = np.prod(array.shape) % 2 == 1
-    if is_odd_volume:
-        array_flat = np.append(array_flat, np.array([0]))
-
-    def single_func(x, y) -> np.ndarray:
-        return subbyte.float32x2_to_4bitx2(x, y, signed)
-
-    func = np.frompyfunc(single_func, 2, 1)
-
-    arr: np.ndarray = func(array_flat[0::2], array_flat[1::2])
-    return arr.astype(np.uint8)
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion"
-)
-def pack_float32_to_float4e2m1(array: np.ndarray | Sequence) -> np.ndarray:
-    """Convert an array of float32 value to float4e2m1 and pack every two concecutive elements in a byte.
-    See :ref:`onnx-detail-float4` for technical details.
-
-    Args:
-        array: array of float to convert and pack
-
-    Returns:
-        Packed array of float4e2m1 (as uint8) with size `ceil(farray.size/2)` (single dimension).
-    """
-    if not isinstance(array, np.ndarray):
-        array = np.asarray(array, dtype=np.float32)
-
-    array_flat: np.ndarray = array.ravel()
-    is_odd_volume = np.prod(array.shape) % 2 == 1
-    if is_odd_volume:
-        array_flat = np.append(array_flat, np.array([0]))
-
-    arr = subbyte.float32x2_to_float4e2m1x2(array_flat[0::2], array_flat[1::2])
-    return arr.astype(np.uint8)
-
-
 def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
     """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
     # Create a 1D copy
@@ -754,7 +411,14 @@ def make_tensor(
         expected_size_bytes *= math.prod(dims)
         expected_size_bytes = math.ceil(expected_size_bytes)
         if isinstance(vals, np.ndarray):
-            raw_data = vals.tobytes()
+            if data_type in {
+                TensorProto.INT4,
+                TensorProto.UINT4,
+                TensorProto.FLOAT4E2M1,
+            }:
+                vals = onnx.numpy_helper._pack_4bitx2(vals)
+
+            raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
             raw_data = vals
         else:

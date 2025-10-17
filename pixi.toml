@@ -21,8 +21,10 @@ depends-on = "build"
 cmd = "python onnx/defs/gen_doc.py"
 
 [tasks.gtest]
-# Windows uses a different path
-cmd = "cp .setuptools-cmake-build/Release/onnx_gtests.exe .setuptools-cmake-build/onnx_gtests |& true && .setuptools-cmake-build/onnx_gtests"
+cmd = ".setuptools-cmake-build/onnx_gtests"
+[target.win-64.tasks.gtest]
+# Different path on Windows
+cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
 
 [tasks.pytest]
 cmd = "pytest"
@@ -37,10 +39,11 @@ ninja = "*"
 libdate = ">=3.0.1,<4"
 libprotobuf = "*"
 pip = ">=25.0"
-pybind11 = ">=2.13.6"
+nanobind = ">=2.8.0"
 [dependencies]
 packaging = ">=24.1"
 python = ">=3.9"
+ml_dtypes = ">=0.5.1"
 
 [feature.dev.dependencies]
 # follows requirements-dev.txt
@@ -61,17 +64,17 @@ pillow = ">=11.2.1,<12"
 [feature.oldies.dependencies]
 # follows requirements-min.txt
 protobuf = "==4.25.1"
-python = "3.9.*"
-numpy = "==1.22.0"
+python = "3.10.*"
+numpy = "==1.23.2"
 
 [feature.lint.tasks]
 lintrunner-init = "lintrunner init"
 lintrunner-run = "lintrunner --all-files"
 [feature.lint.dependencies]
 # follows requirements-lintrunner.txt
-ruff = "==0.11.12"  
-mypy = "==1.16.0"
-types-protobuf = ">=5.29.1.20250403"
+ruff = "==0.13.1"
+mypy = "==1.17.1"
+types-protobuf = "==6.30.2.20250516"
 clang-format = ">=20.1.5"
 [feature.lint.pypi-dependencies]
 lintrunner = ">=0.10.7"

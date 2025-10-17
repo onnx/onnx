@@ -530,8 +530,7 @@ class OpRun(abc.ABC):
 
         names_in = [f"x{i}" for i in range(n_inputs)]
         names_out = [f"y{i}" for i in range(n_outputs)]
-        node = onnx.helper.make_node(op_type, names_in, names_out, **kwargs)
-        return node
+        return onnx.helper.make_node(op_type, names_in, names_out, **kwargs)
 
     @classmethod
     def create(
@@ -566,8 +565,7 @@ class OpRun(abc.ABC):
             "new_ops": None,
             "opsets": {"": onnx.defs.onnx_opset_version()},
         }
-        cl = cls(node, run_params)
-        return cl
+        return cls(node, run_params)
 
     @classmethod
     def eval(
@@ -644,7 +642,7 @@ class OpFunction(OpRun):
                 f"and the expected number of inputs {len(impl.input_names)} "
                 f"for node {self.op_type!r} from domain {self.domain!r}."
             )
-        feeds = dict(zip(impl.input_names, inputs))
+        feeds = dict(zip(impl.input_names, inputs, strict=False))
         attributes = self.attributes_.copy()
         attributes.update(kwargs)
         results = impl.run(None, feeds, attributes=attributes)

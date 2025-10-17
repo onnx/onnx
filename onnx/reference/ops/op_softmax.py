@@ -10,6 +10,8 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class Softmax(OpRunUnaryNum):
     def _run(self, X, axis=None):
+        if X.size == 0:
+            return (X,)
         axis = axis or self.axis
         tmp = X - X.max(axis=axis, keepdims=1)
         Y = np.exp(tmp)

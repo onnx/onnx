@@ -48,6 +48,7 @@ ONNX_DISABLE_STATIC_REGISTRATION = os.getenv("ONNX_DISABLE_STATIC_REGISTRATION")
 ONNX_PREVIEW_BUILD = os.getenv("ONNX_PREVIEW_BUILD") == "1"
 
 USE_MSVC_STATIC_RUNTIME = os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1"
+USE_NINJA = os.getenv("USE_NINJA", "1") != "0"
 DEBUG = os.getenv("DEBUG", "0") == "1"
 COVERAGE = os.getenv("COVERAGE", "0") == "1"
 
@@ -174,6 +175,9 @@ class CmakeBuild(setuptools.Command):
                 "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
             ]
+            if USE_NINJA and not WINDOWS and shutil.which("ninja"):
+                cmake_args.append("-DCMAKE_GENERATOR=Ninja")
+
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
             if COVERAGE or DEBUG:
@@ -308,20 +312,46 @@ CMD_CLASS = {
 # Extensions
 ################################################################################
 
-EXT_MODULES = [setuptools.Extension(name="onnx.onnx_cpp2py_export", sources=[])]
+# Enable limited ABI build
+# nanobind supports limited ABI for Python 3.12 and later.
+# https://blog.trailofbits.com/2022/11/15/python-wheels-abi-abi3audit/
 
+# 1. The Py_LIMITED_API macro is defined in the extension
+# 2. py_limited_api in Extension tags the extension as abi3
+# 3. bdist_wheel_options tags the wheel as abi3
+
+NO_GIL = hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled()
+PY_312_OR_NEWER = sys.version_info >= (3, 12)
+USE_LIMITED_API = not NO_GIL and PY_312_OR_NEWER
+
+macros = []
+if USE_LIMITED_API:
+    macros.append(("Py_LIMITED_API", "0x030C0000"))
+
+EXT_MODULES = [
+    setuptools.Extension(
+        name="onnx.onnx_cpp2py_export",
+        sources=[],
+        py_limited_api=USE_LIMITED_API,
+        define_macros=macros,
+    )
+]
 
 ################################################################################
 # Final
 ################################################################################
 
+bdist_wheel_options = {}
+
+if USE_LIMITED_API:
+    bdist_wheel_options["py_limited_api"] = "cp312"
+
+if ONNX_WHEEL_PLATFORM_NAME is not None:
+    bdist_wheel_options["plat_name"] = ONNX_WHEEL_PLATFORM_NAME
+
 setuptools.setup(
     ext_modules=EXT_MODULES,
     cmdclass=CMD_CLASS,
     version=VERSION_INFO["version"],
-    options=(
-        {"bdist_wheel": {"plat_name": ONNX_WHEEL_PLATFORM_NAME}}
-        if ONNX_WHEEL_PLATFORM_NAME is not None
-        else {}
-    ),
+    options=({"bdist_wheel": bdist_wheel_options}),
 )

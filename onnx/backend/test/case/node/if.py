@@ -13,8 +13,7 @@ from onnx.backend.test.case.node import expect
 def compute_if_outputs(x, cond):
     if cond:
         return []
-    else:
-        return x
+    return x
 
 
 class If(Base):

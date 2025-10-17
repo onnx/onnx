@@ -10994,7 +10994,7 @@ This version of the operator has been available since version 11 of the default 
   Zero point is calculated as:
   ```
   intermediate_zero_point = qmin - min(x)/y_scale
-  y_zero_point = cast(round(saturate(itermediate_zero_point)))
+  y_zero_point = cast(round(saturate(intermediate_zero_point)))
   ```
 
   * where qmax and qmin are max and min values for quantization range .i.e [0, 255] in case of uint8
@@ -15537,8 +15537,8 @@ This version of the operator has been available since version 13 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="Exp-13"></a>**Exp-13**</a>
@@ -17633,7 +17633,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -17642,7 +17642,7 @@ This version of the operator has been available since version 13 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -21836,7 +21836,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -21845,7 +21845,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -21883,7 +21883,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -21892,7 +21892,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -21930,7 +21930,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -21939,7 +21939,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -21977,7 +21977,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -21986,7 +21986,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22024,7 +22024,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22033,7 +22033,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22071,7 +22071,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22080,7 +22080,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22118,7 +22118,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22127,7 +22127,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22165,7 +22165,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22174,7 +22174,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22212,7 +22212,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -22221,7 +22221,7 @@ This version of the operator has been available since version 18 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -22296,11 +22296,11 @@ If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disre
 
 If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio: <br/>
 `scale = Min(sizes[i] / in_size[d])` <br/>
-`out_size[d] = round_int(scale * in_size[i])` <br/>
+`out_size[d] = round_int(scale * in_size[d])` <br/>
 
 If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio: <br/>
 `scale = Max(sizes[i] / in_size[d])` <br/>
-`out_size[d] = round_int(scale * in_size[i])` <br/>
+`out_size[d] = round_int(scale * in_size[d])` <br/>
 
 For non-resizable axes (those not specified in `axes`), the output size will be equal to the input size.
 
@@ -23594,13 +23594,13 @@ If `keep_aspect_ratio_policy` is `"stretch"`, the original aspect ratio is disre
 If `keep_aspect_ratio_policy` is `"not_larger"`, the sizes are adjusted so that no extent of the output is larger than the specified size, while keeping the original aspect ratio:
 ```
 scale = Min(sizes[i] / in_size[d])
-out_size[d] = round_int(scale * in_size[i])
+out_size[d] = round_int(scale * in_size[d])
 ```
 
 If `keep_aspect_ratio_policy` is `"not_smaller"`, the sizes are adjusted so that no extent of the output is smaller than the specified size, while keeping the original aspect ratio:
 ```
 scale = Max(sizes[i] / in_size[d])
-out_size[d] = round_int(scale * in_size[i])
+out_size[d] = round_int(scale * in_size[d])
 ```
 
 For non-resizable axes (those not specified in `axes`), the output size will be equal to the input size.
@@ -24337,7 +24337,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24346,7 +24346,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -24386,7 +24386,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 means keep reduced dimension.</dd>
 <dt><tt>noop_with_empty_axes</tt> : int (default is 0)</dt>
-<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. If true, no reduction is applied, but other operations will be performed. For example, ReduceSumSquare acts as a vanilla Square.</dd>
+<dd>Defines behavior when axes is not provided or is empty. If false (default), reduction happens over all axes. When axes is empty and this attribute is set to true, input tensor will not be reduced, and the output tensor would be equivalent to reducing each input element separately.</dd>
 </dl>
 
 #### Inputs (1 - 2)
@@ -24395,7 +24395,7 @@ This version of the operator has been available since version 20 of the default 
 <dt><tt>data</tt> (differentiable) : T</dt>
 <dd>An input tensor.</dd>
 <dt><tt>axes</tt> (optional, non-differentiable) : tensor(int64)</dt>
-<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, or no reduction is applied if 'noop_with_empty_axes' is true (but other operations will be performed). Accepted range is [-r, r-1] where r = rank(data).</dd>
+<dd>Optional input list of integers, along which to reduce. The default is to reduce over empty axes. When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': reduction over all axes if 'noop_with_empty_axes' is false, else reduce as if individual scalar elements were passed when 'noop_with_empty_axes' is true. Accepted range is [-r, r-1] where r = rank(data).</dd>
 </dl>
 
 #### Outputs
@@ -29267,15 +29267,16 @@ This version of the operator has been available since version 23 of the default 
   Rotary embeddings are defined using the following algorithm:
 
   ```python
-  def compute_rotary_embedding(
-      input,
-      position_ids,
-      sin_cache,
-      cos_cache,
-      interleaved=0,
-      rotary_embedding_dim=0,
-      num_heads=0,
-  ):
+  def rotary_embedding(
+      input: np.ndarray,
+      cos_cache: np.ndarray,
+      sin_cache: np.ndarray,
+      position_ids: np.ndarray | None = None,
+      interleaved=None,
+      rotary_embedding_dim=None,
+      num_heads=None,
+  ) -> np.ndarray:
+      original_input_shape = input.shape
       # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
       if len(input.shape) == 4:
           input = np.transpose(input, (0, 2, 1, 3))
@@ -29291,7 +29292,7 @@ This version of the operator has been available since version 23 of the default 
       head_size = input.shape[3]
 
       # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
-      if rotary_embedding_dim == 0:
+      if rotary_embedding_dim is None or rotary_embedding_dim == 0:
           # If rotary_embedding_dim not provided, perform full rotation by using head_size
           rotary_embedding_dim = head_size
       x_rotate = input[:, :, :, :rotary_embedding_dim]
@@ -29300,15 +29301,29 @@ This version of the operator has been available since version 23 of the default 
 
       # Retrieve sin and cos caches using position ids
       if position_ids is not None:
-          cos = cos_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-          sin = sin_cache[position_ids]  # Shape: [batch_size, sequence_length, head_size/2]
-      else:
-          cos = cos_cache
-          sin = sin_cache
-      cos = cos[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-      sin = sin[:, :, :rotary_embedding_dim_half]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
-      cos = np.expand_dims(cos, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
-      sin = np.expand_dims(sin, axis=2)  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+          cos_cache = cos_cache[
+              position_ids
+          ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+          sin_cache = sin_cache[
+              position_ids
+          ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+
+      # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+      if cos_cache.shape[-1] != rotary_embedding_dim_half:
+          raise ValueError(
+              f"Last dimension of cos cache ({cos_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+          )
+      if sin_cache.shape[-1] != rotary_embedding_dim_half:
+          raise ValueError(
+              f"Last dimension of sin cache ({sin_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+          )
+
+      cos_cache = np.expand_dims(
+          cos_cache, axis=2
+      )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+      sin_cache = np.expand_dims(
+          sin_cache, axis=2
+      )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
 
       # Either divide the input in halves or interleave (based on interleaved attribute)
       if interleaved:
@@ -29318,8 +29333,8 @@ This version of the operator has been available since version 23 of the default 
           x1, x2 = np.split(x_rotate, 2, axis=-1)
 
       # Calculate real and imaginary values
-      real = cos * x1 - sin * x2
-      imag = sin * x1 + cos * x2
+      real = (cos_cache * x1) - (sin_cache * x2)
+      imag = (sin_cache * x1) + (cos_cache * x2)
 
       # Inserted rotated embeddings back to the original input
       if interleaved:
@@ -29333,7 +29348,7 @@ This version of the operator has been available since version 23 of the default 
           x_rotate = np.concatenate((real, imag), axis=-1)
       output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
       if len(original_input_shape) == 3:
-          output = np.reshape(output, input.shape)
+          output = np.reshape(output, original_input_shape)
       else:
           output = np.transpose(output, (0, 2, 1, 3))
       return output

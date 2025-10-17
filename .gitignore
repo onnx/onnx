@@ -112,4 +112,4 @@ docs/docsgen/**/*.pb
 
 # PyEnv files
 .python-version
-=0.10.7
+.pixi/**

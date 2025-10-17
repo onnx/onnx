@@ -27,8 +27,7 @@ def _array_feature_extrator(data, indices):
         tem = data[..., index]
     except IndexError as e:
         raise RuntimeError(f"data.shape={data.shape}, indices={indices}") from e
-    res = tem.reshape(new_shape)
-    return res
+    return tem.reshape(new_shape)
 
 
 class ArrayFeatureExtractor(OpRunAiOnnxMl):

@@ -422,6 +422,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 21)], 10)
         test([("", 22)], 10)
         test([("", 23)], 11)
+        test([("", 24)], 12)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
@@ -527,7 +528,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             name="test",
             data_type=TensorProto.BFLOAT16,
             dims=array.shape,
-            vals=array.tobytes(),
+            vals=numpy_helper.tobytes_little_endian(array),
             raw=True,
         )
         np.testing.assert_allclose(numpy_helper.to_array(tensor).view(np.uint16), array)
@@ -801,7 +802,7 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
             sequence_value_info.type,
         )
 
-    def test_make_seuence_value_info(self) -> None:
+    def test_make_sequence_value_info(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=2, shape=None)
         sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
         sequence_val_info = helper.make_value_info(
@@ -890,9 +891,19 @@ class TestPrintableGraph(unittest.TestCase):
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
-    np_array = np.random.randn(2, 3).astype(
-        helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    )
+    np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
+    if tensor_dtype in {
+        TensorProto.UINT8,
+        TensorProto.UINT16,
+        TensorProto.UINT32,
+        TensorProto.UINT64,
+    }:
+        # Avoid "RuntimeWarning: invalid value encountered in cast" when using
+        # astype() for negative floats.
+        np_array = numpy_helper.create_random_int((2, 3), np_type)
+    else:
+        np_array = np.random.randn(2, 3)
+    np_array = np_array.astype(np_type)
     tensor = helper.make_tensor(
         name="test", data_type=tensor_dtype, dims=np_array.shape, vals=np_array
     )
@@ -919,18 +930,40 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
-def test_make_tensor_raw(tensor_dtype: int) -> None:
-    np_array = np.random.randn(2, 3).astype(
-        helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    )
+@pytest.mark.parametrize(
+    "vals_as_bytes",
+    [True, False],
+    ids=["vals_as_bytes", "vals_as_nparray"],
+)
+def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
+    np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
     if tensor_dtype in {
-        TensorProto.FLOAT4E2M1,
-        TensorProto.INT4,
-        TensorProto.UINT4,
+        TensorProto.UINT8,
+        TensorProto.UINT16,
+        TensorProto.UINT32,
+        TensorProto.UINT64,
     }:
-        vals = _pack_4bit(np_array).tobytes()
+        # Avoid "RuntimeWarning: invalid value encountered in cast" when using
+        # astype() for negative floats.
+        np_array = numpy_helper.create_random_int((2, 3), np_type)
     else:
-        vals = np_array.tobytes()
+        np_array = np.random.randn(2, 3)
+    np_array = np_array.astype(np_type)
+
+    if vals_as_bytes:
+        np_array_intermediate = np_array
+
+        if tensor_dtype in {
+            TensorProto.FLOAT4E2M1,
+            TensorProto.INT4,
+            TensorProto.UINT4,
+        }:
+            np_array_intermediate = _pack_4bit(np_array)
+
+        vals = numpy_helper.tobytes_little_endian(np_array_intermediate)
+    else:
+        vals = np_array
+
     tensor = helper.make_tensor(
         name="test",
         data_type=tensor_dtype,

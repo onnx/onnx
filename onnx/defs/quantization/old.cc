@@ -2,12 +2,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
-static const char* QuantizeLinear_ver23_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver23_doc = R"DOC(
 The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
 low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
 granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
@@ -145,7 +144,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver23_doc = R"DOC(
+static constexpr const char* DequantizeLinear_ver23_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
 full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
 must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
@@ -241,7 +240,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* QuantizeLinear_ver21_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver21_doc = R"DOC(
 The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
 low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
 granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
@@ -362,7 +361,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver21_doc = R"DOC(
+static constexpr const char* DequantizeLinear_ver21_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
 full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
 must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
@@ -437,7 +436,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* QuantizeLinear_ver19_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver19_doc = R"DOC(
 The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
 The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
 The quantization formula is `y = saturate ((x / y_scale) + y_zero_point)`.
@@ -509,7 +508,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver19_doc = R"DOC(
+static constexpr const char* DequantizeLinear_ver19_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
 The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
 for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
@@ -570,7 +569,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* QuantizeLinear_ver13_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver13_doc = R"DOC(
 The linear quantization operator. It consumes a high precision tensor, a scale, and a zero point to compute the low precision / quantized tensor.
 The scale factor and zero point must have same shape, and can be either a scalar for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
 The quantization formula is y = saturate ((x / y_scale) + y_zero_point).
@@ -621,7 +620,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver13_doc = R"DOC(
+static constexpr const char* DequantizeLinear_ver13_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the full precision tensor.
 The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point` must have same shape, and can be either a scalar
 for per-tensor / per layer quantization, or a 1-D tensor for per-axis quantization.
@@ -670,7 +669,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* QuantizeLinear_ver10_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver10_doc = R"DOC(
 The linear per-tensor/layer quantization operator. It consumes a high precision tensor, a scale, a zero point to compute the low precision / quantized tensor.
 The quantization formula is y = saturate ((x / y_scale) + y_zero_point). For saturation, it saturates to [0, 255] if it's uint8, or [-128, 127] if it's int8.
 For (x / y_scale), it's rounding to the nearest even. Refer to https://en.wikipedia.org/wiki/Rounding for details. 'y_zero_point' and 'y' must have same type.
@@ -714,7 +713,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver10_doc = R"DOC(
+static constexpr const char* DequantizeLinear_ver10_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, a zero point to compute the full precision tensor.
 The dequantization formula is y = (x - x_zero_point) * x_scale. 'x_scale' and 'x_zero_point' are both scalars.
 'x_zero_point' and 'x' must have same type. 'x' and 'y' must have same shape. In the case of dequantizing int32,

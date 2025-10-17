@@ -1,11 +1,13 @@
 # Minimum CMake required
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.26)
 # Project
 project(onnx LANGUAGES CXX)
 
 include(cmake/Utils.cmake)
 # Honor visibility properties for all target types.
 cmake_policy(SET CMP0063 NEW)
+# Modules FindPython3 and FindPython use LOCATION for lookup strategy.
+cmake_policy(SET CMP0094 NEW)
 
 # Set default build type
 get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -38,14 +40,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 
 
-if(DEFINED BUILD_ONNX_PYTHON)
-  message(WARNING "'BUILD_ONNX_PYTHON' is deprecated. Please, use 'ONNX_BUILD_PYTHON' instead")
-  set(ONNX_BUILD_PYTHON_DEFAULT ${BUILD_ONNX_PYTHON})
-else()
-  set(ONNX_BUILD_PYTHON_DEFAULT OFF)
-endif()
-
-option(ONNX_BUILD_PYTHON "Build Python binaries" ${ONNX_BUILD_PYTHON_DEFAULT})
+option(ONNX_BUILD_PYTHON "Build Python binaries" OFF)
 option(ONNX_BUILD_CUSTOM_PROTOBUF "Build and use ONNX's own protobuf" OFF)
 option(ONNX_USE_PROTOBUF_SHARED_LIBS "Build ONNX using protobuf shared library." OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
@@ -134,13 +129,8 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
-# explicitly configure FindPython3.cmake to find python3 in virtual environment first
-if(NOT DEFINED Python3_FIND_VIRTUALENV)
-  set(Python3_FIND_VIRTUALENV FIRST)
-endif()
-
-if(NOT DEFINED Python3_FIND_STRATEGY)
-  set(Python3_FIND_STRATEGY LOCATION)
+if(ONNX_BUILD_PYTHON)
+  set(python_dev_component Development.Module Development.SABIModule)
 endif()
 
 if(CMAKE_CROSSCOMPILING)
@@ -148,15 +138,15 @@ if(CMAKE_CROSSCOMPILING)
   # must use a different package. See the discussion about this at
   # https://gitlab.kitware.com/cmake/cmake/-/issues/25145
   if(ONNX_BUILD_PYTHON)
-    find_package(Python3 REQUIRED COMPONENTS Development.Module)
+    find_package(Python3 REQUIRED COMPONENTS ${python_dev_component})
   endif()
   find_package(Python REQUIRED COMPONENTS Interpreter)
   set(ONNX_PYTHON_INTERPRETER Python::Interpreter)
 else()
-  if(ONNX_BUILD_PYTHON)
-    set(python_dev_component Development.Module)
-  endif()
   find_package(Python3 REQUIRED COMPONENTS Interpreter ${python_dev_component})
+  # Find Python for nanobind
+  set(Python_EXECUTABLE ${Python3_EXECUTABLE})
+  find_package(Python REQUIRED COMPONENTS Interpreter ${python_dev_component})
   set(ONNX_PYTHON_INTERPRETER Python3::Interpreter)
 endif()
 
@@ -321,7 +311,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   set(${SRCS})
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
-  set(GENERATED_FILE_TARGETS)
+  set(GENERATED_FILES)
   foreach(INFILE ${ARGN})
     set(ABS_FILE "${ONNX_ROOT}/${INFILE}")
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
@@ -371,12 +361,11 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
         list(APPEND GEN_PROTO_ARGS "${ONNX_PROTOC_EXECUTABLE}")
     endif()
 
-    add_custom_target("${GENERATED_FILE_WE}_proto_file"
-                       COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
-                       BYPRODUCTS "${GENERATED_PROTO}"
-                       DEPENDS ${INFILE}
-                       COMMENT "Running gen_proto.py on ${INFILE}"
-                       )
+    # Use add_custom_command to avoid re-generate of PROTO files
+    add_custom_command(OUTPUT "${GENERATED_PROTO}"
+        COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
+        DEPENDS ${INFILE}
+        COMMENT "Running gen_proto.py on ${INFILE}")
     message("Generated: ${GENERATED_PROTO}")
 
     set(PROTOC_ARGS
@@ -393,11 +382,10 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
         list(APPEND PROTOC_ARGS ${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
-    list(APPEND GENERATED_FILE_TARGETS ${GENERATED_FILE_WE}_proto_file)
-    add_custom_target(${GENERATED_FILE_WE}_src
+    list(APPEND GENERATED_FILES "${GENERATED_PROTO}")
+    add_custom_command(OUTPUT "${OUTPUT_PB_SRC}"
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
-        BYPRODUCTS "${OUTPUT_PB_SRC}"
-        DEPENDS ${GENERATED_FILE_TARGETS}
+        DEPENDS ${GENERATED_FILES}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
@@ -409,7 +397,7 @@ relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
                                onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
 
-add_library(onnx_proto ${ONNX_PROTO_SRCS})
+add_library(onnx_proto_object OBJECT ${ONNX_PROTO_SRCS})
 
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
@@ -417,12 +405,8 @@ file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
     "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
     "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
+list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src} "${ONNX_ROOT}/onnx/test/cmake/main.cc")
 list(APPEND ONNX_SRCS ${__tmp_srcs})
-
-# Hide all symbols we don't need
-set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -430,19 +414,12 @@ if(ONNX_USE_LITE_PROTO)
     set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
-target_link_libraries(onnx_proto PUBLIC ${LINKED_PROTOBUF_TARGET})
-foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
-  if(TARGET ${ABSL_USED_TARGET})
-    target_link_libraries(onnx_proto PRIVATE ${ABSL_USED_TARGET})
-  endif()
-endforeach()
-add_onnx_global_defines(onnx_proto)
-target_include_directories(onnx_proto PUBLIC
-  $<BUILD_INTERFACE:${ONNX_ROOT}>
+add_onnx_global_defines(onnx_proto_object)
+target_include_directories(onnx_proto_object PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 if(MSVC)
   # For disabling Protobuf related warnings
-  target_compile_options(onnx_proto PUBLIC
+  set(protobuf_warnings
     /wd4146 # unary minus operator applied to unsigned type,
             # result still unsigned
     /wd4244 # 'argument': conversion from 'google::
@@ -453,43 +430,56 @@ if(MSVC)
     /wd4141 # 'inline': used more than once
   )
 endif()
+add_library(onnx_proto)
+target_link_libraries(onnx_proto PUBLIC $<BUILD_INTERFACE:onnx_proto_object>)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-  # whole-archive linker option not available on AIX.
-  # So, create a object library
-  add_library(onnx OBJECT ${ONNX_SRCS})
-else()
-  add_library(onnx ${ONNX_SRCS})
-endif()
-set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+# onnx_object and onnx_proto_object are collections of C++ object files.
+# They are introduced to help onnx_cpp2py_export bypass library boundaries and use ONNX private symbols.
+add_library(onnx_object OBJECT ${ONNX_SRCS})
+add_dependencies(onnx_object onnx_proto_object)
+target_include_directories(onnx_object PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+set_target_properties(onnx_object PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(onnx_object PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+target_include_directories(onnx_object PUBLIC $<BUILD_INTERFACE:${ONNX_ROOT}>)
+add_onnx_global_defines(onnx_object)
+target_link_libraries(onnx_proto_object PUBLIC ${LINKED_PROTOBUF_TARGET})
+target_link_libraries(onnx_object PUBLIC ${LINKED_PROTOBUF_TARGET})
+foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
+  if(TARGET ${ABSL_USED_TARGET})
+    target_link_libraries(onnx_proto_object PUBLIC ${ABSL_USED_TARGET})
+    target_link_libraries(onnx_object PUBLIC ${ABSL_USED_TARGET})
+  endif()
+endforeach()
+add_library(onnx)
+target_link_libraries(onnx PUBLIC $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
+target_include_directories(onnx PUBLIC $<INSTALL_INTERFACE:include>)
 
-target_link_libraries(onnx PUBLIC onnx_proto)
-add_onnx_global_defines(onnx)
+target_compile_options(onnx_object PUBLIC ${protobuf_warnings})
+target_compile_options(onnx_proto_object PUBLIC ${protobuf_warnings})
 
 if(ONNX_BUILD_PYTHON)
-  # find system pybind11
-  find_package(pybind11)
-  if(NOT pybind11_FOUND)
+  # find system nanobind
+  find_package(nanobind)
+  if(NOT nanobind_FOUND)
     include(FetchContent)
-    set(pybind11URL https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.tar.gz)
-    set(pybind11SHA1  8c7e3e8fec829ced31a495dec281153511f33c63)
+
     FetchContent_Declare(
-      pybind11
-      URL ${pybind11URL}
-      URL_HASH SHA1=${pybind11SHA1}
+      nanobind
+      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+      GIT_TAG v2.8.0
+      GIT_SHALLOW TRUE
     )
-    FetchContent_MakeAvailable(pybind11)
+    FetchContent_MakeAvailable(nanobind)
   endif()
 
-  pybind11_add_module(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  # Configure nanobind: https://nanobind.readthedocs.io/en/latest/api_cmake.html
+  nanobind_add_module(
+    onnx_cpp2py_export
+    NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
+    "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-  if(CMAKE_SYSTEM_NAME STREQUAL "AIX")
-    # whole-archive linker option not available on AIX
-    target_sources(onnx_cpp2py_export PRIVATE $<TARGET_OBJECTS:onnx>)
-  else()
-    target_link_libraries(onnx_cpp2py_export PRIVATE $<LINK_LIBRARY:WHOLE_ARCHIVE,onnx>)
-  endif()
+  target_link_libraries(onnx_cpp2py_export PRIVATE $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
   # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
   # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
@@ -498,21 +488,21 @@ if(ONNX_BUILD_PYTHON)
 endif()
 
 if(MSVC)
-  add_msvc_runtime_flag(onnx_proto)
-  add_msvc_runtime_flag(onnx)
+  add_msvc_runtime_flag(onnx_proto_object)
+  add_msvc_runtime_flag(onnx_object)
   if(TARGET onnx_cpp2py_export)
     add_msvc_runtime_flag(onnx_cpp2py_export)
   endif()
   if(ONNX_WERROR)
-    target_compile_options(onnx PRIVATE "/WX")
+    target_compile_options(onnx_object PRIVATE "/WX")
   endif()
 else()
-  target_compile_options(onnx PRIVATE -Wall -Wextra)
+  target_compile_options(onnx_object PRIVATE -Wall -Wextra)
   if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
-    target_compile_options(onnx PRIVATE "-Wno-stringop-overflow")
+    target_compile_options(onnx_object PRIVATE "-Wno-stringop-overflow")
   endif()
   if(ONNX_WERROR)
-    target_compile_options(onnx PRIVATE "-Werror")
+    target_compile_options(onnx_object PRIVATE "-Werror")
   endif()
 endif()
 if(ONNX_USE_ASAN AND NOT MSVC)
@@ -564,7 +554,7 @@ if(ONNX_USE_UNITY_BUILD)
   set(NEW_LIST __unity_src_files)
   list(APPEND __unity_src_files ${ONNX_SRCS})
   # These files have an issue with template explicit specialization after instantiation:
-  #   We take them out of the unity group so they are compiled individually.
+  #   We take them out of the unity group so that they are compiled individually.
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
   list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
   set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
@@ -577,9 +567,6 @@ if(ONNX_USE_UNITY_BUILD)
 endif()
 
 if(ONNX_BUILD_TESTS)
-  if(BUILD_SHARED_LIBS)
-    message(FATAL_ERROR "Tests requires static build")
-  endif()
   find_package(GTest)
   if(NOT GTest_FOUND)
     include(googletest)

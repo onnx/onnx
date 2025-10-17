@@ -62,6 +62,7 @@ from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Cast_19, Celu
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
+from onnx.reference.ops.op_attention import _apply_causal
 from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
@@ -1229,7 +1230,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
             def _run(self, x, alpha=None):
                 del x, alpha
-                return tuple()
+                return ()
 
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
@@ -2469,10 +2470,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.21.5"),
-        "op_dft and op_stft requires numpy >= 1.21.5",
-    )
     def test_stft(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
@@ -2522,10 +2519,6 @@ class TestReferenceEvaluator(unittest.TestCase):
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
 
-    @unittest.skipIf(
-        version_utils.numpy_older_than("1.21.5"),
-        "op_dft and op_stft requires numpy >= 1.21.5",
-    )
     def test_stft_with_window(self):
         signal = make_tensor_value_info("signal", TensorProto.FLOAT, [None, None, None])
         frame_step = make_tensor_value_info("frame_step", TensorProto.INT64, [None])
@@ -3000,8 +2993,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         graph = make_graph(nodes, "dummy", inputs, outputs, initializers)
 
         # model
-        onnx_model = make_model(graph, opset_imports=[make_opsetid("", opset)])
-        return onnx_model
+        return make_model(graph, opset_imports=[make_opsetid("", opset)])
 
     @parameterized.parameterized.expand(
         itertools.product(
@@ -3122,7 +3114,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
         baseline = "constant"
         for k, v in results.items():
-            for a, b in zip(reversed(expected), reversed(v)):
+            for a, b in zip(reversed(expected), reversed(v), strict=True):
                 if a.shape != b.shape:
                     raise AssertionError(
                         f"Shape mismatch for {reduce_op!r}, {baseline}:{a.shape} != {k}:{b.shape}."
@@ -3206,10 +3198,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
             graph = make_graph(nodes, "numpyx", inputs, outputs)
 
-            onnx_model = make_model(
-                graph, opset_imports=opset_imports, functions=functions
-            )
-            return onnx_model
+            return make_model(graph, opset_imports=opset_imports, functions=functions)
 
         onnx_model = create_model()
         x1 = np.array([[-5, 6], [15, 3]], dtype=np.float64)
@@ -3278,7 +3267,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             ]
         ]
         self.assertEqual(len(expected[0]), len(got[0]))
-        for a, b in zip(expected[0], got[0]):
+        for a, b in zip(expected[0], got[0], strict=True):
             assert_allclose(a, b)
 
     def test_split_to_sequence_1d(self):
@@ -3299,7 +3288,7 @@ class TestReferenceEvaluator(unittest.TestCase):
             ]
         ]
         self.assertEqual(len(expected[0]), len(got[0]))
-        for a, b in zip(expected[0], got[0]):
+        for a, b in zip(expected[0], got[0], strict=True):
             assert_allclose(a, b)
 
     def test_split_to_sequence_nokeepdims_noinput(self):
@@ -3313,7 +3302,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = ref.run(None, {"X": data})
         expected = [[data[:, :, i] for i in range(data.shape[2])]]
         self.assertEqual(len(expected[0]), len(got[0]))
-        for a, b in zip(expected[0], got[0]):
+        for a, b in zip(expected[0], got[0], strict=True):
             assert_allclose(a, b)
 
     def test_cast_float8(self):
@@ -4057,8 +4046,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                     ]
                     ** 2
                 )
-            y = x / ((bias + (alpha / size) * square_sum) ** beta)
-            return y
+            return x / ((bias + (alpha / size) * square_sum) ** beta)
 
         # keepdims is ignored in that case
         alpha = 0.0002
@@ -4289,7 +4277,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         x = np.array(1, dtype=np.float32)
         got = ref.run(None, {"X": x})[0]
-        self.assertEqual(got.shape, tuple())
+        self.assertEqual(got.shape, ())
         self.assertEqual(got.dtype, np.uint16)
         assert_allclose(np.array(1, dtype=np.uint16), got)
 
@@ -4317,7 +4305,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         x = np.array(1, dtype=np.float32)
         got = ref.run(None, {"X": x})[0]
-        self.assertEqual(got.shape, tuple())
+        self.assertEqual(got.shape, ())
         self.assertEqual(got.dtype, np.uint16)
         assert_allclose(np.array(1, dtype=np.uint16), got)
 
@@ -6117,6 +6105,28 @@ class TestReferenceEvaluator(unittest.TestCase):
         ref = ReferenceEvaluator(model)
         got = ref.run(None, {"X": x})
         self.assertEqual(x.dtype, got[0].dtype)
+
+    def test_apply_causal(self):
+        m = np.ones((3, 3), dtype=np.float16)
+        _apply_causal(m, 0)
+        self.assertEqual(m.dtype, np.float16)
+        assert_allclose(
+            np.array(
+                [[1, -np.inf, -np.inf], [1, 1, -np.inf], [1, 1, 1]], dtype=m.dtype
+            ),
+            m,
+        )
+
+        m = np.zeros((3, 4), dtype=np.float16)
+        _apply_causal(m, 1)
+        self.assertEqual(m.dtype, np.float16)
+        assert_allclose(
+            np.array(
+                [[0, 0, -np.inf, -np.inf], [0, 0, 0, -np.inf], [0, 0, 0, 0]],
+                dtype=m.dtype,
+            ),
+            m,
+        )
 
 
 if __name__ == "__main__":

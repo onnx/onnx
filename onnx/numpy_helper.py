@@ -9,199 +9,12 @@ from typing import TYPE_CHECKING, Any
 import ml_dtypes
 import numpy as np
 import numpy.typing as npt
-import typing_extensions
 
 import onnx.external_data_helper
-from onnx import helper, subbyte
+from onnx import helper
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-
-# System is little endian
-_IS_LITTLE_ENDIAN = sys.byteorder == "little"
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
-)
-def bfloat16_to_float32(
-    data: np.int16 | np.int32 | np.ndarray,
-    dims: int | Sequence[int] | None = None,
-) -> np.ndarray:
-    """Converts ndarray of bf16 (as uint32) to f32 (as uint32).
-
-    Args:
-        data: A numpy array, empty dimensions are allowed if dims is
-            None.
-        dims: If specified, the function reshapes the results.
-
-    Returns:
-        A numpy array of float32 with the same dimension if dims is
-        None, or reshaped to dims if specified
-    """
-    shift = lambda x: x << 16  # noqa: E731
-    if dims is None:
-        if len(data.shape) == 0:
-            return shift(np.array([data]).astype(np.int32)).view(np.float32)[0]  # type: ignore[no-any-return]
-        return shift(data.astype(np.int32)).view(np.float32)  # type: ignore[no-any-return]
-    return shift(data.astype(np.int32)).reshape(dims).view(np.float32)  # type: ignore[no-any-return]
-
-
-def _float8e4m3_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
-    if not fn:
-        raise NotImplementedError("fn=False is not implemented.")
-    if ival < 0 or ival > 255:  # noqa: PLR2004
-        raise ValueError(f"{ival} is not a float8.")
-    if uz:
-        exponent_bias = 8
-        if ival == 0x80:  # noqa: PLR2004
-            return np.nan  # type: ignore[return-value]
-    else:
-        exponent_bias = 7
-        if ival == 255:  # noqa: PLR2004
-            return np.float32(-np.nan)
-        if ival == 127:  # noqa: PLR2004
-            return np.float32(np.nan)
-
-    ival = np.uint32(ival)  # type: ignore[assignment]
-    expo = (ival & 0x78) >> 3
-    mant = ival & 0x07
-    sign = ival & 0x80
-    res = sign << 24
-    if expo == 0:
-        if mant > 0:
-            expo = 0x7F - exponent_bias
-            if mant & 0x4 == 0:
-                mant &= 0x3
-                mant <<= 1
-                expo -= 1
-            if mant & 0x4 == 0:
-                mant &= 0x3
-                mant <<= 1
-                expo -= 1
-            res |= (mant & 0x3) << 21
-            res |= expo << 23
-    else:
-        res |= mant << 20
-        expo += 0x7F - exponent_bias
-        res |= expo << 23
-    f = np.uint32(res).view(np.float32)
-    return f
-
-
-_float8e4m3_to_float32 = np.vectorize(
-    _float8e4m3_to_float32_scalar, excluded=["fn", "uz"]
-)
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
-)
-def float8e4m3_to_float32(
-    data: np.int16 | np.int32 | np.ndarray,
-    dims: int | Sequence[int] | None = None,
-    fn: bool = True,
-    uz: bool = False,
-) -> np.ndarray:
-    """Converts ndarray of float8, e4m3 (as uint32) to f32 (as uint32).
-
-    See :ref:`onnx-detail-float8` for technical details.
-
-    Args:
-        data: A numpy array, empty dimensions are allowed if dims is None.
-        dims: If specified, the function reshapes the results.
-        fn: No infinite values.
-        uz: No negative zero.
-
-    Returns:
-        A numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified.
-    """
-    if not fn:
-        raise NotImplementedError(
-            "float32_to_float8e4m3 not implemented with fn=False."
-        )
-    res = _float8e4m3_to_float32(data, fn=fn, uz=uz)
-    if dims is None:
-        return res  # type: ignore[no-any-return]
-    return res.reshape(dims)  # type: ignore[no-any-return]
-
-
-def _float8e5m2_to_float32_scalar(ival: int, fn: bool, uz: bool) -> np.float32:
-    if fn and uz:
-        if ival == 0x80:  # noqa: PLR2004
-            return np.float32(np.nan)
-        exponent_bias = 16
-    elif not fn and not uz:
-        if ival in {253, 254, 255}:
-            return np.float32(-np.nan)
-        if ival in {125, 126, 127}:
-            return np.float32(np.nan)
-        if ival == 252:  # noqa: PLR2004
-            return np.float32(-np.inf)
-        if ival == 124:  # noqa: PLR2004
-            return np.float32(np.inf)
-        exponent_bias = 15
-    else:
-        raise NotImplementedError("fn and uz must be both False or True.")
-
-    ival = np.uint32(ival)  # type: ignore[assignment]
-    expo = (ival & 0x7C) >> 2
-    mant = ival & 0x03
-    sign = ival & 0x80
-    res = sign << 24
-    if expo == 0:
-        if mant > 0:
-            expo = 0x7F - exponent_bias
-            if mant & 0x2 == 0:
-                mant &= 0x1
-                mant <<= 1
-                expo -= 1
-            res |= (mant & 0x1) << 22
-            res |= expo << 23
-    else:
-        res |= mant << 21
-        expo += 0x7F - exponent_bias
-        res |= expo << 23
-    f = np.uint32(res).view(np.float32)
-    return f
-
-
-_float8e5m2_to_float32 = np.vectorize(
-    _float8e5m2_to_float32_scalar, excluded=["fn", "uz"]
-)
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider using libraries like ml_dtypes for dtype conversion",
-    category=DeprecationWarning,
-)
-def float8e5m2_to_float32(
-    data: np.int16 | np.int32 | np.ndarray,
-    dims: int | Sequence[int] | None = None,
-    fn: bool = False,
-    uz: bool = False,
-) -> np.ndarray:
-    """Converts ndarray of float8, e5m2 (as uint32) to f32 (as uint32).
-
-    See :ref:`onnx-detail-float8` for technical details.
-
-    Args:
-        data: A numpy array, empty dimensions are allowed if dims is None.
-        dims: If specified, the function reshapes the results.
-        fn: No infinite values.
-        uz: No negative zero.
-
-    Returns:
-        A numpy array of float32 with the same dimension if dims is None,
-        or reshaped to dims if specified
-    """
-    res = _float8e5m2_to_float32(data, fn=fn, uz=uz)
-    if dims is None:
-        return res  # type: ignore[no-any-return]
-    return res.reshape(dims)  # type: ignore[no-any-return]
 
 
 def to_float8e8m0(
@@ -277,68 +90,6 @@ def to_float8e8m0(
     output[normal_mask] = exponent[normal_mask]
 
     return output.view(ml_dtypes.float8_e8m0fnu)
-
-
-@typing_extensions.deprecated(
-    "Deprecated since 1.18. Scheduled to remove in 1.20. Consider implementing your own unpack logic",
-    category=DeprecationWarning,
-)
-def unpack_int4(
-    data: np.int32 | np.ndarray,
-    dims: int | Sequence[int],
-    signed: bool,
-) -> np.ndarray:
-    """Converts ndarray of int4 (as packed uint8) to f32
-    See :ref:`onnx-detail-int4` for technical details.
-
-    Args:
-        data: A numpy array, empty dimensions are allowed if dims is
-            None.
-        dims: The dimensions are used to reshape the unpacked buffer
-        signed: Whether the 4 bit integer is signed or unsigned
-
-    Returns:
-        A numpy array of float32 reshaped to dims.
-    """
-    single_func = lambda x: subbyte.unpack_single_4bitx2(x, signed)  # noqa: E731
-    func = np.frompyfunc(single_func, 1, 2)
-
-    res_high, res_low = func(data.ravel())
-    res = np.empty((res_high.size + res_low.size,), dtype=np.float32)
-    res[0::2] = res_high
-    res[1::2] = res_low
-
-    if (
-        res.size == np.prod(dims) + 1
-    ):  # handle single-element padding due to odd number of elements
-        res = res.ravel()[:-1]
-    res = res.reshape(dims)
-    return res
-
-
-def _unpacked_float4e2m1_to_float32(
-    x: npt.NDArray[np.uint8],
-) -> npt.NDArray[np.float32]:
-    """Evaluate the numerical value of an array of unpacked float4e2m1 values (as uint8)
-    See :ref:`onnx-detail-int4` for technical details.
-
-    Args:
-        x: an array of uint8 elements representing a float4e2m1 (using the 4 LSB)
-
-    Returns:
-        An array of float32 elements representing the values of the float4e2m1 input.
-    """
-    # x is stored in 4 LSB of int
-    sign = np.where(np.bitwise_and(x, 0x08), -1, 1)
-    mantissa = (x & 0x01).astype(np.float32)
-    exponent = ((x & 0x06) >> 1).astype(np.float32)
-
-    val = np.where(
-        exponent == 0,
-        sign * (mantissa / 2.0),
-        sign * (1.0 + mantissa / 2.0) * 2.0 ** (exponent - 1),
-    )  # denormalized, normalized
-    return val
 
 
 def _unpack_4bit(
@@ -477,6 +228,26 @@ def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noq
     return np.asarray(data, dtype=storage_np_dtype).astype(np_dtype).reshape(dims)
 
 
+def tobytes_little_endian(array: np.ndarray) -> bytes:
+    """Converts an array into bytes in little endian byte order.
+
+    Args:
+        array: a numpy array.
+
+    Returns:
+        bytes: Byte representation of passed array in little endian byte order.
+
+    .. versionadded:: 1.20
+    """
+    if array.dtype.byteorder == ">" or (
+        sys.byteorder == "big" and array.dtype.byteorder == "="
+    ):
+        # Ensure that the bytes will be in little-endian byte-order.
+        array = array.astype(array.dtype.newbyteorder("<"))
+
+    return array.tobytes()
+
+
 def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProto:
     """Converts an array into a TensorProto including
 
@@ -523,10 +294,8 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
     }:
         # Pack the array into int4
         array = _pack_4bitx2(array)
-    if not _IS_LITTLE_ENDIAN:
-        array = array.view(array.dtype.newbyteorder("<"))
 
-    tensor.raw_data = array.tobytes()
+    tensor.raw_data = tobytes_little_endian(array)
     tensor.data_type = dtype
     return tensor
 
@@ -631,8 +400,7 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
             map_proto.name,
             ") are not the same.",
         )
-    dictionary = dict(zip(key_list, value_list))
-    return dictionary
+    return dict(zip(key_list, value_list, strict=False))
 
 
 def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
@@ -792,8 +560,7 @@ def create_random_int(
         end = min(np.iinfo(dtype).max, np.iinfo(np.int32).max)
         start = max(np.iinfo(dtype).min, np.iinfo(np.int32).min)
         return np.random.randint(start, end, size=input_shape).astype(dtype)
-    else:
-        raise TypeError(f"{dtype} is not supported by create_random_int.")
+    raise TypeError(f"{dtype} is not supported by create_random_int.")
 
 
 def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:

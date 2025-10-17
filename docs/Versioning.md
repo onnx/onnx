@@ -134,6 +134,7 @@ B|-     |**2**  |2      |2
 C|-     |-      |**3**  |**4**
 
 Notes:
+
 - Values that are new or updated from a previous OpSet version are in **bold**.
 
 ## Model versioning
@@ -192,6 +193,7 @@ ONNX version|IR version|Opset version ai.onnx|Opset version ai.onnx.ml|Opset ver
 1.16.0|10|21|5|1
 1.17.0|10|22|5|1
 1.18.0|11|23|5|1
+1.19.0|12|24|5|1
 
 A programmatically accessible version of the above table is available [here](../onnx/helper.py). Limited version number
 information is also maintained in [version.h](../onnx/common/version.h) and [schema.h](../onnx/defs/schema.h).

@@ -11,7 +11,7 @@ namespace defs {
 namespace math {
 namespace utils {
 
-static const char* TopK_ver11_doc = R"DOC(
+static constexpr const char* TopK_ver11_doc = R"DOC(
 Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
 shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
 
@@ -252,7 +252,7 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
 }
 
 const char* QLinearMatMulDoc() {
-  static const char* QLinearMatMul_doc = R"DOC(
+  static constexpr const char* QLinearMatMul_doc = R"DOC(
 Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
 and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).
