@@ -1299,7 +1299,7 @@ The `output` is calculated via the following equation:
 output = np.copy(data)
 update_indices = indices.shape[:-1]
 for idx in np.ndindex(update_indices):
-    output[indices[idx]] = updates[idx]
+    output[tuple(indices[idx])] = updates[idx]
 ```
 
 The order of iteration in the above loop is not specified.
@@ -1316,7 +1316,7 @@ When `reduction` is set to some reduction function `f`, `output` is calculated a
 output = np.copy(data)
 update_indices = indices.shape[:-1]
 for idx in np.ndindex(update_indices):
-    output[indices[idx]] = f(output[indices[idx]], updates[idx])
+    output[tuple(indices[idx])] = f(output[tuple(indices[idx])], updates[idx])
 ```
 
 where the `f` is `+`, `*`, `max` or `min` as specified.
