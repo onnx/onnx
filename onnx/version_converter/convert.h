@@ -114,7 +114,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<OpSchema> all_opschemas = OpSchemaRegistry::get_all_schemas_with_history();
 
     for (const OpSchema& schema : all_opschemas) {
-      all_schemas[schema.Name()][schema.domain()][(int64_t)schema.since_version()] = &schema;
+      all_schemas[schema.Name()][schema.domain()][schema.since_version()] = &schema;
     }
 
     // Iterate through all_schemas to determine NoPreviousVersionAdapters
