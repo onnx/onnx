@@ -93,7 +93,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(MathDocGenerator("subtraction"))
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Sub"); }));
 
-static const char* Mod_doc = R"DOC(
+static constexpr const char* Mod_doc = R"DOC(
 Performs an element-wise binary modulo operation.
 The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
 
@@ -148,7 +148,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 14, OpSchema().FillUsing(MathDocGenerator("division")));
 
-static const char* Neg_ver13_doc = R"DOC(
+static constexpr const char* Neg_ver13_doc = R"DOC(
 Neg takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where each element flipped sign, y = -x, is applied to
 the tensor elementwise.
@@ -174,7 +174,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to signed numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Abs_ver13_doc = R"DOC(
+static constexpr const char* Abs_ver13_doc = R"DOC(
 Absolute takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where absolute value, y = abs(x), is applied to
 the tensor elementwise.
@@ -193,7 +193,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Reciprocal_ver13_doc = R"DOC(
+static constexpr const char* Reciprocal_ver13_doc = R"DOC(
 Reciprocal takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
 the tensor elementwise.
@@ -212,7 +212,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Floor_ver13_doc = R"DOC(
+static constexpr const char* Floor_ver13_doc = R"DOC(
 Floor takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the floor is, y = floor(x), is applied to
 the tensor elementwise. If x is integral, +0, -0, NaN,  or infinite, x itself is returned.
@@ -231,7 +231,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Ceil_ver13_doc = R"DOC(
+static constexpr const char* Ceil_ver13_doc = R"DOC(
 Ceil takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the ceil is, y = ceil(x), is applied to
 the tensor elementwise. If x is integral, +0, -0, NaN,  or infinite, x itself is returned.
@@ -250,7 +250,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Sqrt_ver13_doc = R"DOC(
+static constexpr const char* Sqrt_ver13_doc = R"DOC(
 Square root takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the square root is, y = x^0.5, is applied to
 the tensor elementwise. If x is negative, then it will return NaN.
@@ -269,7 +269,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Relu_ver14_doc = R"DOC(
+static constexpr const char* Relu_ver14_doc = R"DOC(
 Relu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
 the tensor elementwise.
@@ -304,7 +304,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* LeakyRelu_ver16_doc = R"DOC(
+static constexpr const char* LeakyRelu_ver16_doc = R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
 output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
@@ -335,7 +335,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         )ONNX"));
 
-static const char* ThresholdedRelu_ver22_doc = R"DOC(
+static constexpr const char* ThresholdedRelu_ver22_doc = R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
 is applied to the tensor elementwise.
@@ -364,7 +364,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Selu_ver22_doc = R"DOC(
+static constexpr const char* Selu_ver22_doc = R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the scaled exponential linear unit function,
 `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
@@ -412,7 +412,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Elu_ver22_doc = R"DOC(
+static constexpr const char* Elu_ver22_doc = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
 0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
@@ -447,7 +447,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* mish_ver22_doc = R"DOC(
+static constexpr const char* mish_ver22_doc = R"DOC(
 Mish: A Self Regularized Non-Monotonic Neural Activation Function.
 
 Perform the linear unit element-wise on the input tensor X using formula:
@@ -474,7 +474,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* celu_ver12_doc = R"DOC(
+static constexpr const char* celu_ver12_doc = R"DOC(
 Continuously Differentiable Exponential Linear Units:
 Perform the linear unit element-wise on the input tensor X
 using formula:
@@ -519,7 +519,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyCelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* gelu_ver20_doc = R"DOC(
+static constexpr const char* gelu_ver20_doc = R"DOC(
 Gelu takes one input data (Tensor<T>) and produces one
 output data (Tensor<T>) where the gaussian error linear units function,
 $y = 0.5 * x * (1 + erf(x/sqrt(2)))$ is applied to the tensor elementwise.
@@ -604,7 +604,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyGelu)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Swish_ver24_doc = R"DOC(
+static constexpr const char* Swish_ver24_doc = R"DOC(
 Swish function takes one input data (Tensor<T>) and produces one output data (Tensor<T>) of the same shape,
 where $Swish(x) = x * sigmoid(alpha * x)$.
 )DOC";
@@ -633,7 +633,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             )ONNX"));
 
-static const char* Exp_ver13_doc = R"DOC(
+static constexpr const char* Exp_ver13_doc = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
 )DOC";
 
@@ -656,7 +656,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Log_ver13_doc = R"DOC(
+static constexpr const char* Log_ver13_doc = R"DOC(
 Calculates the natural log of the given input tensor, element-wise.
 )DOC";
 
@@ -682,7 +682,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Tanh_ver13_doc = R"DOC(
+static constexpr const char* Tanh_ver13_doc = R"DOC(
 Calculates the hyperbolic tangent of the given input tensor element-wise.
 )DOC";
 
@@ -705,7 +705,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Pow_ver15_doc = R"DOC(
+static constexpr const char* Pow_ver15_doc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
@@ -760,7 +760,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static const char* PRelu_ver16_doc = R"DOC(
+static constexpr const char* PRelu_ver16_doc = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
@@ -806,7 +806,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
-static const char* Sigmoid_ver13_doc = R"DOC(
+static constexpr const char* Sigmoid_ver13_doc = R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
 tensor elementwise.
@@ -825,7 +825,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* HardSigmoid_ver22_doc = R"DOC(
+static constexpr const char* HardSigmoid_ver22_doc = R"DOC(
 HardSigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
 is applied to the tensor elementwise.
@@ -861,7 +861,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* HardSwish_ver22_doc = R"DOC(
+static constexpr const char* HardSwish_ver22_doc = R"DOC(
 HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
 the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
 where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
@@ -965,7 +965,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors."));
 
-static const char* Clip_ver13_doc = R"DOC(
+static constexpr const char* Clip_ver13_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified by the inputs 'min' and 'max'. They default to
 numeric_limits::lowest() and numeric_limits::max(), respectively.
@@ -1217,7 +1217,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         "hardmax",
         "Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise")));
 
-static const char* Softsign_ver22_doc = R"DOC(
+static constexpr const char* Softsign_ver22_doc = R"DOC(
 Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 )DOC";
 
@@ -1250,7 +1250,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Softplus_ver22_doc = R"DOC(
+static constexpr const char* Softplus_ver22_doc = R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
 the tensor elementwise.
@@ -1277,7 +1277,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             )ONNX",
             18));
 
-static const char* Gemm_ver13_doc = R"DOC(General Matrix multiplication:
+static constexpr const char* Gemm_ver13_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
 * A' = transpose(A) if transA else A
@@ -1364,7 +1364,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* MatMul_ver13_doc = R"DOC(
+static constexpr const char* MatMul_ver13_doc = R"DOC(
 Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 )DOC";
 
@@ -1397,7 +1397,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     24,
     OpSchema().FillUsing(defs::math::utils::TopKOpGenerator(OpSchema::all_numeric_types_ir4())));
 
-static const char* Sin_ver22_doc = R"DOC(
+static constexpr const char* Sin_ver22_doc = R"DOC(
 Calculates the sine of the given input tensor, element-wise.
 )DOC";
 
@@ -1420,7 +1420,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Cos_ver22_doc = R"DOC(
+static constexpr const char* Cos_ver22_doc = R"DOC(
 Calculates the cosine of the given input tensor, element-wise.
 )DOC";
 
@@ -1443,7 +1443,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Tan_ver22_doc = R"DOC(
+static constexpr const char* Tan_ver22_doc = R"DOC(
 Calculates the tangent of the given input tensor, element-wise.
 )DOC";
 
@@ -1466,7 +1466,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Asin_ver22_doc = R"DOC(
+static constexpr const char* Asin_ver22_doc = R"DOC(
 Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
 )DOC";
 
@@ -1489,7 +1489,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Acos_ver22_doc = R"DOC(
+static constexpr const char* Acos_ver22_doc = R"DOC(
 Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
 )DOC";
 
@@ -1512,7 +1512,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Atan_ver22_doc = R"DOC(
+static constexpr const char* Atan_ver22_doc = R"DOC(
 Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
 )DOC";
 
@@ -1535,7 +1535,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Expand_ver13_doc = R"DOC(
+static constexpr const char* Expand_ver13_doc = R"DOC(
 Broadcast the input tensor following the given shape and the broadcast rule.
 The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
 Dimensions are right alignment;
@@ -1579,7 +1579,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Sinh_ver22_doc = R"DOC(
+static constexpr const char* Sinh_ver22_doc = R"DOC(
 Calculates the hyperbolic sine of the given input tensor element-wise.
 )DOC";
 
@@ -1602,7 +1602,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Cosh_ver22_doc = R"DOC(
+static constexpr const char* Cosh_ver22_doc = R"DOC(
 Calculates the hyperbolic cosine of the given input tensor element-wise.
 )DOC";
 
@@ -1625,7 +1625,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Asinh_ver22_doc = R"DOC(
+static constexpr const char* Asinh_ver22_doc = R"DOC(
 Calculates the hyperbolic arcsine of the given input tensor element-wise.
 )DOC";
 
@@ -1648,7 +1648,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Acosh_ver22_doc = R"DOC(
+static constexpr const char* Acosh_ver22_doc = R"DOC(
 Calculates the hyperbolic arccosine of the given input tensor element-wise.
 )DOC";
 
@@ -1671,7 +1671,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Atanh_ver22_doc = R"DOC(
+static constexpr const char* Atanh_ver22_doc = R"DOC(
 Calculates the hyperbolic arctangent of the given input tensor element-wise.
 )DOC";
 
@@ -1694,7 +1694,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Sign_ver13_doc = R"DOC(
+static constexpr const char* Sign_ver13_doc = R"DOC(
 Calculate the sign of the given input tensor element-wise.
 If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
 )DOC";
@@ -1721,7 +1721,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Erf_ver13_doc = R"DOC(
+static constexpr const char* Erf_ver13_doc = R"DOC(
 Computes the error function of the given input tensor element-wise.
 )DOC";
 
@@ -1828,7 +1828,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The type of the output and its zeropoint.")
         .TypeAndShapeInferenceFunction(defs::math::utils::QLinearMatMulShapeInference));
 
-static const char* MatMulInteger_ver10_doc = R"DOC(
+static constexpr const char* MatMulInteger_ver10_doc = R"DOC(
 Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 )DOC";
@@ -1892,7 +1892,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           defs::math::utils::MatMulShapeInference(ctx, 0, 1);
         }));
 
-static const char* CumSum_ver14_doc = R"DOC(
+static constexpr const char* CumSum_ver14_doc = R"DOC(
 Performs cumulative sum of the input elements along the given axis.
 By default, it will do the sum inclusively meaning the first element is copied as is.
 Through an `exclusive` attribute, this behavior can change to exclude the first element.
@@ -1966,7 +1966,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 
-static const char* Round_ver22_doc = R"DOC(
+static constexpr const char* Round_ver22_doc = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning
 it finds the nearest integer for each value.
 In case of halves, the rule is to round them to the nearest even integer.
@@ -1993,7 +1993,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Det_ver22_doc = R"DOC(
+static constexpr const char* Det_ver22_doc = R"DOC(
 Det calculates determinant of a square matrix or batches of square matrices.
 Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
 and the inner-most 2 dimensions form square matrices.
@@ -2156,7 +2156,7 @@ static bool BuildContextDependentFunctionBody(
   return true;
 }
 
-static const char* NegativeLogLikelihoodLoss_ver22_doc = R"DOC(
+static constexpr const char* NegativeLogLikelihoodLoss_ver22_doc = R"DOC(
 A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
 Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
 The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
@@ -2545,7 +2545,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
   updateOutputShape(ctx, 0, output_shape);
 }
 
-static const char* Einsum_ver12_doc = R"DOC(
+static constexpr const char* Einsum_ver12_doc = R"DOC(
 An einsum of the form `term1, term2 -> output-term` produces an output tensor using the following equation
 
 ```
@@ -2598,14 +2598,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           einsumShapeInference(ctx, equation);
         }));
 
-static const char* reduction_doc_sce =
+static constexpr const char* reduction_doc_sce =
     "Type of reduction to apply to loss: none, sum, mean(default). "
     "'none': no reduction will be applied, "
     "'sum': the output will be summed. "
     "'mean': the sum of the output will be divided by the number of "
     "elements in the output.";
 
-static const char* SoftmaxCrossEntropyLoss_ver13_doc =
+static constexpr const char* SoftmaxCrossEntropyLoss_ver13_doc =
     R"DOC(Loss function that measures the softmax cross entropy
 between 'scores' and 'labels'.
 This operator first computes a loss tensor whose shape is identical to the labels input.
@@ -2774,7 +2774,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* DFT_ver20_doc =
+static constexpr const char* DFT_ver20_doc =
     R"DOC(Computes the discrete Fourier Transform (DFT) of the input.
 
 Assuming the input has shape `[M, N]`, where `N` is the dimension over which the
@@ -3167,7 +3167,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
-static const char* MelWeightMatrix_ver17_doc = R"DOC(
+static constexpr const char* MelWeightMatrix_ver17_doc = R"DOC(
 Generate a MelWeightMatrix that can be used to re-weight a Tensor containing a linearly sampled frequency spectra (from DFT or STFT) into num_mel_bins frequency information based on the [lower_edge_hertz, upper_edge_hertz] range on the mel scale.
 This function defines the mel scale in terms of a frequency in hertz according to the following formula:
 
@@ -3286,7 +3286,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* STFT_ver17_doc = R"DOC(Computes the Short-time Fourier Transform of the signal.)DOC";
+static constexpr const char* STFT_ver17_doc = R"DOC(Computes the Short-time Fourier Transform of the signal.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     STFT,

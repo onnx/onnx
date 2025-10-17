@@ -10,7 +10,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* ImageDecoder_ver20_doc =
+static constexpr const char* ImageDecoder_ver20_doc =
     R"DOC(Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
 stream, invalid format, it will return an empty matrix).
 The following image formats are supported:
