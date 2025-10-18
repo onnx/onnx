@@ -1477,12 +1477,6 @@ inline void DeregisterOnnxOperatorSetSchema() {
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
 }
 
-inline bool IsOnnxStaticRegistrationDisabled() {
-#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
-  return true;
-#else
-  return false;
-#endif
-}
+bool IsOnnxStaticRegistrationDisabled();
 
 } // namespace ONNX_NAMESPACE
