@@ -7,12 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 # A Short Guide on the Differentiability Tag for ONNX Operators
 
 ## Differentiability Tag
+
 The ONNX operator schema for each operator includes a differentiability tag for each input and output.
 In this document, we explain the meaning of this tag and how to ensure the correctness of the tags.
 Briefly, the tag identifies the set of differentiable inputs and differentiable outputs of an operator.
 The meaning of the tag is that the partial derivative of each differentiable output is defined with respect to each differentiable output.
 
 ## Ways to Define Differentiability Tag
+
 The differentiability definition of an operator consists of several aspects.
 
 - Differentiable inputs, which can be referenced in Gradient's `xs` attribute.
@@ -24,6 +26,7 @@ Because most deep learning frameworks are backward-based, the reviewers should e
 We present a couple of methods below to verify the differentiability for ONNX operator.
 
 ### Method 1: Reuse Existing Deep Learning Frameworks
+
 The first way is to show that the considered operator's backward operation exists in an existing framework such as Pytorch or Tensorflow. In this case, the author should provide a runnable python script which computes the backward pass of the considered operator. The author should also point out how to map the Pytorch or Tensor code to ONNX format (for example, the author can call `torch.onnx.export` to save an ONNX model). The following script shows the differentiability of ONNX Reshape using  Pytorch.
 
 ```python
@@ -65,6 +68,7 @@ with open('model.onnx', 'wb') as f:
 ```
 
 ### Method 2: Manually Do the Math
+
 The second way is formally proving the existence of the Jacobian matrix (or tensor) from outputs to inputs with at least two numerical examples. In this case, the reviewer should go through the math and confirm if the numerical result is correct. The author should add enough details so that any STEM graduated student can easily review it.
 
 For example, to show the differentiability of Add, the author may first write down its equation:
