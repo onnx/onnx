@@ -11,9 +11,11 @@ ONNX models from the [ONNX Model Zoo](https://github.com/onnx/models). Furthermo
 developers the opportunity to share their pre-trained models with the broader community.
 
 ## Install
+
 The ONNX Model hub is available after ONNX 1.11.0.
 
 ## Basic usage
+
 The ONNX Model Hub is capable of downloading, listing, and querying trained models from any git repository,
  and defaults to the official [ONNX Model Zoo](https://github.com/onnx/models). In this section we demonstrate some of the basic functionality.
 
@@ -23,7 +25,7 @@ First please import the hub using:
 from onnx import hub
 ```
 
-#### Downloading a model by name:
+#### Downloading a model by name
 
 The `load` function will default to searching the model zoo for the latest model with a matching name,
  download this model to a local cache, and load the model into a `ModelProto`
@@ -33,7 +35,7 @@ The `load` function will default to searching the model zoo for the latest model
 model = hub.load("resnet50")
 ```
 
-#### Downloading from custom repositories:
+#### Downloading from custom repositories
 
 Any repository with the proper structure can be a ONNX model hub. To download from other hubs,
  or to specify a particular branch or commit on the main model hub one can provide the `repo` parameter:
@@ -42,7 +44,7 @@ Any repository with the proper structure can be a ONNX model hub. To download fr
 model = hub.load("resnet50", repo="onnx/models:771185265efbdc049fb223bd68ab1aeb1aecde76")
 ```
 
-#### Listing and inspecting Models:
+#### Listing and inspecting Models
 
 The model hub provides APIs for querying the model zoo to learn more about available models.
  This does not download the models, but rather just returns information about models matching the given arguments
@@ -90,6 +92,7 @@ The ONNX Model hub locally caches downloaded models in a configurable location
 so that subsequent calls to `hub.load` do not require network connection.
 
 #### Default cache location
+
 The hub client looks for the following default cache locations in this order:
 
 1) `$ONNX_HOME/hub` if the `ONNX_HOME` environment variable is defined
@@ -97,6 +100,7 @@ The hub client looks for the following default cache locations in this order:
 3) `~/.cache/onnx/hub` where `~` is the user home directory
 
 #### Setting the cache location
+
 To manually set the cache location use:
 
 ```python

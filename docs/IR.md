@@ -95,8 +95,8 @@ __Note: Exploring an ONNX file__
 
 You can use the `protoc` tool that is part of the Protocol Buffers distribution to examine the contents of an ONNX file, you do so like this:
 
-```
-$ protoc --decode=onnx.ModelProto onnx.proto < yourfile.onnx
+```bash
+protoc --decode=onnx.ModelProto onnx.proto < yourfile.onnx
 ```
 
 Where [onnx.proto](/onnx/onnx.proto) is the file that is part of this repository.
@@ -445,7 +445,7 @@ In addition to element type, tensor types have a **static** shape. The static sh
 
 The static shape is defined by 'TensorShapeProto':
 
-```
+```proto
 message TensorShapeProto {
   message Dimension {
     oneof value {
@@ -459,7 +459,7 @@ message TensorShapeProto {
 
 Which is referenced by the Tensor type message:
 
-```
+```proto
   message Tensor {
     optional TensorProto.DataType elem_type = 1;
     optional TensorShapeProto shape = 2;
