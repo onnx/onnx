@@ -1,4 +1,3 @@
-### Description
 
 
 ### Motivation and Context
