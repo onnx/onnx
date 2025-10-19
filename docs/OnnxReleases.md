@@ -64,65 +64,6 @@ RC-Candidates
 
 * Before the final merge, it must be confirmed manually via the set up deployment environments.
 
-## Upload release candidate to TestPyPI (valid for releases up to and including 1.18 / fallback for 1.19)
-**Important**
-
-* **WAIT** for PR to set the release branch's `VERSION_NUMBER` to merge and build before continuing.
-* To push files to TestPyPI or PyPI, install `twine` if you don't already have it: `pip install twine`
-    * When prompted for a password by `twine` commands, use an API token. Your password will not work.
-        * Note: TestPyPI and PyPI are separate accounts so make sure you are using the correct one depending where you are uploading.
-        * [Generate a TestPYI API token](https://test.pypi.org/manage/account/token/)
-        * [Generate a PyPI API token](https://pypi.org/manage/account/token/)
-* Like PyPI, A release version can only be pushed to TestPyPI **ONCE**.
-    * To update an already pushed file, you must increase the `VERSION_NUMBER`, rebuild, and push a new X.Y.Zrc2, etc.
-    * To test push commands, you can use docker or podman to create a local pypi server
-        1. Start server `docker run --rm -it --platform linux/amd64 -p 80:8080 pypiserver/pypiserver:latest run -a . -P .`
-            * This starts a local pypiserver that does not require authentication (any user/password will work on it).
-            * The container does not save state. Stopping and starting it again will let you push the same version multiple times.
-        1. To push files:
-            * wheels: `twine upload --repository-url http://127.0.0.1:80 --verbose -u fake -p fake *.whl`
-            * source: `twine upload --repository-url http://127.0.0.1:80 --verbose -u fake -p fake dist/*`
-        1. To pull and install from your test server:
-            * `pip uninstall -y onnx && pip install --index-url http://127.0.0.1:80/simple/ --pre onnx`
-
-**Push Wheels**
-
-1. Gather the wheel files from the ONNX Github Actions for the release candidate.
-   * ONNX GitHub Action
-     * [Create_release](https://github.com/onnx/onnx/blob/main/.github/workflows/create_release.yml)
-
-   * Find the run for the release branch
-     * Or start a run by clicking "Run workflow", pick the release branch, Click "Run Workflow"
-      * Click the completed run, scroll to the "Artifacts" section (bottom), and click "wheels" to download the files
-      * Extract the wheels.zip files and combine their contents into a single folder
-
-2. Upload the produced wheels manually to TestPyPI: `twine upload --repository testpypi --verbose -u <YOUR_TESTPYPI_USER> <extracted_wheel.zip_folder>/*.whl`.
-    * A current owner of the ONNX project will need to give you access to the project before you can push files.
-    * The project name and version built into the files.
-
-**Source Distribution**
-
-1. Make sure all the git submodules are updated
-    * ``git submodule update --init``
-1. Make sure the git checkout is clean –
-    * Run ``git clean -nxd``
-        * Make sure that none of the auto-generated header files such as the following are present.
-            * onnx/onnx-operators.pb.cc
-            * onnx/onnx-operator.pb.h
-            * onnx/onnx.pb.cc
-            * onnx/onnx.pb.h
-        * If they are present run ``git clean -ixd`` and remove those files from your local branch
-1. Generate the source distribution file: ``python -m build --sdist``
-    * Run `pip install build` if you don't already have the `build` package.
-1. Upload source distribution file to TestPyPI: ``twine upload --repository testpypi --verbose -u <YOUR_TESTPYPI_USER> dist/*``
-    * Notes:
-        * A current owner of the ONNX project will need to give you access to the project before you can push files.
-        * The project name and version built into the files.
-1. Confirm TestPyPI package can be installed:
-    * Wheel install: `pip uninstall -y onnx && pip install -i https://test.pypi.org/simple/ --pre onnx`
-       * Assumes pre-built while is available for your environment, if not a source install will start.
-    * Source install: `pip uninstall -y onnx && pip install -i https://test.pypi.org/simple --no-binary onnx --pre onnx`
-
 ## Package verification
 
 **Partner Validation**
@@ -192,14 +133,6 @@ Validation steps must be completed before this point! This is the point of new r
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
   * Please make sure everything is good on TestPyPI before uploading to PyPI**
 * PyPI has separate logins, passwords, and API tokens from TestPyPI but the process is the same. An ONNX PyPI owner will need to grant access, etc.
-
-### old notes (with twine) ##
-Follow the **Wheels** and **Source Distribution** steps in [Upload release candidate toTestPyPI](#Upload-release-candidate-to-TestPyPI) above with the following changes:
-
-* Create a new API token of onnx scope for uploading onnx wheel in your [PyPI account](https://pypi.org/manage/account) (**API tokens** section).
-    * Remove the created token after pushing the wheels and source for the release.
-* When uploading, remove `--repository testpypi` from twine commands.
-* When verifying upload, remove `-i https://test.pypi.org/simple/` and `--pre` from pip commands.
 
 ## After PyPI Release
 
