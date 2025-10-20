@@ -595,7 +595,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<TensorProto_DataType> string_unallowed_types = {TensorProto_DataType_STRING};
     // Opset 19 introduced float8 support across a number of ops. When downgrading
     // to 18 we must reject models that actually use those new element types.
-    registerAdapter(std::make_unique<TypeRestriction>("AveragePool", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("AveragePool", OpSetID(19), OpSetID(18)));
     registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(19), OpSetID(18), float8_unallowed_types));
@@ -607,9 +607,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(19), OpSetID(18), float8_unallowed_types));
-    registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(19), OpSetID(18)));
     registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(19), OpSetID(18), float8_unallowed_types));
-    registerAdapter(std::make_unique<TypeRestriction>("Resize", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(19), OpSetID(18)));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(19), OpSetID(18), float8_unallowed_types));
