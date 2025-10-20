@@ -7,7 +7,7 @@
 
 # export ONNX_ML=0, # if you need to disable ONNX_ML
 
-python_exist=`command -v python`
+python_exist=$(command -v python)
 if [[ -z $python_exist ]]; then
   echo "No python is found, please set it in your environment."
   exit 1
