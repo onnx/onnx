@@ -452,7 +452,7 @@ foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
   endif()
 endforeach()
 add_library(onnx)
-target_link_libraries(onnx PUBLIC $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
+target_link_libraries(onnx PRIVATE $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
 target_include_directories(onnx PUBLIC $<INSTALL_INTERFACE:include>)
 
 target_compile_options(onnx_object PUBLIC ${protobuf_warnings})
