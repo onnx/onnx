@@ -114,7 +114,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<OpSchema> all_opschemas = OpSchemaRegistry::get_all_schemas_with_history();
 
     for (const OpSchema& schema : all_opschemas) {
-      all_schemas[schema.Name()][schema.domain()][(int64_t)schema.since_version()] = &schema;
+      all_schemas[schema.Name()][schema.domain()][schema.since_version()] = &schema;
     }
 
     // Iterate through all_schemas to determine NoPreviousVersionAdapters
@@ -585,6 +585,34 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Size", OpSetID(18), OpSetID(19)));
+
+    /******** 19 -> 18 ********/
+    const std::vector<TensorProto_DataType> float8_unallowed_types = {
+        TensorProto_DataType_FLOAT8E4M3FN,
+        TensorProto_DataType_FLOAT8E4M3FNUZ,
+        TensorProto_DataType_FLOAT8E5M2,
+        TensorProto_DataType_FLOAT8E5M2FNUZ};
+    const std::vector<TensorProto_DataType> string_unallowed_types = {TensorProto_DataType_STRING};
+    // Opset 19 introduced float8 support across a number of ops. When downgrading
+    // to 18 we must reject models that actually use those new element types.
+    registerAdapter(std::make_unique<CompatibleAdapter>("AveragePool", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Constant", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("CastLike", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("DequantizeLinear", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Equal", OpSetID(19), OpSetID(18), string_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Identity", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(19), OpSetID(18), float8_unallowed_types));
+    registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(19), OpSetID(18), float8_unallowed_types));
 
     /******** 19 -> 20 ********/
     registerAdapter(std::make_unique<AxisAttributeToInput>("DFT", OpSetID(19), OpSetID(20), 2, 1));

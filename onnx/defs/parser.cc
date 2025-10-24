@@ -8,6 +8,7 @@
 #include "onnx/defs/parser.h"
 
 #include <cctype>
+#include <limits>
 #include <string>
 
 #include "onnx/common/common.h"
@@ -485,7 +486,10 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
           case TensorProto::DataType::TensorProto_DataType_BOOL:
           case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
             PARSE_TOKEN(intval);
-            // TODO: check values are in the correct range.
+            if (intval > std::numeric_limits<int32_t>::max() || intval < std::numeric_limits<int32_t>::min()) {
+              return ParseError("Mismatch between data type and value: %d, %d", elem_type, intval);
+            }
+            // NOLINTNEXTLINE(bugprone-narrowing-conversions)
             tensorProto.add_int32_data(intval);
             break;
           case TensorProto::DataType::TensorProto_DataType_INT64:

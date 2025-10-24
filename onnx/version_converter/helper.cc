@@ -18,7 +18,7 @@ int check_numpy_unibroadcastable_and_require_broadcast(
     return -1;
   // Check that axis is input1_sizes.size()-input2_sizes.size()
   bool broadcast = false;
-  int axis = (int)(input1_sizes.size() - input2_sizes.size());
+  auto axis = input1_sizes.size() - input2_sizes.size();
   for (size_t i = 0; i < input2_sizes.size(); i++) {
     if (input2_sizes[i].dim != input1_sizes[axis + i].dim && input2_sizes[i].dim != 1)
       return -1;
@@ -48,7 +48,7 @@ void assert_numpy_multibroadcastable(
   }
   const std::vector<Dimension>& A_sizes = *A_ptr;
   const std::vector<Dimension>& B_sizes = *B_ptr;
-  int axis = (int)(A_sizes.size() - B_sizes.size());
+  auto axis = A_sizes.size() - B_sizes.size();
   for (size_t i = 0; i < B_sizes.size(); i++) {
     ONNX_ASSERTM(
         B_sizes[i].dim == A_sizes[axis + i].dim || B_sizes[i].dim == 1 || A_sizes[axis + i].dim == 1,

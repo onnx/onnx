@@ -6,7 +6,7 @@
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
-static const char* LabelEncoder_ver1_doc = R"DOC(
+static constexpr const char* LabelEncoder_ver1_doc = R"DOC(
     Converts strings to integers and vice versa.<br>
     If the string default value is set, it will convert integers to strings.
     If the int default value is set, it will convert strings to integers.<br>
@@ -57,7 +57,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
+static constexpr const char* TreeEnsembleClassifier_ver1_doc = R"DOC(
     Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
     The attributes named 'nodes_X' form a sequence of tuples, associated by
     index into the sequences, which must all be of equal length. These tuples
@@ -158,7 +158,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
+static constexpr const char* TreeEnsembleClassifier_ver3_doc = R"DOC(
     Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
     The attributes named 'nodes_X' form a sequence of tuples, associated by
     index into the sequences, which must all be of equal length. These tuples
@@ -325,7 +325,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 1, {N, E});
         }));
 
-static const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
+static constexpr const char* TreeEnsembleRegressor_ver1_doc = R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
     All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
@@ -404,7 +404,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE));
 
-static const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
+static constexpr const char* TreeEnsembleRegressor_ver3_doc = R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
     All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
@@ -538,7 +538,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {N, E});
         }));
 
-static const char* LabelEncoder_ver2_doc = R"DOC(
+static constexpr const char* LabelEncoder_ver2_doc = R"DOC(
     Maps each element in the input tensor to another value.<br>
     The mapping is determined by the two parallel attributes, 'keys_*' and
     'values_*' attribute. The i-th value in the specified 'keys_*' attribute

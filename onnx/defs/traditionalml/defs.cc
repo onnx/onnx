@@ -7,7 +7,7 @@
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
-static const char* ArrayFeatureExtractor_ver1_doc = R"DOC(
+static constexpr const char* ArrayFeatureExtractor_ver1_doc = R"DOC(
     Select elements of the input tensor based on the indices passed.<br>
     The indices are applied to the last axes of the tensor.
 )DOC";
@@ -72,7 +72,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)", "tensor(string)"},
             "The input must be a tensor of a numeric type or string. The output will be of the same tensor type."));
 
-static const char* Binarizer_ver1_doc = R"DOC(
+static constexpr const char* Binarizer_ver1_doc = R"DOC(
     Maps the values of the input tensor to either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
 )DOC";
 
@@ -90,7 +90,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* CastMap_ver1_doc = R"DOC(
+static constexpr const char* CastMap_ver1_doc = R"DOC(
     Converts a map to a tensor.<br>The map key must be an int64 and the values will be ordered
     in ascending order based on this key.<br>The operator supports dense packing or sparse packing.
     If using sparse packing, the key cannot exceed the max_map-1 value.
@@ -145,7 +145,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* CategoryMapper_ver1_doc = R"DOC(
+static constexpr const char* CategoryMapper_ver1_doc = R"DOC(
     Converts strings to integers and vice versa.<br>
     Two sequences of equal length are used to map between integers and strings,
     with strings and integers at the same index detailing the mapping.<br>
@@ -219,7 +219,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* DictVectorizer_ver1_doc = R"DOC(
+static constexpr const char* DictVectorizer_ver1_doc = R"DOC(
     Uses an index mapping to convert a dictionary to an array.<br>
     Given a dictionary, each key is looked up in the vocabulary attribute corresponding to
     the key type. The index into the vocabulary array at which the key is found is then
@@ -271,7 +271,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           output_elem_type->set_elem_type(input_elem_type);
         }));
 
-static const char* FeatureVectorizer_ver1_doc = R"DOC(
+static constexpr const char* FeatureVectorizer_ver1_doc = R"DOC(
     Concatenates input tensors into one continuous output.<br>
     All input shapes are 2-D and are concatenated along the second dimension. 1-D tensors are treated as [1,C].
     Inputs are copied to the output maintaining the order of the input arguments.<br>
@@ -291,7 +291,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input type must be a tensor of a numeric type.")
         .Attr("inputdimensions", "The size of each input in the input list", AttributeProto::INTS, OPTIONAL_VALUE));
 
-static const char* Imputer_ver1_doc = R"DOC(
+static constexpr const char* Imputer_ver1_doc = R"DOC(
     Replaces inputs that equal one value with another, leaving all other elements alone.<br>
     This operator is typically used to replace missing values in situations where they have a canonical
     representation, such as -1, 0, NaN, or some extreme value.<br>
@@ -319,7 +319,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Attr("imputed_value_int64s", "Value(s) to change to.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("replaced_value_int64", "A value that needs replacing.", AttributeProto::INT, static_cast<int64_t>(0)));
 
-static const char* LabelEncoder_ver4_doc = R"DOC(
+static constexpr const char* LabelEncoder_ver4_doc = R"DOC(
     Maps each element in the input tensor to another value.<br>
     The mapping is determined by the two parallel attributes, 'keys_*' and
     'values_*' attribute. The i-th value in the specified 'keys_*' attribute
@@ -432,7 +432,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* LinearClassifier_ver1_doc = R"DOC(
+static constexpr const char* LinearClassifier_ver1_doc = R"DOC(
     Linear classifier
 )DOC";
 
@@ -529,7 +529,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 1, {batch_size_dim, class_count_dim});
         }));
 
-static const char* LinearRegressor_ver1_doc = R"DOC(
+static constexpr const char* LinearRegressor_ver1_doc = R"DOC(
     Generalized linear regression evaluation.<br>
     If targets is set to 1 (default) then univariate regression is performed.<br>
     If targets is set to M then M sets of coefficients must be passed in as a sequence
@@ -563,7 +563,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(1)));
 
-static const char* Normalizer_ver1_doc = R"DOC(
+static constexpr const char* Normalizer_ver1_doc = R"DOC(
     Normalize the input.  There are three normalization modes, which have the corresponding formulas,
     defined using element-wise infix operators '/' and '^' and tensor-wide functions 'max' and 'sum':<br>
 <br>
@@ -589,7 +589,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input must be a tensor of a numeric type.")
         .Attr("norm", "One of 'MAX,' 'L1,' 'L2'", AttributeProto::STRING, std::string("MAX")));
 
-static const char* OneHotEncoder_ver1_doc = R"DOC(
+static constexpr const char* OneHotEncoder_ver1_doc = R"DOC(
     Replace each input element with an array of ones and zeros, where a single
     one is placed at the index of the category that was passed in. The total category count
     will determine the size of the extra dimension of the output array Y.<br>
@@ -648,7 +648,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputElemType(ctx, 0, TensorProto::FLOAT);
         }));
 
-static const char* Scaler_ver1_doc = R"DOC(
+static constexpr const char* Scaler_ver1_doc = R"DOC(
     Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
 )DOC";
 
@@ -676,7 +676,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOATS,
             OPTIONAL_VALUE));
 
-static const char* SVMClassifier_ver1_doc = R"DOC(
+static constexpr const char* SVMClassifier_ver1_doc = R"DOC(
     Support Vector Machine classifier
 )DOC";
 
@@ -753,7 +753,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* SVMRegressor_ver1_doc = R"DOC(
+static constexpr const char* SVMRegressor_ver1_doc = R"DOC(
     Support Vector Machine regression prediction and one-class SVM anomaly detection.
 )DOC";
 
@@ -794,7 +794,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             std::string("NONE"))
         .Attr("rho", "", AttributeProto::FLOATS, OPTIONAL_VALUE));
 
-static const char* TreeEnsembleClassifier_ver5_doc = R"DOC(
+static constexpr const char* TreeEnsembleClassifier_ver5_doc = R"DOC(
     This operator is DEPRECATED. Please use TreeEnsemble with provides similar functionality.
     In order to determine the top class, the ArgMax node can be applied to the output of TreeEnsemble.
     To encode class labels, use a LabelEncoder operator.
@@ -911,7 +911,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE));
 
-static const char* TreeEnsembleRegressor_ver5_doc = R"DOC(
+static constexpr const char* TreeEnsembleRegressor_ver5_doc = R"DOC(
     This operator is DEPRECATED. Please use TreeEnsemble instead which provides the same
     functionality.<br>
     Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
@@ -1012,7 +1012,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE));
 
-static const char* TreeEnsemble_ver5_doc = R"DOC(
+static constexpr const char* TreeEnsemble_ver5_doc = R"DOC(
     Tree Ensemble operator.  Returns the regressed values for each input in a batch.
     Inputs have dimensions `[N, F]` where `N` is the input batch size and `F` is the number of input features.
     Outputs have dimensions `[N, num_targets]` where `N` is the batch size and `num_targets` is the number of targets, which is a configurable attribute.
@@ -1213,7 +1213,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {N, E});
         }));
 
-static const char* ZipMap_ver1_doc = R"DOC(
+static constexpr const char* ZipMap_ver1_doc = R"DOC(
     Creates a map from the input and the attributes.<br>
     The values are provided by the input tensor, while the keys are specified by the attributes.
     Must provide keys in either classlabels_strings or classlabels_int64s (but not both).<br>

@@ -2,15 +2,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <functional>
-
-#include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/schema.h"
-#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
-static const char* ImageDecoder_ver20_doc =
+static constexpr const char* ImageDecoder_ver20_doc =
     R"DOC(Loads and decodes and image from a file. If it can't decode for any reason (e.g. corrupted encoded
 stream, invalid format, it will return an empty matrix).
 The following image formats are supported:

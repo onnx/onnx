@@ -173,7 +173,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
   };
 }
 
-static const char* RNN_ver22_doc = R"DOC(
+static constexpr const char* RNN_ver22_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -263,7 +263,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* GRU_ver22_doc = R"DOC(
+static constexpr const char* GRU_ver22_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -368,7 +368,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* LSTM_ver22_doc = R"DOC(
+static constexpr const char* LSTM_ver22_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 

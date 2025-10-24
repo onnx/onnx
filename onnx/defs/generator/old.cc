@@ -8,7 +8,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Bernoulli_ver15_doc = R"DOC(
+static constexpr const char* Bernoulli_ver15_doc = R"DOC(
 Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
 containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
 where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
@@ -88,7 +88,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* Multinomial_ver7_doc = R"DOC(
+static constexpr const char* Multinomial_ver7_doc = R"DOC(
 Generate a tensor of samples from a multinomial distribution according to the probabilities
 of each of the possible outcomes.
 )DOC";
@@ -149,7 +149,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
-static const char* RandomNormalLike_ver1_doc = R"DOC(
+static constexpr const char* RandomNormalLike_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a normal distribution.
 The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the normal distribution are specified by `mean` and `scale`.
@@ -199,7 +199,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* RandomUniformLike_ver1_doc = R"DOC(
+static constexpr const char* RandomUniformLike_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution.
 The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the uniform distribution are specified by `low` and `high`.
@@ -249,7 +249,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* RandomNormal_ver1_doc = R"DOC(
+static constexpr const char* RandomNormal_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a normal distribution. The shape
 of the tensor is specified by the `shape` argument and the parameter of the normal distribution
 specified by `mean` and `scale`.
@@ -288,7 +288,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* RandomUniform_ver1_doc = R"DOC(
+static constexpr const char* RandomUniform_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is specified by the `shape` argument and the range by `low` and `high`.
 
@@ -326,7 +326,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* EyeLike_ver9_doc = R"DOC(
+static constexpr const char* EyeLike_ver9_doc = R"DOC(
 Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
 tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
 same as the input tensor. The data type can be specified by the 'dtype' argument. If
@@ -402,7 +402,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* Constant_ver23_doc = R"DOC(
+static constexpr const char* Constant_ver23_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
@@ -452,7 +452,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* Constant_ver19_doc = R"DOC(
+static constexpr const char* Constant_ver19_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
@@ -547,7 +547,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir9(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* Constant_ver13_doc = R"DOC(
+static constexpr const char* Constant_ver13_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
@@ -597,7 +597,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* Constant_ver12_doc = R"DOC(
+static constexpr const char* Constant_ver12_doc = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
@@ -647,7 +647,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
+static constexpr const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -671,7 +671,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
-static const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
+static constexpr const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -690,7 +690,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
-static const char* Constant_ver11_doc = R"DOC(
+static constexpr const char* Constant_ver11_doc = R"DOC(
 A constant tensor. Exactly one of the two attributes, either value or sparse_value,
 must be specified.
 )DOC";
@@ -740,7 +740,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
         }));
 
-static const char* ConstantOfShape_ver23_doc = R"DOC(
+static constexpr const char* ConstantOfShape_ver23_doc = R"DOC(
 Generate a tensor with given value and shape.
 )DOC";
 
@@ -792,7 +792,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ConstantOfShape_ver20_doc = R"DOC(
+static constexpr const char* ConstantOfShape_ver20_doc = R"DOC(
 Generate a tensor with given value and shape.
 )DOC";
 
@@ -918,7 +918,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ConstantOfShape_ver9_doc = R"DOC(
+static constexpr const char* ConstantOfShape_ver9_doc = R"DOC(
 Generate a tensor with given value and shape.
 )DOC";
 

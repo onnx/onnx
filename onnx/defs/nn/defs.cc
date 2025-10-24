@@ -3,8 +3,6 @@
  */
 
 #include <algorithm>
-#include <cmath>
-#include <limits>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
@@ -12,7 +10,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* pads_doc =
+static constexpr const char* pads_doc =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
     "and end part of the corresponding axis. `pads` format should be as follow "
@@ -20,7 +18,7 @@ static const char* pads_doc =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.";
-static const char* conv_auto_pad_doc =
+static constexpr const char* conv_auto_pad_doc =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -28,7 +26,7 @@ static const char* conv_auto_pad_doc =
     "The padding is split between the two sides equally or almost equally (depending "
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
-static const char* conv_transpose_auto_pad_doc =
+static constexpr const char* conv_transpose_auto_pad_doc =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -459,7 +457,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 }
 
-static const char* MaxUnpool_ver22_doc = R"DOC(
+static constexpr const char* MaxUnpool_ver22_doc = R"DOC(
 MaxUnpool essentially computes the partial inverse of the MaxPool op.
  The input information to this op is typically the output information from a MaxPool op. The first
  input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
@@ -837,7 +835,7 @@ computes the output.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(Conv, 22, OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
 
-static const char* QLinearConv_ver10_doc = R"DOC(
+static constexpr const char* QLinearConv_ver10_doc = R"DOC(
 The convolution operator consumes a quantized input tensor, its scale and zero point,
 a quantized filter, its scale and zero point, and output's scale and zero point,
 and computes the quantized output. Each scale and zero-point pair must have same shape.
@@ -989,7 +987,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           convPoolShapeInference(ctx, true, false, 0, 3);
         }));
 
-static const char* ConvInteger_ver10_doc = R"DOC(
+static constexpr const char* ConvInteger_ver10_doc = R"DOC(
 The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
 and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 )DOC";
@@ -1371,7 +1369,7 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 22, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
-static const char* DeformConv_ver22_doc = R"DOC(
+static constexpr const char* DeformConv_ver22_doc = R"DOC(
 Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
 This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
 )DOC";
@@ -1588,7 +1586,7 @@ static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const cha
 
 ONNX_OPERATOR_SET_SCHEMA(GlobalLpPool, 22, OpSchema().FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver15_doc = R"DOC(
+static constexpr const char* BatchNormalization_ver15_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 There are five required inputs 'X', 'scale', 'B', 'input_mean' and
@@ -1768,7 +1766,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* InstanceNormalization_ver22_doc = R"DOC(
+static constexpr const char* InstanceNormalization_ver22_doc = R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
 
@@ -1829,7 +1827,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* LpNormalization_ver22_doc = R"DOC(
+static constexpr const char* LpNormalization_ver22_doc = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
 )DOC";
 
@@ -1853,7 +1851,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* Dropout_ver22_doc = R"DOC(
+static constexpr const char* Dropout_ver22_doc = R"DOC(
 Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
 output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
 Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
@@ -1935,7 +1933,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shrink_ver9_doc = R"DOC(
+static constexpr const char* Shrink_ver9_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
 having same datatype and shape with input. It has two attributes, lambd and
 bias. The formula of this operator is: If x < -lambd, y = x + bias;
@@ -1973,7 +1971,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Flatten_ver24_doc = R"DOC(
+static constexpr const char* Flatten_ver24_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -2028,7 +2026,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* LRN_ver13_doc = R"DOC(
+static constexpr const char* LRN_ver13_doc = R"DOC(
 Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
 It normalizes over local input regions.
 The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
@@ -2085,7 +2083,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(LRN_ver13_doc)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* TfIdfVectorizer_ver9_doc = R"DOC(
+static constexpr const char* TfIdfVectorizer_ver9_doc = R"DOC(
 This transform extracts n-grams from the input sequence and save them as a vector. Input can
 be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
 For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
@@ -2211,7 +2209,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
-static const char* mvn_ver13_doc = R"DOC(
+static constexpr const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
       on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
 )DOC";
@@ -2362,7 +2360,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
   }
 }
 
-static const char* Col2Im_ver18_doc = R"DOC(
+static constexpr const char* Col2Im_ver18_doc = R"DOC(
 The operator rearranges column blocks back into a multidimensional image
 
 Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/generated/torch.nn.Fold.html,
@@ -2455,7 +2453,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
 
-static const char* LayerNormalization_ver17_doc = R"DOC(
+static constexpr const char* LayerNormalization_ver17_doc = R"DOC(
       This is layer normalization defined in ONNX as function.
       The overall computation can be split into two stages.
       The first stage is standardization, which makes the
@@ -2696,7 +2694,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* GroupNormalization_ver21_doc = R"DOC(
+static constexpr const char* GroupNormalization_ver21_doc = R"DOC(
 A GroupNormalization function. Carries out group normalization as described in
 the paper https://arxiv.org/abs/1803.08494
 
@@ -2840,7 +2838,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* RMSNormalization_ver23_doc = R"DOC(
+static constexpr const char* RMSNormalization_ver23_doc = R"DOC(
       This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
       The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
       where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
@@ -2981,7 +2979,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static const char* RotaryEmbedding_ver23_doc = R"DOC(
+static constexpr const char* RotaryEmbedding_ver23_doc = R"DOC(
 RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
 The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
 between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
@@ -3331,7 +3329,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static const char* Attention_ver24_doc = R"DOC(
+static constexpr const char* Attention_ver24_doc = R"DOC(
 
 Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
 

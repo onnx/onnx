@@ -20,6 +20,7 @@ Checks: >-
   google-default-arguments,
   google-global-names-in-headers,
   google-explicit-constructor,
+  google-readability-casting,
   misc-*,
   -misc-const-correctness,
   -misc-include-cleaner,

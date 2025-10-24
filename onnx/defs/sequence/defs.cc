@@ -3,7 +3,6 @@
  */
 
 #include <algorithm>
-#include <numeric>
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
@@ -11,7 +10,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* SequenceEmpty_ver11_doc = R"DOC(
+static constexpr const char* SequenceEmpty_ver11_doc = R"DOC(
 Construct an empty tensor sequence, with given data type.
 )DOC";
 
@@ -42,7 +41,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               elem_type);
         }));
 
-static const char* SequenceConstruct_ver11_doc = R"DOC(
+static constexpr const char* SequenceConstruct_ver11_doc = R"DOC(
 Construct a tensor sequence containing 'inputs' tensors.
 All tensors in 'inputs' must have the same data type.
 )DOC";
@@ -94,7 +93,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* SequenceInsert_ver11_doc = R"DOC(
+static constexpr const char* SequenceInsert_ver11_doc = R"DOC(
 Outputs a tensor sequence that inserts 'tensor' into 'input_sequence' at 'position'.
 'tensor' must have the same data type as 'input_sequence'.
 Accepted range for 'position' is in `[-n, n]`, where `n` is the number of tensors in 'input_sequence'.
@@ -157,7 +156,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           UnionShapeInfo(input1_type->tensor_type().shape(), *output_tensor_type);
         }));
 
-static const char* SequenceAt_ver11_doc = R"DOC(
+static constexpr const char* SequenceAt_ver11_doc = R"DOC(
 Outputs a tensor copy from the tensor at 'position' in 'input_sequence'.
 Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
 Negative value means counting positions from the back.
@@ -194,7 +193,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->CopyFrom(input0_type->sequence_type().elem_type());
         }));
 
-static const char* SequenceErase_ver11_doc = R"DOC(
+static constexpr const char* SequenceErase_ver11_doc = R"DOC(
 Outputs a tensor sequence that removes the tensor at 'position' from 'input_sequence'.
 Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
 Negative value means counting positions from the back.
@@ -232,7 +231,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->CopyFrom(*input0_type);
         }));
 
-static const char* SequenceLength_ver11_doc = R"DOC(
+static constexpr const char* SequenceLength_ver11_doc = R"DOC(
 Produces a scalar(tensor of empty shape) containing the number of tensors in 'input_sequence'.
 )DOC";
 
@@ -264,7 +263,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             OpSchema::all_tensor_sequence_types_ir4())));
 
-static const char* ConcatFromSequence_ver11_doc = R"DOC(
+static constexpr const char* ConcatFromSequence_ver11_doc = R"DOC(
 Concatenate a sequence of tensors into a single tensor.
 All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
 By default 'new_axis' is 0, the behavior is similar to numpy.concatenate.
@@ -349,7 +348,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* SequenceMap_ver17_doc = R"DOC(
+static constexpr const char* SequenceMap_ver17_doc = R"DOC(
 Applies a sub-graph to each sample in the input sequence(s).
 
 Inputs can be either tensors or sequences, with the exception of the first input which must

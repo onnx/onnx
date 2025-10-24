@@ -7,7 +7,7 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-static const char* RoiAlign_ver22_doc = R"DOC(
+static constexpr const char* RoiAlign_ver22_doc = R"DOC(
 Region of Interest (RoI) align operation described in the
 [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
 RoiAlign consumes an input tensor X and region of interests (rois)
@@ -121,7 +121,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static const char* NonMaxSuppression_ver11_doc = R"DOC(
+static constexpr const char* NonMaxSuppression_ver11_doc = R"DOC(
 Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
 Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
 Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to

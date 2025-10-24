@@ -132,7 +132,7 @@ This means that the output itself has 4 shards, as shown in the figure.
 In this example, we want each output-shard to be on one device, as described by
 the sharding spec
 
-```
+```python
 {
     device = [0, 1, 2, 3]
     sharded_dim =[
@@ -166,7 +166,7 @@ is needed by both devices 0 and 2.
 
 Thus, the sharding spec for `Input1` is as below:
 
-```
+```python
 {
     device = [-1, -2] // keys into device_map
     device_map = {-1: [0, 1], -2: [2, 3]}

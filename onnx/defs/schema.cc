@@ -20,7 +20,9 @@
 #include "onnx/defs/operator_sets_ml.h"
 #endif
 
+#ifndef NDEBUG
 #include "onnx/common/assertions.h"
+#endif
 #include "onnx/defs/parser.h"
 
 namespace ONNX_NAMESPACE {

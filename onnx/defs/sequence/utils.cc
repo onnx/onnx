@@ -13,7 +13,7 @@ namespace sequence {
 namespace utils {
 
 // Common documentation for SplitToSequence operator, versions 11 and 24
-static const char* SplitToSequence_ver11_doc =
+static constexpr const char* SplitToSequence_ver11_doc =
     R"DOC(
 Split a tensor into a sequence of tensors, along the specified 'axis'.
 Lengths of the parts can be specified using the optional argument 'split'.
@@ -134,7 +134,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
                 return -1;
               } else {
                 // split is 1-D tensor
-                int64_t splitSizesSum = std::accumulate(splitSizes.begin(), splitSizes.end(), (int64_t)0);
+                int64_t splitSizesSum = std::accumulate(splitSizes.begin(), splitSizes.end(), static_cast<int64_t>(0));
                 if (splitDimValue != splitSizesSum) {
                   fail_shape_inference(
                       "Sum of split values not equal to 'input' dim size on 'axis'. 'axis' dim size=",

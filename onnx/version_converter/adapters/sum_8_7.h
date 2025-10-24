@@ -24,7 +24,7 @@ class Sum_8_7 final : public Adapter {
     // Throw an exception if any broadcasting occurs
     const ArrayRef<Value*>& inputs = node->inputs();
     // Determine if inputs are of different sizes
-    for (int i = 1; i < (int)inputs.size(); i++) {
+    for (size_t i = 1; i < inputs.size(); i++) {
       std::vector<Dimension> A_sizes = inputs[i - 1]->sizes();
       std::vector<Dimension> B_sizes = inputs[i]->sizes();
       assert_numpy_multibroadcastable(A_sizes, B_sizes);

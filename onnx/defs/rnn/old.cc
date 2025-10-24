@@ -176,7 +176,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
   };
 }
 
-static const char* GRU_ver14_doc = R"DOC(
+static constexpr const char* GRU_ver14_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -281,7 +281,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator_opset14("GRU")));
 
-static const char* LSTM_ver14_doc = R"DOC(
+static constexpr const char* LSTM_ver14_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -430,7 +430,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable));
 
-static const char* RNN_ver14_doc = R"DOC(
+static constexpr const char* RNN_ver14_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -598,7 +598,7 @@ static std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
   };
 }
 
-static const char* GRU_ver1_doc = R"DOC(
+static constexpr const char* GRU_ver1_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -845,7 +845,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
   };
 }
 
-static const char* RNN_ver1_doc = R"DOC(
+static constexpr const char* RNN_ver1_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -945,7 +945,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .FillUsing(RNNDocGenerator1("RNN")));
 
-static const char* GRU_ver3_doc = R"DOC(
+static constexpr const char* GRU_ver3_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -1065,7 +1065,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .FillUsing(RNNDocGenerator1("GRU")));
 
-static const char* LSTM_ver1_doc = R"DOC(
+static constexpr const char* LSTM_ver1_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -1338,7 +1338,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
   };
 }
 
-static const char* RNN_ver7_doc = R"DOC(
+static constexpr const char* RNN_ver7_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -1438,7 +1438,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .FillUsing(RNNDocGenerator2("RNN")));
 
-static const char* GRU_ver7_doc = R"DOC(
+static constexpr const char* GRU_ver7_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -1558,7 +1558,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .FillUsing(RNNDocGenerator2("GRU")));
 
-static const char* LSTM_ver7_doc = R"DOC(
+static constexpr const char* LSTM_ver7_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 

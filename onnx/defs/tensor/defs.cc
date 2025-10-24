@@ -14,7 +14,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Cast_ver24_doc = R"DOC(
+static constexpr const char* Cast_ver24_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
@@ -154,7 +154,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* CastLike_ver24_doc = R"DOC(
+static constexpr const char* CastLike_ver24_doc = R"DOC(
 The operator casts the elements of a given input tensor (the first input) to
 the same data type as the elements of the second input tensor.
 See documentation of the Cast operator for further details.
@@ -232,7 +232,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* Reshape_ver24_doc = R"DOC(
+static constexpr const char* Reshape_ver24_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
@@ -396,7 +396,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shape_ver24_doc = R"DOC(
+static constexpr const char* Shape_ver24_doc = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 Optional attributes start and end can be used to compute a slice of the input tensor's shape.
 If start axis is omitted, the slice starts from axis 0.
@@ -499,7 +499,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Size_ver24_doc = R"DOC(
+static constexpr const char* Size_ver24_doc = R"DOC(
 Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 )DOC";
 
@@ -635,7 +635,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Split_ver18_doc =
+static constexpr const char* Split_ver18_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified 'axis'.
 Either input 'split' or the attribute 'num_outputs' should be specified, but not both.
 If the attribute 'num_outputs' is specified, then the tensor is split into equal sized parts.
@@ -761,7 +761,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Slice_ver13_doc = R"DOC(
+static constexpr const char* Slice_ver13_doc = R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://numpy.org/doc/stable/user/basics.indexing.html?highlight=slice#slicing-and-striding
 
@@ -1094,17 +1094,24 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Transpose_ver24_doc = R"DOC(
-Transpose the input tensor similar to numpy.transpose. For example, when
-perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
-will be (2, 1, 3).
+const char* Transpose_doc = R"DOC(
+Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
+The optional attribute `perm` must be a permutation of the dimensions of
+the input tensor. Axis `i` of the output tensor corresponds to the axis
+`perm[i]` of the input tensor.
+For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
+the output shape will be (2, 1, 3).
+When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
+the output shape will be (2, 3, 1).
+If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
+where `n` is the rank of the input tensor.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
     24,
     OpSchema()
-        .SetDoc(Transpose_ver24_doc)
+        .SetDoc(Transpose_doc)
         .Attr(
             "perm",
             "A list of integers. By default, reverse the dimensions, "
@@ -1165,7 +1172,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Scatter_ver11_doc = R"DOC(
+static constexpr const char* Scatter_ver11_doc = R"DOC(
 This operator is deprecated. Please use ScatterElements, which provides the same functionality.
 
 Scatter takes three inputs `data`, `updates`, and `indices` of the same
@@ -1271,7 +1278,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ScatterND_ver18_doc = R"DOC(
+static constexpr const char* ScatterND_ver18_doc = R"DOC(
 ScatterND takes three inputs `data` tensor of rank r >= 1, `indices` tensor of rank q >= 1,
 and `updates` tensor of rank q + r - indices.shape[-1] - 1. The output of the operation
 is produced by creating a copy of the input `data`, and then updating its value to values
@@ -1299,7 +1306,7 @@ The `output` is calculated via the following equation:
 output = np.copy(data)
 update_indices = indices.shape[:-1]
 for idx in np.ndindex(update_indices):
-    output[indices[idx]] = updates[idx]
+    output[tuple(indices[idx])] = updates[idx]
 ```
 
 The order of iteration in the above loop is not specified.
@@ -1316,7 +1323,7 @@ When `reduction` is set to some reduction function `f`, `output` is calculated a
 output = np.copy(data)
 update_indices = indices.shape[:-1]
 for idx in np.ndindex(update_indices):
-    output[indices[idx]] = f(output[indices[idx]], updates[idx])
+    output[tuple(indices[idx])] = f(output[tuple(indices[idx])], updates[idx])
 ```
 
 where the `f` is `+`, `*`, `max` or `min` as specified.
@@ -1392,7 +1399,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ScatterElements_ver18_doc = R"DOC(
+static constexpr const char* ScatterElements_ver18_doc = R"DOC(
 ScatterElements takes three inputs `data`, `updates`, and `indices` of the same
 rank r >= 1 and an optional attribute axis that identifies an axis of `data`
 (by default, the outer-most axis, that is axis 0). The output of the operation
@@ -1516,7 +1523,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Gather_ver13_doc = R"DOC(
+static constexpr const char* Gather_ver13_doc = R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
@@ -1640,7 +1647,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { GatherOp13DataPropagator(ctx); }));
 
-static const char* GatherElements_ver13_doc = R"DOC(
+static constexpr const char* GatherElements_ver13_doc = R"DOC(
 
 GatherElements takes two inputs `data` and `indices` of the same rank r >= 1
 and an optional attribute `axis` that identifies an axis of `data`
@@ -1736,7 +1743,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Squeeze_ver24_doc = R"DOC(
+static constexpr const char* Squeeze_ver24_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes an input `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
@@ -1839,7 +1846,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* Unsqueeze_ver24_doc = R"DOC(
+static constexpr const char* Unsqueeze_ver24_doc = R"DOC(
 Insert single-dimensional entries to the shape of an input tensor (`data`).
 Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
@@ -1923,7 +1930,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* SpaceToDepth_ver13_doc =
+static constexpr const char* SpaceToDepth_ver13_doc =
     R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
 are moved to the depth dimension.
@@ -1979,7 +1986,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* DepthToSpace_ver13_doc =
+static constexpr const char* DepthToSpace_ver13_doc =
     R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
@@ -2060,7 +2067,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Tile_ver13_doc =
+static constexpr const char* Tile_ver13_doc =
     R"DOC(Constructs a tensor by tiling a given tensor.
 This is the same as function `tile` in Numpy, but no broadcast.
 For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]
@@ -2145,7 +2152,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return;
         }));
 
-static const char* Upsample_ver10_doc = R"DOC(
+static constexpr const char* Upsample_ver10_doc = R"DOC(
 Upsample the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
@@ -2174,7 +2181,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Upsample_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
-static const char* Resize_ver19_doc = R"DOC(
+static constexpr const char* Resize_ver19_doc = R"DOC(
 Resize the input tensor. In general, it calculates every value in the output tensor as a weighted average of neighborhood (a.k.a. sampling locations) in the input tensor.
 Each dimension value of the output tensor is:
 ```
@@ -2183,7 +2190,7 @@ output_dimension = floor(input_dimension * (roi_end - roi_start) * scale)
 if input \"sizes\" is not specified.
 )DOC";
 
-static const char* Resize_ver19_attr_coordinate_transformation_mode_doc = R"DOC(
+static constexpr const char* Resize_ver19_attr_coordinate_transformation_mode_doc = R"DOC(
 This attribute describes how to transform the coordinate in the resized tensor to the coordinate in the original tensor.
 
 The coordinate of each dimension is transformed individually. Let's describe a case using axis x as an example.
@@ -2229,7 +2236,7 @@ x_original = length_resized > 1 ? start_x * (length_original - 1) + x_resized * 
 ```
 .)DOC";
 
-static const char* Resize_ver19_attr_keep_aspect_ratio_policy_doc = R"DOC(
+static constexpr const char* Resize_ver19_attr_keep_aspect_ratio_policy_doc = R"DOC(
 This attribute describes how to interpret the `sizes` input with regard to keeping the original aspect ratio of the input, and it is not applicable when
 the `scales` input is used.
 
@@ -2359,7 +2366,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Resize_ver19_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
-static const char* GridSample_ver22_doc = R"DOC(
+static constexpr const char* GridSample_ver22_doc = R"DOC(
 Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
 For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
 the output `Y` will have shape (N, C, H_out, W_out). For volumetric input `X` with shape (N, C, D, H, W),
@@ -2454,7 +2461,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(GridSample_ver22_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
-static const char* AffineGrid_ver20_doc = R"DOC(
+static constexpr const char* AffineGrid_ver20_doc = R"DOC(
 Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta
 (https://pytorch.org/docs/stable/generated/torch.nn.functional.affine_grid.html).
 An affine matrix `theta` is applied to a position tensor represented in its homogeneous expression. Here is an example in 3D:
@@ -2756,7 +2763,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor, sequence, and optional types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Compress_ver11_doc = R"DOC(
+static constexpr const char* Compress_ver11_doc = R"DOC(
     Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
     In case axis is not provided, input is flattened before elements are selected.
     Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
@@ -2829,7 +2836,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* OneHot_ver11_doc = R"DOC(
+static constexpr const char* OneHot_ver11_doc = R"DOC(
     Produces a one-hot tensor based on inputs.
     The locations represented by the index values in the 'indices' input tensor will have 'on_value'
     and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
@@ -3043,7 +3050,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Where_ver16_doc = R"DOC(
+static constexpr const char* Where_ver16_doc = R"DOC(
 Return elements, either from X or Y, depending on condition.
 Where behaves like
 [numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
@@ -3129,7 +3136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, output_shape);
         }));
 
-static const char* ReverseSequence_ver10_doc = R"DOC(
+static constexpr const char* ReverseSequence_ver10_doc = R"DOC(
 Reverse batch of sequences having different lengths specified by `sequence_lens`.
 
 For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
@@ -3207,7 +3214,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* Unique_ver11_doc = R"DOC(
+static constexpr const char* Unique_ver11_doc = R"DOC(
 Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
 Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
 
@@ -3442,7 +3449,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* GatherND_ver13_doc = R"DOC(
+static constexpr const char* GatherND_ver13_doc = R"DOC(
 Given `data` tensor of rank `r` >= 1, `indices` tensor of rank `q` >= 1, and `batch_dims` integer `b`, this operator gathers
 slices of `data` into an output tensor of rank `q + r - indices_shape[-1] - 1 - b`.
 
@@ -3606,7 +3613,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Pad_ver24_doc = R"DOC(
+static constexpr const char* Pad_ver24_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
@@ -3718,7 +3725,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         OpSchema::all_tensor_types_ir12(),
         "Constrain input and output types to all tensor types up to IRv12.")));
 
-static const char* Trilu_ver14_doc = R"DOC(
+static constexpr const char* Trilu_ver14_doc = R"DOC(
 Given a 2-D matrix or batches of 2-D matrices, returns the upper or lower triangular part of the tensor(s).
 The attribute "upper" determines whether the upper or lower part is retained. If set to true,
 the upper triangular matrix is retained. Lower triangular matrix is retained otherwise.
@@ -3786,7 +3793,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* CenterCropPad_ver18_doc = R"DOC(
+static constexpr const char* CenterCropPad_ver18_doc = R"DOC(
 Center crop or pad an input to given dimensions.
 
 The crop/pad dimensions can be specified for a subset of the `axes`; unspecified dimensions will remain unchanged.
@@ -3954,7 +3961,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static const char* TensorScatter_ver24_doc = R"DOC(
+static constexpr const char* TensorScatter_ver24_doc = R"DOC(
 TensorScatter is a generic tensor update operation, motivated by the requirements for KV cache updates for Attention
 ops commonly found in LLMs. It is a functional operation that models an in-place update to a KV cache buffer.
 

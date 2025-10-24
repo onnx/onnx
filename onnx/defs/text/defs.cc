@@ -5,7 +5,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* StringConcat_doc =
+static constexpr const char* StringConcat_doc =
     R"DOC(StringConcat concatenates string tensors elementwise (with NumPy-style broadcasting support))DOC";
 ONNX_OPERATOR_SET_SCHEMA(
     StringConcat,
@@ -33,7 +33,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static const char* RegexFullMatch_doc =
+static constexpr const char* RegexFullMatch_doc =
     R"DOC(RegexFullMatch performs a full regex match on each element of the input tensor. If an element fully matches the regex pattern specified as an attribute, the corresponding element in the output is True and it is False otherwise. [RE2](https://github.com/google/re2/wiki/Syntax) regex syntax is used.)DOC";
 ONNX_OPERATOR_SET_SCHEMA(
     RegexFullMatch,
@@ -61,7 +61,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* StringSplit_doc =
+static constexpr const char* StringSplit_doc =
     R"DOC(StringSplit splits a string tensor's elements into substrings based on a delimiter attribute and a maxsplit attribute.
 
 The first output of this operator is a tensor of strings representing the substrings from splitting each input string on the `delimiter` substring. This tensor has one additional rank compared to the input tensor in order to store the substrings for each input element (where the input tensor is not empty). Note that, in order to ensure the same number of elements are present in the final dimension, this tensor will pad empty strings as illustrated in the examples below. Consecutive delimiters are not grouped together and are deemed to delimit empty strings, except if the `delimiter` is unspecified or is the empty string (""). In the case where the `delimiter` is unspecified or the empty string, consecutive whitespace characters are regarded as a single separator and leading or trailing whitespace is removed in the output.
@@ -128,7 +128,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 1);
         }));
 
-static const char* StringNormalizer_ver10_doc = R"DOC(
+static constexpr const char* StringNormalizer_ver10_doc = R"DOC(
 StringNormalization performs string operations for basic cleaning.
 This operator has only one input (denoted by X) and only one output
 (denoted by Y). This operator first examines the elements in the X,

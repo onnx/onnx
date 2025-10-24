@@ -111,8 +111,8 @@ enum class AttributeKind : uint8_t {
 static inline const char* toString(AttributeKind kind) {
   // NOLINTNEXTLINE(modernize-avoid-c-arrays)
   static constexpr const char* names[] = {"f", "fs", "i", "is", "s", "ss", "t", "ts", "g", "gs", "tp", "tps"};
-  ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*))
-  return names[int(kind)];
+  ONNX_ASSERT(size_t(kind) < std::size(names));
+  return names[static_cast<int>(kind)];
 }
 
 struct AttributeValue {

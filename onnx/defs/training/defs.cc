@@ -2,15 +2,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <algorithm>
-#include <cmath>
-
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
-static const char* Gradient_ver1_doc = R"DOC(
+static constexpr const char* Gradient_ver1_doc = R"DOC(
 Gradient operator computes the partial derivatives of a specific tensor w.r.t.
 some other tensors. This operator is widely used in gradient-based training
 algorithms. To illustrate its use, let's consider a computation graph,
@@ -193,7 +189,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Allow inputs to be any kind of floating-point tensor."));
 
-static const char* Adagrad_ver1_doc = R"DOC(
+static constexpr const char* Adagrad_ver1_doc = R"DOC(
     Compute one iteration of ADAGRAD, a stochastic gradient based optimization
     algorithm. This operator can conduct the optimization of multiple tensor variables.
 
@@ -319,7 +315,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Momentum_ver1_doc = R"DOC(
+static constexpr const char* Momentum_ver1_doc = R"DOC(
     Compute one iteration of stochastic gradient update with momentum.
     This operator can conduct the optimization of multiple tensor variables.
 
@@ -455,7 +451,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Adam_ver1_doc = R"DOC(
+static constexpr const char* Adam_ver1_doc = R"DOC(
     Compute one iteration of Adam, a stochastic gradient based optimization
     algorithm. This operator can conduct the optimization of multiple tensor variables.
 
