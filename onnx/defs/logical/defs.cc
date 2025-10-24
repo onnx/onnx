@@ -20,10 +20,10 @@ static void binaryLogicalOpInference(InferenceContext& ctx) {
   updateOutputElemType(ctx, 0, TensorProto::BOOL);
   // Shape inference
   if (hasNInputShapes(ctx, 2))
-  bidirectionalBroadcastShapeInference(
-    ctx.getInputType(0)->tensor_type().shape(),
-    ctx.getInputType(1)->tensor_type().shape(),
-    *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
 }
 
 // NOLINTNEXTLINE(misc-use-internal-linkage)
