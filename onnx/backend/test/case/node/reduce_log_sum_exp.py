@@ -191,14 +191,3 @@ class ReduceLogSumExp(Base):
             outputs=[reduced],
             name="test_reduce_log_sum_exp_empty_set",
         )
-    
-    @staticmethod
-    def export_int_input_invalid() -> None:
-        """Test that integer inputs raise TypeError (opset 21+).
-
-        Note: Backend tests document expected behavior.
-        The TypeError is raised by the reference evaluator.
-        """
-        # This test documents that integer inputs are invalid in opset 21+
-        # and will raise TypeError in the reference implementation
-        pass
