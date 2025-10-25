@@ -1477,12 +1477,20 @@ inline void DeregisterOnnxOperatorSetSchema() {
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
 }
 
-inline bool IsOnnxStaticRegistrationDisabled() {
-#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
-  return true;
-#else
-  return false;
-#endif
-}
+// Returns true if ONNX was built with static schema registration disabled
+// (i.e., with __ONNX_DISABLE_STATIC_REGISTRATION defined).
+//
+// When static registration is disabled, the linking module is responsible for
+// calling the desired registration methods to register the required opsets:
+//   - RegisterOnnxOperatorSetSchema() for ai.onnx domain operators
+//   - RegisterOnnxMLOperatorSetSchema() for ai.onnx.ml domain operators (if ONNX_ML is enabled)
+//   - RegisterOnnxTrainingOperatorSetSchema() for ai.onnx.training domain operators
+//   - RegisterOnnxPreviewOperatorSetSchema() for ai.onnx.preview domain operators
+//
+// When static registration is enabled (this function returns false), the above
+// opsets are automatically registered during ONNX library initialization, and
+// the linking module should not call the registration methods again to avoid
+// duplicate schema registration errors.
+bool IsOnnxStaticRegistrationDisabled();
 
 } // namespace ONNX_NAMESPACE
