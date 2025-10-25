@@ -39,7 +39,7 @@ class ReduceLogSumExp_18(OpRunReduceNumpy):
                 f"ReduceLogSumExp does not support integer types (got {data.dtype}). "
                 "Integer support was removed in opset 21. Cast input to float."
             )
-        
+
         axes = self.handle_axes(axes, noop_with_empty_axes)
         keepdims = keepdims != 0
 
