@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <climits>
 #include <cstring>
 #include <functional>
 #include <initializer_list>
@@ -173,6 +172,11 @@ class OpSchema final {
     // This formal parameter is not differentiable. That is, this formal
     // parameter can not be differentiable input of Gradient operator.
     NonDifferentiable = 2
+  };
+  enum class NodeDeterminism : uint8_t {
+    Unknown = 0,
+    NonDeterministic = 1,
+    Deterministic = 2,
   };
 
   // Formal parameter representation, including input/output name, typeStr,
@@ -812,6 +816,9 @@ class OpSchema final {
   // Build function with information stored in opschema
   ONNX_API void BuildFunction(FunctionProto& function_body) const;
 
+  NodeDeterminism GetNodeDeterminism() const;
+  OpSchema& SetNodeDeterminism(NodeDeterminism node_determinism);
+
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
@@ -870,6 +877,8 @@ class OpSchema final {
 
   std::map<int, std::shared_ptr<FunctionProto>> opset_version_to_function_body_;
   std::map<int, ContextDependentFunctionBodyBuilder> opset_version_to_function_builder_;
+
+  NodeDeterminism node_determinism_ = NodeDeterminism::Unknown;
 };
 
 // Map type to store operator schemas. The format is,
@@ -994,8 +1003,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    // Export to cpp custom register macro
-    explicit OpSchemaRegisterOnce(
+    // Export to cpp custom register macro.
+    // DO NOT decorate the constructor as "explicit" because that breaks the macro ONNX_OPERATOR_SCHEMA_UNIQ.
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    OpSchemaRegisterOnce( // NOSONAR
         OpSchema op_schema,
         int opset_version_to_load = 0,
         bool fail_duplicate_schema = true) {
@@ -1341,9 +1352,9 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                      \
-  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce(op_schema_register_once##name##Counter) ONNX_UNUSED = \
-      OpSchema(#name, __FILE__, __LINE__)
+#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                     \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce op_schema_register_once##name##Counter ONNX_UNUSED = \
+      ONNX_NAMESPACE::OpSchema(#name, __FILE__, __LINE__)
 
 ONNX_API inline std::string GenerateOptionalArgumentsDoc() {
   return "This operator has **optional** inputs/outputs. "

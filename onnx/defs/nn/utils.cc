@@ -3,8 +3,6 @@
  */
 #include "onnx/defs/nn/utils.h"
 
-#include <algorithm>
-
 namespace ONNX_NAMESPACE {
 namespace defs {
 namespace nn {

@@ -216,6 +216,7 @@ Runnable IPython notebooks:
 - [check_model.ipynb](/examples/check_model.ipynb)
 
 ### Checking a Large ONNX Model >2GB
+
 Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory.
 
 ```python
@@ -263,6 +264,7 @@ Runnable IPython notebooks:
 - [shape_inference.ipynb](/examples/shape_inference.ipynb)
 
 ### Shape inference a Large ONNX Model >2GB
+
 Current shape_inference supports models with external data, but for those models larger than 2GB, please use the model path for onnx.shape_inference.infer_shapes_path and the external data needs to be under the same directory. You can specify the output path for saving the inferred model; otherwise, the default output path is same as the original model path.
 
 ```python
@@ -326,6 +328,7 @@ print(f"The model after conversion:\n{converted_model}")
 ```
 
 ## Utility Functions
+
 ### Extracting Sub-model with Inputs Outputs Tensor Names
 
 Function `extract_model()` extracts sub-model from an ONNX model.
@@ -342,9 +345,9 @@ output_names = ["output_0", "output_1"]
 onnx.utils.extract_model(input_path, output_path, input_names, output_names)
 ```
 
-Note: For control-flow operators, e.g. If and Loop, the _boundary of sub-model_,
-which is defined by the input and output tensors, should not _cut through_ the
-subgraph that is connected to the _main graph_ as attributes of these operators.
+Note: For control-flow operators, e.g. If and Loop, the *boundary of sub-model*,
+which is defined by the input and output tensors, should not *cut through* the
+subgraph that is connected to the *main graph* as attributes of these operators.
 
 ### ONNX Compose
 
@@ -443,7 +446,9 @@ onnx.compose.expand_out_dims(model1, dim_idx=0, inplace=True)
 ```
 
 ## Tools
+
 ### Updating Model"s Inputs Outputs Dimension Sizes with Variable Length
+
 Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
 to the provided values in the parameter. You could provide both static and dynamic dimension size,
 by using dim_param. For more information on static and dynamic dimension size, checkout [Tensor Shapes](IR.md#tensor-shapes).
