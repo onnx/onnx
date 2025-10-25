@@ -432,6 +432,10 @@ if(MSVC)
 endif()
 add_library(onnx_proto)
 target_link_libraries(onnx_proto PUBLIC $<BUILD_INTERFACE:onnx_proto_object>)
+if(ONNX_ML)
+  target_compile_definitions(onnx_proto PUBLIC ONNX_ML=1)
+endif()
+target_compile_definitions(onnx_proto PUBLIC ONNX_NAMESPACE=${ONNX_NAMESPACE})
 
 # onnx_object and onnx_proto_object are collections of C++ object files.
 # They are introduced to help onnx_cpp2py_export bypass library boundaries and use ONNX private symbols.
@@ -454,6 +458,10 @@ endforeach()
 add_library(onnx)
 target_link_libraries(onnx PUBLIC $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
 target_include_directories(onnx PUBLIC $<INSTALL_INTERFACE:include>)
+if(ONNX_ML)
+  target_compile_definitions(onnx PUBLIC ONNX_ML=1)
+endif()
+target_compile_definitions(onnx PUBLIC ONNX_NAMESPACE=${ONNX_NAMESPACE})
 
 target_compile_options(onnx_object PUBLIC ${protobuf_warnings})
 target_compile_options(onnx_proto_object PUBLIC ${protobuf_warnings})
