@@ -15,6 +15,17 @@ inline static void unaryLogicalOpInference(InferenceContext& ctx) {
   }
 }
 
+static void binaryLogicalOpInference(InferenceContext& ctx) {
+  // Type inference
+  updateOutputElemType(ctx, 0, TensorProto::BOOL);
+  // Shape inference
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+}
+
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
@@ -48,16 +59,7 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
         1,
         OpSchema::NonDifferentiable);
     schema.Output(0, "C", "Result tensor.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable);
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference
-      updateOutputElemType(ctx, 0, TensorProto::BOOL);
-      // Shape inference
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
+    schema.TypeAndShapeInferenceFunction(binaryLogicalOpInference);
   };
 }
 
@@ -196,7 +198,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(BinaryLogicDocGenerator("less_equal"))
         .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor.")
-        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .TypeAndShapeInferenceFunction(binaryLogicalOpInference)
         .FunctionBody(R"ONNX(
         {
             O1 = Less (A, B)
@@ -212,7 +214,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(BinaryLogicDocGenerator("greater_equal"))
         .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor.")
-        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .TypeAndShapeInferenceFunction(binaryLogicalOpInference)
         .FunctionBody(R"ONNX(
         {
             O1 = Greater (A, B)
