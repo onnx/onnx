@@ -17,24 +17,24 @@ We should work toward being able to represent major classes of NLP model archite
 seq2seq with attention can roughly be broken down into these constituent parts:
 
 * An Encoder network
-    * This network takes a sequence of tokens and yields a sequence of embeddings representing the context found at each time-step
-    * Major classes of encoders: recurrent network (e.g. LSTM[1]), convolutional[2], attention[3].
-    * Requirements from an ONNX representation
-        * Recurrent network - general recurrent network structures preserving outputs at every timestep. Handling of padding and hidden states for batches with different sequence lengths).
-        * Convolutional - 1d convolution, position embeddings
-        * Attention - sinusoid position encodings, layer normalization
+  * This network takes a sequence of tokens and yields a sequence of embeddings representing the context found at each time-step
+  * Major classes of encoders: recurrent network (e.g. LSTM[1]), convolutional[2], attention[3].
+  * Requirements from an ONNX representation
+    * Recurrent network - general recurrent network structures preserving outputs at every timestep. Handling of padding and hidden states for batches with different sequence lengths).
+    * Convolutional - 1d convolution, position embeddings
+    * Attention - sinusoid position encodings, layer normalization
 * A Decoder network
-    * This network generates a sequence token by token, parameterized by the context provided from the encoder.
-    * Yields a probability distribution over possible tokens given previous context and encoder context.
-    * Major classes of decoders: recurrent network (e.g. LSTM), convolutional (causal, temporal for generation), attention.
-    * Generation requires dynamic control flow. Often, this is done as a beam search, so this is distinct from regular recurrent networks.
-    * Model-specific requirements
-        * Recurrent network - Recurrent network cell that can be used within the context of beam search
-        * Convolutional - 1d causal convolution (only see previous timesteps)
-        * Attention - sinusoid position encodings, masking along diagonal
+  * This network generates a sequence token by token, parameterized by the context provided from the encoder.
+  * Yields a probability distribution over possible tokens given previous context and encoder context.
+  * Major classes of decoders: recurrent network (e.g. LSTM), convolutional (causal, temporal for generation), attention.
+  * Generation requires dynamic control flow. Often, this is done as a beam search, so this is distinct from regular recurrent networks.
+  * Model-specific requirements
+    * Recurrent network - Recurrent network cell that can be used within the context of beam search
+    * Convolutional - 1d causal convolution (only see previous timesteps)
+    * Attention - sinusoid position encodings, masking along diagonal
 * An Attention mechanism
-    * This network weights the Encoder contexts based on the Decoder's generation state, and provides a focused Encoder context to the decoder. The Decoder “focuses” on a certain part of the input sequence at each timestep via this mechanism.
-    * Many classes of attention mechanism: some examples are here https://arxiv.org/pdf/1508.04025.pdf
+  * This network weights the Encoder contexts based on the Decoder's generation state, and provides a focused Encoder context to the decoder. The Decoder “focuses” on a certain part of the input sequence at each timestep via this mechanism.
+  * Many classes of attention mechanism: some examples are here https://arxiv.org/pdf/1508.04025.pdf
 
 Vanilla seq2seq with attention and non-backtracking beam search does NOT include things such as auxiliary data-structures (e.g. stacks), thus it does not require us to implement the full semantics of a programming language. It is an architecture that we can break down into incremental improvements to ONNX without compromising ONNX's fundamental goal.
 
