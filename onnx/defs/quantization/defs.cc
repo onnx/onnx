@@ -2,12 +2,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 
-static const char* QuantizeLinear_ver24_doc = R"DOC(
+static constexpr const char* QuantizeLinear_ver24_doc = R"DOC(
 The linear quantization operator consumes a high-precision tensor, a scale, and a zero point to compute the
 low-precision/quantized tensor. The scale factor and zero point must have the same shape, determining the quantization
 granularity. The quantization formula is `y = saturate((x / y_scale) + y_zero_point)`.
@@ -145,7 +144,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver24_doc = R"DOC(
+static constexpr const char* DequantizeLinear_ver24_doc = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
 full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
 must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
@@ -241,7 +240,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
+static constexpr const char* DynamicQuantizeLinear_ver11_doc = R"DOC(
 A Function to fuse calculation for Scale, Zero Point and FP32->8Bit conversion of FP32 Input data.
 Outputs Scale, ZeroPoint and Quantized Input for a given FP32 Input.
 Scale is calculated as:

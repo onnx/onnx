@@ -259,8 +259,8 @@ static void convPoolShapeInference_opset19(
     int64_t strided_kernel_positions = 0;
 
     if (ceil_mode == 1)
-      strided_kernel_positions =
-          (int64_t)(std::ceil((effective_input_size - effective_kernel_shape[i]) / float(strides[i])));
+      strided_kernel_positions = static_cast<int64_t>(
+          std::ceil((effective_input_size - effective_kernel_shape[i]) / static_cast<float>(strides[i])));
     else
       strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
 
@@ -275,7 +275,7 @@ static void convPoolShapeInference_opset19(
   }
 }
 
-static const char* Dropout_ver13_doc = R"DOC(
+static constexpr const char* Dropout_ver13_doc = R"DOC(
 Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
 output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
 Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
@@ -334,6 +334,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input 'ratio' types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output 'mask' types to boolean tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasInputShape(ctx, 0)) {
@@ -362,7 +363,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* LpNormalization_ver1_doc = R"DOC(
+static constexpr const char* LpNormalization_ver1_doc = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
 )DOC";
 
@@ -389,7 +390,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* InstanceNormalization_ver6_doc = R"DOC(
+static constexpr const char* InstanceNormalization_ver6_doc = R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
 
@@ -761,7 +762,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   }
 }
 
-static const char* DeformConv_ver19_doc = R"DOC(
+static constexpr const char* DeformConv_ver19_doc = R"DOC(
 Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
 This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
 )DOC";
@@ -1279,7 +1280,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset18(const char
 
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 18, OpSchema().FillUsing(LpPoolOpSchemaGenerator_opset18("LpPool")));
 
-static const char* MaxUnpool_ver11_doc = R"DOC(
+static constexpr const char* MaxUnpool_ver11_doc = R"DOC(
 MaxUnpool essentially computes the partial inverse of the MaxPool op.
  The input information to this op is typically the output information from a MaxPool op. The first
  input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
@@ -1553,7 +1554,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
 
-static const char* Dropout_ver12_doc = R"DOC(
+static constexpr const char* Dropout_ver12_doc = R"DOC(
 Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
 output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
 Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
@@ -1606,6 +1607,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input 'ratio' types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output 'mask' types to boolean tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasInputShape(ctx, 0)) {
@@ -1634,7 +1636,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Flatten_ver23_doc = R"DOC(
+static constexpr const char* Flatten_ver23_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -1689,7 +1691,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* Flatten_ver21_doc = R"DOC(
+static constexpr const char* Flatten_ver21_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -1832,7 +1834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* LRN_ver1_doc = R"DOC(
+static constexpr const char* LRN_ver1_doc = R"DOC(
 Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
 It normalizes over local input regions.
 The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
@@ -1877,7 +1879,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(LRN_ver1_doc)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* mvn_ver9_doc = R"DOC(
+static constexpr const char* mvn_ver9_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
       on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ```
 )DOC";
@@ -2082,8 +2084,8 @@ static void convPoolShapeInference1(
     int64_t strided_kernel_positions = 0;
 
     if (ceil_mode == 1)
-      strided_kernel_positions =
-          (int64_t)(std::ceil((effective_input_size - effective_kernel_shape[i]) / float(strides[i])));
+      strided_kernel_positions = static_cast<int64_t>(
+          std::ceil((effective_input_size - effective_kernel_shape[i]) / static_cast<float>(strides[i])));
     else
       strided_kernel_positions = (effective_input_size - effective_kernel_shape[i]) / strides[i];
 
@@ -2638,7 +2640,7 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
   }
 }
 
-static const char* MaxUnpool_ver9_doc = R"DOC(
+static constexpr const char* MaxUnpool_ver9_doc = R"DOC(
 MaxUnpool essentially computes the partial inverse of the MaxPool op.
  The input information to this op is typically the output information from a MaxPool op. The first
  input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
@@ -2821,7 +2823,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_10(const char* nam
 
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 2, OpSchema().FillUsing(LpPoolOpSchemaGenerator_10("LpPool")));
 
-static const char* GlobalLpPool_ver1_doc = R"DOC(
+static constexpr const char* GlobalLpPool_ver1_doc = R"DOC(
  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
  the values in the same channel. This is equivalent to LpPool with kernel size
  equal to the spatial dimension of input tensor.)DOC";
@@ -3224,7 +3226,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors."));
 
-static const char* BatchNormalization_ver1_doc = R"DOC(
+static constexpr const char* BatchNormalization_ver1_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
@@ -3325,7 +3327,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors."));
 
-static const char* BatchNormalization_ver9_doc = R"DOC(
+static constexpr const char* BatchNormalization_ver9_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
@@ -3441,7 +3443,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // the other outputs as well.
         }));
 
-static const char* BatchNormalization_ver14_doc = R"DOC(
+static constexpr const char* BatchNormalization_ver14_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 There are five required inputs 'X', 'scale', 'B', 'input_mean' and
@@ -3617,7 +3619,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* InstanceNormalization_ver1_doc = R"DOC(
+static constexpr const char* InstanceNormalization_ver1_doc = R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
 
@@ -3649,7 +3651,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors."));
 
-static const char* Dropout_old_doc = R"DOC(
+static constexpr const char* Dropout_old_doc = R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
 test mode or not, the output Y will either be a random dropout, or a simple
@@ -3662,6 +3664,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Dropout_old_doc)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .Attr("ratio", "(float, default 0.5) the ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         // This attribute was added via AllowConsumed API in OpSchema.
         // After removing the API, we're now using the Attr API to simulate the
@@ -3690,6 +3693,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     6,
     OpSchema()
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .SetDoc(Dropout_old_doc)
         .Attr("ratio", "(float, default 0.5) the ratio of random dropout", AttributeProto::FLOAT, 0.5f)
         .Attr(
@@ -3712,7 +3716,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Dropout_ver7_doc = R"DOC(
+static constexpr const char* Dropout_ver7_doc = R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
 test mode or not, the output Y will either be a random dropout, or a simple
@@ -3733,9 +3737,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Dropout_ver10_doc = R"DOC(
+static constexpr const char* Dropout_ver10_doc = R"DOC(
 Dropout takes one input floating tensor and produces two tensor outputs,
 output (floating tensor) and mask (`Tensor<bool>`). Depending on whether it is
 in test mode or not, the output Y will either be a random dropout, or a simple
@@ -3757,6 +3762,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output mask types to boolean tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
           if (ctx.getNumOutputs() == 2) {
@@ -3767,7 +3773,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* BatchNorm_ver6_doc = R"DOC(
+static constexpr const char* BatchNorm_ver6_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
@@ -3880,7 +3886,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // the other outputs as well.
         }));
 
-static const char* Flatten_ver1_doc = R"DOC(
+static constexpr const char* Flatten_ver1_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -3927,7 +3933,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* Flatten_ver9_doc = R"DOC(
+static constexpr const char* Flatten_ver9_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -3971,7 +3977,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* BatchNormalization_ver7_doc = R"DOC(
+static constexpr const char* BatchNormalization_ver7_doc = R"DOC(
     Carries out batch normalization as described in the paper
     https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
     there are multiple cases for the number of outputs, which we list below:
@@ -4069,7 +4075,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // the other outputs as well.
         }));
 
-static const char* GroupNormalization_ver18_doc = R"DOC(
+static constexpr const char* GroupNormalization_ver18_doc = R"DOC(
 A GroupNormalization function. Carries out group normalization as described in
 the paper https://arxiv.org/abs/1803.08494
 
@@ -4142,6 +4148,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
@@ -4203,7 +4210,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* Attention_ver23_doc = R"DOC(
+static constexpr const char* Attention_ver23_doc = R"DOC(
 
 Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
 
@@ -4375,6 +4382,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
             "Constrain output 'mask' types to boolean tensors and input types.")
         .TypeAndShapeInferenceFunction(defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
                                                    const OpSchema& schema,
                                                    FunctionProto& functionProto) {

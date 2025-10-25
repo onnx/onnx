@@ -405,12 +405,8 @@ file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
     "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
     "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
+list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src} "${ONNX_ROOT}/onnx/test/cmake/main.cc")
 list(APPEND ONNX_SRCS ${__tmp_srcs})
-
-# Hide all symbols we don't need
-set_target_properties(onnx_proto_object PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx_proto_object PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)

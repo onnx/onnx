@@ -5,7 +5,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* OptionalHasElement_ver1_doc = R"DOC(
+static constexpr const char* OptionalHasElement_ver1_doc = R"DOC(
 Returns true if the optional-type input contains an element. If it is an empty optional-type, this op returns false.
 )DOC";
 
@@ -39,7 +39,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_tensor_type->mutable_shape()->Clear();
         }));
 
-static const char* OptionalGetElement_ver1_doc = R"DOC(
+static constexpr const char* OptionalGetElement_ver1_doc = R"DOC(
 Outputs the element in the optional-type input. It is an error if the input value does not have an element
 and the behavior is undefined in this case.
 )DOC";

@@ -17,7 +17,6 @@
 #include "onnx/common/file_utils.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/shape_inference/attribute_binder.h"
-#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
@@ -1018,7 +1017,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& input_types,
     const std::vector<const TensorProto*>& input_data) {
   SymbolTable* symbol_table = context_->symbol_table;
-  int num_inputs = int(input_types.size());
+  int num_inputs = static_cast<int>(input_types.size());
   std::unordered_set<std::string> initializer_name_set;
   for (const auto& tp : g_->initializer()) {
     initializer_name_set.insert(tp.name());
