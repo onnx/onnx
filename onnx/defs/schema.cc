@@ -1726,4 +1726,12 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
   return numReplaced;
 }
 
+bool IsOnnxStaticRegistrationDisabled() {
+#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
+  return true;
+#else
+  return false;
+#endif
+}
+
 } // namespace ONNX_NAMESPACE
