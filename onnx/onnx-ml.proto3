@@ -118,7 +118,7 @@ enum Version {
   // Added FLOAT4E2M1, multi-device protobuf classes.
   IR_VERSION_2025_05_12 = 0x000000000000000B;
 
-  // IR VERSION 12 published on TBD
+  // IR VERSION 12 published on August 26, 2025
   // Added FLOAT8E8M0.
   IR_VERSION = 0x000000000000000C;
 }
