@@ -41,7 +41,7 @@ The project aims for reliability, extensibility, and broad compatibility across 
 
 ### Linting
 
-We use `lintrunner` to manage multiple linters configured in `.lintrunner.toml`:
+We use `lintrunner` to manage multiple linters configured in .lintrunner.toml:
 
 ```sh
 # Install linting tools
@@ -58,7 +58,7 @@ lintrunner -a
 lintrunner f
 ```
 
-Linters include: Ruff (Python linting), Ruff Format (Python formatting), Mypy (type checking), clang-format (C++ formatting), and custom checks.
+Linters include: Ruff (Python linting and formatting), Mypy (type checking), clang-format (C++ formatting), editorconfig-checker, and custom checks for namespace usage. See .lintrunner.toml for the complete configuration.
 
 ### Building ONNX
 
@@ -169,7 +169,7 @@ All PRs must pass:
 
 ## Common Patterns and Conventions
 
-- **Protobuf changes**: Modify `.in.proto` files and regenerate with `onnx/gen_proto.py`
+- **Protobuf changes**: Modify `.in.proto` files (e.g., `onnx.in.proto`, `onnx-data.in.proto`) and regenerate with `onnx/gen_proto.py`
 - **Operator versioning**: Follow semantic versioning for operator changes
 - **Type annotations**: Use type hints in Python code; mypy checks are enforced
 - **Error handling**: Provide clear, actionable error messages
@@ -191,5 +191,5 @@ Follow the comprehensive guide in `docs/AddNewOp.md`. Key steps:
 - [ONNX Website](https://onnx.ai)
 - [Python API Documentation](https://onnx.ai/onnx/)
 - [IR Specification](https://github.com/onnx/onnx/blob/main/docs/IR.md)
-- [Contributing Guide](CONTRIBUTING.md)
-- [Installation Guide](INSTALL.md)
+- [Contributing Guide](../CONTRIBUTING.md)
+- [Installation Guide](../INSTALL.md)
