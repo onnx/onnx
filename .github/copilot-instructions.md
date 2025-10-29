@@ -41,7 +41,7 @@ The project aims for reliability, extensibility, and broad compatibility across 
 
 ### Linting
 
-We use `lintrunner` to manage multiple linters configured in .lintrunner.toml:
+We use `lintrunner` to manage multiple linters configured in `.lintrunner.toml`:
 
 ```sh
 # Install linting tools
@@ -58,7 +58,7 @@ lintrunner -a
 lintrunner f
 ```
 
-Linters include: Ruff (Python linting and formatting), Mypy (type checking), clang-format (C++ formatting), editorconfig-checker, and custom checks for namespace usage. See .lintrunner.toml for the complete configuration.
+Linters include: Ruff (Python linting and formatting), Mypy (type checking), clang-format (C++ formatting), editorconfig-checker, and custom checks for namespace usage. See `.lintrunner.toml` for the complete configuration.
 
 ### Building ONNX
 
