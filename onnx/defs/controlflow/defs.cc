@@ -12,10 +12,10 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
-static std::vector<std::string> control_flow_types_ir12() {
-  auto t = OpSchema::all_tensor_types_ir12();
-  auto s = OpSchema::all_tensor_sequence_types_ir12();
-  auto o = OpSchema::all_optional_types_ir12();
+static std::vector<std::string> control_flow_types_ir13() {
+  auto t = OpSchema::all_tensor_types_ir13();
+  auto s = OpSchema::all_tensor_sequence_types_ir13();
+  auto o = OpSchema::all_optional_types_ir13();
   t.insert(t.end(), s.begin(), s.end());
   t.insert(t.end(), o.begin(), o.end());
   return t;
@@ -63,8 +63,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint(
             "V",
-            control_flow_types_ir12(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv11.")
+            control_flow_types_ir13(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
@@ -253,8 +253,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint(
             "V",
-            control_flow_types_ir12(),
-            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv11.")
+            control_flow_types_ir13(),
+            "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.")
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
