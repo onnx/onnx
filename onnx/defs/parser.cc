@@ -469,10 +469,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
     if (!Matches('}')) {
       do {
         switch (static_cast<TensorProto::DataType>(elem_type)) {
+          case TensorProto::DataType::TensorProto_DataType_INT2:
           case TensorProto::DataType::TensorProto_DataType_INT4:
           case TensorProto::DataType::TensorProto_DataType_INT8:
           case TensorProto::DataType::TensorProto_DataType_INT16:
           case TensorProto::DataType::TensorProto_DataType_INT32:
+          case TensorProto::DataType::TensorProto_DataType_UINT2:
           case TensorProto::DataType::TensorProto_DataType_UINT4:
           case TensorProto::DataType::TensorProto_DataType_UINT8:
           case TensorProto::DataType::TensorProto_DataType_UINT16:

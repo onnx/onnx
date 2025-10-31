@@ -43,6 +43,21 @@ def _pack_4bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::2] | array_flat[1::2]
 
 
+def _pack_2bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    pad_len = size % 4
+    if pad_len:
+        array_flat.resize([size + (4 - pad_len)], refcheck=False)
+    array_flat &= 0x03
+    array_flat[1::4] <<= 2
+    array_flat[2::4] <<= 4
+    array_flat[3::4] <<= 6
+    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
+
+
 class TestHelperAttributeFunctions(unittest.TestCase):
     def test_attr_float(self) -> None:
         # float
@@ -690,6 +705,63 @@ class TestHelperTensorFunctions(unittest.TestCase):
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(ynp.view(np.uint8), expected)
 
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT2, TensorProto.INT2),
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    def test_make_2bit_tensor(self, dtype, dims) -> None:
+        type_range = {
+            TensorProto.UINT2: (0, 3),
+            TensorProto.INT2: (-2, 1),
+        }
+        data = np.random.randint(
+            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
+        )
+        y = helper.make_tensor("y", dtype, data.shape, data)
+
+        # Check the expected size of int32_data in bytes
+        expected_data_size = math.ceil(np.prod(data.shape) / 4.0)
+        actual_data_size = len(bytes(y.int32_data))
+        np.testing.assert_equal(actual_data_size, expected_data_size)
+
+        # Check the expected data values.
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(ynp, data)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    def test_2bit_tensor_size(self, dims) -> None:
+        # A bug caused negative int2 values to inflate tensor size.
+        # So, test negative values here.
+        num_elems = np.prod(dims)
+        data = np.array([-2] * num_elems, dtype=np.int8).reshape(dims)
+        y = helper.make_tensor("y", TensorProto.INT2, data.shape, data)
+
+        # Check the expected size of int32_data in bytes
+        expected_data_size = math.ceil(num_elems / 4.0)
+        actual_data_size = len(bytes(y.int32_data))
+        np.testing.assert_equal(actual_data_size, expected_data_size)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT2, TensorProto.INT2), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
+        )
+    )
+    def test_make_2bit_raw_tensor(self, dtype, dims) -> None:
+        data = np.random.randint(0, high=4, size=dims, dtype=np.uint8)
+        packed_data = _pack_2bit(data)
+
+        y = helper.make_tensor(
+            "packed_int2", dtype, dims, packed_data.tobytes(), raw=True
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(ynp.view(np.uint8), data)
+
     def test_make_float4e2m1_tensor(self) -> None:
         y = helper.make_tensor(
             "zero_point",
@@ -959,6 +1031,11 @@ def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
             TensorProto.UINT4,
         }:
             np_array_intermediate = _pack_4bit(np_array)
+        if tensor_dtype in {
+            TensorProto.INT2,
+            TensorProto.UINT2,
+        }:
+            np_array_intermediate = _pack_2bit(np_array)
 
         vals = numpy_helper.tobytes_little_endian(np_array_intermediate)
     else:
