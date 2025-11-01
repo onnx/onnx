@@ -103,12 +103,12 @@ jobs:
         with:
           persist-credentials: true
           submodules: true
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6.0.0
         if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14-dev'
         with:
           name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
           path: ./dist
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6.0.0
         if: matrix.python-version != '3.12' && matrix.python-version != '3.13' && matrix.python-version != '3.14-dev'
         with:
           name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
