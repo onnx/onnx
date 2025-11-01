@@ -82,7 +82,7 @@ jobs:
         python -m build --wheel
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
 
-    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+    - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
       if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
       # dev-builds should not be uploaded when release-builds are created
       with:
