@@ -43,7 +43,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
     1. Bump opset version for ai.onnx domain in `onnx/defs/operator_sets.h` and `onnx/defs/schema.h` for use by future operator additions and changes.
         * For example, this [demo PR](https://github.com/onnx/onnx/pull/6001).
 
-## Upload release candidate to TestPyPI without offline steps (starting with onnx version 1.19)
+## Upload release candidate to PyPI
 
 * Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow" with the following config:
 
@@ -51,7 +51,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 RC-Candidates
 
-* Published to https://test.pypi.org/
+* Published to https://pypi.org/ (starting with onnx 1.19.2 before it was test.pypi.org)
 * Build-mode: Release
 
 * This button triggers the build of the different OS
@@ -68,7 +68,7 @@ RC-Candidates
 
 **Partner Validation**
 
- * User should install the rc-packages with *pip install --no-deps -i https://test.pypi.org/simple/ onnx* (and manually install its dependencies so they are not obtained from test-pypi)
+ * User should install the rc-packages with `pip install onnx=={rc version}`
  * Test with onnxruntime package:
      * Run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
         * The scripts tests ONNX functions like `load`, `checker.check_model`, and `shape_inference.infer_shapes`, with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model.
