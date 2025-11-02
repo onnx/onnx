@@ -81,14 +81,13 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
-                  
     - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
       if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
-
+            
   test:
     needs: build
     runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
@@ -106,12 +105,12 @@ jobs:
           persist-credentials: true
           submodules: true
       - uses: actions/download-artifact@v6.0.0
-        if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14-dev'
+        if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14'
         with:
           name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
           path: ./dist
       - uses: actions/download-artifact@v6.0.0
-        if: matrix.python-version != '3.12' && matrix.python-version != '3.13' && matrix.python-version != '3.14-dev'
+        if: matrix.python-version != '3.12' && matrix.python-version != '3.13' && matrix.python-version != '3.14'
         with:
           name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
           path: ./dist
@@ -148,28 +147,28 @@ jobs:
           source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
       - name: Test wheel with Python ${{ matrix.python-version }}
-        if: matrix.python-version != '3.14-dev'
+        if: matrix.python-version != '3.14'
         run: |
           # example file name: ./dist/onnx_weekly-1.19.0.dev20250528-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl
           pytest
 
       - name: Verify ONNX with the latest numpy
-        if: matrix.python-version != '3.14-dev'
+        if: matrix.python-version != '3.14'
         run: |
           python -m pip uninstall -y numpy onnx && python -m pip install numpy
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
           pytest
 
       - name: Verify ONNX with the latest protobuf
-        if: matrix.python-version != '3.14-dev'
+        if: matrix.python-version != '3.14'
         run: |
           python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
           pytest
 
       - name: Verify ONNX with the minimumly supported packages
-        if: matrix.python-version != '3.14-dev'
+        if: matrix.python-version != '3.14'
         run: |
           python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
