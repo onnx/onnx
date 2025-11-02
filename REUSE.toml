@@ -207,7 +207,7 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = ["onnx/backend/sample/ops/abs.py", "onnx/gen_proto.py"]
-precedence = "aggregate"
+precedence = "override"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
