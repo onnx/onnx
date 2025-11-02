@@ -165,14 +165,14 @@ jobs:
 
     steps:
 
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         if: (github.event_name == 'workflow_dispatch' )
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         if: (github.event_name == 'workflow_dispatch' )
         with:
           pattern: sdist
@@ -217,14 +217,14 @@ jobs:
 
       steps:
 
-        - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
           if: (github.event_name == 'workflow_dispatch' )
           with:
             pattern: wheels*
             path: dist
             merge-multiple: true
 
-        - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
           if: (github.event_name == 'workflow_dispatch' )
           with:
             pattern: sdist
@@ -268,14 +268,14 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         with:
           pattern: sdist
@@ -306,13 +306,13 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           pattern: sdist
           path: dist
