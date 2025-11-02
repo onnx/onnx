@@ -1,0 +1,34 @@
+name: Require topic/module label (prefix-only)
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize, reopened, ready_for_review]
+
+jobs:
+  check-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure PR has topic/module label
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const author = context.payload.pull_request.user.login;
+            const prLabels = context.payload.pull_request.labels.map(l => l.name);
+
+            if (author === "dependabot[bot]") {
+              core.info("Skipping check for dependabot");
+              return;
+            }
+
+            if (prLabels.length === 0) {
+              core.setFailed("❌ Add at least one label (topic:/module:).");
+              return;
+            }
+
+            const hasRequired = prLabels.some(l => l.startsWith("topic:") || l.startsWith("module:"));
+
+            if (!hasRequired) {
+              core.setFailed("❌ Add a 'topic:' or 'module:' label.");
+            } else {
+              core.info("✅ Label check passed");
+            }

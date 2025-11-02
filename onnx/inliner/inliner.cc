@@ -165,7 +165,7 @@ class InliningRenamer : public MutableVisitor {
   NameGenerator& generator;
 
  protected:
-  std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
+  std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
 
  public:
   InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {

@@ -4,14 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
-
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
-#include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
-#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
 #include "onnx/shape_inference/implementation.h"

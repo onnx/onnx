@@ -89,7 +89,7 @@ namespace ONNX_NAMESPACE {
     char* bytes = raw_data.data();                                                                                 \
     /* onnx is little endian serialized always-tweak byte order if needed */                                       \
     if (!is_processor_little_endian()) {                                                                           \
-      const size_t element_size = sizeof(type);                                                                    \
+      constexpr size_t element_size = sizeof(type);                                                                \
       const size_t num_elements = raw_data.size() / element_size;                                                  \
       for (size_t i = 0; i < num_elements; ++i) {                                                                  \
         char* start_byte = bytes + i * element_size;                                                               \

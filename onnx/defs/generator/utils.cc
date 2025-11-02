@@ -5,7 +5,6 @@
 #include "onnx/defs/generator/utils.h"
 
 #include <algorithm>
-#include <cmath>
 
 namespace ONNX_NAMESPACE {
 

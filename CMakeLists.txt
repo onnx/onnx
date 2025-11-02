@@ -405,12 +405,8 @@ file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
     "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
     "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
 list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
+list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src} "${ONNX_ROOT}/onnx/test/cmake/main.cc")
 list(APPEND ONNX_SRCS ${__tmp_srcs})
-
-# Hide all symbols we don't need
-set_target_properties(onnx_proto_object PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx_proto_object PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -436,6 +432,10 @@ if(MSVC)
 endif()
 add_library(onnx_proto)
 target_link_libraries(onnx_proto PUBLIC $<BUILD_INTERFACE:onnx_proto_object>)
+if(ONNX_ML)
+  target_compile_definitions(onnx_proto PUBLIC ONNX_ML=1)
+endif()
+target_compile_definitions(onnx_proto PUBLIC ONNX_NAMESPACE=${ONNX_NAMESPACE})
 
 # onnx_object and onnx_proto_object are collections of C++ object files.
 # They are introduced to help onnx_cpp2py_export bypass library boundaries and use ONNX private symbols.
@@ -456,8 +456,13 @@ foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
   endif()
 endforeach()
 add_library(onnx)
-target_link_libraries(onnx PUBLIC $<BUILD_INTERFACE:onnx_object>)
-target_link_libraries(onnx PUBLIC onnx_proto)
+target_link_libraries(onnx PUBLIC $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
+target_include_directories(onnx PUBLIC $<INSTALL_INTERFACE:include>)
+if(ONNX_ML)
+  target_compile_definitions(onnx PUBLIC ONNX_ML=1)
+endif()
+target_compile_definitions(onnx PUBLIC ONNX_NAMESPACE=${ONNX_NAMESPACE})
+
 target_compile_options(onnx_object PUBLIC ${protobuf_warnings})
 target_compile_options(onnx_proto_object PUBLIC ${protobuf_warnings})
 
