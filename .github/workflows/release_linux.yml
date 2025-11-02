@@ -67,10 +67,13 @@ jobs:
       run: |
         echo "PYTHON VERSION: ${{ matrix.python-version }}"
         if [ "${{ matrix.python-version }}" = "3.12" ]; then
-          echo "Artifact name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3"
+          echo "Artifact name: wheels-${INPUT_OS}-${{ matrix.architecture }}-3.12-abi3"
         else
-          echo "Artifact name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}"
+          echo "Artifact name: wheels-${INPUT_OS}-${{ matrix.architecture }}-${{ matrix.python-version }}"
         fi
+      shell: bash
+      env:
+        INPUT_OS: ${{ inputs.os }}
 
     - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
       if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version == '3.12')
@@ -78,14 +81,13 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
+                  
     - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
       if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
-
-
 
   test:
     needs: build
@@ -95,7 +97,7 @@ jobs:
       MANYLINUX_WHEEL_ARM64: "manylinux_2_28_aarch64"
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.13t', '3.14-dev']
+        python-version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         architecture: ['x64', 'arm64']
       fail-fast: false
     steps:
