@@ -26,7 +26,11 @@ All 2-bit types are stored as 4×2-bit values in a single byte. The elements are
 
 Packing:
 ```
-pack(x0, x1, x2, x3): (x0 & 0x03) | (x1 << 2) | (x2 << 4) | (x3 << 6)
+pack(x0, x1, x2, x3):
+    (x0 & 0x03) |
+    ((x1 & 0x03) << 2) |
+    ((x2 & 0x03) << 4) |
+    ((x3 & 0x03) << 6)
 ```
 
 Unpacking:
