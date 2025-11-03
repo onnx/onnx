@@ -13,6 +13,8 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 7
     ignore:
       # Only update them manually since updating them might break compatibility
       - dependency-name: "numpy"
@@ -28,6 +30,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 20
     labels:
       - "github_actions"
