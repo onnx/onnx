@@ -23,7 +23,7 @@ static std::vector<std::string> control_flow_types_ir13() {
 
 ONNX_OPERATOR_SET_SCHEMA(
     If,
-    24,
+    25,
     OpSchema()
         .SetDoc("If conditional")
         .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
@@ -68,7 +68,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static constexpr const char* Loop_ver23_doc = R"DOC(
+static constexpr const char* Loop_ver25_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -208,9 +208,9 @@ The input/output of subgraph (produced by loop node) matching is based on order 
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
-    24,
+    25,
     OpSchema()
-        .SetDoc(Loop_ver23_doc)
+        .SetDoc(Loop_ver25_doc)
         .Input(
             0,
             "M",
@@ -259,7 +259,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static constexpr const char* scan_24_doc = R"DOC(
+static constexpr const char* scan_25_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip, and is intended to enable
@@ -385,9 +385,9 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
-    24,
+    25,
     OpSchema()
-        .SetDoc(scan_24_doc)
+        .SetDoc(scan_25_doc)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -448,7 +448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "range is [-r, r-1].",
             AttributeProto::INTS,
             false)
-        .TypeConstraint("V", OpSchema::all_tensor_types_ir12(), "All Tensor types up to IRv12.")
+        .TypeConstraint("V", OpSchema::all_tensor_types_ir13(), "All Tensor types up to IRv13.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 } // namespace ONNX_NAMESPACE
