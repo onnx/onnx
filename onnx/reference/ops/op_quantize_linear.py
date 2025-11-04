@@ -20,6 +20,8 @@ _QUANT_TYPES = {
     TensorProto.INT8,
     TensorProto.UINT16,
     TensorProto.INT16,
+    TensorProto.INT2,
+    TensorProto.UINT2,
     TensorProto.UINT4,
     TensorProto.INT4,
     TensorProto.FLOAT8E4M3FN,
@@ -36,6 +38,8 @@ _QUANT_INTEGER_RANGES = {
     TensorProto.INT16: (-32768, 32767),
     TensorProto.UINT4: (0, 15),
     TensorProto.INT4: (-8, 7),
+    TensorProto.UINT2: (0, 3),
+    TensorProto.INT2: (-2, 1),
 }
 
 
