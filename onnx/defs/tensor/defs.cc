@@ -14,7 +14,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static constexpr const char* Cast_ver24_doc = R"DOC(
+static constexpr const char* Cast_ver25_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
@@ -101,9 +101,9 @@ The following table describes the casting behavior of special values to FLOAT8E8
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
-    24,
+    25,
     OpSchema()
-        .SetDoc(Cast_ver24_doc)
+        .SetDoc(Cast_ver25_doc)
         .Attr(
             "to",
             "The data type to which the elements of the input tensor are cast. "
@@ -138,11 +138,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
-            OpSchema::all_non_complex_tensor_types_ir12(),
+            OpSchema::all_non_complex_tensor_types_ir13(),
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
-            OpSchema::all_non_complex_tensor_types_ir12(),
+            OpSchema::all_non_complex_tensor_types_ir13(),
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
@@ -154,7 +154,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static constexpr const char* CastLike_ver24_doc = R"DOC(
+static constexpr const char* CastLike_ver25_doc = R"DOC(
 The operator casts the elements of a given input tensor (the first input) to
 the same data type as the elements of the second input tensor.
 See documentation of the Cast operator for further details.
@@ -162,9 +162,9 @@ See documentation of the Cast operator for further details.
 
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
-    24,
+    25,
     OpSchema()
-        .SetDoc(CastLike_ver24_doc)
+        .SetDoc(CastLike_ver25_doc)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -203,11 +203,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T1",
-            OpSchema::all_non_complex_tensor_types_ir12(),
+            OpSchema::all_non_complex_tensor_types_ir13(),
             "Constrain input types. Casting from complex is not supported.")
         .TypeConstraint(
             "T2",
-            OpSchema::all_non_complex_tensor_types_ir12(),
+            OpSchema::all_non_complex_tensor_types_ir13(),
             "Constrain output types. Casting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 1, 0);

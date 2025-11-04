@@ -217,3 +217,24 @@ class QuantizeLinear_23(_CommonQuantizeLinear):
             output_dtype=output_dtype,
             precision=precision,
         )
+
+
+class QuantizeLinear_25(_CommonQuantizeLinear):
+    def _run(
+        self,
+        *args,
+        axis: int = 1,
+        saturate: bool = True,
+        block_size: int = 0,
+        output_dtype=None,
+        precision=None,
+    ):
+        # args: x, y_scale, zero_point
+        return super()._run(
+            *args,
+            axis=axis,
+            saturate=saturate,
+            block_size=block_size,
+            output_dtype=output_dtype,
+            precision=precision,
+        )

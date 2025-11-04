@@ -7715,7 +7715,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 12 test cases, listed as following:
+There are 14 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -8004,6 +8004,32 @@ expect(
 
 </details>
 <details>
+<summary>int2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.INT2, [4], [0, 1, -1, -2])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("x_zero_point", TensorProto.INT2, (1,), [1])
+y = np.array([-2, 0, -4, -6], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_int2",
+)
+```
+
+</details>
+<details>
 <summary>int4</summary>
 
 ```python
@@ -8049,6 +8075,32 @@ expect(
     inputs=[x, x_scale, x_zero_point],
     outputs=[y],
     name="test_dequantizelinear_uint16",
+)
+```
+
+</details>
+<details>
+<summary>uint2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.UINT2, [4], [0, 1, 2, 3])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("x_zero_point", TensorProto.UINT2, (1,), [1])
+y = np.array([-2, 0, 2, 4], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_uint2",
 )
 ```
 
@@ -16726,7 +16778,7 @@ for quant_type_name in ["uint8", "int8"]:
 
 
 ### QuantizeLinear
-There are 11 test cases, listed as following:
+There are 13 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -17046,6 +17098,40 @@ expect(
 
 </details>
 <details>
+<summary>int2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-4.0, -3.0, 1.0, 2.0],
+        [-0.0, -2.5, -4.8, -8.6],
+    ],
+    dtype=np.float32,
+)
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "y_zero_point", TensorProto.INT2, y_scale.shape, np.zeros_like(y_scale)
+)
+y = make_tensor(
+    "y", TensorProto.INT2, x.shape, [0, 1, 1, 1, -1, -1, 0, 1, 0, -1, -1, -2]
+)
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_int2",
+)
+```
+
+</details>
+<details>
 <summary>int4</summary>
 
 ```python
@@ -17155,6 +17241,41 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_uint16",
+)
+```
+
+</details>
+<details>
+<summary>uint2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-2.0, -1.0, 1.0, 3.0],
+        [4.0, 5.0, 6.0, 7.0],
+    ],
+    dtype=np.float32,
+)
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "y_zero_point", TensorProto.UINT2, y_scale.shape, np.zeros_like(y_scale)
+)
+y = make_tensor(
+    "y", TensorProto.UINT2, x.shape, [0, 1, 2, 3, 0, 0, 0, 1, 1, 1, 2, 2]
+)
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_uint2",
 )
 ```
 

@@ -130,3 +130,11 @@ class DequantizeLinear_23(_CommonDequantizeLinear):
         return super()._run(
             *args, axis=axis, block_size=block_size, output_dtype=output_dtype
         )
+
+
+class DequantizeLinear_25(_CommonDequantizeLinear):
+    def _run(self, *args, axis: int = 1, block_size: int = 0, output_dtype=None):
+        # args: x, y_scale, zero_point
+        return super()._run(
+            *args, axis=axis, block_size=block_size, output_dtype=output_dtype
+        )
