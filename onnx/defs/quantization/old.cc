@@ -400,14 +400,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where `r = rank(input)`.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
-        .Attr(
-            "block_size",
-            "(Optional) The size of the quantization block (number of times every scale is replicated). Used only for "
-            "blocked quantization. The block size is a positive integer. Given `x` shape `(D0, ..., Di, ..., Dn)`, "
-            "`y_scale` shape `(S0, ... Si, ...Sn)` and `axis=i`, the accepted range is "
-            "`[ceil(Di/Si), ceil(Di/(Si-1))-1]`",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
         .TypeConstraint(
             "T1",
             {"tensor(int8)",

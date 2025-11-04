@@ -10,6 +10,10 @@
 #include <cctype>
 #include <limits>
 #include <string>
+#include <unordered_map>
+#include <cstdint>
+#include <sstream>
+#include "onnx/onnx.pb.h"
 
 #include "onnx/common/common.h"
 
@@ -482,6 +486,8 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT6E2M3:
+          case TensorProto::DataType::TensorProto_DataType_FLOAT6E3M2:
           case TensorProto::DataType::TensorProto_DataType_FLOAT8E8M0:
           case TensorProto::DataType::TensorProto_DataType_BOOL:
           case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:

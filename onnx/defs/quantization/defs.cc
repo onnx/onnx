@@ -113,8 +113,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float8e5m2fnuz)",
              "tensor(uint4)",
              "tensor(int4)",
-             "tensor(float4e2m1)"},
-            "The type of the input `y_zero_point` and the output `y`.")
+             "tensor(float4e2m1)",
+             "tensor(float6e2m3)",
+             "tensor(float6e3m2)"},
+            "Constrain y_zero_point and y to 8-bit integer tensor, 16-bit integer tensor, float8, uint4, int4, or float4e2m1 tensor.")
         .SetDoc(QuantizeLinear_ver24_doc)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto const zp_type = ctx.hasInput(2) ? ctx.getInputType(2) : nullptr;
@@ -217,7 +219,9 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float8e5m2fnuz)",
              "tensor(uint4)",
              "tensor(int4)",
-             "tensor(float4e2m1)"},
+             "tensor(float4e2m1)",
+             "tensor(float6e2m3)",
+             "tensor(float6e3m2)"},
             "The type of the inputs 'x_zero_point' and 'x'.")
         .TypeConstraint(
             "T2",
