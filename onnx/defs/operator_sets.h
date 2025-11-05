@@ -1416,12 +1416,10 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Transpose);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Unsqueeze);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, QuantizeLinear);
 
-
 // Iterate over schema from ai.onnx version 25
 class OpSet_Onnx_ver25 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-
     // TODO: Remove after introducing the first schema to opset 25
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, CastLike)>());

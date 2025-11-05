@@ -1409,7 +1409,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
-        
+
 static constexpr const char* Reshape_ver23_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
@@ -3049,7 +3049,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int64_t i : perm) {
             appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(i));
           }
-        }));        
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Transpose,
@@ -4194,7 +4194,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
-        
+
 static constexpr const char* Squeeze_ver23_doc = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes an input `axes` with a list of axes to squeeze.
@@ -4639,7 +4639,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
-        
+
 static constexpr const char* Unsqueeze_ver23_doc = R"DOC(
 Insert single-dimensional entries to the shape of an input tensor (`data`).
 Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
