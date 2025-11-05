@@ -3,8 +3,7 @@ Copyright (c) ONNX Project Contributors
 
 SPDX-License-Identifier: Apache-2.0
 -->
-(onnx-detail-int2) = 
-
+(onnx-detail-int2) =
 
 # 2 bit integer types
 
