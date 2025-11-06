@@ -121,7 +121,7 @@ enum Version {
   IR_VERSION_2025_08_26 = 0x000000000000000C;
 
   // IR VERSION 13 published on TBD
-  // Added UINT2, INT2
+  //Added UINT2, INT2.
   IR_VERSION = 0x000000000000000D;
 }
 
@@ -736,7 +736,7 @@ message TensorProto {
   // Complex128 elements must be written as two consecutive DOUBLE values, real component first.
   // Boolean type MUST be written one byte per tensor element (00000001 for true, 00000000 for false).
   // uint4 and int4 values must be packed to 4bitx2, the first element is stored in the 4 LSB and the second element is stored in the 4 MSB.
-  // uint2 and int2 values must be packed to 2bitx4, with elements packed from LSB to MSB in a single byte as:  x0 | (x1 << 2) | (x2 << 4) | (x3 << 6)
+  // uint2 and int2 values must be packed to 2bitx4, with elements packed from LSB to MSB in a single byte as: x0 | (x1 << 2) | (x2 << 4) | (x3 << 6)
   // where x0, x1, x2, x3 are consecutive elements.
   //
   // Note: the advantage of specific field rather than the raw_data field is
