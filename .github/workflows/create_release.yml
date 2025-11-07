@@ -56,6 +56,22 @@ on:
           - 'release'
           - 'preview'
         default: 'preview'
+      release_type:
+        description: 'Select release type to prevent accidental publishing: release-candidate or release'
+        required: true
+        type: choice
+        options:
+          - 'release-candidate'
+          - 'release'
+        default: 'release-candidate'
+      confirm_publish_release:
+        description: 'Confirm you want to publish to pypi-release (must set to yes to allow publishing)'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
 
 permissions:
 
@@ -108,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
 
     needs: [call-linux, call-mac, call-win_x86, call-win_arm64, call-sdist]
-    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_pypi_release == 'yes') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_pypi_release == 'yes') && (github.event.inputs.release_type == 'release') && (github.event.inputs.confirm_publish_release == 'yes') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
 
     steps:
 
@@ -124,6 +140,15 @@ jobs:
           persist-credentials: false
           submodules: true
 
+      - name: "WARNING: about to publish to PyPI-release"
+        run: |
+          echo "####################################################################"
+          echo "WARNING: This run will publish to pypi-release. Be certain you want to do this."
+          echo "publish_pypi_release=${{ github.event.inputs.publish_pypi_release }}"
+          echo "release_type=${{ github.event.inputs.release_type }}"
+          echo "confirm_publish_release=${{ github.event.inputs.confirm_publish_release }}"
+          echo "####################################################################"
+
       - name: Check if package_version matches branch
         run: |
           branch_version=${GITHUB_REF#refs/heads/rel-}
@@ -131,9 +156,19 @@ jobs:
           echo "Branch version: $branch_version"
           echo "Package version: $package_version"
 
-          if [[ "$package_version" != "$branch_version" && "$package_version" != "$branch_version"rc* ]]; then
-            echo "Error: Package version ($package_version) does not match branch version ($branch_version) or expected RC format."
-            exit 1
+          # Enforce package version rules depending on selected release_type
+          if [ "${{ github.event.inputs.release_type }}" = "release" ]; then
+            # For a full release the package version must exactly match the branch
+            if [ "$package_version" != "$branch_version" ]; then
+              echo "Error: For a full release the package version ($package_version) must match the branch version ($branch_version)."
+              exit 1
+            fi
+          else
+            # For release-candidate allow branch_version or branch_versionrc*
+            if [[ "$package_version" != "$branch_version" && "$package_version" != "$branch_version"rc* ]]; then
+              echo "Error: Package version ($package_version) does not match branch version ($branch_version) or expected RC format."
+              exit 1
+            fi
           fi
 
   check_for_publish_preview_build_to_testpypi_weekly:
