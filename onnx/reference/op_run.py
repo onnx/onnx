@@ -394,7 +394,7 @@ class OpRun(abc.ABC):
 
         Args:
             *args: inputs
-            linked_attributes: used if this has an attriute linked to
+            linked_attributes: used if this has an attribute linked to
                 the attribute of the function it belongs to
             context: if this node is part of the subgraph, `context` is
                 a dictionary with the values this node may use

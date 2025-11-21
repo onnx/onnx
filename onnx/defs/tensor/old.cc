@@ -1924,9 +1924,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           // The targetShape vector represents the specified shape for output.
           std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
           // Iterate through targetShape, adding dimensions in the outputShape
-          // TensorProto. If the targertShape dimension is -1, we do not set the
+          // TensorProto. If the targetShape dimension is -1, we do not set the
           // dimension value in this iteration, but we record the Dimension. If
-          // targertShape dimension is 0, we attempt to propagate the dimension
+          // targetShape dimension is 0, we attempt to propagate the dimension
           // value/param. If the value cannot be inferred, we set the flag in
           // the unresolveZeros vector. If targetShape dimension is positive, we
           // set the dimension value in the outputShape. We track the product of
@@ -2043,9 +2043,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> targetShape = ParseData<int64_t>(targetShapeInitializer);
 
           // Iterate through targetShape, adding dimensions in the outputShape
-          // TensorProto. If the targertShape dimension is -1, we do not set the
+          // TensorProto. If the targetShape dimension is -1, we do not set the
           // dimension value in this iteration, but we record the Dimension. If
-          // targertShape dimension is 0, we attempt to propagate the dimension
+          // targetShape dimension is 0, we attempt to propagate the dimension
           // value/param. If the value cannot be inferred, we set the flag in
           // the unresolveZeros vector. If targetShape dimension is positive, we
           // set the dimension value in the outputShape. We track the product of
