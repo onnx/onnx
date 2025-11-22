@@ -7730,7 +7730,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_shape_is_NCdd(self) -> None:
+    def test_negative_log_likelihood_shape_is_NCdd(self) -> None:
         N, C = 3, 4
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (N, C)), ("target", TensorProto.INT64, (N,))],
@@ -7748,7 +7748,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, (N,))]
         )
 
-    def test_negative_log_likehood_shape_is_NC_with_weight(self) -> None:
+    def test_negative_log_likelihood_shape_is_NC_with_weight(self) -> None:
         N, C = 3, 4
         graph = self._make_graph(
             [
@@ -7770,7 +7770,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, (N,))]
         )
 
-    def test_negative_log_likehood_shape_is_NC_reduction_mean(self) -> None:
+    def test_negative_log_likelihood_shape_is_NC_reduction_mean(self) -> None:
         N, C = 3, 4
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (N, C)), ("target", TensorProto.INT64, (N,))],
@@ -7788,7 +7788,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_shape_is_NC_with_weight_reduction_mean(self) -> None:
+    def test_negative_log_likelihood_shape_is_NC_with_weight_reduction_mean(
+        self,
+    ) -> None:
         N, C = 3, 4
         graph = self._make_graph(
             [
@@ -7810,7 +7812,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_shape_is_NCd1d2(self) -> None:
+    def test_negative_log_likelihood_shape_is_NCd1d2(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -7831,7 +7833,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, (N, d1, d2))]
         )
 
-    def test_negative_log_likehood_shape_is_NCd1d2_with_weight(self) -> None:
+    def test_negative_log_likelihood_shape_is_NCd1d2_with_weight(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -7853,7 +7855,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, (N, d1, d2))]
         )
 
-    def test_negative_log_likehood_shape_is_NCd1d2_reduction_sum(self) -> None:
+    def test_negative_log_likelihood_shape_is_NCd1d2_reduction_sum(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -7874,7 +7876,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_shape_is_NCd1d2_with_weight_reduction_mean(
+    def test_negative_log_likelihood_shape_is_NCd1d2_with_weight_reduction_mean(
         self,
     ) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
@@ -7898,7 +7900,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_input_target_shape_mismatch(self) -> None:
+    def test_negative_log_likelihood_input_target_shape_mismatch(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -7919,7 +7921,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
-    def test_negative_log_likehood_input_weight_shape_mismatch(self) -> None:
+    def test_negative_log_likelihood_input_weight_shape_mismatch(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
