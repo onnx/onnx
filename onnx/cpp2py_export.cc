@@ -96,7 +96,7 @@ static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
   auto status = parser.Parse(proto);
   std::string out;
   proto.SerializeToString(&out);
-  std::string error_msg = status.ErrorMessage();
+  const std::string& error_msg = status.ErrorMessage();
   return std::make_tuple(
       status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), nb::bytes(out.c_str(), out.size()));
 }
@@ -444,7 +444,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_prop_ro(
           "_function_body",
           [](OpSchema* op) -> nb::bytes {
-            std::string bytes = "";
+            std::string bytes;
             if (op->HasFunction())
               op->GetFunction()->SerializeToString(&bytes);
             return nb::bytes(bytes.c_str(), bytes.size());
@@ -452,7 +452,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(
           "get_function_with_opset_version",
           [](OpSchema* op, int opset_version) -> nb::bytes {
-            std::string bytes = "";
+            std::string bytes;
             const FunctionProto* function_proto = op->GetFunction(opset_version);
             if (function_proto) {
               function_proto->SerializeToString(&bytes);
@@ -465,7 +465,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](OpSchema* op, const nb::bytes& bytes, const std::vector<nb::bytes>& input_types_bytes) -> nb::bytes {
             NodeProto proto{};
             ParseProtoFromPyBytes(&proto, bytes);
-            std::string func_bytes = "";
+            std::string func_bytes;
             if (op->HasContextDependentFunction()) {
               std::vector<TypeProto> input_types;
               input_types.reserve(input_types_bytes.size());
@@ -487,7 +487,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               -> nb::bytes {
             NodeProto proto{};
             ParseProtoFromPyBytes(&proto, bytes);
-            std::string func_bytes = "";
+            std::string func_bytes;
             if (op->HasContextDependentFunctionWithOpsetVersion(opset_version)) {
               std::vector<TypeProto> input_types;
               input_types.reserve(input_types_bytes.size());
@@ -683,11 +683,11 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   checker.def(
       "check_model_path",
-      (void (*)(
+      static_cast<void (*)(
           const std::string& path,
           bool full_check,
           bool skip_opset_compatibility_check,
-          bool check_custom_domain))&checker::check_model,
+          bool check_custom_domain)>(&checker::check_model),
       "path"_a,
       "full_check"_a = false,
       "skip_opset_compatibility_check"_a = false,
