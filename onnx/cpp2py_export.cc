@@ -439,7 +439,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           nb::arg("inputDataByNameBytes") = std::unordered_map<std::string, nb::bytes>{},
           nb::arg("inputSparseDataByNameBytes") = std::unordered_map<std::string, nb::bytes>{},
           nb::arg("opsetImports") = std::unordered_map<std::string, int>{},
-          nb::arg("irVersion") = int(IR_VERSION))
+          nb::arg("irVersion") = static_cast<int>(IR_VERSION))
       .def_prop_ro("has_function", &OpSchema::HasFunction)
       .def_prop_ro(
           "_function_body",
