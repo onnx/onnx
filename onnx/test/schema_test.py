@@ -237,7 +237,7 @@ class TestFormalParameter(unittest.TestCase):
 
         self.assertEqual(formal_parameter.name, name)
         self.assertEqual(formal_parameter.type_str, type_str)
-        self.assertTrue(isinstance(formal_parameter.types, set))
+        self.assertIsInstance(formal_parameter.types, set)
         self.assertEqual(formal_parameter.description, description)
         self.assertEqual(formal_parameter.option, param_option)
         self.assertEqual(formal_parameter.is_homogeneous, is_homogeneous)
