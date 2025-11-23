@@ -6,7 +6,7 @@ from __future__ import annotations
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
-def _array_feature_extrator(data, indices):
+def _array_feature_extractor(data, indices):
     """Implementation of operator *ArrayFeatureExtractor*."""
     if len(indices.shape) == 2 and indices.shape[0] == 1:
         index = indices.ravel().tolist()
@@ -43,5 +43,5 @@ class ArrayFeatureExtractor(OpRunAiOnnxMl):
             <https://github.com/microsoft/onnxruntime/blob/main/
             onnxruntime/core/providers/cpu/ml/array_feature_extractor.cc#L84>`_.
         """
-        res = _array_feature_extrator(data, indices)
+        res = _array_feature_extractor(data, indices)
         return (res,)

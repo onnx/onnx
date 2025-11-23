@@ -130,7 +130,7 @@ for a in range(num_shards_a):
         split_tensors.append(split)
 ```
 
-Note that the above examples assume that the num_shards are evenly divisible into the axis that's being sharded. While this is not a hard restriction, it is up to the backend on how to handle non-evenly divisble cases.
+Note that the above examples assume that the num_shards are evenly divisible into the axis that's being sharded. While this is not a hard restriction, it is up to the backend on how to handle non-evenly divisible cases.
 
 #### Sharding as a Broadcast
 
