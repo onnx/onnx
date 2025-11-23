@@ -86,7 +86,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_HasShape) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim_size() == 1 && shape.dim(0).dim_value() == 1);
+    EXPECT_EQ(shape.dim_size() == 1 && shape.dim(0).dim_value(), 1);
   }
 
   // source has no shape, target does
@@ -127,7 +127,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_HasShape) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim_size() == 1 && shape.dim(0).dim_value() == 1);
+    EXPECT_EQ(shape.dim_size() == 1 && shape.dim(0).dim_value(), 1);
   }
 }
 TEST(ShapeInferenceTest, mergeShapeInfo_PreferValueOverParam) {
@@ -148,7 +148,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_PreferValueOverParam) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim_size() == 1 && shape.dim(0).dim_value() == 1);
+    EXPECT_EQ(shape.dim_size() == 1 && shape.dim(0).dim_value(), 1);
   }
 
   // source has param, target has value.
@@ -186,7 +186,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
+    EXPECT_EQ(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value(), 2);
   }
 
   {
@@ -203,7 +203,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
+    EXPECT_EQ(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value(), 2);
   }
 
   // prefer value over param,
@@ -225,7 +225,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
+    EXPECT_EQ(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value(), 2);
   }
   {
     TypeProto_SparseTensor source;
@@ -245,7 +245,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
+    EXPECT_EQ(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value(), 2);
   }
 }
 
