@@ -19,7 +19,7 @@ static bool CompareShape(
     const TensorShapeProto& inferredShape,
     const TensorShapeProto& expectedShape,
     bool checkSameParam = false) {
-  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size())
+  EXPECT_EQ(inferredShape.dim_size(), expectedShape.dim_size())
       << "Dim size for inferred and expected shape is different.";
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {
