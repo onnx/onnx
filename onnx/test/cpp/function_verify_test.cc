@@ -273,7 +273,7 @@ struct FunctionTypeChecker {
   std::string checkAll() {
     if (!attribute_cases->empty())
       forTypeVar(0);
-    std::string all_errors = "";
+    std::string all_errors;
     for (const std::string& error : errors)
       all_errors += error;
     return all_errors;
@@ -388,9 +388,9 @@ static void RegisterFunctionSchema() {
               {// nodes: {outputs, op, inputs, attributes}
                FunctionBodyHelper::Const<float>("Q_Min", 0.f),
                FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-               {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
+               {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}},
                {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-               {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
+               {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}},
                {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
                {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
                {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
@@ -398,7 +398,7 @@ static void RegisterFunctionSchema() {
                {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
                {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP", "Q_Min", "Q_Max"}},
                {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
-               {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
+               {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", static_cast<int64_t>(2))}},
                {{"y_scale"}, "Identity", {"Scale"}},
                {{"y_zero_point"}, "Identity", {"Zeropoint"}},
                {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}}),
