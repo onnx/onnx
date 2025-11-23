@@ -1025,7 +1025,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               temp = 0;
 
             // assign output value
-            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->mutable_dim(static_cast<int>(axis))->set_dim_value(temp);
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim(static_cast<int>(axis))
+                ->set_dim_value(temp);
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {

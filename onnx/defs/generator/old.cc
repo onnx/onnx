@@ -79,9 +79,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               FunctionBuilder builder(functionProto);
               builder
                   .Add(
-                      "X_random = RandomUniformLike <low = 0.0, high = 1.0, seed = @seed> (input)",
-                      "dtype",
-                      input_type)
+                      "X_random = RandomUniformLike <low = 0.0, high = 1.0, seed = @seed> (input)", "dtype", input_type)
                   .Add("X_greater = Greater (X_random, input)")
                   .Add("output = Cast (X_greater)", "to", dtype);
               schema.BuildFunction(functionProto);
