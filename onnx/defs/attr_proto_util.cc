@@ -43,6 +43,7 @@ namespace ONNX_NAMESPACE {
 
 ADD_BASIC_ATTR_IMPL(float, AttributeProto_AttributeType_FLOAT, f)
 ADD_BASIC_ATTR_IMPL(int64_t, AttributeProto_AttributeType_INT, i)
+ADD_BASIC_ATTR_IMPL(int, AttributeProto_AttributeType_INT, i)
 ADD_BASIC_ATTR_IMPL(std::string, AttributeProto_AttributeType_STRING, s)
 ADD_ATTR_IMPL(TensorProto, AttributeProto_AttributeType_TENSOR, t)
 ADD_ATTR_IMPL(GraphProto, AttributeProto_AttributeType_GRAPH, g)
