@@ -481,7 +481,7 @@ void ProtoPrinter::print(const FunctionProto& fn) {
     ProtoPrinter printer(os);                                  \
     printer.print(proto);                                      \
     return os;                                                 \
-  };
+  }
 
 DEF_OP(TensorShapeProto_Dimension)
 
