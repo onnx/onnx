@@ -988,7 +988,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < input_rank; ++i) {
             // first update rank of output dim
             auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-            const auto& input_dim = input_shape.dim((int)i);
+            const auto& input_dim = input_shape.dim(i);
             if (input_dim.has_dim_value()) {
               output_dim->set_dim_value(input_dim.dim_value());
             } else if (input_dim.has_dim_param()) {
@@ -1000,7 +1000,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (size_t axis_index = 0; axis_index < axes_size; ++axis_index) {
             auto axis = axes[axis_index] < 0 ? axes[axis_index] + static_cast<int64_t>(input_rank) : axes[axis_index];
 
-            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
+            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim(static_cast<int>(axis));
 
             // input dim value is missing - cannot perform shape inference for
             // this axis
@@ -1025,7 +1025,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               temp = 0;
 
             // assign output value
-            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->mutable_dim((int)axis)->set_dim_value(temp);
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->mutable_dim(static_cast<int>(axis))->set_dim_value(temp);
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
@@ -2135,7 +2135,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < input_rank; ++i) {
-              const auto& input_dim = input_shape.dim((int)i);
+              const auto& input_dim = input_shape.dim(i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
@@ -2950,8 +2950,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
               fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
             }
-            if (depth_shape.dim_size() == 1 && depth_shape.dim((int)0).has_dim_value() &&
-                depth_shape.dim((int)0).dim_value() != 1) {
+            if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() &&
+                depth_shape.dim(0).dim_value() != 1) {
               fail_type_inference("Input 'depth' must have exactly one element.");
             }
           }
@@ -2961,7 +2961,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (values_shape.dim_size() != 1) {
               fail_type_inference("Input 'values' must be rank 1 tensor.");
             }
-            if (values_shape.dim((int)0).has_dim_value() && values_shape.dim((int)0).dim_value() != 2) {
+            if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
               fail_type_inference("Input 'values' must have exactly two elements.");
             }
           }

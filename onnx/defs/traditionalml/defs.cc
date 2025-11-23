@@ -519,7 +519,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
               // if input_rank is 1, batch_size is interpreted to be 1
               batch_size_dim.set_dim_value(1);
             } else if (input_rank == 2) {
-              batch_size_dim = input_shape.dim((int)0);
+              batch_size_dim = input_shape.dim(0);
             } else {
               fail_shape_inference("Input's shape should be 1D or 2D");
             }
