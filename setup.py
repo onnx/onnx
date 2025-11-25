@@ -305,7 +305,9 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         generated_py_files = glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py"))
         generated_pyi_files = glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi"))
         assert generated_py_files, "Bug: No generated python files found"
-        assert generated_pyi_files, "Bug: No generated python stubs found"
+        # Python stub files (.pyi) are optional - only copy if generated
+        # They may not exist when ONNX_GEN_PB_TYPE_STUBS is disabled or when
+        # using protobuf < 21.0 which doesn't support pyi_out option
         for src in (*generated_py_files, *generated_pyi_files):
             dst = os.path.join(dst_dir, os.path.relpath(src, CMAKE_BUILD_DIR))
             os.makedirs(os.path.dirname(dst), exist_ok=True)
