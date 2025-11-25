@@ -95,10 +95,20 @@ def cd(path):
 
 
 def get_python_execute():
+    """Get the Python executable path for CMake configuration.
+
+    Prefer sys.executable as it represents the currently running Python.
+    Only fall back to directory traversal if sys.executable is invalid.
+    """
     if WINDOWS:
         return sys.executable
-    # Try to search more accurate path, because sys.executable may return a wrong one,
-    # as discussed in https://github.com/python/cpython/issues/84399
+
+    # First, check if sys.executable is valid and usable
+    if os.path.isfile(sys.executable) and os.access(sys.executable, os.X_OK):
+        return sys.executable
+
+    # Fallback: Try to search for Python based on include path
+    # This addresses https://github.com/python/cpython/issues/84399
     python_dir = os.path.abspath(
         os.path.join(sysconfig.get_path("include"), "..", "..")
     )
@@ -109,6 +119,7 @@ def get_python_execute():
         python_bin = os.path.join(python_dir, "bin", "python")
         if os.path.isfile(python_bin):
             return python_bin
+
     return sys.executable
 
 
