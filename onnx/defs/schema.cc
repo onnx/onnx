@@ -245,7 +245,7 @@ void OpSchema::Verify(const NodeProto& node) const {
 
     if (!seen_attr_names.insert(name).second) {
       fail_check("Attribute '", name, "' appeared multiple times.");
-    };
+    }
 
     const auto& search = attributes_.find(name);
     AttributeProto::AttributeType expected_type{};

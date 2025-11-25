@@ -2912,7 +2912,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           for (int i = 0; i < input_rank; ++i) {
             // first update rank of output dim
             auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-            const auto& input_dim = input_shape.dim((int)i);
+            const auto& input_dim = input_shape.dim(i);
             if (input_dim.has_dim_value()) {
               output_dim->set_dim_value(input_dim.dim_value());
             } else if (input_dim.has_dim_param()) {
@@ -2935,7 +2935,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             unique_axes.insert(axis);
 
-            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
+            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim(static_cast<int>(axis));
 
             // input dim value is missing - cannot perform shape inference for
             // this axis
@@ -2982,7 +2982,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               temp = 0;
 
             // assign output value
-            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->mutable_dim((int)axis)->set_dim_value(temp);
+            ctx.getOutputType(0)
+                ->mutable_tensor_type()
+                ->mutable_shape()
+                ->mutable_dim(static_cast<int>(axis))
+                ->set_dim_value(temp);
           }
         }));
 
@@ -5139,7 +5143,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < input_rank; ++i) {
-              const auto& input_dim = input_shape.dim((int)i);
+              const auto& input_dim = input_shape.dim(i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
@@ -6346,7 +6350,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             for (int i = 0; i < input_rank; ++i) {
-              const auto& input_dim = input_shape.dim((int)i);
+              const auto& input_dim = input_shape.dim(i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
@@ -6933,7 +6937,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
               // There's a lot of potential behaviors. For now just
               // handle some simple cases.
-              const auto& dim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+              const auto& dim = ctx.getInputType(0)->tensor_type().shape().dim(i);
               if (dim.has_dim_value()) {
                 auto dim_value = dim.dim_value();
                 if (starts[j] < 0) {
@@ -6951,7 +6955,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               ++j;
             } else {
-              *newdim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+              *newdim = ctx.getInputType(0)->tensor_type().shape().dim(i);
             }
           }
         }));
@@ -7120,7 +7124,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             unique_axes.insert(axis);
-            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim((int)axis);
+            auto input_dim = ctx.getInputType(0)->tensor_type().shape().dim(axis);
 
             // input dim value is missing - cannot perform shape inference for
             // this axis
@@ -7159,7 +7163,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               temp = 0;
 
             // assign output value
-            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->mutable_dim((int)axis)->set_dim_value(temp);
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->mutable_dim(axis)->set_dim_value(temp);
           }
         }));
 
@@ -7566,8 +7570,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (depth_shape.dim_size() != 0 && depth_shape.dim_size() != 1) {
               fail_type_inference("Input 'depth' must be a scalar or rank 1 tensor.");
             }
-            if (depth_shape.dim_size() == 1 && depth_shape.dim((int)0).has_dim_value() &&
-                depth_shape.dim((int)0).dim_value() != 1) {
+            if (depth_shape.dim_size() == 1 && depth_shape.dim(0).has_dim_value() &&
+                depth_shape.dim(0).dim_value() != 1) {
               fail_type_inference("Input 'depth' must have exactly one element.");
             }
           }
@@ -7577,7 +7581,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (values_shape.dim_size() != 1) {
               fail_type_inference("Input 'values' must be rank 1 tensor.");
             }
-            if (values_shape.dim((int)0).has_dim_value() && values_shape.dim((int)0).dim_value() != 2) {
+            if (values_shape.dim(0).has_dim_value() && values_shape.dim(0).dim_value() != 2) {
               fail_type_inference("Input 'values' must have exactly two elements.");
             }
           }
@@ -7793,12 +7797,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (int i = 0; i < input_shape.dim_size(); ++i) {
             auto* newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-            if (ctx.getInputType(0)->tensor_type().shape().dim((int)i).has_dim_value()) {
+            if (ctx.getInputType(0)->tensor_type().shape().dim(i).has_dim_value()) {
               newdim->set_dim_value(
-                  ctx.getInputType(0)->tensor_type().shape().dim((int)i).dim_value() + pads[i] +
+                  ctx.getInputType(0)->tensor_type().shape().dim(i).dim_value() + pads[i] +
                   pads[input_shape.dim_size() + i]);
             } else if (pads[i] + pads[input_shape.dim_size() + i] == 0) {
-              *newdim = input_shape.dim((int)i);
+              *newdim = input_shape.dim(i);
             }
           }
         }));
@@ -8150,7 +8154,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             for (int i = 0; i < input_rank; ++i) {
-              const auto& input_dim = input_shape.dim((int)i);
+              const auto& input_dim = input_shape.dim(i);
               auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(input_dim.dim_value() + pads_data[i] + pads_data[i + input_rank]);
