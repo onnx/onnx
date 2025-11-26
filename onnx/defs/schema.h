@@ -902,7 +902,7 @@ class ISchemaRegistry {
 
   ONNX_API virtual const OpSchema*
   // NOLINTNEXTLINE(google-default-arguments)
-  GetSchema(const std::string& key, int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
+  GetSchema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
 /**
