@@ -338,7 +338,7 @@ class ParserBase {
   // return an empty-string identifier.
   std::string ParseOptionalIdentifier() {
     SkipWhiteSpace();
-    auto from = next_;
+    const auto* from = next_;
     if ((next_ < end_) && (isalpha(*next_) || (*next_ == '_'))) {
       ++next_;
       while ((next_ < end_) && (isalnum(*next_) || (*next_ == '_')))
@@ -470,9 +470,9 @@ class OnnxParser : public ParserBase {
 
   Status Parse(char open, ValueInfoList& vilist, char close);
 
-  Status ParseInput(ValueInfoList& vilist, TensorList& initializers);
+  Status ParseInput(ValueInfoList& inputs, TensorList& initializers);
 
-  Status ParseValueInfo(ValueInfoList& vilist, TensorList& initializers);
+  Status ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers);
 
   Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
 

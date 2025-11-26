@@ -187,7 +187,7 @@ struct Attributes {
   void copyAttributes(const Attributes& rhs) {
     values_.clear();
     values_.reserve(rhs.values_.size());
-    for (auto& i : rhs.values_) {
+    for (const auto& i : rhs.values_) {
       values_.push_back(i->clone());
     }
   }
@@ -208,7 +208,7 @@ struct Attributes {
   std::vector<Symbol> attributeNames() const {
     std::vector<Symbol> names;
     names.reserve(values_.size());
-    for (auto& a : values_)
+    for (const auto& a : values_)
       names.push_back(a->name);
     return names;
   }
@@ -357,7 +357,7 @@ struct Value final {
       return unique_name_;
     return toVarName(unique());
   }
-  Value* setUniqueName(const std::string& name, bool rename_subgraph_captured_nodes = true);
+  Value* setUniqueName(const std::string& name, bool update_related_names = true);
   Value* setStage(size_t s) {
     stage_ = s;
     return this;
@@ -535,7 +535,7 @@ struct Node : public Attributes<Node> {
     return {outputs_.data(), outputs_.size()};
   }
   bool hasUses() const {
-    for (auto o : outputs()) {
+    for (const auto* o : outputs()) {
       if (!o->uses().empty())
         return true;
     }
@@ -625,7 +625,7 @@ struct Node : public Attributes<Node> {
     ONNX_ASSERT(from->owningGraph() == graph_)
     ONNX_ASSERT(to->owningGraph() == graph_)
     size_t i = 0;
-    for (auto input : inputs()) {
+    for (auto* input : inputs()) {
       if (input == from)
         replaceInput(i, to);
       i++;
@@ -786,7 +786,7 @@ struct Node : public Attributes<Node> {
   // or erasing the entry from the list.
   Value* dropInput(size_t i) {
     ONNX_ASSERT(i < inputs_.size())
-    auto input_node = inputs_[i];
+    auto* input_node = inputs_[i];
     auto use_it = findUseForInput(i);
     input_node->uses_in_current_graph_.erase(use_it);
     inputs_[i] = nullptr;
@@ -940,11 +940,11 @@ struct Graph final {
           }
         }
       }
-      const auto found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
+      const auto* const found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
       if (found_in != node->inputs().end()) {
         return false;
       }
-      const auto found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
+      const auto* const found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
       if (found_out != node->outputs().end()) {
         return false;
       }
@@ -1117,15 +1117,15 @@ struct Graph final {
 
   Node* create(NodeKind kind, size_t num_outputs = 1) {
     // NB: Node constructor adds node to all_nodes
-    auto n = new Node(this, kind);
+    auto* n = new Node(this, kind);
     for (size_t i = 0; i < num_outputs; i++)
       n->addOutput();
     return n;
   }
 
   Node* create(NodeKind kind, ArrayRef<Value*> inputs, size_t num_outputs = 1) {
-    auto n = create(kind, num_outputs);
-    for (auto i : inputs)
+    auto* n = create(kind, num_outputs);
+    for (auto* i : inputs)
       n->addInput(i);
     return n;
   }

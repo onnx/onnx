@@ -1447,7 +1447,7 @@ class OpSet_Onnx_ver25 {
 // Iterate over schema from ai.onnx version 26
 class OpSet_Onnx_ver26 {
  public:
-  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     // TODO: Remove after introducing the first schema to opset 26
     (void)fn;
   }
@@ -1481,7 +1481,7 @@ ONNX_API inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver25>();
   RegisterOpSetSchema<OpSet_Onnx_ver26>();
   // 0 means all versions of ONNX schema have been loaded
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
+  onnx::OpSchemaRegistry::SetLoadedSchemaVersion(0);
 }
 
 ONNX_API inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicate_schema = true) {
@@ -1516,13 +1516,13 @@ ONNX_API inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail
   RegisterOpSetSchema<OpSet_Onnx_ver2>(target_version, fail_duplicate_schema);
   RegisterOpSetSchema<OpSet_Onnx_ver1>(target_version, fail_duplicate_schema);
   // Sets to record the loaded version and prevent the full operator check in Debug mode
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
+  onnx::OpSchemaRegistry::SetLoadedSchemaVersion(target_version);
 }
 
 ONNX_API inline void DeregisterOnnxOperatorSetSchema() {
   OpSchemaRegistry::Instance()->OpSchemaDeregisterAll(ONNX_DOMAIN);
   // -1 means no ONNX schema is loaded
-  OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
+  onnx::OpSchemaRegistry::SetLoadedSchemaVersion(-1);
 }
 
 // Returns true if ONNX was built with static schema registration disabled
