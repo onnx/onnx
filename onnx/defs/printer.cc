@@ -275,7 +275,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         break;
       case TensorProto::DataType::TensorProto_DataType_STRING: {
         const char* sep = "{";
-        for (auto& elt : tensor.string_data()) {
+        for (const auto& elt : tensor.string_data()) {
           output_ << sep;
           printQuoted(elt);
           sep = ", ";
@@ -325,7 +325,7 @@ void ProtoPrinter::print(const AttributeProto& attr) {
       break;
     case AttributeProto_AttributeType_STRINGS: {
       const char* sep = "[";
-      for (auto& elt : attr.strings()) {
+      for (const auto& elt : attr.strings()) {
         output_ << sep << "\"" << elt << "\"";
         sep = ", ";
       }
@@ -391,7 +391,7 @@ void ProtoPrinter::print(const NodeProto& node) {
 
 void ProtoPrinter::print(const NodeList& nodelist) {
   output_ << "{\n";
-  for (auto& node : nodelist) {
+  for (const auto& node : nodelist) {
     print(node);
   }
   if (indent_level > 3)
@@ -405,12 +405,12 @@ void ProtoPrinter::print(const GraphProto& graph) {
   if ((graph.initializer_size() > 0) || (graph.value_info_size() > 0)) {
     output_ << '\n' << std::setw(indent_level) << ' ' << '<';
     const char* sep = "";
-    for (auto& init : graph.initializer()) {
+    for (const auto& init : graph.initializer()) {
       output_ << sep;
       print(init, true);
       sep = ", ";
     }
-    for (auto& vi : graph.value_info()) {
+    for (const auto& vi : graph.value_info()) {
       output_ << sep;
       print(vi);
       sep = ", ";

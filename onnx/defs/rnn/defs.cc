@@ -22,7 +22,7 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
   auto layout_value = getAttribute(ctx, "layout", 0);
 
   if (hasInputShape(ctx, 0)) {
-    auto& first_input_shape = getInputShape(ctx, 0);
+    const auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
