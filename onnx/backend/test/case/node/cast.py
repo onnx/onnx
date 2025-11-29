@@ -19,6 +19,7 @@ from onnx.numpy_helper import to_float8e8m0
 
 F8_TYPES = frozenset({"FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"})
 FOUR_BIT_TYPES = frozenset({"UINT4", "INT4", "FLOAT4E2M1"})
+TWO_BIT_TYPES = frozenset({"UINT2", "INT2"})
 
 
 class Cast(Base):
@@ -63,6 +64,16 @@ class Cast(Base):
             ("FLOAT4E2M1", "FLOAT16"),
             ("FLOAT", "FLOAT4E2M1"),
             ("FLOAT16", "FLOAT4E2M1"),
+            ("FLOAT", "UINT2"),
+            ("FLOAT16", "UINT2"),
+            ("FLOAT", "INT2"),
+            ("FLOAT16", "INT2"),
+            ("UINT2", "FLOAT"),
+            ("UINT2", "FLOAT16"),
+            ("UINT2", "UINT8"),
+            ("INT2", "FLOAT"),
+            ("INT2", "FLOAT16"),
+            ("INT2", "INT8"),
         ]
 
         for from_type, to_type in test_cases:
@@ -119,6 +130,9 @@ class Cast(Base):
             elif from_type in ("UINT4", "INT4") or to_type in ("UINT4", "INT4"):
                 np_fp32 = np.arange(-9, 16).astype(np.float32)
                 input_shape = (5, 5)
+            elif from_type in ("UINT2", "INT2") or to_type in ("UINT2", "INT2"):
+                np_fp32 = np.arange(-3, 4).astype(np.float32)
+                input_shape = (7, 1)
             elif from_type == "FLOAT4E2M1" or to_type == "FLOAT4E2M1":
                 np_fp32 = np.array(
                     [
@@ -179,6 +193,12 @@ class Cast(Base):
                 input = make_tensor(
                     "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
                 )
+            elif from_type in TWO_BIT_TYPES:
+                np_from = np_fp32.astype(from_np_dtype)
+                packed = onnx.numpy_helper._pack_2bitx4(np_from)
+                input = make_tensor(
+                    "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
+                )
             else:
                 np_from = np_fp32.astype(from_np_dtype)
                 input = make_tensor(
@@ -197,6 +217,11 @@ class Cast(Base):
                 packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
                 # No byteswap needed on big-endian machines as _pack_4bitx2()
                 # returns a numpy array with uint8 datatype.
+                output = make_tensor(
+                    "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
+                )
+            elif to_type in TWO_BIT_TYPES:
+                packed = onnx.numpy_helper._pack_2bitx4(np_from.astype(to_np_dtype))
                 output = make_tensor(
                     "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
                 )

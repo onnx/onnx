@@ -13,7 +13,7 @@ BUILD_MODE=$3  # build mode (release or preview)
 SOURCE_DATE_EPOCH_ARG=$4 # https://reproducible-builds.org/docs/source-date-epoch/
 
 # Set SOURCE_DATE_EPOCH for reproducible builds
-if [ -n "$SOURCE_DATE_EPOCH_ARG" ]; then
+if [[ -n "$SOURCE_DATE_EPOCH_ARG" ]]; then
     export SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH_ARG
 fi
 
@@ -24,7 +24,7 @@ echo "Build mode: $BUILD_MODE"
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
-declare -A python_map=(["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t" ["3.14-dev"]="cp314-cp314")
+declare -A python_map=(["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t" ["3.14"]="cp314-cp314")
 PY_VER=${python_map[$PY_VERSION]}
 PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --only-binary google-re2 --no-cache-dir -q"
 PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
@@ -43,7 +43,7 @@ export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
-if [ "$BUILD_MODE" != "release" ]; then
+if [[ "$BUILD_MODE" != "release" ]]; then
     echo "Building preview wheels..."
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
     export ONNX_PREVIEW_BUILD=1

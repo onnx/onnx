@@ -4619,6 +4619,16 @@ test_cases = [
     ("FLOAT4E2M1", "FLOAT16"),
     ("FLOAT", "FLOAT4E2M1"),
     ("FLOAT16", "FLOAT4E2M1"),
+    ("FLOAT", "UINT2"),
+    ("FLOAT16", "UINT2"),
+    ("FLOAT", "INT2"),
+    ("FLOAT16", "INT2"),
+    ("UINT2", "FLOAT"),
+    ("UINT2", "FLOAT16"),
+    ("UINT2", "UINT8"),
+    ("INT2", "FLOAT"),
+    ("INT2", "FLOAT16"),
+    ("INT2", "INT8"),
 ]
 
 for from_type, to_type in test_cases:
@@ -4675,6 +4685,9 @@ for from_type, to_type in test_cases:
     elif from_type in ("UINT4", "INT4") or to_type in ("UINT4", "INT4"):
         np_fp32 = np.arange(-9, 16).astype(np.float32)
         input_shape = (5, 5)
+    elif from_type in ("UINT2", "INT2") or to_type in ("UINT2", "INT2"):
+        np_fp32 = np.arange(-3, 4).astype(np.float32)
+        input_shape = (7, 1)
     elif from_type == "FLOAT4E2M1" or to_type == "FLOAT4E2M1":
         np_fp32 = np.array(
             [
@@ -4735,6 +4748,12 @@ for from_type, to_type in test_cases:
         input = make_tensor(
             "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
+    elif from_type in TWO_BIT_TYPES:
+        np_from = np_fp32.astype(from_np_dtype)
+        packed = onnx.numpy_helper._pack_2bitx4(np_from)
+        input = make_tensor(
+            "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
+        )
     else:
         np_from = np_fp32.astype(from_np_dtype)
         input = make_tensor(
@@ -4753,6 +4772,11 @@ for from_type, to_type in test_cases:
         packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
         # No byteswap needed on big-endian machines as _pack_4bitx2()
         # returns a numpy array with uint8 datatype.
+        output = make_tensor(
+            "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
+        )
+    elif to_type in TWO_BIT_TYPES:
+        packed = onnx.numpy_helper._pack_2bitx4(np_from.astype(to_np_dtype))
         output = make_tensor(
             "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
@@ -4985,6 +5009,16 @@ test_cases = [
     ("FLOAT4E2M1", "FLOAT16"),
     ("FLOAT", "FLOAT4E2M1"),
     ("FLOAT16", "FLOAT4E2M1"),
+    ("FLOAT", "UINT2"),
+    ("FLOAT16", "UINT2"),
+    ("FLOAT", "INT2"),
+    ("FLOAT16", "INT2"),
+    ("UINT2", "FLOAT"),
+    ("UINT2", "FLOAT16"),
+    ("UINT2", "UINT8"),
+    ("INT2", "FLOAT"),
+    ("INT2", "FLOAT16"),
+    ("INT2", "INT8"),
 ]
 
 f8_types = {"FLOAT8E4M3FN", "FLOAT8E4M3FNUZ", "FLOAT8E5M2", "FLOAT8E5M2FNUZ"}
@@ -5043,6 +5077,9 @@ for from_type, to_type in test_cases:
     elif from_type in ("UINT4", "INT4") or to_type in ("UINT4", "INT4"):
         np_fp32 = np.arange(-9, 16).astype(np.float32)
         input_shape = (5, 5)
+    elif from_type in ("UINT2", "INT2") or to_type in ("UINT2", "INT2"):
+        np_fp32 = np.arange(-3, 4).astype(np.float32)
+        input_shape = (7, 1)
     elif from_type == "FLOAT4E2M1" or to_type == "FLOAT4E2M1":
         np_fp32 = np.array(
             [
@@ -5103,6 +5140,14 @@ for from_type, to_type in test_cases:
         input = make_tensor(
             "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
         )
+    elif from_type in TWO_BIT_TYPES:
+        np_from = np_fp32.astype(from_np_dtype)
+        packed = onnx.numpy_helper._pack_2bitx4(np_from)
+        # No byteswap needed on big-endian machines as _pack_2bitx4()
+        # returns a numpy array with uint8 datatype.
+        input = make_tensor(
+            "input", from_dtype, input_shape, vals=packed.tobytes(), raw=True
+        )
     else:
         np_from = np_fp32.astype(from_np_dtype)
         input = make_tensor(
@@ -5120,6 +5165,13 @@ for from_type, to_type in test_cases:
     elif to_type in FOUR_BIT_TYPES:
         packed = onnx.numpy_helper._pack_4bitx2(np_from.astype(to_np_dtype))
         # No byteswap needed on big-endian machines as _pack_4bitx2()
+        # returns a numpy array with uint8 datatype.
+        output = make_tensor(
+            "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
+        )
+    elif to_type in TWO_BIT_TYPES:
+        packed = onnx.numpy_helper._pack_2bitx4(np_from.astype(to_np_dtype))
+        # No byteswap needed on big-endian machines as _pack_2bitx4()
         # returns a numpy array with uint8 datatype.
         output = make_tensor(
             "output", to_dtype, input_shape, vals=packed.tobytes(), raw=True
@@ -7663,7 +7715,7 @@ expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
 
 
 ### DequantizeLinear
-There are 12 test cases, listed as following:
+There are 14 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -7952,6 +8004,32 @@ expect(
 
 </details>
 <details>
+<summary>int2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.INT2, [4], [0, 1, -1, -2])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("x_zero_point", TensorProto.INT2, (1,), [1])
+y = np.array([-2, 0, -4, -6], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_int2",
+)
+```
+
+</details>
+<details>
 <summary>int4</summary>
 
 ```python
@@ -7997,6 +8075,32 @@ expect(
     inputs=[x, x_scale, x_zero_point],
     outputs=[y],
     name="test_dequantizelinear_uint16",
+)
+```
+
+</details>
+<details>
+<summary>uint2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DequantizeLinear",
+    inputs=["x", "x_scale", "x_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+# scalar zero point and scale
+x = make_tensor("x", TensorProto.UINT2, [4], [0, 1, 2, 3])
+x_scale = np.float32(2)
+x_zero_point = make_tensor("x_zero_point", TensorProto.UINT2, (1,), [1])
+y = np.array([-2, 0, 2, 4], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[x, x_scale, x_zero_point],
+    outputs=[y],
+    name="test_dequantizelinear_uint2",
 )
 ```
 
@@ -16674,7 +16778,7 @@ for quant_type_name in ["uint8", "int8"]:
 
 
 ### QuantizeLinear
-There are 11 test cases, listed as following:
+There are 13 test cases, listed as following:
 <details>
 <summary>axis</summary>
 
@@ -16994,6 +17098,40 @@ expect(
 
 </details>
 <details>
+<summary>int2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-4.0, -3.0, 1.0, 2.0],
+        [-0.0, -2.5, -4.8, -8.6],
+    ],
+    dtype=np.float32,
+)
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "y_zero_point", TensorProto.INT2, y_scale.shape, np.zeros_like(y_scale)
+)
+y = make_tensor(
+    "y", TensorProto.INT2, x.shape, [0, 1, 1, 1, -1, -1, 0, 1, 0, -1, -1, -2]
+)
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_int2",
+)
+```
+
+</details>
+<details>
 <summary>int4</summary>
 
 ```python
@@ -17103,6 +17241,41 @@ expect(
     inputs=[x, y_scale, y_zero_point],
     outputs=[y],
     name="test_quantizelinear_uint16",
+)
+```
+
+</details>
+<details>
+<summary>uint2</summary>
+
+```python
+node = onnx.helper.make_node(
+    "QuantizeLinear",
+    inputs=["x", "y_scale", "y_zero_point"],
+    outputs=["y"],
+    axis=0,
+)
+
+x = np.array(
+    [
+        [0.0, 2.5, 4.8, 8.6],
+        [-2.0, -1.0, 1.0, 3.0],
+        [4.0, 5.0, 6.0, 7.0],
+    ],
+    dtype=np.float32,
+)
+y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+y_zero_point = make_tensor(
+    "y_zero_point", TensorProto.UINT2, y_scale.shape, np.zeros_like(y_scale)
+)
+y = make_tensor(
+    "y", TensorProto.UINT2, x.shape, [0, 1, 2, 3, 0, 0, 0, 1, 1, 1, 2, 2]
+)
+expect(
+    node,
+    inputs=[x, y_scale, y_zero_point],
+    outputs=[y],
+    name="test_quantizelinear_uint2",
 )
 ```
 
