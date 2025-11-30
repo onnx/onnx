@@ -1,8 +1,17 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 name: Require topic/module label (prefix-only)
 
 on:
   pull_request:
     types: [opened, labeled, unlabeled, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
 
 jobs:
   check-label:
