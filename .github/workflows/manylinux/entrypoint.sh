@@ -6,7 +6,14 @@
 
 set -e -x
 
-# CLI arguments
+# ---------------------------------------------------------------------------
+# Sanity checks
+# ---------------------------------------------------------------------------
+if [[ $# -lt 3 ]]; then
+    echo "Usage: $0 <python-version> <platform> <build-mode> [source-date-epoch]" >&2
+    exit 1
+fi
+
 PY_VERSION=$1
 PLAT=$2
 BUILD_MODE=$3  # build mode (release or preview)
@@ -26,7 +33,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
 declare -A python_map=(["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t" ["3.14"]="cp314-cp314")
 PY_VER=${python_map[$PY_VERSION]}
-PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --only-binary google-re2 --no-cache-dir -q"
+PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
 PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
 
 # Update pip
