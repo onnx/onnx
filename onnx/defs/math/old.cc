@@ -21,7 +21,7 @@ static bool BuildContextDependentFunctionBody_opset13(
   }
   auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
   bool float_input = input_type == TensorProto_DataType_FLOAT;
-  auto reduction_attr_proto = ctx.getAttribute("reduction");
+  const auto* const reduction_attr_proto = ctx.getAttribute("reduction");
   std::string reduction_attr =
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
 
@@ -325,7 +325,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // output tensor is of shape (N, d1, d2, ..., dk) if
               // reduction attribute is "none".
               for (int i = 0; i < input_rank - 1; i++) {
-                auto* dim = output_shape->add_dim();
+                auto dim = output_shape->add_dim();
                 if (i == 0)
                   *dim = input_shape.dim(i);
                 else
@@ -381,7 +381,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < rank - 2; ++i) {
-              auto* dim = output_shape->add_dim();
+              auto dim = output_shape->add_dim();
               *dim = input_shape.dim(i);
             }
           }
@@ -1552,7 +1552,7 @@ All inputs and outputs must have the same data type.
       auto num_inputs = ctx.getNumInputs();
       std::vector<const TensorShapeProto*> shapes;
       for (size_t i = 0; i < num_inputs; ++i) {
-        auto input_type = ctx.getInputType(i);
+        const auto* const input_type = ctx.getInputType(i);
         if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
           return;
         }
@@ -1829,7 +1829,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Shape inference
           // For shape inference, we need both input shape
-          const auto* shape_initializer = ctx.getInputData(1);
+          const auto shape_initializer = ctx.getInputData(1);
           if (hasNInputShapes(ctx, 2)) {
             const auto& shape_input_shape = ctx.getInputType(1)->tensor_type().shape();
             if (shape_input_shape.dim_size() != 1) {
@@ -1842,7 +1842,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               const auto shape_data = ParseData<int64_t>(shape_initializer);
 
               for (const auto& e : shape_data) {
-                auto* dim = second_shape.add_dim();
+                auto dim = second_shape.add_dim();
                 dim->set_dim_value(e);
               }
             } else if (shape_input_shape.dim(0).has_dim_value()) {
@@ -2074,7 +2074,7 @@ static bool BuildContextDependentFunctionBody_opset12(
   }
   auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
   bool float_input = input_type == TensorProto_DataType_FLOAT;
-  auto reduction_attr_proto = ctx.getAttribute("reduction");
+  const auto* const reduction_attr_proto = ctx.getAttribute("reduction");
   std::string reduction_attr =
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
   std::vector<FunctionBodyHelper::NodeDef> body;
@@ -2218,7 +2218,7 @@ static bool BuildContextDependentFunctionBody_opset12(
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
   for (const auto& node : func_nodes) {
-    auto new_node = functionProto.add_node();
+    auto* new_node = functionProto.add_node();
     new_node->CopyFrom(node);
   }
 
@@ -2317,7 +2317,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // output tensor is of shape (N, d1, d2, ..., dk) if
               // reduction attribute is "none".
               for (int i = 0; i < input_rank - 1; i++) {
-                auto* dim = output_shape->add_dim();
+                auto dim = output_shape->add_dim();
                 if (i == 0)
                   *dim = input_shape.dim(i);
                 else
@@ -2413,7 +2413,7 @@ static bool BuildContextDependentFunctionBodySCE_opset12(
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(body);
   for (const auto& node : func_nodes) {
-    auto new_node = functionProto.add_node();
+    auto* new_node = functionProto.add_node();
     new_node->CopyFrom(node);
   }
 
@@ -3760,7 +3760,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
-          const auto* k = ctx.getInputData(1);
+          const auto k = ctx.getInputData(1);
 
           // Infer output shape if:
           // (1) 'K' is available
@@ -3795,8 +3795,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Infer output shapes' rank in any case
-          auto* output_shape_0 = getOutputShape(ctx, 0);
-          auto* output_shape_1 = getOutputShape(ctx, 1);
+          auto output_shape_0 = getOutputShape(ctx, 0);
+          auto output_shape_1 = getOutputShape(ctx, 1);
           for (int i = 0; i < input_shape.dim_size(); ++i) {
             output_shape_0->add_dim();
             output_shape_1->add_dim();
@@ -3895,7 +3895,7 @@ All inputs and outputs must have the same data type.
       auto num_inputs = ctx.getNumInputs();
       std::vector<const TensorShapeProto*> shapes;
       for (size_t i = 0; i < num_inputs; ++i) {
-        auto input_type = ctx.getInputType(i);
+        const auto* const input_type = ctx.getInputType(i);
         if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
           return;
         }

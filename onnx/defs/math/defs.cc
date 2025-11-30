@@ -13,8 +13,8 @@
 namespace ONNX_NAMESPACE {
 
 static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string& op_type) {
-  const auto input_0 = ctx.getInputData(0);
-  const auto input_1 = ctx.getInputData(1);
+  const auto* const input_0 = ctx.getInputData(0);
+  const auto* const input_1 = ctx.getInputData(1);
   if (input_0 == nullptr || input_1 == nullptr) {
     return;
   }
@@ -27,8 +27,8 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
   TensorShapeProto tsp;
   int size_out = size_0 == 1 ? size_1 : size_0;
   for (int i = 0; i < size_out; ++i) {
-    auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
-    auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
+    const auto& input_dim_0 = input_0->dim(size_0 == 1 ? 0 : i);
+    const auto& input_dim_1 = input_1->dim(size_1 == 1 ? 0 : i);
     if (input_dim_0.has_dim_value() && input_dim_1.has_dim_value()) {
       tsp.mutable_dim()->Add()->set_dim_value(
           defs::math::utils::MathOpTwoIntegers(op_type, input_dim_0.dim_value(), input_dim_1.dim_value()));
@@ -534,7 +534,7 @@ static bool BuildContextDependentFunctionBodyGelu(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
     FunctionProto& functionProto) {
-  auto approx_attr_proto = ctx.getAttribute("approximate");
+  const auto* const approx_attr_proto = ctx.getAttribute("approximate");
   std::string approximate =
       approx_attr_proto != nullptr && approx_attr_proto->has_s() ? approx_attr_proto->s() : gelu_default_approx;
   FunctionBuilder builder(functionProto);
@@ -912,7 +912,7 @@ All inputs and outputs must have the same data type.
       std::vector<const TensorShapeProto*> shapes;
       shapes.reserve(num_inputs);
       for (int i = 0; i < num_inputs; ++i) {
-        auto input_type = ctx.getInputType(i);
+        const auto* const input_type = ctx.getInputType(i);
         if (nullptr == input_type || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape()) {
           return;
         }
@@ -2037,7 +2037,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
 
             for (int i = 0; i < rank - 2; ++i) {
-              auto* dim = output_shape->add_dim();
+              auto dim = output_shape->add_dim();
               *dim = input_shape.dim(i);
             }
           }
@@ -2053,7 +2053,7 @@ static bool BuildContextDependentFunctionBody(
   }
   auto input_type = ctx.getInputType(0)->tensor_type().elem_type();
   bool float_input = input_type == TensorProto_DataType_FLOAT;
-  auto reduction_attr_proto = ctx.getAttribute("reduction");
+  const auto* const reduction_attr_proto = ctx.getAttribute("reduction");
   std::string reduction_attr =
       reduction_attr_proto != nullptr && reduction_attr_proto->has_s() ? reduction_attr_proto->s() : "mean";
 
@@ -2366,7 +2366,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // output tensor is of shape (N, d1, d2, ..., dk) if
               // reduction attribute is "none".
               for (int i = 0; i < input_rank - 1; i++) {
-                auto* dim = output_shape->add_dim();
+                auto dim = output_shape->add_dim();
                 if (i == 0)
                   *dim = input_shape.dim(i);
                 else
@@ -2462,7 +2462,7 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
         } else {
           for (size_t i = 0; i < ellipsis_dims; i++) {
             const auto shape_dim = shape.dim(index + i - num_illegal_char);
-            const auto current_dim = ellipsis_dims_value.mutable_dim(i);
+            auto* const current_dim = ellipsis_dims_value.mutable_dim(i);
             if (shape_dim.has_dim_value() && current_dim->has_dim_value() &&
                 shape_dim.dim_value() > current_dim->dim_value() && current_dim->dim_value() == 1) {
               current_dim->set_dim_value(shape_dim.dim_value());
@@ -3030,7 +3030,7 @@ Generates a {name} window as described in the paper https://ieeexplore.ieee.org/
         return;
       }
 
-      const auto* size = ctx.getInputData(0);
+      const auto* const size = ctx.getInputData(0);
       if (size == nullptr) {
         // Size is not available, so return early
         return;
@@ -3259,8 +3259,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
-          const auto* num_mel_bins = ctx.getInputData(0);
-          const auto* dft_length = ctx.getInputData(1);
+          const auto num_mel_bins = ctx.getInputData(0);
+          const auto dft_length = ctx.getInputData(1);
           if (nullptr == num_mel_bins || nullptr == dft_length) {
             return;
           }
@@ -3386,7 +3386,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // The frame step is a required input.
           // Its value is needed to compute the number output nDFTs, so return early is missing.
-          const auto* frame_step = ctx.getInputData(1);
+          const auto frame_step = ctx.getInputData(1);
           if (nullptr == frame_step) {
             return;
           }

@@ -63,8 +63,8 @@ void IfInferenceFunction(InferenceContext& ctx) {
   }
 
   for (size_t i = 0, end = then_output_types.size(); i < end; ++i) {
-    auto then_output = then_output_types[i];
-    auto else_output = else_output_types[i];
+    const auto* const then_output = then_output_types[i];
+    const auto* const else_output = else_output_types[i];
 
     auto* if_output = ctx.getOutputType(i);
     *if_output = *then_output;
@@ -138,7 +138,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
     // check loop state values match. we should already have type/shape info
     for (size_t i = 0; i < num_outputs; ++i) {
-      auto* subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
+      const auto* const subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
       auto* loop_output_type = ctx.getOutputType(i);
 
       const bool is_loop_state_var = i < num_loop_state_vars;
@@ -243,7 +243,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   for (size_t i = 0; i < num_inputs; ++i) {
     bool is_loop_state_var = i < num_loop_state_vars;
     bool has_shape = hasInputShape(ctx, i);
-    const auto* input_type = ctx.getInputType(i);
+    const auto* const input_type = ctx.getInputType(i);
 
     // Enforce type constraint for inputs
     if (!input_type || !input_type->has_tensor_type()) {
@@ -315,14 +315,14 @@ void ScanInferenceFunction(InferenceContext& ctx) {
     // propagate type/shape information for loop state variables and outputs
     for (size_t i = 0; i < num_outputs; ++i) {
       const bool is_loop_state_var = i < num_loop_state_vars;
-      auto* subgraph_output_type = output_types[i];
+      const auto* const subgraph_output_type = output_types[i];
       auto* scan_output_type = ctx.getOutputType(i);
       auto* mutable_scan_output_tensor_type = scan_output_type->mutable_tensor_type();
 
       if (!subgraph_output_type->has_tensor_type()) {
         fail_type_inference("Scan 'body' subgraph outputs should all be tensors but output ", i, " was not");
       }
-      auto& subgraph_output_tensor_type = subgraph_output_type->tensor_type();
+      const auto& subgraph_output_tensor_type = subgraph_output_type->tensor_type();
 
       if (is_loop_state_var) {
         // merge shape; type already propagated
