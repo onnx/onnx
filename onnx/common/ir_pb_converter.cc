@@ -17,6 +17,8 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/onnx_pb.h"
+
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
@@ -606,11 +608,24 @@ static void encodeTypeProtoTensorType(ONNX_NAMESPACE::TypeProto_Tensor* tensor_t
   }
 }
 
-static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
+static void encodeSequenceValueInfo(ValueInfoProto* v, Value* n) {
+  v->set_name(value_name(n));
+  TypeProto* t = v->mutable_type();
+  TypeProto_Sequence* sequence_type = t->mutable_sequence_type();
+  TypeProto* elem_type = sequence_type->mutable_elem_type();
+  TypeProto_Tensor* tensor_type = elem_type->mutable_tensor_type();
+  // Use FLOAT as default element type since we don't have the original type info
+  tensor_type->set_elem_type(TensorProto_DataType_FLOAT);
+  // Create a basic shape [3] as default
+  TensorShapeProto* shape = tensor_type->mutable_shape();
+  shape->add_dim()->set_dim_value(3);
+}
+
+static void encodeValueInfo(ValueInfoProto* v, Value* n) {
   v->set_name(value_name(n));
   if (n->elemType() != 0 || n->has_sizes()) {
-    ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
-    ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
+    TypeProto* t = v->mutable_type();
+    TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
     encodeTypeProtoTensorType(tensor_type, n);
   }
 }
@@ -651,6 +666,7 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
         p_n->add_input(value_name(input));
       }
     }
+
     for (auto output : node->outputs()) {
       p_n->add_output(value_name(output));
       // only save it if
@@ -660,6 +676,13 @@ void encodeGraph(GraphProto* p_g, const std::shared_ptr<Graph>& g) {
         continue;
       }
       if (output->elemType() == TensorProto_DataType_UNDEFINED && output->sizes().empty()) {
+        // Special handling for operations that produce sequence types
+        if (node->kind().toString() == std::string("SequenceInsert")) {
+          // SequenceInsert output is a sequence
+          ValueInfoProto* v = p_g->add_value_info();
+          encodeSequenceValueInfo(v, output);
+          continue;
+        }
         continue;
       }
       ValueInfoProto* v = p_g->add_value_info();
