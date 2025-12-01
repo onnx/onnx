@@ -1519,7 +1519,7 @@ inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicat
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(target_version);
 }
 
-inline void DeregisterOnnxOperatorSetSchema() {
+ONNX_API inline void DeregisterOnnxOperatorSetSchema() {
   OpSchemaRegistry::Instance()->OpSchemaDeregisterAll(ONNX_DOMAIN);
   // -1 means no ONNX schema is loaded
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(-1);
@@ -1539,6 +1539,6 @@ inline void DeregisterOnnxOperatorSetSchema() {
 // opsets are automatically registered during ONNX library initialization, and
 // the linking module should not call the registration methods again to avoid
 // duplicate schema registration errors.
-bool IsOnnxStaticRegistrationDisabled();
+ONNX_API bool IsOnnxStaticRegistrationDisabled();
 
 } // namespace ONNX_NAMESPACE
