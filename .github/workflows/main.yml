@@ -144,6 +144,13 @@ jobs:
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
+          if [ "${{ matrix.debug_build }}" == "1" ]; then
+            sudo apt-get install libclang-rt-dev
+            export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang"
+            if [ "${{ matrix.python_version }}" == "3.13t" ]; then
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=OFF -DONNX_USE_TSAN=ON"
+            fi
+          fi
           pip install -e ".[reference]" -v
         env:
           DEBUG: ${{ matrix.debug_build }}
@@ -175,24 +182,29 @@ jobs:
         run: |
           pip freeze
 
-      - name: Setup GCC ASAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
-        run: |
-          export LD_PRELOAD="$(/usr/bin/c++ -print-file-name=libasan.so):$LD_PRELOAD"
-
       - name: Install test dependencies
         run: |
           python -m pip install -r requirements-release_test.txt
 
+      - name: Setup ASAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.13t')
+        run: |
+          echo "LD_PRELOAD_TMP=$(clang++ -print-file-name=libclang_rt.asan-x86_64.so):$LD_PRELOAD" >> $GITHUB_ENV
+
+      - name: Setup TSAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version == '3.13t')
+        run: |
+          echo "LD_PRELOAD_TMP=$(clang++ -print-file-name=libclang_rt.tsan-x86_64.so):$LD_PRELOAD" >> $GITHUB_ENV
+
       - name: Run Python tests
         run: |
-          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
+          env LD_PRELOAD="$LD_PRELOAD_TMP" pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
       - name: Run C++ tests
         if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
         run: |
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
-          ./.setuptools-cmake-build/onnx_gtests
+          env LD_PRELOAD="$LD_PRELOAD_TMP" ./.setuptools-cmake-build/onnx_gtests
 
       - name: Run C++ extension test
         if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'Internal'
