@@ -1,22 +1,15 @@
 # Copyright (c) ONNX Project Contributors
-#
+
 # SPDX-License-Identifier: Apache-2.0
-"""Tests for Python executable detection in setup.py.
-
-This test validates the fix for Python executable detection in virtual environments
-and containerized builds, ensuring that sys.executable is properly prioritized over
-directory-based search methods.
-"""
-
 from __future__ import annotations
 
 import os
+import pathlib
 import platform
 import sys
 import sysconfig
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
 
@@ -91,7 +84,7 @@ class TestGetPythonExecutable(unittest.TestCase):
         """Test fallback finds python3 in bin directory when sys.executable is invalid."""
         # Create a temporary directory structure for testing
         with tempfile.TemporaryDirectory() as tmpdir:
-            mock_python_dir = Path(tmpdir) / "python_install"
+            mock_python_dir = pathlib.Path(tmpdir) / "python_install"
             mock_bin_dir = mock_python_dir / "bin"
             # Include path typically goes: <prefix>/include/pythonX.Y
             # Going up two dirs (.. ..) gets us back to prefix
@@ -117,7 +110,7 @@ class TestGetPythonExecutable(unittest.TestCase):
         """Test fallback finds python (not python3) when python3 doesn't exist."""
         # Create a temporary directory structure for testing
         with tempfile.TemporaryDirectory() as tmpdir:
-            mock_python_dir = Path(tmpdir) / "python_install"
+            mock_python_dir = pathlib.Path(tmpdir) / "python_install"
             mock_bin_dir = mock_python_dir / "bin"
             # Include path typically goes: <prefix>/include/pythonX.Y
             # Going up two dirs (.. ..) gets us back to prefix
@@ -163,7 +156,7 @@ class TestGetPythonExecutable(unittest.TestCase):
 
         # Result should be a non-empty string
         self.assertIsInstance(result, str)
-        self.assertTrue(len(result) > 0)
+        self.assertGreater(len(result), 0)
 
         # On Windows, should be exactly sys.executable
         if platform.system() == "Windows":
@@ -189,24 +182,34 @@ class TestGetPythonExecutable(unittest.TestCase):
                         "Virtual environment Python should be detected",
                     )
 
+    @unittest.skipIf(
+        platform.system() == "Windows",
+        "Fallback mechanism only applies to POSIX systems",
+    )
     def test_cpython_issue_84399_fallback(self) -> None:
-        """Test that the fallback handles cpython issue #84399 edge case."""
+        """Test that the fallback handles cpython issue #84399 edge case.
+
+        This test is skipped on Windows because the Windows implementation
+        always returns sys.executable without any fallback logic.
+        The fallback mechanism is only relevant for POSIX systems.
+        """
         # This test verifies that the fallback mechanism is still present
         # for the edge case mentioned in https://github.com/python/cpython/issues/84399
         with (
-            patch("os.name", "posix"),
-            patch("setup.WINDOWS", False),
             patch("sys.executable", "/usr/bin/python-invalid"),
             patch("os.path.isfile") as mock_isfile,
             patch("os.access") as mock_access,
             patch("sysconfig.get_path") as mock_get_path,
             patch("os.path.isdir") as mock_isdir,
+            patch("os.path.abspath") as mock_abspath,
+            patch("os.path.join", side_effect=lambda *args: "/".join(args)),
         ):
             # sys.executable points to invalid path
             mock_isfile.return_value = False
             mock_access.return_value = False
             mock_get_path.return_value = "/usr/include/python3.12"
             mock_isdir.return_value = True
+            mock_abspath.return_value = "/usr"
 
             # Mock finding python3 in /usr/bin
             def isfile_check(path: str) -> bool:
