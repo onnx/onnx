@@ -27,7 +27,7 @@ class OpSet_OnnxPreview_ver1 {
 };
 
 // Register preview operators.
-inline void RegisterOnnxPreviewOperatorSetSchema() {
+ONNX_API inline void RegisterOnnxPreviewOperatorSetSchema() {
   // Preview operators should have only one version.
   // If changes are needed for a specific preview operator,
   // its spec should be modified without increasing its version.
