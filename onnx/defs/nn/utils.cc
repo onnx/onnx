@@ -15,18 +15,18 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
   ONNX_NAMESPACE::TensorShapeProto output_shape;
   ONNX_NAMESPACE::TensorShapeProto qk_matmul_shape;
   if (hasInputShape(ctx, 0)) {
-    auto& query_shape = getInputShape(ctx, 0);
-    auto& query_dims = query_shape.dim();
+    const auto& query_shape = getInputShape(ctx, 0);
+    const auto& query_dims = query_shape.dim();
     if ((query_dims.size() != 3) && (query_dims.size() != 4)) {
       fail_shape_inference("Inputs 0 (query) shall be 3 or 4 dimensions");
     }
 
     if (query_dims.size() == 3) {
-      auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+      const auto* const q_num_heads_attr = ctx.getAttribute("q_num_heads");
       if (q_num_heads_attr == nullptr) {
         fail_type_inference("3D inputs expected to have q_num_heads attribute.");
       }
-      auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+      const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
       if (kv_num_heads_attr == nullptr) {
         fail_type_inference("3D inputs expected to have q_num_heads attribute.");
       }
@@ -38,16 +38,16 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
     *qk_matmul_shape.add_dim() = query_dims[0]; // batch_size
 
     if (hasInputShape(ctx, 1)) {
-      auto& key_shape = getInputShape(ctx, 1);
-      auto& key_dims = key_shape.dim();
+      const auto& key_shape = getInputShape(ctx, 1);
+      const auto& key_dims = key_shape.dim();
       if ((key_dims.size() != 3) && (key_dims.size() != 4)) {
         fail_shape_inference("Inputs 1 (key) shall be 3 or 4 dimensions");
       }
     }
 
     if (hasInputShape(ctx, 2)) {
-      auto& value_shape = getInputShape(ctx, 2);
-      auto& value_dims = value_shape.dim();
+      const auto& value_shape = getInputShape(ctx, 2);
+      const auto& value_dims = value_shape.dim();
       if ((value_dims.size() != 3) && (value_dims.size() != 4)) {
         fail_shape_inference("Inputs 2 (value) shall be 3 or 4 dimensions");
       }
@@ -79,11 +79,11 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
       // hidden_size = q_num_heads * v_head_size
       if (value_dims.size() == 3 && query_dims.size() == 3) {
         kv_sequence_length = value_dims[1].dim_value();
-        auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+        const auto* const q_num_heads_attr = ctx.getAttribute("q_num_heads");
         if (q_num_heads_attr == nullptr) {
           fail_type_inference("3D inputs expected to have q_num_heads attribute.");
         }
-        auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+        const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
         if (kv_num_heads_attr == nullptr) {
           fail_type_inference("3D inputs expected to have kv_num_heads attribute.");
         }
@@ -113,10 +113,10 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 5, 2);
 
       if (hasInputShape(ctx, 4) && hasInputShape(ctx, 5)) {
-        auto& past_key_shape = getInputShape(ctx, 4);
-        auto& past_key_dims = past_key_shape.dim();
-        auto& past_value_shape = getInputShape(ctx, 5);
-        auto& past_value_dims = past_value_shape.dim();
+        const auto& past_key_shape = getInputShape(ctx, 4);
+        const auto& past_key_dims = past_key_shape.dim();
+        const auto& past_value_shape = getInputShape(ctx, 5);
+        const auto& past_value_dims = past_value_shape.dim();
 
         // past key has shape (batch_size, kv_num_heads, past_sequence_length, head_size)
         if (past_key_dims.size() != 4) {
@@ -131,12 +131,12 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
           int64_t total_sequence_length = kv_sequence_length + past_key_dims[2].dim_value();
 
           ONNX_NAMESPACE::TensorShapeProto present_key_shape;
-          for (auto& dim : past_key_dims) {
+          for (const auto& dim : past_key_dims) {
             *present_key_shape.add_dim() = dim;
           }
 
           ONNX_NAMESPACE::TensorShapeProto present_value_shape;
-          for (auto& dim : past_value_dims) {
+          for (const auto& dim : past_value_dims) {
             *present_value_shape.add_dim() = dim;
           }
 
@@ -166,7 +166,7 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
 
   // If attn_mask is provided
   if (ctx.hasInput(3)) {
-    auto* up = ctx.getInputType(3);
+    const auto* const up = ctx.getInputType(3);
     if ((up == nullptr) || (!up->has_tensor_type()))
       return false;
     int64_t U = up->tensor_type().elem_type();
@@ -191,7 +191,7 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
   // is a square matrix. The attention masking has the form of the upper left causal bias due to
   // the alignment when the mask is a non-square matrix.
   // An error is thrown if both attn_mask and is_causal are set.
-  auto* is_causal_attr = ctx.getAttribute("is_causal");
+  const auto* const is_causal_attr = ctx.getAttribute("is_causal");
   int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
   if (is_causal == 1) {
     builder.Const1D("Zero", static_cast<int64_t>(0))

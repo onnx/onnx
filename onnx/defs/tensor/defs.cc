@@ -294,7 +294,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // the dimensions we are setting outputShape in the outputProduct
           // variable. The outputProduct will potentially be used for inferring
           // a dimension marked -1.
-          auto* outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
           const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
           std::vector<bool> unresolvedZeros(targetShapeProto.dim_size(), false);
@@ -302,7 +302,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool outputProductValid = true;
           for (int i = 0; i < static_cast<int>(targetShapeProto.dim_size()); ++i) {
             // Add a new dimension to outputShape
-            auto* new_dim = outputShape->add_dim();
+            auto new_dim = outputShape->add_dim();
             if (targetShapeProto.dim(i).has_dim_param()) {
               // There is a tricky edge case here. It is possible that the value of
               // symbolic dim can be -1 or 0 at runtime. In that case simply propagating this
@@ -461,8 +461,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", {"tensor(int64)"}, "Constrain output to int64 tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          auto* output_length = output_shape->add_dim();
+          auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto output_length = output_shape->add_dim();
 
           if (!hasNInputShapes(ctx, 1)) {
             return;
@@ -585,7 +585,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool all_lengths_known = true;
           int total_length = 0;
 
-          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           for (int64_t i = 0; i < rank; ++i) {
             output_shape->add_dim();
@@ -987,7 +987,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (int i = 0; i < input_rank; ++i) {
             // first update rank of output dim
-            auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+            auto output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             const auto& input_dim = input_shape.dim(i);
             if (input_dim.has_dim_value()) {
               output_dim->set_dim_value(input_dim.dim_value());
@@ -2118,9 +2118,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
           const auto input_rank = input_shape.dim_size();
 
-          const auto* repeats_inputs = ctx.getInputData(1);
+          const auto repeats_inputs = ctx.getInputData(1);
 
-          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           if (nullptr != repeats_inputs && hasNInputShapes(ctx, 2)) {
             // shape inference is possible only when 'repeats' is an initializer
@@ -2140,7 +2140,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim(i);
-              auto* output_dim = output_shape->add_dim();
+              auto output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
               }
@@ -2148,7 +2148,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             // Infer output shape's rank in any case (if repeats data is not
             // available)
-            auto* output_shape_0 = getOutputShape(ctx, 0);
+            auto output_shape_0 = getOutputShape(ctx, 0);
             for (int i = 0; i < input_rank; ++i) {
               output_shape_0->add_dim();
             }
@@ -2724,7 +2724,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Length of input 'size' is ", size_length, ". It must be 4 for 2D or 5 for 5D.");
           }
 
-          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           const auto& N = size_proto.dim(0);
           *output_shape->add_dim() = N;
           // const auto& C = size_proto.dim(1); // C is not used
@@ -2828,7 +2828,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               TensorShapeProto* shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
               for (int i = 0; i < indices_shape.dim_size(); i++) {
-                auto* dim = shape->add_dim();
+                auto dim = shape->add_dim();
                 if (i != axis) {
                   *dim = indices_shape.dim(i);
                 }
@@ -2986,9 +2986,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (axis < 0) {
               axis += out_rank;
             }
-            auto* output_shape = getOutputShape(ctx, 0);
+            auto output_shape = getOutputShape(ctx, 0);
             for (int i = 0; i < out_rank; ++i) {
-              auto* dim = output_shape->add_dim();
+              auto dim = output_shape->add_dim();
               if (i < axis) {
                 if (indices_shape.dim(i).has_dim_value()) {
                   dim->set_dim_value(indices_shape.dim(i).dim_value());
@@ -3131,7 +3131,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::INT64);
           TensorShapeProto output_shape;
-          auto* dim = output_shape.add_dim();
+          auto dim = output_shape.add_dim();
           if (hasInputShape(ctx, 0)) {
             const TensorShapeProto& input_shape = getInputShape(ctx, 0);
             dim->set_dim_value(input_shape.dim_size());
@@ -3445,7 +3445,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // 'Y' has the same shape as 'X' except in the 'axis' dimension
             // which is unknown.
             for (int i = 0; i < input_shape.dim_size(); i++) {
-              auto* dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
+              auto dim = yTensorProto->mutable_tensor_type()->mutable_shape()->add_dim();
               if (i != axis) {
                 *dim = input_shape.dim(i);
               }
@@ -3905,7 +3905,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Populating default dims
           std::vector<TensorShapeProto_Dimension*> out_dims(input_rank);
-          auto* output_shape = getOutputShape(ctx, 0);
+          auto output_shape = getOutputShape(ctx, 0);
           for (int i = 0; i < input_rank; ++i) {
             out_dims[i] = output_shape->add_dim();
             const auto& input_dim = input_shape.dim(i);

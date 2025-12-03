@@ -23,7 +23,7 @@ static void RNNShapeInference_opset14(InferenceContext& ctx) {
   auto layout_value = getAttribute(ctx, "layout", 0);
 
   if (hasInputShape(ctx, 0)) {
-    auto& first_input_shape = getInputShape(ctx, 0);
+    const auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
@@ -728,7 +728,7 @@ static void RNNShapeInference1(InferenceContext& ctx) {
     hidden_size.set_dim_value(hidden_size_value);
 
   if (hasInputShape(ctx, 0)) {
-    auto& first_input_shape = getInputShape(ctx, 0);
+    const auto& first_input_shape = getInputShape(ctx, 0);
     seq_length = first_input_shape.dim(0);
     batch_size = first_input_shape.dim(1);
   }
@@ -1234,7 +1234,7 @@ static void RNNShapeInference2(InferenceContext& ctx) {
     hidden_size.set_dim_value(hidden_size_value);
 
   if (hasInputShape(ctx, 0)) {
-    auto& first_input_shape = getInputShape(ctx, 0);
+    const auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }

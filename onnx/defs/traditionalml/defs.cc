@@ -194,11 +194,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* cats_int64s = ctx.getAttribute("cats_int64s");
+          auto cats_int64s = ctx.getAttribute("cats_int64s");
           if (cats_int64s == nullptr) {
             fail_shape_inference("Attribute 'cats_int64s' is required.");
           }
-          auto* cats_strings = ctx.getAttribute("cats_strings");
+          auto cats_strings = ctx.getAttribute("cats_strings");
           if (cats_strings == nullptr) {
             fail_shape_inference("Attribute 'cats_strings' is required.");
           }
@@ -488,7 +488,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
 
           // Type inference
-          auto* output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           if (using_strings) {
             output_elem_type->set_elem_type(TensorProto::STRING);
           } else {
@@ -1128,7 +1128,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           checkInputRank(ctx, 0, 2);
-          auto* nodes_splits = ctx.getAttribute("nodes_splits");
+          auto nodes_splits = ctx.getAttribute("nodes_splits");
           if (nullptr == nodes_splits) {
             fail_shape_inference("Attribute 'nodes_splits' is required.");
           }
@@ -1166,7 +1166,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
               ctx.getAttribute("nodes_missing_value_tracks_true"), expected_length, TensorProto_DataType_INT64, false);
 
           // The set membership values and the splits must have the same type as the input.
-          auto* membership_values = ctx.getAttribute("membership_values");
+          auto membership_values = ctx.getAttribute("membership_values");
           if (nullptr != membership_values && membership_values->t().data_type() != input_type) {
             fail_shape_inference(
                 "Attribute 'membership_values' must have same type as input. Input type is ",
@@ -1178,8 +1178,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
               ctx.getAttribute("nodes_splits"), expected_length, static_cast<TensorProto_DataType>(input_type), true);
 
           // Validate all leaf_* attributes that are set have the same length and are 1D.
-          auto* leaf_targetids = ctx.getAttribute("leaf_targetids");
-          auto* leaf_weights = ctx.getAttribute("leaf_weights");
+          auto leaf_targetids = ctx.getAttribute("leaf_targetids");
+          auto leaf_weights = ctx.getAttribute("leaf_weights");
           if (nullptr != leaf_targetids && nullptr != leaf_weights) {
             if (leaf_targetids->ints_size() != leaf_weights->t().dims(0)) {
               fail_shape_inference(

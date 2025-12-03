@@ -93,7 +93,7 @@ static TensorShapeProto RunDataPropagation(const char* graphCode, int domainVers
       continue;
     }
     DataPropagationContextImpl dataPropagationCtx(n, valueTypesByName, inputDataByName, generatedShapeDataByName);
-    const auto schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
+    const auto* const schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
   }
