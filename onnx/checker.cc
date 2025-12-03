@@ -548,7 +548,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   for (const auto& attr : node.attribute()) {
     if (!seen_attr_names.insert(attr.name()).second) {
       fail_check("Attribute '", attr.name(), "' appeared multiple times.");
-    };
+    }
 
     check_attribute(attr, ctx, lex_ctx);
   }

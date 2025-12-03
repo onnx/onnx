@@ -221,10 +221,22 @@ class CmakeBuild(setuptools.Command):
                 cmake_args.append("-DONNX_DISABLE_STATIC_REGISTRATION=ON")
             if "CMAKE_ARGS" in os.environ:
                 extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
+
+                # Check if stub generation was explicitly disabled via CMAKE_ARGS
+                # Store this for later use in BuildExt to decide whether to assert
+                self.distribution.onnx_gen_stubs_disabled = any(
+                    arg in extra_cmake_args
+                    for arg in [
+                        "-DONNX_GEN_PB_TYPE_STUBS=OFF",
+                        "-DONNX_GEN_PB_TYPE_STUBS=0",
+                    ]
+                )
+
                 # prevent crossfire with downstream scripts
                 del os.environ["CMAKE_ARGS"]
                 logging.info("Extra cmake args: %s", extra_cmake_args)  # noqa: LOG015
                 cmake_args.extend(extra_cmake_args)
+
             cmake_args.append(TOP_DIR)
             logging.info("Using cmake args: %s", cmake_args)  # noqa: LOG015
             if "-DONNX_DISABLE_EXCEPTIONS=ON" in cmake_args:
@@ -305,9 +317,18 @@ class BuildExt(setuptools.command.build_ext.build_ext):
         generated_py_files = glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.py"))
         generated_pyi_files = glob.glob(os.path.join(CMAKE_BUILD_DIR, "onnx", "*.pyi"))
         assert generated_py_files, "Bug: No generated python files found"
-        # Python stub files (.pyi) are optional - only copy if generated
-        # They may not exist when ONNX_GEN_PB_TYPE_STUBS is disabled or when
-        # using protobuf < 21.0 which doesn't support pyi_out option
+
+        # Check if stub files should have been generated
+        # Default is ON, so only skip assertion if explicitly disabled via CMAKE_ARGS
+        stubs_disabled = getattr(self.distribution, "onnx_gen_stubs_disabled", False)
+        if not stubs_disabled:
+            # ONNX_GEN_PB_TYPE_STUBS is ON (default or explicit), so stubs should exist
+            assert generated_pyi_files, (
+                "Bug: No generated python stub files (.pyi) found. "
+                "ONNX_GEN_PB_TYPE_STUBS is ON by default. "
+                "you can disable stub generation with CMAKE_ARGS='-DONNX_GEN_PB_TYPE_STUBS=OFF'"
+            )
+
         for src in (*generated_py_files, *generated_pyi_files):
             dst = os.path.join(dst_dir, os.path.relpath(src, CMAKE_BUILD_DIR))
             os.makedirs(os.path.dirname(dst), exist_ok=True)
