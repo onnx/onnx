@@ -826,8 +826,8 @@ class OpSchema final {
   // Build function with information stored in opschema
   ONNX_API void BuildFunction(FunctionProto& function_body) const;
 
-  NodeDeterminism GetNodeDeterminism() const;
-  OpSchema& SetNodeDeterminism(NodeDeterminism node_determinism);
+  ONNX_API NodeDeterminism GetNodeDeterminism() const;
+  ONNX_API OpSchema& SetNodeDeterminism(NodeDeterminism node_determinism);
 
  private:
   void ParseAndSetTypes(
@@ -1168,7 +1168,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // Return the schema with biggest version, which is not greater than specified
   // <maxInclusiveVersion> in specified domain. Domain with default value
   // ONNX_DOMAIN means ONNX.
-  static const OpSchema*
+  ONNX_API static const OpSchema*
   Schema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
@@ -1195,16 +1195,16 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   ONNX_API static OpSchemaRegistry* Instance();
 
   // NOLINTNEXTLINE(google-default-arguments)
-  const OpSchema* GetSchema(
+  ONNX_API const OpSchema* GetSchema(
       const std::string& key,
       const int maxInclusiveVersion,
       const std::string& domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
-  static void SetLoadedSchemaVersion(int target_version) {
+  ONNX_API static void SetLoadedSchemaVersion(int target_version) {
     loaded_schema_version = target_version;
   }
-  static int GetLoadedSchemaVersion() {
+  ONNX_API static int GetLoadedSchemaVersion() {
     return loaded_schema_version;
   }
 
@@ -1334,7 +1334,7 @@ class DbgOperatorSetTracker {
 #define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
   class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
   template <>                                                                                           \
-  OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {                      \
+  ONNX_API OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {             \
     return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
   }                                                                                                     \
   ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(domain, ver, name, dbg_included_in_static_opset)

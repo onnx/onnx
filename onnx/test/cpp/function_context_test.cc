@@ -24,7 +24,7 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   t.set_data_type(elem_type);
   switch (elem_type) {
     case TensorProto_DataType::TensorProto_DataType_FLOAT:
-      t.add_float_data((float)value);
+      t.add_float_data(static_cast<float>(value));
       break;
     case TensorProto_DataType::TensorProto_DataType_DOUBLE:
       t.add_double_data(value);
@@ -129,7 +129,7 @@ BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, F
   auto* tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
     return false;
-  auto elem_type = (TensorProto_DataType)tp->tensor_type().elem_type();
+  auto elem_type = static_cast<TensorProto_DataType>(tp->tensor_type().elem_type());
   auto two_as_tensor = ToTensor(2.0, elem_type);
 
   std::vector<FunctionBodyHelper::NodeDef> body{

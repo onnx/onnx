@@ -384,7 +384,7 @@ void ProtoPrinter::print(const NodeProto& node) {
   if ((!has_subgraph) && (node.attribute_size() > 0))
     print(node.attribute());
   printIdSet(" (", ", ", ")", node.input());
-  if ((has_subgraph) && (node.attribute_size() > 0))
+  if (has_subgraph && (node.attribute_size() > 0))
     print(node.attribute());
   output_ << "\n";
 }
@@ -481,7 +481,7 @@ void ProtoPrinter::print(const FunctionProto& fn) {
     ProtoPrinter printer(os);                                  \
     printer.print(proto);                                      \
     return os;                                                 \
-  };
+  }
 
 DEF_OP(TensorShapeProto_Dimension)
 
