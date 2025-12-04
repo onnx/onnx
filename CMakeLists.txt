@@ -482,9 +482,23 @@ if(ONNX_BUILD_PYTHON)
   endif()
 
   # Configure nanobind: https://nanobind.readthedocs.io/en/latest/api_cmake.html
+  set(USE_FREE_THREADED "")
+  if(${Python_VERSION} VERSION_GREATER_EQUAL "3.13")
+    execute_process(
+    COMMAND ${Python_EXECUTABLE} "-c" [==[import sys;print(sys._is_gil_enabled())]==]
+    OUTPUT_VARIABLE _free_threaded_res
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    COMMAND_ERROR_IS_FATAL ANY
+    )
+    if("${_free_threaded_res}" STREQUAL "False")
+      set(USE_FREE_THREADED "FREE_THREADED")
+    elseif(NOT "${_free_threaded_res}" STREQUAL "True")
+      message(FATAL_ERROR "Can't determine free_threaded support: ${_free_threaded_res}")
+    endif()
+  endif()
   nanobind_add_module(
     onnx_cpp2py_export
-    NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
+    NB_STATIC NB_DOMAIN STABLE_ABI ${USE_FREE_THREADED} LTO
     "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
   target_link_libraries(onnx_cpp2py_export PRIVATE $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
