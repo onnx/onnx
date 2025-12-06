@@ -72,6 +72,8 @@ jobs:
 
     - name: Build ONNX wheel
       id: build_wheel
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
       run: |
         # Select correct cmake architecture
         $cmake_arch = 'x64'
@@ -89,7 +91,7 @@ jobs:
         $Env:CMAKE_ARGS = "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
         # Preview build logic (same for all arches)
-        if ('${{ inputs.build_mode }}' -ne 'release') {
+        if ($env:BUILD_MODE -ne 'release') {
           echo "Build preview build whl package"
           (Get-Content -Path 'pyproject.toml') |
             ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } |
