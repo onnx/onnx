@@ -31,13 +31,11 @@ jobs:
             architecture: 'x86'
           - python-version: '3.14-dev'
             architecture: 'x86'
-
           # arm64 exclusions
           - python-version: '3.10'
             architecture: 'arm64'
     
     runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2022' }} # Pick OS runner based on architecture
-
     steps:
     - name: Checkout ONNX
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
