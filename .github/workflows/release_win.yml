@@ -16,7 +16,7 @@ on:
 
 permissions:
   contents: read
-  
+
 jobs:
   build-windows:
     if: github.event_name != 'pull_request' || startsWith(github.base_ref, 'rel-') || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -35,10 +35,8 @@ jobs:
           # arm64 exclusions
           - python-version: '3.10'
             architecture: 'arm64'
-
-
-    # Pick OS runner based on architecture
-    runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2022' }}
+    
+    runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2022' }} # Pick OS runner based on architecture
 
     steps:
     - name: Checkout ONNX
@@ -52,7 +50,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
-        
+
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
       with:
@@ -65,13 +63,13 @@ jobs:
           echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
           sed -i '' '/-r requirements-reference.txt/d' requirements-release_build.txt
         }
- 
+
         python -m pip install -r requirements-release_build.txt
 
         if ('${{ matrix.architecture }}' -eq 'x64') {
           python -m pip install cmake
         }
-        
+
     - name: Build ONNX wheel
       id: build_wheel
       run: |
@@ -83,26 +81,25 @@ jobs:
         elseif ('${{ matrix.architecture }}' -eq 'arm64') {
           $cmake_arch = 'ARM64'
         }
-    
         # Build protobuf with correct architecture
         . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch $cmake_arch
-    
+        # Build ONNX wheel
         echo "Install ONNX"
         $Env:ONNX_ML = 1
         $Env:CMAKE_ARGS = "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
-    
+
         # Preview build logic (same for all arches)
         if ('${{ inputs.build_mode }}' -ne 'release') {
           echo "Build preview build whl package"
           (Get-Content -Path 'pyproject.toml') |
             ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } |
             Set-Content -Path 'pyproject.toml'
-    
+
           $Env:ONNX_PREVIEW_BUILD = 1
         }
-    
+
         python -m build --wheel
-    
+
         # ARM64 wheels should not install dependencies (no wheels available)
         if ('${{ matrix.architecture }}' -eq 'arm64') {
           Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname --no-deps }
@@ -110,14 +107,14 @@ jobs:
         else {
           Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname }
         }
-    
+
     - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
       if: steps.build_wheel.outcome == 'success' &&
           (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}
         path: ./dist
-        
+
     - name: Check abi3 compatibility with abi3audit
       if: steps.build_wheel.outcome == 'success'
       run: |
@@ -132,7 +129,7 @@ jobs:
           python -m abi3audit -v "$whl"
         done
       shell: bash
-      
+
     - name: Test the installed wheel
       if: steps.build_wheel.outcome == 'success' &&
           matrix.python-version != '3.13t' &&
@@ -141,7 +138,7 @@ jobs:
       run: |
         python -m pip install -q -r requirements-release_test.txt
         pytest
-    
+
     - name: Verify ONNX with the latest numpy
       if: steps.build_wheel.outcome == 'success' &&
           matrix.python-version != '3.13t' &&
@@ -152,7 +149,7 @@ jobs:
         python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-    
+
     - name: Verify ONNX with the latest protobuf
       if: steps.build_wheel.outcome == 'success' &&
           matrix.python-version != '3.13t' &&
@@ -163,7 +160,7 @@ jobs:
         python -m pip install protobuf
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-    
+
     - name: Verify ONNX with the minimumly supported packages
       if: steps.build_wheel.outcome == 'success' &&
           matrix.python-version != '3.13t' &&
@@ -174,5 +171,3 @@ jobs:
         python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
-    
-          
