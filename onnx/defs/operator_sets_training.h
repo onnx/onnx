@@ -17,7 +17,7 @@ class OpSet_OnnxTraining_ver1 {
 };
 
 // Register training operators.
-inline void RegisterOnnxTrainingOperatorSetSchema() {
+ONNX_API inline void RegisterOnnxTrainingOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_OnnxTraining_ver1>();
 }
 
