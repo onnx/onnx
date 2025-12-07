@@ -132,6 +132,10 @@ class TestGetPythonExecutable(unittest.TestCase):
                 result = get_python_execute()
                 self.assertEqual(result, str(mock_python))
 
+    @unittest.skipIf(
+        sys.version_info < (3, 11),
+        "Test requires Python >= 3.11 due to sysconfig/sys.abiflags behavior on older interpreters",
+    )
     def test_executable_permission_check(self) -> None:
         """Test that executable permission is verified for sys.executable."""
         with (
