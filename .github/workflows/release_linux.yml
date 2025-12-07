@@ -147,28 +147,24 @@ jobs:
           source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
       - name: Test wheel with Python ${{ matrix.python-version }}
-        if: matrix.python-version != '3.14'
         run: |
           # example file name: ./dist/onnx_weekly-1.19.0.dev20250528-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl
           pytest
 
       - name: Verify ONNX with the latest numpy
-        if: matrix.python-version != '3.14'
         run: |
           python -m pip uninstall -y numpy onnx && python -m pip install numpy
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
           pytest
 
       - name: Verify ONNX with the latest protobuf
-        if: matrix.python-version != '3.14'
         run: |
           python -m pip uninstall -y protobuf onnx && python -m pip install protobuf
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
           pytest
 
       - name: Verify ONNX with the minimumly supported packages
-        if: matrix.python-version != '3.14'
         run: |
           python -m pip uninstall -y numpy protobuf onnx && python -m pip install -r requirements-min.txt
           python -m pip install dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*whl
