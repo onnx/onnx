@@ -62,6 +62,10 @@ class TestGetPythonExecutable(unittest.TestCase):
             # Should return sys.executable since it's valid
             self.assertEqual(result, sys.executable)
 
+    @unittest.skipIf(
+        sys.version_info < (3, 11),
+        "Test requires Python >= 3.11 due to sysconfig/sys.abiflags behavior on older interpreters",
+    )
     def test_invalid_sys_executable_falls_back(self) -> None:
         """When sys.executable is invalid, should fall back to directory search."""
         with (
