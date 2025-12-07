@@ -63,8 +63,8 @@ class TestGetPythonExecutable(unittest.TestCase):
             self.assertEqual(result, sys.executable)
 
     @unittest.skipIf(
-        sys.version_info < (3, 11),
-        "Test requires Python >= 3.11 due to sysconfig/sys.abiflags behavior on older interpreters",
+        sys.platform == "win32" and sys.version_info < (3, 11),
+        "On Windows this test requires Python >= 3.11 due to sysconfig/sys.abiflags behavior on older interpreters",
     )
     def test_invalid_sys_executable_falls_back(self) -> None:
         """When sys.executable is invalid, should fall back to directory search."""
@@ -137,8 +137,8 @@ class TestGetPythonExecutable(unittest.TestCase):
                 self.assertEqual(result, str(mock_python))
 
     @unittest.skipIf(
-        sys.version_info < (3, 11),
-        "Test requires Python >= 3.11 due to sysconfig/sys.abiflags behavior on older interpreters",
+        sys.platform == "win32" and sys.version_info < (3, 11),
+        "On Windows this test requires Python >= 3.11 due to sysconfig/sys.abiflags behavior on older interpreters",
     )
     def test_executable_permission_check(self) -> None:
         """Test that executable permission is verified for sys.executable."""
