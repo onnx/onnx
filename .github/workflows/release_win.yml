@@ -134,7 +134,6 @@ jobs:
     - name: Test the installed wheel
       if: steps.build_wheel.outcome == 'success' &&
           matrix.python-version != '3.13t' &&
-          matrix.python-version != '3.14-dev' &&
           matrix.architecture != 'arm64'
       run: |
         python -m pip install -q -r requirements-release_test.txt
@@ -143,7 +142,6 @@ jobs:
     - name: Verify ONNX with the latest numpy
       if: steps.build_wheel.outcome == 'success' &&
           matrix.python-version != '3.13t' &&
-          matrix.python-version != '3.14-dev' &&
           matrix.architecture != 'arm64'
       run: |
         python -m pip uninstall -y numpy onnx
@@ -154,7 +152,6 @@ jobs:
     - name: Verify ONNX with the latest protobuf
       if: steps.build_wheel.outcome == 'success' &&
           matrix.python-version != '3.13t' &&
-          matrix.python-version != '3.14-dev' &&
           matrix.architecture != 'arm64'
       run: |
         python -m pip uninstall -y protobuf onnx
@@ -165,7 +162,6 @@ jobs:
     - name: Verify ONNX with the minimumly supported packages
       if: steps.build_wheel.outcome == 'success' &&
           matrix.python-version != '3.13t' &&
-          matrix.python-version != '3.14-dev' &&
           matrix.architecture != 'arm64'
       run: |
         python -m pip uninstall -y protobuf numpy onnx
