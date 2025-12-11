@@ -43,6 +43,7 @@ function(add_onnx_compile_options target)
     )
     add_msvc_runtime_flag(onnx)
     target_compile_options(${target} PUBLIC ${protobuf_warnings})
+    # Uncaught Protobuf warnings can become errors
     # if(ONNX_WERROR)
     #   target_compile_options(${target} PRIVATE "/WX")
     # endif()
