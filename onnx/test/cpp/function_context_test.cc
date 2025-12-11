@@ -98,7 +98,7 @@ static void RegisterCustomFuncFloatSchema() {
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
   RegisterCustomFuncFloatSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
+  const auto* const schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
@@ -126,7 +126,7 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
 static bool
 BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of input-type:
-  auto* tp = ctx.getInputType(0);
+  const auto* const tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
     return false;
   auto elem_type = static_cast<TensorProto_DataType>(tp->tensor_type().elem_type());
@@ -217,7 +217,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused9(schema_ver9);
   (void)unused9;
 
-  const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
+  const auto* const schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
     ONNX_TRY {
@@ -235,7 +235,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
     }
   }
 
-  const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
+  const auto* const schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
     ONNX_TRY {
@@ -252,7 +252,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
 TEST(FunctionAPITest, TypeContextTest) {
   RegisterCustomFunctionSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFunction", 12, ONNX_DOMAIN);
+  const auto* const schema = OpSchemaRegistry::Schema("CustomFunction", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());

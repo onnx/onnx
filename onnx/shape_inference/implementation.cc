@@ -220,7 +220,7 @@ void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_t
   }
   for (int i = 0; i < inferred_type->shape().dim_size(); ++i) {
     // set a symbol if it doesn't have dim_value and dim_param
-    auto* dim = inferred_type->mutable_shape()->mutable_dim(i);
+    auto dim = inferred_type->mutable_shape()->mutable_dim(i);
     if (!dim->has_dim_value() && !dim->has_dim_param()) {
       dim->set_dim_param(symbol_table.createNew());
     }
@@ -459,7 +459,7 @@ class ShapeInferenceImplBase {
       }
     }
     auto domain_version = dit->second;
-    const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
+    const auto* const schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
         n,
         value_types_by_name,
@@ -614,8 +614,8 @@ class ShapeInferenceImplBase {
     const auto num_func_inputs = func_proto.input_size();
     std::vector<TypeProto> types_cache(num_func_inputs);
     for (int i = 0; i < num_func_inputs; ++i) {
-      auto& parameter_name = func_proto.input().Get(i);
-      auto* type_ptr = (i < num_actual_inputs) ? ctx.getInputType(i) : nullptr;
+      const auto& parameter_name = func_proto.input().Get(i);
+      const auto* const type_ptr = (i < num_actual_inputs) ? ctx.getInputType(i) : nullptr;
       // nullptr is valid, and indicates a missing optional input
       if (type_ptr != nullptr) {
         // Use a temporary copy of original type.
@@ -639,20 +639,20 @@ class ShapeInferenceImplBase {
     }
 
     std::unordered_map<std::string, const AttributeProto*> attr_map;
-    for (auto& attr : func_proto.attribute()) {
+    for (const auto& attr : func_proto.attribute()) {
       if (ctx.getAttribute(attr) != nullptr) {
         attr_map[attr] = ctx.getAttribute(attr);
       }
     }
 
-    for (auto& default_value : func_proto.attribute_proto()) {
+    for (const auto& default_value : func_proto.attribute_proto()) {
       const std::string& name = default_value.name();
       const AttributeProto* value = ctx.getAttribute(name);
       attr_map[name] = (value != nullptr) ? value : &default_value;
     }
 
     internal::AttributeBinder attribute_binder(attr_map);
-    for (auto& n : func_proto.node()) {
+    for (const auto& n : func_proto.node()) {
       Process(n, attribute_binder);
     }
 
@@ -663,7 +663,7 @@ class ShapeInferenceImplBase {
       if (iter != value_types_by_name.cend()) {
         // Copy the type info to ctx
         // to pass back to main graph
-        auto type_proto = ctx.getOutputType(i);
+        auto* type_proto = ctx.getOutputType(i);
         type_proto->CopyFrom(*(iter->second));
       }
     }
@@ -707,7 +707,7 @@ class ShapeInferenceImplBase {
   }
 
   void FinalizeShapeInference() {
-    auto& errors = getErrors();
+    const auto& errors = getErrors();
     // Throw shape inference error if any. Error mode right now only supports 0 and 1.
     // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatibility
     // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
@@ -1101,7 +1101,7 @@ std::string GetErrorWithNodeInfo(const NodeProto& n, const std::runtime_error& e
 void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbol_table) {
   symbol_table.addFromGraph(g);
   for (const auto& n : g.node()) {
-    for (auto& attr : n.attribute()) {
+    for (const auto& attr : n.attribute()) {
       if (attr.has_g()) {
         TraverseGraphsToAddExistingSymbols(attr.g(), symbol_table);
       }

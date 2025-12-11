@@ -65,7 +65,7 @@ class StringRange final {
   bool RStrip(StringRange str);
   bool LAndRStrip();
   void ParensWhitespaceStrip();
-  size_t Find(const char ch) const;
+  size_t Find(char ch) const;
 
   // These methods provide a way to return the range of the string
   // which was discarded by LStrip(). i.e. We capture the string
@@ -178,10 +178,12 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
   type_proto.Clear();
   if (s.LStrip("seq")) {
     s.ParensWhitespaceStrip();
-    return FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
+    FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
+    return;
   } else if (s.LStrip("optional")) {
     s.ParensWhitespaceStrip();
-    return FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_optional_type()->mutable_elem_type());
+    FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_optional_type()->mutable_elem_type());
+    return;
   } else if (s.LStrip("map")) {
     s.ParensWhitespaceStrip();
     size_t key_size = s.Find(',');
@@ -192,7 +194,8 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     StringRange v(s.Data(), s.Size());
     auto key_type = FromDataTypeString(key);
     type_proto.mutable_map_type()->set_key_type(key_type);
-    return FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
+    FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
+    return;
   } else
 #ifdef ONNX_ML
       if (s.LStrip("opaque")) {
