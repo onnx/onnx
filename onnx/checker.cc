@@ -558,7 +558,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
     return;
   }
 
-  const auto* schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
+  const auto* const schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN || node.domain() == "ai.onnx" ||
         node.domain() == AI_ONNX_TRAINING_DOMAIN || ctx.check_custom_domain()) {
@@ -742,10 +742,10 @@ void check_opset_compatibility(
     return;
   }
 
-  const auto* schema_for_model_import =
+  const auto* const schema_for_model_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), model_opset_version, node.domain());
 
-  const auto* schema_for_function_import =
+  const auto* const schema_for_function_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), func_opset_version, node.domain());
 
   if (!schema_for_model_import && !schema_for_function_import) {
@@ -803,7 +803,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   CheckerContext ctx_copy = ctx;
 
   std::unordered_map<std::string, int> func_opset_imports;
-  for (auto& relied_opset : function.opset_import()) {
+  for (const auto& relied_opset : function.opset_import()) {
     func_opset_imports[relied_opset.domain()] = static_cast<int>(relied_opset.version());
   }
 

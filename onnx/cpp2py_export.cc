@@ -535,7 +535,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(
           "get_schema",
           [](const std::string& op_type, const int max_inclusive_version, const std::string& domain) -> OpSchema {
-            const auto* schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
+            const auto schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
             if (!schema) {
               fail_schema(
                   "No schema registered for '" + op_type + "' version '" + std::to_string(max_inclusive_version) +
@@ -550,7 +550,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(
           "get_schema",
           [](const std::string& op_type, const std::string& domain) -> OpSchema {
-            const auto* schema = OpSchemaRegistry::Schema(op_type, domain);
+            const auto schema = OpSchemaRegistry::Schema(op_type, domain);
             if (!schema) {
               fail_schema("No schema registered for '" + op_type + "' and domain '" + domain + "'!");
             }
@@ -756,7 +756,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
   inference_context.def("get_attribute", [](InferenceContext& self, const std::string& name) -> nb::object {
-    const auto* attr = self.getAttribute(name);
+    const auto attr = self.getAttribute(name);
     if (attr == nullptr) {
       return nb::none();
     }
@@ -764,7 +764,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
   inference_context.def("get_num_inputs", &InferenceContext::getNumInputs);
   inference_context.def("get_input_type", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* type = self.getInputType(idx);
+    const auto type = self.getInputType(idx);
     if (type == nullptr) {
       return nb::none();
     }
@@ -772,7 +772,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
   inference_context.def("has_input", &InferenceContext::hasInput);
   inference_context.def("get_input_data", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* tensor = self.getInputData(idx);
+    const auto tensor = self.getInputData(idx);
     if (tensor == nullptr) {
       return nb::none();
     }
@@ -780,14 +780,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
   inference_context.def("get_num_outputs", &InferenceContext::getNumOutputs);
   inference_context.def("get_output_type", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* type = self.getOutputType(idx);
+    const auto type = self.getOutputType(idx);
     if (type == nullptr) {
       return nb::none();
     }
     return nb::cast(*type);
   });
   inference_context.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
-    auto* dst = self.getOutputType(idx);
+    auto dst = self.getOutputType(idx);
     if (dst == nullptr) {
       return false;
     }
@@ -800,14 +800,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       &InferenceContext::getGraphAttributeInferencer,
       nb::rv_policy::reference_internal);
   inference_context.def("get_input_sparse_data", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* sparse = self.getInputSparseData(idx);
+    const auto sparse = self.getInputSparseData(idx);
     if (sparse == nullptr) {
       return nb::none();
     }
     return nb::cast(*sparse);
   });
   inference_context.def("get_symbolic_input", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* shape = self.getSymbolicInput(idx);
+    const auto shape = self.getSymbolicInput(idx);
     if (shape == nullptr) {
       return nb::none();
     }

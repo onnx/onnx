@@ -92,7 +92,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
           // Shape inference:
           if (!hasInputShape(ctx, 0))
             return;
-          auto& input_shape = getInputShape(ctx, 0);
+          const auto& input_shape = getInputShape(ctx, 0);
           int64_t rank = input_shape.dim_size();
           int64_t axis = getAttribute(ctx, "axis", -1);
           if (axis < 0)
@@ -102,7 +102,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
           }
 
           const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
-          const auto* k = ctx.getInputData(1);
+          const auto* const k = ctx.getInputData(1);
 
           // Infer output shape if:
           // (1) 'K' is available
@@ -227,20 +227,20 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
 }
 
 void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
-  auto a_type = ctx.getInputType(0);
-  auto b_type = ctx.getInputType(3);
+  const auto* const a_type = ctx.getInputType(0);
+  const auto* const b_type = ctx.getInputType(3);
   if (nullptr == a_type || nullptr == b_type || a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
       b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
     fail_type_inference("inputs are expected to have tensor type.");
   }
 
-  auto a_zero_point_type = ctx.getInputType(2);
+  const auto* const a_zero_point_type = ctx.getInputType(2);
   if (nullptr == a_zero_point_type ||
       a_zero_point_type->tensor_type().elem_type() != a_type->tensor_type().elem_type()) {
     fail_type_inference("input and zero_point pair is expected to have be same type.");
   }
 
-  auto b_zero_point_type = ctx.getInputType(5);
+  const auto* const b_zero_point_type = ctx.getInputType(5);
   if (nullptr == b_zero_point_type ||
       b_zero_point_type->tensor_type().elem_type() != b_type->tensor_type().elem_type()) {
     fail_type_inference("input and zero_point pair is expected to have same type.");
