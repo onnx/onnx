@@ -475,7 +475,7 @@ if(ONNX_BUILD_PYTHON)
     FetchContent_Declare(
       nanobind
       GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      GIT_TAG v2.8.0
+      GIT_TAG v2.10.2
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
