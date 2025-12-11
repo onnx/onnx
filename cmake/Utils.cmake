@@ -39,12 +39,13 @@ function(add_onnx_compile_options target)
                 # 'int', possible loss of data
         /wd4267 # Conversion from 'size_t' to 'int', possible loss of data
         /wd4141 # 'inline': used more than once
+        /wd4047 # '=': 'uintptr_t' differs in levels of indirection from 'void *'
     )
     add_msvc_runtime_flag(onnx)
+    target_compile_options(${target} PRIVATE ${protobuf_warnings})
     if(ONNX_WERROR)
       target_compile_options(${target} PRIVATE "/WX")
     endif()
-    target_compile_options(${target} PRIVATE ${protobuf_warnings})
   else()
     target_compile_options(${target} PRIVATE -Wall -Wextra)
     if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION
