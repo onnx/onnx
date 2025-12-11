@@ -416,6 +416,7 @@ add_library(onnx_proto ${ONNX_PROTO_SRCS})
 add_onnx_global_defines(onnx_proto)
 
 add_library(onnx ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+add_dependencies(onnx onnx_proto)
 set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(onnx PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 add_onnx_global_defines(onnx)
@@ -440,6 +441,7 @@ if(ONNX_BUILD_PYTHON)
     onnx_cpp2py_export
     NB_STATIC NB_DOMAIN STABLE_ABI FREE_THREADED LTO
     "${ONNX_ROOT}/onnx/cpp2py_export.cc" ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+  add_dependencies(onnx_cpp2py_export onnx)
 endif()
 
 add_onnx_compile_options(onnx_proto)

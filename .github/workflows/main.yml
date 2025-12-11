@@ -154,6 +154,10 @@ jobs:
       - name: Build and install ONNX - MacOS
         if: matrix.os == 'macos-latest'
         run: |
+          # Test Xcode on minimum supported python
+          if [ "${{ matrix.python_version}}" == "3.10" ]; then
+            export USE_NINJA=0 CMAKE_ARGS="$CMAKE_ARGS -G Xcode"
+          fi
           pip install -e ".[reference]" -v
         env:
           DEBUG: ${{ matrix.debug_build }}
