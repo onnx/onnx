@@ -22,7 +22,7 @@ namespace ONNX_NAMESPACE {
 Status ParserBase::Parse(Literal& result) {
   bool decimal_point = false;
   auto nextch = NextChar();
-  auto from = next_;
+  const auto* from = next_;
   if (nextch == '"') {
     ++next_;
     bool has_escape = false;
@@ -115,7 +115,7 @@ Status ParserBase::Parse(Literal& result) {
 
 bool ParserBase::NextIsValidFloatString() {
   auto nextch = NextChar();
-  auto from = next_;
+  const auto* const from = next_;
   constexpr int INFINITY_LENGTH = 8;
 
   if (isalpha(nextch)) {
@@ -450,7 +450,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   tensorProto.set_data_type(elem_type);
   if (!tensorTypeProto.tensor_type().has_shape())
     return ParseError("Error parsing TensorProto (expected a tensor shape).");
-  for (auto& dim : tensorTypeProto.tensor_type().shape().dim()) {
+  for (const auto& dim : tensorTypeProto.tensor_type().shape().dim()) {
     if (!dim.has_dim_value())
       return ParseError("Error parsing TensorProto shape (expected numeric dimension).");
     auto dimval = dim.dim_value();
