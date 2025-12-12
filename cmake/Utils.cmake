@@ -43,10 +43,9 @@ function(add_onnx_compile_options target)
     )
     add_msvc_runtime_flag(onnx)
     target_compile_options(${target} PUBLIC ${protobuf_warnings})
-    # Uncaught Protobuf warnings can become errors
-    # if(ONNX_WERROR)
-    #   target_compile_options(${target} PRIVATE "/WX")
-    # endif()
+    if(ONNX_WERROR)
+      target_compile_options(${target} PRIVATE "/WX")
+    endif()
   else()
     target_compile_options(${target} PRIVATE -Wall -Wextra)
     if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION
