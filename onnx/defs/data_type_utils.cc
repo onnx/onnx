@@ -242,8 +242,9 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
 
 int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   if (!IsValidDataTypeString(type_str)) {
-    ONNX_THROW_EX(std::invalid_argument(
-        "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
+    ONNX_THROW_EX(
+        std::invalid_argument(
+            "DataTypeUtils::FromDataTypeString - Received invalid data type string '" + type_str + "'."));
   }
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
