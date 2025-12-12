@@ -62,15 +62,15 @@ False instead of True.)DOC";
       }
 
       int64_t keep_dims = 1;
-      auto attr_proto = ctx.getAttribute("keepdims");
+      const auto* const attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       int64_t input_ndim = input_shape.dim_size();
-      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       std::vector<int64_t> axes;
-      auto axes_proto = ctx.getAttribute("axes");
+      const auto* const axes_proto = ctx.getAttribute("axes");
       if (axes_proto)
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
 
@@ -85,11 +85,11 @@ False instead of True.)DOC";
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
         if (!axes.empty() && std::find(axes.begin(), axes.end(), i) == axes.end()) {
-          auto dim = output_shape->add_dim();
+          auto* dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
-            auto dim = output_shape->add_dim();
+            auto* dim = output_shape->add_dim();
             dim->set_dim_value(1);
           }
         }
@@ -159,11 +159,11 @@ The type of the output tensor is integer.)DOC";
         return;
       }
 
-      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
       int64_t axis = 0; // default to 0
-      auto axis_proto = ctx.getAttribute("axis");
+      const auto* const axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
         if (axis < -input_ndim || axis >= input_ndim) {
@@ -174,18 +174,18 @@ The type of the output tensor is integer.)DOC";
       }
 
       int64_t keep_dims = 1;
-      auto attr_proto = ctx.getAttribute("keepdims");
+      const auto* const attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
       // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {
         if (i != axis) {
-          auto dim = output_shape->add_dim();
+          auto* dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
-            auto dim = output_shape->add_dim();
+            auto* dim = output_shape->add_dim();
             dim->set_dim_value(1);
           }
         }
@@ -240,15 +240,15 @@ False instead of True.)DOC";
       }
 
       int64_t keep_dims = 1;
-      auto attr_proto = ctx.getAttribute("keepdims");
+      const auto* const attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       int64_t input_ndim = input_shape.dim_size();
-      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       std::vector<int64_t> axes;
-      auto axes_proto = ctx.getAttribute("axes");
+      const auto* const axes_proto = ctx.getAttribute("axes");
       if (axes_proto)
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
 
@@ -260,11 +260,11 @@ False instead of True.)DOC";
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
         if (!axes.empty() && std::find(axes.begin(), axes.end(), i) == axes.end()) {
-          auto dim = output_shape->add_dim();
+          auto* dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
-            auto dim = output_shape->add_dim();
+            auto* dim = output_shape->add_dim();
             dim->set_dim_value(1);
           }
         }
@@ -329,11 +329,11 @@ The type of the output tensor is integer.)DOC";
         return;
       }
 
-      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
       int64_t axis = 0; // default to 0
-      auto axis_proto = ctx.getAttribute("axis");
+      const auto* const axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
         if (axis < 0)
@@ -341,18 +341,18 @@ The type of the output tensor is integer.)DOC";
       }
 
       int64_t keep_dims = 1;
-      auto attr_proto = ctx.getAttribute("keepdims");
+      const auto* const attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
       // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {
         if (i != axis) {
-          auto dim = output_shape->add_dim();
+          auto* dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
-            auto dim = output_shape->add_dim();
+            auto* dim = output_shape->add_dim();
             dim->set_dim_value(1);
           }
         }
@@ -397,11 +397,11 @@ The type of the output tensor is integer.)DOC";
         return;
       }
 
-      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
       int64_t input_ndim = input_shape.dim_size();
       int64_t axis = 0; // default to 0
-      auto axis_proto = ctx.getAttribute("axis");
+      const auto* const axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
         axis = axis_proto->i();
         if (axis < -input_ndim || axis >= input_ndim) {
@@ -412,18 +412,18 @@ The type of the output tensor is integer.)DOC";
       }
 
       int64_t keep_dims = 1;
-      auto attr_proto = ctx.getAttribute("keepdims");
+      const auto* const attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
       // do we need handle negative axis?
       for (int i = 0; i < input_ndim; ++i) {
         if (i != axis) {
-          auto dim = output_shape->add_dim();
+          auto* dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
-            auto dim = output_shape->add_dim();
+            auto* dim = output_shape->add_dim();
             dim->set_dim_value(1);
           }
         }

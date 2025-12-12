@@ -47,7 +47,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           const size_t numInputs = ctx.getNumInputs();
-          const auto* attr_proto = ctx.getAttribute("type");
+          const auto attr_proto = ctx.getAttribute("type");
 
           if ((numInputs == 0) && (attr_proto != nullptr)) {
             if (!attr_proto->has_tp())
@@ -97,7 +97,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (numOutputs != 1) {
             fail_type_inference("OptionalHasElement is expected to have 1 output.");
           }
-          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::BOOL);
           output_tensor_type->mutable_shape()->Clear();
         }));

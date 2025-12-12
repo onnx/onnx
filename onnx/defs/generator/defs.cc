@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <algorithm>
 #include <cmath>
 
 #include "onnx/defs/function.h"
@@ -451,8 +452,7 @@ compute_output_dim_for_range(const TensorProto* start, const TensorProto* limit,
 
   int64_t n = static_cast<int64_t>(ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
 
-  if (n < 0)
-    n = 0;
+  n = std::max<int64_t>(n, 0);
 
   return n;
 }
@@ -493,12 +493,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
-          const auto* start_initializer = ctx.getInputData(0);
-          const auto* limit_initializer = ctx.getInputData(1);
-          const auto* delta_initializer = ctx.getInputData(2);
+          const auto start_initializer = ctx.getInputData(0);
+          const auto limit_initializer = ctx.getInputData(1);
+          const auto delta_initializer = ctx.getInputData(2);
 
           // Output is always 1-D
-          auto* output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+          auto output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
 
           // If any of Range's inputs are not initializers, the output dimension
           // value would remain unknown.

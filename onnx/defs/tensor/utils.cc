@@ -195,7 +195,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
     }
   }
 
-  auto keep_aspect_ratio_policy_attr = ctx.getAttribute("keep_aspect_ratio_policy");
+  const auto* const keep_aspect_ratio_policy_attr = ctx.getAttribute("keep_aspect_ratio_policy");
   KeepAspectRatioPolicy keep_aspect_ratio_policy = KeepAspectRatioPolicy::STRETCH;
   if (keep_aspect_ratio_policy_attr && keep_aspect_ratio_policy_attr->has_s()) {
     auto str = keep_aspect_ratio_policy_attr->s();
@@ -230,7 +230,7 @@ static void resizeShapeInferenceVersioned(InferenceContext& ctx, int opset_versi
     }
   }
 
-  auto axes_attr = ctx.getAttribute("axes");
+  const auto* const axes_attr = ctx.getAttribute("axes");
   size_t rank_x = input_shape.dim_size();
   std::vector<int64_t> axes;
   if (axes_attr) {
@@ -361,7 +361,7 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
   }
   const auto& input_shape = getInputShape(ctx, 0);
   auto* output_shape = getOutputShape(ctx, 0);
-  const auto scales = ctx.getInputData(1);
+  const auto* const scales = ctx.getInputData(1);
 
   if (output_shape->dim_size() > 0) {
     if (output_shape->dim_size() != input_shape.dim_size()) {
@@ -453,7 +453,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
 
       std::vector<int64_t> axes;
       if (hasInputShape(ctx, 3)) { //'axes' input
-        auto axes_initializer = ctx.getInputData(3);
+        const auto* const axes_initializer = ctx.getInputData(3);
         if (axes_initializer == nullptr)
           return; // can't do shape inference then
 

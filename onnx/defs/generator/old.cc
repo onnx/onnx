@@ -757,8 +757,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* value = ctx.getAttribute("value");
-          auto* sparse_value = ctx.getAttribute("sparse_value");
+          auto value = ctx.getAttribute("value");
+          auto sparse_value = ctx.getAttribute("sparse_value");
 
           if ((nullptr != value) && (nullptr != sparse_value))
             fail_shape_inference(
@@ -779,7 +779,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // checker.cc::check_sparse_tensor checks that the sparse-value is
             // well-formed
             updateOutputElemType(ctx, 0, sparse.values().data_type());
-            auto* output_shape = getOutputShape(ctx, 0);
+            auto output_shape = getOutputShape(ctx, 0);
             for (int i = 0; i < sparse.dims_size(); ++i)
               appendDim(output_shape, sparse.dims(i));
             return;

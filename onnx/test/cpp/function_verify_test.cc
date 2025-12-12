@@ -58,7 +58,7 @@ static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProt
   std::unordered_map<std::string, int> op_set;
   GetFunctionProtoOpsetImport(function_op, function_proto, op_set);
 
-  for (auto& node : function_proto->node()) {
+  for (const auto& node : function_proto->node()) {
     const std::string& op_type = node.op_type();
     std::unordered_map<std::string, int>::const_iterator it = op_set.find(node.domain());
     if (it == op_set.end()) {
@@ -84,7 +84,7 @@ static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProt
         auto formal_i = std::min(i, num_formal_inputs - 1);
         const auto& types = schema->inputs().at(formal_i).GetTypes();
         std::unordered_set<std::string> allowed_types;
-        for (auto& s : types) {
+        for (const auto& s : types) {
           allowed_types.insert(*s);
         }
         for (auto& actual_type : iter->second) {
@@ -132,7 +132,7 @@ struct FunctionOpAttributeMap {
     auto& schema_test_cases = map[key("", opname, opset_version)];
     schema_test_cases.emplace_back();
     auto& test_case = schema_test_cases.back();
-    for (auto attr_text : attributes) {
+    for (const auto* const attr_text : attributes) {
       test_case.emplace_back();
       OnnxParser::Parse(test_case.back(), attr_text);
     }
@@ -208,7 +208,7 @@ struct FunctionTypeChecker {
     for (auto& pair : typeVarBindings) {
       ostr << pair.first << " = " << *pair.second << ", ";
     }
-    for (auto& attr : attrs) {
+    for (const auto& attr : attrs) {
       ostr << attr << ", ";
     }
     ostr << "}\n" << error << "\n";
@@ -220,7 +220,7 @@ struct FunctionTypeChecker {
     for (auto& pair : typeVarBindings) {
       std::cout << pair.first << " = " << *pair.second << ", ";
     }
-    for (auto& attr : attrs) {
+    for (const auto& attr : attrs) {
       std::cout << attr << ", ";
     }
     std::cout << "}\n";
@@ -230,11 +230,11 @@ struct FunctionTypeChecker {
   // to all type-variables used in the op schema, and invoke the type-checker for
   // each possible instantiation.
   void forTypeVar(size_t i) {
-    auto& typeConstraintVector = schema.typeConstraintParams();
+    const auto& typeConstraintVector = schema.typeConstraintParams();
     if (i < typeConstraintVector.size()) {
       std::string typeVar = typeConstraintVector[i].type_param_str;
-      auto& values = schema.typeConstraintMap().at(typeVar).first;
-      for (auto typeValue : values) {
+      const auto& values = schema.typeConstraintMap().at(typeVar).first;
+      for (const auto* const typeValue : values) {
         typeVarBindings[typeVar] = typeValue;
         // Now, process remaining type-variables
         forTypeVar(i + 1);
@@ -260,7 +260,7 @@ struct FunctionTypeChecker {
       input_types.push_back(Utils::DataTypeUtils::ToTypeProto(datatype));
     }
 
-    for (auto& attribute_vals : *attribute_cases) {
+    for (const auto& attribute_vals : *attribute_cases) {
       ONNX_TRY {
         shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
       }
@@ -330,7 +330,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
       ++function_counter;
       std::vector<int> function_versions = s.function_opset_versions();
       for (int function_version : function_versions) {
-        auto function_body = s.GetFunction(function_version);
+        const auto* const function_body = s.GetFunction(function_version);
         VerifyFunction(s, function_body, verified_counter);
       }
     }
@@ -348,7 +348,7 @@ TEST(FunctionVerification, VerifyFunctionExpandHelper) {
   NodeProto* new_node = graph.add_node();
   new_node->set_op_type("MeanVarianceNormalization");
 
-  const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
+  const auto* const schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
   const FunctionProto* func = schema->GetFunction();
   const auto default_axes_attribute = schema->attributes().at("axes").default_value;
 
@@ -421,7 +421,7 @@ static void RegisterFunctionSchema() {
 TEST(FunctionVerification, VerifyFunctionBodyWithMultipleDomains) {
   RegisterFunctionSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("DynamicQuantizeLinear_Fake", 2, AI_ONNX_ML_DOMAIN);
+  const auto* const schema = OpSchemaRegistry::Schema("DynamicQuantizeLinear_Fake", 2, AI_ONNX_ML_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_TRUE(schema->HasFunction());
   EXPECT_FALSE(schema->HasContextDependentFunction());

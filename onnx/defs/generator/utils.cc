@@ -9,14 +9,14 @@
 namespace ONNX_NAMESPACE {
 
 void ConstantOpInference(InferenceContext& ctx) {
-  auto* value = ctx.getAttribute("value");
-  auto* sparse_value = ctx.getAttribute("sparse_value");
-  auto* value_int = ctx.getAttribute("value_int");
-  auto* value_ints = ctx.getAttribute("value_ints");
-  auto* value_float = ctx.getAttribute("value_float");
-  auto* value_floats = ctx.getAttribute("value_floats");
-  auto* value_string = ctx.getAttribute("value_string");
-  auto* value_strings = ctx.getAttribute("value_strings");
+  const auto* const value = ctx.getAttribute("value");
+  const auto* const sparse_value = ctx.getAttribute("sparse_value");
+  const auto* const value_int = ctx.getAttribute("value_int");
+  const auto* const value_ints = ctx.getAttribute("value_ints");
+  const auto* const value_float = ctx.getAttribute("value_float");
+  const auto* const value_floats = ctx.getAttribute("value_floats");
+  const auto* const value_string = ctx.getAttribute("value_string");
+  const auto* const value_strings = ctx.getAttribute("value_strings");
 
   std::vector<bool> non_null_attr = {
       (nullptr != value),
