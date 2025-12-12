@@ -1759,7 +1759,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 #ifndef NDEBUG
       size_t dbg_registered_schema_count = GetRegisteredSchemaCount() - dbg_initial_schema_count;
       // Check enabled only if schemas for all opset versions are loaded
-      if (onnx::OpSchemaRegistry::GetLoadedSchemaVersion() == 0) {
+      if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
             "%u schema were exposed from operator sets and automatically placed into the static registry.  "
