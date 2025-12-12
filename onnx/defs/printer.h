@@ -12,33 +12,33 @@
 
 namespace ONNX_NAMESPACE {
 
-std::ostream& operator<<(std::ostream& os, const TensorShapeProto_Dimension& proto);
+std::ostream& operator<<(std::ostream& os, const TensorShapeProto_Dimension& dim);
 
-std::ostream& operator<<(std::ostream& os, const TensorShapeProto& proto);
+std::ostream& operator<<(std::ostream& os, const TensorShapeProto& shape);
 
-std::ostream& operator<<(std::ostream& os, const TypeProto_Tensor& proto);
+std::ostream& operator<<(std::ostream& os, const TypeProto_Tensor& tensortype);
 
-std::ostream& operator<<(std::ostream& os, const TypeProto& proto);
+std::ostream& operator<<(std::ostream& os, const TypeProto& type);
 
-std::ostream& operator<<(std::ostream& os, const TensorProto& proto);
+std::ostream& operator<<(std::ostream& os, const TensorProto& tensor);
 
-std::ostream& operator<<(std::ostream& os, const ValueInfoProto& proto);
+std::ostream& operator<<(std::ostream& os, const ValueInfoProto& value_info);
 
-std::ostream& operator<<(std::ostream& os, const ValueInfoList& proto);
+std::ostream& operator<<(std::ostream& os, const ValueInfoList& vilist);
 
-std::ostream& operator<<(std::ostream& os, const AttributeProto& proto);
+std::ostream& operator<<(std::ostream& os, const AttributeProto& attr);
 
-std::ostream& operator<<(std::ostream& os, const AttrList& proto);
+std::ostream& operator<<(std::ostream& os, const AttrList& attrlist);
 
-std::ostream& operator<<(std::ostream& os, const NodeProto& proto);
+std::ostream& operator<<(std::ostream& os, const NodeProto& node);
 
-std::ostream& operator<<(std::ostream& os, const NodeList& proto);
+std::ostream& operator<<(std::ostream& os, const NodeList& nodelist);
 
-std::ostream& operator<<(std::ostream& os, const GraphProto& proto);
+std::ostream& operator<<(std::ostream& os, const GraphProto& graph);
 
-std::ostream& operator<<(std::ostream& os, const FunctionProto& proto);
+std::ostream& operator<<(std::ostream& os, const FunctionProto& fn);
 
-std::ostream& operator<<(std::ostream& os, const ModelProto& proto);
+std::ostream& operator<<(std::ostream& os, const ModelProto& model);
 
 template <typename ProtoType>
 std::string ProtoToString(const ProtoType& proto) {

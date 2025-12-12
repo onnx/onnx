@@ -625,7 +625,7 @@ struct Node : public Attributes<Node> {
     ONNX_ASSERT(from->owningGraph() == graph_)
     ONNX_ASSERT(to->owningGraph() == graph_)
     size_t i = 0;
-    for (auto* input : inputs()) {
+    for (const auto* input : inputs()) {
       if (input == from)
         replaceInput(i, to);
       i++;
