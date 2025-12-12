@@ -382,6 +382,9 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
   auto* output_type = ctx.getOutputType(outputIndex);
   const auto output_value_case = output_type->value_case();
   const auto* input_type = ctx.getInputType(inputIndex);
+  if (!input_type) {
+    fail_type_inference("Input: ", inputIndex, " is null.");
+  }
   const auto input_value_case = input_type->value_case();
   if (output_value_case != input_value_case) {
     fail_type_inference(
