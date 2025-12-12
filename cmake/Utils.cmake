@@ -41,7 +41,7 @@ function(add_onnx_compile_options target)
         /wd4141 # 'inline': used more than once
         /wd4047 # '=': 'uintptr_t' differs in levels of indirection from 'void *'
     )
-    add_msvc_runtime_flag(onnx)
+    add_msvc_runtime_flag(${target})
     target_compile_options(${target} PUBLIC ${protobuf_warnings})
     if(ONNX_WERROR)
       target_compile_options(${target} PRIVATE "/WX")
