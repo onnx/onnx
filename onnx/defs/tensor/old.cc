@@ -2872,14 +2872,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return vec;
           };
 
-          auto clamp = [](int64_t val, int64_t low, int64_t high) -> int64_t {
-            if (val < low)
-              return low;
-            if (val > high)
-              return high;
-            return val;
-          };
-
           std::vector<int64_t> starts = get_initializer_data(startsInitializer);
           std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
@@ -2963,18 +2955,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (start < 0)
               start += input_dim_value;
             if (step < 0)
-              start = clamp(start, 0, input_dim_value - 1);
+              start = std::clamp(start, static_cast<int64_t>(0), input_dim_value - 1);
             else
-              start = clamp(start, 0, input_dim_value);
+              start = std::clamp(start, static_cast<int64_t>(0), input_dim_value);
 
             // process end
             auto end = ends[axis_index];
-            if (end < 0)
+            if (end < static_cast<int64_t>(0))
               end += input_dim_value;
-            if (step < 0)
-              end = clamp(end, -1, input_dim_value);
+            if (step < static_cast<int64_t>(0))
+              end = std::clamp(end, static_cast<int64_t>(-1), input_dim_value);
             else
-              end = clamp(end, 0, input_dim_value);
+              end = std::clamp(end, static_cast<int64_t>(0), input_dim_value);
 
             // find output dim value for this axis
             auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
@@ -7062,14 +7054,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             return vec;
           };
 
-          auto clamp = [](int64_t val, int64_t low, int64_t high) -> int64_t {
-            if (val < low)
-              return low;
-            if (val > high)
-              return high;
-            return val;
-          };
-
           std::vector<int64_t> starts = get_initializer_data(startsInitializer);
           std::vector<int64_t> ends = get_initializer_data(endsInitializer);
 
@@ -7144,18 +7128,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (start < 0)
               start += input_dim_value;
             if (step < 0)
-              start = clamp(start, 0, input_dim_value - 1);
+              start = std::clamp(start, static_cast<int64_t>(0), input_dim_value - 1);
             else
-              start = clamp(start, 0, input_dim_value);
+              start = std::clamp(start, static_cast<int64_t>(0), input_dim_value);
 
             // process end
             auto end = ends[axis_index];
-            if (end < 0)
+            if (end < static_cast<int64_t>(0))
               end += input_dim_value;
-            if (step < 0)
-              end = clamp(end, -1, input_dim_value);
+            if (step < static_cast<int64_t>(0))
+              end = std::clamp(end, static_cast<int64_t>(-1), input_dim_value);
             else
-              end = clamp(end, 0, input_dim_value);
+              end = std::clamp(end, static_cast<int64_t>(0), input_dim_value);
 
             // find output dim value for this axis
             auto temp = static_cast<int64_t>(ceil(1.0 * (end - start) / step));
