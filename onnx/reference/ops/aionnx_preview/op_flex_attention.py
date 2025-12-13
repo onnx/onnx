@@ -75,8 +75,9 @@ def _compute_flex_attention(
     # probs: (batch_size, num_heads, seq_length_q, seq_length_k)
     # V: (batch_size, num_heads, seq_length_k, head_size_v)
     # Result: (batch_size, num_heads, seq_length_q, head_size_v)
-    return np.matmul(attention_probs, V)
-
+    output = np.matmul(attention_probs, V)
+    
+    return output
 
 
 class FlexAttention(OpRun):

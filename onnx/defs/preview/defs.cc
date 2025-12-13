@@ -201,36 +201,28 @@ ONNX_PREVIEW_OPERATOR_SET_SCHEMA(
                 builder.Add("scores_scaled = Identity (qk_scores)");
               }
               
-              // Step 3: Apply score_mod if provided
-              // Note: Graph attributes require special handling
-              // For the initial implementation, we'll use Identity as a placeholder
-              // A full backend implementation would inline the subgraph here
+              // Step 3-4: Apply score_mod and mask_mod if provided, then Softmax
+              // Note: Graph attributes require special handling. For this reference implementation,
+              // we use Identity as a placeholder. Backend implementations should inline the subgraphs.
               auto score_mod_attr = ctx.getAttribute("score_mod");
+              auto mask_mod_attr = ctx.getAttribute("mask_mod");
+              
               if (score_mod_attr != nullptr && score_mod_attr->has_g()) {
-                // Placeholder: In a complete implementation, the subgraph would be inlined
                 builder.Add("scores_after_score_mod = Identity (scores_scaled)");
                 builder.Add("attention_probs = Softmax <axis = -1> (scores_after_score_mod)");
+              } else if (mask_mod_attr != nullptr && mask_mod_attr->has_g()) {
+                builder.Add("scores_after_mask_mod = Identity (scores_scaled)");
+                builder.Add("attention_probs = Softmax <axis = -1> (scores_after_mask_mod)");
               } else {
-                // Step 4: Apply mask_mod if provided  
-                auto mask_mod_attr = ctx.getAttribute("mask_mod");
-                if (mask_mod_attr != nullptr && mask_mod_attr->has_g()) {
-                  // Placeholder: In a complete implementation, the subgraph would be inlined
-                  builder.Add("scores_after_mask_mod = Identity (scores_scaled)");
-                  builder.Add("attention_probs = Softmax <axis = -1> (scores_after_mask_mod)");
-                } else {
-                  // Step 5: Apply Softmax
-                  builder.Add("attention_probs = Softmax <axis = -1> (scores_scaled)");
-                }
+                builder.Add("attention_probs = Softmax <axis = -1> (scores_scaled)");
               }
               
-              // Step 6: Apply prob_mod if provided
+              // Step 5-6: Apply prob_mod if provided, then compute output
               auto prob_mod_attr = ctx.getAttribute("prob_mod");
               if (prob_mod_attr != nullptr && prob_mod_attr->has_g()) {
-                // Placeholder: In a complete implementation, the subgraph would be inlined
                 builder.Add("probs_after_prob_mod = Identity (attention_probs)");
                 builder.Add("output = MatMul (probs_after_prob_mod, V)");
               } else {
-                // Step 7: Compute output = probs @ V
                 builder.Add("output = MatMul (attention_probs, V)");
               }
               
