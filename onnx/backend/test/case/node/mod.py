@@ -69,7 +69,6 @@ class Mod(Base):
         z = np.mod(x, y)
         expect(node, inputs=[x, y], outputs=[z], name="test_mod_float16_mixed_sign_fmod_0")
 
-
     @staticmethod
     def export_mod_mixed_sign_int64() -> None:
         node = onnx.helper.make_node(
