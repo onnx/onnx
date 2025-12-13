@@ -160,7 +160,8 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       return left + "sparse_tensor(" + ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" + right;
     }
     default:
-      ONNX_THROW_EX(std::invalid_argument("Unsupported type proto value case."));
+      ONNX_THROW_EX(
+          std::invalid_argument("Unsupported type proto value case:" + std::to_string(type_proto.value_case())));
   }
 }
 

@@ -144,16 +144,19 @@ class LexicalScopeContext final {
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
-void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
-void check_tensor(const TensorProto& tensor, const CheckerContext&);
-void check_sparse_tensor(const SparseTensorProto& sparse_tensor, const CheckerContext&);
-void check_sequence(const SequenceProto& sequence, const CheckerContext&);
-void check_map(const MapProto& map, const CheckerContext&);
-void check_optional(const OptionalProto& opt, const CheckerContext&);
-void check_attribute(const AttributeProto& attr, const CheckerContext&, const LexicalScopeContext&);
-void check_node(const NodeProto& node, const CheckerContext&, const LexicalScopeContext&);
-void check_graph(const GraphProto& graph, const CheckerContext&, const LexicalScopeContext&);
-void check_function(const FunctionProto& function, const CheckerContext&, const LexicalScopeContext&);
+void check_value_info(const ValueInfoProto& value_info, const CheckerContext& /*ctx*/);
+void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/);
+void check_sparse_tensor(const SparseTensorProto& sparse_tensor, const CheckerContext& /*ctx*/);
+void check_sequence(const SequenceProto& sequence, const CheckerContext& /*ctx*/);
+void check_map(const MapProto& map, const CheckerContext& /*ctx*/);
+void check_optional(const OptionalProto& opt, const CheckerContext& /*ctx*/);
+void check_attribute(const AttributeProto& attr, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*lex_ctx*/);
+void check_node(const NodeProto& node, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*lex_ctx*/);
+void check_graph(const GraphProto& graph, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*parent_lex*/);
+void check_function(
+    const FunctionProto& function,
+    const CheckerContext& /*ctx*/,
+    const LexicalScopeContext& /*parent_lex*/);
 
 // Check schema compatibility for 2 opset versions for a given node.
 // Checks whether the schema for 2 versions is same, this is true when the opschema

@@ -52,7 +52,7 @@ class AttributeBinder : public MutableVisitor {
   // attribute-values in the call-node, if present. Otherwise, the attribute is removed.
   static void BindAttributes(const NodeProto& callnode, FunctionProto& callee) {
     AttributeMap map;
-    for (auto& attr : callnode.attribute()) {
+    for (const auto& attr : callnode.attribute()) {
       map[attr.name()] = &attr;
     }
     AttributeBinder attr_binder(map);
