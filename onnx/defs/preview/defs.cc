@@ -193,47 +193,46 @@ ONNX_PREVIEW_OPERATOR_SET_SCHEMA(
               
               // Step 2: Apply scaling
               if (scale_attr != nullptr) {
-                builder.AddOpsetImport("", 14);
-                builder.Const("scale_value", scale_attr->f());
+                builder.Const1D("scale_value", scale_attr->f());
                 builder.Add("scores_scaled = Mul (qk_scores, scale_value)");
               } else {
-                // Compute default scale: 1/sqrt(head_size)
-                // For simplicity, we'll require scale to be provided for now
-                // A full implementation would compute head_size from input shapes
+                // For now, use Identity if no scale is provided
+                // A full implementation would compute default scale: 1/sqrt(head_size)
                 builder.Add("scores_scaled = Identity (qk_scores)");
               }
               
               // Step 3: Apply score_mod if provided
+              // Note: Graph attributes require special handling
+              // For the initial implementation, we'll use Identity as a placeholder
+              // A full backend implementation would inline the subgraph here
               auto score_mod_attr = ctx.getAttribute("score_mod");
-              std::string current_scores = "scores_scaled";
               if (score_mod_attr != nullptr && score_mod_attr->has_g()) {
-                // Note: Inline graph execution would require additional support
-                // For now, we'll use Identity as a placeholder
-                // A full backend implementation would inline the subgraph here
+                // Placeholder: In a complete implementation, the subgraph would be inlined
                 builder.Add("scores_after_score_mod = Identity (scores_scaled)");
-                current_scores = "scores_after_score_mod";
+                builder.Add("attention_probs = Softmax <axis = -1> (scores_after_score_mod)");
+              } else {
+                // Step 4: Apply mask_mod if provided  
+                auto mask_mod_attr = ctx.getAttribute("mask_mod");
+                if (mask_mod_attr != nullptr && mask_mod_attr->has_g()) {
+                  // Placeholder: In a complete implementation, the subgraph would be inlined
+                  builder.Add("scores_after_mask_mod = Identity (scores_scaled)");
+                  builder.Add("attention_probs = Softmax <axis = -1> (scores_after_mask_mod)");
+                } else {
+                  // Step 5: Apply Softmax
+                  builder.Add("attention_probs = Softmax <axis = -1> (scores_scaled)");
+                }
               }
-              
-              // Step 4: Apply mask_mod if provided  
-              auto mask_mod_attr = ctx.getAttribute("mask_mod");
-              if (mask_mod_attr != nullptr && mask_mod_attr->has_g()) {
-                builder.Add("scores_after_mask_mod = Identity (" + current_scores + ")");
-                current_scores = "scores_after_mask_mod";
-              }
-              
-              // Step 5: Apply Softmax
-              builder.Add("attention_probs = Softmax <axis = -1> (" + current_scores + ")");
               
               // Step 6: Apply prob_mod if provided
               auto prob_mod_attr = ctx.getAttribute("prob_mod");
-              std::string current_probs = "attention_probs";
               if (prob_mod_attr != nullptr && prob_mod_attr->has_g()) {
+                // Placeholder: In a complete implementation, the subgraph would be inlined
                 builder.Add("probs_after_prob_mod = Identity (attention_probs)");
-                current_probs = "probs_after_prob_mod";
+                builder.Add("output = MatMul (probs_after_prob_mod, V)");
+              } else {
+                // Step 7: Compute output = probs @ V
+                builder.Add("output = MatMul (attention_probs, V)");
               }
-              
-              // Step 7: Compute output = probs @ V
-              builder.Add("output = MatMul (" + current_probs + ", V)");
               
               return true;
             }));
