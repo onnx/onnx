@@ -333,7 +333,7 @@ CMD_CLASS = {
 
 NO_GIL = hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled()
 PY_312_OR_NEWER = sys.version_info >= (3, 12)
-USE_LIMITED_API = not NO_GIL and PY_312_OR_NEWER
+USE_LIMITED_API = not NO_GIL and PY_312_OR_NEWER and platform.system() != "FreeBSD"
 
 macros = []
 if USE_LIMITED_API:
