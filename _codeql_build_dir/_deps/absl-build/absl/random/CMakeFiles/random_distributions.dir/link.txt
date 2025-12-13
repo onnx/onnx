@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_random_distributions.a CMakeFiles/random_distributions.dir/discrete_distribution.cc.o CMakeFiles/random_distributions.dir/gaussian_distribution.cc.o
-/usr/bin/ranlib libabsl_random_distributions.a

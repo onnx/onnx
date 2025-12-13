@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_log_internal_proto.a CMakeFiles/log_internal_proto.dir/internal/proto.cc.o
-/usr/bin/ranlib libabsl_log_internal_proto.a

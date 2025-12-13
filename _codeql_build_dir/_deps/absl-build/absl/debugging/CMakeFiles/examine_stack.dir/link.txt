@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_examine_stack.a CMakeFiles/examine_stack.dir/internal/examine_stack.cc.o
-/usr/bin/ranlib libabsl_examine_stack.a

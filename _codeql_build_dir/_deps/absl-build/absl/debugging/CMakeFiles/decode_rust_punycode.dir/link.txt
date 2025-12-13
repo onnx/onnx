@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_decode_rust_punycode.a CMakeFiles/decode_rust_punycode.dir/internal/decode_rust_punycode.cc.o
-/usr/bin/ranlib libabsl_decode_rust_punycode.a

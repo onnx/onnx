@@ -1,2 +1,0 @@
-/usr/bin/ar qc libonnx_proto.a "CMakeFiles/onnx_proto.dir/onnx/onnx-ml.pb.cc.o" "CMakeFiles/onnx_proto.dir/onnx/onnx-operators-ml.pb.cc.o" "CMakeFiles/onnx_proto.dir/onnx/onnx-data.pb.cc.o"
-/usr/bin/ranlib libonnx_proto.a

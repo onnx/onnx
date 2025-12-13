@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_symbolize.a CMakeFiles/symbolize.dir/symbolize.cc.o
-/usr/bin/ranlib libabsl_symbolize.a

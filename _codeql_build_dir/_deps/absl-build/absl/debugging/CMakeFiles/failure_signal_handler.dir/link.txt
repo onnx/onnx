@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_failure_signal_handler.a CMakeFiles/failure_signal_handler.dir/failure_signal_handler.cc.o
-/usr/bin/ranlib libabsl_failure_signal_handler.a

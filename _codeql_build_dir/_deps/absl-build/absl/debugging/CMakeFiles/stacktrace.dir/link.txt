@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_stacktrace.a CMakeFiles/stacktrace.dir/stacktrace.cc.o
-/usr/bin/ranlib libabsl_stacktrace.a

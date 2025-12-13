@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_log_internal_format.a CMakeFiles/log_internal_format.dir/internal/log_format.cc.o
-/usr/bin/ranlib libabsl_log_internal_format.a
