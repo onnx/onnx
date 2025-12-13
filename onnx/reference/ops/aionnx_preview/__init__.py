@@ -7,15 +7,15 @@ from onnx.reference.ops.aionnx_preview._op_list import (
     load_op as _load_op,
 )
 
+
 def load_op(domain: str, op_type: str, version: int | None = None):
-    """
-    Loads the registered operator for the specified domain and type.
-    
+    """Loads the registered operator for the specified domain and type.
+
     Args:
         domain: operator domain
         op_type: operator type
         version: requested version
-        
+
     Returns:
         class
     """
