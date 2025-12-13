@@ -94,9 +94,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static constexpr const char* Mod_doc = R"DOC(
 Performs an element-wise binary modulo operation.
-The semantics and supported data types depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
+The semantics depend on the value of the `fmod` attribute which must be `0` (default), or `1`.
 
-If the `fmod` attribute is set to `0`, `T` is constrained to integer data types and the semantics follow that of the Python `%`-operator.
+If the `fmod` attribute is set to `0`, the semantics follow that of the Python `%`-operator.
 The sign of the result is that of the divisor.
 
 If `fmod` is set to `1`, the behavior of this operator follows that of the `fmod` function in C and `T` is constrained to floating point data types.

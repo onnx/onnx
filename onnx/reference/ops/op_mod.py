@@ -13,6 +13,5 @@ class Mod(OpRun):
         fmod = fmod or self.fmod
         if fmod == 1:
             return (np.fmod(a, b),)
-        if a.dtype in (np.float16, np.float32, np.float64):
-            return (np.nan_to_num(np.fmod(a, b)),)
-        return (np.nan_to_num(np.mod(a, b)),)
+        # When fmod=0, use np.mod (Python % operator) for all types
+        return (np.mod(a, b),)
