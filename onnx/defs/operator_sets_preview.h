@@ -8,14 +8,17 @@
 
 namespace ONNX_NAMESPACE {
 
-// Declare training operators.
+// Declare training operators in ai.onnx.preview.training domain.
 
 class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Gradient);
 class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Momentum);
 class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Adagrad);
 class ONNX_PREVIEW_OPERATOR_SET_SCHEMA_CLASS_NAME(1, Adam);
 
-// Iterate over schema from ai.onnx.training version 1
+// Declare general preview operators in ai.onnx.preview domain.
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxPreviewGeneral, 1, FlexAttention);
+
+// Iterate over schema from ai.onnx.preview.training version 1
 class OpSet_OnnxPreview_ver1 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
@@ -26,12 +29,21 @@ class OpSet_OnnxPreview_ver1 {
   }
 };
 
+// Iterate over schema from ai.onnx.preview version 1
+class OpSet_OnnxPreviewGeneral_ver1 {
+ public:
+  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(OnnxPreviewGeneral, 1, FlexAttention)>());
+  }
+};
+
 // Register preview operators.
 ONNX_API inline void RegisterOnnxPreviewOperatorSetSchema() {
   // Preview operators should have only one version.
   // If changes are needed for a specific preview operator,
   // its spec should be modified without increasing its version.
   RegisterOpSetSchema<OpSet_OnnxPreview_ver1>();
+  RegisterOpSetSchema<OpSet_OnnxPreviewGeneral_ver1>();
 }
 
 } // namespace ONNX_NAMESPACE
