@@ -1,9 +1,3 @@
-// Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/defs/parser.h"
@@ -758,6 +752,34 @@ TEST(ParserTest, QuotedIdentifierTest2) {
 
   FunctionProto fp;
   Parse(fp, code);
+}
+
+TEST(ParserTest, FloatAttributeTest) {
+  AttributeProto attr;
+
+  // Test float attribute without decimal point or exponent
+  Parse(attr, "x = 2");
+  EXPECT_EQ(attr.name(), "x");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  EXPECT_FLOAT_EQ(attr.f(), 2.0);
+
+  // Test float attribute with decimal point
+  Parse(attr, "x = 2.5");
+  EXPECT_EQ(attr.name(), "x");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  EXPECT_FLOAT_EQ(attr.f(), 2.5);
+
+  // Test float attribute with exponent
+  Parse(attr, "x = 2e3");
+  EXPECT_EQ(attr.name(), "x");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  EXPECT_FLOAT_EQ(attr.f(), 2000.0);
+
+  // Test float attribute with negative value
+  Parse(attr, "x = -2.5");
+  EXPECT_EQ(attr.name(), "x");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  EXPECT_FLOAT_EQ(attr.f(), -2.5);
 }
 
 } // namespace Test
