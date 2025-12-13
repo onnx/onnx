@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_log_internal_check_op.a CMakeFiles/log_internal_check_op.dir/internal/check_op.cc.o
+/usr/bin/ranlib libabsl_log_internal_check_op.a

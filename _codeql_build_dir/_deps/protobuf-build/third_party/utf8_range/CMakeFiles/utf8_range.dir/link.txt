@@ -1,0 +1,2 @@
+/usr/bin/ar qc libutf8_range.a CMakeFiles/utf8_range.dir/utf8_range.c.o
+/usr/bin/ranlib libutf8_range.a

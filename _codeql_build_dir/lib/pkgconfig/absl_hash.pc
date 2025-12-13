@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_hash
+Description: Abseil hash library
+URL: https://abseil.io/
+Version: 20250127
+Requires: absl_bits = 20250127, absl_city = 20250127, absl_config = 20250127, absl_core_headers = 20250127, absl_endian = 20250127, absl_fixed_array = 20250127, absl_function_ref = 20250127, absl_meta = 20250127, absl_int128 = 20250127, absl_strings = 20250127, absl_optional = 20250127, absl_variant = 20250127, absl_utility = 20250127, absl_low_level_hash = 20250127
+Libs: -L${libdir}  -labsl_hash 
+Cflags: -I${includedir} -DNOMINMAX

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_crc_internal.a CMakeFiles/crc_internal.dir/internal/crc.cc.o CMakeFiles/crc_internal.dir/internal/crc_x86_arm_combined.cc.o
+/usr/bin/ranlib libabsl_crc_internal.a

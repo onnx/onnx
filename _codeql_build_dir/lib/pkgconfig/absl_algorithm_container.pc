@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_algorithm_container
+Description: Abseil algorithm_container library
+URL: https://abseil.io/
+Version: 20250127
+Requires: absl_algorithm = 20250127, absl_config = 20250127, absl_core_headers = 20250127, absl_meta = 20250127, absl_nullability = 20250127
+Libs: -L${libdir}  
+Cflags: -I${includedir} -DNOMINMAX

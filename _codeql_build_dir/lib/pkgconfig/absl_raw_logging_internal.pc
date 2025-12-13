@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_raw_logging_internal
+Description: Abseil raw_logging_internal library
+URL: https://abseil.io/
+Version: 20250127
+Requires: absl_atomic_hook = 20250127, absl_config = 20250127, absl_core_headers = 20250127, absl_errno_saver = 20250127, absl_log_severity = 20250127
+Libs: -L${libdir}  -labsl_raw_logging_internal 
+Cflags: -I${includedir} -DNOMINMAX

@@ -925,6 +925,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // versioning is not meaningful and that domain should have only one
       // version.
       map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_PREVIEW_DOMAIN] = std::make_pair(1, 1);
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
@@ -932,6 +933,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
+      last_release_version_map_[AI_ONNX_PREVIEW_DOMAIN] = 1;
     }
 
     ONNX_API const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -1297,6 +1299,9 @@ ONNX_API OpSchema GetOpSchema();
 
 #define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
+
+#define ONNX_PREVIEW_OPERATOR_SET_SCHEMA(name, ver, impl) \
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxPreviewGeneral, AI_ONNX_PREVIEW_DOMAIN, ver, true, impl)
 
 #ifdef NDEBUG
 #define ONNX_DBG_INCREMENT_COUNT_IN_OPSETS() 0

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_raw_logging_internal.a CMakeFiles/raw_logging_internal.dir/internal/raw_logging.cc.o
+/usr/bin/ranlib libabsl_raw_logging_internal.a

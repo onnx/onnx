@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_bad_optional_access.a CMakeFiles/bad_optional_access.dir/bad_optional_access.cc.o
+/usr/bin/ranlib libabsl_bad_optional_access.a

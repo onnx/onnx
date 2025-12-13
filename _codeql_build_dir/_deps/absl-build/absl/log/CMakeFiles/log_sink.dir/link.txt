@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_log_sink.a CMakeFiles/log_sink.dir/log_sink.cc.o
+/usr/bin/ranlib libabsl_log_sink.a

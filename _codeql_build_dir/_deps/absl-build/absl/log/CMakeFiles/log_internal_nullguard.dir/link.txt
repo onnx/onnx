@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_log_internal_nullguard.a CMakeFiles/log_internal_nullguard.dir/internal/nullguard.cc.o
+/usr/bin/ranlib libabsl_log_internal_nullguard.a
