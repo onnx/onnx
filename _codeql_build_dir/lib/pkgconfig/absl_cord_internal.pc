@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_cord_internal
+Description: Abseil cord_internal library
+URL: https://abseil.io/
+Version: 20250127
+Requires: absl_base_internal = 20250127, absl_compressed_tuple = 20250127, absl_config = 20250127, absl_container_memory = 20250127, absl_compare = 20250127, absl_core_headers = 20250127, absl_crc_cord_state = 20250127, absl_endian = 20250127, absl_inlined_vector = 20250127, absl_layout = 20250127, absl_raw_logging_internal = 20250127, absl_strings = 20250127, absl_throw_delegate = 20250127, absl_type_traits = 20250127
+Libs: -L${libdir}  -labsl_cord_internal 
+Cflags: -I${includedir} -DNOMINMAX

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_string_view.a CMakeFiles/string_view.dir/string_view.cc.o
+/usr/bin/ranlib libabsl_string_view.a

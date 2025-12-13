@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_log_internal_conditions.a CMakeFiles/log_internal_conditions.dir/internal/conditions.cc.o
+/usr/bin/ranlib libabsl_log_internal_conditions.a

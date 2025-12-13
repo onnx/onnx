@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_cordz_functions.a CMakeFiles/cordz_functions.dir/internal/cordz_functions.cc.o
+/usr/bin/ranlib libabsl_cordz_functions.a

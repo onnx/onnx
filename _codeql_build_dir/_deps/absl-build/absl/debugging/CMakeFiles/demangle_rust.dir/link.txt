@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_demangle_rust.a CMakeFiles/demangle_rust.dir/internal/demangle_rust.cc.o
+/usr/bin/ranlib libabsl_demangle_rust.a

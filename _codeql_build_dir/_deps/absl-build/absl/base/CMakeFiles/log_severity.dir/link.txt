@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_log_severity.a CMakeFiles/log_severity.dir/log_severity.cc.o
+/usr/bin/ranlib libabsl_log_severity.a
