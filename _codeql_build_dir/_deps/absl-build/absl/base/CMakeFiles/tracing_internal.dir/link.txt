@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_tracing_internal.a CMakeFiles/tracing_internal.dir/internal/tracing.cc.o
+/usr/bin/ranlib libabsl_tracing_internal.a
