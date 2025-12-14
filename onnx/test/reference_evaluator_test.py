@@ -6237,6 +6237,64 @@ class TestReferenceEvaluator(unittest.TestCase):
             m,
         )
 
+    def test_center_crop_pad_no_change_when_shape_equals_dim(self):
+        """Test that CenterCropPad correctly handles the case where target shape equals current dimension.
+
+        This test specifically validates the fix for the bug where 'if sh == a' was comparing
+        the target shape value with the axis index instead of 'if sh == dim' which correctly
+        compares with the current dimension size.
+
+        Test case: Input shape (5, 5, 5), target shape [3, 3, 3]
+        - Axis 0: dim=5, sh=3, a=0 -> should crop (sh != dim)
+        - Axis 1: dim=5, sh=3, a=1 -> should crop (sh != dim)
+        - Axis 2: dim=5, sh=3, a=2 -> should crop (sh != dim)
+
+        The bug would have incorrectly evaluated 'if sh == a' as True when sh=3 and a=3,
+        but with shape (5,5,5) and target [3,3,3], we don't hit that case.
+
+        Better test: Input shape (4, 4, 2), target shape [2, 2, 2]
+        - Axis 0: dim=4, sh=2, a=0 -> should crop (sh != dim, and sh != a)
+        - Axis 1: dim=4, sh=2, a=1 -> should crop (sh != dim, and sh != a)
+        - Axis 2: dim=2, sh=2, a=2 -> should NOT change (sh == dim)
+
+        The bug would cause axis 2 to be incorrectly processed because sh=2 and a=2,
+        making 'if sh == a' True when it should be checking 'if sh == dim' which is also True.
+        In this case both evaluate to True, but the semantic meaning is different.
+
+        Most revealing test: Input shape (5, 5, 1), target shape [1, 1, 1]
+        - Axis 0: dim=5, sh=1, a=0 -> should crop (sh != dim, sh != a)
+        - Axis 1: dim=5, sh=1, a=1 -> should crop (sh != dim, and sh == a would be False)
+        - Axis 2: dim=1, sh=1, a=2 -> should NOT change (sh == dim, but sh != a)
+
+        This clearly demonstrates the bug: at axis 2, 'if sh == a' would be False (1 != 2),
+        causing incorrect cropping logic to be applied when no change should happen.
+        """
+        # Test case where target shape equals dimension (should not change that axis)
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
+        shape = make_tensor_value_info("shape", TensorProto.INT64, [3])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        node = make_node("CenterCropPad", ["X", "shape"], ["Y"])
+        graph = make_graph([node], "g", [X, shape], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        check_model(onnx_model)
+
+        # Input shape (5, 5, 1), target [1, 1, 1]
+        # This tests the bug: axis 2 has dim=1, sh=1, but a=2
+        # Bug: 'if sh == a' would be False (1 != 2), causing wrong branch
+        # Fix: 'if sh == dim' is True (1 == 1), correctly skipping processing
+        x = np.arange(25).reshape((5, 5, 1)).astype(np.float32)
+        target_shape = np.array([1, 1, 1], dtype=np.int64)
+
+        # Expected: crop first two dimensions to center element [2, 2, :]
+        # The third dimension should remain unchanged (not cropped/padded)
+        expected = x[2:3, 2:3, :]  # Center element, shape (1, 1, 1)
+
+        sess = ReferenceEvaluator(onnx_model)
+        got = sess.run(None, {"X": x, "shape": target_shape})[0]
+
+        assert_allclose(got, expected)
+        self.assertEqual(got.shape, (1, 1, 1))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
