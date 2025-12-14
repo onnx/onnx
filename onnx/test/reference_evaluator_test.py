@@ -6244,30 +6244,17 @@ class TestReferenceEvaluator(unittest.TestCase):
         the target shape value with the axis index instead of 'if sh == dim' which correctly
         compares with the current dimension size.
 
-        Test case: Input shape (5, 5, 5), target shape [3, 3, 3]
-        - Axis 0: dim=5, sh=3, a=0 -> should crop (sh != dim)
-        - Axis 1: dim=5, sh=3, a=1 -> should crop (sh != dim)
-        - Axis 2: dim=5, sh=3, a=2 -> should crop (sh != dim)
+        The actual test uses: Input shape (5, 5, 1), target shape [1, 1, 1]
+        - Axis 0: dim=5, sh=1, a=0 -> should crop (sh < dim)
+        - Axis 1: dim=5, sh=1, a=1 -> should crop (sh < dim)
+        - Axis 2: dim=1, sh=1, a=2 -> should NOT change (sh == dim)
 
-        The bug would have incorrectly evaluated 'if sh == a' as True when sh=3 and a=3,
-        but with shape (5,5,5) and target [3,3,3], we don't hit that case.
+        This test reveals the bug at axis 2:
+        - Bug: 'if sh == a' evaluates to 'if 1 == 2' -> False (incorrectly enters crop logic)
+        - Fix: 'if sh == dim' evaluates to 'if 1 == 1' -> True (correctly skips processing)
 
-        Better test: Input shape (4, 4, 2), target shape [2, 2, 2]
-        - Axis 0: dim=4, sh=2, a=0 -> should crop (sh != dim, and sh != a)
-        - Axis 1: dim=4, sh=2, a=1 -> should crop (sh != dim, and sh != a)
-        - Axis 2: dim=2, sh=2, a=2 -> should NOT change (sh == dim)
-
-        The bug would cause axis 2 to be incorrectly processed because sh=2 and a=2,
-        making 'if sh == a' True when it should be checking 'if sh == dim' which is also True.
-        In this case both evaluate to True, but the semantic meaning is different.
-
-        Most revealing test: Input shape (5, 5, 1), target shape [1, 1, 1]
-        - Axis 0: dim=5, sh=1, a=0 -> should crop (sh != dim, sh != a)
-        - Axis 1: dim=5, sh=1, a=1 -> should crop (sh != dim, and sh == a would be False)
-        - Axis 2: dim=1, sh=1, a=2 -> should NOT change (sh == dim, but sh != a)
-
-        This clearly demonstrates the bug: at axis 2, 'if sh == a' would be False (1 != 2),
-        causing incorrect cropping logic to be applied when no change should happen.
+        With the buggy code, axis 2 would incorrectly attempt to crop from dimension 1 to 1,
+        which should be a no-op but the buggy logic doesn't recognize it as such.
         """
         # Test case where target shape equals dimension (should not change that axis)
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
