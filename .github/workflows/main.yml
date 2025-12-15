@@ -7,6 +7,7 @@ name: CI
 env:
   ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
   UBSAN_OPTIONS: print_stacktrace=1
+  TSAN_OPTIONS: suppressions=./tsan.supp
 
 on:
   schedule:
