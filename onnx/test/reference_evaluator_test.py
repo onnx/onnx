@@ -6237,6 +6237,30 @@ class TestReferenceEvaluator(unittest.TestCase):
             m,
         )
 
+    def test_center_crop_pad_no_change_when_shape_equals_dim(self):
+        """Test CenterCropPad when target shape equals current dimension.
+
+        Validates the fix where comparison should be 'if sh == dim' not 'if sh == a'.
+        Uses input (5, 5, 1) with target [1, 1, 1] to test axis 2 where dim=1, sh=1, a=2.
+        """
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
+        shape = make_tensor_value_info("shape", TensorProto.INT64, [3])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        node = make_node("CenterCropPad", ["X", "shape"], ["Y"])
+        graph = make_graph([node], "g", [X, shape], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        check_model(onnx_model)
+
+        x = np.arange(25).reshape((5, 5, 1)).astype(np.float32)
+        target_shape = np.array([1, 1, 1], dtype=np.int64)
+        expected = x[2:3, 2:3, :]
+
+        sess = ReferenceEvaluator(onnx_model)
+        got = sess.run(None, {"X": x, "shape": target_shape})[0]
+
+        assert_allclose(got, expected)
+        self.assertEqual(got.shape, (1, 1, 1))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
