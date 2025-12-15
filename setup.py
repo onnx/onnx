@@ -224,12 +224,12 @@ class CmakeBuild(setuptools.Command):
 
                 # Check if stub generation was explicitly disabled via CMAKE_ARGS
                 # Store this for later use in BuildExt to decide whether to assert
+                # Accept all CMake boolean false values for disabling stubs
+                cmake_false_values = {"0", "off", "false", "no", "n"}
                 self.distribution.onnx_gen_stubs_disabled = any(
-                    arg in extra_cmake_args
-                    for arg in [
-                        "-DONNX_GEN_PB_TYPE_STUBS=OFF",
-                        "-DONNX_GEN_PB_TYPE_STUBS=0",
-                    ]
+                    arg.lower().startswith("-donnx_gen_pb_type_stubs=") and
+                    arg.split("=", 1)[1].strip().lower() in cmake_false_values
+                    for arg in extra_cmake_args
                 )
 
                 # prevent crossfire with downstream scripts
