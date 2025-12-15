@@ -78,7 +78,7 @@ jobs:
             protobuf_type: 'External'
           - python_version: '3.10'
             onnx_ml: 0
-            debug_build: 0
+            debug_build: 1
             unity_build: 0
             documentation: 0
             protobuf_type: 'Internal'
@@ -152,9 +152,12 @@ jobs:
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
           if [ "${{ matrix.debug_build }}" == "1" ]; then
-            export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=ON"
             if [ "${{ matrix.python_version }}" == "3.13t" ]; then
-              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=OFF -DONNX_USE_TSAN=ON"
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_TSAN=ON"
+            elif [ "${{ matrix.python_version }}" == "3.10" ]; then
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_MSAN=ON"
+            else
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=ON"
             fi
           fi
           pip install -e ".[reference]" -v
@@ -193,14 +196,14 @@ jobs:
           python -m pip install -r requirements-release_test.txt
 
       - name: Setup ASAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.13t')
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.13t') && (matrix.python_version != '3.10')
         run: |
           echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libasan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
       - name: Setup TSAN LD_PRELOAD
         if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version == '3.13t')
         run: |
-          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libtsan.so)" >> $GITHUB_ENV
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libtsan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
       - name: Run Python tests
         run: |

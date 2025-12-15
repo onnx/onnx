@@ -1,1 +1,3 @@
 race:v8::
+race:object_stack
+race:mi_segment_page_clear
