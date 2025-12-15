@@ -1345,7 +1345,6 @@ class OpSet_Onnx_ver23 {
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CumProd);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Constant);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, ConstantOfShape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, DequantizeLinear);
@@ -1374,7 +1373,6 @@ class OpSet_Onnx_ver24 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Attention)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CastLike)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, CumProd)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, Constant)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, ConstantOfShape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 24, DequantizeLinear)>());

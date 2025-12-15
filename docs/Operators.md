@@ -42,7 +42,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-22">22</a>, <a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
 |<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-22">22</a>, <a href="Changelog.md#Cos-7">7</a>|
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-22">22</a>, <a href="Changelog.md#Cosh-9">9</a>|
-|<a href="#CumProd">CumProd</a>|<a href="Changelog.md#CumProd-24">24</a>|
+|<a href="#CumProd">CumProd</a>|<a href="Changelog.md#CumProd-26">26</a>|
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
@@ -9448,7 +9448,7 @@ expect(node, inputs=[x], outputs=[y], name="test_cosh")
 
 #### Version
 
-This version of the operator has been available since version 24 of the default ONNX operator set.
+This version of the operator has been available since version 26 of the default ONNX operator set.
 
 #### Attributes
 
