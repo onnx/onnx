@@ -362,9 +362,13 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
     endif()
 
     # Use add_custom_command to avoid re-generate of PROTO files
+    set(deps ${INFILE})
+    if(TARGET protobuf::protoc)
+      list(APPEND deps protobuf::protoc)
+    endif()
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
         COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
-        DEPENDS ${INFILE}
+        DEPENDS ${deps}
         COMMENT "Running gen_proto.py on ${INFILE}")
     message("Generated: ${GENERATED_PROTO}")
 
