@@ -96,7 +96,7 @@ TEST(ParserTest, TypeTest) {
   // sequence type:
   Parse(type, "seq(float[])");
   EXPECT_TRUE(type.has_sequence_type());
-  auto& elttype = type.sequence_type().elem_type();
+  const auto& elttype = type.sequence_type().elem_type();
   EXPECT_TRUE(elttype.has_tensor_type());
   EXPECT_EQ(elttype.tensor_type().elem_type(), float_type);
   EXPECT_FALSE(elttype.tensor_type().has_shape());
@@ -104,7 +104,7 @@ TEST(ParserTest, TypeTest) {
   // optional type:
   Parse(type, "optional(float)");
   EXPECT_TRUE(type.has_optional_type());
-  auto& optelttype = type.optional_type().elem_type();
+  const auto& optelttype = type.optional_type().elem_type();
   EXPECT_TRUE(optelttype.has_tensor_type());
   EXPECT_EQ(optelttype.tensor_type().elem_type(), float_type);
   EXPECT_TRUE(optelttype.tensor_type().has_shape());
@@ -119,7 +119,7 @@ TEST(ParserTest, TypeTest) {
   Parse(type, "map(int32, float[N])");
   EXPECT_TRUE(type.has_map_type());
   EXPECT_EQ(type.map_type().key_type(), int32_type);
-  auto& valtype = type.map_type().value_type();
+  const auto& valtype = type.map_type().value_type();
   EXPECT_TRUE(valtype.has_tensor_type());
   EXPECT_EQ(valtype.tensor_type().elem_type(), float_type);
   EXPECT_EQ(valtype.tensor_type().shape().dim_size(), 1);
@@ -143,7 +143,7 @@ TEST(ParserTest, TensorProtoTest) {
 
   Parse(tensorProto, "float[5] {1e1, 2.0e-1, 3.1E-1, 4E+1, 5.5e-10}");
 
-  Parse(tensorProto, "string[2] { \"Hello\", \"World\" }");
+  Parse(tensorProto, R"(string[2] { "Hello", "World" })");
 
   // String literals with escape character
   Parse(tensorProto, R"(
@@ -179,7 +179,7 @@ TEST(ParserTest, AttributeTest) {
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRING);
   EXPECT_EQ(attr.s(), "astring");
 
-  Parse(attr, "x = [\"abc\", \"def\"]");
+  Parse(attr, R"(x = ["abc", "def"])");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_STRINGS);
 
   Parse(attr, "x : ints = @xyz");
@@ -348,7 +348,7 @@ TEST(ParserTest, NodeAttrTest1) {
 }
 
 TEST(ParserTest, NodeAttrTest2) {
-  const char* code = "x = foo <d = [5, 10], e = [0.55, 0.66], f = [\"str1\", \"str2\"]> (y, z)";
+  const char* code = R"(x = foo <d = [5, 10], e = [0.55, 0.66], f = ["str1", "str2"]> (y, z))";
   NodeProto n;
   Parse(n, code);
   EXPECT_EQ(n.attribute_size(), 3);

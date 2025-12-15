@@ -5608,6 +5608,113 @@ class TestReferenceEvaluator(unittest.TestCase):
     @parameterized.parameterized.expand(
         [
             (
+                TensorProto.UINT2,
+                [-1, 0, 1.5, 2, 3.3, 10, 20, 40],
+                [0, 0, 2, 2, 4, 6, 6, 6],
+            ),
+            (TensorProto.UINT2, [-1, 0, 1.5, 2, 3.3, 10, 40], [0, 0, 2, 2, 4, 6, 6]),
+            (TensorProto.UINT2, [0], [0]),
+            (
+                TensorProto.INT2,
+                [-20, -14.5, 0, 1.5, 2, 3.3, 10, 20],
+                [-4, -4, 0, 2, 2, 2, 2, 2],
+            ),
+            (
+                TensorProto.INT2,
+                [-20, -14.5, 0, 1.5, 2, 3.3, 10],
+                [-4, -4, 0, 2, 2, 2, 2],
+            ),
+            (TensorProto.INT2, [0], [0]),
+        ]
+    )
+    def test_quantize_linear_int2(self, qtype, data, expected):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["scale"],
+                        value=make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["zero"],
+                        value=make_tensor("zero", qtype, [1], [0]),
+                    ),
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": np.asarray(data)})
+        assert_allclose(got[0], expected)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.FLOAT, TensorProto.FLOAT16),
+            (TensorProto.UINT2, TensorProto.INT2),
+        )
+    )
+    def test_cast_int2_output(self, cast_from, cast_to):
+        X = make_tensor_value_info("X", cast_from, [None])
+        Y = make_tensor_value_info("Y", cast_to, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Y"], to=cast_to),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array(
+            [0, 1, 2.4, 2.6, 4, 10],
+            dtype=onnx.helper.tensor_dtype_to_np_dtype(cast_from),
+        )
+        expected = data.astype(onnx.helper.tensor_dtype_to_np_dtype(cast_to))
+        got = ref.run(None, {"X": data})
+        self.assertEqual(got[0].tolist(), expected.tolist())
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT2, TensorProto.INT2),
+            (TensorProto.FLOAT, TensorProto.FLOAT16),
+        )
+    )
+    def test_cast_int2_input(
+        self, cast_from: TensorProto.DataType, cast_to: TensorProto.DataType
+    ):
+        X = make_tensor_value_info("X", cast_from, [None])
+        Y = make_tensor_value_info("Y", cast_to, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Y"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array(range(2), dtype=np.float32)
+        expected = data.astype(onnx.helper.tensor_dtype_to_np_dtype(cast_from))
+        got = ref.run(None, {"X": data})
+        np.testing.assert_array_equal(got[0], expected)
+
+    @parameterized.parameterized.expand(
+        [
+            (
                 TensorProto.UINT4,
                 [-1, 0, 1.5, 2, 3.3, 10, 20, 40],
                 [0, 0, 2, 2, 4, 10, 20, 30],
@@ -5998,6 +6105,8 @@ class TestReferenceEvaluator(unittest.TestCase):
             ("FLOAT8E5M2FNUZ",),
             ("INT4",),
             ("UINT4",),
+            ("INT2",),
+            ("UINT2",),
         ]
     )
     def test_cmp_custom_dtype(self, stype):

@@ -8,6 +8,7 @@
 #include "onnx/defs/parser.h"
 
 #include <cctype>
+#include <limits>
 #include <string>
 
 #include "onnx/common/common.h"
@@ -21,7 +22,7 @@ namespace ONNX_NAMESPACE {
 Status ParserBase::Parse(Literal& result) {
   bool decimal_point = false;
   auto nextch = NextChar();
-  auto from = next_;
+  const auto* from = next_;
   if (nextch == '"') {
     ++next_;
     bool has_escape = false;
@@ -114,7 +115,7 @@ Status ParserBase::Parse(Literal& result) {
 
 bool ParserBase::NextIsValidFloatString() {
   auto nextch = NextChar();
-  auto from = next_;
+  const auto* const from = next_;
   constexpr int INFINITY_LENGTH = 8;
 
   if (isalpha(nextch)) {
@@ -449,7 +450,7 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
   tensorProto.set_data_type(elem_type);
   if (!tensorTypeProto.tensor_type().has_shape())
     return ParseError("Error parsing TensorProto (expected a tensor shape).");
-  for (auto& dim : tensorTypeProto.tensor_type().shape().dim()) {
+  for (const auto& dim : tensorTypeProto.tensor_type().shape().dim()) {
     if (!dim.has_dim_value())
       return ParseError("Error parsing TensorProto shape (expected numeric dimension).");
     auto dimval = dim.dim_value();
@@ -468,10 +469,12 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
     if (!Matches('}')) {
       do {
         switch (static_cast<TensorProto::DataType>(elem_type)) {
+          case TensorProto::DataType::TensorProto_DataType_INT2:
           case TensorProto::DataType::TensorProto_DataType_INT4:
           case TensorProto::DataType::TensorProto_DataType_INT8:
           case TensorProto::DataType::TensorProto_DataType_INT16:
           case TensorProto::DataType::TensorProto_DataType_INT32:
+          case TensorProto::DataType::TensorProto_DataType_UINT2:
           case TensorProto::DataType::TensorProto_DataType_UINT4:
           case TensorProto::DataType::TensorProto_DataType_UINT8:
           case TensorProto::DataType::TensorProto_DataType_UINT16:
@@ -485,7 +488,10 @@ Status OnnxParser::Parse(TensorProto& tensorProto, const TypeProto& tensorTypePr
           case TensorProto::DataType::TensorProto_DataType_BOOL:
           case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
             PARSE_TOKEN(intval);
-            // TODO: check values are in the correct range.
+            if (intval > std::numeric_limits<int32_t>::max() || intval < std::numeric_limits<int32_t>::min()) {
+              return ParseError("Mismatch between data type and value: %d, %d", elem_type, intval);
+            }
+            // NOLINTNEXTLINE(bugprone-narrowing-conversions)
             tensorProto.add_int32_data(intval);
             break;
           case TensorProto::DataType::TensorProto_DataType_INT64:

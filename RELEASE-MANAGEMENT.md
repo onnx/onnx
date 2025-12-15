@@ -8,7 +8,6 @@ SPDX-License-Identifier: Apache-2.0
 
 This describes the process by which versions of ONNX are officially released to the public.
 
-
 Release Cadence
 ---------------
 
@@ -19,7 +18,8 @@ Branch cuts for a new release are planned every 4 months. However, the times can
 | 1.17.0 | XYZ | XYZ | Not planned |
 | 1.18.0 | Mar 2025 | May 2025 | Not planned |
 | 1.19.0 | 31. July 2025 | 27. August 2025 | 9. October 2025 |
-| 1.20.0 (tbd) | November 2025 | December 2025 | Not planned |
+| 1.20.0  | 31. October 2025 | November 2025 | tbd |
+| 1.21.0 (tbd) | February 2026 | March 2026 | tbd |
 
 Release Compatibility Matrix
 ----------------------------

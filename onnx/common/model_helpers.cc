@@ -22,10 +22,10 @@ Common::Status BuildNode(
   node->set_domain(domain);
   node->set_doc_string(doc_string);
   node->set_op_type(op_type);
-  for (auto& input : inputs) {
+  for (const auto& input : inputs) {
     node->add_input(input);
   }
-  for (auto& output : outputs) {
+  for (const auto& output : outputs) {
     node->add_output(output);
   }
 

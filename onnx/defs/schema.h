@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <climits>
 #include <cstring>
 #include <functional>
 #include <initializer_list>
@@ -173,6 +172,11 @@ class OpSchema final {
     // This formal parameter is not differentiable. That is, this formal
     // parameter can not be differentiable input of Gradient operator.
     NonDifferentiable = 2
+  };
+  enum class NodeDeterminism : uint8_t {
+    Unknown = 0,
+    NonDeterministic = 1,
+    Deterministic = 2,
   };
 
   // Formal parameter representation, including input/output name, typeStr,
@@ -592,6 +596,8 @@ class OpSchema final {
 
   ONNX_API static const std::vector<std::string>& numeric_types_for_math_reduction();
 
+  ONNX_API static const std::vector<std::string>& all_numeric_types_ir13();
+
   ONNX_API static const std::vector<std::string>& all_numeric_types_ir12();
 
   ONNX_API static const std::vector<std::string>& all_numeric_types_ir11();
@@ -636,6 +642,10 @@ class OpSchema final {
 
   ONNX_API static const std::vector<std::string>& all_non_complex_tensor_types_ir12();
 
+  ONNX_API static const std::vector<std::string>& all_tensor_types_ir13();
+
+  ONNX_API static const std::vector<std::string>& all_non_complex_tensor_types_ir13();
+
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types();
 
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir4();
@@ -648,6 +658,8 @@ class OpSchema final {
 
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir12();
 
+  ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir13();
+
   ONNX_API static const std::vector<std::string>& all_optional_types();
 
   ONNX_API static const std::vector<std::string>& all_optional_types_ir4();
@@ -659,6 +671,8 @@ class OpSchema final {
   ONNX_API static const std::vector<std::string>& all_optional_types_ir11();
 
   ONNX_API static const std::vector<std::string>& all_optional_types_ir12();
+
+  ONNX_API static const std::vector<std::string>& all_optional_types_ir13();
 
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for templated/macro ops.
@@ -812,6 +826,9 @@ class OpSchema final {
   // Build function with information stored in opschema
   ONNX_API void BuildFunction(FunctionProto& function_body) const;
 
+  ONNX_API NodeDeterminism GetNodeDeterminism() const;
+  ONNX_API OpSchema& SetNodeDeterminism(NodeDeterminism node_determinism);
+
  private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
@@ -870,6 +887,8 @@ class OpSchema final {
 
   std::map<int, std::shared_ptr<FunctionProto>> opset_version_to_function_body_;
   std::map<int, ContextDependentFunctionBodyBuilder> opset_version_to_function_builder_;
+
+  NodeDeterminism node_determinism_ = NodeDeterminism::Unknown;
 };
 
 // Map type to store operator schemas. The format is,
@@ -899,7 +918,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 25);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 26);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
@@ -909,7 +928,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 24;
+      last_release_version_map_[ONNX_DOMAIN] = 25;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
@@ -994,8 +1013,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   class OpSchemaRegisterOnce final {
    public:
-    // Export to cpp custom register macro
-    explicit OpSchemaRegisterOnce(
+    // Export to cpp custom register macro.
+    // DO NOT decorate the constructor as "explicit" because that breaks the macro ONNX_OPERATOR_SCHEMA_UNIQ.
+    // NOLINTNEXTLINE(google-explicit-constructor)
+    OpSchemaRegisterOnce( // NOSONAR
         OpSchema op_schema,
         int opset_version_to_load = 0,
         bool fail_duplicate_schema = true) {
@@ -1147,7 +1168,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // Return the schema with biggest version, which is not greater than specified
   // <maxInclusiveVersion> in specified domain. Domain with default value
   // ONNX_DOMAIN means ONNX.
-  static const OpSchema*
+  ONNX_API static const OpSchema*
   Schema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
@@ -1174,16 +1195,16 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   ONNX_API static OpSchemaRegistry* Instance();
 
   // NOLINTNEXTLINE(google-default-arguments)
-  const OpSchema* GetSchema(
+  ONNX_API const OpSchema* GetSchema(
       const std::string& key,
       const int maxInclusiveVersion,
       const std::string& domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
-  static void SetLoadedSchemaVersion(int target_version) {
+  ONNX_API static void SetLoadedSchemaVersion(int target_version) {
     loaded_schema_version = target_version;
   }
-  static int GetLoadedSchemaVersion() {
+  ONNX_API static int GetLoadedSchemaVersion() {
     return loaded_schema_version;
   }
 
@@ -1313,7 +1334,7 @@ class DbgOperatorSetTracker {
 #define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
   class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
   template <>                                                                                           \
-  OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {                      \
+  ONNX_API OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {             \
     return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
   }                                                                                                     \
   ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(domain, ver, name, dbg_included_in_static_opset)
@@ -1341,9 +1362,9 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                      \
-  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce(op_schema_register_once##name##Counter) ONNX_UNUSED = \
-      OpSchema(#name, __FILE__, __LINE__)
+#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                     \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce op_schema_register_once##name##Counter ONNX_UNUSED = \
+      ONNX_NAMESPACE::OpSchema(#name, __FILE__, __LINE__)
 
 ONNX_API inline std::string GenerateOptionalArgumentsDoc() {
   return "This operator has **optional** inputs/outputs. "

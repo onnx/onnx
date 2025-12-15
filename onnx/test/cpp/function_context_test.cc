@@ -24,7 +24,7 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   t.set_data_type(elem_type);
   switch (elem_type) {
     case TensorProto_DataType::TensorProto_DataType_FLOAT:
-      t.add_float_data((float)value);
+      t.add_float_data(static_cast<float>(value));
       break;
     case TensorProto_DataType::TensorProto_DataType_DOUBLE:
       t.add_double_data(value);
@@ -88,6 +88,7 @@ static void RegisterCustomFuncFloatSchema() {
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)"}, "Type of the input and output values")
+      .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
       .SetContextDependentFunctionBodyBuilder(BuildFloatFunctionBody);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
@@ -97,7 +98,7 @@ static void RegisterCustomFuncFloatSchema() {
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
   RegisterCustomFuncFloatSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
+  const auto* const schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
@@ -125,10 +126,10 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
 static bool
 BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of input-type:
-  auto* tp = ctx.getInputType(0);
+  const auto* const tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
     return false;
-  auto elem_type = (TensorProto_DataType)tp->tensor_type().elem_type();
+  auto elem_type = static_cast<TensorProto_DataType>(tp->tensor_type().elem_type());
   auto two_as_tensor = ToTensor(2.0, elem_type);
 
   std::vector<FunctionBodyHelper::NodeDef> body{
@@ -148,6 +149,7 @@ static void RegisterCustomFunctionSchema() {
       .Input(0, "X", "Input tensor", "T", OpSchema::Single)
       .Output(0, "Y", "Output tensor", "T", OpSchema::Single)
       .TypeConstraint("T", {"tensor(float)", "tensor(double)"}, "Type of the input and output values")
+      .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
       .SetContextDependentFunctionBodyBuilder(BuildFunctionBody);
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused(schema);
   (void)unused;
@@ -215,7 +217,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused9(schema_ver9);
   (void)unused9;
 
-  const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
+  const auto* const schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
     ONNX_TRY {
@@ -233,7 +235,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
     }
   }
 
-  const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
+  const auto* const schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
     ONNX_TRY {
@@ -250,7 +252,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
 TEST(FunctionAPITest, TypeContextTest) {
   RegisterCustomFunctionSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFunction", 12, ONNX_DOMAIN);
+  const auto* const schema = OpSchemaRegistry::Schema("CustomFunction", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());

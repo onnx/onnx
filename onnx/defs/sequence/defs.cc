@@ -3,7 +3,6 @@
  */
 
 #include <algorithm>
-#include <numeric>
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
@@ -11,7 +10,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* SequenceEmpty_ver11_doc = R"DOC(
+static constexpr const char* SequenceEmpty_ver11_doc = R"DOC(
 Construct an empty tensor sequence, with given data type.
 )DOC";
 
@@ -29,7 +28,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Empty sequence.", "S")
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          const auto* attr_proto = ctx.getAttribute("dtype");
+          const auto attr_proto = ctx.getAttribute("dtype");
           auto elem_type = TensorProto::FLOAT;
           if (nullptr != attr_proto) {
             if (!attr_proto->has_i()) {
@@ -42,7 +41,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               elem_type);
         }));
 
-static const char* SequenceConstruct_ver11_doc = R"DOC(
+static constexpr const char* SequenceConstruct_ver11_doc = R"DOC(
 Construct a tensor sequence containing 'inputs' tensors.
 All tensors in 'inputs' must have the same data type.
 )DOC";
@@ -77,7 +76,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("Element type of inputs are expected to be the same.");
           }
 
-          auto* output_tensor_type =
+          auto output_tensor_type =
               ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
 
           output_tensor_type->set_elem_type(static_cast<TensorProto_DataType>(input_elem_types[0]));
@@ -94,7 +93,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* SequenceInsert_ver11_doc = R"DOC(
+static constexpr const char* SequenceInsert_ver11_doc = R"DOC(
 Outputs a tensor sequence that inserts 'tensor' into 'input_sequence' at 'position'.
 'tensor' must have the same data type as 'input_sequence'.
 Accepted range for 'position' is in `[-n, n]`, where `n` is the number of tensors in 'input_sequence'.
@@ -144,7 +143,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 tensor_elem_type);
           }
 
-          auto* output_tensor_type =
+          auto output_tensor_type =
               ctx.getOutputType(0)->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type();
           output_tensor_type->set_elem_type(seq_elem_type);
 
@@ -157,7 +156,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           UnionShapeInfo(input1_type->tensor_type().shape(), *output_tensor_type);
         }));
 
-static const char* SequenceAt_ver11_doc = R"DOC(
+static constexpr const char* SequenceAt_ver11_doc = R"DOC(
 Outputs a tensor copy from the tensor at 'position' in 'input_sequence'.
 Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
 Negative value means counting positions from the back.
@@ -194,7 +193,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->CopyFrom(input0_type->sequence_type().elem_type());
         }));
 
-static const char* SequenceErase_ver11_doc = R"DOC(
+static constexpr const char* SequenceErase_ver11_doc = R"DOC(
 Outputs a tensor sequence that removes the tensor at 'position' from 'input_sequence'.
 Accepted range for 'position' is in `[-n, n - 1]`, where `n` is the number of tensors in 'input_sequence'.
 Negative value means counting positions from the back.
@@ -232,7 +231,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           ctx.getOutputType(0)->CopyFrom(*input0_type);
         }));
 
-static const char* SequenceLength_ver11_doc = R"DOC(
+static constexpr const char* SequenceLength_ver11_doc = R"DOC(
 Produces a scalar(tensor of empty shape) containing the number of tensors in 'input_sequence'.
 )DOC";
 
@@ -249,7 +248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int64)"},
             "Constrain output to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::INT64);
           output_tensor_type->mutable_shape()->Clear();
         }));
@@ -264,7 +263,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             OpSchema::all_tensor_sequence_types_ir4())));
 
-static const char* ConcatFromSequence_ver11_doc = R"DOC(
+static constexpr const char* ConcatFromSequence_ver11_doc = R"DOC(
 Concatenate a sequence of tensors into a single tensor.
 All input tensors must have the same shape, except for the dimension size of the axis to concatenate on.
 By default 'new_axis' is 0, the behavior is similar to numpy.concatenate.
@@ -339,7 +338,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             axis += (upper_bound + 1);
           }
 
-          auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           for (int i = 0; i <= upper_bound; ++i) {
             output_shape->add_dim();
@@ -349,7 +348,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* SequenceMap_ver17_doc = R"DOC(
+static constexpr const char* SequenceMap_ver17_doc = R"DOC(
 Applies a sub-graph to each sample in the input sequence(s).
 
 Inputs can be either tensors or sequences, with the exception of the first input which must
@@ -376,7 +375,7 @@ static void SequenceMapInferenceFunction(InferenceContext& ctx) {
   std::vector<const TypeProto*> subgraph_input_types;
   subgraph_input_types.reserve(num_inputs);
   for (size_t inputIndex = 0; inputIndex < num_inputs; inputIndex++) {
-    auto input_type = ctx.getInputType(inputIndex);
+    const auto* const input_type = ctx.getInputType(inputIndex);
     if (input_type == nullptr) {
       fail_type_inference("Input ", inputIndex, " expected to have type info");
     }
@@ -409,7 +408,7 @@ static void SequenceMapInferenceFunction(InferenceContext& ctx) {
     }
 
     for (size_t outputIndex = 0; outputIndex < num_outputs; outputIndex++) {
-      auto* subgraph_output_type = subgraph_output_types[outputIndex];
+      const auto* const subgraph_output_type = subgraph_output_types[outputIndex];
       ctx.getOutputType(outputIndex)->mutable_sequence_type()->mutable_elem_type()->CopyFrom(*subgraph_output_type);
     }
   }
@@ -423,7 +422,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
   functionProto.clear_input();
   functionProto.clear_output();
 
-  auto body_attr = ctx.getAttribute("body");
+  const auto* const body_attr = ctx.getAttribute("body");
   if (!body_attr || !body_attr->has_g())
     ONNX_THROW_EX(std::invalid_argument("Invalid ``body`` argument. Expected a graph"));
   const GraphProto& body = body_attr->g();
@@ -439,9 +438,9 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
     ONNX_THROW_EX(std::invalid_argument("Expected 1 or more outputs."));
 
   if (!ctx.hasInput(0))
-    ONNX_THROW_EX(std::invalid_argument(MakeString("Input 0 expected but not provided")));
+    ONNX_THROW_EX(std::invalid_argument("Input 0 expected but not provided"));
 
-  const auto* first_input_type = ctx.getInputType(0);
+  const auto* const first_input_type = ctx.getInputType(0);
   assert(first_input_type);
   if (!first_input_type->has_sequence_type())
     ONNX_THROW_EX(std::invalid_argument("Expected a sequence type for input 0"));
@@ -466,7 +465,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
   }
 
   // Loop body subgraph
-  std::string loopbody_graph_name("SequenceMap_loop_body");
+  const std::string loopbody_graph_name("SequenceMap_loop_body");
   GraphProto loopbody_graph;
   loopbody_graph.set_name(loopbody_graph_name);
   {
@@ -479,19 +478,19 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
     bool_type.mutable_tensor_type()->mutable_shape()->Clear();
 
     ValueInfoProto iter_count;
-    std::string iter_count_name = MakeString(loopbody_graph_name, "_itercount");
+    std::string iter_count_name = loopbody_graph_name + "_itercount";
     iter_count.set_name(iter_count_name);
     *iter_count.mutable_type() = int64_type;
     *loopbody_graph.add_input() = iter_count;
 
     ValueInfoProto cond_in;
-    std::string cond_in_name = MakeString(loopbody_graph_name, "_cond_in");
+    std::string cond_in_name = loopbody_graph_name + "_cond_in";
     cond_in.set_name(cond_in_name);
     *cond_in.mutable_type() = bool_type;
     *loopbody_graph.add_input() = cond_in;
 
     ValueInfoProto cond_out;
-    std::string cond_out_name = MakeString(loopbody_graph_name, "_cond_out");
+    std::string cond_out_name = loopbody_graph_name + "_cond_out";
     cond_out.set_name(cond_out_name);
     *cond_out.mutable_type() = bool_type;
     *loopbody_graph.add_output() = cond_out;
@@ -504,7 +503,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
     *loopbody_graph.add_node() = cond_identity;
 
     for (int inputIndex = 0; inputIndex < ninputs; inputIndex++) {
-      const auto* input_type = ctx.getInputType(inputIndex);
+      const auto* const input_type = ctx.getInputType(inputIndex);
       if (input_type && input_type->has_sequence_type()) {
         // If it's a sequence input, extract ``iter_count`` element
         NodeProto seq_at_node;
@@ -537,8 +536,8 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
     for (int outputIndex = 0; outputIndex < noutputs; outputIndex++) {
       const auto& body_out_i = body.output(outputIndex);
       assert(body_out_i.type().has_tensor_type());
-      std::string prefix = MakeString(loopbody_graph_name, "_", body_out_i.name());
-      std::string loopbody_in_name = MakeString(prefix, "_in");
+      std::string prefix = loopbody_graph_name + "_" + body_out_i.name();
+      std::string loopbody_in_name = prefix + "_in";
 
       ValueInfoProto tmp;
       *tmp.mutable_type()->mutable_sequence_type()->mutable_elem_type()->mutable_tensor_type() =
@@ -546,7 +545,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
       tmp.set_name(loopbody_in_name);
       *loopbody_graph.add_input() = tmp;
 
-      std::string loopbody_out_name = MakeString(prefix, "_out");
+      std::string loopbody_out_name = prefix + "_out";
       tmp.set_name(loopbody_out_name);
       *loopbody_graph.add_output() = tmp;
 
@@ -565,10 +564,10 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
   // TODO: figure out a way to prevent name collisions?
   auto first_input_name = functionProto.input(0);
   std::string prefix = MakeString("SequenceMap_", first_input_name);
-  std::string seqlen = MakeString(prefix, "_seqlen");
+  std::string seqlen = prefix + "_seqlen";
   nodes.push_back({{seqlen}, "SequenceLength", {first_input_name}});
 
-  std::string cond_bool = MakeString(prefix, "_cond");
+  std::string cond_bool = prefix + "_cond";
   nodes.push_back(FunctionBodyHelper::Const<bool>(cond_bool, true));
 
   std::vector<std::string> loop_node_inputs = {seqlen, cond_bool};
@@ -577,7 +576,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
     auto output_name = functionProto.output(outputIndex);
     std::string out_prefix = MakeString("SequenceMap_", output_name);
 
-    std::string seqempty_name = MakeString(out_prefix, "_seqempty");
+    std::string seqempty_name = out_prefix + "_seqempty";
     int64_t dtype = g_outputs.Get(outputIndex).type().tensor_type().elem_type();
     nodes.push_back({{seqempty_name}, "SequenceEmpty", {}, {MakeAttribute("dtype", dtype)}});
     loop_node_inputs.emplace_back(std::move(seqempty_name));
@@ -588,7 +587,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
 
   auto func_nodes = FunctionBodyHelper::BuildNodes(nodes);
   for (const auto& node : func_nodes) {
-    auto new_node = functionProto.add_node();
+    auto* new_node = functionProto.add_node();
     new_node->CopyFrom(node);
   }
 
@@ -619,6 +618,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain to any tensor or sequence type.")
+        // Setting `NonDeterministic` since it needs to be evaluated after function inlining
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .SetContextDependentFunctionBodyBuilder(BuildSequenceMapBodyFunc)
         .TypeAndShapeInferenceFunction(SequenceMapInferenceFunction));
 
