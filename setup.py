@@ -326,7 +326,7 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             assert generated_pyi_files, (
                 "Bug: No generated python stub files (.pyi) found. "
                 "ONNX_GEN_PB_TYPE_STUBS is ON by default. "
-                "you can disable stub generation with CMAKE_ARGS='-DONNX_GEN_PB_TYPE_STUBS=OFF'"
+                "You can disable stub generation with CMAKE_ARGS='-DONNX_GEN_PB_TYPE_STUBS=OFF'"
             )
 
         for src in (*generated_py_files, *generated_pyi_files):
