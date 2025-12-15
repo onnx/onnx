@@ -1891,7 +1891,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           defs::math::utils::MatMulShapeInference(ctx, 0, 1);
         }));
 
-static const char* CumProd_ver24_doc = R"DOC(
+static const char* CumProd_ver26_doc = R"DOC(
 Performs cumulative product of the input elements along the given axis.
 By default, it will do the product inclusively meaning the first element is copied as is.
 Through an `exclusive` attribute, this behavior can change to exclude the first element.
@@ -1915,9 +1915,9 @@ output = [6, 3, 1]
 
 ONNX_OPERATOR_SET_SCHEMA(
     CumProd,
-    24,
+    26,
     OpSchema()
-        .SetDoc(CumProd_ver24_doc)
+        .SetDoc(CumProd_ver26_doc)
         .Attr(
             "exclusive",
             "If set to 1 will return exclusive product in which the top element is not included."
