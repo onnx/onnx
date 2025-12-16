@@ -6281,6 +6281,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))]
         )
 
+    def test_cumprod(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 2)), ("axis", TensorProto.FLOAT, (1,))],
+            [make_node("CumProd", ["x", "axis"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 2))]
+        )
+
     def test_cumsum(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)), ("axis", TensorProto.FLOAT, (1,))],
