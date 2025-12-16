@@ -138,11 +138,8 @@ class TestStubAssertionLogic(unittest.TestCase):
 
         # When stubs are disabled, the assertion should be skipped
         # This verifies the condition logic: if not stubs_disabled
-        try:
-            if not stubs_disabled:
-                assert generated_pyi_files, "Bug: No .pyi files"
-        except AssertionError:
-            self.fail("AssertionError should not be raised when stubs are disabled")
+        if not stubs_disabled:
+            assert generated_pyi_files, "Bug: No .pyi files"
     def test_multiple_cmake_args_with_stubs_disabled(self) -> None:
         """Test CMAKE_ARGS with multiple options including stubs disabled."""
         extra_cmake_args = [
