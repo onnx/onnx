@@ -134,7 +134,6 @@ class TestStubAssertionLogic(unittest.TestCase):
     def test_assertion_logic_stubs_disabled_no_files(self) -> None:
         """Test assertion logic when stubs disabled and no files exist."""
         stubs_disabled = True
-        generated_pyi_files = []
 
         # When stubs are disabled, the assertion should be skipped
         # This verifies the condition logic: if not stubs_disabled
