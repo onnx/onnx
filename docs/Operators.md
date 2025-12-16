@@ -42,6 +42,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-22">22</a>, <a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
 |<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-22">22</a>, <a href="Changelog.md#Cos-7">7</a>|
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-22">22</a>, <a href="Changelog.md#Cosh-9">9</a>|
+|<a href="#CumProd">CumProd</a>|<a href="Changelog.md#CumProd-26">26</a>|
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
@@ -9422,6 +9423,241 @@ expect(node, inputs=[x], outputs=[y], name="test_cosh")
 </details>
 
 
+### <a name="CumProd"></a><a name="cumprod">**CumProd**</a>
+
+  Performs cumulative product of the input elements along the given axis.
+  By default, it will do the product inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform product in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 2, 6]
+  exclusive=1
+  output = [1, 1, 2]
+  exclusive=0
+  reverse=1
+  output = [6, 6, 3]
+  exclusive=1
+  reverse=1
+  output = [6, 3, 1]
+  ```
+
+
+#### Version
+
+This version of the operator has been available since version 26 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive product in which the top element is not included. In other terms, if set to 1, the j-th output element would be the product of the first (j-1) elements. Otherwise, it would be the product of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the products in reverse direction.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> (differentiable) : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> (non-differentiable) : T2</dt>
+<dd>A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> (differentiable) : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative products of the x's elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cumprod_1d</summary>
+
+```python
+node = onnx.helper.make_node("CumProd", inputs=["x", "axis"], outputs=["y"])
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([1.0, 2.0, 6.0, 24.0, 120.0]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d")
+```
+
+</details>
+
+
+<details>
+<summary>cumprod_1d_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd", inputs=["x", "axis"], outputs=["y"], exclusive=1
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([1.0, 1.0, 2.0, 6.0, 24.0]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_exclusive")
+```
+
+</details>
+
+
+<details>
+<summary>cumprod_1d_int32_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd", inputs=["x", "axis"], outputs=["y"], exclusive=1
+)
+x = np.array([1, 2, 3, 4, 5]).astype(np.int32)
+axis = np.array(0, dtype=np.int32)
+y = np.array([1, 1, 2, 6, 24]).astype(np.int32)
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_int32_exclusive"
+)
+```
+
+</details>
+
+
+<details>
+<summary>cumprod_1d_reverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd", inputs=["x", "axis"], outputs=["y"], reverse=1
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([120.0, 120.0, 60.0, 20.0, 5.0]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_reverse")
+```
+
+</details>
+
+
+<details>
+<summary>cumprod_1d_reverse_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd", inputs=["x", "axis"], outputs=["y"], reverse=1, exclusive=1
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([120.0, 60.0, 20.0, 5.0, 1.0]).astype(np.float64)
+expect(
+    node,
+    inputs=[x, axis],
+    outputs=[y],
+    name="test_cumprod_1d_reverse_exclusive",
+)
+```
+
+</details>
+
+
+<details>
+<summary>cumprod_2d_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
+axis = np.array(0, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 3.0, 4.0, 10.0, 18.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_axis_0")
+```
+
+</details>
+
+
+<details>
+<summary>cumprod_2d_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
+axis = np.array(1, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 6.0, 4.0, 20.0, 120.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_axis_1")
+```
+
+</details>
+
+
+<details>
+<summary>cumprod_2d_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.int32).reshape((2, 3))
+axis = np.array(0, dtype=np.int32)
+y = np.array([1, 2, 3, 4, 10, 18]).astype(np.int32).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_int32")
+```
+
+</details>
+
+
+<details>
+<summary>cumprod_2d_negative_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
+axis = np.array(-1, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 6.0, 4.0, 20.0, 120.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_negative_axis"
+)
+```
+
+</details>
+
+
 ### <a name="CumSum"></a><a name="cumsum">**CumSum**</a>
 
   Performs cumulative sum of the input elements along the given axis.
@@ -9480,7 +9716,7 @@ Other versions of this operator: <a href="Changelog.md#CumSum-11">11</a>
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
