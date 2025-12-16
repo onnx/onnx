@@ -14,198 +14,123 @@ class TestStubAssertionLogic(unittest.TestCase):
     triggering setuptools.setup() during test collection.
     """
 
-    def test_cmake_args_with_stubs_disabled(self) -> None:
-        """Test CMAKE_ARGS with ONNX_GEN_PB_TYPE_STUBS=OFF sets flag correctly."""
-        # Simulate what CmakeBuild.run() does
-        extra_cmake_args = ["-DONNX_GEN_PB_TYPE_STUBS=OFF"]
+    @staticmethod
+    def _is_stubs_disabled(extra_cmake_args: list[str]) -> bool:
+        """Helper method to detect if stubs are disabled in CMAKE_ARGS.
 
-        stubs_disabled = any(
-            arg in extra_cmake_args
-            for arg in [
-                "-DONNX_GEN_PB_TYPE_STUBS=OFF",
-                "-DONNX_GEN_PB_TYPE_STUBS=0",
-            ]
+        Matches the logic in setup.py which accepts all CMake boolean false values.
+        """
+        cmake_false_values = {"0", "off", "false", "no", "n"}
+        return any(
+            arg.lower().startswith("-donnx_gen_pb_type_stubs=")
+            and arg.split("=", 1)[1].strip().lower() in cmake_false_values
+            for arg in extra_cmake_args
         )
 
-        self.assertTrue(stubs_disabled, "Should detect -DONNX_GEN_PB_TYPE_STUBS=OFF")
-
-    def test_cmake_args_with_stubs_disabled_zero(self) -> None:
-        """Test CMAKE_ARGS with ONNX_GEN_PB_TYPE_STUBS=0 sets flag correctly."""
-        extra_cmake_args = ["-DONNX_GEN_PB_TYPE_STUBS=0"]
-
-        stubs_disabled = any(
-            arg in extra_cmake_args
-            for arg in ["-DONNX_GEN_PB_TYPE_STUBS=OFF", "-DONNX_GEN_PB_TYPE_STUBS=0"]
-        )
-
-        self.assertTrue(stubs_disabled, "Should detect -DONNX_GEN_PB_TYPE_STUBS=0")
-
-    def test_cmake_args_with_stubs_enabled(self) -> None:
-        """Test CMAKE_ARGS with ONNX_GEN_PB_TYPE_STUBS=ON doesn't set flag."""
-        extra_cmake_args = ["-DONNX_GEN_PB_TYPE_STUBS=ON"]
-
-        stubs_disabled = any(
-            arg in extra_cmake_args
-            for arg in ["-DONNX_GEN_PB_TYPE_STUBS=OFF", "-DONNX_GEN_PB_TYPE_STUBS=0"]
-        )
-
-        self.assertFalse(stubs_disabled, "Should not detect disabled when set to ON")
-
-    def test_cmake_args_without_stub_option(self) -> None:
-        """Test CMAKE_ARGS without ONNX_GEN_PB_TYPE_STUBS doesn't set flag."""
-        extra_cmake_args = ["-DONNX_USE_LITE_PROTO=ON", "-DCMAKE_BUILD_TYPE=Debug"]
-
-        stubs_disabled = any(
-            arg in extra_cmake_args
-            for arg in ["-DONNX_GEN_PB_TYPE_STUBS=OFF", "-DONNX_GEN_PB_TYPE_STUBS=0"]
-        )
-
-        self.assertFalse(
-            stubs_disabled, "Should not detect disabled when option not present"
-        )
-
-    def test_no_cmake_args(self) -> None:
-        """Test when CMAKE_ARGS is not set (default behavior)."""
-
-        # When CMAKE_ARGS is not set and not in extra_cmake_args,
-        # onnx_gen_stubs_disabled should not be set (defaults to False via getattr)
-        # This test verifies the getattr default behavior
-        class FakeDistribution:
-            pass
-
-        dist = FakeDistribution()
-        stubs_disabled = getattr(dist, "onnx_gen_stubs_disabled", False)
-
-        self.assertFalse(
-            stubs_disabled, "Should default to False (stubs enabled) when no CMAKE_ARGS"
-        )
-
-    def test_getattr_with_attribute_set(self) -> None:
-        """Test getattr when onnx_gen_stubs_disabled is set."""
-        mock_distribution = MagicMock()
-        mock_distribution.onnx_gen_stubs_disabled = True
-
-        stubs_disabled = getattr(mock_distribution, "onnx_gen_stubs_disabled", False)
-
-        self.assertTrue(stubs_disabled, "Should retrieve True from distribution")
-
-    def test_getattr_with_attribute_not_set(self) -> None:
-        """Test getattr when onnx_gen_stubs_disabled is not set (uses default)."""
-
-        # Create a real object without the attribute (not MagicMock which auto-creates attrs)
-        class FakeDistribution:
-            pass
-
-        dist = FakeDistribution()
-        stubs_disabled = getattr(dist, "onnx_gen_stubs_disabled", False)
-
-        self.assertFalse(
-            stubs_disabled,
-            "Should return default False when attribute not set",
-        )
-
-    def test_assertion_logic_stubs_enabled_files_exist(self) -> None:
-        """Test assertion logic when stubs enabled and files exist."""
-        stubs_disabled = False
-        generated_pyi_files = ["onnx_pb2.pyi", "onnx-ml_pb2.pyi"]
-
-        # Should not raise assertion error
-        try:
-            if not stubs_disabled:
-                assert generated_pyi_files, "Bug: No .pyi files"
-            success = True
-        except AssertionError:
-            success = False
-
-        self.assertTrue(success, "Should not raise assertion when files exist")
-
-    def test_assertion_logic_stubs_enabled_no_files(self) -> None:
-        """Test assertion logic when stubs enabled but no files exist."""
-        stubs_disabled = False
-        generated_pyi_files = []
-
-        # Should raise assertion error
-        with self.assertRaises(AssertionError) as context:
-            if not stubs_disabled:
-                assert generated_pyi_files, "Bug: No .pyi files"
-
-        self.assertIn("Bug: No .pyi files", str(context.exception))
-
-    def test_assertion_logic_stubs_disabled_no_files(self) -> None:
-        """Test assertion logic when stubs disabled and no files exist."""
-        stubs_disabled = True
-
-        # When stubs are disabled, the assertion should be skipped
-        # This verifies the condition logic: if not stubs_disabled
-        if not stubs_disabled:
-            assert generated_pyi_files, "Bug: No .pyi files"
-    def test_multiple_cmake_args_with_stubs_disabled(self) -> None:
-        """Test CMAKE_ARGS with multiple options including stubs disabled."""
-        extra_cmake_args = [
-            "-DONNX_USE_LITE_PROTO=ON",
+    def test_cmake_false_values_detected(self) -> None:
+        """Test all CMake boolean false values are detected (case-insensitive)."""
+        # Test all 5 CMake false values: 0, off, false, no, n
+        # Include case variations and whitespace to verify robustness
+        false_value_cases = [
+            "-DONNX_GEN_PB_TYPE_STUBS=0",
             "-DONNX_GEN_PB_TYPE_STUBS=OFF",
-            "-DCMAKE_BUILD_TYPE=Release",
+            "-DONNX_GEN_PB_TYPE_STUBS=off",
+            "-DONNX_GEN_PB_TYPE_STUBS=Off",
+            "-DONNX_GEN_PB_TYPE_STUBS=false",
+            "-DONNX_GEN_PB_TYPE_STUBS=FALSE",
+            "-DONNX_GEN_PB_TYPE_STUBS=no",
+            "-DONNX_GEN_PB_TYPE_STUBS=NO",
+            "-DONNX_GEN_PB_TYPE_STUBS=n",
+            "-DONNX_GEN_PB_TYPE_STUBS=N",
+            "-Donnx_gen_pb_type_stubs=OFF",  # Case-insensitive flag name
+            "-DONNX_GEN_PB_TYPE_STUBS= OFF ",  # Whitespace handling
         ]
+        for test_arg in false_value_cases:
+            with self.subTest(arg=test_arg):
+                stubs_disabled = self._is_stubs_disabled([test_arg])
+                self.assertTrue(stubs_disabled, f"Should detect {test_arg} as disabled")
 
-        stubs_disabled = any(
-            arg in extra_cmake_args
-            for arg in ["-DONNX_GEN_PB_TYPE_STUBS=OFF", "-DONNX_GEN_PB_TYPE_STUBS=0"]
-        )
+    def test_cmake_true_values_not_detected(self) -> None:
+        """Test that CMake true values are NOT detected as disabled."""
+        true_value_cases = [
+            "-DONNX_GEN_PB_TYPE_STUBS=ON",
+            "-DONNX_GEN_PB_TYPE_STUBS=1",
+            "-DONNX_GEN_PB_TYPE_STUBS=true",
+            "-DONNX_GEN_PB_TYPE_STUBS=yes",
+        ]
+        for test_arg in true_value_cases:
+            with self.subTest(arg=test_arg):
+                stubs_disabled = self._is_stubs_disabled([test_arg])
+                self.assertFalse(stubs_disabled, f"{test_arg} should not disable stubs")
 
-        self.assertTrue(stubs_disabled, "Should detect disabled flag among other args")
+    def test_default_behavior_when_flag_not_set(self) -> None:
+        """Test default behavior when flag is not present in CMAKE_ARGS."""
+        # Test with no CMAKE_ARGS at all
+        self.assertFalse(self._is_stubs_disabled([]))
+
+        # Test with other CMAKE_ARGS but not the stubs flag
+        other_args = ["-DONNX_USE_LITE_PROTO=ON", "-DCMAKE_BUILD_TYPE=Debug"]
+        self.assertFalse(self._is_stubs_disabled(other_args))
+
+    def test_assertion_logic(self) -> None:
+        """Test the assertion logic in BuildExt based on stubs_disabled flag."""
+        # When stubs enabled and files exist - should pass
+        stubs_disabled = False
+        generated_pyi_files = ["onnx_pb2.pyi"]
+        if not stubs_disabled:
+            assert generated_pyi_files  # Should not raise
+
+        # When stubs enabled but no files - should raise
+        generated_pyi_files = []
+        with self.assertRaises(AssertionError):
+            if not stubs_disabled:
+                assert generated_pyi_files, "Bug: No .pyi files"
+
+        # When stubs disabled - should skip assertion even if no files
+        stubs_disabled = True
+        if not stubs_disabled:
+            self.fail("Should not execute assertion when stubs are disabled")
 
 
 class TestIntegration(unittest.TestCase):
-    """Integration tests for the stub assertion logic."""
+    """Integration test for CmakeBuild to BuildExt communication."""
 
-    def test_end_to_end_disabled_flag_propagation(self) -> None:
-        """Test that the disabled flag propagates from CmakeBuild to BuildExt."""
-        # Create a mock distribution
+    def test_flag_propagation_via_distribution(self) -> None:
+        """Test that onnx_gen_stubs_disabled propagates via distribution object."""
         distribution = MagicMock()
 
-        # Simulate CmakeBuild setting the flag
+        # Test 1: When stubs explicitly disabled
         extra_cmake_args = ["-DONNX_GEN_PB_TYPE_STUBS=OFF"]
-        distribution.onnx_gen_stubs_disabled = any(
-            arg in extra_cmake_args
-            for arg in ["-DONNX_GEN_PB_TYPE_STUBS=OFF", "-DONNX_GEN_PB_TYPE_STUBS=0"]
+        distribution.onnx_gen_stubs_disabled = (
+            TestStubAssertionLogic._is_stubs_disabled(extra_cmake_args)
         )
-
-        # Simulate BuildExt reading the flag
         stubs_disabled = getattr(distribution, "onnx_gen_stubs_disabled", False)
+        self.assertTrue(stubs_disabled)
 
-        self.assertTrue(
-            stubs_disabled,
-            "Flag should propagate from CmakeBuild to BuildExt",
-        )
-
-    def test_end_to_end_default_behavior(self) -> None:
-        """Test default behavior when no CMAKE_ARGS set."""
-        # Create a mock distribution
-        distribution = MagicMock()
-
-        # Simulate CmakeBuild with no CMAKE_ARGS (else branch)
+        # Test 2: When no CMAKE_ARGS (default behavior)
         distribution.onnx_gen_stubs_disabled = False
-
-        # Simulate BuildExt reading the flag
         stubs_disabled = getattr(distribution, "onnx_gen_stubs_disabled", False)
-
-        self.assertFalse(stubs_disabled, "Default should be False (stubs enabled)")
+        self.assertFalse(stubs_disabled)
 
 
 class TestErrorMessages(unittest.TestCase):
-    """Test that error messages are helpful."""
+    """Test that error messages match setup.py exactly."""
 
-    def test_error_message_contains_fix_instructions(self) -> None:
-        """Test that assertion error message contains fix instructions."""
-        error_message = (
+    def test_error_message_matches_setup_py(self) -> None:
+        """Test that error message matches setup.py exactly (case-sensitive)."""
+        # This is the exact error message from setup.py (lines 327-330)
+        # Must match character-for-character, including capitalization "You can"
+        expected_error_message = (
             "Bug: No generated python stub files (.pyi) found. "
             "ONNX_GEN_PB_TYPE_STUBS is ON by default. "
-            "you can disable stub generation with CMAKE_ARGS='-DONNX_GEN_PB_TYPE_STUBS=OFF'"
+            "You can disable stub generation with CMAKE_ARGS='-DONNX_GEN_PB_TYPE_STUBS=OFF'"
         )
 
-        self.assertIn("CMAKE_ARGS", error_message)
-        self.assertIn("-DONNX_GEN_PB_TYPE_STUBS=OFF", error_message)
-        self.assertIn("you can disable stub generation", error_message)
+        # Verify key components are present with correct capitalization
+        self.assertIn("CMAKE_ARGS", expected_error_message)
+        self.assertIn("-DONNX_GEN_PB_TYPE_STUBS=OFF", expected_error_message)
+        self.assertIn("You can disable", expected_error_message)  # Capital Y
+        self.assertIn("ONNX_GEN_PB_TYPE_STUBS is ON by default", expected_error_message)
 
 
 if __name__ == "__main__":

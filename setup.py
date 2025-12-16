@@ -227,8 +227,8 @@ class CmakeBuild(setuptools.Command):
                 # Accept all CMake boolean false values for disabling stubs
                 cmake_false_values = {"0", "off", "false", "no", "n"}
                 self.distribution.onnx_gen_stubs_disabled = any(
-                    arg.lower().startswith("-donnx_gen_pb_type_stubs=") and
-                    arg.split("=", 1)[1].strip().lower() in cmake_false_values
+                    arg.lower().startswith("-donnx_gen_pb_type_stubs=")
+                    and arg.split("=", 1)[1].strip().lower() in cmake_false_values
                     for arg in extra_cmake_args
                 )
 
