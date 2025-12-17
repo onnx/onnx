@@ -417,7 +417,7 @@ add_onnx_global_defines(onnx_proto)
 
 add_library(onnx ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
 add_dependencies(onnx onnx_proto)
-set_target_properties(onnx PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_source_files_properties(${ONNX_SRCS} PROPERTIES CXX_VISIBILITY_PRESET hidden)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
