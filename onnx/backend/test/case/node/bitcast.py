@@ -160,3 +160,33 @@ class BitCast(Base):
         # Bitcast preserves bit pattern
         y = x.view(np.uint8)
         expect(node, inputs=[x], outputs=[y], name="test_bitcast_int8_to_uint8")
+
+    @staticmethod
+    def export_bitcast_scalar_float32_to_int32() -> None:
+        """Test bitcasting scalar from float32 to int32."""
+        node = onnx.helper.make_node(
+            "BitCast",
+            inputs=["x"],
+            outputs=["y"],
+            to=onnx.TensorProto.INT32,
+        )
+        x = np.array(1.0, dtype=np.float32)
+        # Bitcast preserves bit pattern
+        y = x.view(np.int32)
+        expect(
+            node, inputs=[x], outputs=[y], name="test_bitcast_scalar_float32_to_int32"
+        )
+
+    @staticmethod
+    def export_bitcast_uint16_to_int16() -> None:
+        """Test bitcasting from uint16 to int16 (same size, different signedness)."""
+        node = onnx.helper.make_node(
+            "BitCast",
+            inputs=["x"],
+            outputs=["y"],
+            to=onnx.TensorProto.INT16,
+        )
+        x = np.array([1, 32768, 65535], dtype=np.uint16)
+        # Bitcast preserves bit pattern
+        y = x.view(np.int16)
+        expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint16_to_int16")

@@ -18,6 +18,7 @@ class BitCast(OpRun):
             1: np.float32,      # FLOAT
             2: np.uint8,        # UINT8
             3: np.int8,         # INT8
+            4: np.uint16,       # UINT16
             5: np.int16,        # INT16
             6: np.int32,        # INT32
             7: np.int64,        # INT64
@@ -26,18 +27,34 @@ class BitCast(OpRun):
             11: np.float64,     # DOUBLE
             12: np.uint32,      # UINT32
             13: np.uint64,      # UINT64
-            16: np.dtype('float16'),  # BFLOAT16 (approximated as float16)
-            # Note: numpy doesn't have native bfloat16, using float16 as approximation
+            # Note: BFLOAT16 (16) is not directly supported by standard numpy
             # 4-bit types and float8 types would require special handling
         }
         
         target_dtype = onnx_to_numpy_dtype.get(to)
         if target_dtype is None:
-            raise ValueError(f"Unsupported target type: {to}")
+            raise ValueError(f"Unsupported or unavailable target type: {to}")
         
         # Get element sizes in bytes
         input_itemsize = x.dtype.itemsize
         output_itemsize = np.dtype(target_dtype).itemsize
+        
+        # Handle scalar input
+        if x.shape == ():
+            if input_itemsize == output_itemsize:
+                # Same size: simple view
+                result = x.reshape(1).view(target_dtype).reshape(())
+            elif input_itemsize < output_itemsize:
+                # Cannot bitcast scalar to larger type
+                raise ValueError(
+                    f"Cannot bitcast scalar from {x.dtype} to {target_dtype}: "
+                    f"output type is larger than input type"
+                )
+            else:
+                # Input larger than output: split into multiple elements
+                size_ratio = input_itemsize // output_itemsize
+                result = x.reshape(1).view(target_dtype).reshape(size_ratio)
+            return (result,)
         
         if input_itemsize == output_itemsize:
             # Same size: simple view
@@ -62,11 +79,7 @@ class BitCast(OpRun):
             size_ratio = input_itemsize // output_itemsize
             
             # Flatten to 1D, view as target type, then reshape
-            new_shape = list(x.shape[:-1]) + [x.shape[-1] * size_ratio] if len(x.shape) > 0 else [size_ratio]
-            if len(x.shape) == 0:
-                # Scalar input
-                result = x.reshape(1).view(target_dtype).reshape(size_ratio)
-            else:
-                result = x.reshape(-1).view(target_dtype).reshape(new_shape)
+            new_shape = list(x.shape[:-1]) + [x.shape[-1] * size_ratio]
+            result = x.reshape(-1).view(target_dtype).reshape(new_shape)
         
         return (result,)
