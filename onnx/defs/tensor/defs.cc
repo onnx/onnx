@@ -232,6 +232,155 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
+static constexpr const char* BitCast_ver26_doc = R"DOC(
+The operator performs a bitwise reinterpretation (reinterpret cast) of the input tensor's data type
+to the specified target data type without changing the underlying bit pattern.
+
+This is equivalent to reinterpreting the memory representation of the input tensor as a different type.
+The input and output types must have the same size in bytes. The shape of the output tensor is the same
+as the input tensor, with the exception that the last dimension may change size to accommodate the
+different element size, or an additional dimension may be added.
+
+The behavior follows these rules:
+* If input and output element types have the same size (e.g., float32 to int32), the shape remains unchanged.
+* If the output element type is smaller than the input element type (e.g., float32 to int16), the last
+  dimension size is multiplied by the size ratio (e.g., [2, 3] float32 to int16 becomes [2, 6]).
+* If the output element type is larger than the input element type (e.g., int16 to float32), the last
+  dimension size is divided by the size ratio, and must be divisible (e.g., [2, 6] int16 to float32 becomes [2, 3]).
+
+Example use cases:
+* Reinterpret float weights as integer bits for specialized operations
+* Convert between different numeric representations without value conversion
+* Access the bit-level representation of floating-point numbers
+
+Note: This operation does not perform value conversion. To convert values between types, use the Cast operator instead.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BitCast,
+    26,
+    OpSchema()
+        .SetDoc(BitCast_ver26_doc)
+        .Attr(
+            "to",
+            "The data type to which the input tensor is bitwise reinterpreted. "
+            "Strictly must be one of the types from DataType enum in TensorProto. "
+            "The element size of the target type may differ from the input type.",
+            AttributeProto::INT)
+        .Input(
+            0,
+            "input",
+            "Input tensor to be bitcast.",
+            "T1",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor with potentially adjusted shape to accommodate the bitcast.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_non_complex_tensor_types_ir13(),
+            "Constrain input types. Bitcasting from complex is not supported.")
+        .TypeConstraint(
+            "T2",
+            OpSchema::all_non_complex_tensor_types_ir13(),
+            "Constrain output types. Bitcasting to complex is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+          
+          // Shape inference for BitCast
+          if (hasNInputShapes(ctx, 1)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            auto* output_shape = getOutputShape(ctx, 0);
+            
+            // Get input and output element types
+            auto input_type = ctx.getInputType(0);
+            if (!input_type || !input_type->has_tensor_type()) {
+              return;
+            }
+            auto input_elem_type = input_type->tensor_type().elem_type();
+            
+            auto* to_attr = ctx.getAttribute("to");
+            if (!to_attr) {
+              return;
+            }
+            auto output_elem_type = static_cast<int32_t>(to_attr->i());
+            
+            // Get element sizes in bits
+            auto get_elem_size_bytes = [](int elem_type) -> int {
+              switch (elem_type) {
+                case TensorProto::FLOAT:
+                case TensorProto::INT32:
+                case TensorProto::UINT32:
+                  return 4;
+                case TensorProto::DOUBLE:
+                case TensorProto::INT64:
+                case TensorProto::UINT64:
+                  return 8;
+                case TensorProto::FLOAT16:
+                case TensorProto::BFLOAT16:
+                case TensorProto::INT16:
+                case TensorProto::UINT16:
+                  return 2;
+                case TensorProto::INT8:
+                case TensorProto::UINT8:
+                case TensorProto::BOOL:
+                  return 1;
+                case TensorProto::FLOAT8E4M3FN:
+                case TensorProto::FLOAT8E4M3FNUZ:
+                case TensorProto::FLOAT8E5M2:
+                case TensorProto::FLOAT8E5M2FNUZ:
+                case TensorProto::FLOAT8E8M0:
+                  return 1;
+                case TensorProto::INT4:
+                case TensorProto::UINT4:
+                case TensorProto::FLOAT4E2M1:
+                  return 0;  // Special handling needed - 4 bits
+                default:
+                  return 0;  // Unknown
+              }
+            };
+            
+            int input_size = get_elem_size_bytes(input_elem_type);
+            int output_size = get_elem_size_bytes(output_elem_type);
+            
+            if (input_size == 0 || output_size == 0) {
+              // Cannot infer shape for unsupported or 4-bit types
+              return;
+            }
+            
+            // Copy input shape
+            for (int i = 0; i < input_shape.dim_size(); ++i) {
+              *output_shape->add_dim() = input_shape.dim(i);
+            }
+            
+            // Adjust the last dimension if element sizes differ
+            if (input_size != output_size && input_shape.dim_size() > 0) {
+              auto* last_dim = output_shape->mutable_dim(output_shape->dim_size() - 1);
+              if (last_dim->has_dim_value()) {
+                int64_t input_last_dim = last_dim->dim_value();
+                int64_t total_bytes = input_last_dim * input_size;
+                
+                // Check if total bytes is divisible by output element size
+                if (total_bytes % output_size == 0) {
+                  last_dim->set_dim_value(total_bytes / output_size);
+                } else {
+                  // Cannot determine output shape - clear it
+                  last_dim->clear_dim_value();
+                }
+              }
+            }
+          }
+        }));
+
 static constexpr const char* Reshape_ver25_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
