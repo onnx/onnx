@@ -267,15 +267,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Strictly must be one of the types from DataType enum in TensorProto. "
             "The element size of the target type may differ from the input type.",
             AttributeProto::INT)
-        .Input(
-            0,
-            "input",
-            "Input tensor to be bitcast.",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
+        .Input(0, "input", "Input tensor to be bitcast.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
             "output",
@@ -295,25 +287,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output types. Bitcasting to complex is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
-          
+
           // Shape inference for BitCast
           if (hasNInputShapes(ctx, 1)) {
             auto& input_shape = getInputShape(ctx, 0);
             auto* output_shape = getOutputShape(ctx, 0);
-            
+
             // Get input and output element types
             auto input_type = ctx.getInputType(0);
             if (!input_type || !input_type->has_tensor_type()) {
               return;
             }
             auto input_elem_type = input_type->tensor_type().elem_type();
-            
+
             auto* to_attr = ctx.getAttribute("to");
             if (!to_attr) {
               return;
             }
             auto output_elem_type = static_cast<int32_t>(to_attr->i());
-            
+
             // Get element sizes in bits
             auto get_elem_size_bytes = [](int elem_type) -> int {
               switch (elem_type) {
@@ -343,32 +335,32 @@ ONNX_OPERATOR_SET_SCHEMA(
                 case TensorProto::INT4:
                 case TensorProto::UINT4:
                 case TensorProto::FLOAT4E2M1:
-                  return 0;  // Special handling needed - 4 bits
+                  return 0; // Special handling needed - 4 bits
                 default:
-                  return 0;  // Unknown
+                  return 0; // Unknown
               }
             };
-            
+
             int input_size = get_elem_size_bytes(input_elem_type);
             int output_size = get_elem_size_bytes(output_elem_type);
-            
+
             if (input_size == 0 || output_size == 0) {
               // Cannot infer shape for unsupported or 4-bit types
               return;
             }
-            
+
             // Copy input shape
             for (int i = 0; i < input_shape.dim_size(); ++i) {
               *output_shape->add_dim() = input_shape.dim(i);
             }
-            
+
             // Adjust the last dimension if element sizes differ
             if (input_size != output_size && input_shape.dim_size() > 0) {
               auto* last_dim = output_shape->mutable_dim(output_shape->dim_size() - 1);
               if (last_dim->has_dim_value()) {
                 int64_t input_last_dim = last_dim->dim_value();
                 int64_t total_bytes = input_last_dim * input_size;
-                
+
                 // Check if total bytes is divisible by output element size
                 if (total_bytes % output_size == 0) {
                   last_dim->set_dim_value(total_bytes / output_size);

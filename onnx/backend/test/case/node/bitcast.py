@@ -64,7 +64,7 @@ class BitCast(Base):
             outputs=["y"],
             to=onnx.TensorProto.DOUBLE,
         )
-        # Use specific bit patterns that represent float64 values  
+        # Use specific bit patterns that represent float64 values
         x = np.array(
             [4607182418800017408, -4611686018427387904, 4614256656552045184],
             dtype=np.int64,
