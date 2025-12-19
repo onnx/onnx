@@ -9,10 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class BitCast(OpRun):
-    def _run(self, x, to=None):  # type: ignore
-        if to is None:
-            raise ValueError("The 'to' attribute must be specified for BitCast.")
-
+    def _run(self, x, to):  # type: ignore
         # Map ONNX data types to numpy dtypes
         onnx_to_numpy_dtype = {
             1: np.float32,  # FLOAT
@@ -27,13 +24,12 @@ class BitCast(OpRun):
             11: np.float64,  # DOUBLE
             12: np.uint32,  # UINT32
             13: np.uint64,  # UINT64
-            # Note: BFLOAT16 (16) is not directly supported by standard numpy
-            # 4-bit types and float8 types would require special handling
+            # FIXME: Use mldtypes for the rest of the types
         }
 
         target_dtype = onnx_to_numpy_dtype.get(to)
         if target_dtype is None:
-            raise ValueError(f"Unsupported or unavailable target type: {to}")
+            raise NotImplementedError
 
         # Get element sizes in bytes
         input_itemsize = x.dtype.itemsize
