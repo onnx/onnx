@@ -233,27 +233,33 @@ ONNX_OPERATOR_SET_SCHEMA(
             }));
 
 static constexpr const char* BitCast_ver26_doc = R"DOC(
-The operator performs a bitwise reinterpretation (reinterpret cast) of the input tensor's data type
-to the specified target data type without changing the underlying bit pattern.
+This operator outputs a tensor with the same underlying bits as the input tensor,
+but reinterpreted as a different data type specified by the 'to' attribute.
+Unlike Cast, BitCast does not transform values—the output has the same binary
+representation as the input. It supports all non-complex types.
 
-This is equivalent to reinterpreting the memory representation of the input tensor as a different type.
-The input and output types must have the same size in bytes. The shape of the output tensor is the same
-as the input tensor, with the exception that the last dimension may change size to accommodate the
-different element size, or an additional dimension may be added.
+**Shape inference:**
 
-The behavior follows these rules:
-* If input and output element types have the same size (e.g., float32 to int32), the shape remains unchanged.
-* If the output element type is smaller than the input element type (e.g., float32 to int16), the last
-  dimension size is multiplied by the size ratio (e.g., [2, 3] float32 to int16 becomes [2, 6]).
-* If the output element type is larger than the input element type (e.g., int16 to float32), the last
-  dimension size is divided by the size ratio, and must be divisible (e.g., [2, 6] int16 to float32 becomes [2, 3]).
+When converting from a larger data type `T1` (element size `M` bytes) to a smaller
+type `T2` (element size `N` bytes), an input tensor with shape `[D_0, D_1, ..., D_n]`
+produces an output tensor with shape `[D_0, D_1, ..., D_n, M/N]`. Each element of
+type `T1` is reinterpreted as `M/N` elements of type `T2`.
 
-Example use cases:
-* Reinterpret float weights as integer bits for specialized operations
-* Convert between different numeric representations without value conversion
-* Access the bit-level representation of floating-point numbers
+When converting from a smaller type `T1` to a larger type `T2`, the last dimension
+of the input must be `N/M`, and the output shape is `[D_0, D_1, ..., D_{n-1}]`.
+Each `N/M` elements of type `T1` are reinterpreted as a single element of type `T2`.
 
-Note: This operation does not perform value conversion. To convert values between types, use the Cast operator instead.
+When `T1` and `T2` have the same size, the shape remains unchanged.
+
+**Example:**
+
+On a little-endian system, an `int16` tensor `[x1, x2, x3]` reinterpreted as `int8`
+becomes `[[y1_1, y1_2], [y2_1, y2_2], [y3_1, y3_2]]`, where `ym_n` represents the
+`n`-th byte of `xm`.
+
+Conversely, an `int8` tensor `[[x1, x2], [x3, x4]]` reinterpreted as `int16` becomes
+`[y1, y2]`, where `y1` contains the bits of `x2` as its high byte and `x1` as its low
+byte (on little-endian systems).
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
