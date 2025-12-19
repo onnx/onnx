@@ -5,31 +5,19 @@ from __future__ import annotations
 
 import numpy as np
 
+import onnx
 from onnx.reference.op_run import OpRun
 
 
 class BitCast(OpRun):
-    def _run(self, x, to):  # type: ignore
+    def _run(self, x, to: int):  # type: ignore
         # Map ONNX data types to numpy dtypes
-        onnx_to_numpy_dtype = {
-            1: np.float32,  # FLOAT
-            2: np.uint8,  # UINT8
-            3: np.int8,  # INT8
-            4: np.uint16,  # UINT16
-            5: np.int16,  # INT16
-            6: np.int32,  # INT32
-            7: np.int64,  # INT64
-            9: np.bool_,  # BOOL
-            10: np.float16,  # FLOAT16
-            11: np.float64,  # DOUBLE
-            12: np.uint32,  # UINT32
-            13: np.uint64,  # UINT64
-            # FIXME: Use mldtypes for the rest of the types
-        }
+        if to == onnx.TensorProto.STRING:
+            raise ValueError("BitCast to STRING is not supported")
+        if x.dtype == np.str_:
+            raise ValueError("BitCast from STRING is not supported")
 
-        target_dtype = onnx_to_numpy_dtype.get(to)
-        if target_dtype is None:
-            raise NotImplementedError
+        target_dtype = onnx.helper.tensor_dtype_to_np_dtype(to)
 
         # Get element sizes in bytes
         input_itemsize = x.dtype.itemsize
