@@ -16,7 +16,7 @@ fi
 
 PY_VERSION=$1
 PLAT=$2
-BUILD_MODE=$3  # build mode (release or preview)
+BUILD_MODE=$3  # build mode (release, preview, or scientific)
 SOURCE_DATE_EPOCH_ARG=$4 # https://reproducible-builds.org/docs/source-date-epoch/
 
 # Set SOURCE_DATE_EPOCH for reproducible builds
@@ -50,12 +50,18 @@ export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
 
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
-if [[ "$BUILD_MODE" != "release" ]]; then
+if [[ "$BUILD_MODE" == "release" ]]; then
+    echo "Building release wheels..."
+elif [[ "$BUILD_MODE" == "preview" ]]; then
     echo "Building preview wheels..."
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
     export ONNX_PREVIEW_BUILD=1
+elif [[ "$BUILD_MODE" == "scientific" ]]; then
+    echo "Building scientific wheels..."
+    export ONNX_SCIENTIFIC_PYTHON_BUILD=1
 else
-    echo "Building release wheels..."
+    echo "Unknown build mode: $BUILD_MODE"
+    exit 1
 fi
 
 # Build the wheels
