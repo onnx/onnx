@@ -422,8 +422,27 @@ add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
   # find system nanobind
-  find_package(nanobind)
+  find_package(nanobind CONFIG QUIET)
+  if(NOT nanobind_FOUND AND (NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL ""))
+    if(DEFINED Python_EXECUTABLE AND NOT "${Python_EXECUTABLE}" STREQUAL "")
+      execute_process(
+        COMMAND ${Python_EXECUTABLE} -m nanobind --cmake-dir
+        RESULT_VARIABLE NANOBIND_CMAKE_RESULT
+        OUTPUT_VARIABLE NANOBIND_CMAKE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+      if(NANOBIND_CMAKE_RESULT EQUAL 0 AND EXISTS "${NANOBIND_CMAKE_DIR}")
+        set(nanobind_DIR "${NANOBIND_CMAKE_DIR}")
+        find_package(nanobind CONFIG QUIET)
+      endif()
+    endif()
+  endif()
   if(NOT nanobind_FOUND)
+    if(FETCHCONTENT_FULLY_DISCONNECTED)
+      message(FATAL_ERROR
+        "nanobind not found and FetchContent is disabled. Install nanobind with "
+        "CMake config files (nanobind-devel) or set nanobind_DIR/CMAKE_PREFIX_PATH.")
+    endif()
     include(FetchContent)
 
     FetchContent_Declare(
