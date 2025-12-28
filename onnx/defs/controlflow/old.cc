@@ -294,7 +294,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* Loop_ver23_doc = kDoc_e27ff0dc02ee;
+static const char* const Loop_ver23_doc = kDoc_e27ff0dc02ee;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
@@ -402,7 +402,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* Loop_ver16_doc = Loop_ver23_doc;
+static const char* const Loop_ver16_doc = Loop_ver23_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
@@ -563,7 +563,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* scan_24_doc = kDoc_d0dbbf7d114b;
+static const char* const scan_24_doc = kDoc_d0dbbf7d114b;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
@@ -633,7 +633,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types_ir12(), "All Tensor types up to IRv12.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
-static const char* scan_23_doc = scan_24_doc;
+static const char* const scan_23_doc = scan_24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
@@ -703,7 +703,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types_ir11(), "All Tensor types up to IRv11.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
-static const char* scan_16_doc = scan_24_doc;
+static const char* const scan_16_doc = scan_24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
@@ -1949,7 +1949,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset11));
 
-static const char* scan_9_doc = scan_24_doc;
+static const char* const scan_9_doc = scan_24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
@@ -2640,7 +2640,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction_13));
 
-static const char* scan_11_doc = scan_24_doc;
+static const char* const scan_11_doc = scan_24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,

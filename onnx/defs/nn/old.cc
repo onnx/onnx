@@ -276,7 +276,7 @@ static void convPoolShapeInference_opset19(
   }
 }
 
-static const char* Dropout_ver13_doc = kDoc_2a1d1cd218ee;
+static const char* const Dropout_ver13_doc = kDoc_2a1d1cd218ee;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
@@ -352,7 +352,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* LpNormalization_ver1_doc = kDoc_a97f79e35dad;
+static const char* const LpNormalization_ver1_doc = kDoc_a97f79e35dad;
 
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
@@ -377,7 +377,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* InstanceNormalization_ver6_doc = kDoc_1ab4a0c91b30;
+static const char* const InstanceNormalization_ver6_doc = kDoc_1ab4a0c91b30;
 
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
@@ -741,7 +741,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   }
 }
 
-static const char* DeformConv_ver19_doc = kDoc_2a3c7dc19b6e;
+static const char* const DeformConv_ver19_doc = kDoc_2a3c7dc19b6e;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DeformConv,
@@ -1256,7 +1256,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset18(const char
 
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 18, OpSchema().FillUsing(LpPoolOpSchemaGenerator_opset18("LpPool")));
 
-static const char* MaxUnpool_ver11_doc = kDoc_02d46ecaffc0;
+static const char* const MaxUnpool_ver11_doc = kDoc_02d46ecaffc0;
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
@@ -1511,7 +1511,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
 
-static const char* Dropout_ver12_doc = Dropout_ver13_doc;
+static const char* const Dropout_ver12_doc = Dropout_ver13_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
@@ -1581,7 +1581,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Flatten_ver24_doc = kDoc_765d88f2118f;
+static const char* const Flatten_ver24_doc = kDoc_765d88f2118f;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
@@ -1632,7 +1632,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* Flatten_ver23_doc = Flatten_ver24_doc;
+static const char* const Flatten_ver23_doc = Flatten_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
@@ -1683,7 +1683,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* Flatten_ver21_doc = Flatten_ver24_doc;
+static const char* const Flatten_ver21_doc = Flatten_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
@@ -2627,7 +2627,7 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
   }
 }
 
-static const char* MaxUnpool_ver9_doc = MaxUnpool_ver11_doc;
+static const char* const MaxUnpool_ver9_doc = MaxUnpool_ver11_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
@@ -3586,7 +3586,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* InstanceNormalization_ver1_doc = InstanceNormalization_ver6_doc;
+static const char* const InstanceNormalization_ver1_doc = InstanceNormalization_ver6_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
@@ -3676,7 +3676,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Dropout_ver7_doc = Dropout_old_doc;
+static const char* const Dropout_ver7_doc = Dropout_old_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
@@ -3840,7 +3840,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // the other outputs as well.
         }));
 
-static const char* Flatten_ver1_doc = Flatten_ver24_doc;
+static const char* const Flatten_ver1_doc = Flatten_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
@@ -3883,7 +3883,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* Flatten_ver9_doc = Flatten_ver24_doc;
+static const char* const Flatten_ver9_doc = Flatten_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,

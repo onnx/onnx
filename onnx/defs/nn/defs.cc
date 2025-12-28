@@ -457,7 +457,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 }
 
-static const char* MaxUnpool_ver22_doc = kDoc_02d46ecaffc0;
+static const char* const MaxUnpool_ver22_doc = kDoc_02d46ecaffc0;
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
@@ -1349,7 +1349,7 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 22, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
-static const char* DeformConv_ver22_doc = kDoc_2a3c7dc19b6e;
+static const char* const DeformConv_ver22_doc = kDoc_2a3c7dc19b6e;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DeformConv,
@@ -1743,7 +1743,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* InstanceNormalization_ver22_doc = kDoc_1ab4a0c91b30;
+static const char* const InstanceNormalization_ver22_doc = kDoc_1ab4a0c91b30;
 
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
@@ -1797,7 +1797,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* LpNormalization_ver22_doc = kDoc_a97f79e35dad;
+static const char* const LpNormalization_ver22_doc = kDoc_a97f79e35dad;
 
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
@@ -1819,7 +1819,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* Dropout_ver22_doc = kDoc_2a1d1cd218ee;
+static const char* const Dropout_ver22_doc = kDoc_2a1d1cd218ee;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
@@ -1927,7 +1927,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Flatten_ver25_doc = kDoc_765d88f2118f;
+static const char* const Flatten_ver25_doc = kDoc_765d88f2118f;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,

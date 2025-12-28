@@ -9,7 +9,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* Bernoulli_ver15_doc = kDoc_3e396a883b11;
+static const char* const Bernoulli_ver15_doc = kDoc_3e396a883b11;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Bernoulli,
@@ -80,7 +80,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* Multinomial_ver7_doc = kDoc_59bcdb27958e;
+static const char* const Multinomial_ver7_doc = kDoc_59bcdb27958e;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Multinomial,
@@ -138,7 +138,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
-static const char* RandomNormalLike_ver1_doc = kDoc_9100504df429;
+static const char* const RandomNormalLike_ver1_doc = kDoc_9100504df429;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormalLike,
@@ -180,7 +180,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* RandomUniformLike_ver1_doc = kDoc_8441849959c8;
+static const char* const RandomUniformLike_ver1_doc = kDoc_8441849959c8;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniformLike,
@@ -222,7 +222,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* RandomNormal_ver1_doc = kDoc_0857272140bf;
+static const char* const RandomNormal_ver1_doc = kDoc_0857272140bf;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormal,
@@ -253,7 +253,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* RandomUniform_ver1_doc = kDoc_05dd1123b6c7;
+static const char* const RandomUniform_ver1_doc = kDoc_05dd1123b6c7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniform,
@@ -284,7 +284,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* EyeLike_ver9_doc = kDoc_ef88f83cbcbc;
+static const char* const EyeLike_ver9_doc = kDoc_ef88f83cbcbc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     EyeLike,
@@ -352,7 +352,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* Constant_ver24_doc = kDoc_675be5a19c07;
+static const char* const Constant_ver24_doc = kDoc_675be5a19c07;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -399,7 +399,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir12(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* Constant_ver23_doc = Constant_ver24_doc;
+static const char* const Constant_ver23_doc = Constant_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -446,7 +446,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* Constant_ver19_doc = Constant_ver24_doc;
+static const char* const Constant_ver19_doc = Constant_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -538,7 +538,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir9(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* Constant_ver13_doc = Constant_ver24_doc;
+static const char* const Constant_ver13_doc = Constant_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -585,7 +585,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* Constant_ver12_doc = Constant_ver24_doc;
+static const char* const Constant_ver12_doc = Constant_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -656,7 +656,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
-static const char* Constant_ver9_doc = Constant_ver1_doc;
+static const char* const Constant_ver9_doc = Constant_ver1_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -725,7 +725,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
         }));
 
-static const char* ConstantOfShape_ver24_doc = kDoc_3400e66a52ac;
+static const char* const ConstantOfShape_ver24_doc = kDoc_3400e66a52ac;
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
@@ -776,7 +776,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ConstantOfShape_ver23_doc = ConstantOfShape_ver24_doc;
+static const char* const ConstantOfShape_ver23_doc = ConstantOfShape_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
@@ -826,7 +826,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ConstantOfShape_ver20_doc = ConstantOfShape_ver24_doc;
+static const char* const ConstantOfShape_ver20_doc = ConstantOfShape_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
@@ -950,7 +950,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* ConstantOfShape_ver9_doc = ConstantOfShape_ver24_doc;
+static const char* const ConstantOfShape_ver9_doc = ConstantOfShape_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,

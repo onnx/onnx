@@ -145,7 +145,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver24_doc = kDoc_068e9c2fb48f;
+static const char* const DequantizeLinear_ver24_doc = kDoc_068e9c2fb48f;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
@@ -228,7 +228,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* QuantizeLinear_ver23_doc = QuantizeLinear_ver24_doc;
+static const char* const QuantizeLinear_ver23_doc = QuantizeLinear_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     QuantizeLinear,
@@ -338,7 +338,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* DequantizeLinear_ver23_doc = DequantizeLinear_ver24_doc;
+static const char* const DequantizeLinear_ver23_doc = DequantizeLinear_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,

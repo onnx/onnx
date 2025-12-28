@@ -174,7 +174,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
   };
 }
 
-static const char* RNN_ver22_doc = kDoc_e49986c33e73;
+static const char* const RNN_ver22_doc = kDoc_e49986c33e73;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
@@ -224,7 +224,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* GRU_ver22_doc = kDoc_02528396a05f;
+static const char* const GRU_ver22_doc = kDoc_02528396a05f;
 
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
@@ -282,7 +282,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* LSTM_ver22_doc = kDoc_3950deae3514;
+static const char* const LSTM_ver22_doc = kDoc_3950deae3514;
 
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,

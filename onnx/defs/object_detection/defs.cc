@@ -8,7 +8,7 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-static const char* RoiAlign_ver22_doc = kDoc_7a5cec98fd98;
+static const char* const RoiAlign_ver22_doc = kDoc_7a5cec98fd98;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
@@ -110,7 +110,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static const char* NonMaxSuppression_ver11_doc = kDoc_e8a6c745b28c;
+static const char* const NonMaxSuppression_ver11_doc = kDoc_e8a6c745b28c;
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonMaxSuppression,
