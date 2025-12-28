@@ -3,6 +3,7 @@
  */
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/doc_strings.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -148,20 +149,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static constexpr const char* DequantizeLinear_ver25_doc = R"DOC(
-The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
-full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
-must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
-a 1-D tensor for per-axis quantization, or have a rank identical to the input for blocked quantization.
-See QuantizeLinear for details on quantization granularity.
-
-`x_zero_point` and `x` must have the same type. `x` and `y` must have the same shape. In the case of dequantizing
-`int32`, there's no zero point (zero point is supposed to be 0).
-`zero-point` is usually not used in the case of float8 and 4-bit types quantization, but the dequantization formula remains the same
-for consistency. The output type is determined by the attribute `output_dtype`. If `output_dtype` is not supplied then the output type
-is the same as `x_scale`. The output type also determines the precision of the multiplication operation.
-
-)DOC";
+static const char* DequantizeLinear_ver25_doc = kDoc_068e9c2fb48f;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,

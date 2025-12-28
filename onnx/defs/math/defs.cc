@@ -9,6 +9,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/math/utils.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/doc_strings.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -147,11 +148,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(Div, 14, OpSchema().FillUsing(MathDocGenerator("division")));
 
-static constexpr const char* Neg_ver13_doc = R"DOC(
-Neg takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where each element flipped sign, y = -x, is applied to
-the tensor elementwise.
-)DOC";
+static const char* Neg_ver13_doc = kDoc_fc4747c81897;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Neg,
@@ -192,11 +189,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Reciprocal_ver13_doc = R"DOC(
-Reciprocal takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the reciprocal is, y = 1/x, is applied to
-the tensor elementwise.
-)DOC";
+static const char* Reciprocal_ver13_doc = kDoc_7700aeea1356;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reciprocal,
@@ -249,11 +242,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Sqrt_ver13_doc = R"DOC(
-Square root takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the square root is, y = x^0.5, is applied to
-the tensor elementwise. If x is negative, then it will return NaN.
-)DOC";
+static const char* Sqrt_ver13_doc = kDoc_c4a941491968;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sqrt,
@@ -268,11 +257,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Relu_ver14_doc = R"DOC(
-Relu takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
-the tensor elementwise.
-)DOC";
+static const char* Relu_ver14_doc = kDoc_8f2b9889715a;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Relu,
@@ -303,11 +288,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             18)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* LeakyRelu_ver16_doc = R"DOC(
-LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
-output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
-`f(x) = x for x >= 0`, is applied to the data tensor elementwise.
-)DOC";
+static const char* LeakyRelu_ver16_doc = kDoc_7b2fc7c9a203;
 
 ONNX_OPERATOR_SET_SCHEMA(
     LeakyRelu,
@@ -334,11 +315,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         )ONNX"));
 
-static constexpr const char* ThresholdedRelu_ver22_doc = R"DOC(
-ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
-is applied to the tensor elementwise.
-)DOC";
+static const char* ThresholdedRelu_ver22_doc = kDoc_1cb89a65f851;
 
 ONNX_OPERATOR_SET_SCHEMA(
     ThresholdedRelu,
@@ -363,12 +340,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static constexpr const char* Selu_ver22_doc = R"DOC(
-Selu takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the scaled exponential linear unit function,
-`y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
-is applied to the tensor elementwise.
-)DOC";
+static const char* Selu_ver22_doc = kDoc_46f026ddc963;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Selu,
@@ -411,12 +383,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static constexpr const char* Elu_ver22_doc = R"DOC(
-Elu takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
-0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
-
-)DOC";
+static const char* Elu_ver22_doc = kDoc_35881fb051bb;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Elu,
@@ -446,15 +413,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static constexpr const char* mish_ver22_doc = R"DOC(
-Mish: A Self Regularized Non-Monotonic Neural Activation Function.
-
-Perform the linear unit element-wise on the input tensor X using formula:
-
-```
-mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
-```
-)DOC";
+static const char* mish_ver22_doc = kDoc_79892e581561;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mish,
@@ -632,9 +591,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             )ONNX"));
 
-static constexpr const char* Exp_ver13_doc = R"DOC(
-Calculates the exponential of the given input tensor, element-wise.
-)DOC";
+static const char* Exp_ver13_doc = kDoc_9b56125d9c91;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,
@@ -655,9 +612,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Log_ver13_doc = R"DOC(
-Calculates the natural log of the given input tensor, element-wise.
-)DOC";
+static const char* Log_ver13_doc = kDoc_edcb0fcc1a35;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Log,
@@ -681,9 +636,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Tanh_ver13_doc = R"DOC(
-Calculates the hyperbolic tangent of the given input tensor element-wise.
-)DOC";
+static const char* Tanh_ver13_doc = kDoc_51834a493821;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tanh,
@@ -704,11 +657,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Pow_ver15_doc = R"DOC(
-Pow takes input data (Tensor<T>) and exponent Tensor, and
-produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
-is applied to the data tensor elementwise.
-)DOC";
+static const char* Pow_ver15_doc = kDoc_770b7752e541;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
@@ -759,11 +708,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static constexpr const char* PRelu_ver16_doc = R"DOC(
-PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
-output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
-`f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-)DOC";
+static const char* PRelu_ver16_doc = kDoc_f8ec9eaa5833;
 
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
@@ -805,11 +750,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
-static constexpr const char* Sigmoid_ver13_doc = R"DOC(
-Sigmoid takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
-tensor elementwise.
-)DOC";
+static const char* Sigmoid_ver13_doc = kDoc_a852ca531446;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sigmoid,
@@ -824,11 +765,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* HardSigmoid_ver22_doc = R"DOC(
-HardSigmoid takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
-is applied to the tensor elementwise.
-)DOC";
+static const char* HardSigmoid_ver22_doc = kDoc_a8b097e53545;
 
 ONNX_OPERATOR_SET_SCHEMA(
     HardSigmoid,
@@ -860,11 +797,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static constexpr const char* HardSwish_ver22_doc = R"DOC(
-HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
-the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
-where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
-)DOC";
+static const char* HardSwish_ver22_doc = kDoc_d9850b45cf78;
 
 ONNX_OPERATOR_SET_SCHEMA(
     HardSwish,
@@ -1216,9 +1149,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         "hardmax",
         "Hardmax(element in input, axis) = 1 if the element is the first maximum value along the specified axis, 0 otherwise")));
 
-static constexpr const char* Softsign_ver22_doc = R"DOC(
-Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
-)DOC";
+static const char* Softsign_ver22_doc = kDoc_4436838301b3;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softsign,
@@ -1249,11 +1180,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static constexpr const char* Softplus_ver22_doc = R"DOC(
-Softplus takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
-the tensor elementwise.
-)DOC";
+static const char* Softplus_ver22_doc = kDoc_2a503f1c01e1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softplus,
@@ -1363,9 +1290,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* MatMul_ver13_doc = R"DOC(
-Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
-)DOC";
+static const char* MatMul_ver13_doc = kDoc_deb527ce5bbc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
@@ -1396,9 +1321,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     24,
     OpSchema().FillUsing(defs::math::utils::TopKOpGenerator(OpSchema::all_numeric_types_ir4())));
 
-static constexpr const char* Sin_ver22_doc = R"DOC(
-Calculates the sine of the given input tensor, element-wise.
-)DOC";
+static const char* Sin_ver22_doc = kDoc_e2417f4edb2a;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sin,
@@ -1419,9 +1342,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Cos_ver22_doc = R"DOC(
-Calculates the cosine of the given input tensor, element-wise.
-)DOC";
+static const char* Cos_ver22_doc = kDoc_d36efc917b8e;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cos,
@@ -1442,9 +1363,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Tan_ver22_doc = R"DOC(
-Calculates the tangent of the given input tensor, element-wise.
-)DOC";
+static const char* Tan_ver22_doc = kDoc_77fbebfb7457;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tan,
@@ -1465,9 +1384,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Asin_ver22_doc = R"DOC(
-Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
-)DOC";
+static const char* Asin_ver22_doc = kDoc_cb18c801844b;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Asin,
@@ -1488,9 +1405,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Acos_ver22_doc = R"DOC(
-Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
-)DOC";
+static const char* Acos_ver22_doc = kDoc_37fd39b7e227;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Acos,
@@ -1511,9 +1426,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Atan_ver22_doc = R"DOC(
-Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
-)DOC";
+static const char* Atan_ver22_doc = kDoc_c2091afabfbc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Atan,
@@ -1534,16 +1447,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Expand_ver13_doc = R"DOC(
-Broadcast the input tensor following the given shape and the broadcast rule.
-The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
-Dimensions are right alignment;
-Two corresponding dimensions must have the same value, or one of them is equal to 1.
-Also, this operator is similar to numpy.broadcast_to(input, shape),
-but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
-It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
-or the shape.ndim < input.shape.ndim.
-)DOC";
+static const char* Expand_ver13_doc = kDoc_cccb6a35d39d;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Expand,
@@ -1578,9 +1482,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Sinh_ver22_doc = R"DOC(
-Calculates the hyperbolic sine of the given input tensor element-wise.
-)DOC";
+static const char* Sinh_ver22_doc = kDoc_c0e13616eabf;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sinh,
@@ -1601,9 +1503,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Cosh_ver22_doc = R"DOC(
-Calculates the hyperbolic cosine of the given input tensor element-wise.
-)DOC";
+static const char* Cosh_ver22_doc = kDoc_a225c659360c;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cosh,
@@ -1624,9 +1524,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Asinh_ver22_doc = R"DOC(
-Calculates the hyperbolic arcsine of the given input tensor element-wise.
-)DOC";
+static const char* Asinh_ver22_doc = kDoc_bdc588b2ca97;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Asinh,
@@ -1647,9 +1545,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Acosh_ver22_doc = R"DOC(
-Calculates the hyperbolic arccosine of the given input tensor element-wise.
-)DOC";
+static const char* Acosh_ver22_doc = kDoc_27bd435de752;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Acosh,
@@ -1670,9 +1566,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Atanh_ver22_doc = R"DOC(
-Calculates the hyperbolic arctangent of the given input tensor element-wise.
-)DOC";
+static const char* Atanh_ver22_doc = kDoc_75c5413751b3;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Atanh,
@@ -1693,10 +1587,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Sign_ver13_doc = R"DOC(
-Calculate the sign of the given input tensor element-wise.
-If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
-)DOC";
+static const char* Sign_ver13_doc = kDoc_9ce3253f193d;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sign,
@@ -1720,9 +1611,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Erf_ver13_doc = R"DOC(
-Computes the error function of the given input tensor element-wise.
-)DOC";
+static const char* Erf_ver13_doc = kDoc_b7dac33bda7f;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Erf,
@@ -1965,27 +1854,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* CumSum_ver14_doc = R"DOC(
-Performs cumulative sum of the input elements along the given axis.
-By default, it will do the sum inclusively meaning the first element is copied as is.
-Through an `exclusive` attribute, this behavior can change to exclude the first element.
-It can also perform summation in the opposite direction of the axis. For that, set `reverse` attribute to 1.
-
-Example:
-```
-input_x = [1, 2, 3]
-axis=0
-output = [1, 3, 6]
-exclusive=1
-output = [0, 1, 3]
-exclusive=0
-reverse=1
-output = [6, 5, 3]
-exclusive=1
-reverse=1
-output = [5, 3, 0]
-```
- )DOC";
+static const char* CumSum_ver14_doc = kDoc_36220ef2e688;
 
 ONNX_OPERATOR_SET_SCHEMA(
     CumSum,
@@ -2039,22 +1908,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "axis tensor can be int32 or int64 only")
         .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Round_ver22_doc = R"DOC(
-Round takes one input Tensor and rounds the values, element-wise, meaning
-it finds the nearest integer for each value.
-In case of halves, the rule is to round them to the nearest even integer.
-If input x is integral, +0, -0, NaN,  or infinite, x itself is returned.
-The output tensor has the same shape and type as the input.
-
-Examples:
-```
-round([0.9]) = [1.0]
-round([2.5]) = [2.0]
-round([2.3]) = [2.0]
-round([1.5]) = [2.0]
-round([-4.5]) = [-4.0]
-```
-)DOC";
+static const char* Round_ver22_doc = kDoc_186d901a2312;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Round,
@@ -2066,13 +1920,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* Det_ver22_doc = R"DOC(
-Det calculates determinant of a square matrix or batches of square matrices.
-Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
-and the inner-most 2 dimensions form square matrices.
-The output is a tensor of shape `[*]`, containing the determinants of all input submatrices.
-e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
-)DOC";
+static const char* Det_ver22_doc = kDoc_8224748962a5;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Det,
@@ -2229,109 +2077,7 @@ static bool BuildContextDependentFunctionBody(
   return true;
 }
 
-static constexpr const char* NegativeLogLikelihoodLoss_ver22_doc = R"DOC(
-A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
-Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
-The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
-The operator's "target" input tensor has the shape of (N, d1, d2, ..., dk). It encodes class labels (one of C classes)
-or it may contain a special value (indicated by an attribute ignore_index) for N x d1 x d2 x ... x dk samples.
-The loss value for input[n, :, d_1, d_2,...d_k] being classified as class c = target[n][d_1][d_2]...[d_k] is computed as:
-
-```
-loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k].
-```
-
-When an optional "weight" is provided, the sample loss is calculated as:
-
-```
-loss[n][d_1][d_2]...[d_k] = -input[n][c][d_1][d_2]...[d_k] * weight[c].
-```
-
-loss is zero for the case when target-value equals ignore_index.
-
-```
-loss[n][d_1][d_2]...[d_k] = 0, when target[n][d_1][d_2]...[d_k] = ignore_index
-```
-
-If "reduction" attribute is set to "none", the operator's output will be the above loss with shape (N, d1, d2, ..., dk).
-If "reduction" attribute is set to "mean" (the default attribute value), the output loss is (weight) averaged:
-
-```
-mean(loss), if "weight" is not provided,
-```
-
-or if weight is provided,
-
-```
-sum(loss) / sum(weight[target[n][d_1][d_2]...[d_k]]]), for all samples.
-```
-
-If "reduction" attribute is set to "sum", the output is a scalar: `sum(loss)`.
-
-See also https://pytorch.org/docs/stable/nn.html#torch.nn.NLLLoss.
-
-Example 1:
-
-```
-// negative log likelihood loss, "none" reduction
-N, C, d1 = 2, 3, 2
-input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-          [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-target = [[2, 1], [0, 2]]
-
-loss = np.zeros((N, d1))
-for n in range(N):
-    for d_1 in range(d1):
-        c = target[n][d_1]
-        loss[n][d_1] = -input[n][c][d_1]
-
-// print(loss)
-// [[-3. -2.]
-//  [-0. -2.]]
-```
-
-Example 2:
-
-```
-// weighted negative log likelihood loss, sum reduction
-N, C, d1 = 2, 3, 2
-input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-        [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-target = [[2, 1], [0, 2]]
-weight = [0.2, 0.3, 0.1]
-loss = np.zeros((N, d1))
-for n in range(N):
-    for d_1 in range(d1):
-        c = target[n][d_1]
-        loss[n][d_1] = -input[n][c][d_1] * weight[c]
-
-loss = np.sum(loss)
-// print(loss)
-// -1.1
-```
-
-Example 3:
-
-```
-// weighted negative log likelihood loss, mean reduction
-N, C, d1 = 2, 3, 2
-input = [[[1.0, 2.0], [2.0, 2.0], [3.0, 2.0]],
-        [[0.0, 1.0], [2.0, 2.0], [1.0, 2]]]
-target = [[2, 1], [0, 2]]
-weight = [0.2, 0.3, 0.1]
-loss = np.zeros((N, d1))
-weight_total = 0
-for n in range(N):
-    for d_1 in range(d1):
-        c = target[n][d_1]
-        loss[n][d_1] = -input[n][c][d_1] * weight[c]
-        weight_total = weight_total + weight[c]
-
-loss = np.sum(loss) / weight_total
-// print(loss)
-// -1.57
-```
-)DOC";
+static const char* NegativeLogLikelihoodLoss_ver22_doc = kDoc_e04b32fdafc1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     NegativeLogLikelihoodLoss,
