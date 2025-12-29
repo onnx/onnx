@@ -134,7 +134,8 @@ round([-4.5]) = [-4.0]
 ```
 )DOC";
 
-const char kDoc_SpaceToDepth_ver1[] = R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+const char kDoc_SpaceToDepth_ver1[] =
+    R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
 are moved to the depth dimension.
 )DOC";
