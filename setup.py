@@ -220,7 +220,10 @@ class CmakeBuild(setuptools.Command):
             if ONNX_DISABLE_STATIC_REGISTRATION:
                 cmake_args.append("-DONNX_DISABLE_STATIC_REGISTRATION=ON")
             if "CMAKE_ARGS" in os.environ:
-                extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
+                extra_cmake_args = shlex.split(
+                    os.environ["CMAKE_ARGS"],
+                    posix=not WINDOWS,
+                )
                 # prevent crossfire with downstream scripts
                 del os.environ["CMAKE_ARGS"]
                 logging.info("Extra cmake args: %s", extra_cmake_args)  # noqa: LOG015
