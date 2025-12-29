@@ -276,7 +276,7 @@ static void convPoolShapeInference_opset19(
   }
 }
 
-static const char* const Dropout_ver13_doc = kDoc_2a1d1cd218ee;
+static const char* const Dropout_ver13_doc = kDoc_Dropout_ver22;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
@@ -352,7 +352,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const LpNormalization_ver1_doc = kDoc_a97f79e35dad;
+static const char* const LpNormalization_ver1_doc = kDoc_LpNormalization_ver22;
 
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
@@ -377,7 +377,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* const InstanceNormalization_ver6_doc = kDoc_1ab4a0c91b30;
+static const char* const InstanceNormalization_ver6_doc = kDoc_InstanceNormalization_ver22;
 
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
@@ -741,7 +741,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   }
 }
 
-static const char* const DeformConv_ver19_doc = kDoc_2a3c7dc19b6e;
+static const char* const DeformConv_ver19_doc = kDoc_DeformConv_ver22;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DeformConv,
@@ -1256,7 +1256,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset18(const char
 
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 18, OpSchema().FillUsing(LpPoolOpSchemaGenerator_opset18("LpPool")));
 
-static const char* const MaxUnpool_ver11_doc = kDoc_02d46ecaffc0;
+static const char* const MaxUnpool_ver11_doc = kDoc_MaxUnpool_ver22;
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
@@ -1581,7 +1581,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Flatten_ver24_doc = kDoc_765d88f2118f;
+static const char* const Flatten_ver24_doc = kDoc_Flatten_ver25;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,

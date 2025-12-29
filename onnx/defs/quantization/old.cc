@@ -145,7 +145,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* const DequantizeLinear_ver24_doc = kDoc_068e9c2fb48f;
+static const char* const DequantizeLinear_ver24_doc = kDoc_DequantizeLinear_ver25;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,

@@ -2,7 +2,7 @@
 
 namespace ONNX_NAMESPACE {
 #ifndef __ONNX_NO_DOC_STRINGS
-const char kDoc_02528396a05f[] = R"DOC(
+const char kDoc_GRU_ver22[] = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -51,14 +51,14 @@ Equations (Default: f=Sigmoid, g=Tanh):
 * Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC";
 
-const char kDoc_0263e5d4c984[] = R"DOC(
+const char kDoc_Squeeze_ver25[] = R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes an input `axes` with a list of axes to squeeze.
 If `axes` is not provided, all the single dimensions will be removed from
 the shape. If an axis is selected with shape entry not equal to one, an error is raised.
 )DOC";
 
-const char kDoc_02d46ecaffc0[] = R"DOC(
+const char kDoc_MaxUnpool_ver22[] = R"DOC(
 MaxUnpool essentially computes the partial inverse of the MaxPool op.
  The input information to this op is typically the output information from a MaxPool op. The first
  input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
@@ -79,11 +79,11 @@ In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape
  pooling op that the unpooling op is trying to invert.
 )DOC";
 
-const char kDoc_02f11fa13bcc[] = R"DOC(
+const char kDoc_Size_ver25[] = R"DOC(
 Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 )DOC";
 
-const char kDoc_05dd1123b6c7[] = R"DOC(
+const char kDoc_RandomUniform_ver22[] = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is specified by the `shape` argument and the range by `low` and `high`.
 
@@ -92,7 +92,7 @@ be one of the data types specified in the 'DataType' enum field in the
 TensorProto message.
 )DOC";
 
-const char kDoc_068e9c2fb48f[] = R"DOC(
+const char kDoc_DequantizeLinear_ver25[] = R"DOC(
 The linear dequantization operator. It consumes a quantized tensor, a scale, and a zero point to compute the
 full-precision tensor. The dequantization formula is `y = (x - x_zero_point) * x_scale`. `x_scale` and `x_zero_point`
 must have the same shape, determining the quantization's granularity: a scalar for per-tensor/per-layer quantization,
@@ -107,7 +107,7 @@ is the same as `x_scale`. The output type also determines the precision of the m
 
 )DOC";
 
-const char kDoc_0857272140bf[] = R"DOC(
+const char kDoc_RandomNormal_ver22[] = R"DOC(
 Generate a tensor with random values drawn from a normal distribution. The shape
 of the tensor is specified by the `shape` argument and the parameter of the normal distribution
 specified by `mean` and `scale`.
@@ -117,7 +117,7 @@ be one of the data types specified in the 'DataType' enum field in the
 TensorProto message.
 )DOC";
 
-const char kDoc_186d901a2312[] = R"DOC(
+const char kDoc_Round_ver22[] = R"DOC(
 Round takes one input Tensor and rounds the values, element-wise, meaning
 it finds the nearest integer for each value.
 In case of halves, the rule is to round them to the nearest even integer.
@@ -134,12 +134,12 @@ round([-4.5]) = [-4.0]
 ```
 )DOC";
 
-const char kDoc_1890ac9fbec3[] = R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+const char kDoc_SpaceToDepth_ver13[] = R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
 are moved to the depth dimension.
 )DOC";
 
-const char kDoc_1ab4a0c91b30[] = R"DOC(
+const char kDoc_InstanceNormalization_ver22[] = R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
 
@@ -148,17 +148,17 @@ where mean and variance are computed per instance per channel.
 
 )DOC";
 
-const char kDoc_1cb89a65f851[] = R"DOC(
+const char kDoc_ThresholdedRelu_ver22[] = R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
 is applied to the tensor elementwise.
 )DOC";
 
-const char kDoc_27bd435de752[] = R"DOC(
+const char kDoc_Acosh_ver22[] = R"DOC(
 Calculates the hyperbolic arccosine of the given input tensor element-wise.
 )DOC";
 
-const char kDoc_2a1d1cd218ee[] = R"DOC(
+const char kDoc_Dropout_ver22[] = R"DOC(
 Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
 output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
 Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
@@ -172,23 +172,23 @@ scale = 1. / (1. - ratio).
 ```
 )DOC";
 
-const char kDoc_2a3c7dc19b6e[] = R"DOC(
+const char kDoc_DeformConv_ver22[] = R"DOC(
 Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
 This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
 )DOC";
 
-const char kDoc_2a503f1c01e1[] = R"DOC(
+const char kDoc_Softplus_ver22[] = R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
 the tensor elementwise.
 )DOC";
 
-const char kDoc_2f18eb64c540[] = R"DOC(Constructs a tensor by tiling a given tensor.
+const char kDoc_Tile_ver13[] = R"DOC(Constructs a tensor by tiling a given tensor.
 This is the same as function `tile` in Numpy, but no broadcast.
 For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]
 )DOC";
 
-const char kDoc_31fda3078751[] = R"DOC(
+const char kDoc_Unsqueeze_ver25[] = R"DOC(
 Insert single-dimensional entries to the shape of an input tensor (`data`).
 Takes one required input `axes` - which contains a list of dimension indices and this operator will insert a dimension of value `1` into the corresponding index of the output tensor (`expanded`).
 
@@ -201,18 +201,18 @@ Each value in `axes` should be within the (inclusive) range [-output_rank , outp
 The order of values in `axes` does not matter and can come in any order.
 )DOC";
 
-const char kDoc_3400e66a52ac[] = R"DOC(
+const char kDoc_ConstantOfShape_ver25[] = R"DOC(
 Generate a tensor with given value and shape.
 )DOC";
 
-const char kDoc_35881fb051bb[] = R"DOC(
+const char kDoc_Elu_ver22[] = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
 0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
 
 )DOC";
 
-const char kDoc_36220ef2e688[] = R"DOC(
+const char kDoc_CumSum_ver14[] = R"DOC(
 Performs cumulative sum of the input elements along the given axis.
 By default, it will do the sum inclusively meaning the first element is copied as is.
 Through an `exclusive` attribute, this behavior can change to exclude the first element.
@@ -234,11 +234,11 @@ output = [5, 3, 0]
 ```
  )DOC";
 
-const char kDoc_37fd39b7e227[] = R"DOC(
+const char kDoc_Acos_ver22[] = R"DOC(
 Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
 )DOC";
 
-const char kDoc_3950deae3514[] = R"DOC(
+const char kDoc_LSTM_ver22[] = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -290,7 +290,7 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 * Ht = ot (.) h(Ct)
 )DOC";
 
-const char kDoc_3e396a883b11[] = R"DOC(
+const char kDoc_Bernoulli_ver22[] = R"DOC(
 Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
 containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
 where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
@@ -299,18 +299,18 @@ This operator is non-deterministic and may not produce the same values in differ
 implementations (even if a seed is specified).
 )DOC";
 
-const char kDoc_4436838301b3[] = R"DOC(
+const char kDoc_Softsign_ver22[] = R"DOC(
 Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 )DOC";
 
-const char kDoc_46f026ddc963[] = R"DOC(
+const char kDoc_Selu_ver22[] = R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the scaled exponential linear unit function,
 `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
 is applied to the tensor elementwise.
 )DOC";
 
-const char kDoc_4e337d7f45b6[] = R"DOC(
+const char kDoc_Shape_ver25[] = R"DOC(
 Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 Optional attributes start and end can be used to compute a slice of the input tensor's shape.
 If start axis is omitted, the slice starts from axis 0.
@@ -351,17 +351,17 @@ Output: [3]
 ```
 )DOC";
 
-const char kDoc_4f9fa4508221[] = R"DOC(
+const char kDoc_Upsample_ver10[] = R"DOC(
 Upsample the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
 )DOC";
 
-const char kDoc_51834a493821[] = R"DOC(
+const char kDoc_Tanh_ver13[] = R"DOC(
 Calculates the hyperbolic tangent of the given input tensor element-wise.
 )DOC";
 
-const char kDoc_51d026025170[] = R"DOC(
+const char kDoc_Cast_ver25[] = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
@@ -446,17 +446,17 @@ The following table describes the casting behavior of special values to FLOAT8E8
 | x \< 0            | Unspecified   | Unspecified            |
 )DOC";
 
-const char kDoc_59bcdb27958e[] = R"DOC(
+const char kDoc_Multinomial_ver22[] = R"DOC(
 Generate a tensor of samples from a multinomial distribution according to the probabilities
 of each of the possible outcomes.
 )DOC";
 
-const char kDoc_675be5a19c07[] = R"DOC(
+const char kDoc_Constant_ver25[] = R"DOC(
 This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
 or value_* must be specified.
 )DOC";
 
-const char kDoc_675c7a37ab1d[] = R"DOC(
+const char kDoc_Where_ver16[] = R"DOC(
 Return elements, either from X or Y, depending on condition.
 Where behaves like
 [numpy.where](https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html)
@@ -464,13 +464,13 @@ with three parameters.
 
 )DOC";
 
-const char kDoc_6cf3f81f0d6e[] = R"DOC(
+const char kDoc_CastLike_ver25[] = R"DOC(
 The operator casts the elements of a given input tensor (the first input) to
 the same data type as the elements of the second input tensor.
 See documentation of the Cast operator for further details.
 )DOC";
 
-const char kDoc_75434a1edbd7[] = R"DOC(
+const char kDoc_GridSample_ver22[] = R"DOC(
 Given an input `X` and a flow-field `grid`, computes the output `Y` using `X` values and pixel locations from the `grid`.
 For spatial input `X` with shape (N, C, H, W), the `grid` will have shape (N, H_out, W_out, 2),
 the output `Y` will have shape (N, C, H_out, W_out). For volumetric input `X` with shape (N, C, D, H, W),
@@ -491,33 +491,33 @@ The GridSample operator is often used in doing grid generator and sampler in the
 See also in [torch.nn.functional.grid_sample](https://pytorch.org/docs/stable/generated/torch.nn.functional.grid_sample.html).
 )DOC";
 
-const char kDoc_75c5413751b3[] = R"DOC(
+const char kDoc_Atanh_ver22[] = R"DOC(
 Calculates the hyperbolic arctangent of the given input tensor element-wise.
 )DOC";
 
-const char kDoc_765d88f2118f[] = R"DOC(
+const char kDoc_Flatten_ver25[] = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
 )DOC";
 
-const char kDoc_7700aeea1356[] = R"DOC(
+const char kDoc_Reciprocal_ver13[] = R"DOC(
 Reciprocal takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
 the tensor elementwise.
 )DOC";
 
-const char kDoc_770b7752e541[] = R"DOC(
+const char kDoc_Pow_ver15[] = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC";
 
-const char kDoc_77fbebfb7457[] = R"DOC(
+const char kDoc_Tan_ver22[] = R"DOC(
 Calculates the tangent of the given input tensor, element-wise.
 )DOC";
 
-const char kDoc_79892e581561[] = R"DOC(
+const char kDoc_mish_ver22[] = R"DOC(
 Mish: A Self Regularized Non-Monotonic Neural Activation Function.
 
 Perform the linear unit element-wise on the input tensor X using formula:
@@ -527,7 +527,7 @@ mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
 ```
 )DOC";
 
-const char kDoc_7a5cec98fd98[] = R"DOC(
+const char kDoc_RoiAlign_ver22[] = R"DOC(
 Region of Interest (RoI) align operation described in the
 [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
 RoiAlign consumes an input tensor X and region of interests (rois)
@@ -541,13 +541,13 @@ the value of the sampled locations are computed directly
 through bilinear interpolation.
 )DOC";
 
-const char kDoc_7b2fc7c9a203[] = R"DOC(
+const char kDoc_LeakyRelu_ver16[] = R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
 output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
 )DOC";
 
-const char kDoc_8224748962a5[] = R"DOC(
+const char kDoc_Det_ver22[] = R"DOC(
 Det calculates determinant of a square matrix or batches of square matrices.
 Det takes one input tensor of shape `[*, M, M]`, where `*` is zero or more batch dimensions,
 and the inner-most 2 dimensions form square matrices.
@@ -555,7 +555,7 @@ The output is a tensor of shape `[*]`, containing the determinants of all input 
 e.g., When the input is 2-D, the output is a scalar(shape is empty: `[]`).
 )DOC";
 
-const char kDoc_8441849959c8[] = R"DOC(
+const char kDoc_RandomUniformLike_ver22[] = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution.
 The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the uniform distribution are specified by `low` and `high`.
@@ -565,13 +565,13 @@ The 'dtype' argument must be one of the data types specified in the 'DataType' e
 TensorProto message and be valid as an output type.
 )DOC";
 
-const char kDoc_8f2b9889715a[] = R"DOC(
+const char kDoc_Relu_ver14[] = R"DOC(
 Relu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
 the tensor elementwise.
 )DOC";
 
-const char kDoc_9100504df429[] = R"DOC(
+const char kDoc_RandomNormalLike_ver22[] = R"DOC(
 Generate a tensor with random values drawn from a normal distribution.
 The shape of the output tensor is copied from the shape of the input tensor,
 and the parameters of the normal distribution are specified by `mean` and `scale`.
@@ -581,62 +581,62 @@ The 'dtype' argument must be one of the data types specified in the 'DataType' e
 TensorProto message, and be valid as an output type.
 )DOC";
 
-const char kDoc_9b56125d9c91[] = R"DOC(
+const char kDoc_Exp_ver13[] = R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
 )DOC";
 
-const char kDoc_9ce3253f193d[] = R"DOC(
+const char kDoc_Sign_ver13[] = R"DOC(
 Calculate the sign of the given input tensor element-wise.
 If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
 )DOC";
 
-const char kDoc_a225c659360c[] = R"DOC(
+const char kDoc_Cosh_ver22[] = R"DOC(
 Calculates the hyperbolic cosine of the given input tensor element-wise.
 )DOC";
 
-const char kDoc_a852ca531446[] = R"DOC(
+const char kDoc_Sigmoid_ver13[] = R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
 tensor elementwise.
 )DOC";
 
-const char kDoc_a8b097e53545[] = R"DOC(
+const char kDoc_HardSigmoid_ver22[] = R"DOC(
 HardSigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
 is applied to the tensor elementwise.
 )DOC";
 
-const char kDoc_a97f79e35dad[] = R"DOC(
+const char kDoc_LpNormalization_ver22[] = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
 )DOC";
 
-const char kDoc_b7dac33bda7f[] = R"DOC(
+const char kDoc_Erf_ver13[] = R"DOC(
 Computes the error function of the given input tensor element-wise.
 )DOC";
 
-const char kDoc_bdc588b2ca97[] = R"DOC(
+const char kDoc_Asinh_ver22[] = R"DOC(
 Calculates the hyperbolic arcsine of the given input tensor element-wise.
 )DOC";
 
-const char kDoc_c0e13616eabf[] = R"DOC(
+const char kDoc_Sinh_ver22[] = R"DOC(
 Calculates the hyperbolic sine of the given input tensor element-wise.
 )DOC";
 
-const char kDoc_c2091afabfbc[] = R"DOC(
+const char kDoc_Atan_ver22[] = R"DOC(
 Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
 )DOC";
 
-const char kDoc_c4a941491968[] = R"DOC(
+const char kDoc_Sqrt_ver13[] = R"DOC(
 Square root takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the square root is, y = x^0.5, is applied to
 the tensor elementwise. If x is negative, then it will return NaN.
 )DOC";
 
-const char kDoc_cb18c801844b[] = R"DOC(
+const char kDoc_Asin_ver22[] = R"DOC(
 Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
 )DOC";
 
-const char kDoc_cccb6a35d39d[] = R"DOC(
+const char kDoc_Expand_ver13[] = R"DOC(
 Broadcast the input tensor following the given shape and the broadcast rule.
 The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
 Dimensions are right alignment;
@@ -647,7 +647,7 @@ It is possible that the output.shape is not equal to shape, when some dimensions
 or the shape.ndim < input.shape.ndim.
 )DOC";
 
-const char kDoc_d0dbbf7d114b[] = R"DOC(
+const char kDoc_scan_25[] = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip, and is intended to enable
@@ -771,7 +771,7 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 )DOC";
 
-const char kDoc_d22538bdee9f[] = R"DOC(
+const char kDoc_Pad_ver25[] = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
@@ -874,21 +874,21 @@ output = [
 ```
 )DOC";
 
-const char kDoc_d36efc917b8e[] = R"DOC(
+const char kDoc_Cos_ver22[] = R"DOC(
 Calculates the cosine of the given input tensor, element-wise.
 )DOC";
 
-const char kDoc_d9850b45cf78[] = R"DOC(
+const char kDoc_HardSwish_ver22[] = R"DOC(
 HardSwish takes one input data (Tensor<T>) and produces one output data (Tensor<T>) where
 the HardSwish function, y = x * max(0, min(1, alpha * x + beta)) = x * HardSigmoid<alpha, beta>(x),
 where alpha = 1/6 and beta = 0.5, is applied to the tensor elementwise.
 )DOC";
 
-const char kDoc_deb527ce5bbc[] = R"DOC(
+const char kDoc_MatMul_ver13[] = R"DOC(
 Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 )DOC";
 
-const char kDoc_e04b32fdafc1[] = R"DOC(
+const char kDoc_NegativeLogLikelihoodLoss_ver22[] = R"DOC(
 A NegativeLogLikelihoodLoss operator computes (weighted) negative log likelihood loss.
 Its "input" tensor has the shape of (N, C, d1, d2, ..., dk) where k >= 0.
 The "input" tensor contains log-probabilities for input[n, :, d_1, d_2,..., d_k] being in a class of [0, C).
@@ -992,11 +992,11 @@ loss = np.sum(loss) / weight_total
 ```
 )DOC";
 
-const char kDoc_e2417f4edb2a[] = R"DOC(
+const char kDoc_Sin_ver22[] = R"DOC(
 Calculates the sine of the given input tensor, element-wise.
 )DOC";
 
-const char kDoc_e27ff0dc02ee[] = R"DOC(
+const char kDoc_Loop_ver25[] = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -1134,7 +1134,7 @@ point-wise operators (e.g. dropout, residual connections, linear layer).
 The input/output of subgraph (produced by loop node) matching is based on order instead of name. The implementation will figure out the names based on this order.
 )DOC";
 
-const char kDoc_e49986c33e73[] = R"DOC(
+const char kDoc_RNN_ver22[] = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -1176,7 +1176,7 @@ Equations (Default: f=Tanh):
 * Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
 )DOC";
 
-const char kDoc_e8a6c745b28c[] = R"DOC(
+const char kDoc_NonMaxSuppression_ver11[] = R"DOC(
 Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
 Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
 Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
@@ -1186,11 +1186,11 @@ The selected_indices output is a set of integers indexing into the input collect
 The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
 )DOC";
 
-const char kDoc_edcb0fcc1a35[] = R"DOC(
+const char kDoc_Log_ver13[] = R"DOC(
 Calculates the natural log of the given input tensor, element-wise.
 )DOC";
 
-const char kDoc_ef88f83cbcbc[] = R"DOC(
+const char kDoc_EyeLike_ver22[] = R"DOC(
 Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
 tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
 same as the input tensor. The data type can be specified by the 'dtype' argument. If
@@ -1200,7 +1200,7 @@ The 'dtype' argument must be one of the data types specified in the 'DataType' e
 TensorProto message and be valid as an output type.
 )DOC";
 
-const char kDoc_f56c247b0397[] = R"DOC(
+const char kDoc_Reshape_ver25[] = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
@@ -1216,99 +1216,99 @@ contain both a zero value and -1, as the value of the dimension corresponding
 to -1 cannot be determined uniquely.
 )DOC";
 
-const char kDoc_f72d3db0fec7[] = R"DOC(
+const char kDoc_Compress_ver11[] = R"DOC(
     Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
     In case axis is not provided, input is flattened before elements are selected.
     Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
     )DOC";
 
-const char kDoc_f8ec9eaa5833[] = R"DOC(
+const char kDoc_PRelu_ver16[] = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
 )DOC";
 
-const char kDoc_fc4747c81897[] = R"DOC(
+const char kDoc_Neg_ver13[] = R"DOC(
 Neg takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where each element flipped sign, y = -x, is applied to
 the tensor elementwise.
 )DOC";
 
 #else
-const char kDoc_02528396a05f[] = "";
-const char kDoc_0263e5d4c984[] = "";
-const char kDoc_02d46ecaffc0[] = "";
-const char kDoc_02f11fa13bcc[] = "";
-const char kDoc_05dd1123b6c7[] = "";
-const char kDoc_068e9c2fb48f[] = "";
-const char kDoc_0857272140bf[] = "";
-const char kDoc_186d901a2312[] = "";
-const char kDoc_1890ac9fbec3[] = "";
-const char kDoc_1ab4a0c91b30[] = "";
-const char kDoc_1cb89a65f851[] = "";
-const char kDoc_27bd435de752[] = "";
-const char kDoc_2a1d1cd218ee[] = "";
-const char kDoc_2a3c7dc19b6e[] = "";
-const char kDoc_2a503f1c01e1[] = "";
-const char kDoc_2f18eb64c540[] = "";
-const char kDoc_31fda3078751[] = "";
-const char kDoc_3400e66a52ac[] = "";
-const char kDoc_35881fb051bb[] = "";
-const char kDoc_36220ef2e688[] = "";
-const char kDoc_37fd39b7e227[] = "";
-const char kDoc_3950deae3514[] = "";
-const char kDoc_3e396a883b11[] = "";
-const char kDoc_4436838301b3[] = "";
-const char kDoc_46f026ddc963[] = "";
-const char kDoc_4e337d7f45b6[] = "";
-const char kDoc_4f9fa4508221[] = "";
-const char kDoc_51834a493821[] = "";
-const char kDoc_51d026025170[] = "";
-const char kDoc_59bcdb27958e[] = "";
-const char kDoc_675be5a19c07[] = "";
-const char kDoc_675c7a37ab1d[] = "";
-const char kDoc_6cf3f81f0d6e[] = "";
-const char kDoc_75434a1edbd7[] = "";
-const char kDoc_75c5413751b3[] = "";
-const char kDoc_765d88f2118f[] = "";
-const char kDoc_7700aeea1356[] = "";
-const char kDoc_770b7752e541[] = "";
-const char kDoc_77fbebfb7457[] = "";
-const char kDoc_79892e581561[] = "";
-const char kDoc_7a5cec98fd98[] = "";
-const char kDoc_7b2fc7c9a203[] = "";
-const char kDoc_8224748962a5[] = "";
-const char kDoc_8441849959c8[] = "";
-const char kDoc_8f2b9889715a[] = "";
-const char kDoc_9100504df429[] = "";
-const char kDoc_9b56125d9c91[] = "";
-const char kDoc_9ce3253f193d[] = "";
-const char kDoc_a225c659360c[] = "";
-const char kDoc_a852ca531446[] = "";
-const char kDoc_a8b097e53545[] = "";
-const char kDoc_a97f79e35dad[] = "";
-const char kDoc_b7dac33bda7f[] = "";
-const char kDoc_bdc588b2ca97[] = "";
-const char kDoc_c0e13616eabf[] = "";
-const char kDoc_c2091afabfbc[] = "";
-const char kDoc_c4a941491968[] = "";
-const char kDoc_cb18c801844b[] = "";
-const char kDoc_cccb6a35d39d[] = "";
-const char kDoc_d0dbbf7d114b[] = "";
-const char kDoc_d22538bdee9f[] = "";
-const char kDoc_d36efc917b8e[] = "";
-const char kDoc_d9850b45cf78[] = "";
-const char kDoc_deb527ce5bbc[] = "";
-const char kDoc_e04b32fdafc1[] = "";
-const char kDoc_e2417f4edb2a[] = "";
-const char kDoc_e27ff0dc02ee[] = "";
-const char kDoc_e49986c33e73[] = "";
-const char kDoc_e8a6c745b28c[] = "";
-const char kDoc_edcb0fcc1a35[] = "";
-const char kDoc_ef88f83cbcbc[] = "";
-const char kDoc_f56c247b0397[] = "";
-const char kDoc_f72d3db0fec7[] = "";
-const char kDoc_f8ec9eaa5833[] = "";
-const char kDoc_fc4747c81897[] = "";
+const char kDoc_GRU_ver22[] = "";
+const char kDoc_Squeeze_ver25[] = "";
+const char kDoc_MaxUnpool_ver22[] = "";
+const char kDoc_Size_ver25[] = "";
+const char kDoc_RandomUniform_ver22[] = "";
+const char kDoc_DequantizeLinear_ver25[] = "";
+const char kDoc_RandomNormal_ver22[] = "";
+const char kDoc_Round_ver22[] = "";
+const char kDoc_SpaceToDepth_ver13[] = "";
+const char kDoc_InstanceNormalization_ver22[] = "";
+const char kDoc_ThresholdedRelu_ver22[] = "";
+const char kDoc_Acosh_ver22[] = "";
+const char kDoc_Dropout_ver22[] = "";
+const char kDoc_DeformConv_ver22[] = "";
+const char kDoc_Softplus_ver22[] = "";
+const char kDoc_Tile_ver13[] = "";
+const char kDoc_Unsqueeze_ver25[] = "";
+const char kDoc_ConstantOfShape_ver25[] = "";
+const char kDoc_Elu_ver22[] = "";
+const char kDoc_CumSum_ver14[] = "";
+const char kDoc_Acos_ver22[] = "";
+const char kDoc_LSTM_ver22[] = "";
+const char kDoc_Bernoulli_ver22[] = "";
+const char kDoc_Softsign_ver22[] = "";
+const char kDoc_Selu_ver22[] = "";
+const char kDoc_Shape_ver25[] = "";
+const char kDoc_Upsample_ver10[] = "";
+const char kDoc_Tanh_ver13[] = "";
+const char kDoc_Cast_ver25[] = "";
+const char kDoc_Multinomial_ver22[] = "";
+const char kDoc_Constant_ver25[] = "";
+const char kDoc_Where_ver16[] = "";
+const char kDoc_CastLike_ver25[] = "";
+const char kDoc_GridSample_ver22[] = "";
+const char kDoc_Atanh_ver22[] = "";
+const char kDoc_Flatten_ver25[] = "";
+const char kDoc_Reciprocal_ver13[] = "";
+const char kDoc_Pow_ver15[] = "";
+const char kDoc_Tan_ver22[] = "";
+const char kDoc_mish_ver22[] = "";
+const char kDoc_RoiAlign_ver22[] = "";
+const char kDoc_LeakyRelu_ver16[] = "";
+const char kDoc_Det_ver22[] = "";
+const char kDoc_RandomUniformLike_ver22[] = "";
+const char kDoc_Relu_ver14[] = "";
+const char kDoc_RandomNormalLike_ver22[] = "";
+const char kDoc_Exp_ver13[] = "";
+const char kDoc_Sign_ver13[] = "";
+const char kDoc_Cosh_ver22[] = "";
+const char kDoc_Sigmoid_ver13[] = "";
+const char kDoc_HardSigmoid_ver22[] = "";
+const char kDoc_LpNormalization_ver22[] = "";
+const char kDoc_Erf_ver13[] = "";
+const char kDoc_Asinh_ver22[] = "";
+const char kDoc_Sinh_ver22[] = "";
+const char kDoc_Atan_ver22[] = "";
+const char kDoc_Sqrt_ver13[] = "";
+const char kDoc_Asin_ver22[] = "";
+const char kDoc_Expand_ver13[] = "";
+const char kDoc_scan_25[] = "";
+const char kDoc_Pad_ver25[] = "";
+const char kDoc_Cos_ver22[] = "";
+const char kDoc_HardSwish_ver22[] = "";
+const char kDoc_MatMul_ver13[] = "";
+const char kDoc_NegativeLogLikelihoodLoss_ver22[] = "";
+const char kDoc_Sin_ver22[] = "";
+const char kDoc_Loop_ver25[] = "";
+const char kDoc_RNN_ver22[] = "";
+const char kDoc_NonMaxSuppression_ver11[] = "";
+const char kDoc_Log_ver13[] = "";
+const char kDoc_EyeLike_ver22[] = "";
+const char kDoc_Reshape_ver25[] = "";
+const char kDoc_Compress_ver11[] = "";
+const char kDoc_PRelu_ver16[] = "";
+const char kDoc_Neg_ver13[] = "";
 #endif
 } // namespace ONNX_NAMESPACE

@@ -294,7 +294,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* const Loop_ver23_doc = kDoc_e27ff0dc02ee;
+static const char* const Loop_ver23_doc = kDoc_Loop_ver25;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
@@ -563,7 +563,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* const scan_24_doc = kDoc_d0dbbf7d114b;
+static const char* const scan_24_doc = kDoc_scan_25;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
