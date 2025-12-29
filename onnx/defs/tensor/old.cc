@@ -14,7 +14,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* const GridSample_ver20_doc = kDoc_GridSample_ver22;
+static const char* const GridSample_ver20_doc = kDoc_GridSample_ver20;
 
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
@@ -93,7 +93,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(GridSample_ver20_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
-static const char* const Cast_ver24_doc = kDoc_Cast_ver25;
+static const char* const Cast_ver24_doc = kDoc_Cast_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
@@ -508,7 +508,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const CastLike_ver24_doc = kDoc_CastLike_ver25;
+static const char* const CastLike_ver24_doc = kDoc_CastLike_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
@@ -1057,7 +1057,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(GridSample_ver16_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
-static const char* const Reshape_ver24_doc = kDoc_Reshape_ver25;
+static const char* const Reshape_ver24_doc = kDoc_Reshape_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -1893,7 +1893,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Shape_ver24_doc = kDoc_Shape_ver25;
+static const char* const Shape_ver24_doc = kDoc_Shape_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
@@ -2089,7 +2089,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { ShapeOp13DataPropagator(ctx); }));
 
-static const char* const Size_ver24_doc = kDoc_Size_ver25;
+static const char* const Size_ver24_doc = kDoc_Size_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -3662,7 +3662,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Squeeze_ver24_doc = kDoc_Squeeze_ver25;
+static const char* const Squeeze_ver24_doc = kDoc_Squeeze_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
@@ -4111,7 +4111,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Unsqueeze_ver24_doc = kDoc_Unsqueeze_ver25;
+static const char* const Unsqueeze_ver24_doc = kDoc_Unsqueeze_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
@@ -4484,7 +4484,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const SpaceToDepth_ver1_doc = kDoc_SpaceToDepth_ver13;
+static const char* const SpaceToDepth_ver1_doc = kDoc_SpaceToDepth_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
@@ -4597,7 +4597,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Tile_ver6_doc = kDoc_Tile_ver13;
+static const char* const Tile_ver6_doc = kDoc_Tile_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tile,
@@ -5383,7 +5383,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Pad_ver24_doc = kDoc_Pad_ver25;
+static const char* const Pad_ver24_doc = kDoc_Pad_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
@@ -5922,7 +5922,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output types to bool, int32, int64, float16, float, double tensors.")
         .SetDoc(Upsample_ver1_doc));
 
-static const char* const Upsample_ver7_doc = kDoc_Upsample_ver10;
+static const char* const Upsample_ver7_doc = kDoc_Upsample_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
@@ -6808,7 +6808,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Compress_ver9_doc = kDoc_Compress_ver11;
+static const char* const Compress_ver9_doc = kDoc_Compress_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
@@ -7128,7 +7128,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor and sequence types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Where_ver9_doc = kDoc_Where_ver16;
+static const char* const Where_ver9_doc = kDoc_Where_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Where,

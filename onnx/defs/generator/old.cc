@@ -9,7 +9,7 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* const Bernoulli_ver15_doc = kDoc_Bernoulli_ver22;
+static const char* const Bernoulli_ver15_doc = kDoc_Bernoulli_ver15;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Bernoulli,
@@ -80,7 +80,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* const Multinomial_ver7_doc = kDoc_Multinomial_ver22;
+static const char* const Multinomial_ver7_doc = kDoc_Multinomial_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Multinomial,
@@ -138,7 +138,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
-static const char* const RandomNormalLike_ver1_doc = kDoc_RandomNormalLike_ver22;
+static const char* const RandomNormalLike_ver1_doc = kDoc_RandomNormalLike_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormalLike,
@@ -180,7 +180,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const RandomUniformLike_ver1_doc = kDoc_RandomUniformLike_ver22;
+static const char* const RandomUniformLike_ver1_doc = kDoc_RandomUniformLike_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniformLike,
@@ -222,7 +222,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const RandomNormal_ver1_doc = kDoc_RandomNormal_ver22;
+static const char* const RandomNormal_ver1_doc = kDoc_RandomNormal_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormal,
@@ -253,7 +253,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* const RandomUniform_ver1_doc = kDoc_RandomUniform_ver22;
+static const char* const RandomUniform_ver1_doc = kDoc_RandomUniform_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniform,
@@ -284,7 +284,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* const EyeLike_ver9_doc = kDoc_EyeLike_ver22;
+static const char* const EyeLike_ver9_doc = kDoc_EyeLike_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     EyeLike,
@@ -352,7 +352,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const Constant_ver24_doc = kDoc_Constant_ver25;
+static const char* const Constant_ver24_doc = kDoc_Constant_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -725,7 +725,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
         }));
 
-static const char* const ConstantOfShape_ver24_doc = kDoc_ConstantOfShape_ver25;
+static const char* const ConstantOfShape_ver24_doc = kDoc_ConstantOfShape_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,

@@ -124,7 +124,7 @@ static bool BuildContextDependentFunctionBody_opset13(
   return true;
 }
 
-static const char* const NegativeLogLikelihoodLoss_ver13_doc = kDoc_NegativeLogLikelihoodLoss_ver22;
+static const char* const NegativeLogLikelihoodLoss_ver13_doc = kDoc_NegativeLogLikelihoodLoss_ver13;
 
 ONNX_OPERATOR_SET_SCHEMA(
     NegativeLogLikelihoodLoss,
@@ -235,7 +235,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Det_ver11_doc = kDoc_Det_ver22;
+static const char* const Det_ver11_doc = kDoc_Det_ver11;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Det,
@@ -280,7 +280,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Round_ver11_doc = kDoc_Round_ver22;
+static const char* const Round_ver11_doc = kDoc_Round_ver11;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Round,
@@ -295,7 +295,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Atanh_ver9_doc = kDoc_Atanh_ver22;
+static const char* const Atanh_ver9_doc = kDoc_Atanh_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Atanh,
@@ -319,7 +319,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Acosh_ver9_doc = kDoc_Acosh_ver22;
+static const char* const Acosh_ver9_doc = kDoc_Acosh_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Acosh,
@@ -343,7 +343,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Asinh_ver9_doc = kDoc_Asinh_ver22;
+static const char* const Asinh_ver9_doc = kDoc_Asinh_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Asinh,
@@ -367,7 +367,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Cosh_ver9_doc = kDoc_Cosh_ver22;
+static const char* const Cosh_ver9_doc = kDoc_Cosh_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cosh,
@@ -391,7 +391,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Sinh_ver9_doc = kDoc_Sinh_ver22;
+static const char* const Sinh_ver9_doc = kDoc_Sinh_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sinh,
@@ -415,7 +415,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Atan_ver7_doc = kDoc_Atan_ver22;
+static const char* const Atan_ver7_doc = kDoc_Atan_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Atan,
@@ -439,7 +439,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Acos_ver7_doc = kDoc_Acos_ver22;
+static const char* const Acos_ver7_doc = kDoc_Acos_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Acos,
@@ -463,7 +463,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Asin_ver7_doc = kDoc_Asin_ver22;
+static const char* const Asin_ver7_doc = kDoc_Asin_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Asin,
@@ -487,7 +487,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Tan_ver7_doc = kDoc_Tan_ver22;
+static const char* const Tan_ver7_doc = kDoc_Tan_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tan,
@@ -511,7 +511,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Cos_ver7_doc = kDoc_Cos_ver22;
+static const char* const Cos_ver7_doc = kDoc_Cos_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cos,
@@ -535,7 +535,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Sin_ver7_doc = kDoc_Sin_ver22;
+static const char* const Sin_ver7_doc = kDoc_Sin_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sin,
@@ -559,7 +559,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Softplus_ver1_doc = kDoc_Softplus_ver22;
+static const char* const Softplus_ver1_doc = kDoc_Softplus_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softplus,
@@ -585,7 +585,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             )ONNX",
             18));
 
-static const char* const Softsign_ver1_doc = kDoc_Softsign_ver22;
+static const char* const Softsign_ver1_doc = kDoc_Softsign_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softsign,
@@ -619,7 +619,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* const HardSwish_ver14_doc = kDoc_HardSwish_ver22;
+static const char* const HardSwish_ver14_doc = kDoc_HardSwish_ver14;
 
 ONNX_OPERATOR_SET_SCHEMA(
     HardSwish,
@@ -640,7 +640,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         )ONNX"));
 
-static const char* const HardSigmoid_ver6_doc = kDoc_HardSigmoid_ver22;
+static const char* const HardSigmoid_ver6_doc = kDoc_HardSigmoid_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     HardSigmoid,
@@ -675,7 +675,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* const mish_ver18_doc = kDoc_mish_ver22;
+static const char* const mish_ver18_doc = kDoc_mish_ver18;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mish,
@@ -697,7 +697,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Elu_ver6_doc = kDoc_Elu_ver22;
+static const char* const Elu_ver6_doc = kDoc_Elu_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Elu,
@@ -730,7 +730,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* const Selu_ver6_doc = kDoc_Selu_ver22;
+static const char* const Selu_ver6_doc = kDoc_Selu_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Selu,
@@ -776,7 +776,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* const ThresholdedRelu_ver10_doc = kDoc_ThresholdedRelu_ver22;
+static const char* const ThresholdedRelu_ver10_doc = kDoc_ThresholdedRelu_ver10;
 
 ONNX_OPERATOR_SET_SCHEMA(
     ThresholdedRelu,
@@ -1016,7 +1016,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static const char* const Neg_ver6_doc = kDoc_Neg_ver13;
+static const char* const Neg_ver6_doc = kDoc_Neg_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Neg,
@@ -1053,7 +1053,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Reciprocal_ver6_doc = kDoc_Reciprocal_ver13;
+static const char* const Reciprocal_ver6_doc = kDoc_Reciprocal_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reciprocal,
@@ -1106,7 +1106,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Sqrt_ver6_doc = kDoc_Sqrt_ver13;
+static const char* const Sqrt_ver6_doc = kDoc_Sqrt_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sqrt,
@@ -1121,7 +1121,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Relu_ver6_doc = kDoc_Relu_ver14;
+static const char* const Relu_ver6_doc = kDoc_Relu_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Relu,
@@ -1151,7 +1151,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Exp_ver6_doc = kDoc_Exp_ver13;
+static const char* const Exp_ver6_doc = kDoc_Exp_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Exp,
@@ -1171,7 +1171,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Log_ver6_doc = kDoc_Log_ver13;
+static const char* const Log_ver6_doc = kDoc_Log_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Log,
@@ -1191,7 +1191,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Tanh_ver6_doc = kDoc_Tanh_ver13;
+static const char* const Tanh_ver6_doc = kDoc_Tanh_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tanh,
@@ -1211,7 +1211,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Pow_ver13_doc = kDoc_Pow_ver15;
+static const char* const Pow_ver13_doc = kDoc_Pow_ver13;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
@@ -1298,7 +1298,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static const char* const Sigmoid_ver6_doc = kDoc_Sigmoid_ver13;
+static const char* const Sigmoid_ver6_doc = kDoc_Sigmoid_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sigmoid,
@@ -1554,7 +1554,7 @@ static void matmulShapeInference_opset_9(ONNX_NAMESPACE::InferenceContext& ctx, 
   *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
 }
 
-static const char* const MatMul_ver9_doc = kDoc_MatMul_ver13;
+static const char* const MatMul_ver9_doc = kDoc_MatMul_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
@@ -1579,7 +1579,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           matmulShapeInference_opset_9(ctx, 0, 1);
         }));
 
-static const char* const Expand_ver8_doc = kDoc_Expand_ver13;
+static const char* const Expand_ver8_doc = kDoc_Expand_ver8;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Expand,
@@ -1629,7 +1629,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Sign_ver9_doc = kDoc_Sign_ver13;
+static const char* const Sign_ver9_doc = kDoc_Sign_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sign,
@@ -1646,7 +1646,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Erf_ver9_doc = kDoc_Erf_ver13;
+static const char* const Erf_ver9_doc = kDoc_Erf_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Erf,
@@ -1663,7 +1663,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_numeric_types(), "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const CumSum_ver11_doc = kDoc_CumSum_ver14;
+static const char* const CumSum_ver11_doc = kDoc_CumSum_ver11;
 
 ONNX_OPERATOR_SET_SCHEMA(
     CumSum,
@@ -2580,7 +2580,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors."));
 
-static const char* const LeakyRelu_ver1_doc = kDoc_LeakyRelu_ver16;
+static const char* const LeakyRelu_ver1_doc = kDoc_LeakyRelu_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     LeakyRelu,
@@ -2756,7 +2756,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const PRelu_ver7_doc = kDoc_PRelu_ver16;
+static const char* const PRelu_ver7_doc = kDoc_PRelu_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
