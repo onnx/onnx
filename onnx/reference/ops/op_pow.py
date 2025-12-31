@@ -5,13 +5,12 @@ from __future__ import annotations
 
 from warnings import catch_warnings, simplefilter
 
-import numpy as np
-
 from onnx.reference.op_run import OpRun
 
 
 class Pow(OpRun):
     def _run(self, a, b):
+        xp = self._get_array_api_namespace(a, b)
         with catch_warnings():
             simplefilter("ignore")
-            return (np.power(a, b).astype(a.dtype),)
+            return (xp.pow(a, b),)

@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class Where(OpRun):
     def _run(self, condition, x, y):
+        xp = self._get_array_api_namespace(condition, x, y)
         if (
             x.dtype != y.dtype
             and x.dtype not in (object,)
@@ -19,4 +20,4 @@ class Where(OpRun):
             raise RuntimeError(
                 f"x and y should share the same dtype {x.dtype} != {y.dtype}"
             )
-        return (np.where(condition, x, y).astype(x.dtype),)
+        return (xp.where(condition, x, y),)

@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class Gather(OpRun):
     def _run(self, x, indices, axis=None):
+        xp = self._get_array_api_namespace(x)
         if not x.flags["C_CONTIGUOUS"]:
             x = np.ascontiguousarray(x)
         if not indices.flags["C_CONTIGUOUS"]:

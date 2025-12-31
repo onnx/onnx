@@ -15,4 +15,5 @@ def common_reference_implementation(data: np.ndarray, shape: np.ndarray) -> np.n
 
 class Expand(OpRun):
     def _run(self, data, shape):
+        xp = self._get_array_api_namespace(data)
         return (common_reference_implementation(data, shape),)

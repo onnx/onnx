@@ -10,6 +10,7 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class Softplus(OpRunUnaryNum):
     def _run(self, X):
+        xp = self._get_array_api_namespace(X)
         tmp = np.asarray(np.exp(X), dtype=X.dtype)
         tmp += 1
         np.log(tmp, out=tmp)

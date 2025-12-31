@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class Unsqueeze_1(OpRun):
     def _run(self, data, axes=None):
+        xp = self._get_array_api_namespace(data)
         if isinstance(axes, np.ndarray):
             axes = tuple(axes)
         elif axes in ([], ()):
@@ -31,6 +32,7 @@ class Unsqueeze_11(Unsqueeze_1):
 
 class Unsqueeze_13(OpRun):
     def _run(self, data, axes=None):
+        xp = self._get_array_api_namespace(data)
         if axes is not None:
             if hasattr(axes, "__iter__") and len(axes.shape) > 0:
                 try:

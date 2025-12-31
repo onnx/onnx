@@ -19,5 +19,6 @@ def _leaky_relu(x: np.ndarray, alpha: float) -> np.ndarray:
 
 class LeakyRelu(OpRunUnaryNum):
     def _run(self, x, alpha=None):
+        xp = self._get_array_api_namespace(x)
         alpha = alpha or self.alpha
         return (_leaky_relu(x, alpha).astype(x.dtype),)

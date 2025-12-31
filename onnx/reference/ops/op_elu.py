@@ -10,5 +10,6 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class Elu(OpRunUnaryNum):
     def _run(self, x, alpha=None):
+        xp = self._get_array_api_namespace(x)
         alpha = alpha or self.alpha
         return (np.where(x > 0, x, alpha * (np.exp(x) - 1)).astype(x.dtype),)
