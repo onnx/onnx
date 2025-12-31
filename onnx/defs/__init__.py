@@ -7,6 +7,7 @@ __all__ = [
     "C",
     "ONNX_DOMAIN",
     "ONNX_ML_DOMAIN",
+    "AI_ONNX_PREVIEW_DOMAIN",
     "AI_ONNX_PREVIEW_TRAINING_DOMAIN",
     "has",
     "register_schema",
@@ -25,6 +26,7 @@ import onnx.onnx_cpp2py_export.defs as C  # noqa: N812
 
 ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = "ai.onnx.ml"
+AI_ONNX_PREVIEW_DOMAIN = "ai.onnx.preview"
 AI_ONNX_PREVIEW_TRAINING_DOMAIN = "ai.onnx.preview.training"
 
 
