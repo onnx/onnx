@@ -11,7 +11,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-import onnx
 from onnx import TensorProto, helper
 from onnx.reference import ReferenceEvaluator
 
@@ -24,8 +23,7 @@ def create_simple_add_model():
 
     add_node = helper.make_node("Add", ["X", "Y"], ["Z"])
     graph = helper.make_graph([add_node], "test_add", [X, Y], [Z])
-    model = helper.make_model(graph)
-    return model
+    return helper.make_model(graph)
 
 
 def create_matmul_model():
@@ -36,8 +34,7 @@ def create_matmul_model():
 
     matmul_node = helper.make_node("MatMul", ["X", "Y"], ["Z"])
     graph = helper.make_graph([matmul_node], "test_matmul", [X, Y], [Z])
-    model = helper.make_model(graph)
-    return model
+    return helper.make_model(graph)
 
 
 def create_reduce_sum_model():
@@ -47,8 +44,7 @@ def create_reduce_sum_model():
 
     reduce_node = helper.make_node("ReduceSum", ["X"], ["Y"], axes=[1], keepdims=0)
     graph = helper.make_graph([reduce_node], "test_reduce_sum", [X], [Y])
-    model = helper.make_model(graph)
-    return model
+    return helper.make_model(graph)
 
 
 class TestArrayAPICompatibility:
@@ -152,11 +148,11 @@ if __name__ == "__main__":
     test = TestArrayAPICompatibility()
     test.test_numpy_add()
     print("✓ NumPy Add test passed")
-    
+
     test.test_numpy_matmul()
     print("✓ NumPy MatMul test passed")
-    
+
     test.test_numpy_reduce_sum()
     print("✓ NumPy ReduceSum test passed")
-    
+
     print("\nAll tests passed!")

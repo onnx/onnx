@@ -192,10 +192,10 @@ class OpRun(abc.ABC):
 
     def _get_array_api_namespace(self, *arrays):
         """Get the array API namespace from the input arrays.
-        
+
         Args:
             *arrays: Input arrays
-            
+
         Returns:
             The array API namespace (xp) for the input arrays.
             Defaults to numpy if no array inputs are provided.
@@ -401,7 +401,7 @@ class OpRun(abc.ABC):
             else:
                 fixed_res.append(x)
         res = tuple(fixed_res)  # type: ignore[assignment]
-        
+
         # Check that results are valid ONNX types (arrays, lists, dicts, or sparse tensors)
         if any(
             not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense") or is_array_api_obj(t))
