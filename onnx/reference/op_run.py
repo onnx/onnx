@@ -9,6 +9,10 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 
 import onnx
+from onnx.reference.array_api_namespace import (
+    get_array_api_namespace,
+    is_array_api_obj,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -185,6 +189,21 @@ class OpRun(abc.ABC):
 
     def _log(self, pattern, *args):
         self.run_params["log"](pattern, *args)
+
+    def _get_array_api_namespace(self, *arrays):
+        """Get the array API namespace from the input arrays.
+        
+        Args:
+            *arrays: Input arrays
+            
+        Returns:
+            The array API namespace (xp) for the input arrays.
+            Defaults to numpy if no array inputs are provided.
+        """
+        for arr in arrays:
+            if arr is not None and is_array_api_obj(arr):
+                return get_array_api_namespace(arr)
+        return np
 
     def _extract_attribute_value(
         self, att: onnx.AttributeProto, ref_att: onnx.AttributeProto | None = None
@@ -373,11 +392,19 @@ class OpRun(abc.ABC):
                 f"is a tuple, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
                 f"All returned types: {dtypes!r}."
             )
-        res = tuple(  # type: ignore[assignment]
-            (np.array(x) if np.isscalar(x) else x) for x in res
-        )
+        # Convert scalar results to arrays, but preserve array API arrays
+        fixed_res = []
+        for x in res:
+            if np.isscalar(x):
+                # For scalars, convert to numpy array
+                fixed_res.append(np.array(x))
+            else:
+                fixed_res.append(x)
+        res = tuple(fixed_res)  # type: ignore[assignment]
+        
+        # Check that results are valid ONNX types (arrays, lists, dicts, or sparse tensors)
         if any(
-            not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense"))
+            not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense") or is_array_api_obj(t))
             for t in res
         ):
             dtypes = [type(t) for t in res]

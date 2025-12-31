@@ -1,1 +1,2 @@
 Pillow
+array-api-compat>=1.4
