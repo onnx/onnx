@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import numpy as np
 
-from onnx.reference.array_api_namespace import convert_to_numpy, asarray
 from onnx.reference.ops._op import OpRunReduceNumpy
 
 
