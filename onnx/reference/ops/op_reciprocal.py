@@ -10,5 +10,7 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class Reciprocal(OpRunUnaryNum):
     def _run(self, x):
+        xp = self._get_array_api_namespace(x)
         with np.errstate(divide="ignore"):
-            return (np.reciprocal(x).astype(x.dtype),)
+            # Array API doesn't have reciprocal, use 1/x
+            return (1.0 / x,)

@@ -10,6 +10,7 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 class ReduceMin_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
+        xp = self._get_array_api_namespace(data)
         axes = tuple(axes) if axes is not None else None
         if data.size == 0:
             maxvalue = (
@@ -19,10 +20,13 @@ class ReduceMin_1(OpRunReduceNumpy):
             )
             return self.reduce_constant(data, maxvalue, axes, keepdims)
 
-        res = np.minimum.reduce(data, axis=axes, keepdims=keepdims == 1)
+        res = xp.min(data, axis=axes, keepdims=bool(keepdims))
         if keepdims == 0 and not isinstance(res, np.ndarray):
-            # The runtime must return a numpy array of a single float.
-            res = np.array(res)
+            # The runtime must return an array
+            if xp.__name__ == 'numpy' or 'numpy' in str(xp.__name__):
+                res = np.array(res)
+            else:
+                res = xp.asarray(res)
         return (res,)
 
 
@@ -32,19 +36,23 @@ class ReduceMin_11(ReduceMin_1):
 
 class ReduceMin_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims: int = 1, noop_with_empty_axes: int = 0):
+        xp = self._get_array_api_namespace(data)
         axes = self.handle_axes(axes, noop_with_empty_axes)
 
-        keepdims = keepdims != 0
+        keepdims_bool = keepdims != 0
         if data.size == 0:
             maxvalue = (
                 np.iinfo(data.dtype).max
                 if np.issubdtype(data.dtype, np.integer)
                 else np.inf
             )
-            return self.reduce_constant(data, maxvalue, axes, keepdims)
+            return self.reduce_constant(data, maxvalue, axes, keepdims_bool)
 
-        res = np.minimum.reduce(data, axis=axes, keepdims=keepdims)
-        if keepdims == 0 and not isinstance(res, np.ndarray):
-            # The runtime must return a numpy array of a single float.
-            res = np.array(res)
+        res = xp.min(data, axis=axes, keepdims=keepdims_bool)
+        if not keepdims_bool and not isinstance(res, np.ndarray):
+            # The runtime must return an array
+            if xp.__name__ == 'numpy' or 'numpy' in str(xp.__name__):
+                res = np.array(res)
+            else:
+                res = xp.asarray(res)
         return (res,)
