@@ -20,16 +20,25 @@ class Div(OpRunBinaryNumpy):
 
     def _run(self, a, b):
         xp = self._get_array_api_namespace(a, b)
+        
+        # Check if integer type by converting to numpy for dtype inspection
+        # Array API doesn't have a standard way to check integer vs float types
+        try:
+            a_np = np.asarray(a) if not isinstance(a, np.ndarray) else a
+            is_integer = issubclass(a_np.dtype.type, np.integer)
+        except (AttributeError, TypeError):
+            # Fallback: check dtype name
+            is_integer = 'int' in str(a.dtype).lower()
+        
         # For integer division, use floor_divide; for float, use divide
-        if hasattr(a.dtype, 'type') and issubclass(a.dtype.type, np.integer):
-            assert hasattr(b.dtype, 'type') and issubclass(b.dtype.type, np.integer)
+        if is_integer:
             result = xp.floor_divide(a, b)
         else:
             result = xp.divide(a, b)
         
         res = (result,)
-        if res[0].dtype != a.dtype:
-            # Use astype via the namespace if available
+        if hasattr(res[0], 'dtype') and res[0].dtype != a.dtype:
+            # Preserve original dtype
             if hasattr(xp, 'astype'):
                 res = (xp.astype(res[0], a.dtype),)
             else:

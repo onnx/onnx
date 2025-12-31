@@ -88,13 +88,9 @@ class TestArrayAPICompatibility:
         expected = np.sum(x, axis=1, keepdims=False)
         np.testing.assert_array_almost_equal(result[0], expected)
 
-    @pytest.mark.skipif(
-        "torch" not in dir(),
-        reason="PyTorch not available",
-    )
     def test_torch_add(self):
         """Test Add operator with PyTorch tensors."""
-        import torch
+        torch = pytest.importorskip("torch")
 
         model = create_simple_add_model()
         sess = ReferenceEvaluator(model)
@@ -106,13 +102,9 @@ class TestArrayAPICompatibility:
         expected = torch.tensor([5.0, 7.0, 9.0], dtype=torch.float32)
         assert torch.allclose(result[0], expected)
 
-    @pytest.mark.skipif(
-        "cupy" not in dir(),
-        reason="CuPy not available",
-    )
     def test_cupy_add(self):
         """Test Add operator with CuPy arrays (GPU)."""
-        import cupy as cp
+        cp = pytest.importorskip("cupy")
 
         model = create_simple_add_model()
         sess = ReferenceEvaluator(model)
@@ -124,12 +116,9 @@ class TestArrayAPICompatibility:
         expected = cp.array([5.0, 7.0, 9.0], dtype=cp.float32)
         cp.testing.assert_array_equal(result[0], expected)
 
-    @pytest.mark.skipif(
-        "jax" not in dir(),
-        reason="JAX not available",
-    )
     def test_jax_add(self):
         """Test Add operator with JAX arrays."""
+        jax = pytest.importorskip("jax")
         import jax.numpy as jnp
 
         model = create_simple_add_model()
