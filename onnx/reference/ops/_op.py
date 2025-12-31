@@ -143,6 +143,10 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
             result = xp.subtract(a, b)
         elif self._fct_name == 'divide':
             result = xp.divide(a, b)
+        elif self._fct_name == 'maximum':
+            result = xp.maximum(a, b)
+        elif self._fct_name == 'minimum':
+            result = xp.minimum(a, b)
         else:
             # Fall back to the provided function
             result = self.numpy_fct(a, b)

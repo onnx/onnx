@@ -18,8 +18,9 @@ class Max(OpRunBinaryNumpy):
         if len(data) == 1:
             return (data[0].copy(),)
         if len(data) > 2:
+            xp = self._get_array_api_namespace(*data)
             a = data[0]
             for i in range(1, len(data)):
-                a = np.maximum(a, data[i])
+                a = xp.maximum(a, data[i])
             return (a,)
         raise RuntimeError("Unexpected turn of events.")

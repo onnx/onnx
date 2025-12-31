@@ -5,13 +5,12 @@ from __future__ import annotations
 
 from warnings import catch_warnings, simplefilter
 
-import numpy as np
-
 from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Sqrt(OpRunUnaryNum):
     def _run(self, x):
+        xp = self._get_array_api_namespace(x)
         with catch_warnings():
             simplefilter("ignore")
-            return (np.sqrt(x).astype(x.dtype),)
+            return (xp.sqrt(x),)
