@@ -5,20 +5,19 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
 def sequence_insert_reference_implementation(
-    sequence: list[Any] | np.ndarray,
-    tensor: np.ndarray,
-    position: np.ndarray | None = None,
+    sequence: list[Any] | Any,
+    tensor: Any,
+    position: Any | None = None,
 ) -> list[Any]:
     # make a copy of input sequence
     seq: list[Any] = []
     if sequence is not None and (
-        not isinstance(sequence, np.ndarray) or len(sequence.shape) > 0
+        not isinstance(sequence, Any) or len(sequence.shape) > 0
     ):
         try:
             seq.extend(sequence)

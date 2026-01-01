@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.ops._op import OpRunReduceNumpy
 
@@ -15,7 +16,7 @@ class ReduceL1_1(OpRunReduceNumpy):
         res = xp.sum(xp.abs(data), axis=axes, keepdims=keepdims).astype(
             dtype=data.dtype
         )
-        if keepdims == 0 and not isinstance(res, np.ndarray):
+        if keepdims == 0 and not isinstance(res, Any):
             # The runtime must return a numpy array of a single float.
             res = np.array(res)
         return (res,)
@@ -30,7 +31,7 @@ class ReduceL1_18(OpRunReduceNumpy):
         res = xp.sum(xp.abs(data), axis=axes, keepdims=keepdims).astype(
             dtype=data.dtype
         )
-        if keepdims == 0 and not isinstance(res, np.ndarray):
+        if keepdims == 0 and not isinstance(res, Any):
             # The runtime must return a numpy array of a single float.
             res = np.array(res)
         return (res,)

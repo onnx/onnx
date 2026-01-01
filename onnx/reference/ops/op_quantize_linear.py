@@ -5,7 +5,8 @@
 
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 import onnx
 from onnx import TensorProto
@@ -44,11 +45,11 @@ _QUANT_INTEGER_RANGES = {
 
 
 def _reshape_input(
-    value: np.ndarray,
+    value: Any,
     shape: tuple[int, ...],
     axis: int,
     block_size: int | None = None,
-) -> np.ndarray:
+) -> Any:
     """Reshape/Replicate scale/zero-point to be broadcastable to shape.
 
     Args:
@@ -96,15 +97,15 @@ def _reshape_input(
 class _CommonQuantizeLinear(OpRun):
     def _run(
         self,
-        x: np.ndarray,
-        y_scale: np.ndarray,
-        zero_point: np.ndarray | None = None,
+        x: Any,
+        y_scale: Any,
+        zero_point: Any | None = None,
         axis: int = 1,
         saturate: bool = True,
         block_size: int | None = None,
         output_dtype: TensorProto.DataType | None = None,
         precision: int | None = None,
-    ) -> tuple[np.ndarray]:
+    ) -> tuple[Any]:
         y_scale = _reshape_input(y_scale, x.shape, axis, block_size)
 
         # Determine output data type

@@ -3,19 +3,20 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
 def _batchnorm_test_mode(
-    x: np.ndarray,
-    s: np.ndarray,
-    bias: np.ndarray,
-    mean: np.ndarray,
-    var: np.ndarray,
+    x: Any,
+    s: Any,
+    bias: Any,
+    mean: Any,
+    var: Any,
     epsilon: float = 1e-5,
-) -> np.ndarray:
+) -> Any:
     dims_x = len(x.shape)
     dim_ones = (1,) * (dims_x - 2)
     s = s.reshape(-1, *dim_ones)
@@ -27,14 +28,14 @@ def _batchnorm_test_mode(
 
 
 def _batchnorm_training_mode(
-    x: np.ndarray,
-    s: np.ndarray,
-    bias: np.ndarray,
-    mean: np.ndarray,
-    var: np.ndarray,
+    x: Any,
+    s: Any,
+    bias: Any,
+    mean: Any,
+    var: Any,
     momentum: float = 0.9,
     epsilon: float = 1e-5,
-) -> np.ndarray:
+) -> Any:
     axis = tuple(np.delete(np.arange(len(x.shape)), 1))
     saved_mean = x.mean(axis=axis)
     saved_var = x.var(axis=axis)

@@ -3,18 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
 def _layer_normalization(
-    X: np.ndarray,
-    W: np.ndarray,
-    B: np.ndarray,
+    X: Any,
+    W: Any,
+    B: Any,
     axis: int = -1,
     epsilon: float = 1e-5,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[Any, Any, Any]:
     X_shape = X.shape
     X_rank = len(X_shape)
     if axis < 0:

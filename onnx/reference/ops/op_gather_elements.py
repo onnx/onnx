@@ -3,19 +3,20 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
-def gather_numpy_2(self: np.ndarray, index: np.ndarray) -> np.ndarray:
+def gather_numpy_2(self: Any, index: Any) -> Any:
     res = []
     for a, b in zip(self, index, strict=True):
         res.append(a[b[0]])
     return np.array(res, dtype=self.dtype).reshape(index.shape)
 
 
-def gather_numpy(self: np.ndarray, dim: int, index: np.ndarray) -> np.ndarray:
+def gather_numpy(self: Any, dim: int, index: Any) -> Any:
     idx_xsection_shape = index.shape[:dim] + index.shape[dim + 1 :]
     self_xsection_shape = self.shape[:dim] + self.shape[dim + 1 :]
     if idx_xsection_shape != self_xsection_shape:

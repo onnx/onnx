@@ -3,19 +3,20 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 from numpy.random import RandomState
 
 from onnx.reference.op_run import OpRun
 
 
 def _dropout(
-    X: np.ndarray,
+    X: Any,
     drop_probability: float = 0.5,
     seed: int | None = None,
     training_mode: bool = False,
     return_mask: bool = False,
-) -> tuple[np.ndarray]:
+) -> tuple[Any]:
     if drop_probability == 0 or not training_mode:
         if return_mask:
             return X, xp.ones(X.shape, dtype=bool)
@@ -34,11 +35,11 @@ class DropoutBase(OpRun):
 
     def _private_run(
         self,
-        X: np.ndarray,
+        X: Any,
         seed: int | None = None,
         ratio: float = 0.5,
         training_mode: bool = False,
-    ) -> tuple[np.ndarray]:
+    ) -> tuple[Any]:
         return _dropout(
             X,
             ratio,

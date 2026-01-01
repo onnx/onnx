@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops import op_grid_sample
@@ -49,7 +48,7 @@ def _deform_conv_implementation(
     )
 
     if mask is None:
-        mask = xp.ones((n, offset_group * np.prod(kernel_shape), *output_shape))
+        mask = np.ones((n, offset_group * np.prod(kernel_shape), *output_shape))
     mask = mask.reshape((n, offset_group, *kernel_shape, *output_shape))
 
     if len(X.shape) == 4:
@@ -69,7 +68,7 @@ def _deform_conv_implementation(
 
         bh, bw = -pads[0], -pads[1]
 
-        res = xp.zeros((n, oc, oh, ow), dtype=X.dtype)
+        res = np.zeros((n, oc, oh, ow), dtype=X.dtype)
         if B is not None:
             res[:, :, :, :] = B.reshape((1, -1, 1, 1))
 
@@ -77,7 +76,7 @@ def _deform_conv_implementation(
         kernel_pos_w, kernel_pos_h = np.meshgrid(
             np.arange(0, kw_new, dw), np.arange(0, kh_new, dh)
         )
-        kernel_pos_wrt_first_elem = xp.stack(
+        kernel_pos_wrt_first_elem = np.stack(
             (kernel_pos_h, kernel_pos_w), axis=2
         )  # shape (kH, kW, 2)
 
@@ -122,15 +121,15 @@ def _deform_conv_implementation(
                                 align_corners=1,
                             )
 
-                            conv_value = xp.multiply(
+                            conv_value = np.multiply(
                                 grid_sample_output,
                                 W[oc_idx, ic_idx % ics_per_group, :, :],
                             )
-                            conv_value = xp.multiply(
+                            conv_value = np.multiply(
                                 conv_value,
                                 mask[batch_idx, offset_group_idx, :, :, i, j],
                             )
-                            res[batch_idx, oc_idx, i, j] += xp.sum(conv_value)
+                            res[batch_idx, oc_idx, i, j] += np.sum(conv_value)
 
         return res
 

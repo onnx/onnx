@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun, RefAttrName
 
@@ -116,7 +117,7 @@ class Constant_12(ConstantCommon):
                     f"Cannot find attribute {self.cst_name!r} in {list(overridden_attributes)!r}."
                 )
             value = overridden_attributes[self.cst_name]
-            if isinstance(value, np.ndarray):
+            if isinstance(value, Any):
                 return (value,)
             return (self.cst_convert(value),)
         return (self._check(self.cst),)

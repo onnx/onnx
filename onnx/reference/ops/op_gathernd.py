@@ -3,14 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
 def _gather_nd_impl(
-    data: np.ndarray, indices: np.ndarray, batch_dims: int
-) -> tuple[np.ndarray]:
+    data: Any, indices: Any, batch_dims: int
+) -> tuple[Any]:
     # Note the data rank - will be reused multiple times later
     data_rank = len(data.shape)
 

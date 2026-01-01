@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import numpy as np
 
 import onnx
 from onnx.reference.op_run import OpRun
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.ndarray:
+def _cartesian(arrays: list[Any], out: Any | None = None) -> Any:
     """From https://stackoverflow.com/a/1235363
     Generate a cartesian product of input arrays.
     Parameters
@@ -51,7 +50,7 @@ def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.nd
 
     n = np.prod([x.size for x in arrays])
     if out is None:
-        out = xp.zeros([n, len(arrays)], dtype=dtype)
+        out = np.zeros([n, len(arrays)], dtype=dtype)
 
     m = n // arrays[0].size
     out[:, 0] = np.repeat(arrays[0], m)
@@ -63,8 +62,8 @@ def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.nd
 
 
 def _nearest_coeffs(
-    ratio: float | int | np.ndarray, mode: str = "round_prefer_floor"
-) -> np.ndarray:
+    ratio: float | int | Any, mode: str = "round_prefer_floor"
+) -> Any:
     if isinstance(ratio, int) or ratio.is_integer():
         return np.array([0, 1])
     if mode == "round_prefer_floor":
@@ -80,7 +79,7 @@ def _nearest_coeffs(
 
 def _cubic_coeffs(
     ratio: float, scale: float | None = None, A: float = -0.75
-) -> np.ndarray:
+) -> Any:
     del scale  # Unused
     coeffs = [
         ((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,
@@ -93,7 +92,7 @@ def _cubic_coeffs(
     return np.array(coeffs)
 
 
-def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.ndarray:
+def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> Any:
     # Antialias is applied when downsampling
     scale = min(scale, 1.0)
 
@@ -114,23 +113,23 @@ def _cubic_coeffs_antialias(ratio: float, scale: float, A: float = -0.75) -> np.
     return np.array(coeffs) / sum(coeffs)
 
 
-def _linear_coeffs(ratio: float, scale: float | None = None) -> np.ndarray:
+def _linear_coeffs(ratio: float, scale: float | None = None) -> Any:
     del scale  # unused
     return np.array([1 - ratio, ratio])
 
 
-def _linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
+def _linear_coeffs_antialias(ratio: float, scale: float) -> Any:
     # Antialias is applied when downsampling
     scale = min(scale, 1.0)
 
     start = int(np.floor(-1 / scale) + 1)
     footprint = 2 - 2 * start
     args = (np.arange(start, start + footprint) - ratio) * scale
-    coeffs = xp.clip(1 - xp.abs(args), 0, 1)
+    coeffs = np.clip(1 - np.abs(args), 0, 1)
     return np.array(coeffs) / sum(coeffs)  # type: ignore[no-any-return]
 
 
-def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
+def _get_neighbor_idxes(x: float, n: int, limit: int) -> Any:
     """Return the n nearest indexes to x among `[0, limit)`,
     prefer the indexes smaller than x.
     As a result, the ratio must be in `(0, 1]`.
@@ -158,7 +157,7 @@ def _get_neighbor_idxes(x: float, n: int, limit: int) -> np.ndarray:
     return np.array(idxes)
 
 
-def _get_neighbor(x: float, n: int, data: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def _get_neighbor(x: float, n: int, data: Any) -> tuple[Any, Any]:
     """Pad `data` in 'edge' mode, and get n nearest elements in the padded array and their indexes in the original array.
 
     Args:
@@ -182,16 +181,16 @@ def _get_neighbor(x: float, n: int, data: np.ndarray) -> tuple[np.ndarray, np.nd
 
 
 def _interpolate_1d_with_x(
-    data: np.ndarray,
+    data: Any,
     scale_factor: float,
     output_width_int: int,
     x: float,
-    get_coeffs: Callable[[float, float], np.ndarray],
-    roi: np.ndarray | None = None,
+    get_coeffs: Callable[[float, float], Any],
+    roi: Any | None = None,
     extrapolation_value: float = 0.0,
     coordinate_transformation_mode: str = "half_pixel",
     exclude_outside: bool = False,
-) -> np.ndarray:
+) -> Any:
     input_width = len(data)
     output_width = scale_factor * input_width
     if coordinate_transformation_mode == "align_corners":
@@ -254,16 +253,16 @@ def _interpolate_1d_with_x(
 
 
 def _interpolate_nd_with_x(
-    data: np.ndarray,
+    data: Any,
     n: int,
     scale_factors: list[float],
     output_size: list[int],
     x: list[float],
-    get_coeffs: Callable[[float, float], np.ndarray],
-    roi: np.ndarray | None = None,
+    get_coeffs: Callable[[float, float], Any],
+    roi: Any | None = None,
     exclude_outside: bool = False,
     **kwargs: Any,
-) -> np.ndarray:
+) -> Any:
     if n == 1:
         return _interpolate_1d_with_x(
             data,
@@ -284,7 +283,7 @@ def _interpolate_nd_with_x(
             output_size[1:],
             x[1:],
             get_coeffs,
-            roi=None if roi is None else xp.concatenate([roi[1:n], roi[n + 1 :]]),
+            roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
             exclude_outside=exclude_outside,
             **kwargs,
         )
@@ -302,7 +301,7 @@ def _interpolate_nd_with_x(
     )
 
 
-def _get_all_coords(data: np.ndarray) -> np.ndarray:
+def _get_all_coords(data: Any) -> Any:
     # FIXME: Fix input type
     return _cartesian(
         [list(range(data.shape[i])) for i in range(len(data.shape))]  # type: ignore[arg-type,misc]
@@ -310,16 +309,16 @@ def _get_all_coords(data: np.ndarray) -> np.ndarray:
 
 
 def _interpolate_nd(
-    data: np.ndarray,
-    get_coeffs: Callable[[float, float], np.ndarray],
+    data: Any,
+    get_coeffs: Callable[[float, float], Any],
     output_size: list[int] | None = None,
     scale_factors: list[float] | None = None,
     axes: list[int] | None = None,
-    roi: np.ndarray | None = None,
+    roi: Any | None = None,
     keep_aspect_ratio_policy: str | None = "stretch",
     exclude_outside: bool = False,
     **kwargs: Any,
-) -> np.ndarray:
+) -> Any:
     if output_size is None and scale_factors is None:
         raise ValueError("output_size is None and scale_factors is None.")
 
@@ -377,7 +376,7 @@ def _interpolate_nd(
     if output_size is None:
         raise ValueError("output_size is None.")
 
-    ret = xp.zeros(output_size)
+    ret = np.zeros(output_size)
     for x in _get_all_coords(ret):
         ret[tuple(x)] = _interpolate_nd_with_x(
             data,
@@ -454,7 +453,7 @@ class Resize(OpRun):
         # axes is not None
         not_axes = [a for a in range(len(X.shape)) if a not in axes]
         perm = tuple(not_axes + axes)
-        permuted = xp.transpose(X, perm)
+        permuted = np.transpose(X, perm)
         new_shape = (-1, *tuple(X.shape[a] for a in axes))
         reshaped = permuted.reshape(new_shape)
         res = None
@@ -478,5 +477,5 @@ class Resize(OpRun):
         new_perm = list(perm)
         for i, a in enumerate(perm):
             new_perm[a] = i
-        final = xp.transpose(res_reshaped, tuple(new_perm))
+        final = np.transpose(res_reshaped, tuple(new_perm))
         return (final,)

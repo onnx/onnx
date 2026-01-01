@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.ops._op import OpRunReduceNumpy
 
@@ -21,7 +22,7 @@ class ReduceMax_1(OpRunReduceNumpy):
             return self.reduce_constant(data, minvalue, axes, keepdims)
 
         res = xp.max(data, axis=axes, keepdims=bool(keepdims))
-        if keepdims == 0 and not isinstance(res, np.ndarray):
+        if keepdims == 0 and not isinstance(res, Any):
             # The runtime must return an array
             if xp.__name__ == 'numpy' or 'numpy' in str(xp.__name__):
                 res = np.array(res)
@@ -45,7 +46,7 @@ class ReduceMax_18(OpRunReduceNumpy):
             return self.reduce_constant(data, minvalue, axes, keepdims_bool)
 
         res = xp.max(data, axis=axes, keepdims=keepdims_bool)
-        if not keepdims_bool and not isinstance(res, np.ndarray):
+        if not keepdims_bool and not isinstance(res, Any):
             # The runtime must return an array
             if xp.__name__ == 'numpy' or 'numpy' in str(xp.__name__):
                 res = np.array(res)

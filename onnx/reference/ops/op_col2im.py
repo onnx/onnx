@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
@@ -72,7 +71,7 @@ def _col2im_naive_implementation_2d(
     _col2im_shape_check_2d(res, image_shape, kernel_shape, dilations, new_pads, strides)
 
     data_col = res.ravel()
-    data_im = xp.zeros(image_shape, dtype=res.dtype).flatten()
+    data_im = np.zeros(image_shape, dtype=res.dtype).flatten()
 
     kernel_h, kernel_w = kernel_shape
     channels_col = kernel_h * kernel_w
@@ -153,7 +152,7 @@ def col2im_naive_implementation(
     _col2im_shape_check(data, image_shape, kernel_shape, dilations, new_pads, strides)
 
     data_col = data
-    data_im = xp.zeros(image_shape, dtype=data.dtype)
+    data_im = np.zeros(image_shape, dtype=data.dtype)
 
     dim_col = []
     for i in range(n_dims):

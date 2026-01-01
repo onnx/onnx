@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 
@@ -43,7 +42,7 @@ class MaxUnpool(OpRun):
             shape = output_shape
 
         total_elements = np.prod(X.shape)
-        Y = xp.zeros((np.prod(inferred_shape),), dtype=X.dtype)
+        Y = np.zeros((np.prod(inferred_shape),), dtype=X.dtype)
 
         I_data = indices.flatten()
         X_data = X.flatten()
@@ -52,7 +51,7 @@ class MaxUnpool(OpRun):
             Y[I_data[cur_elem]] = X_data[cur_elem]
 
         Y = Y.reshape(tuple(inferred_shape))
-        res = xp.zeros(shape, dtype=Y.dtype)
+        res = np.zeros(shape, dtype=Y.dtype)
         slices = tuple(slice(0, i) for i in inferred_shape)
         res[slices] = Y
         return (res,)

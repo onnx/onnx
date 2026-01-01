@@ -3,12 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
-def _global_max_pool(x: np.ndarray) -> np.ndarray:
+def _global_max_pool(x: Any) -> Any:
     spatial_shape = np.ndim(x) - 2
     y = x.max(axis=tuple(range(spatial_shape, spatial_shape + 2)))
     for _ in range(spatial_shape):

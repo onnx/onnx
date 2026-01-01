@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.ops._op import OpRunBinaryNumpy
 
@@ -24,7 +25,7 @@ class Div(OpRunBinaryNumpy):
         # Check if integer type by converting to numpy for dtype inspection
         # Array API doesn't have a standard way to check integer vs float types
         try:
-            a_np = np.asarray(a) if not isinstance(a, np.ndarray) else a
+            a_np = np.asarray(a) if not isinstance(a, Any) else a
             is_integer = issubclass(a_np.dtype.type, np.integer)
         except (AttributeError, TypeError):
             # Fallback: check dtype name

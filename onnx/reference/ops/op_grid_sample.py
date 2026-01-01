@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import numbers
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_resize import _get_all_coords
@@ -44,7 +43,7 @@ class GridSample(OpRun):
         return x
 
     def _gs_denormalize_coordinates(self, n, dims, align_corners: bool):
-        x = xp.zeros(len(n), dtype=np.float32)
+        x = np.zeros(len(n), dtype=np.float32)
         for i, (v, dim) in enumerate(zip(n, dims, strict=False)):
             x[i] = self._gs_denormalize(n=v, length=dim, align_corners=align_corners)
         return x
@@ -254,7 +253,7 @@ class GridSample(OpRun):
     def _prepare_border(self, dims, align_corners: bool):
         # boarder: [x_1_min, x_2_min, ..., x_1_max, x_2_max, ...]
         num_dims = len(dims)
-        borders = xp.zeros(num_dims * 2)
+        borders = np.zeros(num_dims * 2)
         for i in range(num_dims):
             # min
             borders[i] = -0.5

@@ -3,22 +3,23 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from typing import Any
+
 import dataclasses
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
 @dataclasses.dataclass
 class PrepareContext:
-    boxes_data_: np.ndarray | None = None
+    boxes_data_: Any | None = None
     boxes_size_: int = 0
-    scores_data_: np.ndarray | None = None
+    scores_data_: Any | None = None
     scores_size_: int = 0
-    max_output_boxes_per_class_: np.ndarray | None = None
-    score_threshold_: np.ndarray | None = None
-    iou_threshold_: np.ndarray | None = None
+    max_output_boxes_per_class_: Any | None = None
+    score_threshold_: Any | None = None
+    iou_threshold_: Any | None = None
     num_batches_: int = 0
     num_classes_: int = 0
     num_boxes_: int = 0
@@ -42,7 +43,7 @@ def max_min(lhs: float, rhs: float) -> tuple[float, float]:
 
 
 def suppress_by_iou(  # noqa: PLR0911
-    boxes_data: np.ndarray,
+    boxes_data: Any,
     box_index1: int,
     box_index2: int,
     center_point_box: int,
@@ -147,11 +148,11 @@ class NonMaxSuppression(OpRun):
     def prepare_compute(
         self,
         pc: PrepareContext,
-        boxes_tensor: np.ndarray,  # float
-        scores_tensor: np.ndarray,  # float
-        max_output_boxes_per_class_tensor: np.ndarray,  # int
-        iou_threshold_tensor: np.ndarray,  # float
-        score_threshold_tensor: np.ndarray,  # float
+        boxes_tensor: Any,  # float
+        scores_tensor: Any,  # float
+        max_output_boxes_per_class_tensor: Any,  # int
+        iou_threshold_tensor: Any,  # float
+        score_threshold_tensor: Any,  # float
     ):
         pc.boxes_data_ = boxes_tensor
         pc.scores_data_ = scores_tensor

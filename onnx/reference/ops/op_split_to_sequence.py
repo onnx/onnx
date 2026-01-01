@@ -3,18 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any
 
 from onnx.reference.op_run import OpRun
-
-if TYPE_CHECKING:
-    import numpy as np
 
 
 class SplitToSequence(OpRun):
     def common_run(
-        self, mat: np.ndarray, split: np.ndarray | None, axis: int
-    ) -> list[np.ndarray]:
+        self, mat: Any, split: Any | None, axis: int
+    ) -> list[Any]:
         if split is None:
             split_length = [1 for _ in range(mat.shape[axis])]
         elif len(split.shape) == 0:
@@ -40,11 +37,11 @@ class SplitToSequence(OpRun):
 
     def _run(
         self,
-        mat: np.ndarray,
-        split: np.ndarray | None = None,
+        mat: Any,
+        split: Any | None = None,
         axis: int = 0,
         keepdims: int = 1,
-    ) -> tuple[np.ndarray]:
+    ) -> tuple[Any]:
         res = self.common_run(mat, split, axis=axis)
         if split is None and not keepdims:
             for i, res_i in enumerate(res):

@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.array_api_namespace import convert_to_numpy, asarray
 from onnx.reference.op_run import OpRun
@@ -12,7 +13,7 @@ from onnx.reference.op_run import OpRun
 class Squeeze_1(OpRun):
     def _run(self, data, axes=None):
         xp = self._get_array_api_namespace(data)
-        if isinstance(axes, np.ndarray):
+        if isinstance(axes, Any):
             axes = tuple(axes)
         elif axes in [[], ()]:
             axes = None

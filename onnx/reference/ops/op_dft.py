@@ -3,29 +3,30 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
-def _fft(x: np.ndarray, fft_length: int, axis: int) -> np.ndarray:
+def _fft(x: Any, fft_length: int, axis: int) -> Any:
     """Compute the FFT return the real representation of the complex result."""
     transformed = np.fft.fft(x, n=fft_length, axis=axis)
     real_frequencies = np.real(transformed)
     imaginary_frequencies = np.imag(transformed)
-    return xp.concatenate(
+    return np.concatenate(
         (real_frequencies[..., np.newaxis], imaginary_frequencies[..., np.newaxis]),
         axis=-1,
     )
 
 
 def _cfft(
-    x: np.ndarray,
+    x: Any,
     fft_length: int,
     axis: int,
     onesided: bool,
     normalize: bool,
-) -> np.ndarray:
+) -> Any:
     if x.shape[-1] == 1:
         # The input contains only the real part
         signal = x
@@ -50,11 +51,11 @@ def _cfft(
     return result
 
 
-def _ifft(x: np.ndarray, fft_length: int, axis: int, onesided: bool) -> np.ndarray:
+def _ifft(x: Any, fft_length: int, axis: int, onesided: bool) -> Any:
     signals = np.fft.ifft(x, fft_length, axis=axis)
     real_signals = np.real(signals)
     imaginary_signals = np.imag(signals)
-    merged = xp.concatenate(
+    merged = np.concatenate(
         (real_signals[..., np.newaxis], imaginary_signals[..., np.newaxis]),
         axis=-1,
     )
@@ -66,8 +67,8 @@ def _ifft(x: np.ndarray, fft_length: int, axis: int, onesided: bool) -> np.ndarr
 
 
 def _cifft(
-    x: np.ndarray, fft_length: int, axis: int, onesided: bool = False
-) -> np.ndarray:
+    x: Any, fft_length: int, axis: int, onesided: bool = False
+) -> Any:
     if x.shape[-1] == 1:
         frequencies = x
     else:
@@ -84,12 +85,12 @@ def _cifft(
 class DFT_17(OpRun):
     def _run(
         self,
-        x: np.ndarray,
+        x: Any,
         dft_length: int | None = None,
         axis: int = 1,
         inverse: bool = False,
         onesided: bool = False,
-    ) -> tuple[np.ndarray]:
+    ) -> tuple[Any]:
         # Convert to positive axis
         axis = axis % len(x.shape)
         if dft_length is None:
@@ -104,12 +105,12 @@ class DFT_17(OpRun):
 class DFT_20(OpRun):
     def _run(
         self,
-        x: np.ndarray,
+        x: Any,
         dft_length: int | None = None,
         axis: int = -2,
         inverse: bool = False,
         onesided: bool = False,
-    ) -> tuple[np.ndarray]:
+    ) -> tuple[Any]:
         # Convert to positive axis
         axis = axis % len(x.shape)
         if dft_length is None:

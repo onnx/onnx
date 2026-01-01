@@ -3,10 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from typing import Any
+
 import collections
 from enum import IntEnum
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 
@@ -191,7 +192,7 @@ class TfIdfVectorizer(OpRun):
         # assert(static_cast<size_t>(output_idx) < frequencies.size());
         frequencies[output_idx] += 1
 
-    def output_result(self, B: int, frequencies: list[int]) -> np.ndarray:
+    def output_result(self, B: int, frequencies: list[int]) -> Any:
         l_output_dims: list[int] = []
         if B == 0:
             l_output_dims.append(self.output_size_)
@@ -240,7 +241,7 @@ class TfIdfVectorizer(OpRun):
 
     def compute_impl(
         self,
-        X: np.ndarray,
+        X: Any,
         row_num: int,
         row_size: int,
         frequencies: list[int],
@@ -350,7 +351,7 @@ class TfIdfVectorizer(OpRun):
                 f"Unexpected total of items, num_rows * C = {num_rows * C} != total_items = {total_items}."
             )
         # Frequency holder allocate [B..output_size_] and init all to zero
-        frequencies = xp.zeros((num_rows * self.output_size_,), dtype=np.int64)
+        frequencies = np.zeros((num_rows * self.output_size_,), dtype=np.int64)
 
         if total_items == 0 or self.int64_map_.empty():
             # TfidfVectorizer may receive an empty input when it follows a Tokenizer

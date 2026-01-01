@@ -3,18 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.ops._op import OpRun
 
 
 def _slice(
-    data: np.ndarray,
-    starts: np.ndarray,
-    ends: np.ndarray,
-    axes: np.ndarray | None = None,
-    steps: np.ndarray | None = None,
-) -> np.ndarray:
+    data: Any,
+    starts: Any,
+    ends: Any,
+    axes: Any | None = None,
+    steps: Any | None = None,
+) -> Any:
     if isinstance(starts, list):
         starts = np.array(starts)
     if isinstance(ends, list):

@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx import TensorProto
 from onnx.helper import np_dtype_to_tensor_dtype, tensor_dtype_to_np_dtype
@@ -11,11 +12,11 @@ from onnx.reference.op_run import OpRun
 
 
 def _reshape_input(
-    value: np.ndarray,
+    value: Any,
     shape: tuple[int, ...],
     axis: int,
     block_size: int | None = None,
-) -> np.ndarray:
+) -> Any:
     """Reshape/Replicate scale/zero-point to be broadcastable to shape.
 
     Args:
@@ -63,9 +64,9 @@ def _reshape_input(
 class _CommonDequantizeLinear(OpRun):
     def _run(
         self,
-        x: np.ndarray,
-        x_scale: np.ndarray,
-        x_zero_point: np.ndarray | None = None,
+        x: Any,
+        x_scale: Any,
+        x_zero_point: Any | None = None,
         axis: int = 1,
         block_size: int = 0,
         output_dtype: int | None = None,

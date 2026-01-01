@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 
 from onnx.helper import tensor_dtype_to_np_dtype
 from onnx.reference.op_run import OpRun
@@ -31,7 +30,7 @@ class MelWeightMatrix(OpRun):
         frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
         frequency_bins = frequency_bins.astype(int)
 
-        output = xp.zeros((num_spectrogram_bins, num_mel_bins))
+        output = np.zeros((num_spectrogram_bins, num_mel_bins))
         output.flags.writeable = True
 
         for i in range(num_mel_bins):

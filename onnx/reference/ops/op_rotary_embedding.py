@@ -3,24 +3,25 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
 def rotary_embedding(
-    input: np.ndarray,
-    cos_cache: np.ndarray,
-    sin_cache: np.ndarray,
-    position_ids: np.ndarray | None = None,
+    input: Any,
+    cos_cache: Any,
+    sin_cache: Any,
+    position_ids: Any | None = None,
     interleaved=None,
     rotary_embedding_dim=None,
     num_heads=None,
-) -> np.ndarray:
+) -> Any:
     original_input_shape = input.shape
     # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
     if len(input.shape) == 4:
-        input = xp.transpose(input, (0, 2, 1, 3))
+        input = np.transpose(input, (0, 2, 1, 3))
     batch_size = input.shape[0]
     sequence_length = input.shape[1]
     if len(input.shape) == 3:
@@ -28,7 +29,7 @@ def rotary_embedding(
         assert num_heads != 0
         head_size = int(hidden_size / num_heads)
         new_shape = [batch_size, sequence_length, num_heads, head_size]
-        input = xp.reshape(input, new_shape)
+        input = np.reshape(input, new_shape)
     assert len(input.shape) == 4
     head_size = input.shape[3]
 
@@ -83,29 +84,29 @@ def rotary_embedding(
         # x_rotate[:, :, :, 1::2] = imag
         real = np.expand_dims(real, axis=-1)
         imag = np.expand_dims(imag, axis=-1)
-        x_rotate_concat = xp.concatenate((real, imag), axis=-1)
-        x_rotate = xp.reshape(x_rotate_concat, x_rotate.shape)
+        x_rotate_concat = np.concatenate((real, imag), axis=-1)
+        x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
     else:
-        x_rotate = xp.concatenate((real, imag), axis=-1)
-    output = xp.concatenate((x_rotate, x_not_rotate), axis=-1)
+        x_rotate = np.concatenate((real, imag), axis=-1)
+    output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
     if len(original_input_shape) == 3:
-        output = xp.reshape(output, original_input_shape)
+        output = np.reshape(output, original_input_shape)
     else:
-        output = xp.transpose(output, (0, 2, 1, 3))
+        output = np.transpose(output, (0, 2, 1, 3))
     return output
 
 
 class RotaryEmbedding(OpRun):
     def _run(
         self,
-        input: np.ndarray,
-        cos_cache: np.ndarray,
-        sin_cache: np.ndarray,
-        position_ids: np.ndarray | None = None,
+        input: Any,
+        cos_cache: Any,
+        sin_cache: Any,
+        position_ids: Any | None = None,
         interleaved=None,
         rotary_embedding_dim=None,
         num_heads=None,
-    ) -> np.ndarray:
+    ) -> Any:
         return (
             rotary_embedding(
                 input,

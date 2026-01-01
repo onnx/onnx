@@ -3,14 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 import onnx
 from onnx.reference.op_run import OpRun
 
 
 def cast_to(
-    x: np.ndarray, to: onnx.TensorProto.DataType, saturate: bool, round_mode: str = "up"
+    x: Any, to: onnx.TensorProto.DataType, saturate: bool, round_mode: str = "up"
 ):
     if to == onnx.TensorProto.STRING:
         return x.astype(np.str_)

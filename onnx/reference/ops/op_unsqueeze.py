@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.array_api_namespace import convert_to_numpy, asarray
 from onnx.reference.op_run import OpRun
@@ -16,7 +17,7 @@ class Unsqueeze_1(OpRun):
         # Convert to numpy for unsqueeze (expand_dims not in array API standard yet)
         data_np = convert_to_numpy(data)
         
-        if isinstance(axes, np.ndarray):
+        if isinstance(axes, Any):
             axes = tuple(axes)
         elif axes in ([], ()):
             axes = None

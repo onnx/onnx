@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
@@ -14,26 +15,26 @@ class CommonLSTM(OpRun):
         self.n_outputs = len(onnx_node.output)
         self.n_gates = 3
 
-    def f(self, x: np.ndarray) -> np.ndarray:
-        return 1 / (1 + xp.exp(-x))
+    def f(self, x: Any) -> Any:
+        return 1 / (1 + np.exp(-x))
 
-    def g(self, x: np.ndarray) -> np.ndarray:
+    def g(self, x: Any) -> Any:
         return np.tanh(x)
 
-    def h(self, x: np.ndarray) -> np.ndarray:
+    def h(self, x: Any) -> Any:
         return np.tanh(x)
 
     def _step(
         self,
-        X: np.ndarray,
-        R: np.ndarray,
-        B: np.ndarray,
-        W: np.ndarray,
-        H_0: np.ndarray,
-        C_0: np.ndarray,
-        P: np.ndarray,
+        X: Any,
+        R: Any,
+        B: Any,
+        W: Any,
+        H_0: Any,
+        C_0: Any,
+        P: Any,
         num_directions: int,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[Any, Any]:
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
@@ -46,9 +47,9 @@ class CommonLSTM(OpRun):
         C_t = C_0
         for x in np.split(X, X.shape[0], axis=0):
             gates = (
-                np.dot(x, xp.transpose(W))
-                + np.dot(H_t, xp.transpose(R))
-                + xp.add(*np.split(B, 2))
+                np.dot(x, np.transpose(W))
+                + np.dot(H_t, np.transpose(R))
+                + np.add(*np.split(B, 2))
             )
             i, o, f, c = np.split(gates, 4, -1)
             i = self.f(i + p_i * C_t)
@@ -61,14 +62,14 @@ class CommonLSTM(OpRun):
             H_t = H
             C_t = C
 
-        concatenated = xp.concatenate(h_list)
+        concatenated = np.concatenate(h_list)
         if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
         if self.layout == 0:
             Y_h = Y[-1]
         else:
-            Y = xp.transpose(Y, [2, 0, 1, 3])
+            Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
         return Y, Y_h
@@ -130,13 +131,13 @@ class CommonLSTM(OpRun):
             if self.layout != 0:
                 X = np.swapaxes(X, 0, 1)
             if B is None:
-                B = xp.zeros(2 * n_gates * hidden_size, dtype=np.float32)
+                B = np.zeros(2 * n_gates * hidden_size, dtype=np.float32)
             if P is None:
-                P = xp.zeros(number_of_peepholes * hidden_size, dtype=np.float32)
+                P = np.zeros(number_of_peepholes * hidden_size, dtype=np.float32)
             if initial_h is None:
-                initial_h = xp.zeros((batch_size, hidden_size), dtype=np.float32)
+                initial_h = np.zeros((batch_size, hidden_size), dtype=np.float32)
             if initial_c is None:
-                initial_c = xp.zeros((batch_size, hidden_size), dtype=np.float32)
+                initial_c = np.zeros((batch_size, hidden_size), dtype=np.float32)
         else:
             raise NotImplementedError(  # pragma: no cover
                 f"Unsupported value {num_directions!r} for num_directions "

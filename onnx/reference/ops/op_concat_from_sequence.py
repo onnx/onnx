@@ -5,12 +5,11 @@ from __future__ import annotations
 
 from typing import Any
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
-def _concat_from_sequence(seq: list[Any], axis: int, new_axis: int = 0) -> np.ndarray:
+def _concat_from_sequence(seq: list[Any], axis: int, new_axis: int = 0) -> Any:
     if new_axis == 1:
         if axis == -1:
             seq2 = [s[..., np.newaxis] for s in seq]

@@ -3,17 +3,18 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
 def _rms_normalization(
-    X: np.ndarray,
-    W: np.ndarray,
+    X: Any,
+    W: Any,
     axis: int = -1,
     epsilon: float = 1e-5,
-) -> np.ndarray:
+) -> Any:
     shape = X.shape
     rank = len(shape)
     if axis < 0:

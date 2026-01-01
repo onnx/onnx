@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 
@@ -80,13 +79,13 @@ class CommonRNN(OpRun):
         H_t = H_0
         for x in np.split(X, X.shape[0], axis=0):
             H = self.f1(
-                np.dot(x, xp.transpose(W))
-                + np.dot(H_t, xp.transpose(R))
-                + xp.add(*np.split(B, 2))
+                np.dot(x, np.transpose(W))
+                + np.dot(H_t, np.transpose(R))
+                + np.add(*np.split(B, 2))
             )
             h_list.append(H)
             H_t = H
-        concatenated = xp.concatenate(h_list)
+        concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
             output = np.expand_dims(concatenated, 1)
         return output, h_list[-1]
@@ -124,11 +123,11 @@ class CommonRNN(OpRun):
             batch_size = X.shape[1]
 
             X = X if layout == 0 else np.swapaxes(X, 0, 1)
-            b = B if B is not None else xp.zeros(2 * hidden_size, dtype=X.dtype)
+            b = B if B is not None else np.zeros(2 * hidden_size, dtype=X.dtype)
             h_0 = (
                 initial_h
                 if initial_h is not None
-                else xp.zeros((batch_size, hidden_size), dtype=X.dtype)
+                else np.zeros((batch_size, hidden_size), dtype=X.dtype)
             )
 
             B = b
@@ -140,7 +139,7 @@ class CommonRNN(OpRun):
 
         Y, Y_h = self._step(X, R, B, W, H_0)
         if layout == 1:
-            Y = xp.transpose(Y, [2, 0, 1, 3])
+            Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
         Y = Y.astype(X.dtype)

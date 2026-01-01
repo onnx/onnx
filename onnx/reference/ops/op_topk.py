@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
@@ -13,7 +14,7 @@ def topk_sorted_implementation(X, k, axis, largest):
     <https://github.com/scikit-learn/scikit-learn/blob/main/
     sklearn/neighbors/_base.py#L304>`_.
     """
-    if isinstance(k, np.ndarray):
+    if isinstance(k, Any):
         if k.size != 1:
             raise RuntimeError(f"k must be an integer not {k!r}.")
         k = k[0]

@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_conv import _conv_implementation
@@ -67,12 +66,12 @@ class QLinearConv(OpRun):
         if y_zero_point is not None:
             R += y_zero_point
             if y_zero_point.dtype == np.int8:
-                R = xp.clip(R, -128, 127)
+                R = np.clip(R, -128, 127)
             else:
-                R = xp.clip(R, 0, 255)
+                R = np.clip(R, 0, 255)
             return (np.round(R).astype(y_zero_point.dtype),)
         if x.dtype == np.int8:
-            R = xp.clip(R, -128, 127)
+            R = np.clip(R, -128, 127)
         else:
-            R = xp.clip(R, 0, 255)
+            R = np.clip(R, 0, 255)
         return (np.round(R).astype(x.dtype),)

@@ -4,12 +4,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any
 
 from onnx.reference.op_run import OpRun
-
-if TYPE_CHECKING:
-    import numpy as np
 
 
 class If(OpRun):
@@ -32,7 +29,7 @@ class If(OpRun):
 
     def _run(
         self,
-        cond: np.ndarray | np.bool_,
+        cond: Any,
         context=None,
         else_branch=None,  # noqa: ARG002
         then_branch=None,  # noqa: ARG002

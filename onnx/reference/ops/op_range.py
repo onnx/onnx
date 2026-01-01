@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
@@ -12,8 +13,8 @@ class Range(OpRun):
     def _run(self, starts, ends, steps):
         xp = self._get_array_api_namespace(starts)
         start_scalar = starts.item()
-        if isinstance(ends, np.ndarray):
+        if isinstance(ends, Any):
             ends = ends.item()
-        if isinstance(steps, np.ndarray):
+        if isinstance(steps, Any):
             steps = steps.item()
         return (np.arange(start_scalar, ends, steps).astype(starts.dtype),)

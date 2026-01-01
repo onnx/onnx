@@ -3,12 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 from onnx.reference.op_run import OpRun
 
 
-def _global_average_pool(x: np.ndarray) -> np.ndarray:
+def _global_average_pool(x: Any) -> Any:
     axis = tuple(range(2, np.ndim(x)))
     y = np.average(x, axis=axis)
     for _ in axis:

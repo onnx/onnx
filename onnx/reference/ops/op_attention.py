@@ -3,16 +3,17 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
+from typing import Any
+
 
 import onnx
 from onnx.reference.op_run import OpRun
 
 
-def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
-    x_max = xp.max(x, axis=axis, keepdims=True)
-    tmp = xp.exp(x - x_max)
-    s = xp.sum(tmp, axis=axis, keepdims=True)
+def _softmax(x: Any, axis: int = -1) -> Any:
+    x_max = np.max(x, axis=axis, keepdims=True)
+    tmp = np.exp(x - x_max)
+    s = np.sum(tmp, axis=axis, keepdims=True)
     return tmp / s
 
 
@@ -32,7 +33,7 @@ def _apply_causal(mask, past_sequence_length):
     """
     q_sequence_length, total_sequence_length = mask.shape[-2:]
     triu = np.triu(
-        xp.ones(
+        np.ones(
             (q_sequence_length, total_sequence_length - past_sequence_length),
             dtype=mask.dtype,
         ),
@@ -44,13 +45,13 @@ def _apply_causal(mask, past_sequence_length):
 
 
 def _compute_attention(
-    Q: np.ndarray,
-    K: np.ndarray,
-    V: np.ndarray,
-    attn_mask: np.ndarray | None = None,
-    past_key: np.ndarray | None = None,
-    past_value: np.ndarray | None = None,
-    nonpad_kv_seqlen: np.ndarray | None = None,
+    Q: Any,
+    K: Any,
+    V: Any,
+    attn_mask: Any | None = None,
+    past_key: Any | None = None,
+    past_value: Any | None = None,
+    nonpad_kv_seqlen: Any | None = None,
     scale=None,
     is_causal=False,
     q_num_heads=None,
@@ -58,7 +59,7 @@ def _compute_attention(
     softmax_precision=None,
     softcap=None,
     qk_matmul_output_mode=None,
-) -> np.ndarray:
+) -> Any:
     assert len(Q.shape) == len(K.shape) == len(V.shape)
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
@@ -75,38 +76,38 @@ def _compute_attention(
         head_size_q = int(hidden_size_q / q_num_heads)
         # First reshape to [batch_size, q_sequence_length, q_num_heads, head_size]
         intermediate_shape_q = [batch_size, Q.shape[1], q_num_heads, head_size_q]
-        Q = xp.reshape(Q, intermediate_shape_q)
+        Q = np.reshape(Q, intermediate_shape_q)
         # Then transpose to [batch_size, q_num_heads, q_sequence_length, head_size]
-        Q = xp.transpose(Q, (0, 2, 1, 3))
+        Q = np.transpose(Q, (0, 2, 1, 3))
 
         head_size_k = int(hidden_size_k / kv_num_heads)
         # First reshape to [batch_size, kv_sequence_length, kv_num_heads, head_size]
         intermediate_shape_k = [batch_size, K.shape[1], kv_num_heads, head_size_k]
-        K = xp.reshape(K, intermediate_shape_k)
+        K = np.reshape(K, intermediate_shape_k)
         # Then transpose to [batch_size, kv_num_heads, kv_sequence_length, head_size]
-        K = xp.transpose(K, (0, 2, 1, 3))
+        K = np.transpose(K, (0, 2, 1, 3))
 
         head_size_v = int(hidden_size_v / kv_num_heads)
         # First reshape to [batch_size, kv_sequence_length, kv_num_heads, head_size]
         intermediate_shape_v = [batch_size, V.shape[1], kv_num_heads, head_size_v]
-        V = xp.reshape(V, intermediate_shape_v)
+        V = np.reshape(V, intermediate_shape_v)
         # Then transpose to [batch_size, kv_num_heads, kv_sequence_length, head_size]
-        V = xp.transpose(V, (0, 2, 1, 3))
+        V = np.transpose(V, (0, 2, 1, 3))
     assert len(Q.shape) == 4 and len(K.shape) == 4 and len(V.shape) == 4
 
     # Calculate Scaling Factor if not provided
     if scale is None:
         q_head_size = Q.shape[3]
-        scale = 1 / xp.sqrt(q_head_size)
-    scale = xp.sqrt(scale)
+        scale = 1 / np.sqrt(q_head_size)
+    scale = np.sqrt(scale)
 
     # Update key and value cache
     if past_key is not None:
-        present_key = xp.concatenate((past_key, K), axis=2)
+        present_key = np.concatenate((past_key, K), axis=2)
     else:
         present_key = K
     if past_value is not None:
-        present_value = xp.concatenate((past_value, V), axis=2)
+        present_value = np.concatenate((past_value, V), axis=2)
     else:
         present_value = V
     K = present_key
@@ -115,7 +116,7 @@ def _compute_attention(
     # Create attn_bias
     q_sequence_length = Q.shape[2]
     kv_sequence_length = K.shape[2]
-    attn_bias = xp.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
+    attn_bias = np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
 
     # The attn_mask can be less than kv_sequence_length, we need to pad it with -inf or 0
     if attn_mask is not None:
@@ -133,7 +134,7 @@ def _compute_attention(
     # bias due to the alignment when the mask is a non-square matrix.
     if is_causal:
         if attn_mask is None:
-            temp_mask = xp.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
+            temp_mask = np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
             attn_bias = _apply_causal(
                 temp_mask,
                 past_sequence_length=past_key.shape[2] if past_key is not None else 0,
@@ -157,7 +158,7 @@ def _compute_attention(
         )  # broadcast to 4D
         padding_mask = np.arange(kv_sequence_length) < nonpad_kv_seqlen[:, np.newaxis]
         padding_mask = padding_mask.reshape(batch_size, 1, 1, kv_sequence_length)
-        padding_mask = xp.where(padding_mask, 0, -np.inf)
+        padding_mask = np.where(padding_mask, 0, -np.inf)
         attn_bias += padding_mask
 
     # Group Query Attention is applied if the following are satisfied
@@ -200,7 +201,7 @@ def _compute_attention(
     #            -----MatMul------
     #                    |
     #                    Y
-    k_transpose = xp.transpose(K, (0, 1, 3, 2))
+    k_transpose = np.transpose(K, (0, 1, 3, 2))
     qk_matmul_output = np.matmul(Q * scale, k_transpose * scale)
     qk_with_bias = qk_matmul_output + attn_bias
     if qk_matmul_output_mode == 1:
@@ -223,21 +224,21 @@ def _compute_attention(
 
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
     if input_shape_len == 3:
-        output = xp.transpose(output, (0, 2, 1, 3))
-        output = xp.reshape(output, (output.shape[0], output.shape[1], -1))
+        output = np.transpose(output, (0, 2, 1, 3))
+        output = np.reshape(output, (output.shape[0], output.shape[1], -1))
     return output, present_key, present_value, qk_matmul_output
 
 
 class Attention(OpRun):
     def _run(
         self,
-        Q: np.ndarray,
-        K: np.ndarray,
-        V: np.ndarray,
-        attn_mask: np.ndarray | None = None,
-        past_key: np.ndarray | None = None,
-        past_value: np.ndarray | None = None,
-        nonpad_kv_seqlen: np.ndarray | None = None,
+        Q: Any,
+        K: Any,
+        V: Any,
+        attn_mask: Any | None = None,
+        past_key: Any | None = None,
+        past_value: Any | None = None,
+        nonpad_kv_seqlen: Any | None = None,
         scale=None,
         is_causal=False,
         q_num_heads=None,
@@ -245,7 +246,7 @@ class Attention(OpRun):
         softmax_precision=None,
         softcap=None,
         qk_matmul_output_mode=None,
-    ) -> np.ndarray:
+    ) -> Any:
         return _compute_attention(
             Q,
             K,

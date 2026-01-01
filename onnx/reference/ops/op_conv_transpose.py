@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_col2im import col2im_naive_implementation
@@ -101,7 +100,7 @@ class ConvTranspose(OpRun):
                         res += B[c]
                     final[image_id, c, ...] = res[...]
         else:
-            final = xp.zeros((X.shape[0], num_output_channels, *output_shape))
+            final = np.zeros((X.shape[0], num_output_channels, *output_shape))
             output_array = []
 
             for group_id in range(group):

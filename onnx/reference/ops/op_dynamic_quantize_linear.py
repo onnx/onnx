@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
 
 from onnx.reference.op_run import OpRun
 
@@ -12,8 +11,8 @@ class DynamicQuantizeLinear(OpRun):
     def _run(self, x):
         # args: x, y_scale, zero_point
         dtype, qmin, qmax = np.uint8, 0, 255
-        maxx = np.float32(xp.maximum(0, xp.max(x)))
-        minx = np.float32(xp.minimum(0, xp.min(x)))
+        maxx = np.float32(np.maximum(0, np.max(x)))
+        minx = np.float32(np.minimum(0, np.min(x)))
         y_scale = np.float32(1.0 if maxx == minx else (maxx - minx)) / np.float32(
             qmax - qmin
         )
@@ -24,7 +23,7 @@ class DynamicQuantizeLinear(OpRun):
         zp = max(qmin, min(qmax, initial_zero_point))
         zpi = np.rint(zp)
 
-        y = xp.clip(np.rint(x / y_scale) + zpi, qmin, qmax)
+        y = np.clip(np.rint(x / y_scale) + zpi, qmin, qmax)
         return (
             y.astype(dtype),
             np.array(y_scale.astype(x.dtype)),
