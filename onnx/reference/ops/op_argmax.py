@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -25,7 +24,7 @@ def _argmax_use_numpy_select_last_index(data, axis=0, keepdims=True):
 
 class _ArgMax(OpRun):
     def _run(self, data, axis=None, keepdims=None):
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         return (_argmax(data, axis=axis, keepdims=keepdims),)
 
 
@@ -35,7 +34,7 @@ class ArgMax_1(_ArgMax):
 
 class ArgMax_12(_ArgMax):
     def _run(self, data, axis=None, keepdims=None, select_last_index=None):
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         if select_last_index == 0:
             return _ArgMax._run(self, data, axis=axis, keepdims=keepdims)
         return (

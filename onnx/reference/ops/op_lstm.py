@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 

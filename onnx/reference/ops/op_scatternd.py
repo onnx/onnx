@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -25,6 +24,6 @@ def _scatter_nd_impl(data, indices, updates, reduction=None):
 
 class ScatterND(OpRun):
     def _run(self, data, indices, updates, reduction=None):
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         y = _scatter_nd_impl(data, indices, updates, reduction=reduction)
         return (y,)

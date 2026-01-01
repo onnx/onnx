@@ -3,8 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
-from onnx.reference.array_api_namespace import convert_to_numpy, asarray
+from onnx.reference.array_api_namespace import asarray, convert_to_numpy
 from onnx.reference.op_run import OpRun
 
 

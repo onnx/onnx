@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -17,5 +16,5 @@ def _vcelu1(x: Any, alpha: float = 1.0) -> Any:
 
 class Celu(OpRun):
     def _run(self, x, alpha=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         return (_vcelu1(x, alpha).astype(x.dtype),)

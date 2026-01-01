@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -67,7 +66,7 @@ def _layer_normalization(
 
 class LayerNormalization(OpRun):
     def _run(self, X, Scale, B=None, axis=None, epsilon=None, stash_type=None):
-        xp = self._get_array_api_namespace(X)
+        self._get_array_api_namespace(X)
         if stash_type != 1:
             raise NotImplementedError(
                 f"LayerNormalization not implemented for stash_type={stash_type} != 1."

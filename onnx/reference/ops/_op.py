@@ -117,7 +117,7 @@ class OpRunBinaryNum(OpRunBinary):
 class OpRunBinaryNumpy(OpRunBinaryNum):
     """*numpy_fct* is a binary numpy function which
     takes two matrices.
-    
+
     Note: The numpy_fct parameter is maintained for backward compatibility,
     but the implementation now uses array API when possible.
     """
@@ -128,29 +128,29 @@ class OpRunBinaryNumpy(OpRunBinaryNum):
         OpRunBinaryNum.__init__(self, onnx_node, run_params)
         self.numpy_fct = numpy_fct
         # Store the function name if it's a numpy ufunc for array API mapping
-        self._fct_name = getattr(numpy_fct, '__name__', None)
+        self._fct_name = getattr(numpy_fct, "__name__", None)
 
     def _run(self, a, b):
         # Try to use array API if available
         xp = self._get_array_api_namespace(a, b)
-        
+
         # Map common numpy functions to array API equivalents
-        if self._fct_name == 'add':
+        if self._fct_name == "add":
             result = xp.add(a, b)
-        elif self._fct_name == 'multiply':
+        elif self._fct_name == "multiply":
             result = xp.multiply(a, b)
-        elif self._fct_name == 'subtract':
+        elif self._fct_name == "subtract":
             result = xp.subtract(a, b)
-        elif self._fct_name == 'divide':
+        elif self._fct_name == "divide":
             result = xp.divide(a, b)
-        elif self._fct_name == 'maximum':
+        elif self._fct_name == "maximum":
             result = xp.maximum(a, b)
-        elif self._fct_name == 'minimum':
+        elif self._fct_name == "minimum":
             result = xp.minimum(a, b)
         else:
             # Fall back to the provided function
             result = self.numpy_fct(a, b)
-        
+
         res = (result,)
         return self._check_and_fix_outputs(res)
 

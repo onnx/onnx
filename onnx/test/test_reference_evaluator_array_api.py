@@ -6,6 +6,7 @@
 This test demonstrates that the reference runtime can work with different
 array backends that implement the Array API standard.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -74,7 +75,9 @@ class TestArrayAPICompatibility:
         )
         result = sess.run(None, {"X": x, "Y": y})
 
-        expected = np.array([[1.0, 2.0, 3.0, 6.0], [4.0, 5.0, 6.0, 15.0]], dtype=np.float32)
+        expected = np.array(
+            [[1.0, 2.0, 3.0, 6.0], [4.0, 5.0, 6.0, 15.0]], dtype=np.float32
+        )
         np.testing.assert_array_almost_equal(result[0], expected)
 
     def test_numpy_reduce_sum(self):
@@ -118,7 +121,7 @@ class TestArrayAPICompatibility:
 
     def test_jax_add(self):
         """Test Add operator with JAX arrays."""
-        jax = pytest.importorskip("jax")
+        pytest.importorskip("jax")
         import jax.numpy as jnp
 
         model = create_simple_add_model()

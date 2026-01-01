@@ -51,13 +51,13 @@ class DropoutBase(OpRun):
 
 class Dropout_7(DropoutBase):
     def _run(self, X, ratio=None):
-        xp = self._get_array_api_namespace(X)
+        self._get_array_api_namespace(X)
         return self._private_run(X, ratio)
 
 
 class Dropout_12(DropoutBase):
     def _run(self, *inputs, seed=None):
-        xp = self._get_array_api_namespace(inputs)
+        self._get_array_api_namespace(inputs)
         X = inputs[0]
         ratio = 0.5 if len(inputs) <= 1 else inputs[1]
         training_mode = False if len(inputs) <= 2 else inputs[2]

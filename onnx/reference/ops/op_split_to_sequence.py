@@ -9,9 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class SplitToSequence(OpRun):
-    def common_run(
-        self, mat: Any, split: Any | None, axis: int
-    ) -> list[Any]:
+    def common_run(self, mat: Any, split: Any | None, axis: int) -> list[Any]:
         if split is None:
             split_length = [1 for _ in range(mat.shape[axis])]
         elif len(split.shape) == 0:

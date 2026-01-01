@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -82,7 +81,7 @@ def softmaxcrossentropy(
 
 class SoftmaxCrossEntropyLoss(OpRun):
     def _run(self, x, target, weight=None, ignore_index=None, reduction=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         n_outputs = len(self.onnx_node.output)
         return softmaxcrossentropy(
             x,

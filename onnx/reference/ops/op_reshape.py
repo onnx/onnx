@@ -8,7 +8,7 @@ from onnx.reference.op_run import OpRun
 
 def reshape_reference_implementation(data, shape, allowzero: int, xp):
     """Reference implementation of reshape using array API.
-    
+
     Args:
         data: Input array
         shape: Target shape
@@ -16,17 +16,17 @@ def reshape_reference_implementation(data, shape, allowzero: int, xp):
         xp: Array API namespace
     """
     # Convert shape to a list/tuple we can work with
-    if hasattr(shape, 'tolist'):
+    if hasattr(shape, "tolist"):
         new_shape = list(shape.tolist())
     else:
         new_shape = list(shape)
-    
+
     # Replace zeros with corresponding dim size if allowzero is 0
     if allowzero == 0:
         for i in range(len(new_shape)):
             if new_shape[i] == 0:
                 new_shape[i] = data.shape[i]
-    
+
     return xp.reshape(data, tuple(new_shape))
 
 

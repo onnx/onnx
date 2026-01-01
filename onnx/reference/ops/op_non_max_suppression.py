@@ -3,10 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any
-
 import dataclasses
-
+from typing import Any
 
 from onnx.reference.op_run import OpRun
 

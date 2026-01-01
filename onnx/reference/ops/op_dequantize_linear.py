@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx import TensorProto
 from onnx.helper import np_dtype_to_tensor_dtype, tensor_dtype_to_np_dtype
 from onnx.reference.op_run import OpRun
@@ -114,7 +113,7 @@ class _CommonDequantizeLinear(OpRun):
 
 class DequantizeLinear_19(_CommonDequantizeLinear):
     def _run(self, x, x_scale, x_zero_point=None, axis: int = 1):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         if len(x_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
         return super()._run(x, x_scale, x_zero_point, axis)

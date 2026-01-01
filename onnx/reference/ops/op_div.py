@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.ops._op import OpRunBinaryNumpy
 
 
@@ -21,7 +20,7 @@ class Div(OpRunBinaryNumpy):
 
     def _run(self, a, b):
         xp = self._get_array_api_namespace(a, b)
-        
+
         # Check if integer type by converting to numpy for dtype inspection
         # Array API doesn't have a standard way to check integer vs float types
         try:
@@ -29,18 +28,18 @@ class Div(OpRunBinaryNumpy):
             is_integer = issubclass(a_np.dtype.type, np.integer)
         except (AttributeError, TypeError):
             # Fallback: check dtype name
-            is_integer = 'int' in str(a.dtype).lower()
-        
+            is_integer = "int" in str(a.dtype).lower()
+
         # For integer division, use floor_divide; for float, use divide
         if is_integer:
             result = xp.floor_divide(a, b)
         else:
             result = xp.divide(a, b)
-        
+
         res = (result,)
-        if hasattr(res[0], 'dtype') and res[0].dtype != a.dtype:
+        if hasattr(res[0], "dtype") and res[0].dtype != a.dtype:
             # Preserve original dtype
-            if hasattr(xp, 'astype'):
+            if hasattr(xp, "astype"):
                 res = (xp.astype(res[0], a.dtype),)
             else:
                 res = (res[0].astype(a.dtype),)

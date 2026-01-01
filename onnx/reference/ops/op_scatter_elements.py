@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -109,6 +108,6 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):
 
 class ScatterElements(OpRun):
     def _run(self, data, indices, updates, axis=None, reduction=None):
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         res = scatter_elements(data, indices, updates, axis=axis, reduction=reduction)
         return (res,)

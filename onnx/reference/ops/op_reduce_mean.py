@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.ops._op import OpRunReduceNumpy
 
 
@@ -13,20 +12,20 @@ class ReduceMean_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
         xp = self._get_array_api_namespace(data)
         axes = tuple(axes) if axes is not None else None
-        
+
         # Array API has mean function
         res = xp.mean(data, axis=axes, keepdims=bool(keepdims))
-        
+
         # Ensure dtype is preserved
-        if hasattr(res, 'dtype') and res.dtype != data.dtype:
-            if hasattr(xp, 'astype'):
+        if hasattr(res, "dtype") and res.dtype != data.dtype:
+            if hasattr(xp, "astype"):
                 res = xp.astype(res, data.dtype)
             else:
                 res = res.astype(data.dtype)
-        
+
         if keepdims == 0 and not isinstance(res, Any):
             # The runtime must return an array
-            if xp.__name__ == 'numpy' or 'numpy' in str(xp.__name__):
+            if xp.__name__ == "numpy" or "numpy" in str(xp.__name__):
                 res = np.array(res)
             else:
                 res = xp.asarray(res)
@@ -41,17 +40,17 @@ class ReduceMean_18(OpRunReduceNumpy):
         keepdims_bool = keepdims != 0
         try:
             res = xp.mean(data, axis=axes, keepdims=keepdims_bool)
-            
+
             # Ensure dtype is preserved
-            if hasattr(res, 'dtype') and res.dtype != data.dtype:
-                if hasattr(xp, 'astype'):
+            if hasattr(res, "dtype") and res.dtype != data.dtype:
+                if hasattr(xp, "astype"):
                     res = xp.astype(res, data.dtype)
                 else:
                     res = res.astype(data.dtype)
-            
+
             if keepdims == 0 and not isinstance(res, Any):
                 # The runtime must return an array
-                if xp.__name__ == 'numpy' or 'numpy' in str(xp.__name__):
+                if xp.__name__ == "numpy" or "numpy" in str(xp.__name__):
                     res = np.array(res)
                 else:
                     res = xp.asarray(res)

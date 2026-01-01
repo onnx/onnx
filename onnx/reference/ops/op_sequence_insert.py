@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -38,7 +37,7 @@ def sequence_insert_reference_implementation(
 
 class SequenceInsert(OpRun):
     def _run(self, S, T, ind=None):
-        xp = self._get_array_api_namespace(S)
+        self._get_array_api_namespace(S)
         if ind is None:
             res = sequence_insert_reference_implementation(S, T)
         elif isinstance(ind, int):

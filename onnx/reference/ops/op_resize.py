@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-
 import onnx
 from onnx.reference.op_run import OpRun
 
@@ -61,9 +60,7 @@ def _cartesian(arrays: list[Any], out: Any | None = None) -> Any:
     return out
 
 
-def _nearest_coeffs(
-    ratio: float | int | Any, mode: str = "round_prefer_floor"
-) -> Any:
+def _nearest_coeffs(ratio: float | int | Any, mode: str = "round_prefer_floor") -> Any:
     if isinstance(ratio, int) or ratio.is_integer():
         return np.array([0, 1])
     if mode == "round_prefer_floor":
@@ -77,9 +74,7 @@ def _nearest_coeffs(
     raise ValueError(f"Unexpected value {mode!r}.")
 
 
-def _cubic_coeffs(
-    ratio: float, scale: float | None = None, A: float = -0.75
-) -> Any:
+def _cubic_coeffs(ratio: float, scale: float | None = None, A: float = -0.75) -> Any:
     del scale  # Unused
     coeffs = [
         ((A * (ratio + 1) - 5 * A) * (ratio + 1) + 8 * A) * (ratio + 1) - 4 * A,

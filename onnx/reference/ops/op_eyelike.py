@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.helper import tensor_dtype_to_np_dtype
 from onnx.onnx_pb import TensorProto
 from onnx.reference.op_run import OpRun
@@ -11,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class EyeLike(OpRun):
     def _run(self, data, *args, dtype=None, k=None):  # noqa: ARG002
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         if dtype is None:
             if data is None:
                 _dtype = np.float32

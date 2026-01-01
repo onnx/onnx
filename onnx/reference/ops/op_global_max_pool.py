@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -19,6 +18,6 @@ def _global_max_pool(x: Any) -> Any:
 
 class GlobalMaxPool(OpRun):
     def _run(self, x):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         res = _global_max_pool(x)
         return (res,)

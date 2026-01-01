@@ -3,8 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
-from onnx.reference.array_api_namespace import convert_to_numpy, asarray
+from onnx.reference.array_api_namespace import asarray, convert_to_numpy
 from onnx.reference.op_run import OpRun
 
 
@@ -14,7 +13,7 @@ class Gather(OpRun):
         # Array API doesn't have take, use numpy for gather
         x_np = convert_to_numpy(x)
         indices_np = convert_to_numpy(indices)
-        
+
         if not x_np.flags["C_CONTIGUOUS"]:
             x_np = np.ascontiguousarray(x_np)
         if not indices_np.flags["C_CONTIGUOUS"]:
@@ -27,6 +26,6 @@ class Gather(OpRun):
             except TypeError:
                 # distribution x86 requires int32.
                 result = np.take(x_np, indices_np.astype(int), axis=axis)
-        
+
         # Convert back to original array type
         return (asarray(result, xp=xp),)

@@ -5,15 +5,12 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 _acceptable_str_dtypes = ("U", "O")
 
 
-def pad_empty_string(
-    split_lists: list | Any, padding_requirement: list | int
-) -> list:
+def pad_empty_string(split_lists: list | Any, padding_requirement: list | int) -> list:
     if isinstance(split_lists, list):
         assert isinstance(padding_requirement, int)
         return split_lists + ["" for _ in range(padding_requirement)]
@@ -39,7 +36,7 @@ def split_with_padding(x, separator=None, maxsplit=None):
 
 class StringSplit(OpRun):
     def _run(self, x, delimiter=None, maxsplit=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         if delimiter == "":
             delimiter = None
 

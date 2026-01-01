@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -39,7 +38,7 @@ def gather_numpy(self: Any, dim: int, index: Any) -> Any:
 
 class GatherElements(OpRun):
     def _run(self, data, indices, axis=None):
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         if indices.size == 0:
             return (np.empty((0,), dtype=data.dtype),)
         try:

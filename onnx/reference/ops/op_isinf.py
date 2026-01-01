@@ -3,13 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
 class IsInf(OpRun):
     def _run(self, data, detect_negative=None, detect_positive=None):
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         if detect_negative:
             if detect_positive:
                 return (np.isinf(data),)

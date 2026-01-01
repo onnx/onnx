@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -27,7 +26,7 @@ class Loop(OpRun):
         return True
 
     def _run(self, M, cond, *args, context=None, body=None, attributes=None):
-        xp = self._get_array_api_namespace(M)
+        self._get_array_api_namespace(M)
         if args:
             v_initial = args[0]
             args = args[1:]

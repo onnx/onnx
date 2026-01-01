@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_concat_from_sequence import _concat_from_sequence
 from onnx.reference.ops.op_dft import _cfft as _dft

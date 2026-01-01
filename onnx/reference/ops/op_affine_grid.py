@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -82,7 +81,7 @@ def apply_affine_transform(theta_n, original_grid_homo):
 
 class AffineGrid(OpRun):
     def _run(self, theta, size, align_corners=None):
-        xp = self._get_array_api_namespace(theta)
+        self._get_array_api_namespace(theta)
         align_corners = align_corners or self.align_corners
         _, _, *data_size = size
         original_grid = construct_original_grid(data_size, align_corners)

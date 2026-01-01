@@ -3,13 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Hardmax(OpRunUnaryNum):
     def _run(self, x, axis=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         axis = axis or self.axis
         if x.size == 0:
             return (x,)

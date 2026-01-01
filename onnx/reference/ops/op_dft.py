@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -66,9 +65,7 @@ def _ifft(x: Any, fft_length: int, axis: int, onesided: bool) -> Any:
     return merged
 
 
-def _cifft(
-    x: Any, fft_length: int, axis: int, onesided: bool = False
-) -> Any:
+def _cifft(x: Any, fft_length: int, axis: int, onesided: bool = False) -> Any:
     if x.shape[-1] == 1:
         frequencies = x
     else:

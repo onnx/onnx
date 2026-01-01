@@ -5,13 +5,12 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
 class Range(OpRun):
     def _run(self, starts, ends, steps):
-        xp = self._get_array_api_namespace(starts)
+        self._get_array_api_namespace(starts)
         start_scalar = starts.item()
         if isinstance(ends, Any):
             ends = ends.item()

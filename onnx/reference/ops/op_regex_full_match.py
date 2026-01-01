@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import re
 
-
 from onnx.reference.op_run import OpRun
 
 _acceptable_str_dtypes = ("U", "O")

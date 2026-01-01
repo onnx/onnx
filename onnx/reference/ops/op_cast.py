@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 import onnx
 from onnx.reference.op_run import OpRun
 
@@ -37,23 +36,23 @@ def cast_to(
 
 class Cast_1(OpRun):
     def _run(self, x, to=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         return (cast_to(x, to, saturate=True, round_mode="up"),)
 
 
 class Cast_19(OpRun):
     def _run(self, x, to=None, saturate=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         return (cast_to(x, to, saturate, round_mode="up"),)
 
 
 class Cast_24(OpRun):
     def _run(self, x, to=None, saturate=None, round_mode=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         return (cast_to(x, to, saturate, round_mode),)
 
 
 class Cast_25(OpRun):
     def _run(self, x, to=None, saturate=None, round_mode=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         return (cast_to(x, to, saturate, round_mode),)

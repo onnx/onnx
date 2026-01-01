@@ -12,8 +12,8 @@ class Exp(OpRunUnaryNum):
         result = xp.exp(x)
         # Ensure dtype is preserved - array API may promote types
         # Check if dtypes differ (works across array backends)
-        if hasattr(result, 'dtype') and str(result.dtype) != str(x.dtype):
-            if hasattr(xp, 'astype'):
+        if hasattr(result, "dtype") and str(result.dtype) != str(x.dtype):
+            if hasattr(xp, "astype"):
                 result = xp.astype(result, x.dtype)
             else:
                 result = result.astype(x.dtype)

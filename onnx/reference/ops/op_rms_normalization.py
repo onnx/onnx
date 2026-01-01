@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -42,7 +41,7 @@ def _rms_normalization(
 
 class RMSNormalization(OpRun):
     def _run(self, X, Scale, axis=None, epsilon=None, stash_type=None):
-        xp = self._get_array_api_namespace(X)
+        self._get_array_api_namespace(X)
         if stash_type != 1:
             raise NotImplementedError(
                 f"RMSNormalization not implemented for stash_type={stash_type} != 1."

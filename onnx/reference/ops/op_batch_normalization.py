@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -75,7 +74,7 @@ class BatchNormalization_6(OpRun):
 
 class BatchNormalization_9(OpRun):
     def _run(self, x, scale, bias, mean, var, epsilon=None, momentum=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         if momentum is None:
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
             return (res,)

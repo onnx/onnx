@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Any
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -19,5 +18,5 @@ def _global_average_pool(x: Any) -> Any:
 
 class GlobalAveragePool(OpRun):
     def _run(self, x):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         return (_global_average_pool(x).astype(x.dtype),)

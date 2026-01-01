@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import numbers
 
-
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_resize import _get_all_coords
 

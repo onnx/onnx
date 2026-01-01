@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.ops._op import OpRunReduceNumpy
 
 
@@ -23,7 +22,7 @@ def compute_log_sum_exp(data, axes, keepdims):
 
 class ReduceLogSumExp_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         tax = tuple(axes) if axes is not None else None
 
         if data.size == 0:
@@ -33,7 +32,7 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
 
 class ReduceLogSumExp_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
-        xp = self._get_array_api_namespace(data)
+        self._get_array_api_namespace(data)
         axes = self.handle_axes(axes, noop_with_empty_axes)
 
         keepdims = keepdims != 0

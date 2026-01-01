@@ -404,7 +404,11 @@ class OpRun(abc.ABC):
 
         # Check that results are valid ONNX types (arrays, lists, dicts, or sparse tensors)
         if any(
-            not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense") or is_array_api_obj(t))
+            not (
+                isinstance(t, (np.ndarray, list, dict))
+                or hasattr(t, "todense")
+                or is_array_api_obj(t)
+            )
             for t in res
         ):
             dtypes = [type(t) for t in res]

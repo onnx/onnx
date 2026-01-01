@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -13,8 +12,8 @@ class Where(OpRun):
         if (
             x.dtype != y.dtype
             and x.dtype not in (object,)
-            and x.dtype.type is not np.str_
-            and y.dtype.type is not np.str_
+            and x.dtype.type is not xp.str_
+            and y.dtype.type is not xp.str_
         ):
             raise RuntimeError(
                 f"x and y should share the same dtype {x.dtype} != {y.dtype}"

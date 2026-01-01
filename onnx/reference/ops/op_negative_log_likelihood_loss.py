@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
@@ -74,7 +73,7 @@ def _compute_negative_log_likelihood_loss(
 
 class NegativeLogLikelihoodLoss(OpRun):
     def _run(self, x, target, weight=None, ignore_index=None, reduction=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         return _compute_negative_log_likelihood_loss(
             x,
             target,

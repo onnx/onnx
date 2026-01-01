@@ -7,7 +7,6 @@ import locale as pylocale
 import unicodedata
 import warnings
 
-
 from onnx.reference.op_run import OpRun, RuntimeTypeError
 
 

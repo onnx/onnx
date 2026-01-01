@@ -6,17 +6,13 @@
 This module provides a unified interface for array operations using the Array API standard.
 It supports numpy, cupy, jax, pytorch (torch), and mlx backends through array-api-compat.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
+import array_api_compat
 import numpy as np
-
-try:
-    import array_api_compat
-    ARRAY_API_COMPAT_AVAILABLE = True
-except ImportError:
-    ARRAY_API_COMPAT_AVAILABLE = False
 
 
 def get_array_api_namespace(array: Any) -> Any:
@@ -29,9 +25,6 @@ def get_array_api_namespace(array: Any) -> Any:
         The array API namespace for operations on this array type.
         Falls back to numpy for non-array types or if array-api-compat is not available.
     """
-    if not ARRAY_API_COMPAT_AVAILABLE:
-        return np
-
     # Use array-api-compat to get the appropriate namespace
     try:
         return array_api_compat.array_namespace(array)
@@ -51,9 +44,6 @@ def is_array_api_obj(obj: Any) -> bool:
     """
     if isinstance(obj, np.ndarray):
         return True
-
-    if not ARRAY_API_COMPAT_AVAILABLE:
-        return False
 
     try:
         array_api_compat.array_namespace(obj)
@@ -81,7 +71,7 @@ def asarray(obj: Any, dtype: Any = None, xp: Any = None) -> Any:
             xp = np
 
     # Use asarray if available, otherwise use array
-    if hasattr(xp, 'asarray'):
+    if hasattr(xp, "asarray"):
         if dtype is not None:
             return xp.asarray(obj, dtype=dtype)
         return xp.asarray(obj)
@@ -106,21 +96,21 @@ def convert_to_numpy(array: Any) -> np.ndarray:
     xp = get_array_api_namespace(array)
 
     # For PyTorch
-    if hasattr(array, 'cpu') and hasattr(array, 'numpy'):
+    if hasattr(array, "cpu") and hasattr(array, "numpy"):
         return array.cpu().numpy()
 
     # For JAX
-    if hasattr(array, '__array__'):
+    if hasattr(array, "__array__"):
         return np.asarray(array)
 
     # For CuPy
-    if hasattr(array, 'get'):
+    if hasattr(array, "get"):
         return array.get()
 
     # For MLX
-    if hasattr(xp, '__name__') and 'mlx' in xp.__name__.lower():
+    if hasattr(xp, "__name__") and "mlx" in xp.__name__.lower():
         # MLX arrays can be converted to numpy via __array__
-        if hasattr(array, '__array__'):
+        if hasattr(array, "__array__"):
             return np.asarray(array)
 
     # Generic fallback

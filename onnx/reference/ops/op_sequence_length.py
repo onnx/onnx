@@ -3,13 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-
 from onnx.reference.op_run import OpRun
 
 
 class SequenceLength(OpRun):
     def _run(self, input_sequence):
-        xp = self._get_array_api_namespace(input_sequence)
+        self._get_array_api_namespace(input_sequence)
         if not isinstance(input_sequence, list):
             raise TypeError(
                 f"input_sequence must be a list not {type(input_sequence)}."
