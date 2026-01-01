@@ -143,11 +143,16 @@ class Scan(OpRun):
             outputs = dict(zip(self.output_names, outputs_list, strict=False))
             states = [outputs[name] for name in state_names_out]
             for i, name in enumerate(scan_names_out):
-                import numpy as np
-                results[i].append(np.expand_dims(outputs[name], axis=0))
+                # Use array API to expand dims
+                from onnx.reference.array_api_namespace import get_array_api_namespace
+                xp = get_array_api_namespace(outputs[name])
+                expanded = xp.expand_dims(outputs[name], axis=0)
+                results[i].append(expanded)
 
         for res in results:
-            import numpy as np
-            conc = np.vstack(res)
+            # Use array API to concatenate/stack
+            from onnx.reference.array_api_namespace import get_array_api_namespace
+            xp = get_array_api_namespace(res[0])
+            conc = xp.concat(res, axis=0)
             states.append(conc)
         return self._check_and_fix_outputs(tuple(states))

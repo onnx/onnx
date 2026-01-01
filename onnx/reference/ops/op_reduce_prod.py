@@ -22,10 +22,8 @@ class ReduceProd_1(OpRunReduceNumpy):
                 res = res.astype(data.dtype)
 
         if keepdims == 0 and not hasattr(res, 'shape'):
-            # The runtime must return an array
-            import numpy as np
-            from onnx.reference.array_api_namespace import asarray
-            res = asarray(np.array(res), xp=xp)
+            # The runtime must return an array - convert scalar to 0-d array
+            res = xp.asarray(res)
         return (res,)
 
 
@@ -45,8 +43,6 @@ class ReduceProd_18(OpRunReduceNumpy):
                 res = res.astype(data.dtype)
 
         if not keepdims_bool and not hasattr(res, 'shape'):
-            # The runtime must return an array
-            import numpy as np
-            from onnx.reference.array_api_namespace import asarray
-            res = asarray(np.array(res), xp=xp)
+            # The runtime must return an array - convert scalar to 0-d array
+            res = xp.asarray(res)
         return (res,)

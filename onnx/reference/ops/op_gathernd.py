@@ -44,17 +44,24 @@ def _gather_nd_impl(data: Any, indices: Any, batch_dims: int) -> tuple[Any]:
     reshaped_data = data.reshape((batch_dims_size, *data.shape[batch_dims:]))
 
     # Gather each scalar value from 'data'.
+    output_list = []
     for batch_dim in range(reshaped_indices.shape[0]):
         for outer_dim in range(reshaped_indices.shape[1]):
             gather_index = tuple(reshaped_indices[batch_dim][outer_dim])
-            output_data_buffer.append(reshaped_data[(batch_dim, *gather_index)])
+            output_list.append(reshaped_data[(batch_dim, *gather_index)])
     
-    # Convert to numpy for asarray, then convert back to original array type
-    import numpy as np
-    from onnx.reference.array_api_namespace import asarray, get_array_api_namespace
+    # Use array API to construct result
+    from onnx.reference.array_api_namespace import get_array_api_namespace, asarray
     xp = get_array_api_namespace(data)
-    result = np.asarray(output_data_buffer, dtype=data.dtype).reshape(output_shape)
-    return (asarray(result, xp=xp),)
+    
+    # Convert list to array - use concat if available, otherwise stack
+    if len(output_list) > 0:
+        # Create array from list of scalars
+        result = xp.stack([asarray(x, xp=xp) for x in output_list])
+        result = xp.reshape(result, output_shape)
+    else:
+        result = xp.zeros(output_shape, dtype=data.dtype)
+    return (result,)
 
 
 class GatherND(OpRun):

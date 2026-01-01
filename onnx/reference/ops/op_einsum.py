@@ -3,9 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
-
-from onnx.reference.array_api_namespace import asarray, convert_to_numpy
 from onnx.reference.op_run import OpRun
 
 
@@ -18,12 +15,19 @@ class Einsum(OpRun):
         if not equation:
             raise TypeError("equation is empty.")
         
-        # Convert to numpy for einsum (not in array API standard)
-        args_np = [convert_to_numpy(arg) for arg in args]
-        try:
-            result = np.einsum(equation, *args_np, optimize=True)
-        except TypeError:
-            result = np.einsum(equation, *args_np)
-        
-        # Convert back to original array type
-        return (asarray(result, xp=xp),)
+        # einsum is available in array-api-compat's linalg namespace
+        if hasattr(xp, 'linalg') and hasattr(xp.linalg, 'einsum'):
+            try:
+                return (xp.linalg.einsum(equation, *args, optimize=True),)
+            except TypeError:
+                return (xp.linalg.einsum(equation, *args),)
+        else:
+            # Fallback for backends without einsum
+            import numpy as np
+            from onnx.reference.array_api_namespace import convert_to_numpy, asarray
+            args_np = [convert_to_numpy(arg) for arg in args]
+            try:
+                result = np.einsum(equation, *args_np, optimize=True)
+            except TypeError:
+                result = np.einsum(equation, *args_np)
+            return (asarray(result, xp=xp),)

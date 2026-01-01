@@ -119,12 +119,9 @@ class TestArrayAPICompatibility:
         expected = cp.array([5.0, 7.0, 9.0], dtype=cp.float32)
         cp.testing.assert_array_equal(result[0], expected)
 
-    @unittest.skipUnless(
-        _can_import("jax"),
-        "JAX not available",
-    )
     def test_jax_add(self):
         """Test Add operator with JAX arrays."""
+        pytest.importorskip("jax")
         import jax.numpy as jnp
 
         model = create_simple_add_model()
