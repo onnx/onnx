@@ -13,7 +13,7 @@ def _fft(x: np.ndarray, fft_length: int, axis: int) -> np.ndarray:
     transformed = np.fft.fft(x, n=fft_length, axis=axis)
     real_frequencies = np.real(transformed)
     imaginary_frequencies = np.imag(transformed)
-    return np.concatenate(
+    return xp.concatenate(
         (real_frequencies[..., np.newaxis], imaginary_frequencies[..., np.newaxis]),
         axis=-1,
     )
@@ -54,7 +54,7 @@ def _ifft(x: np.ndarray, fft_length: int, axis: int, onesided: bool) -> np.ndarr
     signals = np.fft.ifft(x, fft_length, axis=axis)
     real_signals = np.real(signals)
     imaginary_signals = np.imag(signals)
-    merged = np.concatenate(
+    merged = xp.concatenate(
         (real_signals[..., np.newaxis], imaginary_signals[..., np.newaxis]),
         axis=-1,
     )

@@ -10,8 +10,9 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 class ReduceL2_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
+        xp = self._get_array_api_namespace(data)
         axes = tuple(axes) if axes is not None else None
-        res = np.sqrt(np.sum(np.square(data), axis=axes, keepdims=keepdims)).astype(
+        res = xp.sqrt(xp.sum(np.square(data), axis=axes, keepdims=keepdims)).astype(
             dtype=data.dtype
         )
         if keepdims == 0 and not isinstance(res, np.ndarray):
@@ -22,10 +23,11 @@ class ReduceL2_1(OpRunReduceNumpy):
 
 class ReduceL2_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        xp = self._get_array_api_namespace(data)
         axes = self.handle_axes(axes, noop_with_empty_axes)
 
         keepdims = keepdims != 0
-        res = np.sqrt(np.sum(np.square(data), axis=axes, keepdims=keepdims)).astype(
+        res = xp.sqrt(xp.sum(np.square(data), axis=axes, keepdims=keepdims)).astype(
             dtype=data.dtype
         )
         if keepdims == 0 and not isinstance(res, np.ndarray):

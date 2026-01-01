@@ -101,7 +101,7 @@ class ConvTranspose(OpRun):
                         res += B[c]
                     final[image_id, c, ...] = res[...]
         else:
-            final = np.zeros((X.shape[0], num_output_channels, *output_shape))
+            final = xp.zeros((X.shape[0], num_output_channels, *output_shape))
             output_array = []
 
             for group_id in range(group):

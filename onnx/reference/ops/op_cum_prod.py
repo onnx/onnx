@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class CumProd(OpRun):
     def _run(self, x, axis, exclusive=None, reverse=None):
+        xp = self._get_array_api_namespace(x)
         axis = np.asarray(axis)
         if axis.ndim != 0:
             raise ValueError(f"Axis must be a rank-0 tensor, got `{axis.ndim}`.")
@@ -22,7 +23,7 @@ class CumProd(OpRun):
             indices_d = [slice(0, s) for s in x.shape]
             indices_c[axis] = slice(0, -1)
             indices_d[axis] = slice(1, x.shape[axis])
-            res = np.ones(x.shape, dtype=x.dtype)
+            res = xp.ones(x.shape, dtype=x.dtype)
             np.cumprod(x[tuple(indices_c)], axis=axis, out=res[tuple(indices_d)])
         else:
             res = np.cumprod(x, axis=axis, dtype=x.dtype)

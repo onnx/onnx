@@ -15,7 +15,7 @@ class CommonLSTM(OpRun):
         self.n_gates = 3
 
     def f(self, x: np.ndarray) -> np.ndarray:
-        return 1 / (1 + np.exp(-x))
+        return 1 / (1 + xp.exp(-x))
 
     def g(self, x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
@@ -46,9 +46,9 @@ class CommonLSTM(OpRun):
         C_t = C_0
         for x in np.split(X, X.shape[0], axis=0):
             gates = (
-                np.dot(x, np.transpose(W))
-                + np.dot(H_t, np.transpose(R))
-                + np.add(*np.split(B, 2))
+                np.dot(x, xp.transpose(W))
+                + np.dot(H_t, xp.transpose(R))
+                + xp.add(*np.split(B, 2))
             )
             i, o, f, c = np.split(gates, 4, -1)
             i = self.f(i + p_i * C_t)
@@ -61,14 +61,14 @@ class CommonLSTM(OpRun):
             H_t = H
             C_t = C
 
-        concatenated = np.concatenate(h_list)
+        concatenated = xp.concatenate(h_list)
         if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
         if self.layout == 0:
             Y_h = Y[-1]
         else:
-            Y = np.transpose(Y, [2, 0, 1, 3])
+            Y = xp.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
         return Y, Y_h
@@ -130,13 +130,13 @@ class CommonLSTM(OpRun):
             if self.layout != 0:
                 X = np.swapaxes(X, 0, 1)
             if B is None:
-                B = np.zeros(2 * n_gates * hidden_size, dtype=np.float32)
+                B = xp.zeros(2 * n_gates * hidden_size, dtype=np.float32)
             if P is None:
-                P = np.zeros(number_of_peepholes * hidden_size, dtype=np.float32)
+                P = xp.zeros(number_of_peepholes * hidden_size, dtype=np.float32)
             if initial_h is None:
-                initial_h = np.zeros((batch_size, hidden_size), dtype=np.float32)
+                initial_h = xp.zeros((batch_size, hidden_size), dtype=np.float32)
             if initial_c is None:
-                initial_c = np.zeros((batch_size, hidden_size), dtype=np.float32)
+                initial_c = xp.zeros((batch_size, hidden_size), dtype=np.float32)
         else:
             raise NotImplementedError(  # pragma: no cover
                 f"Unsupported value {num_directions!r} for num_directions "

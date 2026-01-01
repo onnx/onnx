@@ -38,6 +38,7 @@ def gather_numpy(self: np.ndarray, dim: int, index: np.ndarray) -> np.ndarray:
 
 class GatherElements(OpRun):
     def _run(self, data, indices, axis=None):
+        xp = self._get_array_api_namespace(data)
         if indices.size == 0:
             return (np.empty((0,), dtype=data.dtype),)
         try:

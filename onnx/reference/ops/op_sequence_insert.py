@@ -39,6 +39,7 @@ def sequence_insert_reference_implementation(
 
 class SequenceInsert(OpRun):
     def _run(self, S, T, ind=None):
+        xp = self._get_array_api_namespace(S)
         if ind is None:
             res = sequence_insert_reference_implementation(S, T)
         elif isinstance(ind, int):

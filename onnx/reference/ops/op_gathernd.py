@@ -55,4 +55,5 @@ def _gather_nd_impl(
 
 class GatherND(OpRun):
     def _run(self, data, indices, batch_dims=None):
+        xp = self._get_array_api_namespace(data)
         return _gather_nd_impl(data, indices, batch_dims)

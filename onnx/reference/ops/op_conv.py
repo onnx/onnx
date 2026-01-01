@@ -60,7 +60,7 @@ def _conv_implementation(
 
         new_shape = [X.shape[0], *list(res[0][1].shape[1:])]
         new_shape[1] = td
-        final = np.zeros(tuple(new_shape), dtype=res[0][1].dtype)
+        final = xp.zeros(tuple(new_shape), dtype=res[0][1].dtype)
         p = 0
         for b, cv in res:
             final[b : b + 1, p : p + cv.shape[1]] = cv
@@ -83,7 +83,7 @@ def _conv_implementation(
             di = len(W.shape) - nd + i
             new_shape.append(W.shape[di] + (W.shape[di] - 1) * (d - 1))
             new_kernel_shape.append(kernel_shape[i] + (kernel_shape[i] - 1) * (d - 1))
-        new_w = np.zeros(tuple(new_shape), dtype=W.dtype)
+        new_w = xp.zeros(tuple(new_shape), dtype=W.dtype)
         indices = [slice(0, new_w.shape[0]), slice(0, new_w.shape[1])]
         for i, d in enumerate(dilations):
             di = len(W.shape) - nd + i
@@ -120,7 +120,7 @@ def _conv_implementation(
         oh = -1 * (kh % 2)
         bh = -h0
         eh = h_out * sth
-        res = np.zeros((X.shape[0], W.shape[0], h_out))  # type: ignore[assignment]
+        res = xp.zeros((X.shape[0], W.shape[0], h_out))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :] += B.reshape((1, -1, 1))
 
@@ -167,7 +167,7 @@ def _conv_implementation(
         oh, ow = -1 * (kh % 2), -1 * (kw % 2)
         bh, bw = -h0, -w0
         eh, ew = h_out * sth, w_out * stw
-        res = np.zeros((X.shape[0], W.shape[0], h_out, w_out))  # type: ignore[assignment]
+        res = xp.zeros((X.shape[0], W.shape[0], h_out, w_out))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :, :] = B.reshape((1, -1, 1, 1))
 
@@ -227,7 +227,7 @@ def _conv_implementation(
         oh, ow, oz = -1 * (kh % 2), -1 * (kw % 2), -1 * (kz % 2)
         bh, bw, bz = -h0, -w0, -z0
         eh, ew, ez = h_out * sth, w_out * stw, z_out * stz
-        res = np.zeros((X.shape[0], W.shape[0], h_out, w_out, z_out))  # type: ignore[assignment]
+        res = xp.zeros((X.shape[0], W.shape[0], h_out, w_out, z_out))  # type: ignore[assignment]
         if B is not None:
             res[:, :, :, :, :] = B.reshape((1, -1, 1, 1, 1))
 

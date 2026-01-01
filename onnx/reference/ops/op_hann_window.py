@@ -15,6 +15,7 @@ class HannWindow(_CommonWindow):
     """
 
     def _run(self, size, output_datatype=None, periodic=None):
+        xp = self._get_array_api_namespace(size)
         ni, N_1 = self._begin(size, periodic, output_datatype)
-        res = np.sin(ni * np.pi / N_1) ** 2
+        res = xp.sin(ni * np.pi / N_1) ** 2
         return self._end(size, res, output_datatype)

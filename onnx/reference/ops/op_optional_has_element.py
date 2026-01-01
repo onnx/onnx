@@ -10,4 +10,5 @@ from onnx.reference.op_run import OpRun
 
 class OptionalHasElement(OpRun):
     def _run(self, x=None):
+        # Return numpy array for boolean result
         return (np.array(x is not None),)

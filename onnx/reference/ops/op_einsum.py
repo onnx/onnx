@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class Einsum(OpRun):
     def _run(self, *args, equation=None):
+        xp = self._get_array_api_namespace()
         if not isinstance(equation, str):
             raise TypeError(f"equation must be string but is {type(equation)!r}.")
         equation = equation.strip()

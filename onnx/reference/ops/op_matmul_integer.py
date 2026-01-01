@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class MatMulInteger(OpRun):
     def _run(self, A, B, a_zero_point=None, b_zero_point=None):
+        xp = self._get_array_api_namespace(A)
         A32 = A.astype(np.int32)
         if a_zero_point is not None:
             A32 -= a_zero_point

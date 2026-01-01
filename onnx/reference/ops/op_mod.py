@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class Mod(OpRun):
     def _run(self, a, b, fmod=None):
+        xp = self._get_array_api_namespace(a)
         fmod = fmod or self.fmod
         if fmod == 1:
             return (np.fmod(a, b),)

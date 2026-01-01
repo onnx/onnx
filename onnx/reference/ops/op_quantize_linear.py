@@ -140,7 +140,7 @@ class _CommonQuantizeLinear(OpRun):
             xi += zero_point
             dtype = tensor_dtype_to_np_dtype(tensor_type)
             quant_range = _QUANT_INTEGER_RANGES[tensor_type]
-            return (np.clip(xi, quant_range[0], quant_range[1]).astype(dtype),)
+            return (xp.clip(xi, quant_range[0], quant_range[1]).astype(dtype),)
 
         if tensor_type in {
             TensorProto.FLOAT8E4M3FN,
@@ -167,6 +167,7 @@ class _CommonQuantizeLinear(OpRun):
 
 class QuantizeLinear_10(_CommonQuantizeLinear):
     def _run(self, x, y_scale, zero_point=None, axis: int = 1):
+        xp = self._get_array_api_namespace(x)
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
         return super()._run(x, y_scale, zero_point, axis=axis)
@@ -174,6 +175,7 @@ class QuantizeLinear_10(_CommonQuantizeLinear):
 
 class QuantizeLinear_19(_CommonQuantizeLinear):
     def _run(self, x, y_scale, zero_point=None, axis: int = 1, saturate: bool = True):
+        xp = self._get_array_api_namespace(x)
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
         return super()._run(x, y_scale, zero_point, axis=axis, saturate=saturate)

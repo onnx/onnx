@@ -70,6 +70,7 @@ class Gemm_6(OpRun):
 
 class Gemm_7(OpRun):
     def _run(self, a, b, c=None, alpha=None, beta=None, transA=None, transB=None):
+        xp = self._get_array_api_namespace(a)
         if transA:
             _meth = _gemm11 if transB else _gemm10
         else:

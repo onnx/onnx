@@ -31,7 +31,7 @@ class MelWeightMatrix(OpRun):
         frequency_bins = ((dft_length + 1) * frequency_bins) // sample_rate
         frequency_bins = frequency_bins.astype(int)
 
-        output = np.zeros((num_spectrogram_bins, num_mel_bins))
+        output = xp.zeros((num_spectrogram_bins, num_mel_bins))
         output.flags.writeable = True
 
         for i in range(num_mel_bins):

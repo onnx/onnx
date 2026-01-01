@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class ConstantOfShape(OpRun):
     def _run(self, data, value: np.array | None = None):
+        xp = self._get_array_api_namespace(data)
         if self.value is None:
             value = np.array(0, dtype=np.float32)
         else:

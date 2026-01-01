@@ -20,10 +20,10 @@ def softmaxcrossentropy(
     C = input_shape[1]
 
     # compute log_softmax
-    max_x = np.max(x, axis=1, keepdims=True)
-    exp_x = np.exp(x - max_x)
-    p = exp_x / np.sum(exp_x, axis=1, keepdims=True)
-    inp = np.log(p)
+    max_x = xp.max(x, axis=1, keepdims=True)
+    exp_x = xp.exp(x - max_x)
+    p = exp_x / xp.sum(exp_x, axis=1, keepdims=True)
+    inp = xp.log(p)
     log_prob = None
     if get_log_prob is True:
         log_prob = np.copy(inp)
@@ -33,11 +33,11 @@ def softmaxcrossentropy(
     if weight is not None:
         gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
         if ignore_index is not None:
-            gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
+            gather_weight = xp.where(target == ignore_index, 0, gather_weight).astype(
                 dtype=x.dtype
             )
     elif ignore_index is not None:
-        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
+        gather_weight = xp.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
@@ -49,7 +49,7 @@ def softmaxcrossentropy(
     # the D here should be H * W because we reshape
     # [N, C, H, W] to [N, C, H * W].
     D = inp.shape[2]
-    neg_gather_element_input = np.zeros((N, D), dtype=x.dtype)
+    neg_gather_element_input = xp.zeros((N, D), dtype=x.dtype)
     for i in range(N):
         for d in range(D):
             if target[i, d] != ignore_index:
@@ -71,9 +71,9 @@ def softmaxcrossentropy(
             return (loss,)
 
     if reduction == "mean":
-        loss = np.mean(loss)
+        loss = xp.mean(loss)
     elif reduction == "sum":
-        loss = np.sum(loss)
+        loss = xp.sum(loss)
 
     loss = loss.astype(x.dtype)
     if get_log_prob is True:
@@ -83,6 +83,7 @@ def softmaxcrossentropy(
 
 class SoftmaxCrossEntropyLoss(OpRun):
     def _run(self, x, target, weight=None, ignore_index=None, reduction=None):
+        xp = self._get_array_api_namespace(x)
         n_outputs = len(self.onnx_node.output)
         return softmaxcrossentropy(
             x,

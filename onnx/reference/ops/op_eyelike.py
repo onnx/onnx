@@ -12,6 +12,7 @@ from onnx.reference.op_run import OpRun
 
 class EyeLike(OpRun):
     def _run(self, data, *args, dtype=None, k=None):  # noqa: ARG002
+        xp = self._get_array_api_namespace(data)
         if dtype is None:
             if data is None:
                 _dtype = np.float32

@@ -83,7 +83,7 @@ def get_output_shape_explicit_padding(
     strides_spatial = strides_spatial or [1] * len(input_spatial_shape)
     dims = len(input_spatial_shape)
     if dilations is None:
-        dilations = np.ones([dims], dtype=np.int64)
+        dilations = xp.ones([dims], dtype=np.int64)
 
     for dim in range(dims):
         dim_size = (
@@ -187,15 +187,15 @@ def pool(
     p: the p value for lp pooling
     """
     spatial_size = len(x_shape) - 2
-    y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)], dtype=padded.dtype)
+    y = xp.zeros([x_shape[0], x_shape[1], *list(out_shape)], dtype=padded.dtype)
     if dilations is None:
-        dilations = np.ones([spatial_size], dtype=np.int64)
+        dilations = xp.ones([spatial_size], dtype=np.int64)
     if pads_required is None:
-        pads_required = np.zeros([spatial_size * 2], dtype=np.int64)
+        pads_required = xp.zeros([spatial_size * 2], dtype=np.int64)
     elif len(pads_required) == 1:
         pads_required = pads_required * spatial_size * 2
     if pads is None:
-        pads = np.zeros([spatial_size * 2], dtype=np.int64)
+        pads = xp.zeros([spatial_size * 2], dtype=np.int64)
     elif len(pads) == 1:
         pads = pads * spatial_size * 2
     strides = strides or [1] * spatial_size
@@ -252,7 +252,7 @@ def pool(
         elif pooling_type == "LPPOOL":
 
             def lp_pool(x: np.array, p: int = p) -> float:
-                return np.sum(np.abs(x) ** p) ** (1.0 / p)
+                return xp.sum(xp.abs(x) ** p) ** (1.0 / p)
 
             f = lp_pool
         else:
@@ -263,7 +263,7 @@ def pool(
         if count_include_pad == 1 and (pooling_type in {"AVG", "LPPOOL"}):
             y[shape] = f(window_vals)
         else:
-            y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
+            y[shape] = f(window_vals[xp.where(~np.isnan(window_vals))])
     return y.astype(padded.dtype)
 
 

@@ -35,6 +35,7 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):
 
 class Pad_1(OpRun):
     def _run(self, data, paddings=None, mode=None, value=None):
+        xp = self._get_array_api_namespace(data)
         if value is None:
             value = 0
         return (_pad_impl(data, paddings, mode=mode, constant_values=value),)
@@ -42,6 +43,7 @@ class Pad_1(OpRun):
 
 class Pad_2(OpRun):
     def _run(self, data, pads=None, mode=None, value=None):
+        xp = self._get_array_api_namespace(data)
         if value is None:
             value = 0
         return (_pad_impl(data, pads, mode=mode, constant_values=value),)
@@ -49,6 +51,7 @@ class Pad_2(OpRun):
 
 class Pad_11(OpRun):
     def _run(self, data, pads, constant_value=None, mode=None):
+        xp = self._get_array_api_namespace(data)
         if constant_value is None:
             constant_value = 0
         return (
@@ -58,6 +61,7 @@ class Pad_11(OpRun):
 
 class Pad_18(OpRun):
     def _run(self, data, pads, constant_value=None, axes=None, mode=None):
+        xp = self._get_array_api_namespace(data)
         if constant_value is None:
             constant_value = 0
         return (

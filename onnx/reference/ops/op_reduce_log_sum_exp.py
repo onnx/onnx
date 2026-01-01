@@ -13,10 +13,10 @@ def compute_log_sum_exp(data, axes, keepdims):
     ind = np.isinf(data_max)
     data_max[ind] = -np.inf
     mx = data_max.max(axis=axes, keepdims=True)
-    sub = np.subtract(data, mx)
-    exp = np.exp(sub, out=sub)
-    mxs = np.sum(exp, axis=axes, keepdims=True, dtype=data.dtype)
-    res = np.log(mxs) + mx
+    sub = xp.subtract(data, mx)
+    exp = xp.exp(sub, out=sub)
+    mxs = xp.sum(exp, axis=axes, keepdims=True, dtype=data.dtype)
+    res = xp.log(mxs) + mx
     if not keepdims:
         res = np.squeeze(res, axis=axes)
     return (res,)
@@ -24,6 +24,7 @@ def compute_log_sum_exp(data, axes, keepdims):
 
 class ReduceLogSumExp_1(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=None):
+        xp = self._get_array_api_namespace(data)
         tax = tuple(axes) if axes is not None else None
 
         if data.size == 0:
@@ -33,6 +34,7 @@ class ReduceLogSumExp_1(OpRunReduceNumpy):
 
 class ReduceLogSumExp_18(OpRunReduceNumpy):
     def _run(self, data, axes=None, keepdims=1, noop_with_empty_axes=0):
+        xp = self._get_array_api_namespace(data)
         axes = self.handle_axes(axes, noop_with_empty_axes)
 
         keepdims = keepdims != 0

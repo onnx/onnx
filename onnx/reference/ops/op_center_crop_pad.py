@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class CenterCropPad(OpRun):
     def _run(self, input_data, shape, axes=None):
+        xp = self._get_array_api_namespace(input_data)
         axes = axes or self.axes
         input_rank = len(input_data.shape)
         if axes is None:
@@ -44,7 +45,7 @@ class CenterCropPad(OpRun):
                     sl = slice(d, sh - d - 1)
                 pad_slices[a] = sl
 
-        res = np.zeros(tuple(new_shape), dtype=input_data.dtype)
+        res = xp.zeros(tuple(new_shape), dtype=input_data.dtype)
         cropped = input_data[tuple(crop_slices)]
         res[tuple(pad_slices)] = cropped
         return (res,)

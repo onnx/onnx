@@ -113,6 +113,7 @@ class _CommonDequantizeLinear(OpRun):
 
 class DequantizeLinear_19(_CommonDequantizeLinear):
     def _run(self, x, x_scale, x_zero_point=None, axis: int = 1):
+        xp = self._get_array_api_namespace(x)
         if len(x_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
         return super()._run(x, x_scale, x_zero_point, axis)

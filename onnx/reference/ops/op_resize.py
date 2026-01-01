@@ -51,7 +51,7 @@ def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.nd
 
     n = np.prod([x.size for x in arrays])
     if out is None:
-        out = np.zeros([n, len(arrays)], dtype=dtype)
+        out = xp.zeros([n, len(arrays)], dtype=dtype)
 
     m = n // arrays[0].size
     out[:, 0] = np.repeat(arrays[0], m)
@@ -126,7 +126,7 @@ def _linear_coeffs_antialias(ratio: float, scale: float) -> np.ndarray:
     start = int(np.floor(-1 / scale) + 1)
     footprint = 2 - 2 * start
     args = (np.arange(start, start + footprint) - ratio) * scale
-    coeffs = np.clip(1 - np.abs(args), 0, 1)
+    coeffs = xp.clip(1 - xp.abs(args), 0, 1)
     return np.array(coeffs) / sum(coeffs)  # type: ignore[no-any-return]
 
 
@@ -284,7 +284,7 @@ def _interpolate_nd_with_x(
             output_size[1:],
             x[1:],
             get_coeffs,
-            roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
+            roi=None if roi is None else xp.concatenate([roi[1:n], roi[n + 1 :]]),
             exclude_outside=exclude_outside,
             **kwargs,
         )
@@ -377,7 +377,7 @@ def _interpolate_nd(
     if output_size is None:
         raise ValueError("output_size is None.")
 
-    ret = np.zeros(output_size)
+    ret = xp.zeros(output_size)
     for x in _get_all_coords(ret):
         ret[tuple(x)] = _interpolate_nd_with_x(
             data,
@@ -454,7 +454,7 @@ class Resize(OpRun):
         # axes is not None
         not_axes = [a for a in range(len(X.shape)) if a not in axes]
         perm = tuple(not_axes + axes)
-        permuted = np.transpose(X, perm)
+        permuted = xp.transpose(X, perm)
         new_shape = (-1, *tuple(X.shape[a] for a in axes))
         reshaped = permuted.reshape(new_shape)
         res = None
@@ -478,5 +478,5 @@ class Resize(OpRun):
         new_perm = list(perm)
         for i, a in enumerate(perm):
             new_perm[a] = i
-        final = np.transpose(res_reshaped, tuple(new_perm))
+        final = xp.transpose(res_reshaped, tuple(new_perm))
         return (final,)

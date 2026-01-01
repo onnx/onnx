@@ -193,7 +193,7 @@ class MaxPool(CommonPool):
     ):
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
-        y = np.zeros(y_dims, dtype=x.dtype)
+        y = xp.zeros(y_dims, dtype=x.dtype)
         indices = np.full(y_dims, dtype=np.int64, fill_value=-1)
         x_dims = x.shape
         channels = x_dims[1]
@@ -249,7 +249,7 @@ class MaxPool(CommonPool):
     ):
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
-        y = np.zeros(y_dims, dtype=x.dtype)
+        y = xp.zeros(y_dims, dtype=x.dtype)
         indices = np.full(y_dims, dtype=np.int64, fill_value=-1)
         x_dims = x.shape
         channels = x_dims[1]
@@ -326,7 +326,7 @@ class MaxPool(CommonPool):
     ):
         global_pooling = False
         y_dims = x.shape[:2] + tuple(output_spatial_shape)
-        y = np.zeros(y_dims, dtype=x.dtype)
+        y = xp.zeros(y_dims, dtype=x.dtype)
         indices = np.full(y_dims, dtype=np.int64, fill_value=-1)
         x_dims = x.shape
         channels = x_dims[1]

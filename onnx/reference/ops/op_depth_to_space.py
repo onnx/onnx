@@ -10,6 +10,7 @@ from onnx.reference.op_run import OpRun
 
 class DepthToSpace(OpRun):
     def _run(self, data, blocksize=None, mode=None):
+        xp = self._get_array_api_namespace(data)
         if len(data.shape) != 4:
             raise RuntimeError(f"Unexpected shape {data.shape!r}.")
         b, c, h, w = data.shape
@@ -23,7 +24,7 @@ class DepthToSpace(OpRun):
                 w,
             )
             reshaped = data.reshape(tmpshape)
-            transposed = np.transpose(reshaped, [0, 3, 4, 1, 5, 2])
+            transposed = xp.transpose(reshaped, [0, 3, 4, 1, 5, 2])
         else:
             # assert mode == "CRD"
             tmpshape = (
@@ -35,12 +36,12 @@ class DepthToSpace(OpRun):
                 w,
             )
             reshaped = data.reshape(tmpshape)
-            transposed = np.transpose(reshaped, [0, 1, 4, 2, 5, 3])
+            transposed = xp.transpose(reshaped, [0, 1, 4, 2, 5, 3])
         finalshape = (
             b,
             c // (blocksize * blocksize),
             h * blocksize,
             w * blocksize,
         )
-        y = np.reshape(transposed, finalshape)
+        y = xp.reshape(transposed, finalshape)
         return (y,)

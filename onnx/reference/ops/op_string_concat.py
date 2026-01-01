@@ -12,6 +12,7 @@ _acceptable_str_dtypes = ("U", "O")
 
 class StringConcat(OpRun):
     def _run(self, x, y):
+        xp = self._get_array_api_namespace(x)
         if (
             x.dtype.kind not in _acceptable_str_dtypes
             or y.dtype.kind not in _acceptable_str_dtypes

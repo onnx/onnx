@@ -10,11 +10,12 @@ from onnx.reference.op_run import OpRun
 
 class TensorScatter(OpRun):
     def _run(self, past_cache, update, write_indices=None, mode="linear", axis=-2):
+        xp = self._get_array_api_namespace(past_cache)
         if mode not in {"linear", "circular"}:
             raise ValueError(f"Unsupported mode: {mode}")
 
         if write_indices is None:
-            write_indices = np.zeros((past_cache.shape[0],), dtype=np.int64)
+            write_indices = xp.zeros((past_cache.shape[0],), dtype=np.int64)
 
         input_shape = past_cache.shape
         update_shape = update.shape

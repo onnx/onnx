@@ -16,9 +16,9 @@ def _scatter_nd_impl(data, indices, updates, reduction=None):
         elif reduction == "mul":
             output[tuple(indices[i])] *= updates[i]
         elif reduction == "max":
-            output[tuple(indices[i])] = np.maximum(output[indices[i]], updates[i])
+            output[tuple(indices[i])] = xp.maximum(output[indices[i]], updates[i])
         elif reduction == "min":
-            output[tuple(indices[i])] = np.minimum(output[indices[i]], updates[i])
+            output[tuple(indices[i])] = xp.minimum(output[indices[i]], updates[i])
         else:
             output[tuple(indices[i])] = updates[i]
     return output
@@ -26,5 +26,6 @@ def _scatter_nd_impl(data, indices, updates, reduction=None):
 
 class ScatterND(OpRun):
     def _run(self, data, indices, updates, reduction=None):
+        xp = self._get_array_api_namespace(data)
         y = _scatter_nd_impl(data, indices, updates, reduction=reduction)
         return (y,)

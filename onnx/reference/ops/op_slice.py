@@ -53,6 +53,7 @@ def _slice(
 
 class SliceCommon(OpRun):
     def _run(self, data, starts, ends, axes=None, steps=None):
+        xp = self._get_array_api_namespace(data)
         res = _slice(data, starts, ends, axes, steps)
         return (res,)
 
@@ -72,4 +73,5 @@ class Slice_1(SliceCommon):
                 setattr(self, f, None)
 
     def _run(self, data, axes=None, ends=None, starts=None):
+        xp = self._get_array_api_namespace(data)
         return SliceCommon._run(self, data, starts, ends, axes)

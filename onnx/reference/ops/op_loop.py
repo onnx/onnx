@@ -28,6 +28,7 @@ class Loop(OpRun):
         return True
 
     def _run(self, M, cond, *args, context=None, body=None, attributes=None):
+        xp = self._get_array_api_namespace(M)
         if args:
             v_initial = args[0]
             args = args[1:]

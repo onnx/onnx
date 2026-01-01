@@ -15,7 +15,7 @@ class CommonGRU(OpRun):
         self.number_of_gates = 3
 
     def f(self, x):
-        return 1 / (1 + np.exp(-x))
+        return 1 / (1 + xp.exp(-x))
 
     def g(self, x):
         return np.tanh(x)
@@ -31,9 +31,9 @@ class CommonGRU(OpRun):
         [w_z, w_r, w_h] = np.split(W, 3)
         [r_z, r_r, r_h] = np.split(R, 3)
         [w_bz, w_br, w_bh, r_bz, r_br, r_bh] = np.split(B, 6)
-        gates_w = np.transpose(np.concatenate((w_z, w_r)))
-        gates_r = np.transpose(np.concatenate((r_z, r_r)))
-        gates_b = np.add(np.concatenate((w_bz, w_br)), np.concatenate((r_bz, r_br)))
+        gates_w = xp.transpose(xp.concatenate((w_z, w_r)))
+        gates_r = xp.transpose(xp.concatenate((r_z, r_r)))
+        gates_b = xp.add(xp.concatenate((w_bz, w_br)), xp.concatenate((r_bz, r_br)))
 
         H_t = H_0
         for x in np.split(X, X.shape[0], axis=0):
@@ -42,14 +42,14 @@ class CommonGRU(OpRun):
             z = self.f(z)
             r = self.f(r)
             h_default = self.g(
-                np.dot(x, np.transpose(w_h))
-                + np.dot(r * H_t, np.transpose(r_h))
+                np.dot(x, xp.transpose(w_h))
+                + np.dot(r * H_t, xp.transpose(r_h))
                 + w_bh
                 + r_bh
             )
             h_linear = self.g(
-                np.dot(x, np.transpose(w_h))
-                + r * (np.dot(H_t, np.transpose(r_h)) + r_bh)
+                np.dot(x, xp.transpose(w_h))
+                + r * (np.dot(H_t, xp.transpose(r_h)) + r_bh)
                 + w_bh
             )
             h = h_linear if self.linear_before_reset else h_default
@@ -57,14 +57,14 @@ class CommonGRU(OpRun):
             h_list.append(H)
             H_t = H
 
-        concatenated = np.concatenate(h_list)
+        concatenated = xp.concatenate(h_list)
         if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
         if self.layout == 0:
             Y_h = Y[-1]
         else:
-            Y = np.transpose(Y, [2, 0, 1, 3])
+            Y = xp.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
         return Y, Y_h
@@ -106,12 +106,12 @@ class CommonGRU(OpRun):
             b = (
                 B
                 if B is not None
-                else np.zeros(2 * self.number_of_gates * hidden_size, dtype=X.dtype)
+                else xp.zeros(2 * self.number_of_gates * hidden_size, dtype=X.dtype)
             )
             h_0 = (
                 initial_h
                 if initial_h is not None
-                else np.zeros((batch_size, hidden_size), dtype=X.dtype)
+                else xp.zeros((batch_size, hidden_size), dtype=X.dtype)
             )
 
             B = b

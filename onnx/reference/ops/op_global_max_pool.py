@@ -18,5 +18,6 @@ def _global_max_pool(x: np.ndarray) -> np.ndarray:
 
 class GlobalMaxPool(OpRun):
     def _run(self, x):
+        xp = self._get_array_api_namespace(x)
         res = _global_max_pool(x)
         return (res,)

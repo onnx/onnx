@@ -43,7 +43,7 @@ class MaxUnpool(OpRun):
             shape = output_shape
 
         total_elements = np.prod(X.shape)
-        Y = np.zeros((np.prod(inferred_shape),), dtype=X.dtype)
+        Y = xp.zeros((np.prod(inferred_shape),), dtype=X.dtype)
 
         I_data = indices.flatten()
         X_data = X.flatten()
@@ -52,7 +52,7 @@ class MaxUnpool(OpRun):
             Y[I_data[cur_elem]] = X_data[cur_elem]
 
         Y = Y.reshape(tuple(inferred_shape))
-        res = np.zeros(shape, dtype=Y.dtype)
+        res = xp.zeros(shape, dtype=Y.dtype)
         slices = tuple(slice(0, i) for i in inferred_shape)
         res[slices] = Y
         return (res,)

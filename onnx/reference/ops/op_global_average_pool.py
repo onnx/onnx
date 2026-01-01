@@ -18,4 +18,5 @@ def _global_average_pool(x: np.ndarray) -> np.ndarray:
 
 class GlobalAveragePool(OpRun):
     def _run(self, x):
+        xp = self._get_array_api_namespace(x)
         return (_global_average_pool(x).astype(x.dtype),)

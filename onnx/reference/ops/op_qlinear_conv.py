@@ -67,12 +67,12 @@ class QLinearConv(OpRun):
         if y_zero_point is not None:
             R += y_zero_point
             if y_zero_point.dtype == np.int8:
-                R = np.clip(R, -128, 127)
+                R = xp.clip(R, -128, 127)
             else:
-                R = np.clip(R, 0, 255)
+                R = xp.clip(R, 0, 255)
             return (np.round(R).astype(y_zero_point.dtype),)
         if x.dtype == np.int8:
-            R = np.clip(R, -128, 127)
+            R = xp.clip(R, -128, 127)
         else:
-            R = np.clip(R, 0, 255)
+            R = xp.clip(R, 0, 255)
         return (np.round(R).astype(x.dtype),)

@@ -22,7 +22,7 @@ def _batchnorm_test_mode(
     bias = bias.reshape(-1, *dim_ones)
     mean = mean.reshape(-1, *dim_ones)
     var = var.reshape(-1, *dim_ones)
-    y = s * (x - mean) / np.sqrt(var + epsilon) + bias
+    y = s * (x - mean) / xp.sqrt(var + epsilon) + bias
     return y.astype(x.dtype)
 
 
@@ -74,6 +74,7 @@ class BatchNormalization_6(OpRun):
 
 class BatchNormalization_9(OpRun):
     def _run(self, x, scale, bias, mean, var, epsilon=None, momentum=None):
+        xp = self._get_array_api_namespace(x)
         if momentum is None:
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
             return (res,)

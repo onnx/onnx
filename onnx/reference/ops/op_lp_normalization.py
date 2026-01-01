@@ -10,6 +10,7 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 class LpNormalization(OpRunUnaryNum):
     def _run(self, x, axis=None, p=None):
+        xp = self._get_array_api_namespace(x)
         axis = axis or self.axis
         p = p or self.p
         norm = np.power(np.power(x, p).sum(axis=axis), 1.0 / p)

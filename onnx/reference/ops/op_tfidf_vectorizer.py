@@ -350,7 +350,7 @@ class TfIdfVectorizer(OpRun):
                 f"Unexpected total of items, num_rows * C = {num_rows * C} != total_items = {total_items}."
             )
         # Frequency holder allocate [B..output_size_] and init all to zero
-        frequencies = np.zeros((num_rows * self.output_size_,), dtype=np.int64)
+        frequencies = xp.zeros((num_rows * self.output_size_,), dtype=np.int64)
 
         if total_items == 0 or self.int64_map_.empty():
             # TfidfVectorizer may receive an empty input when it follows a Tokenizer

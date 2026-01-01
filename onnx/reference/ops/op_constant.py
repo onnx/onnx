@@ -30,6 +30,7 @@ class Constant_1(ConstantCommon):
         _check_dtype(self.cst)
 
     def _run(self, **overridden_attributes):
+        xp = self._get_array_api_namespace(overridden_attributes)
         if overridden_attributes and (
             len(overridden_attributes) > 1
             or "value" not in overridden_attributes
@@ -56,6 +57,7 @@ class Constant_11(ConstantCommon):
         _check_dtype(self.cst)
 
     def _run(self, **overridden_attributes):
+        xp = self._get_array_api_namespace(overridden_attributes)
         if overridden_attributes and (
             len(overridden_attributes) > 1
             or "value" not in overridden_attributes
@@ -103,6 +105,7 @@ class Constant_12(ConstantCommon):
             )
 
     def _run(self, **overridden_attributes):
+        xp = self._get_array_api_namespace(overridden_attributes)
         if self.has_linked_attribute:
             if overridden_attributes is None:
                 raise RuntimeError(
