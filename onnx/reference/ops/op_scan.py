@@ -143,9 +143,11 @@ class Scan(OpRun):
             outputs = dict(zip(self.output_names, outputs_list, strict=False))
             states = [outputs[name] for name in state_names_out]
             for i, name in enumerate(scan_names_out):
+                import numpy as np
                 results[i].append(np.expand_dims(outputs[name], axis=0))
 
         for res in results:
+            import numpy as np
             conc = np.vstack(res)
             states.append(conc)
         return self._check_and_fix_outputs(tuple(states))

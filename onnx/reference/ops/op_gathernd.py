@@ -48,7 +48,13 @@ def _gather_nd_impl(data: Any, indices: Any, batch_dims: int) -> tuple[Any]:
         for outer_dim in range(reshaped_indices.shape[1]):
             gather_index = tuple(reshaped_indices[batch_dim][outer_dim])
             output_data_buffer.append(reshaped_data[(batch_dim, *gather_index)])
-    return (np.asarray(output_data_buffer, dtype=data.dtype).reshape(output_shape),)
+    
+    # Convert to numpy for asarray, then convert back to original array type
+    import numpy as np
+    from onnx.reference.array_api_namespace import asarray, get_array_api_namespace
+    xp = get_array_api_namespace(data)
+    result = np.asarray(output_data_buffer, dtype=data.dtype).reshape(output_shape)
+    return (asarray(result, xp=xp),)
 
 
 class GatherND(OpRun):

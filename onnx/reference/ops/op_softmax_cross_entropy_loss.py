@@ -17,6 +17,11 @@ def softmaxcrossentropy(
     N = input_shape[0]
     C = input_shape[1]
 
+    # Get array namespace
+    from onnx.reference.array_api_namespace import convert_to_numpy, asarray, get_array_api_namespace
+    import numpy as np
+    xp = get_array_api_namespace(x)
+
     # compute log_softmax
     max_x = xp.max(x, axis=1, keepdims=True)
     exp_x = xp.exp(x - max_x)
@@ -24,12 +29,16 @@ def softmaxcrossentropy(
     inp = xp.log(p)
     log_prob = None
     if get_log_prob is True:
-        log_prob = np.copy(inp)
+        # Convert to numpy for copy, then back
+        inp_np = convert_to_numpy(inp)
+        log_prob = asarray(np.copy(inp_np), xp=xp)
 
     # initialize the positional weights when required
     gather_weight = None
     if weight is not None:
-        gather_weight = np.take(weight, np.array(target, dtype=np.int32), mode="clip")
+        target_np = convert_to_numpy(target)
+        weight_np = convert_to_numpy(weight)
+        gather_weight = asarray(np.take(weight_np, np.array(target_np, dtype=np.int32), mode="clip"), xp=xp)
         if ignore_index is not None:
             gather_weight = xp.where(target == ignore_index, 0, gather_weight).astype(
                 dtype=x.dtype
