@@ -39,7 +39,7 @@ jobs:
           - oldies
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v6.0.0
+        uses: actions/checkout@v6.0.1
         with:
           submodules: recursive
           fetch-depth: 0
