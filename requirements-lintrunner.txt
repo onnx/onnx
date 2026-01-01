@@ -3,7 +3,7 @@ lintrunner-adapters>=0.12.3
 # RUFF
 ruff==0.14.6
 # MYPY
-mypy==1.18.2
+mypy==1.19.1
 types-protobuf==6.32.1.20250918
 # CLANG-FORMAT
 clang-format==21.1.6
