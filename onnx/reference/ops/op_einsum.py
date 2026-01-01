@@ -14,9 +14,9 @@ class Einsum(OpRun):
         equation = equation.strip()
         if not equation:
             raise TypeError("equation is empty.")
-        
+
         # einsum is available in array-api-compat's linalg namespace
-        if hasattr(xp, 'linalg') and hasattr(xp.linalg, 'einsum'):
+        if hasattr(xp, "linalg") and hasattr(xp.linalg, "einsum"):
             try:
                 return (xp.linalg.einsum(equation, *args, optimize=True),)
             except TypeError:
@@ -25,6 +25,7 @@ class Einsum(OpRun):
             # Fallback for backends without einsum
             import numpy as np
             from onnx.reference.array_api_namespace import convert_to_numpy, asarray
+
             args_np = [convert_to_numpy(arg) for arg in args]
             try:
                 result = np.einsum(equation, *args_np, optimize=True)

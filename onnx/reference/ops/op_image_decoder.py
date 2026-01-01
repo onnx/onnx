@@ -4,17 +4,16 @@
 
 from __future__ import annotations
 
+import io
 from typing import Any
 
-import io
-
+import numpy as np
 
 from onnx.reference.op_run import OpRun
 
 
 class ImageDecoder(OpRun):
     def _run(self, encoded: Any, pixel_format="RGB") -> tuple[Any]:
-        xp = self._get_array_api_namespace(encoded: Any)
         try:
             import PIL.Image  # noqa: PLC0415
         except ImportError as e:

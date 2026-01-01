@@ -19,7 +19,8 @@ def get_pad_shape(
     input_spatial_shape: Sequence[int],
     kernel_spatial_shape: Sequence[int],
     strides_spatial: Sequence[int],
-    output_spatial_shape: Sequence[int],, Any) -> Sequence[int]:
+    output_spatial_shape: Sequence[int],
+) -> Sequence[int]:
     spatial_dims = len(input_spatial_shape)
     pad_shape = [0] * spatial_dims
     strides_spatial = strides_spatial or [1] * spatial_dims

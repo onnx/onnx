@@ -145,6 +145,7 @@ class Scan(OpRun):
             for i, name in enumerate(scan_names_out):
                 # Use array API to expand dims
                 from onnx.reference.array_api_namespace import get_array_api_namespace
+
                 xp = get_array_api_namespace(outputs[name])
                 expanded = xp.expand_dims(outputs[name], axis=0)
                 results[i].append(expanded)
@@ -152,6 +153,7 @@ class Scan(OpRun):
         for res in results:
             # Use array API to concatenate/stack
             from onnx.reference.array_api_namespace import get_array_api_namespace
+
             xp = get_array_api_namespace(res[0])
             conc = xp.concat(res, axis=0)
             states.append(conc)

@@ -7,7 +7,13 @@ from onnx.reference.op_run import OpRun
 
 
 def softmaxcrossentropy(
-    x, target, weight=None, reduction="mean", ignore_index=None, get_log_prob=None, xp=None
+    x,
+    target,
+    weight=None,
+    reduction="mean",
+    ignore_index=None,
+    get_log_prob=None,
+    xp=None,
 ):
     input_shape = x.shape
     if len(input_shape) == 1:
@@ -15,6 +21,7 @@ def softmaxcrossentropy(
 
     # Get array namespace
     from onnx.reference.array_api_namespace import get_array_api_namespace
+
     if xp is None:
         xp = get_array_api_namespace(x)
 
@@ -42,7 +49,7 @@ def softmaxcrossentropy(
         target_flat = xp.reshape(target, (-1,))
         weight_flat = weight[target_flat.astype(xp.int32)]
         gather_weight = xp.reshape(weight_flat, target.shape)
-        
+
         if ignore_index is not None:
             gather_weight = xp.where(target == ignore_index, 0, gather_weight).astype(
                 dtype=x.dtype

@@ -49,11 +49,12 @@ def _gather_nd_impl(data: Any, indices: Any, batch_dims: int) -> tuple[Any]:
         for outer_dim in range(reshaped_indices.shape[1]):
             gather_index = tuple(reshaped_indices[batch_dim][outer_dim])
             output_list.append(reshaped_data[(batch_dim, *gather_index)])
-    
+
     # Use array API to construct result
     from onnx.reference.array_api_namespace import get_array_api_namespace, asarray
+
     xp = get_array_api_namespace(data)
-    
+
     # Convert list to array - use concat if available, otherwise stack
     if len(output_list) > 0:
         # Create array from list of scalars
