@@ -3,18 +3,16 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
-
 from onnx.reference.op_run import OpRun
 
 
 class PRelu(OpRun):
     def _run(self, x, slope):
-        xp = self._get_array_api_namespace(x)
+        xp = self._get_array_api_namespace(x, slope)
         try:
-            return (np.where(x > 0, x, x * slope).astype(x.dtype),)
+            return (xp.where(x > 0, x, x * slope),)
         except ValueError:
-            # Broadcast did not work according to numpy.
+            # Broadcast did not work according to array API.
             # The logic is then the following, if slope has d elements,
             # the following code is looking for d in x.shape. If it is found
             # only once, x * slope is broadcasted on any other dimension.
@@ -30,6 +28,6 @@ class PRelu(OpRun):
                     else:
                         new_shape.append(1)
                 if n == 1:
-                    xs = x * slope.reshape(tuple(new_shape))
-                    return (np.where(x > 0, x, xs).astype(x.dtype),)
+                    xs = x * xp.reshape(slope, tuple(new_shape))
+                    return (xp.where(x > 0, x, xs),)
             raise

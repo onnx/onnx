@@ -13,5 +13,6 @@ class Flatten(OpRunUnary):
         xp = self._get_array_api_namespace(x)
         i = axis or self.axis
         shape = x.shape
-        new_shape = (1, -1) if i == 0 else (np.prod(shape[:i]).astype(int), -1)
-        return (x.reshape(new_shape),)
+        # Use numpy for shape calculation
+        new_shape = (1, -1) if i == 0 else (int(np.prod(shape[:i])), -1)
+        return (xp.reshape(x, new_shape),)

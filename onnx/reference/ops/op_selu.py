@@ -3,14 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import numpy as np
-
 from onnx.reference.op_run import OpRun
 
 
 class Selu(OpRun):
     def _run(self, x, alpha=None, gamma=None):
         xp = self._get_array_api_namespace(x)
-        return (
-            (np.where(x > 0, x, np.exp(x) * alpha - alpha) * gamma).astype(x.dtype),
-        )
+        return (xp.where(x > 0, x, xp.exp(x) * alpha - alpha) * gamma,)
