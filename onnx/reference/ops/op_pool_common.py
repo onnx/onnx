@@ -5,8 +5,9 @@ from __future__ import annotations
 
 import itertools
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
+import numpy as np
 
 from onnx.reference.op_run import OpRun
 

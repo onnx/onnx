@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from onnx import TensorProto
 from onnx.helper import np_dtype_to_tensor_dtype, tensor_dtype_to_np_dtype
 from onnx.reference.op_run import OpRun

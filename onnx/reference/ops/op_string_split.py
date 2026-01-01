@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
 
 _acceptable_str_dtypes = ("U", "O")
@@ -24,7 +26,7 @@ def split_with_padding(x, separator=None, maxsplit=None):
     split_lists = np.char.split(x.astype(np.str_), separator, maxsplit)
     # Find the maximum length after splitting
     num_splits = np.vectorize(len, otypes=[np.int64])(split_lists)
-    padding_requirement = (xp.max(num_splits, initial=0) - num_splits).tolist()
+    padding_requirement = (np.max(num_splits, initial=0) - num_splits).tolist()
     # Add padding to lists that are shorter than the maximum length
     split_lists_padded = np.array(
         pad_empty_string(split_lists, padding_requirement), dtype=object
@@ -36,6 +38,8 @@ def split_with_padding(x, separator=None, maxsplit=None):
 
 class StringSplit(OpRun):
     def _run(self, x, delimiter=None, maxsplit=None):
+        self._get_array_api_namespace(x, delimiter, maxsplit)
+        self._get_array_api_namespace(x, delimiter=None, maxsplit=None)
         self._get_array_api_namespace(x)
         if delimiter == "":
             delimiter = None

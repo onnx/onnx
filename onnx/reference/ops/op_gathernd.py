@@ -34,7 +34,6 @@ def _gather_nd_impl(data: Any, indices: Any, batch_dims: int) -> tuple[Any]:
     )
 
     # Placeholder for output data.
-    output_data_buffer = []
 
     # Flatten 'indices' to 2D array.
     reshaped_indices = indices.reshape(batch_dims_size, -1, indices.shape[-1])
@@ -51,7 +50,7 @@ def _gather_nd_impl(data: Any, indices: Any, batch_dims: int) -> tuple[Any]:
             output_list.append(reshaped_data[(batch_dim, *gather_index)])
 
     # Use array API to construct result
-    from onnx.reference.array_api_namespace import get_array_api_namespace, asarray
+    from onnx.reference.array_api_namespace import asarray, get_array_api_namespace
 
     xp = get_array_api_namespace(data)
 

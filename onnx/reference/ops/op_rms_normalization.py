@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
 
 
@@ -24,12 +26,12 @@ def _rms_normalization(
 
     # This computes RMS for every x_mat's column.
     x_squared = np.power(X, 2)
-    x_squared_mean = xp.mean(
+    x_squared_mean = np.mean(
         x_squared, axis=tuple(range(axis, len(shape))), keepdims=True
     )
     # epsilon adjustment to avoid divide-by-zero.
     rmseps = x_squared_mean + epsilon
-    rms = xp.sqrt(rmseps)
+    rms = np.sqrt(rmseps)
     rms_reciprocal = np.reciprocal(rms)
 
     y_mat = X * rms_reciprocal
@@ -41,6 +43,10 @@ def _rms_normalization(
 
 class RMSNormalization(OpRun):
     def _run(self, X, Scale, axis=None, epsilon=None, stash_type=None):
+        self._get_array_api_namespace(X, Scale, axis, epsilon, stash_type)
+        self._get_array_api_namespace(
+            X, Scale, axis=None, epsilon=None, stash_type=None
+        )
         self._get_array_api_namespace(X)
         if stash_type != 1:
             raise NotImplementedError(

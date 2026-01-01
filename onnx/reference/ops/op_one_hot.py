@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
 
 
@@ -15,13 +17,15 @@ def _one_hot(indices, depth, axis=-1, dtype=np.float32):
     ls = values.shape[0:axis]
     rs = values.shape[axis:rank]
     new_shape = (1,) * len(ls) + depth_range.shape + (1,) * len(rs)
-    targets = xp.reshape(depth_range, new_shape)
-    values = xp.reshape(np.mod(values, depth), (*ls, 1, *rs))
+    targets = np.reshape(depth_range, new_shape)
+    values = np.reshape(np.mod(values, depth), (*ls, 1, *rs))
     return np.asarray(targets == values, dtype=dtype)
 
 
 class OneHot(OpRun):
     def _run(self, indices, depth, values, axis=None):
+        self._get_array_api_namespace(indices, depth, values, axis)
+        self._get_array_api_namespace(indices, depth, values, axis=None)
         self._get_array_api_namespace(indices)
         off_value, on_value = values
         y = _one_hot(indices, depth, axis=axis, dtype=values.dtype)

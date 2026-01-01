@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 import onnx
 from onnx import TensorProto
 from onnx.helper import (
@@ -105,6 +107,7 @@ class _CommonQuantizeLinear(OpRun):
         output_dtype: TensorProto.DataType | None = None,
         precision: int | None = None,
     ) -> tuple[Any]:
+        xp = self._get_array_api_namespace(x, y_scale)
         y_scale = _reshape_input(y_scale, x.shape, axis, block_size)
 
         # Determine output data type
@@ -167,7 +170,7 @@ class _CommonQuantizeLinear(OpRun):
 
 class QuantizeLinear_10(_CommonQuantizeLinear):
     def _run(self, x, y_scale, zero_point=None, axis: int = 1):
-        self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x, y_scale)
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
         return super()._run(x, y_scale, zero_point, axis=axis)
@@ -175,7 +178,7 @@ class QuantizeLinear_10(_CommonQuantizeLinear):
 
 class QuantizeLinear_19(_CommonQuantizeLinear):
     def _run(self, x, y_scale, zero_point=None, axis: int = 1, saturate: bool = True):
-        self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x, y_scale)
         if len(y_scale.shape) > 1:
             raise ValueError("Input 2 must be a vector or a number.")
         return super()._run(x, y_scale, zero_point, axis=axis, saturate=saturate)

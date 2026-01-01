@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
 
 
@@ -12,17 +14,19 @@ def _concat_from_sequence(seq: list[Any], axis: int, new_axis: int = 0) -> Any:
     if new_axis == 1:
         if axis == -1:
             seq2 = [s[..., np.newaxis] for s in seq]
-            res = xp.concatenate(seq2, axis=-1)
+            res = np.concatenateenate(seq2, axis=-1)
         else:
             seq2 = [np.expand_dims(s, axis) for s in seq]
-            res = xp.concatenate(seq2, axis=axis)
+            res = np.concatenateenate(seq2, axis=axis)
     else:
-        res = xp.concatenate(seq, axis=axis)
+        res = np.concatenateenate(seq, axis=axis)
     return res
 
 
 class ConcatFromSequence(OpRun):
     def _run(self, seq, axis=None, new_axis=None):
+        self._get_array_api_namespace(seq, axis, new_axis)
+        self._get_array_api_namespace(seq, axis=None, new_axis=None)
         self._get_array_api_namespace(seq)
         if seq is None:
             raise RuntimeError("A sequence cannot be null.")

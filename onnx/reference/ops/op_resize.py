@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+
 import onnx
 from onnx.reference.op_run import OpRun
 

@@ -24,7 +24,8 @@ class Einsum(OpRun):
         else:
             # Fallback for backends without einsum
             import numpy as np
-            from onnx.reference.array_api_namespace import convert_to_numpy, asarray
+
+            from onnx.reference.array_api_namespace import asarray, convert_to_numpy
 
             args_np = [convert_to_numpy(arg) for arg in args]
             try:

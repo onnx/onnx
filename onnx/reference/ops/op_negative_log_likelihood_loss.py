@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
 
 
@@ -29,11 +31,11 @@ def _compute_negative_log_likelihood_loss(
         # The loss tensor will be multiplied by this weight tensor,
         # so `ignore_index`'s loss value will be eliminated.
         if ignore_index is not None:
-            gather_weight = xp.where(target == ignore_index, 0, gather_weight).astype(
+            gather_weight = np.where(target == ignore_index, 0, gather_weight).astype(
                 dtype=x.dtype
             )
     elif ignore_index != -1:
-        gather_weight = xp.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
+        gather_weight = np.where(target == ignore_index, 0, 1).astype(dtype=x.dtype)
 
     # if input is 4-d and above, make it 3-d
     if len(input_shape) != 3:
@@ -45,7 +47,7 @@ def _compute_negative_log_likelihood_loss(
     # the D here should be H * W because we reshape
     # [N, C, H, W] to [N, C, H * W].
     D = x.shape[2]
-    neg_gather_element_input = xp.zeros((N, D), dtype=x.dtype)
+    neg_gather_element_input = np.zeros((N, D), dtype=x.dtype)
     for i in range(N):
         for d in range(D):
             if target[i][d] != ignore_index:
@@ -65,14 +67,18 @@ def _compute_negative_log_likelihood_loss(
             return (loss,)
 
     if reduction == "mean":
-        loss = xp.mean(loss)
+        loss = np.mean(loss)
     elif reduction == "sum":
-        loss = xp.sum(loss)
+        loss = np.sum(loss)
     return (loss.astype(x.dtype),)
 
 
 class NegativeLogLikelihoodLoss(OpRun):
     def _run(self, x, target, weight=None, ignore_index=None, reduction=None):
+        self._get_array_api_namespace(x, target, weight, ignore_index, reduction)
+        self._get_array_api_namespace(
+            x, target, weight=None, ignore_index=None, reduction=None
+        )
         self._get_array_api_namespace(x)
         return _compute_negative_log_likelihood_loss(
             x,

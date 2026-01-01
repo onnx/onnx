@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
 from onnx.reference.ops.op_concat_from_sequence import _concat_from_sequence
 from onnx.reference.ops.op_dft import _cfft as _dft
@@ -10,7 +12,7 @@ from onnx.reference.ops.op_slice import _slice
 
 
 def _concat(*args, axis=0):
-    return xp.concatenate(args, axis=axis)
+    return np.concatenate(args, axis=axis)
 
 
 def _unsqueeze(a, axis):
@@ -47,7 +49,7 @@ def _stft(x, fft_length: int, hop_length, n_frames, window, onesided=False):
         new_dim = sliced_x.shape[-2:-1]
         missing = (window_size - new_dim[0],)
         new_shape = sliced_x.shape[:-2] + missing + sliced_x.shape[-1:]
-        cst = xp.zeros(new_shape, dtype=x.dtype)
+        cst = np.zeros(new_shape, dtype=x.dtype)
         pad_sliced_x = _concat(sliced_x, cst, axis=-2)
 
         # same size
@@ -62,7 +64,7 @@ def _stft(x, fft_length: int, hop_length, n_frames, window, onesided=False):
     shape_x_short = shape_x[:-2]
     shape_x_short_one = tuple(1 for _ in shape_x_short)
     window_shape = (*shape_x_short_one, window_size, 1)
-    weights = xp.reshape(window, window_shape)
+    weights = np.reshape(window, window_shape)
     weighted_new_x = new_x * weights
 
     return _dft(
@@ -108,8 +110,8 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):
 
         left_shape = (*shape_begin, n_left)
         right_shape = (*shape_begin, n_right)
-        right = xp.zeros(right_shape, dtype=x.dtype)
-        left = xp.zeros(left_shape, dtype=x.dtype)
+        right = np.zeros(right_shape, dtype=x.dtype)
+        left = np.zeros(left_shape, dtype=x.dtype)
 
         y = _concat(left, ytmp, right, axis=-1)
         yc = _concat(left, ctmp, right, axis=-1)
@@ -144,7 +146,7 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):
     # rotation, bring first dimension to the last position
     result_shape = conc.shape
     reshaped_result = conc.reshape((2, -1))
-    transposed = xp.transpose(reshaped_result, (1, 0))
+    transposed = np.transpose(reshaped_result, (1, 0))
     other_dimensions = result_shape[1:]
     final_shape = _concat(other_dimensions, two, axis=0)
     return transposed.reshape(final_shape)
@@ -152,7 +154,7 @@ def _istft(x, fft_length: int, hop_length, window, onesided=False):
 
 class STFT(OpRun):
     def _run(self, x, frame_step, window=None, frame_length=None, onesided=None):
-        xp = self._get_array_api_namespace(x)
+        self._get_array_api_namespace(x)
         if frame_length is None:
             if window is None:
                 frame_length = x.shape[-2]
@@ -160,7 +162,7 @@ class STFT(OpRun):
                 frame_length = window.shape[0]
         hop_length = frame_step
         if window is None:
-            window = xp.ones((frame_length,), dtype=x.dtype)
+            window = np.ones((frame_length,), dtype=x.dtype)
         n_frames = 1 + (x.shape[-2] - frame_length) // frame_step
         res = _stft(x, frame_length, hop_length, n_frames, window, onesided=onesided)
         return (res.astype(x.dtype),)

@@ -7,6 +7,8 @@ import collections
 from enum import IntEnum
 from typing import Any
 
+import numpy as np
+
 from onnx.reference.op_run import OpRun
 
 
