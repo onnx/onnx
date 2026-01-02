@@ -244,6 +244,12 @@ For full list refer to CMakeLists.txt
 * `ONNX_WERROR` should be `ON` or `OFF`. When set to `ON` warnings are treated as errors.
 **Default**: `ONNX_WERROR=OFF` in local builds, `ON` in CI and release pipelines.
 
+* `nanobind_DIR` can be set to the directory that contains `nanobindConfig.cmake`
+  (for example, `python -m nanobind --cmake-dir`) if CMake cannot find nanobind.
+
+* `FETCHCONTENT_FULLY_DISCONNECTED` can be set to `ON` for offline builds; ensure
+  nanobind is discoverable via `nanobind_DIR` or `CMAKE_PREFIX_PATH`.
+
 ## Common Errors
 
 * Note: the `import onnx` command does not work from the source checkout directory; in this case you'll see `ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'`. Change into another directory to fix this error.
