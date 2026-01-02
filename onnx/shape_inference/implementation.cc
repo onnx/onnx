@@ -283,20 +283,15 @@ class InferredTypes {
       *p->mutable_type() = type;
       return p->mutable_type();
     } else {
-      auto* p = new TypeProto(type);
-      types.push_back(p);
-      return p;
+      types.emplace_back(std::make_unique<TypeProto>(type));
+      return types.back().get();
     }
   }
 
-  ~InferredTypes() {
-    for (auto* p : types) {
-      delete p;
-    }
-  }
+  ~InferredTypes() = default;
 
  private:
-  std::vector<TypeProto*> types;
+  std::vector<std::unique_ptr<TypeProto>> types;
   GraphProto* graph_ptr;
   ONNX_DISALLOW_COPY_ASSIGNMENT_AND_MOVE(InferredTypes);
 };
