@@ -113,11 +113,11 @@ to `False` instead of `True`.)DOC";
       }
 
       int64_t keep_dims = 1, noop_with_empty_axes = 0;
-      auto attr_proto = ctx.getAttribute("keepdims");
+      const auto* const attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      auto noop_attr_proto = ctx.getAttribute("noop_with_empty_axes");
+      const auto* const noop_attr_proto = ctx.getAttribute("noop_with_empty_axes");
       if (noop_attr_proto) {
         noop_with_empty_axes = noop_attr_proto->i();
       }
@@ -135,17 +135,17 @@ to `False` instead of `True`.)DOC";
         std::vector<int64_t> axes_values = ParseData<int64_t>(axesInitializer);
         axes.assign(axes_values.begin(), axes_values.end());
       } else { // axes is attribute
-        auto axes_proto = ctx.getAttribute("axes");
+        const auto* const axes_proto = ctx.getAttribute("axes");
         if (axes_proto)
           axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
       }
-      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       if (noop_with_empty_axes && axes.empty()) {
         propagateShapeFromInputToOutput(ctx, 0, 0);
         return;
       }
       int64_t input_ndim = input_shape.dim_size();
-      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
       for (int64_t& axe : axes) {
         if (axe < -input_ndim || axe >= input_ndim) {
@@ -157,11 +157,11 @@ to `False` instead of `True`.)DOC";
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
         if (!axes.empty() && std::find(axes.begin(), axes.end(), i) == axes.end()) {
-          auto dim = output_shape->add_dim();
+          auto* dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
-            auto dim = output_shape->add_dim();
+            auto* dim = output_shape->add_dim();
             dim->set_dim_value(1);
           }
         }
