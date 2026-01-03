@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Create Releases
+name: Scientific Python Nightly
 on:
   schedule:
     # Run weekly on Monday 00:00 UTC
