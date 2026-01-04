@@ -95,11 +95,24 @@ jobs:
 
     - name: Validate build mode
       run: |
-        if ($env:BUILD_MODE -notin @('preview', 'scientific', 'release')) {
-          Write-Error "Invalid build mode: $env:BUILD_MODE. Must be one of: preview, scientific, release"
-          exit 1
+        switch ("${{ inputs.build_mode }}") {
+          "preview" { 
+            Write-Host "Build mode validated: ${{ inputs.build_mode }}"
+            break
+          }
+          "scientific" { 
+            Write-Host "Build mode validated: ${{ inputs.build_mode }}"
+            break
+          }
+          "release" { 
+            Write-Host "Build mode validated: ${{ inputs.build_mode }}"
+            break
+          }
+          default { 
+            Write-Error "Invalid build mode: ${{ inputs.build_mode }}. Must be one of: preview, scientific, release"
+            exit 1
+          }
         }
-        echo "Build mode validated: $env:BUILD_MODE"
       shell: powershell
 
     - name: Build ONNX wheel
