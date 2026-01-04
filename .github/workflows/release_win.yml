@@ -51,7 +51,7 @@ jobs:
             architecture: 'x86'
           - python-version: '3.14'
             architecture: 'x86'
-          # arm64 exclusions  
+          # arm64 exclusions
           - python-version: '3.10'
             architecture: 'arm64'
 
@@ -98,19 +98,19 @@ jobs:
     - name: Validate build mode
       run: |
         switch ("${BUILD_MODE}") {
-          "preview" { 
+          "preview" {
             Write-Host "Build mode validated: ${BUILD_MODE}"
             break
           }
-          "scientific" { 
+          "scientific" {
             Write-Host "Build mode validated: ${BUILD_MODE}"
             break
           }
-          "release" { 
+          "release" {
             Write-Host "Build mode validated: ${BUILD_MODE}"
             break
           }
-          default { 
+          default {
             Write-Error "Invalid build mode: ${BUILD_MODE}. Must be one of: preview, scientific, release"
             exit 1
           }
