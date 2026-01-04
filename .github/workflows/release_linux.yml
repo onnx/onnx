@@ -43,6 +43,14 @@ jobs:
       run: |
         git config --global --add safe.directory /github/workspace
 
+    - name: Validate build mode
+      run: |
+        if [[ "${{ inputs.build_mode }}" != "preview" && "${{ inputs.build_mode }}" != "scientific" && "${{ inputs.build_mode }}" != "release" ]]; then
+          echo "Error: Invalid build mode '${{ inputs.build_mode }}'. Must be one of: preview, scientific, release"
+          exit 1
+        fi
+        echo "Build mode validated: ${{ inputs.build_mode }}"
+
     - name: Set source date epoch variable and git hash
       run: |
         echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV

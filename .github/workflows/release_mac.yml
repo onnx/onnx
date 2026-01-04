@@ -45,6 +45,11 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release_build.txt
 
+    - name: Set git hash and source date epoch
+      run: |
+        echo "GIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
     - name: Build wheel
       id: build_wheel
       env:
@@ -57,9 +62,12 @@ jobs:
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        if [ '${{ inputs.build_mode }}' != 'release' ]; then
+        if [ '${{ inputs.build_mode }}' = 'preview' ]; then
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
+        elif [ '${{ inputs.build_mode }}' = 'scientific' ]; then
+          echo "Building scientific python build"
+          export ONNX_SCIENTIFIC_PYTHON_BUILD=1
         fi
         python -m build --wheel
 

@@ -50,6 +50,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
+    - name: Set git hash and source date epoch
+      run: |
+        echo "GIT_HASH=$(git rev-parse HEAD)" >> $env:GITHUB_ENV
+        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $env:GITHUB_ENV
+      shell: powershell
+
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
       with:
@@ -68,6 +74,15 @@ jobs:
         if ('${{ matrix.architecture }}' -eq 'x64') {
           python -m pip install cmake
         }
+
+    - name: Validate build mode
+      run: |
+        if ($env:BUILD_MODE -notin @('preview', 'scientific', 'release')) {
+          Write-Error "Invalid build mode: $env:BUILD_MODE. Must be one of: preview, scientific, release"
+          exit 1
+        }
+        echo "Build mode validated: $env:BUILD_MODE"
+      shell: powershell
 
     - name: Build ONNX wheel
       id: build_wheel
@@ -90,13 +105,21 @@ jobs:
         $Env:CMAKE_ARGS = "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
 
         # Preview build logic (same for all arches)
-        if ($env:BUILD_MODE -ne 'release') {
+        if ($env:BUILD_MODE -eq 'preview') {
           echo "Build preview build whl package"
           (Get-Content -Path 'pyproject.toml') |
             ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } |
             Set-Content -Path 'pyproject.toml'
 
           $Env:ONNX_PREVIEW_BUILD = 1
+        }
+        elseif ($env:BUILD_MODE -eq 'scientific') {
+          echo "Build scientific python build whl package"
+          $Env:ONNX_SCIENTIFIC_PYTHON_BUILD = 1
+        }
+        elseif ($env:BUILD_MODE -eq 'release') {
+          echo "Build release whl package"
+          # No special environment variables needed for release
         }
 
         python -m build --wheel
