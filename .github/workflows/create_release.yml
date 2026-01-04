@@ -90,7 +90,7 @@ jobs:
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-      python_versions: '3.14,3.13t,3.12,3.11,3.10'
+      python_versions: '3.13t,3.12,3.11,3.10'
 
   call-sdist:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
