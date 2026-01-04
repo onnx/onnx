@@ -40,6 +40,7 @@ jobs:
     with:
       os: "linux"
       build_mode: 'scientific'
+      python_versions: '3.12'
 
   call-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -47,6 +48,7 @@ jobs:
     with:
       os: "win"
       build_mode: 'scientific'
+      python_versions: '3.12'
 
 
   call-mac:
@@ -55,6 +57,7 @@ jobs:
     with:
       os: "macos"
       build_mode: 'scientific'
+      python_versions: '3.12'
 
   call-sdist:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -62,6 +65,7 @@ jobs:
     with:
       os: "macos"
       build_mode: 'scientific'
+      python_versions: '3.12'
 
   publish_scientific_nightly:
     name: Publish to scientific-python nightly channel

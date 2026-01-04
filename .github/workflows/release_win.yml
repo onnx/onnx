@@ -13,25 +13,43 @@ on:
       build_mode:
         required: true
         type: string
+      python_versions:
+        required: false
+        type: string
+        default: '3.12'
 
 permissions:
   contents: read
 
 jobs:
+  parse-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      python-matrix: ${{ steps.parse.outputs.matrix }}
+    steps:
+      - name: Parse Python versions
+        id: parse
+        run: |
+          versions="${{ inputs.python_versions }}"
+          # Convert comma-separated to JSON array
+          matrix=$(echo "$versions" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"/')
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
   build-windows:
     if: github.event_name != 'pull_request' || startsWith(github.base_ref, 'rel-') || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    needs: parse-python-versions
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.13t','3.12','3.11','3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
         architecture: ['x64','x86','arm64']
         exclude:
           # x86 exclusions
           - python-version: '3.13t'
             architecture: 'x86'
-          - python-version: '3.14-dev'
+          - python-version: '3.14'
             architecture: 'x86'
-          # arm64 exclusions
+          # arm64 exclusions  
           - python-version: '3.10'
             architecture: 'arm64'
 
