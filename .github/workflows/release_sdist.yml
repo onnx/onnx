@@ -68,10 +68,12 @@ jobs:
         ONNX_SCIENTIFIC_PYTHON_BUILD=1 python -m build --sdist
 
     - name: Build source distribution (for release)
-      if: ${{ inputs.build_mode == 'release' }}
+      if: ${{ env.BUILD_MODE == 'release' }}
       run: |
         git clean -xdf
         python -m build --sdist
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
 
     - name: Upload sdist
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
