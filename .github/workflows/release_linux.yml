@@ -25,7 +25,7 @@ jobs:
   parse-python-versions:
     runs-on: ubuntu-latest
     outputs:
-      python-matrix: ${PYTHON_VERSIONS}
+      python-matrix: ${{ steps.parse.outputs.matrix }}
     steps:
       - name: Parse Python versions
         id: parse
@@ -110,13 +110,13 @@ jobs:
         INPUT_OS: ${{ inputs.os }}
 
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version == '3.12')
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview') && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version != '3.12')
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' ) && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |

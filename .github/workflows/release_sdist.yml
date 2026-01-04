@@ -25,12 +25,28 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-sdist
 
 jobs:
+  parse-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      python-matrix: ${{ steps.parse.outputs.matrix }}
+    steps:
+      - name: Parse Python versions
+        id: parse
+        run: |
+          versions="${PYTHON_VERSIONS}"
+          # Convert comma-separated to JSON array
+          matrix=$(echo "$versions" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"/')
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+        env:
+          PYTHON_VERSIONS: ${{ inputs.python_versions }}
+
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    needs: parse-python-versions
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
         target-architecture: ['arm64']
 
     steps:

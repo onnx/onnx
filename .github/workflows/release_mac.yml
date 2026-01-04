@@ -28,7 +28,7 @@ jobs:
   parse-python-versions:
     runs-on: ubuntu-latest
     outputs:
-      python-matrix: ${PYTHON_VERSIONS}
+      python-matrix: ${{ steps.parse.outputs.matrix }}
     steps:
       - name: Parse Python versions
         id: parse
