@@ -116,7 +116,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
           submodules: true
@@ -162,14 +162,14 @@ jobs:
 
     steps:
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         if: (github.event_name == 'workflow_dispatch' )
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         if: (github.event_name == 'workflow_dispatch' )
         with:
           pattern: sdist
@@ -214,14 +214,14 @@ jobs:
 
       steps:
 
-        - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
           if: (github.event_name == 'workflow_dispatch' )
           with:
             pattern: wheels*
             path: dist
             merge-multiple: true
 
-        - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
           if: (github.event_name == 'workflow_dispatch' )
           with:
             pattern: sdist
@@ -265,14 +265,14 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         with:
           pattern: sdist
@@ -303,13 +303,13 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           pattern: sdist
           path: dist
