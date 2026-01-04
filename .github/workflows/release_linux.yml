@@ -25,15 +25,17 @@ jobs:
   parse-python-versions:
     runs-on: ubuntu-latest
     outputs:
-      python-matrix: ${{ steps.parse.outputs.matrix }}
+      python-matrix: ${PYTHON_VERSIONS}
     steps:
       - name: Parse Python versions
         id: parse
         run: |
-          versions="${{ inputs.python_versions }}"
+          versions="${PYTHON_VERSIONS}"
           # Convert comma-separated to JSON array
           matrix=$(echo "$versions" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"/')
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
+        env:
+          PYTHON_VERSIONS: ${{ inputs.python_versions }}
 
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
