@@ -36,14 +36,14 @@ jobs:
 
   call-linux:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_linux.yml
+    uses: andife/onnx/.github/workflows/release_linux.yml@scientific
     with:
       os: "linux"
       build_mode: 'scientific'
 
   call-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_win.yml
+    uses: andife/onnx/.github/workflows/release_win.yml@scientific
     with:
       os: "win"
       build_mode: 'scientific'
@@ -51,14 +51,14 @@ jobs:
 
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_mac.yml
+    uses: andife/onnx/.github/workflows/release_mac.yml@scientific
     with:
       os: "macos"
       build_mode: 'scientific'
 
   call-sdist:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_sdist.yml
+    uses: andife/onnx/.github/workflows/release_sdist.yml@scientific
     with:
       os: "macos"
       build_mode: 'scientific'
