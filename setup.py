@@ -62,7 +62,8 @@ ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
 ################################################################################
 
 try:
-    _git_version = (
+    # Use GIT_HASH from environment if set (passed from CI), otherwise get from git
+    _git_version = os.getenv("GIT_HASH") or (
         subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=TOP_DIR)
         .decode("ascii")
         .strip()
