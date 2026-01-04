@@ -35,7 +35,7 @@ concurrency:
 jobs:
 
   call-linux:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' 
     uses: andife/onnx/.github/workflows/release_linux.yml@scientific
     with:
       os: "linux"
@@ -43,16 +43,15 @@ jobs:
       python_versions: '3.12'
 
   call-win:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' 
     uses: andife/onnx/.github/workflows/release_win.yml@scientific
     with:
       os: "win"
       build_mode: 'scientific'
       python_versions: '3.12'
 
-
   call-mac:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' 
     uses: andife/onnx/.github/workflows/release_mac.yml@scientific
     with:
       os: "macos"
@@ -60,7 +59,7 @@ jobs:
       python_versions: '3.12'
 
   call-sdist:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' 
     uses: andife/onnx/.github/workflows/release_sdist.yml@scientific
     with:
       os: "macos"
