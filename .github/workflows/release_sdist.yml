@@ -44,11 +44,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Validate Python versions input
-      run: |
-        echo "Python versions requested: ${{ inputs.python_versions }}"
-        echo "Building source distribution for build mode: ${{ inputs.build_mode }}"
-
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
