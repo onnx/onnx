@@ -13,17 +13,34 @@ on:
       build_mode:
         required: true
         type: string
+      python_versions:
+        required: false
+        type: string
+        default: '3.12'
 
 permissions:
   contents: read
 
 jobs:
+  parse-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      python-matrix: ${{ steps.parse.outputs.matrix }}
+    steps:
+      - name: Parse Python versions
+        id: parse
+        run: |
+          versions="${{ inputs.python_versions }}"
+          # Convert comma-separated to JSON array
+          matrix=$(echo "$versions" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"/')
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-
+    needs: parse-python-versions
     strategy:
       matrix:
-        python-version: ['3.13t', '3.12', '3.11', '3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
         architecture: ['x64', 'arm64']
       fail-fast: false
 
@@ -31,7 +48,7 @@ jobs:
       MANYLINUX_WHEEL_X64: "manylinux_2_28_x86_64"
       MANYLINUX_WHEEL_ARM64: "manylinux_2_28_aarch64"
 
-    runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}    
 
     steps:
     - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -45,11 +62,15 @@ jobs:
 
     - name: Validate build mode
       run: |
-        if [[ "${{ inputs.build_mode }}" != "preview" && "${{ inputs.build_mode }}" != "scientific" && "${{ inputs.build_mode }}" != "release" ]]; then
-          echo "Error: Invalid build mode '${{ inputs.build_mode }}'. Must be one of: preview, scientific, release"
-          exit 1
-        fi
-        echo "Build mode validated: ${{ inputs.build_mode }}"
+        case "${{ inputs.build_mode }}" in
+          "preview"|"scientific"|"release")
+            echo "Build mode validated: ${{ inputs.build_mode }}"
+            ;;
+          *)
+            echo "Error: Invalid build mode '${{ inputs.build_mode }}'. Must be one of: preview, scientific, release"
+            exit 1
+            ;;
+        esac
 
     - name: Set source date epoch variable and git hash
       run: |
@@ -98,14 +119,14 @@ jobs:
             ./dist/*.whl
 
   test:
-    needs: build
-    runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    needs: [build, parse-python-versions]
+    runs-on: ${{ matrix.python-version == '3.12' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     env:
       MANYLINUX_WHEEL_X64: "manylinux_2_28_x86_64"
       MANYLINUX_WHEEL_ARM64: "manylinux_2_28_aarch64"
     strategy:
       matrix:
-        python-version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
         architecture: ['x64', 'arm64']
       fail-fast: false
     steps:
