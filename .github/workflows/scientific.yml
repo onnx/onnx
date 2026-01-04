@@ -25,7 +25,6 @@ on:
         default: 'no'
 
 permissions:
-
   contents: read
 
 concurrency:
