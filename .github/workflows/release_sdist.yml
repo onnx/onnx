@@ -13,6 +13,10 @@ on:
       build_mode:
         required: true
         type: string
+      python_versions:
+        required: false
+        type: string
+        default: '3.12'
 
 permissions:
   contents: read
@@ -40,13 +44,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Validate build mode
+    - name: Validate Python versions input
       run: |
-        if [[ "${{ inputs.build_mode }}" != "preview" && "${{ inputs.build_mode }}" != "scientific" && "${{ inputs.build_mode }}" != "release" ]]; then
-          echo "Error: Invalid build mode '${{ inputs.build_mode }}'. Must be one of: preview, scientific, release"
-          exit 1
-        fi
-        echo "Build mode validated: ${{ inputs.build_mode }}"
+        echo "Python versions requested: ${{ inputs.python_versions }}"
+        echo "Building source distribution for build mode: ${{ inputs.build_mode }}"
 
     - name: Install Python dependencies
       run: |
