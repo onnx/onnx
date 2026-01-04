@@ -97,25 +97,27 @@ jobs:
 
     - name: Validate build mode
       run: |
-        switch ("${{ inputs.build_mode }}") {
+        switch ("${BUILD_MODE}") {
           "preview" { 
-            Write-Host "Build mode validated: ${{ inputs.build_mode }}"
+            Write-Host "Build mode validated: ${BUILD_MODE}"
             break
           }
           "scientific" { 
-            Write-Host "Build mode validated: ${{ inputs.build_mode }}"
+            Write-Host "Build mode validated: ${BUILD_MODE}"
             break
           }
           "release" { 
-            Write-Host "Build mode validated: ${{ inputs.build_mode }}"
+            Write-Host "Build mode validated: ${BUILD_MODE}"
             break
           }
           default { 
-            Write-Error "Invalid build mode: ${{ inputs.build_mode }}. Must be one of: preview, scientific, release"
+            Write-Error "Invalid build mode: ${BUILD_MODE}. Must be one of: preview, scientific, release"
             exit 1
           }
         }
       shell: powershell
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
 
     - name: Build ONNX wheel
       id: build_wheel
@@ -166,8 +168,7 @@ jobs:
         }
 
     - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
-      if: steps.build_wheel.outcome == 'success' &&
-          (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
+      if: steps.build_wheel.outcome == 'success' && inputs.build_mode == 'preview'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}
         path: ./dist
