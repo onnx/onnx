@@ -35,7 +35,7 @@ jobs:
         run: |
           versions="${PYTHON_VERSIONS}"
           # Convert comma-separated to JSON array
-          matrix=$(echo "$versions" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"/')
+          matrix=$(echo "$versions" | jq -R 'split(",") | map(select(length > 0))')
           echo "matrix=$matrix" >> $GITHUB_OUTPUT
         env:
           PYTHON_VERSIONS: ${{ inputs.python_versions }}
