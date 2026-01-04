@@ -50,7 +50,7 @@ jobs:
       MANYLINUX_WHEEL_X64: "manylinux_2_28_x86_64"
       MANYLINUX_WHEEL_ARM64: "manylinux_2_28_aarch64"
 
-    runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}    
+    runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
 
     steps:
     - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -64,15 +64,17 @@ jobs:
 
     - name: Validate build mode
       run: |
-        case "${{ inputs.build_mode }}" in
+        case "${BUILD_MODE}" in
           "preview"|"scientific"|"release")
-            echo "Build mode validated: ${{ inputs.build_mode }}"
+            echo "Build mode validated: ${BUILD_MODE}"
             ;;
           *)
-            echo "Error: Invalid build mode '${{ inputs.build_mode }}'. Must be one of: preview, scientific, release"
+            echo "Error: Invalid build mode '${BUILD_MODE}'. Must be one of: preview, scientific, release"
             exit 1
             ;;
         esac
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
 
     - name: Set source date epoch variable and git hash
       run: |
