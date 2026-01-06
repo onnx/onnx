@@ -449,6 +449,17 @@ inline void propagateShapeFromInputToOutput(InferenceContext& ctx, size_t inputI
   auto input_type = ctx.getInputType(inputIndex);
 
   propagateShape(input_type, output_type);
+
+  // Also relay symbolic dimension data if available
+  const TensorShapeProto* symbolic_input = ctx.getSymbolicInput(inputIndex);
+  if (symbolic_input != nullptr) {
+    const auto output_value_case = output_type->value_case();
+    if (output_value_case == TypeProto::kTensorType) {
+      mergeInShapeInfo(*symbolic_input, *output_type->mutable_tensor_type());
+    } else if (output_value_case == TypeProto::kSparseTensorType) {
+      mergeInShapeInfo(*symbolic_input, *output_type->mutable_sparse_tensor_type());
+    }
+  }
 }
 
 ONNX_API inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
