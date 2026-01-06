@@ -244,11 +244,14 @@ For full list refer to CMakeLists.txt
 * `ONNX_WERROR` should be `ON` or `OFF`. When set to `ON` warnings are treated as errors.
 **Default**: `ONNX_WERROR=OFF` in local builds, `ON` in CI and release pipelines.
 
-* `nanobind_DIR` can be set to the directory that contains `nanobindConfig.cmake`
-  (for example, `python -m nanobind --cmake-dir`) if CMake cannot find nanobind.
+* `nanobind_DIR` can be set to the directory that contains `nanobindConfig.cmake` (for example,
+  `python -m nanobind --cmake-dir`) if CMake cannot find nanobind. You can also set
+  `CMAKE_PREFIX_PATH` instead.
 
-* `FETCHCONTENT_FULLY_DISCONNECTED` can be set to `ON` for offline builds; ensure
-  nanobind is discoverable via `nanobind_DIR` or `CMAKE_PREFIX_PATH`.
+* `FETCHCONTENT_FULLY_DISCONNECTED` can be set to `ON` for offline builds after the first
+  configure has already populated dependencies. To prevent network access on the initial
+  configure, prefer a [dependency provider](https://cmake.org/cmake/help/latest/module/FetchContent.html#dependency-providers)
+  or provide dependencies locally (for example, via `nanobind_DIR` or `CMAKE_PREFIX_PATH`).
 
 ## Common Errors
 
