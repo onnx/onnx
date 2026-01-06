@@ -415,6 +415,10 @@ inline void appendSingleDimCopiedFromInputTypeToOutputType(
   }
 }
 
+// Forward declarations for mergeInShapeInfo
+void mergeInShapeInfo(const TensorShapeProto& source_shape, TypeProto_Tensor& target_type);
+void mergeInShapeInfo(const TensorShapeProto& source_shape, TypeProto_SparseTensor& target_type);
+
 inline void propagateShape(const TypeProto* from_type, TypeProto* to_type) {
   const auto from_type_case = from_type->value_case();
   const auto to_type_case = to_type->value_case();

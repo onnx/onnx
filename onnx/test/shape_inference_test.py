@@ -2406,6 +2406,60 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_symbolic_dimension_relay(self) -> None:
+        """Test that symbolic dimensions are relayed through shape propagation.
+
+        Identity should relay both the concrete shape and symbolic dimension information
+        from the input to the output, preserving dynamic dimensions like batch, seq_len, hidden.
+        """
+        model = parse_graph(
+            """
+            agraph (float[batch, seq_len, hidden] x) => (float[batch, seq_len, hidden] y) {
+                y = Identity(x)
+            }
+        """
+        )
+        inferred_model = self._inferred(model, opset_imports=[make_opsetid("", 18)])
+        output_shape = inferred_model.graph.output[0].type.tensor_type.shape
+        # Verify dynamic dimensions are preserved
+        assert output_shape.dim[0].dim_param == "batch"
+        assert output_shape.dim[1].dim_param == "seq_len"
+        assert output_shape.dim[2].dim_param == "hidden"
+
+    def test_symbolic_dimension_relay_through_multiple_ops(self) -> None:
+        """Test that symbolic dimensions are relayed through a chain of operations.
+
+        Each operation (Add, Mul, Identity) should preserve the symbolic dimension information.
+        """
+        model = parse_graph(
+            """
+            agraph (float[batch, channels, height, width] x, float[batch, channels, height, width] y) 
+                => (float[batch, channels, height, width] z) {
+                temp1 = Add(x, y)
+                temp2 = Identity(temp1)
+                z = Mul(temp2, x)
+            }
+        """
+        )
+        inferred_model = self._inferred(model, opset_imports=[make_opsetid("", 18)])
+        # Check temp1
+        temp1 = [v for v in inferred_model.graph.value_info if v.name == "temp1"][0]
+        assert temp1.type.tensor_type.shape.dim[0].dim_param == "batch"
+        assert temp1.type.tensor_type.shape.dim[1].dim_param == "channels"
+        assert temp1.type.tensor_type.shape.dim[2].dim_param == "height"
+        assert temp1.type.tensor_type.shape.dim[3].dim_param == "width"
+        # Check temp2
+        temp2 = [v for v in inferred_model.graph.value_info if v.name == "temp2"][0]
+        assert temp2.type.tensor_type.shape.dim[0].dim_param == "batch"
+        assert temp2.type.tensor_type.shape.dim[1].dim_param == "channels"
+        assert temp2.type.tensor_type.shape.dim[2].dim_param == "height"
+        assert temp2.type.tensor_type.shape.dim[3].dim_param == "width"
+        # Check output z
+        assert inferred_model.graph.output[0].type.tensor_type.shape.dim[0].dim_param == "batch"
+        assert inferred_model.graph.output[0].type.tensor_type.shape.dim[1].dim_param == "channels"
+        assert inferred_model.graph.output[0].type.tensor_type.shape.dim[2].dim_param == "height"
+        assert inferred_model.graph.output[0].type.tensor_type.shape.dim[3].dim_param == "width"
+
     def test_add(self) -> None:
         graph = self._make_graph(
             [
