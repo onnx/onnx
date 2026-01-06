@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 185/197 (93.91%, 5 generators excluded) common operators.
+Node tests have covered 186/198 (93.94%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -7214,6 +7214,163 @@ expect(node, inputs=[x], outputs=[y], name="test_cosh_example")
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cosh(x)
 expect(node, inputs=[x], outputs=[y], name="test_cosh")
+```
+
+</details>
+
+
+### CumProd
+There are 9 test cases, listed as following:
+<details>
+<summary>cumprod_1d</summary>
+
+```python
+node = onnx.helper.make_node("CumProd", inputs=["x", "axis"], outputs=["y"])
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([1.0, 2.0, 6.0, 24.0, 120.0]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d")
+```
+
+</details>
+<details>
+<summary>cumprod_1d_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd", inputs=["x", "axis"], outputs=["y"], exclusive=1
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([1.0, 1.0, 2.0, 6.0, 24.0]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_exclusive")
+```
+
+</details>
+<details>
+<summary>cumprod_1d_int32_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd", inputs=["x", "axis"], outputs=["y"], exclusive=1
+)
+x = np.array([1, 2, 3, 4, 5]).astype(np.int32)
+axis = np.array(0, dtype=np.int32)
+y = np.array([1, 1, 2, 6, 24]).astype(np.int32)
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_int32_exclusive"
+)
+```
+
+</details>
+<details>
+<summary>cumprod_1d_reverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd", inputs=["x", "axis"], outputs=["y"], reverse=1
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([120.0, 120.0, 60.0, 20.0, 5.0]).astype(np.float64)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_1d_reverse")
+```
+
+</details>
+<details>
+<summary>cumprod_1d_reverse_exclusive</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd", inputs=["x", "axis"], outputs=["y"], reverse=1, exclusive=1
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0]).astype(np.float64)
+axis = np.array(0, dtype=np.int32)
+y = np.array([120.0, 60.0, 20.0, 5.0, 1.0]).astype(np.float64)
+expect(
+    node,
+    inputs=[x, axis],
+    outputs=[y],
+    name="test_cumprod_1d_reverse_exclusive",
+)
+```
+
+</details>
+<details>
+<summary>cumprod_2d_axis_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
+axis = np.array(0, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 3.0, 4.0, 10.0, 18.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_axis_0")
+```
+
+</details>
+<details>
+<summary>cumprod_2d_axis_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
+axis = np.array(1, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 6.0, 4.0, 20.0, 120.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_axis_1")
+```
+
+</details>
+<details>
+<summary>cumprod_2d_int32</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.int32).reshape((2, 3))
+axis = np.array(0, dtype=np.int32)
+y = np.array([1, 2, 3, 4, 10, 18]).astype(np.int32).reshape((2, 3))
+expect(node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_int32")
+```
+
+</details>
+<details>
+<summary>cumprod_2d_negative_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CumProd",
+    inputs=["x", "axis"],
+    outputs=["y"],
+)
+x = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]).astype(np.float64).reshape((2, 3))
+axis = np.array(-1, dtype=np.int32)
+y = (
+    np.array([1.0, 2.0, 6.0, 4.0, 20.0, 120.0])
+    .astype(np.float64)
+    .reshape((2, 3))
+)
+expect(
+    node, inputs=[x, axis], outputs=[y], name="test_cumprod_2d_negative_axis"
+)
 ```
 
 </details>

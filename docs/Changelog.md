@@ -18929,7 +18929,7 @@ This version of the operator has been available since version 14 of the default 
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+<dd>Constrain input and output types to numeric tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
@@ -32677,6 +32677,68 @@ This version of the operator has been available since version 25 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
 <dd>Constrain input and output types to all tensor types up to IRv13.</dd>
+</dl>
+
+## Version 26 of the default ONNX operator set
+### <a name="CumProd-26"></a>**CumProd-26**</a>
+
+  Performs cumulative product of the input elements along the given axis.
+  By default, it will do the product inclusively meaning the first element is copied as is.
+  Through an `exclusive` attribute, this behavior can change to exclude the first element.
+  It can also perform product in the opposite direction of the axis. For that, set `reverse` attribute to 1.
+
+  Example:
+  ```
+  input_x = [1, 2, 3]
+  axis=0
+  output = [1, 2, 6]
+  exclusive=1
+  output = [1, 1, 2]
+  exclusive=0
+  reverse=1
+  output = [6, 6, 3]
+  exclusive=1
+  reverse=1
+  output = [6, 3, 1]
+  ```
+
+
+#### Version
+
+This version of the operator has been available since version 26 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>exclusive</tt> : int (default is 0)</dt>
+<dd>If set to 1 will return exclusive product in which the top element is not included. In other terms, if set to 1, the j-th output element would be the product of the first (j-1) elements. Otherwise, it would be the product of the first j elements.</dd>
+<dt><tt>reverse</tt> : int (default is 0)</dt>
+<dd>If set to 1 will perform the products in reverse direction.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>x</tt> (differentiable) : T</dt>
+<dd>An input tensor that is to be processed.</dd>
+<dt><tt>axis</tt> (non-differentiable) : T2</dt>
+<dd>A 0-D tensor. Must be in the range [-rank(x), rank(x)-1]. Negative value means counting dimensions from the back.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>y</tt> (differentiable) : T</dt>
+<dd>Output tensor of the same type as 'x' with cumulative products of the x's elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
 # ai.onnx.preview.training
