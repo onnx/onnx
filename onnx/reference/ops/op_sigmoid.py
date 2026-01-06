@@ -20,6 +20,4 @@ class Sigmoid(OpRunUnaryNum):
         OpRunUnaryNum.__init__(self, onnx_node, run_params)
 
     def _run(self, X):
-        if X.size == 0:
-            return (X,)
         return (sigmoid(X),)
