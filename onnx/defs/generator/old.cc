@@ -2,10 +2,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
-#include "onnx/defs/doc_strings.h"
 
 namespace ONNX_NAMESPACE {
 

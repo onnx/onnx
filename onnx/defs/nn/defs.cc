@@ -5,10 +5,10 @@
 #include <algorithm>
 
 #include "onnx/common/assertions.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/nn/utils.h"
 #include "onnx/defs/schema.h"
-#include "onnx/defs/doc_strings.h"
 
 namespace ONNX_NAMESPACE {
 static constexpr const char* pads_doc =

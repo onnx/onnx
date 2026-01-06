@@ -8,9 +8,9 @@
 #include <optional>
 
 #include "onnx/defs/data_propagators.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/tensor/utils.h"
-#include "onnx/defs/doc_strings.h"
 
 namespace ONNX_NAMESPACE {
 

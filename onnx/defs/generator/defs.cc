@@ -5,10 +5,10 @@
 #include <algorithm>
 #include <cmath>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
-#include "onnx/defs/doc_strings.h"
 
 namespace ONNX_NAMESPACE {
 static const char* const Constant_ver25_doc = kDoc_Constant_ver24;

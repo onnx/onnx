@@ -7,8 +7,8 @@
 #include <cassert>
 
 #include "onnx/defs/controlflow/utils.h"
-#include "onnx/defs/schema.h"
 #include "onnx/defs/doc_strings.h"
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;

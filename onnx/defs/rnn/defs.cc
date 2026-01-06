@@ -2,8 +2,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "onnx/defs/schema.h"
 #include "onnx/defs/doc_strings.h"
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 ONNX_API void RNNShapeInference(InferenceContext& ctx) {
