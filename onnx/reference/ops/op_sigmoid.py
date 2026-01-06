@@ -10,8 +10,10 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 def sigmoid(x: np.ndarray) -> np.ndarray:
     result = np.empty_like(x)
-    result[x > 0] = 1 / (1 + np.exp(-x[x > 0]))
-    result[x <= 0] = np.exp(x[x <= 0]) / (1 + np.exp(x[x <= 0]))
+    gt_zero = x > 0
+    le_zero = ~gt_zero
+    result[gt_zero] = 1 / (1 + np.exp(-x[gt_zero]))
+    result[le_zero] = np.exp(x[le_zero]) / (1 + np.exp(x[le_zero]))
     return result
 
 
