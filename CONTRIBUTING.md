@@ -92,6 +92,8 @@ python onnx/defs/gen_doc.py
 
 ### Coding style
 
+We adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) and [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) for this project.
+
 We use `lintrunner` to drive multiple linters defined in `.lintrunner.toml` to lint the codebase.
 
 To run these checks locally, install `lintrunner` and the linters with
@@ -123,7 +125,7 @@ Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examp
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
 
 ```sh
-pip install pytest nbval
+pip install pytest
 ```
 
 After installing pytest, run from the root of the repo:

@@ -20,9 +20,8 @@ __all__ = [
     "SchemaError",
 ]
 
-
+import onnx
 import onnx.onnx_cpp2py_export.defs as C  # noqa: N812
-from onnx import AttributeProto, FunctionProto
 
 ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = "ai.onnx.ml"
@@ -48,7 +47,7 @@ def onnx_ml_opset_version() -> int:
 
 @property  # type: ignore
 def _function_proto(self):
-    func_proto = FunctionProto()
+    func_proto = onnx.FunctionProto()
     func_proto.ParseFromString(self._function_body)
     return func_proto
 
@@ -57,9 +56,18 @@ OpSchema = C.OpSchema
 OpSchema.function_body = _function_proto  # type: ignore
 
 
+@property  # type: ignore[misc]
+def _non_deterministic(self):
+    """Check if the operator is non-deterministic."""
+    return self.node_determinism != OpSchema.NodeDeterminism.Deterministic  # type: ignore[no-any-return]
+
+
+OpSchema.non_deterministic = _non_deterministic  # type: ignore
+
+
 @property  # type: ignore
 def _attribute_default_value(self):
-    attr = AttributeProto()
+    attr = onnx.AttributeProto()
     attr.ParseFromString(self._default_value)
     return attr
 

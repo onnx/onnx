@@ -19,7 +19,7 @@ class StringNormalizer(OpRun):
     usually happens after this steps.
     """
 
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         case_change_action=None,
@@ -74,7 +74,7 @@ class StringNormalizer(OpRun):
         return (res,)
 
     @staticmethod
-    def _run_column(  # type: ignore
+    def _run_column(
         cin,
         cout,
         slocale=None,
@@ -122,12 +122,12 @@ class StringNormalizer(OpRun):
         return cout
 
     @staticmethod
-    def _remove_stopwords(text, stops):  # type: ignore
+    def _remove_stopwords(text, stops):
         spl = text.split(" ")
         return " ".join(filter(lambda s: s not in stops, spl))
 
     @staticmethod
-    def strip_accents_unicode(s):  # type: ignore
+    def strip_accents_unicode(s):
         """Transforms accentuated unicode symbols into their simple counterpart.
         Source: `sklearn/feature_extraction/text.py
         <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/
@@ -146,5 +146,4 @@ class StringNormalizer(OpRun):
             return s  # noqa: TRY300
         except UnicodeEncodeError:
             normalized = unicodedata.normalize("NFKD", s)
-            s = "".join([c for c in normalized if not unicodedata.combining(c)])
-            return s
+            return "".join([c for c in normalized if not unicodedata.combining(c)])

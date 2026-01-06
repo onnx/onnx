@@ -1,9 +1,10 @@
 """Submodule containing all the ONNX schema definitions."""
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import overload
 
 from onnx import AttributeProto, FunctionProto
+from onnx.shape_inference import InferenceContext
 
 class SchemaError(Exception): ...
 
@@ -68,6 +69,12 @@ class OpSchema:
     ) -> dict[str, bytes]: ...
     @property
     def function_body(self) -> FunctionProto: ...
+    def set_type_and_shape_inference_function(
+        self, func: Callable[[InferenceContext], None]
+    ) -> None: ...
+    def get_type_and_shape_inference_function(
+        self,
+    ) -> Callable[[InferenceContext], None]: ...
 
     class TypeConstraintParam:
         def __init__(
@@ -99,6 +106,11 @@ class OpSchema:
         Unknown: OpSchema.DifferentiationCategory = ...
         Differentiable: OpSchema.DifferentiationCategory = ...
         NonDifferentiable: OpSchema.DifferentiationCategory = ...
+
+    class NodeDeterminism:
+        Deterministic: OpSchema.NodeDeterminism = ...
+        NonDeterministic: OpSchema.NodeDeterminism = ...
+        Unknown: OpSchema.NodeDeterminism = ...
 
     class FormalParameter:
         def __init__(

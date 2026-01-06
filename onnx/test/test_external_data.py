@@ -78,14 +78,14 @@ class TestLoadExternalDataBase(unittest.TestCase):
             inputs=[],
             outputs=["values"],
             value=self.create_external_data_tensor(
-                self.attribute_value,  # type: ignore[arg-type]
+                self.attribute_value,
                 "attribute_value",
             ),
         )
 
         initializers = [
             self.create_external_data_tensor(
-                self.initializer_value,  # type: ignore[arg-type]
+                self.initializer_value,
                 "input_value",
                 location,
             )
@@ -229,7 +229,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         os.mkdir(model_dir)
 
         traversal_external_data_dir = os.path.join(
-            self.temp_dir, "invlid_external_data"
+            self.temp_dir, "invalid_external_data"
         )
         os.mkdir(traversal_external_data_dir)
 
@@ -238,7 +238,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
                 traversal_external_data_dir, "tensors.bin"
             )
         else:
-            traversal_external_data_location = "../invlid_external_data/tensors.bin"
+            traversal_external_data_location = "../invalid_external_data/tensors.bin"
 
         external_data_dir = os.path.join(self.temp_dir, "external_data")
         os.mkdir(external_data_dir)
@@ -299,8 +299,8 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
     def create_test_model_proto(self) -> ModelProto:
         tensors = self.create_data_tensors(
             [
-                (self.attribute_value, "attribute_value"),  # type: ignore[list-item]
-                (self.initializer_value, "input_value"),  # type: ignore[list-item]
+                (self.attribute_value, "attribute_value"),
+                (self.initializer_value, "input_value"),
             ]
         )
 
@@ -598,7 +598,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="X",
             data_type=TensorProto.FLOAT,
             dims=self.large_data.shape,
-            vals=self.large_data.tobytes(),
+            vals=onnx.numpy_helper.tobytes_little_endian(self.large_data),
             raw=True,
         )
 
@@ -607,7 +607,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="Shape",
             data_type=TensorProto.INT64,
             dims=shape_data.shape,
-            vals=shape_data.tobytes(),
+            vals=onnx.numpy_helper.tobytes_little_endian(shape_data),
             raw=True,
         )
         C = helper.make_tensor_value_info("C", TensorProto.INT64, self.small_data)
@@ -628,8 +628,7 @@ class TestExternalDataToArray(unittest.TestCase):
             [C],
             initializer=[input_init, shape_init],
         )
-        model = helper.make_model(graph_def, producer_name="onnx-example")
-        return model
+        return helper.make_model(graph_def, producer_name="onnx-example")
 
     @unittest.skipIf(
         serialization_format != "protobuf",

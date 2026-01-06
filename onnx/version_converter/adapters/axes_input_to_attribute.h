@@ -26,6 +26,11 @@ class AxesInputToAttribute : public Adapter {
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     // Identify if axes is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
+    // Check if axes input is provided (it's optional)
+    if (inputs.size() <= 1) {
+      // No axes input provided, nothing to convert
+      return node;
+    }
     // Get axes from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];
@@ -38,7 +43,7 @@ class AxesInputToAttribute : public Adapter {
         std::string raw_data = node_ptr->t(kvalue).raw();
         ONNX_ASSERTM(
             !raw_data.empty() && raw_data.size() % 8 == 0,
-            "Raw Data must be non-empty and size must be a multiple of 8");
+            "Raw Data must be non-empty and size must be a multiple of 8")
         int64_t* raw = reinterpret_cast<int64_t*>(raw_data.data());
         node->is_(kaxes, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
       } else {
@@ -62,7 +67,7 @@ class AxesInputToAttribute : public Adapter {
         }
       }
     }
-    ONNX_ASSERTM(node->hasAttribute(kaxes), "No initializer or constant input to node found");
+    ONNX_ASSERTM(node->hasAttribute(kaxes), "No initializer or constant input to node found")
     return node;
   }
 };

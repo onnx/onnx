@@ -7,7 +7,7 @@ import subprocess
 import sys
 from copy import deepcopy
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import onnx
 from onnx.backend.test.case.test_case import TestCase
@@ -18,12 +18,13 @@ from onnx.onnx_pb import (
     GraphProto,
     ModelProto,
     NodeProto,
+    OperatorSetIdProto,
     TensorProto,
     TypeProto,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
     import numpy as np
 
@@ -116,23 +117,36 @@ def function_expand_helper(
     def rename_helper(internal_name: str) -> Any:
         if internal_name in io_names_map:
             return io_names_map[internal_name]
-        elif internal_name == "":
+        if internal_name == "":
             return ""
         return op_prefix + internal_name
 
-    new_node_list = [
+    return [
         _rename_edges_helper(internal_node, rename_helper, attribute_map, op_prefix)
         for internal_node in function_proto.node
     ]
-    return new_node_list
 
 
 def function_testcase_helper(
-    node: NodeProto, input_types: list[TypeProto], name: str
+    node: NodeProto,
+    input_types: list[TypeProto],
+    name: str,
+    opset_imports: Sequence[OperatorSetIdProto] | None = None,
 ) -> tuple[list[tuple[list[NodeProto], Any]], int]:
     test_op = node.op_type
     op_prefix = test_op + "_" + name + "_expanded_function_"
-    schema = onnx.defs.get_schema(test_op, domain=node.domain)
+    if opset_imports is None:
+        # No opset in the model. We take the most recent definition.
+        schema = onnx.defs.get_schema(test_op, domain=node.domain)
+    else:
+        # We take the function coming defined in the specific version mentioned
+        # in the model.
+        if len(opset_imports) != 1:
+            raise ValueError(
+                f"Only one domain is allowed but {len(opset_imports)} found."
+            )
+        version = opset_imports[0].version
+        schema = onnx.defs.get_schema(test_op, version, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
     # opset versions include the op's since_version and other opset versions
@@ -178,7 +192,7 @@ def _extract_value_info(
             raise NotImplementedError(
                 "_extract_value_info: both input and type_proto arguments cannot be None."
             )
-        elif isinstance(input, list):
+        if isinstance(input, list):
             elem_type = onnx.helper.np_dtype_to_tensor_dtype(input[0].dtype)
             shape = None
             tensor_type_proto = onnx.helper.make_tensor_type_proto(elem_type, shape)
@@ -236,7 +250,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
 # Instead of creating model with latest version, it now generates models for since_version by default.
 # Thus it can make every model uses the same opset version after every opset change.
 # Besides, user can specify "use_max_opset_version" to generate models for
-# the latest opset vesion that supports before targeted opset version
+# the latest opset version that supports before targeted opset version
 def expect(
     node_op: onnx.NodeProto,
     inputs: Sequence[np.ndarray | TensorProto],
@@ -269,12 +283,14 @@ def expect(
         del kwargs["output_type_protos"]
     inputs_vi = [
         _extract_value_info(arr, arr_name, input_type)
-        for arr, arr_name, input_type in zip(inputs, present_inputs, input_type_protos)
+        for arr, arr_name, input_type in zip(
+            inputs, present_inputs, input_type_protos, strict=False
+        )
     ]
     outputs_vi = [
         _extract_value_info(arr, arr_name, output_type)
         for arr, arr_name, output_type in zip(
-            outputs, present_outputs, output_type_protos
+            outputs, present_outputs, output_type_protos, strict=False
         )
     ]
     graph = onnx.helper.make_graph(
@@ -319,15 +335,16 @@ def expect(
                     present_value_info[0].type,
                     *merge(node_inputs[1:], present_value_info[1:]),
                 ]
-            else:
-                return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
+            return [TypeProto(), *merge(node_inputs[1:], present_value_info)]
         return []
 
     merged_types = merge(list(node.input), inputs_vi)
     (
         expanded_tests,
         since_version,
-    ) = function_testcase_helper(node, merged_types, name)
+    ) = function_testcase_helper(
+        node, merged_types, name, opset_imports=kwargs.get("opset_imports")
+    )
     for expanded_function_nodes, func_opset_import in expanded_tests:
         kwargs["producer_name"] = "backend-test"
 

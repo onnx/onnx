@@ -12,7 +12,7 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble_helper import TreeEnsemble
 class TreeEnsembleRegressor(OpRunAiOnnxMl):
     """`nodes_hitrates` and `nodes_hitrates_as_tensor` are not used."""
 
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         aggregate_function=None,
@@ -59,10 +59,12 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
         self._tree = tr
         leaves_index = tr.leave_index_tree(X)
         res = np.zeros((leaves_index.shape[0], n_targets), dtype=X.dtype)
-        n_trees = len(set(tr.atts.nodes_treeids))  # type: ignore
+        n_trees = len(set(tr.atts.nodes_treeids))
 
-        target_index = {}  # type: ignore
-        for i, (tid, nid) in enumerate(zip(target_treeids, target_nodeids)):
+        target_index = {}
+        for i, (tid, nid) in enumerate(
+            zip(target_treeids, target_nodeids, strict=False)
+        ):
             if (tid, nid) not in target_index:
                 target_index[tid, nid] = []
             target_index[tid, nid].append(i)
@@ -74,14 +76,14 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
             if aggregate_function in ("SUM", "AVERAGE"):
                 for its in t_index:
                     for it in its:
-                        res[i, target_ids[it]] += tr.atts.target_weights[it]  # type: ignore
+                        res[i, target_ids[it]] += tr.atts.target_weights[it]
             elif aggregate_function == "MIN":
                 res[i, :] = np.finfo(res.dtype).max
                 for its in t_index:
                     for it in its:
                         res[i, target_ids[it]] = min(
                             res[i, target_ids[it]],
-                            tr.atts.target_weights[it],  # type: ignore
+                            tr.atts.target_weights[it],
                         )
             elif aggregate_function == "MAX":
                 res[i, :] = np.finfo(res.dtype).min
@@ -89,7 +91,7 @@ class TreeEnsembleRegressor(OpRunAiOnnxMl):
                     for it in its:
                         res[i, target_ids[it]] = max(
                             res[i, target_ids[it]],
-                            tr.atts.target_weights[it],  # type: ignore
+                            tr.atts.target_weights[it],
                         )
             else:
                 raise NotImplementedError(

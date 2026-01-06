@@ -65,6 +65,7 @@ The float value is defined by the following expressions:
 ```
 
 The following table lists all the representable values by float4 E2M1, ignoring the sign bit:
+
 ```{eval-rst}
 .. list-table:: Float4 type values
    :widths: 10 10
@@ -110,9 +111,11 @@ The behavior for downcasting to float 4 is summarized below
 Float4 is stored as 2x4bit in a single byte.
 The first element is stored in the 4 LSB and the second element is stored in the 4 MSB,
 i.e. for elements `x` and `y` that are consecutive elements in the array:
+
 ```
 pack(x,y): y << 4 | x & 0x0F
 unpack(z): x = z & 0x0F, y = z >> 4
 ```
+
 In case the total number of elements is odd, padding of 4 bits will be appended.
 The storage size of a 4 bit tensor of size `N` is `ceil(N/2)`.

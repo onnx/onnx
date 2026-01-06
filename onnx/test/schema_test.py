@@ -18,7 +18,10 @@ if TYPE_CHECKING:
 
 class TestSchema(unittest.TestCase):
     def test_get_schema(self) -> None:
-        defs.get_schema("Relu")
+        relu_schema = defs.get_schema("Relu")
+        self.assertEqual(
+            relu_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        )
 
     def test_typecheck(self) -> None:
         defs.get_schema("Conv")
@@ -29,9 +32,35 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(v.type, onnx.AttributeProto.FLOAT)
 
     def test_function_body(self) -> None:
+        selu_schema = defs.get_schema("Selu")
+        self.assertEqual(type(selu_schema.function_body), onnx.FunctionProto)
         self.assertEqual(
-            type(defs.get_schema("Selu").function_body), onnx.FunctionProto
+            selu_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
         )
+
+    def test_node_determinism(self) -> None:
+        rand_schema = defs.get_schema("RandomNormalLike")
+        self.assertEqual(
+            rand_schema.node_determinism, defs.OpSchema.NodeDeterminism.NonDeterministic
+        )
+        self.assertTrue(rand_schema.non_deterministic)
+        bn_schema = defs.get_schema("BatchNormalization")
+        self.assertEqual(
+            bn_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        )
+        self.assertFalse(bn_schema.non_deterministic)
+        cast_like_schema = defs.get_schema("CastLike")
+        self.assertEqual(
+            cast_like_schema.node_determinism,
+            defs.OpSchema.NodeDeterminism.Deterministic,
+        )
+        self.assertFalse(cast_like_schema.non_deterministic)
+        if_schema = defs.get_schema("If")
+        self.assertEqual(
+            if_schema.node_determinism,
+            defs.OpSchema.NodeDeterminism.NonDeterministic,
+        )
+        self.assertTrue(if_schema.non_deterministic)
 
 
 class TestOpSchema(unittest.TestCase):
@@ -39,6 +68,9 @@ class TestOpSchema(unittest.TestCase):
         # Test that the constructor creates an OpSchema object
         schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertIsInstance(schema, defs.OpSchema)
+        self.assertEqual(
+            schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
+        )
 
     def test_init_with_inputs(self) -> None:
         op_schema = defs.OpSchema(
@@ -114,9 +146,9 @@ class TestOpSchema(unittest.TestCase):
     def test_name(self):
         # Test that the name parameter is required and is a string
         with self.assertRaises(TypeError):
-            defs.OpSchema(domain="test_domain", since_version=1)  # type: ignore
+            defs.OpSchema(domain="test_domain", since_version=1)
         with self.assertRaises(TypeError):
-            defs.OpSchema(123, "test_domain", 1)  # type: ignore
+            defs.OpSchema(123, "test_domain", 1)
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertEqual(schema.name, "test_op")
@@ -124,9 +156,9 @@ class TestOpSchema(unittest.TestCase):
     def test_domain(self):
         # Test that the domain parameter is required and is a string
         with self.assertRaises(TypeError):
-            defs.OpSchema(name="test_op", since_version=1)  # type: ignore
+            defs.OpSchema(name="test_op", since_version=1)
         with self.assertRaises(TypeError):
-            defs.OpSchema("test_op", 123, 1)  # type: ignore
+            defs.OpSchema("test_op", 123, 1)
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertEqual(schema.domain, "test_domain")
@@ -134,7 +166,7 @@ class TestOpSchema(unittest.TestCase):
     def test_since_version(self):
         # Test that the since_version parameter is required and is an integer
         with self.assertRaises(TypeError):
-            defs.OpSchema("test_op", "test_domain")  # type: ignore
+            defs.OpSchema("test_op", "test_domain")
 
         schema = defs.OpSchema("test_op", "test_domain", 1)
         self.assertEqual(schema.since_version, 1)
@@ -205,6 +237,7 @@ class TestFormalParameter(unittest.TestCase):
 
         self.assertEqual(formal_parameter.name, name)
         self.assertEqual(formal_parameter.type_str, type_str)
+        self.assertIsInstance(formal_parameter.types, set)
         self.assertEqual(formal_parameter.description, description)
         self.assertEqual(formal_parameter.option, param_option)
         self.assertEqual(formal_parameter.is_homogeneous, is_homogeneous)

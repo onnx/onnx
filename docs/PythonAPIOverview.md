@@ -16,13 +16,15 @@ import onnx
 # onnx_model is an in-memory ModelProto
 onnx_model = onnx.load("path/to/the/model.onnx")
 ```
+
 Runnable IPython notebooks:
+
 - [load_model.ipynb](/examples/load_model.ipynb)
 
 ## Loading an ONNX Model with External Data
 
-
 * [Default] If the external data is under the same directory of the model, simply use `onnx.load()`
+
 ```python
 import onnx
 
@@ -41,6 +43,7 @@ load_external_data_for_model(onnx_model, "data/directory/path/")
 ```
 
 ## Converting an ONNX Model to External Data
+
 ```python
 from onnx.external_data_helper import convert_model_to_external_data
 
@@ -52,6 +55,7 @@ convert_model_to_external_data(onnx_model, all_tensors_to_one_file=True, locatio
 ```
 
 ## Saving an ONNX Model
+
 ```python
 import onnx
 
@@ -61,11 +65,13 @@ onnx_model = ...
 # Save the ONNX model
 onnx.save(onnx_model, "path/to/the/model.onnx")
 ```
+
 Runnable IPython notebooks:
+
 - [save_model.ipynb](/examples/save_model.ipynb)
 
-
 ## Converting and Saving an ONNX Model to External Data
+
 ```python
 import onnx
 
@@ -75,8 +81,8 @@ onnx.save_model(onnx_model, "path/to/save/the/model.onnx", save_as_external_data
 # Then the onnx_model has converted raw data as external data and saved to specific directory
 ```
 
-
 ## Manipulating TensorProto and Numpy Array
+
 ```python
 import numpy
 import onnx
@@ -121,10 +127,13 @@ for tensor_dtype in helper.get_all_tensor_dtypes():
     print(helper.tensor_dtype_to_string(tensor_dtype))
 
 ```
+
 Runnable IPython notebooks:
+
 - [np_array_tensorproto.ipynb](/examples/np_array_tensorproto.ipynb)
 
 ## Creating an ONNX Model Using Helper Functions
+
 ```python
 import onnx
 from onnx import helper, AttributeProto, TensorProto, GraphProto
@@ -162,11 +171,14 @@ print("Model is valid!")
 
 
 ```
+
 Runnable IPython notebooks:
+
 - [make_model.ipynb](/examples/make_model.ipynb)
 - [Protobufs.ipynb](/examples/Protobufs.ipynb)
 
 ## Conversion utilities for mapping attributes in ONNX IR
+
 ```python
 from onnx import TensorProto, helper
 
@@ -180,6 +192,7 @@ print(f"The field name for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is
 ```
 
 ## Checking an ONNX Model
+
 ```python
 import onnx
 
@@ -197,10 +210,13 @@ except onnx.checker.ValidationError as e:
 else:
     print("The model is valid!")
 ```
+
 Runnable IPython notebooks:
+
 - [check_model.ipynb](/examples/check_model.ipynb)
 
 ### Checking a Large ONNX Model >2GB
+
 Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory.
 
 ```python
@@ -211,6 +227,7 @@ onnx.checker.check_model("path/to/the/model.onnx")
 ```
 
 ## Running Shape Inference on an ONNX Model
+
 ```python
 import onnx
 from onnx import helper, shape_inference
@@ -241,10 +258,13 @@ inferred_model = shape_inference.infer_shapes(original_model)
 onnx.checker.check_model(inferred_model)
 print(f"After shape inference, the shape info of Y is:\n{inferred_model.graph.value_info}")
 ```
+
 Runnable IPython notebooks:
+
 - [shape_inference.ipynb](/examples/shape_inference.ipynb)
 
 ### Shape inference a Large ONNX Model >2GB
+
 Current shape_inference supports models with external data, but for those models larger than 2GB, please use the model path for onnx.shape_inference.infer_shapes_path and the external data needs to be under the same directory. You can specify the output path for saving the inferred model; otherwise, the default output path is same as the original model path.
 
 ```python
@@ -288,6 +308,7 @@ print(result) # a list containing the (single) output type
 ```
 
 ## Converting Version of an ONNX Model within Default Domain (""/"ai.onnx")
+
 ```python
 import onnx
 from onnx import version_converter, helper
@@ -307,6 +328,7 @@ print(f"The model after conversion:\n{converted_model}")
 ```
 
 ## Utility Functions
+
 ### Extracting Sub-model with Inputs Outputs Tensor Names
 
 Function `extract_model()` extracts sub-model from an ONNX model.
@@ -323,9 +345,9 @@ output_names = ["output_0", "output_1"]
 onnx.utils.extract_model(input_path, output_path, input_names, output_names)
 ```
 
-Note: For control-flow operators, e.g. If and Loop, the _boundary of sub-model_,
-which is defined by the input and output tensors, should not _cut through_ the
-subgraph that is connected to the _main graph_ as attributes of these operators.
+Note: For control-flow operators, e.g. If and Loop, the *boundary of sub-model*,
+which is defined by the input and output tensors, should not *cut through* the
+subgraph that is connected to the *main graph* as attributes of these operators.
 
 ### ONNX Compose
 
@@ -336,6 +358,7 @@ from the first model with inputs from the second model. By default, inputs/outpu
 `io_map` argument will remain as inputs/outputs of the combined model.
 
 In this example we merge two models by connecting each output of the first model to an input in the second. The resulting model will have the same inputs as the first model and the same outputs as the second:
+
 ```python
 import onnx
 
@@ -362,6 +385,7 @@ Additionally, a user can specify a list of `inputs`/`outputs` to be included in 
 effectively dropping the part of the graph that does't contribute to the combined model outputs.
 In the following example, we are connecting only one of the two outputs in the first model
 to both inputs in the second. By specifying the outputs of the combined model explicitly, we are dropping the output not consumed from the first model, and the relevant part of the graph:
+
 ```python
 import onnx
 
@@ -422,12 +446,15 @@ onnx.compose.expand_out_dims(model1, dim_idx=0, inplace=True)
 ```
 
 ## Tools
+
 ### Updating Model"s Inputs Outputs Dimension Sizes with Variable Length
+
 Function `update_inputs_outputs_dims` updates the dimension of the inputs and outputs of the model,
 to the provided values in the parameter. You could provide both static and dynamic dimension size,
 by using dim_param. For more information on static and dynamic dimension size, checkout [Tensor Shapes](IR.md#tensor-shapes).
 
 The function runs model checker after the input/output sizes are updated.
+
 ```python
 import onnx
 from onnx.tools import update_model_dims

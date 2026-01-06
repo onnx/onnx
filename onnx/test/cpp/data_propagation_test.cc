@@ -19,7 +19,7 @@ static bool CompareShape(
     const TensorShapeProto& inferredShape,
     const TensorShapeProto& expectedShape,
     bool checkSameParam = false) {
-  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size())
+  EXPECT_EQ(inferredShape.dim_size(), expectedShape.dim_size())
       << "Dim size for inferred and expected shape is different.";
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {
@@ -93,7 +93,7 @@ static TensorShapeProto RunDataPropagation(const char* graphCode, int domainVers
       continue;
     }
     DataPropagationContextImpl dataPropagationCtx(n, valueTypesByName, inputDataByName, generatedShapeDataByName);
-    const auto schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
+    const auto* const schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
   }

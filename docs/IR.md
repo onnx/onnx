@@ -26,11 +26,11 @@ __Notes on language in this and all related documents__:
 
 ONNX is an open specification that consists of the following components:
 
-1)  A definition of an extensible computation graph model.
+1) A definition of an extensible computation graph model.
 
-2)  Definitions of standard data types.
+2) Definitions of standard data types.
 
-3)  Definitions of built-in operators.
+3) Definitions of built-in operators.
 
 #1 and #2 together make up the ONNX Intermediate Representation, or 'IR', specification which is covered herein; the built-in operators are covered in documents listed at the end. Specifically, built-in operators are divided into a set of primitive operators and functions. A function is an operator whose semantics is formally expressed via expansion into a sub-graph (called the function body) using other operators (and functions). Functionality-wise, an ONNX compatible framework or runtime may inline a function body to execute it if it does not have corresponding implementation of the function.
 
@@ -87,6 +87,7 @@ Each model has the following components:
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
 |training_info|TrainingInfoProto[]|An optional extension that contains information for training.|
 |functions|FunctionProto[]|An optional list of functions local to the model.|
+|configuration|DeviceConfigurationProto[]|(IR version >= 11) An optional list of multi-device configurations for distributed execution.|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
@@ -94,8 +95,8 @@ __Note: Exploring an ONNX file__
 
 You can use the `protoc` tool that is part of the Protocol Buffers distribution to examine the contents of an ONNX file, you do so like this:
 
-```
-$ protoc --decode=onnx.ModelProto onnx.proto < yourfile.onnx
+```bash
+protoc --decode=onnx.ModelProto onnx.proto < yourfile.onnx
 ```
 
 Where [onnx.proto](/onnx/onnx.proto) is the file that is part of this repository.
@@ -274,7 +275,6 @@ Graph|The names of graphs within a domain, unique within the model domain.
 Operator|The names of operators within a domain.
 Shape|The names of tensor shape variables – scoped to the value information records of a graph, which is where shape variables occur.
 
-
 ### Nodes
 
 Computation nodes are comprised of a name, the name of an operator that it invokes, a list of named inputs, a list of named outputs, and a list of attributes.
@@ -294,6 +294,7 @@ attribute|Attribute[]|Named attributes, another form of operator parameterizatio
 doc_string|string|Human-readable documentation for this value. Markdown is allowed.
 overload|string|Part of unique id of function (added in IR version 10)
 |metadata_props|map<string,string>|(IR version >= 10) Named metadata values; keys should be distinct.
+|device_configurations|NodeDeviceConfigurationProto[]|(IR version >= 11) Multi-device execution configurations for this node.
 
 A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, a graph initializer, or as a node output is said to be a definition and the occurrence of a name as a node input or as a graph output is said to be a use.
 
@@ -305,7 +306,7 @@ Edges in the computation graph are established by outputs of one node being refe
 
 The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node. A node input in a nested subgraph MAY refer to names introduced in outer graphs (as node outputs, graph inputs, or graph initializers).
 
-The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name MUST be distinct from the names from the outer scopes that are visible in the nested subgraph.
+The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name and names of inputs and initializers of the subgraph MUST be distinct from the names from the outer scopes that are visible in the nested subgraph. That is, variable shadowing is not allowed.
 
 Node dependencies MUST NOT create cycles in the computation graph.
 
@@ -348,7 +349,6 @@ The properties ‘name’ and ‘type’ are required on all attributes, and ‘
 
 In case ‘ref_attr_name’ is set, this attribute does not contain data, and instead it's a reference to the parent function's attribute of the given name. Can only be used within the function body.
 
-
 #### Variadic Inputs and Outputs
 
 The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values. A variadic operator has a minimum arity, which specifies the minimum number of operands that must be specified.
@@ -389,7 +389,7 @@ More details can be found in [External Data](ExternalData.md).
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the supported operators.
 
-With respect to supported types, both __ONNX__ and __ONNX-ML__ definition recognize tensors, sparse tensors, sequences, maps, and optionals as input and output types. Sequences and maps were supported from the IR version 6 (ONNX 1.6.0 release). Optional type was supported from IR vesion 8 (ONNX 1.10.0 release).
+With respect to supported types, both __ONNX__ and __ONNX-ML__ definition recognize tensors, sparse tensors, sequences, maps, and optionals as input and output types. Sequences and maps were supported from the IR version 6 (ONNX 1.6.0 release). Optional type was supported from IR version 8 (ONNX 1.10.0 release).
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the initializers of a graph.
 
@@ -401,29 +401,29 @@ Tensors are a generalization of vectors and matrices; whereas vectors have one d
 
 Mathematically, a tensor can be defined as a pair of sequences/lists (V, S) where S is the shape of the tensor (a list of non-negative integers) and V is a list of values with length equal to the product of the dimensions in S. Two tensors (V, S) and (V', S') are equal if and only if V = V' and S = S'. The length of S is referred to as the rank.
 
- - If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
- - S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
- - If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
- - A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
+- If S has length 0, V must have length 1, since the empty product is defined to be 1. In this case, the tensor represents a scalar.
+- S can contain dimensions of value 0. If any dimensions are 0, V must have length 0.
+- If S has length 1, V has length equal to the single dimension in S. In this case, the tensor represents a vector.
+- A tensor representing a vector of length 1 has shape [1], while a tensor representing a scalar has shape []. They both have a single element, but scalars are _not_ vectors of length 1.
 
 A tensor's shape S is a list but can be represented as a tensor with values S and shape [R] where R is the rank of the tensor.
 
- - For a tensor (V, S), the tensor representing its shape is (S, [R]).
- - The shape of a scalar is []. Represented as a tensor, [] has shape [0].
+- For a tensor (V, S), the tensor representing its shape is (S, [R]).
+- The shape of a scalar is []. Represented as a tensor, [] has shape [0].
 
 #### Representation
 
 It is common to represent a tensor as a nested list. This generally works fine, but is problematic when zero dimensions are involved. A tensor of shape (5, 0) can be represented as [[], [], [], [], []], but (0, 5) is represented as [] which loses the information that the second dimension is 5.
 
- - A nested list is not a complete representation of a tensor with dimensions of value zero.
+- A nested list is not a complete representation of a tensor with dimensions of value zero.
 
 ### Tensor Element Types
 
 |Group|Types|Description|
 |---|---|---|
 Floating Point Types|float16, float32, float64, bfloat16, float8e4m3fn, float8e5m2, float8e4m3fnuz, float8e5m2fnuz, float4e2m1|Values adhering to the IEEE 754-2008 standard representation of floating-point data or defined in papers [FP8 Formats for Deep Learning](https://arxiv.org/abs/2209.05433), [8-bit Numerical Formats for Deep Neural Networks](https://arxiv.org/abs/2206.02915), and the [Open Compute Project](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf)
-Signed Integer Types|int4, int8, int16, int32, int64|Signed integers are supported for 4-64 bit widths.
-Unsigned Integer Types|uint4, uint8, uint16, uint32, uint64|Unsigned integers are supported for 4-64 bit widths.
+Signed Integer Types|int2, int4, int8, int16, int32, int64|Signed integers are supported for 2-64 bit widths.
+Unsigned Integer Types|uint2, uint4, uint8, uint16, uint32, uint64|Unsigned integers are supported for 2-64 bit widths.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
 Other|bool|Boolean values represent data with only two values, typically true and false.
@@ -445,7 +445,7 @@ In addition to element type, tensor types have a **static** shape. The static sh
 
 The static shape is defined by 'TensorShapeProto':
 
-```
+```proto
 message TensorShapeProto {
   message Dimension {
     oneof value {
@@ -456,9 +456,10 @@ message TensorShapeProto {
   repeated Dimension dim = 1;
 }
 ```
+
 Which is referenced by the Tensor type message:
 
-```
+```proto
   message Tensor {
     optional TensorProto.DataType elem_type = 1;
     optional TensorShapeProto shape = 2;
@@ -485,6 +486,7 @@ For example, a graph that performs matrix cross-product may be defined as taking
 Shapes MAY be defined using a combination of integers and variables.
 
 _Historical Notes_: The following extensions were considered early on, but were never implemented or supported.
+
 * The use of an empty string (as a dimension variable) to denote an unknown dimension not related to any other dimension. This was discarded in favor of using a Dimension with neither dim_value nor dim_param set.
 * The use of the string "\*" (as a dimension variable) to denote a sequence of zero or more dimensions of unknown cardinality. This is not supported. In the current implementation, the number of dimensions in a shape MUST represent the rank of the tensor. A tensor of unknown rank is represented using a TypeProto::Tensor object with no shape, which is legal.
 * A scoping mechanism to allow dimension variables that are local to a sub-graph (such as the body of a loop) may be useful, but is not currently supported.
@@ -513,6 +515,83 @@ The training step is similarly described using a Graph (TrainingInfoProto.algori
 Thus, the state variables of the training model consist of a subset of the initializers of the main inference graph (i.e., ModelProto.graph.initializer) and the training-algorithm graph (TrainingInfoProto.algorithm.initializer) as identified by the keys of the bindings (in TrainingInfoProto.initialization_binding and TrainingInfoProto.update_binding). Note that the state variables are not constant values in the context of training. They represent mutable variables shared by multiple graphs (implicitly declared in the top-level training model scope). This implicit declaration of shared mutable variables is used instead of an explicit declaration for purposes of backward compatibility with the inference graph representation.
 
 All state variables are pre-initialized to the value specified in the corresponding initializer. A subsequent call to perform the initialization step (using the appropriate API exposed by a runtime) updates the values of the state variables as described above. If the training model has more than one instance of TrainingInfoProto, the initialization step corresponding to each is performed in order. A TrainingInfoProto.initialization MAY be omitted (only if there are no initialization_bindings). For the training step, a runtime MAY allow users to invoke any one of the TrainingInfoProto.algorithm, allowing the training process to interleave the different algorithms as desired. The order in which the different TrainingProto.algorithms are called affects the training result, and it is the callers responsibility to call them in the correct order.
+
+## Multi-Device Configuration (IR version >= 11)
+
+ONNX supports multi-device execution through device configuration specifications that enable distributed inference and training. This includes support for tensor parallelism (sharding tensors across multiple devices) and pipeline parallelism (distributing different subgraphs to different devices).
+
+### Device Configurations
+
+A model MAY specify one or more multi-device configurations using _DeviceConfigurationProto_ contained in the model. Each configuration describes a specific arrangement of devices that can be used for model execution.
+
+The properties of a device configuration are:
+
+|Name|Type|Description|
+|---|---|---|
+|name|string|The name of the configuration. This field MUST be present for this version of the IR.|
+|num_devices|int32|Number of devices in this configuration. This field MUST be present for this version of the IR.|
+|device|string[]|Optional names of the devices. MUST be length of num_devices if provided.|
+
+### Node Device Configuration
+
+Individual nodes can specify device-specific execution information through _NodeDeviceConfigurationProto_. This allows fine-grained control over how computation is distributed across devices.
+
+The properties of a node device configuration are:
+
+|Name|Type|Description|
+|---|---|---|
+|configuration_id|string|ID of the configuration. MUST match the name of a DeviceConfigurationProto. This field MUST be present for this version of the IR.|
+|sharding_spec|ShardingSpecProto[]|Sharding specifications for the node's inputs and outputs.|
+|pipeline_stage|int32|Optional pipeline stage identifier for this node.|
+
+### Sharding Specification
+
+Sharding describes how tensors are partitioned or replicated across multiple devices. A _ShardingSpecProto_ defines the sharding behavior for a specific input or output tensor of a node.
+
+The properties of a sharding specification are:
+
+|Name|Type|Description|
+|---|---|---|
+|tensor_name|string|Identifies the input or output tensor being sharded. Must match a name in the node's input or output list. This field MUST be present for this version of the IR.|
+|device|int64[]|List of devices across which the tensor is sharded or replicated.|
+|index_to_device_group_map|IntIntListEntryProto[]|Optional map indicating device groups when a device ID represents multiple physical devices.|
+|sharded_dim|ShardedDimProto[]|Sharding specification for each axis of the tensor.|
+
+### Sharded Dimension
+
+A _ShardedDimProto_ describes how a single axis of a tensor is sharded across devices.
+
+The properties of a sharded dimension are:
+
+|Name|Type|Description|
+|---|---|---|
+|axis|int64|The tensor axis being sharded. Must be in range [-r, r-1] where r is tensor rank. This field MUST be present for this version of the IR.|
+|simple_sharding|SimpleShardedDimProto[]|Describes how the axis is divided into shards.|
+
+### Simple Sharded Dimension
+
+A _SimpleShardedDimProto_ specifies that N blocks are divided into M shards, where N may be symbolic but M must be constant.
+
+The properties of a simple sharded dimension are:
+
+|Name|Type|Description|
+|---|---|---|
+|dim_value|int64|Dimension value to be sharded (alternative to dim_param).|
+|dim_param|string|Symbolic dimension parameter to be sharded (alternative to dim_value).|
+|num_shards|int64|Number of shards to split the dimension into. This field MUST be present for this version of the IR.|
+
+### Multi-Device Execution Semantics
+
+The multi-device annotations are hints to execution backends and do not affect the computational semantics of the model. Backends MAY ignore these annotations if the specified configurations are not supported or available. All communication operations required for multi-device execution (such as data transfers between devices) are implicit and handled by the runtime.
+
+For tensor parallelism, tensors can be:
+
+- **Split** across devices along specified axes, distributing different portions of the data to different devices
+- **Replicated** across devices, where the same tensor data is duplicated on multiple devices
+
+Pipeline parallelism is indicated through optional pipeline stage identifiers that suggest how to distribute subgraphs across devices for pipelined execution.
+
+For more detailed information about multi-device execution patterns and examples, see the [Multi-Device Proposal](proposals/ONNXMultiDeviceProposal.md).
 
 ## Other Specification Documents
 

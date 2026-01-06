@@ -61,17 +61,26 @@ to `False` instead of `True`.)DOC";
     if (axes_input) {
       schema.Attr(
           "noop_with_empty_axes",
-          "Defines behavior if 'axes' is empty. Default behavior with 'false' is to reduce all axes. "
-          "When axes is empty and this attribute is set to true, input tensor will not be reduced,"
-          "and the output tensor would be equivalent to input tensor.",
+          "Defines behavior when axes is not provided or is empty. "
+          "If false (default), reduction happens over all axes (similar to the case "
+          "when `axis=None` in numpy). "
+          "If true, reduction happens over an empty set of axes (similar to the case "
+          "when `axis=()` in numpy). "
+          "Note that reduction over an empty set of axes means that the reduction step "
+          "behaves like a no-op (identity function), but composite-reduction operators "
+          "will still perform the non-reduction steps as needed. "
+          "Thus, ReduceLogSum returns the Log of input tensor, and ReduceSumSquare "
+          "returns the Square of the input tensor, in this case.",
           AttributeProto::INT,
           static_cast<int64_t>(0));
       schema.Input(
           1,
           "axes",
           "Optional input list of integers, along which to reduce. "
-          "The default is to reduce over all the dimensions of the input tensor if 'noop_with_empty_axes' is false, "
-          "else act as an Identity op when 'noop_with_empty_axes' is true. "
+          "The default is to reduce over empty axes. "
+          "When axes is empty (either not provided or explicitly empty), behavior depends on 'noop_with_empty_axes': "
+          "reduction over all axes if 'noop_with_empty_axes' is false, "
+          "and reduction over the empty set of axes when 'noop_with_empty_axes' is true. "
           "Accepted range is [-r, r-1] where r = rank(data).",
           "tensor(int64)",
           OpSchema::Optional,
@@ -104,11 +113,11 @@ to `False` instead of `True`.)DOC";
       }
 
       int64_t keep_dims = 1, noop_with_empty_axes = 0;
-      auto attr_proto = ctx.getAttribute("keepdims");
+      const auto* const attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
         keep_dims = attr_proto->i();
       }
-      auto noop_attr_proto = ctx.getAttribute("noop_with_empty_axes");
+      const auto* const noop_attr_proto = ctx.getAttribute("noop_with_empty_axes");
       if (noop_attr_proto) {
         noop_with_empty_axes = noop_attr_proto->i();
       }
@@ -126,17 +135,17 @@ to `False` instead of `True`.)DOC";
         std::vector<int64_t> axes_values = ParseData<int64_t>(axesInitializer);
         axes.assign(axes_values.begin(), axes_values.end());
       } else { // axes is attribute
-        auto axes_proto = ctx.getAttribute("axes");
+        const auto* const axes_proto = ctx.getAttribute("axes");
         if (axes_proto)
           axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
       }
-      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      const auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       if (noop_with_empty_axes && axes.empty()) {
         propagateShapeFromInputToOutput(ctx, 0, 0);
         return;
       }
       int64_t input_ndim = input_shape.dim_size();
-      auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
       for (int64_t& axe : axes) {
         if (axe < -input_ndim || axe >= input_ndim) {
@@ -148,11 +157,11 @@ to `False` instead of `True`.)DOC";
       for (int i = 0; i < input_ndim; ++i) {
         // axes empty means reduce all dim
         if (!axes.empty() && std::find(axes.begin(), axes.end(), i) == axes.end()) {
-          auto dim = output_shape->add_dim();
+          auto* dim = output_shape->add_dim();
           dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
-            auto dim = output_shape->add_dim();
+            auto* dim = output_shape->add_dim();
             dim->set_dim_value(1);
           }
         }

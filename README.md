@@ -12,13 +12,14 @@ SPDX-License-Identifier: Apache-2.0
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/onnx/onnx/badge)](https://api.securityscorecards.dev/projects/github.com/onnx/onnx)
 [![REUSE compliant](https://api.reuse.software/badge/github.com/onnx/onnx)](https://api.reuse.software/info/github.com/onnx/onnx)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![abi3 compatible](https://img.shields.io/badge/abi3-compatible-brightgreen)](https://docs.python.org/3/c-api/stable.html)
 
 [Open Neural Network Exchange (ONNX)](https://onnx.ai) is an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models, both deep learning and traditional ML. It defines an extensible computation graph model, as well as definitions of built-in operators and standard
 data types. Currently we focus on the capabilities needed for inferencing (scoring).
 
 ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in many frameworks, tools, and hardware. Enabling interoperability between different frameworks and streamlining the path from research to production helps increase the speed of innovation in the AI community. We invite the community to join us and further evolve ONNX.
+
 
 # Use ONNX
 
@@ -56,12 +57,12 @@ The schedules of the regular meetings of the Steering Committee, the working gro
 
 Community Meetups are held at least once a year. Content from previous community meetups are at:
 
-* 2020.04.09 <https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-ONNX+Community+Virtual+Meetup+-+Silicon+Valley+-+April+9>
-* 2020.10.14 <https://wiki.lfaidata.foundation/display/DL/LF+AI+Day+-+ONNX+Community+Workshop+-+October+14>
-* 2021.03.24 <https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=35160391>
-* 2021.10.21 <https://wiki.lfaidata.foundation/pages/viewpage.action?pageId=46989689>
-* 2022.06.24 <https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+-+June+24>
-* 2023.06.28 <https://wiki.lfaidata.foundation/display/DL/ONNX+Community+Day+2023+-+June+28>
+* 2020.04.09 <https://lf-aidata.atlassian.net/wiki/spaces/DL/pages/14091402/LF+AI+Day+-ONNX+Community+Virtual+Meetup+-+Silicon+Valley+-+2020+April+9>
+* 2020.10.14 <https://lf-aidata.atlassian.net/wiki/spaces/DL/pages/14092138/LF+AI+Day+-+ONNX+Community+Workshop+-+2020+October+14>
+* 2021.03.24 <https://lf-aidata.atlassian.net/wiki/spaces/DL/pages/14092424/Instructions+for+Event+Hosts+-+LF+AI+Data+Day+-+ONNX+Virtual+Community+Meetup+-+March+2021>
+* 2021.10.21 <https://lf-aidata.atlassian.net/wiki/spaces/DL/pages/14093194/LF+AI+Data+Day+ONNX+Community+Virtual+Meetup+-+October+2021>
+* 2022.06.24 <https://lf-aidata.atlassian.net/wiki/spaces/DL/pages/14093969/ONNX+Community+Day+-+2022+June+24>
+* 2023.06.28 <https://lf-aidata.atlassian.net/wiki/spaces/DL/pages/14094507/ONNX+Community+Day+2023+-+June+28>
 
 # Discuss
 
@@ -69,7 +70,7 @@ We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [
 
 # Follow Us
 
-Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
+Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter/X](https://twitter.com/onnxai)]
 
 # Roadmap
 
@@ -87,12 +88,17 @@ pip install onnx # or pip install onnx[reference] for optional reference impleme
 
 Detailed install instructions, including Common Build Options and Common Errors can be found [here](https://github.com/onnx/onnx/blob/main/INSTALL.md)
 
+# Python ABI3 Compatibility
+
+This package provides [abi3](https://docs.python.org/3/c-api/stable.html)-compatible wheels, allowing a single binary wheel to work across multiple Python versions (from 3.12 onwards).
+
+
 # Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, you will first need to install `pytest`:
 
 ```sh
-pip install pytest nbval
+pip install pytest
 ```
 
 After installing pytest, use the following command to run tests.
@@ -105,9 +111,29 @@ pytest
 
 Check out the [contributor guide](https://github.com/onnx/onnx/blob/main/CONTRIBUTING.md) for instructions.
 
+# Reproducible Builds (Linux)
+
+This project provides reproducible builds for Linux.
+
+A *reproducible build* means that the same source code will always produce identical binary outputs, no matter who builds it or where it is built.
+
+To achieve this, we use the [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/) standard. This ensures that build timestamps and other time-dependent information are fixed, making the output bit-for-bit identical across different environments.
+
+### Why this matters
+- **Transparency**: Anyone can verify that the distributed binaries were created from the published source code.
+- **Security**: Prevents tampering or hidden changes in the build process.
+- **Trust**: Users can be confident that the binaries they download are exactly what the maintainers intended.
+
+If you prefer, you can use the prebuilt reproducible binaries instead of building from source yourself.
+
 # License
 
 [Apache License v2.0](LICENSE)
+
+# Trademark
+Checkout [https://trademarks.justia.com](https://trademarks.justia.com/877/25/onnx-87725026.html) for the trademark.
+
+[General rules of the Linux Foundation on Trademark usage](https://www.linuxfoundation.org/legal/trademark-usage)
 
 # Code of Conduct
 

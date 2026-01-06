@@ -43,7 +43,7 @@ with float 8.
 - `E5M2FNUZ`: 1 bit for the sign, 5 bits for the exponents, 2 bits for the mantissa,
   only nan values and no infinite values (FN), no negative zero (UZ)
 
-The implementation is usually hardware dependant.
+The implementation is usually hardware dependent.
 NVIDIA, Intel and Arm implement `E4M3FN` and `E5M2` is its latest graphical processor.
 GraphCore does the same only with `E4M3FNUZ` and `E5M2FNUZ`.
 
@@ -197,3 +197,36 @@ The conversion may also be defined without any saturation.
 | \[x\] > FLT_MAX   | NaN    | NaN      | Inf  | NaN      |
 | \[x\] \< -FLT_MAX | NaN    | NaN      | -Inf | NaN      |
 | else              | RNE    | RNE      | RNE  | RNE      |
+
+## E8M0
+
+The E8M0 data type serves as the common scale type for all [OCP Microscaling (MX) Formats](https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf). It has eight bits for the exponent, and no sign or mantissa bits.
+
+```{eval-rst}
+.. list-table:: E8M0
+   :widths: 10 10
+   :header-rows: 1
+
+   * -
+     - E8M0
+   * - Exponent bias
+     - 127
+   * - Infinities
+     -
+   * - NaN
+     - :math:`11111111_2`
+   * - Zeros
+     -
+   * - Max
+     - :math:`11111110_2 = 2^{127}`
+   * - Min
+     - :math:`00000000_2 = 2^{-127}`
+```
+
+When computing scale factors in MX formats, there are different casting choices one can make. For this reason, the ONNX spec for the Cast operator has introduced an additional "round_mode" attribute, which accepts the following:
+
+- "up": round to nearest value away from zero
+- "down": round to nearest value towards zero
+- "nearest": round to nearest value and ties round up
+
+It has been [shown](https://arxiv.org/abs/2506.08027) that rounding up with saturation achieves superior accuracy in LLM pretraining compared to other rounding modes.

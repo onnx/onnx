@@ -14,10 +14,19 @@ from typing import TYPE_CHECKING
 
 import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C  # noqa: N812
-from onnx import AttributeProto, FunctionProto, ModelProto, TypeProto
+from onnx.onnx_pb import (
+    IR_VERSION,
+    AttributeProto,
+    FunctionProto,
+    ModelProto,
+    TypeProto,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+GraphInferencer = C.GraphInferencer
+InferenceContext = C.InferenceContext
 
 
 def infer_shapes(
@@ -106,10 +115,8 @@ def infer_node_outputs(
     input_data: dict[str, onnx.TensorProto] | None = None,
     input_sparse_data: dict[str, onnx.SparseTensorProto] | None = None,
     opset_imports: list[onnx.OperatorSetIdProto] | None = None,
-    ir_version: int = onnx.IR_VERSION,
+    ir_version: int = IR_VERSION,
 ) -> dict[str, onnx.TypeProto]:
-    if not schema.has_type_and_shape_inference_function:
-        return {}
     if input_data is None:
         input_data = {}
     if input_sparse_data is None:

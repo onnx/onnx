@@ -9,7 +9,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class LabelEncoder(OpRunAiOnnxMl):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         default_float=None,
@@ -27,7 +27,7 @@ class LabelEncoder(OpRunAiOnnxMl):
     ):
         keys = keys_floats or keys_int64s or keys_strings or keys_tensor
         values = values_floats or values_int64s or values_strings or values_tensor
-        classes = dict(zip(keys, values))
+        classes = dict(zip(keys, values, strict=False))
 
         if values is values_tensor:
             defval = default_tensor.item()

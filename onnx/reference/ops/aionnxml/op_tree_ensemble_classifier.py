@@ -16,7 +16,7 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble_helper import TreeEnsemble
 
 
 class TreeEnsembleClassifier(OpRunAiOnnxMl):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         base_values=None,
@@ -66,13 +66,13 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
         leaves_index = tr.leave_index_tree(X)
         n_classes = max(len(classlabels_int64s or []), len(classlabels_strings or []))
         res = np.empty((leaves_index.shape[0], n_classes), dtype=np.float32)
-        if tr.atts.base_values is None:  # type: ignore
+        if tr.atts.base_values is None:
             res[:, :] = 0
         else:
-            res[:, :] = np.array(tr.atts.base_values).reshape((1, -1))  # type: ignore
+            res[:, :] = np.array(tr.atts.base_values).reshape((1, -1))
 
-        class_index = {}  # type: ignore
-        for i, (tid, nid) in enumerate(zip(class_treeids, class_nodeids)):
+        class_index = {}
+        for i, (tid, nid) in enumerate(zip(class_treeids, class_nodeids, strict=False)):
             if (tid, nid) not in class_index:
                 class_index[tid, nid] = []
             class_index[tid, nid].append(i)
@@ -81,7 +81,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
             t_index = [class_index[nodes_treeids[i], nodes_nodeids[i]] for i in indices]
             for its in t_index:
                 for it in its:
-                    res[i, class_ids[it]] += tr.atts.class_weights[it]  # type: ignore
+                    res[i, class_ids[it]] += tr.atts.class_weights[it]
 
         # post_transform
         binary = len(set(class_ids)) == 1
@@ -105,7 +105,7 @@ class TreeEnsembleClassifier(OpRunAiOnnxMl):
                 res[:, 0] = 1 - res[:, 1]
             else:
                 res[:, 0] = -res[:, 1]
-        new_scores = post_function[post_transform](res)  # type: ignore
+        new_scores = post_function[post_transform](res)
         labels = np.argmax(new_scores, axis=1)
 
         # labels

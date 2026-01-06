@@ -111,6 +111,22 @@ class InlinerTest(unittest.TestCase):
         self.assertEqual(function_nodes[0].op_type, "Add")
         self.assertEqual(function_nodes[1].op_type, "Mul")
 
+    def test_schema_function_inlining(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 20]>
+            agraph (float[N] X) => (float[N] Y)
+            {
+                Y = Softsign (X)
+            }
+        """
+        )
+        inlined = inliner.inline_selected_functions(
+            model, [], exclude=True, inline_schema_functions=True
+        )
+        inlined_nodes = inlined.graph.node
+        self.assertIn("Abs", [n.op_type for n in inlined_nodes])
+
 
 if __name__ == "__main__":
     unittest.main()

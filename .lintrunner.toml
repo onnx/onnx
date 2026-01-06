@@ -74,8 +74,7 @@ include_patterns = [
 exclude_patterns = [
     'onnx/backend/test/**',
     'onnx/reference/ops/**',  # FIXME: Enable this once typing is fixed
-    'onnx/test/parser_test.py',
-    'onnx/test/numpy_helper_test.py',
+    'onnx/test/**',  # Disable mypy for tests
     'onnx/reference/reference_evaluator.py',
 ]
 command = [
@@ -191,12 +190,15 @@ include_patterns=[
     '**/*.h',
     '**/*.md',
     '**/*.cpp',
+    '**/*.yml',
 ]
 exclude_patterns = [
     '*_pb2*',
     '.setuptools-cmake-build/*',
     'cmake/**',
-    'docs/**',
+    'docs/Changelog*',
+    'docs/Operators*',
+    'docs/TestCoverage*',
     'community/sc-election-guidelines.md',
 ]
 command = [

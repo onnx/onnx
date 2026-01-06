@@ -253,11 +253,11 @@ inline void setTensorElementType(int32_t elem_type, TypeProto::ValueCase value_c
   }
 }
 
-void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type);
+ONNX_API void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* output_type);
 
-void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
+ONNX_API void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
 
-void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
+ONNX_API void propagateElemTypeFromTensorInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex);
 
 inline void propagateElemTypeFromDtypeToOutput(
     InferenceContext& ctx,
@@ -326,7 +326,7 @@ inline bool hasShape(const TypeProto& type) {
 
 template <typename Context>
 inline bool hasInputShape(const Context& ctx, size_t n) {
-  return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
+  return ctx.getNumInputs() > n && ctx.getInputType(n) && hasShape(*ctx.getInputType(n));
 }
 
 template <typename Context>
@@ -451,7 +451,7 @@ inline void propagateShapeFromInputToOutput(InferenceContext& ctx, size_t inputI
   propagateShape(input_type, output_type);
 }
 
-inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
+ONNX_API inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasNInputShapes(ctx, 1)) {
     return;
@@ -930,5 +930,18 @@ void checkDuplicateAxes(Axes& axes, int rank) {
     tmp[actual_axis] = true;
   }
 }
+
+// Shape inference functions for various ONNX operators.
+// Users can use these functions to implement shape inference for custom operators
+// by calling them in their own inference functions.
+ONNX_API void RNNShapeInference(InferenceContext& ctx);
+ONNX_API void convPoolShapeInference(
+    InferenceContext& ctx,
+    bool use_dilation,
+    bool require_kernel_shape,
+    int input1Idx,
+    int input2Idx);
+ONNX_API void convTransposeShapeInference(InferenceContext& ctx);
+ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx);
 
 } // namespace ONNX_NAMESPACE

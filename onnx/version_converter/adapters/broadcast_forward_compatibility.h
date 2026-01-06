@@ -33,7 +33,7 @@ class BroadcastForwardCompatibility final : public Adapter {
       const std::vector<Dimension>& B_sizes = inputs[1]->sizes();
       // Also assert that broadcasting syntax are correct if axis is not present
       if (node->hasAttribute(kaxis)) {
-        if (node->i(kaxis) != (int)(A_sizes.size() - B_sizes.size())) {
+        if (node->i(kaxis) != static_cast<int>(A_sizes.size() - B_sizes.size())) {
           // Add a Reshape node before input B
           Node* n = graph->create(kUnsqueeze);
           n->addInput(inputs[1]);

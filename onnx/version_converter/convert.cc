@@ -91,12 +91,12 @@ void DefaultVersionConverter::convert_graph(
           std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << '\n';
         }
       } else if (op_name != "Undefined" && op_name != "Captured") {
-        auto& op_domain_map = all_schemas.at(op_name);
+        const auto& op_domain_map = all_schemas.at(op_name);
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
         if (searchOpDomainMap(op_domain_map, curr_version, step)) {
           // Op is specifically defined for this domain and version
-          auto& op_adapter = adapter_lookup(cur_op, curr_id, next_id);
+          const auto& op_adapter = adapter_lookup(cur_op, curr_id, next_id);
           // If adapter_lookup returns null, no adapter is present.
           // Error thrown by adapter_lookup
           if (DEBUG) {
@@ -132,7 +132,7 @@ ModelProto DefaultVersionConverter::convert_version(
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
     if (it->domain() == initial_version.domain()) {
       ONNX_ASSERTM(
-          initial_version.version() == it->version(), "initial_version does not reflect current state of model");
+          initial_version.version() == it->version(), "initial_version does not reflect current state of model")
     }
   }
 

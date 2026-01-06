@@ -22,18 +22,18 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
         architecture: ['x64']
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
          path: ./onnx
          submodules: 'recursive'
          persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
@@ -50,7 +50,7 @@ jobs:
 
     - name: Build and test ONNX binaries
       run: |
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch ${{ matrix.architecture }}
+        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch ${{ matrix.architecture }}
 
         cd onnx
         echo "Build ONNX"

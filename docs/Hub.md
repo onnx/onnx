@@ -11,18 +11,21 @@ ONNX models from the [ONNX Model Zoo](https://github.com/onnx/models). Furthermo
 developers the opportunity to share their pre-trained models with the broader community.
 
 ## Install
+
 The ONNX Model hub is available after ONNX 1.11.0.
 
 ## Basic usage
+
 The ONNX Model Hub is capable of downloading, listing, and querying trained models from any git repository,
  and defaults to the official [ONNX Model Zoo](https://github.com/onnx/models). In this section we demonstrate some of the basic functionality.
 
 First please import the hub using:
+
 ```python
 from onnx import hub
 ```
 
-#### Downloading a model by name:
+#### Downloading a model by name
 
 The `load` function will default to searching the model zoo for the latest model with a matching name,
  download this model to a local cache, and load the model into a `ModelProto`
@@ -32,8 +35,7 @@ The `load` function will default to searching the model zoo for the latest model
 model = hub.load("resnet50")
 ```
 
-
-#### Downloading from custom repositories:
+#### Downloading from custom repositories
 
 Any repository with the proper structure can be a ONNX model hub. To download from other hubs,
  or to specify a particular branch or commit on the main model hub one can provide the `repo` parameter:
@@ -42,7 +44,7 @@ Any repository with the proper structure can be a ONNX model hub. To download fr
 model = hub.load("resnet50", repo="onnx/models:771185265efbdc049fb223bd68ab1aeb1aecde76")
 ```
 
-#### Listing and inspecting Models:
+#### Listing and inspecting Models
 
 The model hub provides APIs for querying the model zoo to learn more about available models.
  This does not download the models, but rather just returns information about models matching the given arguments
@@ -63,7 +65,9 @@ One can also inspect the metadata of a model prior to download with the `get_mod
 ```python
 print(hub.get_model_info(model="mnist", opset=8))
 ```
+
 This will print something like:
+
 ```
 ModelInfo(
     model=MNIST,
@@ -82,13 +86,13 @@ ModelInfo(
 )
 ```
 
-
 ## Local Caching
 
 The ONNX Model hub locally caches downloaded models in a configurable location
 so that subsequent calls to `hub.load` do not require network connection.
 
 #### Default cache location
+
 The hub client looks for the following default cache locations in this order:
 
 1) `$ONNX_HOME/hub` if the `ONNX_HOME` environment variable is defined
@@ -96,6 +100,7 @@ The hub client looks for the following default cache locations in this order:
 3) `~/.cache/onnx/hub` where `~` is the user home directory
 
 #### Setting the cache location
+
 To manually set the cache location use:
 
 ```python
@@ -193,6 +198,7 @@ The ONNX Hub consists of two main components, the client and the server.
     }
 }
 ```
+
 These important fields are:
 
 - `model`: The name of the model used for querying
@@ -205,7 +211,6 @@ These important fields are:
 All other fields in the `metadata` field are optional for the client but provide important details for users.
 
 ## Adding to the ONNX Model Hub
-
 
 #### Contributing an official model
 
@@ -234,5 +239,6 @@ To host your own model hub, add an `ONNX_HUB_MANIFEST.json` to the top level of 
  using the "Downloading from custom repositories" section of this doc.
 
 ## Raise issue if any
+
 - For ONNX model problem or SHA mismatch issue, please raise issue in [Model Zoo]/(https://github.com/onnx/models/issues).
 - Other questions/issues regarding the usage of ONNX Model Hub, please raise issue in [this repo](https://github.com/onnx/onnx/issues).

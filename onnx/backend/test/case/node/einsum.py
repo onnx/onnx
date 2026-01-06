@@ -13,8 +13,7 @@ from onnx.backend.test.case.node import expect
 def einsum_reference_implementation(
     Eqn: str, Operands: tuple[np.ndarray, ...]
 ) -> np.ndarray:
-    Z = np.einsum(Eqn, *Operands)
-    return Z
+    return np.einsum(Eqn, *Operands)
 
 
 class Einsum(Base):
@@ -79,3 +78,15 @@ class Einsum(Base):
         Z = einsum_reference_implementation(Eqn, (X, Y))
 
         expect(node, inputs=[X, Y], outputs=[Z], name="test_einsum_batch_matmul")
+
+    @staticmethod
+    def export_einsum_scalar() -> None:
+        Eqn = "->"
+        node = onnx.helper.make_node(
+            "Einsum", inputs=["x"], outputs=["y"], equation=Eqn
+        )
+
+        X = np.array(5.0)  # scalar input
+        Z = einsum_reference_implementation(Eqn, (X,))
+
+        expect(node, inputs=[X], outputs=[Z], name="test_einsum_scalar")

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=4.25.1"]
+requires = ["setuptools>=77", "protobuf>=4.25.1"]
 backend-path = ["."]
 build-backend = "backend"
 
@@ -18,8 +18,8 @@ authors = [
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-license = {text = "Apache License v2.0"}
-requires-python = ">=3.9"
+license = "Apache-2.0"
+requires-python = ">=3.10"
 
 [project.urls]
 Homepage = "https://onnx.ai/"
@@ -52,7 +52,7 @@ onnx = [
 
 [tool.pytest.ini_options]
 
-addopts = "--nbval --nbval-current-env --tb=short --color=yes"
+addopts = "--tb=short --color=yes"
 testpaths = [
     "onnx/test",
     "onnx/examples",
@@ -99,8 +99,6 @@ module = [
 ignore_errors = true
 
 [tool.pylint.message_control]
-# This list is for vscode. Add new disables in pyproject_pylint.toml for lintrunner and CI.
-# Exclude patterns should be modified in .lintrunner.toml
 disable = [
     "format",
     "import-error",
@@ -115,7 +113,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py39"
+target-version = "py310"
 unsafe-fixes = true
 lint.select = [
     "A", # flake8-builtins
@@ -147,6 +145,7 @@ lint.select = [
     "UP", # pyupgrade
     "W", # pycodestyle
     "YTT", # flake8-2020
+    "RET", # flake8-return
 ]
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
@@ -168,15 +167,11 @@ lint.ignore = [
     "PYI041", # int | float is sometimes more clear than float
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "RUF022", # We may want to keep __all__ unsorted for better readability
-    "SIM102", # We don't perfer always combining if branches
-    "SIM103", # We don't always prefer combining if branches
+    "SIM102", # We don't prefer always combining if branches
     "SIM108", # We don't always encourage ternary operators
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
     "TRY003", # Messages can be constructed in the exception
-]
-lint.unfixable = [
-    "SIM112", # Envvars should not be modified
 ]
 
 [tool.ruff.lint.flake8-builtins]
@@ -193,7 +188,6 @@ convention = "google"
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/*.pyi" = ["I002"] # from __future__ import annotations` has no effect in stub files
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Prefer inline ignores with `noqa: xxx`.
 # Eventually this list should become empty.
@@ -204,15 +198,6 @@ required-imports = ["from __future__ import annotations"]
     "N801", # Class casing
     "PLR2004", # Magic numbers
 ]
-"onnx/reference/ops/_op_list.py" = ["F401"]
-"onnx/__init__.py" = ["F401"]
-"onnx/reference/__init__.py" = ["F401"]
-"onnx/reference/ops/__init__.py" = ["F401"]
-"onnx/reference/ops/aionnxml/_op_list.py" = ["F401"]
-"onnx/reference/ops/aionnxml/__init__.py" = ["F401"]
-"onnx/reference/ops/aionnx_preview_training/__init__.py" = ["F401"]
-"onnx/reference/ops/aionnx_preview_training/_op_list.py" = ["F401"]
-"onnx/reference/ops/experimental/__init__.py" = ["F401"]
 "onnx/test/reference_evaluator_test.py"= ["C408"]  # dict(...) -> { ... }
 "onnx/test/**" = ["PLR2004"] # Magic numbers allowed in tests
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]

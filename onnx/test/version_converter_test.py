@@ -1477,6 +1477,24 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[1].op_type == "Split"
         assert converted_model.opset_import[0].version == 13
 
+    # Test Split Adapter: 13 -> 12 with optional split input
+    def test_split_13_12_optional_input(self) -> None:
+        """Test Split 13->12 conversion with optional split input."""
+        nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], axis=0)]
+        graph = helper.make_graph(
+            nodes,
+            "test_split_13_12_optional",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (10,))],
+            [
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (5,)),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Split"
+        assert converted_model.opset_import[0].version == 12
+
     # Test AxesInputToAttribute Adapter: 13 -> 12
     def test_axes_input_to_attr_13_12(self) -> None:
         nodes = [
@@ -1512,6 +1530,80 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Constant"
         assert converted_model.opset_import[0].version == 13
+
+    # Test AxesInputToAttribute Adapter: 13 -> 11 with optional axes input
+    def test_squeeze_13_11_optional_axes(self) -> None:
+        """Test Squeeze 13->11 conversion with optional axes input."""
+        nodes = [helper.make_node("Squeeze", ["X"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test_squeeze_13_11_optional",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 10, 1))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (10,))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 11)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Squeeze"
+        assert converted_model.opset_import[0].version == 11
+
+    # Test Reshape Adapter: 4 -> 5 with optional axes input
+    def test_reshape_4_5_optional_shape(self) -> None:
+        """Test Reshape 4->5 conversion - shape in attribute should become input."""
+        nodes = [helper.make_node("Reshape", ["X"], ["Y"], shape=[2, 5])]
+        graph = helper.make_graph(
+            nodes,
+            "test_reshape_4_5",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (10,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 5))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 4), 5)
+        # Should have added a Constant node for the shape
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Reshape"
+        assert converted_model.opset_import[0].version == 5
+
+    # Test Resize Adapter: 10 -> 11
+    def test_resize_10_11_bounds_check(self) -> None:
+        """Test Resize 10->11 conversion with proper bounds checking."""
+        nodes = [
+            helper.make_node(
+                "Constant",
+                [],
+                ["scales"],
+                value=helper.make_tensor(
+                    "", TensorProto.FLOAT, [4], [1.0, 1.0, 2.0, 2.0]
+                ),
+            ),
+            helper.make_node("Resize", ["X", "scales"], ["Y"], mode="nearest"),
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test_resize_10_11",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 1, 2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 4, 4))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
+        assert converted_model.opset_import[0].version == 11
+
+    # Test Scatter Adapter: 10 -> 11
+    def test_scatter_10_11_bounds_check(self) -> None:
+        """Test Scatter 10->11 conversion with proper bounds checking."""
+        nodes = [
+            helper.make_node("Scatter", ["data", "indices", "updates"], ["Y"], axis=0)
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test_scatter_10_11",
+            [
+                helper.make_tensor_value_info("data", TensorProto.FLOAT, (3,)),
+                helper.make_tensor_value_info("indices", TensorProto.INT64, (2,)),
+                helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2,)),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3,))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
+        assert converted_model.graph.node[0].op_type == "ScatterElements"
+        assert converted_model.opset_import[0].version == 11
 
     # Test Slice Adapter: 9 -> 10
     def test_slice_9_10(self) -> None:
@@ -2196,7 +2288,7 @@ class TestVersionConverter(unittest.TestCase):
                 name="initializer_tensor",
                 data_type=onnx.TensorProto.FLOAT,
                 dims=list(shape),
-                vals=random_data.tobytes(),
+                vals=random_data,
                 raw=True,
             )
             initializer_scalar = onnx.helper.make_tensor(
