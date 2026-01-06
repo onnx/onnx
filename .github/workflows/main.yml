@@ -214,9 +214,10 @@ jobs:
 
       - name: Upload test results to Codecov
         if: github.repository_owner == 'onnx' && !cancelled()
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          report-type: test_results
 
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
