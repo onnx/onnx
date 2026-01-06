@@ -10,7 +10,7 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 def sigmoid(x: np.ndarray) -> np.ndarray:
     result = np.empty_like(x)
-    pos_mask  = x > 0
+    pos_mask = x > 0
     neg_mask = ~pos_mask
     x_neg = x[neg_mask]
     result[pos_mask] = 1 / (1 + np.exp(-x[pos_mask]))
