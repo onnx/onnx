@@ -9,13 +9,16 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 
 def sigmoid(x: np.ndarray) -> np.ndarray:
-    result = np.empty_like(x)
+    """
+    Numerically stable sigmoid implementation that supports scalars
+    (0-dimensional arrays) and higher-dimensional arrays.
+    """
     pos_mask = x > 0
-    neg_mask = ~pos_mask
-    x_neg = x[neg_mask]
-    result[pos_mask] = 1 / (1 + np.exp(-x[pos_mask]))
-    result[neg_mask] = np.exp(x_neg) / (1 + np.exp(x_neg))
-    return result
+    return np.where(
+        pos_mask,
+        1.0 / (1.0 + np.exp(-x)),
+        np.exp(x) / (1.0 + np.exp(x)),
+    )
 
 
 class Sigmoid(OpRunUnaryNum):
