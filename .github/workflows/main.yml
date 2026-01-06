@@ -213,7 +213,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results to Codecov
-        if: github.repository_owner == 'onnx' && !cancelled() # misspell:ignore cancelled
+        if: github.repository_owner == 'onnx' && !cancelled()
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
