@@ -57,40 +57,40 @@ class IntMap(collections.UserDict):
 class NgramPart:
     def __init__(self, nid: int):
         self.id_ = nid  # 0 - means no entry, search for a bigger N
-        self._leafs_ = None
+        self._leaves_ = None
 
     def init(self):
-        self._leafs_ = IntMap()
+        self._leaves_ = IntMap()
 
     def __repr__(self):
         if self.empty():
             return f"NgramPart({self.id_})"
-        return f"NgramPart({self.id_}, {self.leafs_!r})"
+        return f"NgramPart({self.id_}, {self.leaves_!r})"
 
     def empty(self):
-        return self._leafs_ is None
+        return self._leaves_ is None
 
     def has_leaves(self):
-        return self._leafs_ is not None and len(self._leafs_) > 0
+        return self._leaves_ is not None and len(self._leaves_) > 0
 
     @property
-    def leafs_(self):
-        if self._leafs_ is None:
+    def leaves_(self):
+        if self._leaves_ is None:
             raise RuntimeError("NgramPart was not initialized.")
-        return self._leafs_
+        return self._leaves_
 
     def find(self, key):
         if not self.has_leaves():
             return None
-        if key in self._leafs_:
+        if key in self._leaves_:
             return key
         return None
 
     def emplace(self, key, value):
-        return self.leafs_.emplace(key, value)
+        return self.leaves_.emplace(key, value)
 
     def __getitem__(self, key):
-        return self._leafs_[key]
+        return self._leaves_[key]
 
 
 class WeightingCriteria(IntEnum):
@@ -120,7 +120,7 @@ def populate_grams(
                 break
             if p.empty():
                 p.init()
-            m = p.leafs_
+            m = p.leaves_
             n += 1
             els_index += 1
     return ngram_id

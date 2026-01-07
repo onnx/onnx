@@ -15,7 +15,7 @@ import time
 import unittest
 from collections import defaultdict
 from re import Pattern
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 from urllib.request import urlretrieve
 
 import numpy as np
@@ -27,7 +27,7 @@ from onnx.backend.test.loader import load_model_tests
 from onnx.backend.test.runner.item import TestItem
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Callable, Iterable, Sequence
 
     from onnx.backend.base import Backend
     from onnx.backend.test.case.test_case import TestCase
@@ -51,6 +51,7 @@ def retry_execute(times: int) -> Callable[[Callable[..., Any]], Callable[..., An
                     if i == times:
                         raise
                     time.sleep(5 * i)
+            return None
 
         return wrapped
 

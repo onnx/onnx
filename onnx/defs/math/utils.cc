@@ -11,6 +11,142 @@ namespace defs {
 namespace math {
 namespace utils {
 
+static constexpr const char* TopK_ver11_doc = R"DOC(
+Retrieve the top-K largest or smallest elements along a specified axis. Given an input tensor of
+shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
+
+* Value tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}]
+  which contains the values of the top k elements along the specified axis
+* Index tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] which
+  contains the indices of the top k elements (original indices from the input
+  tensor).
+
+* If "largest" is 1 (the default value) then the k largest elements are returned.
+* If "sorted" is 1 (the default value) then the resulting k elements will be sorted.
+* If "sorted" is 0, order of returned 'Values' and 'Indices' are undefined.
+
+Given two equivalent values, this operator uses the indices along the axis as
+a tiebreaker. That is, the element with the lower index will appear first.
+)DOC";
+
+std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types) {
+  return [=](OpSchema& schema) {
+    schema.SetDoc(TopK_ver11_doc)
+        .Input(
+            0,
+            "X",
+            "Tensor of shape [a_0, a_1, ..., a_{n-1}]",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "K",
+            "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve",
+            "tensor(int64)",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "Values",
+            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
+            "containing top K values from the input tensor",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            1,
+            "Indices",
+            "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
+            "containing the corresponding input tensor indices for the top K "
+            "values.",
+            "I",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint("T", allowed_types, "Constrain input and output types to numeric tensors.")
+        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
+        .Attr(
+            "axis",
+            "Dimension on which to do the sort. Negative value means counting dimensions "
+            "from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr(
+            "largest",
+            "Whether to return the top-K largest or smallest elements.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr("sorted", "Whether to return the elements in sorted order.", AttributeProto::INT, static_cast<int64_t>(1))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference:
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          updateOutputElemType(ctx, 1, TensorProto::INT64);
+          // Shape inference:
+          if (!hasInputShape(ctx, 0))
+            return;
+          const auto& input_shape = getInputShape(ctx, 0);
+          int64_t rank = input_shape.dim_size();
+          int64_t axis = getAttribute(ctx, "axis", -1);
+          if (axis < 0)
+            axis += rank;
+          if (axis < 0 || axis >= rank) {
+            fail_shape_inference("Invalid value for attribute axis");
+          }
+
+          const auto& axis_dim = input_shape.dim(static_cast<int>(axis));
+          const auto* const k = ctx.getInputData(1);
+
+          // Infer output shape if:
+          // (1) 'K' is available
+          // (2) axis_dim has dim value
+          // Otherwise cannot reliably compute output shape as axis dim value is
+          // unknown and hence cannot determine if axis dim value >= k (which
+          // should be enforced)
+          if (nullptr != k && axis_dim.has_dim_value()) {
+            int64_t k_value = 0;
+            if (k->dims_size() != 1 || k->dims(0) != 1) {
+              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+            }
+            if (k->data_type() == TensorProto::INT64) {
+              const auto data = ParseData<int64_t>(k);
+              k_value = data[0];
+            } else {
+              fail_shape_inference("K input must be of type int64.");
+            }
+            if (axis_dim.dim_value() < k_value) {
+              fail_shape_inference("Axis has less than the requested k elements.");
+            }
+
+            TensorShapeProto result_shape = input_shape;
+            result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k_value);
+
+            updateOutputShape(ctx, 0, result_shape);
+            updateOutputShape(ctx, 1, result_shape);
+
+            return;
+          }
+
+          // Infer output shapes' rank in any case
+          auto* output_shape_0 = getOutputShape(ctx, 0);
+          auto* output_shape_1 = getOutputShape(ctx, 1);
+          for (int i = 0; i < input_shape.dim_size(); ++i) {
+            output_shape_0->add_dim();
+            output_shape_1->add_dim();
+          }
+
+          return;
+        });
+  };
+}
+
 int MathOpTwoIntegers(const std::string& op_type, int a, int b) {
   if (op_type == "Add") {
     return a + b;
@@ -91,20 +227,20 @@ void MatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, int input1Idx, 
 }
 
 void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
-  auto a_type = ctx.getInputType(0);
-  auto b_type = ctx.getInputType(3);
+  const auto* const a_type = ctx.getInputType(0);
+  const auto* const b_type = ctx.getInputType(3);
   if (nullptr == a_type || nullptr == b_type || a_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType ||
       b_type->value_case() != ONNX_NAMESPACE::TypeProto::kTensorType) {
     fail_type_inference("inputs are expected to have tensor type.");
   }
 
-  auto a_zero_point_type = ctx.getInputType(2);
+  const auto* const a_zero_point_type = ctx.getInputType(2);
   if (nullptr == a_zero_point_type ||
       a_zero_point_type->tensor_type().elem_type() != a_type->tensor_type().elem_type()) {
     fail_type_inference("input and zero_point pair is expected to have be same type.");
   }
 
-  auto b_zero_point_type = ctx.getInputType(5);
+  const auto* const b_zero_point_type = ctx.getInputType(5);
   if (nullptr == b_zero_point_type ||
       b_zero_point_type->tensor_type().elem_type() != b_type->tensor_type().elem_type()) {
     fail_type_inference("input and zero_point pair is expected to have same type.");
@@ -116,7 +252,7 @@ void QLinearMatMulShapeInference(ONNX_NAMESPACE::InferenceContext& ctx) {
 }
 
 const char* QLinearMatMulDoc() {
-  static const char* QLinearMatMul_doc = R"DOC(
+  static constexpr const char* QLinearMatMul_doc = R"DOC(
 Matrix product that behaves like [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html).
 It consumes two quantized input tensors, their scales and zero points, scale and zero point of output,
 and computes the quantized output. The quantization formula is y = saturate((x / y_scale) + y_zero_point).

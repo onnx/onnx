@@ -10,10 +10,8 @@
 #include <vector>
 
 #include "onnx/common/file_utils.h"
-#include "onnx/defs/schema.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"
-#include "onnx/string_utils.h"
 
 #ifdef _WIN32
 #include "onnx/common/path.h"
@@ -177,8 +175,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E4M3FNUZ:
       case TensorProto::FLOAT8E5M2:
       case TensorProto::FLOAT8E5M2FNUZ:
+      case TensorProto::FLOAT8E8M0:
       case TensorProto::UINT4:
       case TensorProto::INT4:
+      case TensorProto::UINT2:
+      case TensorProto::INT2:
       case TensorProto::FLOAT4E2M1:
         check_field(int32_data);
         break;
@@ -547,7 +548,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   for (const auto& attr : node.attribute()) {
     if (!seen_attr_names.insert(attr.name()).second) {
       fail_check("Attribute '", attr.name(), "' appeared multiple times.");
-    };
+    }
 
     check_attribute(attr, ctx, lex_ctx);
   }
@@ -557,7 +558,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
     return;
   }
 
-  const auto* schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
+  const auto* const schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN || node.domain() == "ai.onnx" ||
         node.domain() == AI_ONNX_TRAINING_DOMAIN || ctx.check_custom_domain()) {
@@ -741,10 +742,10 @@ void check_opset_compatibility(
     return;
   }
 
-  const auto* schema_for_model_import =
+  const auto* const schema_for_model_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), model_opset_version, node.domain());
 
-  const auto* schema_for_function_import =
+  const auto* const schema_for_function_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), func_opset_version, node.domain());
 
   if (!schema_for_model_import && !schema_for_function_import) {
@@ -802,7 +803,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   CheckerContext ctx_copy = ctx;
 
   std::unordered_map<std::string, int> func_opset_imports;
-  for (auto& relied_opset : function.opset_import()) {
+  for (const auto& relied_opset : function.opset_import()) {
     func_opset_imports[relied_opset.domain()] = static_cast<int>(relied_opset.version());
   }
 

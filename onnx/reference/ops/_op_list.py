@@ -46,6 +46,7 @@ __all__ = [
     "BlackmanWindow",
     "Cast_1",
     "Cast_19",
+    "Cast_24",
     "CastLike_15",
     "CastLike_19",
     "Ceil",
@@ -67,6 +68,7 @@ __all__ = [
     "ConvTranspose",
     "Cos",
     "Cosh",
+    "CumProd",
     "CumSum",
     "DeformConv",
     "DepthToSpace",
@@ -214,6 +216,7 @@ __all__ = [
     "SoftmaxCrossEntropyLoss",
     "Softplus",
     "Softsign",
+    "Swish",
     "SpaceToDepth",
     "Split_2",
     "Split_11",
@@ -232,6 +235,7 @@ __all__ = [
     "Sum",
     "Tan",
     "Tanh",
+    "TensorScatter",
     "TfIdfVectorizer",
     "ThresholdedRelu",
     "Tile",
@@ -294,7 +298,7 @@ from onnx.reference.ops.op_bitwise_not import BitwiseNot
 from onnx.reference.ops.op_bitwise_or import BitwiseOr
 from onnx.reference.ops.op_bitwise_xor import BitwiseXor
 from onnx.reference.ops.op_blackman_window import BlackmanWindow
-from onnx.reference.ops.op_cast import Cast_1, Cast_19
+from onnx.reference.ops.op_cast import Cast_1, Cast_19, Cast_24
 from onnx.reference.ops.op_cast_like import CastLike_15, CastLike_19
 from onnx.reference.ops.op_ceil import Ceil
 from onnx.reference.ops.op_celu import Celu
@@ -316,6 +320,7 @@ from onnx.reference.ops.op_conv_integer import ConvInteger
 from onnx.reference.ops.op_conv_transpose import ConvTranspose
 from onnx.reference.ops.op_cos import Cos
 from onnx.reference.ops.op_cosh import Cosh
+from onnx.reference.ops.op_cum_prod import CumProd
 from onnx.reference.ops.op_cum_sum import CumSum
 from onnx.reference.ops.op_deform_conv import DeformConv
 from onnx.reference.ops.op_depth_to_space import DepthToSpace
@@ -464,8 +469,10 @@ from onnx.reference.ops.op_string_normalizer import StringNormalizer
 from onnx.reference.ops.op_string_split import StringSplit
 from onnx.reference.ops.op_sub import Sub
 from onnx.reference.ops.op_sum import Sum
+from onnx.reference.ops.op_swish import Swish
 from onnx.reference.ops.op_tan import Tan
 from onnx.reference.ops.op_tanh import Tanh
+from onnx.reference.ops.op_tensor_scatter import TensorScatter
 from onnx.reference.ops.op_tfidf_vectorizer import TfIdfVectorizer
 from onnx.reference.ops.op_thresholded_relu import ThresholdedRelu
 from onnx.reference.ops.op_tile import Tile

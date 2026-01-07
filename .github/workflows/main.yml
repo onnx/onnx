@@ -33,9 +33,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
-        python_version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10', '3.9']
+        python_version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         include:
-          - python_version: '3.14-dev'
+          - python_version: '3.14'
             onnx_ml: 1
             debug_build: 1
             documentation: 0
@@ -45,7 +45,7 @@ jobs:
             debug_build: 1
             unity_build: 1
             documentation: 1
-            protobuf_type: 'Internal'            
+            protobuf_type: 'Internal'
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 1
@@ -76,36 +76,21 @@ jobs:
             unity_build: 0
             documentation: 0
             protobuf_type: 'Internal'
-          - python_version: '3.9'
-            onnx_ml: 1
-            debug_build: 0
-            unity_build: 0
-            documentation: 0
-            protobuf_type: 'External'
         exclude:
           - os: windows-11-arm
             python_version: '3.10'
-          - os: windows-11-arm
-            python_version: '3.9'
-          - os: windows-latest # TODO: reevalute for final python 3.14 release: "Numpy built with MINGW-W64 on Windows 64 bits is experimental"
-            python_version: '3.14-dev'
-          # skip mac os 3.9, 3.11, 3.13
-          - os:  macos-latest
-            python_version: '3.9'
           - os:  macos-latest
             python_version: '3.11'
-          - os:  macos-latest
-            python_version: '3.13'
-            
+
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
         with:
           python-version: ${{ matrix.python_version }}
 
@@ -146,15 +131,16 @@ jobs:
           }
 
           workflow_scripts/protobuf/build_protobuf_win.ps1 -cmake_arch $cmake_arch
+        shell: pwsh
 
       - name: Build and install ONNX - Linux
         if: startsWith(matrix.os,'ubuntu')
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
-          if [ "${{ matrix.python_version }}" == "3.14-dev" ]; then
+          if [ "${{ matrix.python_version }}" == "3.14" ]; then
             sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           fi
-        
+
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
@@ -197,15 +183,8 @@ jobs:
       - name: Install test dependencies
         run: |
           python -m pip install -r requirements-release_test.txt
-      
-      - name: Install Pillow with JPEG 2000 support
-        if: (matrix.python_version == '3.14-dev') && startsWith(matrix.os,'ubuntu')
-        run: |
-          sudo apt-get install -y libopenjp2-7-dev # TODO: integrate in test reqs
-          python -m pip install --upgrade Pillow --no-binary :all:
-          
+
       - name: Run Python tests
-        if: (matrix.python_version != '3.13t' ) && (matrix.python_version != '3.14-dev')
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
@@ -215,22 +194,35 @@ jobs:
           export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
 
+      - name: Run C++ extension test
+        if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'Internal'
+        run: |
+          cd ./.setuptools-cmake-build/
+          sudo cmake --build . --target install
+          cd .././onnx/test/cmake
+          mkdir build
+          cd build
+          cmake -DONNX_ML=${{ matrix.onnx_ml }} ..
+          cmake --build .
+          ./main
+
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'
-        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload test results to Codecov
         if: github.repository_owner == 'onnx' && !cancelled()
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
 
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t') && (matrix.python_version != '3.14-dev')
+        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status

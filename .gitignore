@@ -112,3 +112,5 @@ docs/docsgen/**/*.pb
 
 # PyEnv files
 .python-version
+.pixi/**
+=0.*

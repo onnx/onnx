@@ -158,24 +158,22 @@ void check_function(const FunctionProto& function, const CheckerContext&, const 
 // Check schema compatibility for 2 opset versions for a given node.
 // Checks whether the schema for 2 versions is same, this is true when the opschema
 // does not change between versions.
-void check_opset_compatibility(
+ONNX_API void check_opset_compatibility(
     const NodeProto& node,
     const CheckerContext& ctx,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const std::unordered_map<std::string, int>& model_opset_imports);
 
 // Checks all model local functions present in ModelProto
-void check_model_local_functions(
-    const ModelProto& model,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex);
+ONNX_API void
+check_model_local_functions(const ModelProto& model, const CheckerContext& ctx, const LexicalScopeContext& parent_lex);
 
-void check_model(
+ONNX_API void check_model(
     const ModelProto& model,
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
     bool check_custom_domain = false);
-void check_model(
+ONNX_API void check_model(
     const std::string& model_path,
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
@@ -184,7 +182,7 @@ std::string resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,
     const std::string& tensor_name);
-bool check_is_experimental_op(const NodeProto& node);
+ONNX_API bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE

@@ -169,7 +169,7 @@ class TestShapeInferenceHelper(unittest.TestCase):
         vis = sorted(vis, key=lambda x: x.name)
         inferred_vis = sorted(inferred_vis, key=lambda x: x.name)
         assert len(vis) == len(inferred_vis)
-        for v, inferred_v in zip(vis, inferred_vis):
+        for v, inferred_v in zip(vis, inferred_vis, strict=True):
             self._compare_value_infos(v.type, inferred_v.type)
 
     def _compare_value_infos(
@@ -1595,6 +1595,33 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("y", TensorProto.FLOAT, None),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    def test_tensor_scatter(self) -> None:
+        graph = self._make_graph(
+            [
+                ("past_cache", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("update", TensorProto.FLOAT, (2, 8, 10, 64)),
+                ("write_indices", TensorProto.INT64, (2,)),
+            ],
+            [
+                make_node(
+                    "TensorScatter",
+                    ["past_cache", "update", "write_indices"],
+                    ["present_cache"],
+                    axis=2,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "present_cache", TensorProto.FLOAT, (2, 8, 128, 64)
+                )
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 24)],
         )
 
     @parameterized.expand(all_versions_for("Squeeze"))
@@ -6254,6 +6281,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.FLOAT, (2, 2))]
         )
 
+    def test_cumprod(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 2)), ("axis", TensorProto.FLOAT, (1,))],
+            [make_node("CumProd", ["x", "axis"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("z", TensorProto.FLOAT, (3, 2))]
+        )
+
     def test_cumsum(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 3)), ("axis", TensorProto.FLOAT, (1,))],
@@ -7285,6 +7322,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())]
         )
 
+    def test_einsum_scalar_invalid_equation(self) -> None:
+        # Test that scalar inputs with incompatible equations fail gracefully
+        # instead of causing segfaults (issue #6981)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ())],
+            [make_node("Einsum", ["x"], ["y"], equation="i->i")],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def test_einsum_outer_prod(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 5)), ("y", TensorProto.FLOAT, (7, 9))],
@@ -7693,7 +7740,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_shape_is_NCdd(self) -> None:
+    def test_negative_log_likelihood_shape_is_NCdd(self) -> None:
         N, C = 3, 4
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (N, C)), ("target", TensorProto.INT64, (N,))],
@@ -7711,7 +7758,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, (N,))]
         )
 
-    def test_negative_log_likehood_shape_is_NC_with_weight(self) -> None:
+    def test_negative_log_likelihood_shape_is_NC_with_weight(self) -> None:
         N, C = 3, 4
         graph = self._make_graph(
             [
@@ -7733,7 +7780,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, (N,))]
         )
 
-    def test_negative_log_likehood_shape_is_NC_reduction_mean(self) -> None:
+    def test_negative_log_likelihood_shape_is_NC_reduction_mean(self) -> None:
         N, C = 3, 4
         graph = self._make_graph(
             [("input", TensorProto.FLOAT, (N, C)), ("target", TensorProto.INT64, (N,))],
@@ -7751,7 +7798,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_shape_is_NC_with_weight_reduction_mean(self) -> None:
+    def test_negative_log_likelihood_shape_is_NC_with_weight_reduction_mean(
+        self,
+    ) -> None:
         N, C = 3, 4
         graph = self._make_graph(
             [
@@ -7773,7 +7822,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_shape_is_NCd1d2(self) -> None:
+    def test_negative_log_likelihood_shape_is_NCd1d2(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -7794,7 +7843,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, (N, d1, d2))]
         )
 
-    def test_negative_log_likehood_shape_is_NCd1d2_with_weight(self) -> None:
+    def test_negative_log_likelihood_shape_is_NCd1d2_with_weight(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -7816,7 +7865,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, (N, d1, d2))]
         )
 
-    def test_negative_log_likehood_shape_is_NCd1d2_reduction_sum(self) -> None:
+    def test_negative_log_likelihood_shape_is_NCd1d2_reduction_sum(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -7837,7 +7886,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_shape_is_NCd1d2_with_weight_reduction_mean(
+    def test_negative_log_likelihood_shape_is_NCd1d2_with_weight_reduction_mean(
         self,
     ) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
@@ -7861,7 +7910,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("loss", TensorProto.FLOAT, ())]
         )
 
-    def test_negative_log_likehood_input_target_shape_mismatch(self) -> None:
+    def test_negative_log_likelihood_input_target_shape_mismatch(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -7882,7 +7931,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
-    def test_negative_log_likehood_input_weight_shape_mismatch(self) -> None:
+    def test_negative_log_likelihood_input_weight_shape_mismatch(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
         graph = self._make_graph(
             [
@@ -8062,7 +8111,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
         onnx.shape_inference.infer_shapes(original_model, strict_mode=True)
 
-    def test_infer_initializer_input_consistency_differnt_rank(self) -> None:
+    def test_infer_initializer_input_consistency_different_rank(self) -> None:
         initializer_shape = (8, 7, 9)
         input_shape = (None, 7)  # acceptable
         original_model = self.prepare_input_initializer_tensors(
@@ -10801,10 +10850,9 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         node = make_node(
             self.custom_op_type, ["a", "b"], [v.name for v in outs], out_len=out_len
         )
-        graph = make_graph(
+        return make_graph(
             [node], "test", [a, b], outs if mark_output else [], value_info=outs
         )
-        return graph
 
     def gen_dummy_graph_graph(self, N, La, Lb, out_len):
         subgraph = self.gen_custom_op_graph(N, La, Lb, out_len, True)
@@ -10817,8 +10865,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         node = make_node(
             self.dummy_graph_op_type, ["a", "b"], [v.name for v in outs], graph=subgraph
         )
-        graph = make_graph([node], "test", [a, b], [], value_info=outs)
-        return graph
+        return make_graph([node], "test", [a, b], [], value_info=outs)
 
     def shape_infer_once(self, graph, N, La, Lb, out_len):
         self._assert_inferred(

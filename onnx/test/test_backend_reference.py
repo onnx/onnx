@@ -17,6 +17,7 @@ from onnx.backend.base import Device, DeviceType
 from onnx.reference import ReferenceEvaluator
 
 # The following just executes a backend based on ReferenceEvaluator through the backend test
+VERBOSE = int(os.environ.get("VERBOSE", "0"))
 
 
 class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
@@ -28,12 +29,12 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             inputs = [inputs]
         if isinstance(inputs, list):
             if len(inputs) == len(self._session.input_names):
-                feeds = dict(zip(self._session.input_names, inputs))
+                feeds = dict(zip(self._session.input_names, inputs, strict=True))
             else:
                 feeds = {}
                 pos_inputs = 0
                 for inp, tshape in zip(
-                    self._session.input_names, self._session.input_types
+                    self._session.input_names, self._session.input_types, strict=True
                 ):
                     shape = tuple(d.dim_value for d in tshape.tensor_type.shape.dim)
                     if shape == inputs[pos_inputs].shape:
@@ -45,8 +46,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             feeds = inputs
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
-        outs = self._session.run(None, feeds)
-        return outs
+        return self._session.run(None, feeds)
 
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
@@ -61,7 +61,7 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
 
     @classmethod
     def create_inference_session(cls, model):
-        return ReferenceEvaluator(model)
+        return ReferenceEvaluator(model, verbose=VERBOSE)
 
     @classmethod
     def prepare(
@@ -119,7 +119,6 @@ backend_test.exclude(
 # The following tests cannot pass because they consists in generating random number.
 backend_test.exclude("(test_bernoulli)")
 
-
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
 
@@ -133,6 +132,17 @@ if version_utils.numpy_older_than("2.0"):
     backend_test.exclude(r"test_cast.*(FLOAT8|BFLOAT16|FLOAT4|INT4)")
     backend_test.exclude(r"test_quantizelinear_e4m3fn")
     backend_test.exclude(r"test_quantizelinear_float4e2m1")
+
+# The documentation does not explicitly say that is_causal=1 and attn_mask is not None
+# is not allowed. The expansion (based on the function definition in ONNX)
+# assumes this case never happens and behaves likes is_causal=0 even if it is 1.
+# The reference implementation and the backend tests have a different behavior in that case.
+backend_test.exclude(
+    "(test_attention_4d_with_past_and_present_qk_matmul_bias_4d_mask_causal_expanded"
+    "|test_attention_4d_with_past_and_present_qk_matmul_bias_3d_mask_causal_expanded"
+    "|test_attention_4d_attn_mask_4d_causal_expanded"
+    "|test_attention_4d_attn_mask_3d_causal_expanded)"
+)
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

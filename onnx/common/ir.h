@@ -111,8 +111,8 @@ enum class AttributeKind : uint8_t {
 static inline const char* toString(AttributeKind kind) {
   // NOLINTNEXTLINE(modernize-avoid-c-arrays)
   static constexpr const char* names[] = {"f", "fs", "i", "is", "s", "ss", "t", "ts", "g", "gs", "tp", "tps"};
-  ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*))
-  return names[int(kind)];
+  ONNX_ASSERT(size_t(kind) < std::size(names));
+  return names[static_cast<int>(kind)];
 }
 
 struct AttributeValue {
@@ -839,7 +839,7 @@ class OpSetID final {
   explicit OpSetID(const OperatorSetIdProto& proto) : domain_(proto.domain()), version_(proto.version()) {}
 
   // Default Domain Constructor
-  explicit OpSetID(const int64_t version) : domain_(""), version_(version) {}
+  explicit OpSetID(const int64_t version) : version_(version) {}
 
   explicit OpSetID(std::string domain, int64_t version) : domain_(std::move(domain)), version_(version) {}
 
@@ -1272,7 +1272,7 @@ inline const Graph* Value::owningGraph() const {
 // `captured` nodes in subgraph determines which value it captures
 // by storing the value's unique name, so old unique names in `captured` nodes
 // should also be updated.
-// Initializer names are also storaged in graph.initializer_names_, it should be
+// Initializer names are also stored in graph.initializer_names_, it should be
 // updated too.
 inline Value* Value::setUniqueName(const std::string& name, bool update_related_names) {
   if (has_unique_name() && update_related_names) {

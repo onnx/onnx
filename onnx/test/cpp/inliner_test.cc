@@ -4,13 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
-
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
-#include "onnx/common/constants.h"
+#include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
-#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
 #include "onnx/shape_inference/implementation.h"
@@ -117,10 +114,10 @@ square (x) => (y) {
 
   ModelProto model;
   InlineFunctions(model, code);
-  auto& if_node = model.graph().node(0);
-  auto& graph1 = if_node.attribute(0).g();
+  const auto& if_node = model.graph().node(0);
+  const auto& graph1 = if_node.attribute(0).g();
   ASSERT_EQ(graph1.node(0).op_type(), "Mul");
-  auto& graph2 = if_node.attribute(1).g();
+  const auto& graph2 = if_node.attribute(1).g();
   ASSERT_EQ(graph2.node(0).op_type(), "Mul");
   auto num_functions = model.functions_size();
   ASSERT_EQ(num_functions, 0);
@@ -198,10 +195,10 @@ foo (x) => (y)
   ModelProto model;
   InlineFunctions(model, code);
   // Check that valueinfo is propagated from function to main graph.
-  auto& graph = model.graph();
-  auto& temp_new_name = graph.node(0).output(0);
-  auto& valueinfos = graph.value_info();
-  for (auto& valueinfo : valueinfos) {
+  const auto& graph = model.graph();
+  const auto& temp_new_name = graph.node(0).output(0);
+  const auto& valueinfos = graph.value_info();
+  for (const auto& valueinfo : valueinfos) {
     if (valueinfo.name() == temp_new_name) {
       ASSERT_TRUE(valueinfo.has_type());
       ASSERT_TRUE(valueinfo.type().has_tensor_type());
@@ -259,12 +256,12 @@ bar (x) => (y) {
   InlineFunctions(model, code);
 
   // The first node's call, to foo, must be inlined.
-  auto& first_node = model.graph().node(0);
+  const auto& first_node = model.graph().node(0);
   // Check that it is a call to Add
   ASSERT_EQ(first_node.op_type(), "Add");
 
   // The second node's call, to bar, must be inlined.
-  auto& second_node = model.graph().node(1);
+  const auto& second_node = model.graph().node(1);
   // Check that it is a call to Add
   ASSERT_EQ(second_node.op_type(), "Add");
 
@@ -297,19 +294,19 @@ bar (x) => (y) {
   InlineFunctions(model, code, to_inline_set.get());
 
   // The first node's call, to foo, must be inlined.
-  auto& first_node = model.graph().node(0);
+  const auto& first_node = model.graph().node(0);
   // Check that it is a call to Add
   ASSERT_EQ(first_node.op_type(), "Add");
 
   // The second node's call, to bar, must not be inlined.
-  auto& second_node = model.graph().node(1);
+  const auto& second_node = model.graph().node(1);
   // Check that it is a call to bar
   ASSERT_EQ(second_node.op_type(), "bar");
 
   // foo will be removed, bar will remain, in model.functions()
   ASSERT_EQ(model.functions_size(), 1);
 
-  auto& bar_node = model.functions(0).node(0);
+  const auto& bar_node = model.functions(0).node(0);
   // Check that it is a call to Add, due to inlining
   // the call to foo in bar.
   ASSERT_EQ(bar_node.op_type(), "Add");
@@ -333,7 +330,7 @@ foo (x) => (y) {
   InlineFunctions(model, code);
   // Inlining ReduceLogSum (version 17) should convert it to ReduceLogSum (version 18)
   // by promoting axes from attribute to input.
-  auto& node = model.graph().node(1);
+  const auto& node = model.graph().node(1);
   ASSERT_EQ(node.op_type(), "ReduceLogSum");
   ASSERT_EQ(node.input_size(), 2);
   ASSERT_EQ(node.attribute_size(), 0);
@@ -367,7 +364,7 @@ bar (x) => (y) {
   // Check that both ReduceLogSum nodes have been converted.
   ASSERT_EQ(model.graph().node_size(), 4);
   ASSERT_EQ(model.graph().node(0).op_type(), "Constant");
-  auto& node = model.graph().node(1);
+  const auto& node = model.graph().node(1);
   ASSERT_EQ(node.op_type(), "ReduceLogSum");
   ASSERT_EQ(node.input_size(), 2);
   ASSERT_EQ(node.attribute_size(), 0);
@@ -430,5 +427,75 @@ agraph (float[N, C] X, int32[N] expected) => (float Y)
   // Nested call to LogSoftmax should be inlined.
   ASSERT_FALSE(ContainsOp(model, "LogSoftmax"));
 }
+
+TEST(FunctionBuilder, AddInlinedCallBasic) {
+  // Test the AddInlinedCall functionality
+  GraphProto graph;
+
+  // Create a simple graph using parser for better readability
+  const char* graph_text = R"ONNX(
+test_graph (float x) => (float y)
+<float const_val = {2.0}>
+{
+    y = Add(x, const_val)
+}
+)ONNX";
+
+  auto status = OnnxParser::Parse(graph, graph_text);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  // Create a function and use AddInlinedCall
+  FunctionProto function;
+  FunctionBuilder builder(function);
+
+  builder.AddInlinedCall({"result"}, graph, {"input_x"}, "test");
+
+  // Verify the function has the expected structure
+  ASSERT_EQ(function.node_size(), 2); // One Constant node + one Add node
+
+  // Check the first node is a Constant
+  ASSERT_EQ(function.node(0).op_type(), "Constant");
+  ASSERT_EQ(function.node(0).output_size(), 1);
+  ASSERT_TRUE(function.node(0).output(0).find("test") != std::string::npos);
+
+  // Check the second node is an Add
+  ASSERT_EQ(function.node(1).op_type(), "Add");
+  ASSERT_EQ(function.node(1).input_size(), 2);
+  ASSERT_EQ(function.node(1).output_size(), 1);
+  ASSERT_EQ(function.node(1).input(0), "input_x"); // Should be renamed to actual input
+  ASSERT_EQ(function.node(1).output(0), "result"); // Should be renamed to actual output
+}
+
+TEST(Renamer, BasicFunctionality) {
+  // Test the Renamer class functionality
+  GraphProto graph;
+
+  // Add input to graph
+  auto* input = graph.add_input();
+  input->set_name("input");
+
+  // Create a Renamer instance
+  inliner::Renamer renamer("test", graph);
+
+  // Test binding names
+  renamer.BindName("formal_input", "actual_input");
+
+  // Test creating unique names and binding
+  std::string unique_name = renamer.BindToUniqueName("temp");
+  ASSERT_TRUE(unique_name.find("test") != std::string::npos);
+
+  // Test renaming a node
+  NodeProto node;
+  node.set_op_type("Add");
+  node.add_input("formal_input");
+  node.add_output("temp_output");
+
+  renamer.RenameNode(node);
+
+  // Verify renaming worked correctly
+  ASSERT_EQ(node.input(0), "actual_input"); // Should be bound to actual name
+  ASSERT_TRUE(node.output(0).find("test") != std::string::npos); // Should have prefix
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

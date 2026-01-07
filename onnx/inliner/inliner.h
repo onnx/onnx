@@ -79,5 +79,67 @@ void InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline);
 // functions that use opset versions that are compatible with the model.
 void InlineLocalFunctions(ModelProto& model, bool convert_version = false);
 
+/**
+ * @brief A utility class for renaming variables during graph inlining operations.
+ *
+ * This class provides a simplified interface to the InliningRenamer functionality,
+ * allowing users to bind formal parameter names to actual parameter names and
+ * rename nodes with unique prefixes.
+ */
+class Renamer {
+ public:
+  /**
+   * @brief Constructs a Renamer with the given prefix.
+   *
+   * @param prefix The prefix to add to intermediate variable names to ensure uniqueness.
+   * @param graph The graph context for name generation.
+   */
+  explicit Renamer(const std::string& prefix, const GraphProto& graph);
+
+  /**
+   * @brief Constructs a Renamer with the given prefix.
+   *
+   * @param prefix The prefix to add to intermediate variable names to ensure uniqueness.
+   * @param function The function context for name generation.
+   */
+  explicit Renamer(const std::string& prefix, const FunctionProto& function);
+
+  /**
+   * @brief Destructor.
+   */
+  ~Renamer();
+
+  /**
+   * @brief Binds a formal parameter name to an actual parameter name.
+   *
+   * @param formal_name The formal parameter name in the source graph.
+   * @param actual_name The actual parameter name to use in the target.
+   */
+  void BindName(const std::string& formal_name, const std::string& actual_name);
+
+  /**
+   * @brief Creates a unique name for the given name and binds it.
+   *
+   * This method creates a unique name based on the prefix and binds the original
+   * name to the unique name for later reference renaming.
+   *
+   * @param original_name The name to create a unique version of.
+   * @return The unique name that was created and bound.
+   */
+  std::string BindToUniqueName(const std::string& original_name);
+
+  /**
+   * @brief Renames all variables in the given node according to the current bindings.
+   *
+   * @param node The node to rename. Input and output names will be updated in place.
+   */
+  void RenameNode(NodeProto& node);
+
+ private:
+  // Pimpl pattern to hide internal implementation details
+  class Impl;
+  std::unique_ptr<Impl> pImpl_;
+};
+
 } // namespace inliner
 } // namespace ONNX_NAMESPACE
