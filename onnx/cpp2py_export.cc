@@ -357,11 +357,11 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             self->SetName(std::move(name)).SetDomain(std::move(domain)).SinceVersion(since_version).SetDoc(doc);
             self->SetNodeDeterminism(node_determinism);
             // Add inputs and outputs
-            for (auto i = 0; i < inputs.size(); ++i) {
-              self->Input(i, std::move(inputs[i]));
+            for (size_t i = 0; i < inputs.size(); ++i) {
+              self->Input(static_cast<int>(i), std::move(inputs[i]));
             }
-            for (auto i = 0; i < outputs.size(); ++i) {
-              self->Output(i, std::move(outputs[i]));
+            for (size_t i = 0; i < outputs.size(); ++i) {
+              self->Output(static_cast<int>(i), std::move(outputs[i]));
             }
             // Add type constraints
             for (auto& type_constraint : type_constraints) {

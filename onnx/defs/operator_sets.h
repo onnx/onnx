@@ -108,7 +108,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Xor);
 // Iterate over schema from ai.onnx version 1
 class OpSet_Onnx_ver1 {
  public:
-  static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
+  ONNX_API static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Abs)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Add)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, And)>());
@@ -1442,7 +1442,7 @@ class OpSet_Onnx_ver25 {
   }
 };
 
-inline void RegisterOnnxOperatorSetSchema() {
+ONNX_API inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
   RegisterOpSetSchema<OpSet_Onnx_ver3>();
@@ -1472,7 +1472,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   OpSchemaRegistry::Instance()->SetLoadedSchemaVersion(0);
 }
 
-inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicate_schema = true) {
+ONNX_API inline void RegisterOnnxOperatorSetSchema(int target_version, bool fail_duplicate_schema = true) {
   // Update here if opset_version bumps
   // These calls for schema registration here are required to be in descending order for this to work correctly
   //
