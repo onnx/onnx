@@ -126,45 +126,10 @@ jobs:
         emmake make -j$(nproc)
         cd ../..
 
-    - name: Cache protobuf-native
-      id: cache-protobuf-native
-      uses: actions/cache@v4
-      with:
-        path: protobuf-native
-        key: protobuf-native-${{ steps.protobuf_version.outputs.version }}
-
-    - name: Build native protobuf for protoc
-      if: steps.cache-protobuf-native.outputs.cache-hit != 'true'
+    - name: Build and install protoc
       run: |
-        # Clone and checkout the right version
-        git clone https://github.com/protocolbuffers/protobuf.git protobuf-native
-        cd protobuf-native
-        git checkout v${{ steps.protobuf_version.outputs.version }}
-        git submodule update --init --recursive
-
-        # Build natively (not with emscripten) to get protoc binary
-        # CMake configuration is similar to WASM build but without emcmake
-        mkdir -p build_source
-        cd build_source
-        cmake .. \
-          -DCMAKE_BUILD_TYPE=Release \
-          -Dprotobuf_BUILD_SHARED_LIBS=OFF \
-          -DCMAKE_INSTALL_PREFIX=/usr \
-          -DCMAKE_INSTALL_SYSCONFDIR=/etc \
-          -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-          -Dprotobuf_BUILD_TESTS=OFF \
-          -Dprotobuf_ABSL_PROVIDER=module
-
-        make -j$(nproc)
-        cd ../..
-
-    - name: Install protoc to system
-      run: |
-        cd protobuf-native/build_source
-        sudo make install
-        sudo ldconfig
-        which protoc
-        protoc --version
+        # Use ONNX's existing protobuf build script to build and install protoc
+        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
 
     - name: Configure build environment
       run: |
