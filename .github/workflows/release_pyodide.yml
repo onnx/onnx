@@ -113,7 +113,7 @@ jobs:
         # Build with emscripten
         mkdir -p build_source
         cd build_source
-        emcmake cmake ../cmake \
+        emcmake cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
           -Dprotobuf_BUILD_SHARED_LIBS=OFF \
           -DCMAKE_INSTALL_PREFIX=/usr \
@@ -145,7 +145,7 @@ jobs:
         # CMake configuration is similar to WASM build but without emcmake
         mkdir -p build_source
         cd build_source
-        cmake ../cmake \
+        cmake .. \
           -DCMAKE_BUILD_TYPE=Release \
           -Dprotobuf_BUILD_SHARED_LIBS=OFF \
           -DCMAKE_INSTALL_PREFIX=/usr \
