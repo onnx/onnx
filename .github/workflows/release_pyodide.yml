@@ -2,6 +2,18 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# This workflow builds ONNX wheels for Pyodide (WebAssembly).
+# Pyodide wheels allow ONNX to run in web browsers.
+#
+# Key adaptations from the original josephrocca/onnx-pyodide build process:
+# - Uses modern pyodide-build tool (vs. manual emscripten compilation)
+# - Automatically detects compatible emscripten version via pyodide config
+# - Uses GitHub Actions caching for emscripten and protobuf builds
+# - Dynamically determines protobuf version from requirements
+# - Builds both WASM protobuf (for linking) and native protobuf (for protoc binary)
+# - Uses --exports whole_archive flag to ensure all symbols are included
+# - Removes test data from wheel to optimize size (~10MB -> ~1.5MB)
+
 name: PyodideRelease
 
 on:
