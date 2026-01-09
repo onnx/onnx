@@ -90,13 +90,13 @@ jobs:
       if: steps.cache-protobuf-wasm.outputs.cache-hit != 'true'
       run: |
         source emsdk/emsdk_env.sh
-        
+
         # Clone and checkout the right version
         git clone https://github.com/protocolbuffers/protobuf.git protobuf-wasm
         cd protobuf-wasm
         git checkout v${{ steps.protobuf_version.outputs.version }}
         git submodule update --init --recursive
-        
+
         # Build with emscripten
         mkdir -p build_source
         cd build_source
@@ -108,7 +108,7 @@ jobs:
           -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
           -Dprotobuf_BUILD_TESTS=OFF \
           -Dprotobuf_BUILD_PROTOC_BINARIES=OFF
-        
+
         emmake make -j$(nproc)
         cd ../..
 
@@ -127,7 +127,7 @@ jobs:
         cd protobuf-native
         git checkout v${{ steps.protobuf_version.outputs.version }}
         git submodule update --init --recursive
-        
+
         # Build natively
         mkdir -p build_source
         cd build_source
@@ -138,7 +138,7 @@ jobs:
           -DCMAKE_INSTALL_SYSCONFDIR=/etc \
           -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
           -Dprotobuf_BUILD_TESTS=OFF
-        
+
         make -j$(nproc)
         cd ../..
 
@@ -153,7 +153,7 @@ jobs:
     - name: Configure build environment
       run: |
         source emsdk/emsdk_env.sh
-        
+
         # Set up build mode
         if [ '${{ inputs.build_mode }}' != 'release' ]; then
           echo "Building preview wheels..."
@@ -163,11 +163,11 @@ jobs:
         else
           echo "Building release wheels..."
         fi
-        
+
         # Configure ONNX build settings
         export ONNX_ML=1
         echo "ONNX_ML=1" >> $GITHUB_ENV
-        
+
         # Set CMAKE_ARGS for pyodide build
         export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF \
           -DONNX_USE_LITE_PROTO=ON \
@@ -179,13 +179,13 @@ jobs:
           -DPYTHON_LIBRARY=$(python -c 'import sysconfig; print(sysconfig.get_config_var(\"LIBDIR\"))') \
           -DCMAKE_C_FLAGS=\"-fPIC\" \
           -DCMAKE_CXX_FLAGS=\"-fPIC\""
-        
+
         echo "CMAKE_ARGS=${CMAKE_ARGS}" >> $GITHUB_ENV
 
     - name: Build Pyodide wheel
       run: |
         source emsdk/emsdk_env.sh
-        
+
         # Build with pyodide-build using whole_archive to ensure all symbols are included
         pyodide build --exports whole_archive
 
@@ -211,7 +211,7 @@ jobs:
   test:
     needs: build
     runs-on: ubuntu-24.04
-    
+
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
@@ -237,12 +237,12 @@ jobs:
       - name: Test wheel with Pyodide
         run: |
           python -m pip install pyodide-build
-          
+
           # Create a simple test script
           cat > test_pyodide.py << 'EOF'
           import asyncio
           from pyodide_build.testing import run_in_pyodide
-          
+
           @run_in_pyodide
           def test_onnx_import():
               import onnx
@@ -251,29 +251,29 @@ jobs:
               assert hasattr(onnx, 'ModelProto')
               assert hasattr(onnx, 'TensorProto')
               return True
-          
+
           async def main():
               result = await test_onnx_import()
               print(f"Test result: {result}")
               assert result, "Test failed"
-          
+
           if __name__ == "__main__":
               asyncio.run(main())
           EOF
-          
+
           # Install the wheel in Pyodide environment and run test
           wheel_file=$(ls dist/*.whl)
           echo "Testing wheel: $wheel_file"
-          
+
           # For now, just verify the wheel file exists and is reasonable size
           if [ -f "$wheel_file" ]; then
             echo "Wheel file found: $wheel_file"
             ls -lh "$wheel_file"
-            
+
             # Check wheel size is reasonable (should be 1-5 MB after optimization)
             size=$(stat -c%s "$wheel_file")
             echo "Wheel size: $size bytes"
-            
+
             # Verify it's a valid zip file
             unzip -t "$wheel_file" > /dev/null
             echo "Wheel file is valid"
