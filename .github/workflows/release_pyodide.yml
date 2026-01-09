@@ -120,7 +120,8 @@ jobs:
           -DCMAKE_INSTALL_SYSCONFDIR=/etc \
           -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
           -Dprotobuf_BUILD_TESTS=OFF \
-          -Dprotobuf_BUILD_PROTOC_BINARIES=OFF
+          -Dprotobuf_BUILD_PROTOC_BINARIES=OFF \
+          -Dprotobuf_ABSL_PROVIDER=module
 
         emmake make -j$(nproc)
         cd ../..
@@ -151,7 +152,8 @@ jobs:
           -DCMAKE_INSTALL_PREFIX=/usr \
           -DCMAKE_INSTALL_SYSCONFDIR=/etc \
           -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-          -Dprotobuf_BUILD_TESTS=OFF
+          -Dprotobuf_BUILD_TESTS=OFF \
+          -Dprotobuf_ABSL_PROVIDER=module
 
         make -j$(nproc)
         cd ../..
