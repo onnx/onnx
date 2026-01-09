@@ -87,7 +87,8 @@ jobs:
       id: protobuf_version
       run: |
         # Get protobuf version from requirements
-        PROTOBUF_VERSION=$(python -c "import re; content=open('requirements-release_build.txt').read(); match=re.search(r'protobuf>=([0-9.]+)', content); print(match.group(1) if match else '4.25.1')")
+        # Fallback to 5.29.2 if not found (current stable protobuf version)
+        PROTOBUF_VERSION=$(python -c "import re; content=open('requirements-release_build.txt').read(); match=re.search(r'protobuf>=([0-9.]+)', content); print(match.group(1) if match else '5.29.2')")
         echo "version=${PROTOBUF_VERSION}" >> $GITHUB_OUTPUT
         echo "Using protobuf version: ${PROTOBUF_VERSION}"
 
@@ -140,7 +141,8 @@ jobs:
         git checkout v${{ steps.protobuf_version.outputs.version }}
         git submodule update --init --recursive
 
-        # Build natively
+        # Build natively (not with emscripten) to get protoc binary
+        # CMake configuration is similar to WASM build but without emcmake
         mkdir -p build_source
         cd build_source
         cmake ../cmake \
@@ -208,10 +210,23 @@ jobs:
         wheel_file=$(ls dist/*.whl)
         if [ -f "$wheel_file" ]; then
           echo "Optimizing wheel: $wheel_file"
-          # Remove test data from the wheel
-          zip --delete "$wheel_file" 'onnx/backend/test/data/*' || true
-          echo "Wheel optimized"
+          original_size=$(stat -c%s "$wheel_file")
+          echo "Original size: $original_size bytes ($(numfmt --to=iec-i --suffix=B $original_size))"
+
+          # Remove test data from the wheel (ignore errors if pattern doesn't exist)
+          if zip --delete "$wheel_file" 'onnx/backend/test/data/*' 2>/dev/null; then
+            echo "Successfully removed test data from wheel"
+          else
+            echo "Note: No test data found in wheel or already removed"
+          fi
+
+          optimized_size=$(stat -c%s "$wheel_file")
+          echo "Optimized size: $optimized_size bytes ($(numfmt --to=iec-i --suffix=B $optimized_size))"
+          echo "Size reduction: $((original_size - optimized_size)) bytes"
           ls -lh dist/
+        else
+          echo "Error: Wheel file not found"
+          exit 1
         fi
 
     - name: Upload Pyodide wheel
