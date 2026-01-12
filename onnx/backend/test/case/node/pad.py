@@ -23,8 +23,8 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):
 
     # Separate negative (crop) and positive (pad) values
     # Negative pads crop first, then positive pads apply padding
-    slices = [slice(None)] * input_rank
-    pad_width = [[0, 0] for _ in range(input_rank)]
+    slices = [slice(None)] * input_rank  # Start with full slices for all axes
+    pad_width = [[0, 0] for _ in range(input_rank)]  # Initialize with no padding
     
     for i in range(num_axes):
         axis = axes[i]
@@ -39,9 +39,11 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):
         end_crop = max(0, -end_pad)
         
         # Update slice for this axis
+        # Note: If total cropping exceeds dimension size, the slice will be empty
+        # which is allowed for constant mode
         dim_size = data.shape[axis]
         slice_start = start_crop
-        slice_end = dim_size - end_crop if end_crop > 0 else dim_size
+        slice_end = max(slice_start, dim_size - end_crop)  # Ensure slice_end >= slice_start
         slices[axis] = slice(slice_start, slice_end)
         
         # Only positive padding remains
@@ -163,7 +165,7 @@ class Pad(Base):
         )
         pads = np.array([0, -1, 0, -1]).astype(
             np.int64
-        )  # Remove first and last column
+        )  # Remove first column (begin) and last column (end)
         value = np.float32(0.0)
         y = pad_impl(x, pads, "constant", 0.0)
 
@@ -212,7 +214,7 @@ class Pad(Base):
         )
         pads = np.array([-1, 0, 0, 1]).astype(
             np.int64
-        )  # Remove first row, add one column at end
+        )  # Remove first row (begin), add one column at end
         y = pad_impl(x, pads, "edge")
 
         expect(
