@@ -21,17 +21,36 @@ def pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):
     if num_axes * 2 != raw_pads.size:
         raise ValueError("The number of elements in raw_pads should be 2 * num_axes")
 
-    pad_width = []
-    for _ in range(input_rank):
-        pad_width += [[0, 0]]  # init to zero
-
-    # re-order to np.pad accepted order ((x1_begin, x1_end), (x2_begin, x2_end), ...)
+    # Separate negative (crop) and positive (pad) values
+    # Negative pads crop first, then positive pads apply padding
+    slices = [slice(None)] * input_rank
+    pad_width = [[0, 0] for _ in range(input_rank)]
+    
     for i in range(num_axes):
         axis = axes[i]
         if axis < 0:
             axis = input_rank + axis
-        pad_width[axis] = [raw_pads[i], raw_pads[i + num_axes]]
-
+        
+        begin_pad = raw_pads[i]
+        end_pad = raw_pads[i + num_axes]
+        
+        # Handle negative pads (cropping)
+        start_crop = max(0, -begin_pad)
+        end_crop = max(0, -end_pad)
+        
+        # Update slice for this axis
+        dim_size = data.shape[axis]
+        slice_start = start_crop
+        slice_end = dim_size - end_crop if end_crop > 0 else dim_size
+        slices[axis] = slice(slice_start, slice_end)
+        
+        # Only positive padding remains
+        pad_width[axis] = [max(0, begin_pad), max(0, end_pad)]
+    
+    # Apply cropping first
+    data = data[tuple(slices)]
+    
+    # Then apply padding
     if mode == "constant":
         return np.pad(
             data,
@@ -126,4 +145,76 @@ class Pad(Base):
             inputs=[x, pads, value, axes],
             outputs=[y],
             name="test_constant_pad_negative_axes",
+        )
+
+    @staticmethod
+    def export_negative_pads_constant() -> None:
+        """Test negative pads (cropping) with constant mode."""
+        node = onnx.helper.make_node(
+            "Pad", inputs=["x", "pads", "value"], outputs=["y"], mode="constant"
+        )
+        x = np.array(
+            [
+                [1.0, 1.2, 1.4, 1.6],
+                [2.0, 2.2, 2.4, 2.6],
+                [3.0, 3.2, 3.4, 3.6],
+            ],
+            dtype=np.float32,
+        )
+        pads = np.array([0, -1, 0, -1]).astype(
+            np.int64
+        )  # Remove first and last column
+        value = np.float32(0.0)
+        y = pad_impl(x, pads, "constant", 0.0)
+
+        expect(
+            node,
+            inputs=[x, pads, value],
+            outputs=[y],
+            name="test_pad_negative_pads_constant",
+        )
+
+    @staticmethod
+    def export_negative_pads_reflect() -> None:
+        """Test negative pads (cropping) with reflect mode."""
+        node = onnx.helper.make_node(
+            "Pad", inputs=["x", "pads"], outputs=["y"], mode="reflect"
+        )
+        x = np.array(
+            [
+                [1.0, 1.2, 1.4, 1.6],
+                [2.0, 2.2, 2.4, 2.6],
+                [3.0, 3.2, 3.4, 3.6],
+            ],
+            dtype=np.float32,
+        )
+        pads = np.array([0, -1, 0, 1]).astype(
+            np.int64
+        )  # Remove first column, add one at end
+        y = pad_impl(x, pads, "reflect")
+
+        expect(
+            node, inputs=[x, pads], outputs=[y], name="test_pad_negative_pads_reflect"
+        )
+
+    @staticmethod
+    def export_negative_pads_edge() -> None:
+        """Test negative pads (cropping) with edge mode."""
+        node = onnx.helper.make_node(
+            "Pad", inputs=["x", "pads"], outputs=["y"], mode="edge"
+        )
+        x = np.array(
+            [
+                [1.0, 1.2, 1.4],
+                [2.0, 2.2, 2.4],
+            ],
+            dtype=np.float32,
+        )
+        pads = np.array([-1, 0, 0, 1]).astype(
+            np.int64
+        )  # Remove first row, add one column at end
+        y = pad_impl(x, pads, "edge")
+
+        expect(
+            node, inputs=[x, pads], outputs=[y], name="test_pad_negative_pads_edge"
         )

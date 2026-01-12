@@ -786,6 +786,23 @@ The three supported `modes` are (similar to corresponding modes supported by `nu
 
 4) `wrap` - wrap-around padding as if the data tensor forms a torus
 
+**Negative pads (cropping):**
+
+The `pads` tensor may contain negative values, which represent the number of elements to remove (crop) from the beginning or end of an axis.
+When negative pads are used, the cropping is applied **first**, followed by padding using the specified mode.
+
+For `reflect` mode with negative pads:
+- After cropping, each axis must have a length of at least 2 to perform reflection.
+- If cropping results in an axis length less than 2, the behavior is undefined and may result in an error.
+
+For `edge` and `wrap` modes with negative pads:
+- After cropping, each axis must have a length of at least 1.
+- If cropping results in an axis length of 0, the behavior is undefined and may result in an error for non-constant modes.
+
+For `constant` mode with negative pads:
+- Cropping can result in any non-negative dimension size (including 0).
+- If all data is removed by cropping, the output will be filled with the constant value.
+
 
 Example 1 (`constant` mode):
 
@@ -871,6 +888,79 @@ output = [
     [3.4, 2.3, 3.4, 2.3],
     [5.7, 4.5, 5.7, 4.5],
     [1.2, 1.0, 1.2, 1.0],
+]
+```
+
+Example 5 (negative pads with `constant` mode):
+
+Negative pads remove (crop) elements. Cropping happens before padding.
+
+```
+data = [
+    [1.0, 1.2, 1.4, 1.6],
+    [2.0, 2.2, 2.4, 2.6],
+    [3.0, 3.2, 3.4, 3.6],
+]
+
+pads = [0, -1, 0, -1]
+
+mode = 'constant'
+
+constant_value = 0.0
+
+output = [
+    [1.2, 1.4],
+    [2.2, 2.4],
+    [3.2, 3.4],
+]
+```
+
+Example 6 (negative pads with `reflect` mode):
+
+With reflect mode, after cropping, each axis must have at least 2 elements to reflect.
+
+```
+data = [
+    [1.0, 1.2, 1.4, 1.6],
+    [2.0, 2.2, 2.4, 2.6],
+    [3.0, 3.2, 3.4, 3.6],
+]
+
+pads = [0, -1, 0, 1]
+
+mode = 'reflect'
+
+# After cropping with pads [0, -1], the data becomes:
+# [[1.2, 1.4, 1.6],
+#  [2.2, 2.4, 2.6],
+#  [3.2, 3.4, 3.6]]
+# Then apply positive pads [0, 1] using reflection:
+
+output = [
+    [1.2, 1.4, 1.6, 1.4],
+    [2.2, 2.4, 2.6, 2.4],
+    [3.2, 3.4, 3.6, 3.4],
+]
+```
+
+Example 7 (negative and positive pads combined):
+
+```
+data = [
+    [1.0, 1.2, 1.4],
+    [2.0, 2.2, 2.4],
+]
+
+pads = [-1, 0, 0, 1]
+
+mode = 'edge'
+
+# After cropping with pads [-1, 0] at beginning, the data becomes:
+# [[2.0, 2.2, 2.4]]
+# Then apply positive pads [0, 1] at end using edge mode:
+
+output = [
+    [2.0, 2.2, 2.4, 2.4],
 ]
 ```
 )DOC";
