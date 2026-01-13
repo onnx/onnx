@@ -36,3 +36,14 @@ updates:
     labels:
       - "github_actions"
       - "run release CIs"
+
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "run release CIs"
