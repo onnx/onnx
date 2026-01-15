@@ -23,10 +23,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.13t','3.12','3.11','3.10']
+        python-version: ['3.14t', '3.13t','3.12','3.11','3.10']
         architecture: ['x64','x86','arm64']
         exclude:
           # x86 exclusions
+          - python-version: '3.14t'
+            architecture: 'x86'
           - python-version: '3.13t'
             architecture: 'x86'
           - python-version: '3.14-dev'
@@ -110,8 +112,7 @@ jobs:
         }
 
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: steps.build_wheel.outcome == 'success' &&
-          (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
+      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}
         path: ./dist

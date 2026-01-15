@@ -21,9 +21,12 @@ class Resize_10_11 final : public Adapter {
   explicit Resize_10_11() : Adapter("Resize", OpSetID(10), OpSetID(11)) {}
 
   void adapt_resize_10_11(const std::shared_ptr<Graph>& graph, Node* node) const {
-    int64_t input_rank = node->inputs()[0]->sizes().size();
+    const ArrayRef<Value*>& inputs = node->inputs();
+    ONNX_ASSERTM(inputs.size() >= 2, "Resize in opset 10 needs to have at least 2 inputs.")
 
-    Value* scales_input = node->inputs()[1];
+    int64_t input_rank = inputs[0]->sizes().size();
+
+    Value* scales_input = inputs[1];
     node->addInput(scales_input);
 
     Tensor t;
