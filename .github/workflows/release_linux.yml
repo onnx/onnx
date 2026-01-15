@@ -13,17 +13,36 @@ on:
       build_mode:
         required: true
         type: string
+      python_versions:
+        required: false
+        type: string
+        default: '3.12'
 
 permissions:
   contents: read
 
 jobs:
+  parse-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      python-matrix: ${{ steps.parse.outputs.matrix }}
+    steps:
+      - name: Parse Python versions
+        id: parse
+        run: |
+          versions="${PYTHON_VERSIONS}"
+          # Convert comma-separated to JSON array
+          matrix=$(echo "$versions" | jq -R 'split(",") | map(select(length > 0))')
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+        env:
+          PYTHON_VERSIONS: ${{ inputs.python_versions }}
+
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-
+    needs: parse-python-versions
     strategy:
       matrix:
-        python-version: ['3.14t', '3.13t', '3.12', '3.11', '3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
         architecture: ['x64', 'arm64']
       fail-fast: false
 
@@ -43,9 +62,25 @@ jobs:
       run: |
         git config --global --add safe.directory /github/workspace
 
-    - name: Set source date epoch variable
+    - name: Validate build mode
       run: |
-        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+        case "${BUILD_MODE}" in
+          "preview"|"scientific"|"release")
+            echo "Build mode validated: ${BUILD_MODE}"
+            ;;
+          *)
+            echo "Error: Invalid build mode '${BUILD_MODE}'. Must be one of: preview, scientific, release"
+            exit 1
+            ;;
+        esac
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
+
+    - name: Set source date epoch variable and git hash
+      id: set_vars
+      run: |
+        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_OUTPUT
+        echo "GIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
@@ -53,7 +88,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.10.10-1
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_x86_64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_x86_64 ${{ inputs.build_mode }} ${{ steps.set_vars.outputs.SOURCE_DATE_EPOCH }} ${{ steps.set_vars.outputs.GIT_HASH }}
 
     - name: Build wheel for arm64
       if: matrix.architecture == 'arm64'
@@ -61,7 +96,7 @@ jobs:
       uses: docker://quay.io/pypa/manylinux_2_28_aarch64:2025.10.10-1
       with:
         entrypoint: bash
-        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_aarch64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
+        args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_aarch64 ${{ inputs.build_mode }} ${{ steps.set_vars.outputs.SOURCE_DATE_EPOCH }} ${{ steps.set_vars.outputs.GIT_HASH }}
 
     - name: Debug Python version and artifact name
       run: |
@@ -76,27 +111,27 @@ jobs:
         INPUT_OS: ${{ inputs.os }}
 
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version == '3.12')
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview') && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version != '3.12')
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' ) && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
 
   test:
-    needs: build
-    runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    needs: [build, parse-python-versions]
+    runs-on: ${{ matrix.python-version == '3.12' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     env:
       MANYLINUX_WHEEL_X64: "manylinux_2_28_x86_64"
       MANYLINUX_WHEEL_ARM64: "manylinux_2_28_aarch64"
     strategy:
       matrix:
-        python-version: ['3.14t', '3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
         architecture: ['x64', 'arm64']
       fail-fast: false
     steps:
