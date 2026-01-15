@@ -33,8 +33,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
-        python_version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python_version: ['3.14t', '3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         include:
+          - python_version: '3.14t'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 0
+            protobuf_type: 'Internal'
           - python_version: '3.14'
             onnx_ml: 1
             debug_build: 1
@@ -214,9 +219,10 @@ jobs:
 
       - name: Upload test results to Codecov
         if: github.repository_owner == 'onnx' && !cancelled()
-        uses: codecov/test-results-action@v1
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
 
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.

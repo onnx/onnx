@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Experimental language syntax and parser for ONNX. Please note that the syntax as formalized
 // by this parser is preliminary and may change.

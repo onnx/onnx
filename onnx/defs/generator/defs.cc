@@ -5,15 +5,13 @@
 #include <algorithm>
 #include <cmath>
 
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static constexpr const char* Constant_ver25_doc = R"DOC(
-This operator produces a constant tensor. Exactly one of the provided attributes, either value, sparse_value,
-or value_* must be specified.
-)DOC";
+static const char* const Constant_ver25_doc = kDoc_Constant_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -60,9 +58,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir13(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static constexpr const char* ConstantOfShape_ver25_doc = R"DOC(
-Generate a tensor with given value and shape.
-)DOC";
+static const char* const ConstantOfShape_ver25_doc = kDoc_ConstantOfShape_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
@@ -130,15 +126,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* EyeLike_ver22_doc = R"DOC(
-Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
-tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
-same as the input tensor. The data type can be specified by the 'dtype' argument. If
-'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal
-is populated with ones, but attribute 'k' can be used to populate upper or lower diagonals.
-The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
-TensorProto message and be valid as an output type.
-)DOC";
+static const char* const EyeLike_ver22_doc = kDoc_EyeLike_ver9;
 
 ONNX_OPERATOR_SET_SCHEMA(
     EyeLike,
@@ -183,14 +171,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static constexpr const char* RandomUniform_ver22_doc = R"DOC(
-Generate a tensor with random values drawn from a uniform distribution. The shape
-of the tensor is specified by the `shape` argument and the range by `low` and `high`.
-
-The data type is specified by the 'dtype' argument. The 'dtype' argument must
-be one of the data types specified in the 'DataType' enum field in the
-TensorProto message.
-)DOC";
+static const char* const RandomUniform_ver22_doc = kDoc_RandomUniform_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniform,
@@ -218,15 +199,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static constexpr const char* RandomNormal_ver22_doc = R"DOC(
-Generate a tensor with random values drawn from a normal distribution. The shape
-of the tensor is specified by the `shape` argument and the parameter of the normal distribution
-specified by `mean` and `scale`.
-
-The data type is specified by the 'dtype' argument. The 'dtype' argument must
-be one of the data types specified in the 'DataType' enum field in the
-TensorProto message.
-)DOC";
+static const char* const RandomNormal_ver22_doc = kDoc_RandomNormal_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormal,
@@ -254,15 +227,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static constexpr const char* RandomUniformLike_ver22_doc = R"DOC(
-Generate a tensor with random values drawn from a uniform distribution.
-The shape of the output tensor is copied from the shape of the input tensor,
-and the parameters of the uniform distribution are specified by `low` and `high`.
-
-The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
-The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
-TensorProto message and be valid as an output type.
-)DOC";
+static const char* const RandomUniformLike_ver22_doc = kDoc_RandomUniformLike_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniformLike,
@@ -301,15 +266,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static constexpr const char* RandomNormalLike_ver22_doc = R"DOC(
-Generate a tensor with random values drawn from a normal distribution.
-The shape of the output tensor is copied from the shape of the input tensor,
-and the parameters of the normal distribution are specified by `mean` and `scale`.
-
-The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
-The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
-TensorProto message, and be valid as an output type.
-)DOC";
+static const char* const RandomNormalLike_ver22_doc = kDoc_RandomNormalLike_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormalLike,
@@ -348,10 +305,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static constexpr const char* Multinomial_ver22_doc = R"DOC(
-Generate a tensor of samples from a multinomial distribution according to the probabilities
-of each of the possible outcomes.
-)DOC";
+static const char* const Multinomial_ver22_doc = kDoc_Multinomial_ver7;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Multinomial,
@@ -532,14 +486,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* Bernoulli_ver22_doc = R"DOC(
-Draws binary random numbers (0 or 1) from a Bernoulli distribution. The input tensor should be a tensor
-containing probabilities p (a value in the range [0,1]) to be used for drawing the binary random number,
-where an output of 1 is produced with probability p and an output of 0 is produced with probability (1-p).
-
-This operator is non-deterministic and may not produce the same values in different
-implementations (even if a seed is specified).
-)DOC";
+static const char* const Bernoulli_ver22_doc = kDoc_Bernoulli_ver15;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Bernoulli,

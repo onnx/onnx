@@ -47,6 +47,8 @@ jobs:
         architecture: ['x64','x86','arm64']
         exclude:
           # x86 exclusions
+          - python-version: '3.14t'
+            architecture: 'x86'
           - python-version: '3.13t'
             architecture: 'x86'
           - python-version: '3.14'
@@ -167,7 +169,6 @@ jobs:
           Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname }
         }
 
-    - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
       if: steps.build_wheel.outcome == 'success' && inputs.build_mode == 'preview'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}
