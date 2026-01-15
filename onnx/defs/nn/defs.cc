@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "onnx/common/assertions.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/nn/utils.h"
 #include "onnx/defs/schema.h"
@@ -456,26 +457,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 }
 
-static constexpr const char* MaxUnpool_ver22_doc = R"DOC(
-MaxUnpool essentially computes the partial inverse of the MaxPool op.
- The input information to this op is typically the output information from a MaxPool op. The first
- input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
- from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corresponding
- to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
- The third (optional) input is a tensor that specifies the output size of the unpooling operation.
-
-MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
- values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
- the result of an unpooling operation should give back the original input to the unpooling op.
-
-MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
- The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
- known/predictable size.
-
-In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
- which define the exact unpooling op. The attributes typically have the same values as the corresponding
- pooling op that the unpooling op is trying to invert.
-)DOC";
+static const char* const MaxUnpool_ver22_doc = kDoc_MaxUnpool_ver11;
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
@@ -1367,10 +1349,7 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 22, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
-static constexpr const char* DeformConv_ver22_doc = R"DOC(
-Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
-This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
-)DOC";
+static const char* const DeformConv_ver22_doc = kDoc_DeformConv_ver19;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DeformConv,
@@ -1764,14 +1743,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* InstanceNormalization_ver22_doc = R"DOC(
-Carries out instance normalization as described in the paper
-https://arxiv.org/abs/1607.08022.
-
-y = scale * (x - mean) / sqrt(variance + epsilon) + B,
-where mean and variance are computed per instance per channel.
-
-)DOC";
+static const char* const InstanceNormalization_ver22_doc = kDoc_InstanceNormalization_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
@@ -1825,9 +1797,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static constexpr const char* LpNormalization_ver22_doc = R"DOC(
-Given a matrix, apply Lp-normalization along the provided axis.
-)DOC";
+static const char* const LpNormalization_ver22_doc = kDoc_LpNormalization_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
@@ -1849,19 +1819,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static constexpr const char* Dropout_ver22_doc = R"DOC(
-Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
-output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
-Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
-the user can simply not pass `training_mode` input or set it to false.
-```
-output = scale * data * mask,
-```
-where
-```
-scale = 1. / (1. - ratio).
-```
-)DOC";
+static const char* const Dropout_ver22_doc = kDoc_Dropout_ver13;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
@@ -1969,11 +1927,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static constexpr const char* Flatten_ver25_doc = R"DOC(
-Flattens the input tensor into a 2D matrix. If input tensor has shape
-(d_0, d_1, ... d_n) then the output will have shape
-(d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
-)DOC";
+static const char* const Flatten_ver25_doc = kDoc_Flatten_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
