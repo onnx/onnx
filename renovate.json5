@@ -15,28 +15,10 @@
       "matchPackageNames": ["quay.io/pypa/manylinux_2_28_x86_64", "quay.io/pypa/manylinux_2_28_aarch64"],
       "enabled": true,
       "groupName": "manylinux docker images"
-    },
-    {
-      // Enable updates for nanobind from GitHub releases
-      "matchDatasources": ["github-releases"],
-      "matchPackageNames": ["https://github.com/wjakob/nanobind"],
-      "enabled": true
     }
   ],
   // Custom regex managers for dependencies not auto-detected by Renovate
   "regexManagers": [
-    {
-      // Detect nanobind version in CMakeLists.txt FetchContent_Declare
-      // Example: GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      //          GIT_TAG v2.10.2
-      "fileMatch": ["^CMakeLists\\.txt$"],
-      "matchStrings": [
-        "FetchContent_Declare\\(\\s*nanobind\\s+GIT_REPOSITORY\\s+(?<depName>https://github\\.com/[^/]+/[^.]+)\\.git\\s+GIT_TAG\\s+(?<currentValue>v[0-9.]+)"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "{{{depName}}}",
-      "extractVersionTemplate": "^v(?<version>.*)$"
-    },
     {
       // Detect manylinux Docker images in GitHub Actions workflows
       // Example: uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.10.10-1
