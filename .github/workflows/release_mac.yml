@@ -65,12 +65,16 @@ jobs:
 
     - name: Debug Python version and artifact name
       run: |
-        echo "PYTHON VERSION: ${{ matrix.python-version }}"
-        if [ "${{ matrix.python-version }}" = "3.12" ] || [ "${{ matrix.python-version }}" = "3.14" ]; then
-          echo "Artifact name: wheels-${{ inputs.os }}-3.12-abi3"
+        echo "PYTHON VERSION: $PYTHON_VERSION"
+        if [ "$PYTHON_VERSION" = "3.12" ] || [ "$INPUTS_OS" = "3.14" ]; then
+          echo "Artifact name: wheels-$PYTHON_VERSION-$INPUTS_OS-3.12-abi3"
         else
-          echo "Artifact name: wheels-${{ inputs.os }}-${{ matrix.python-version }}"
+          echo "Artifact name: wheels-$PYTHON_VERSION-$INPUTS_OS"
         fi
+      env:
+        PYTHON_VERSION: ${{ matrix.python-version }}
+        INPUTS_OS: ${{ inputs.os  }}
+
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
       with:
