@@ -74,7 +74,7 @@ jobs:
       env:
         PYTHON_VERSION: ${{ matrix.python-version }}
         INPUTS_OS: ${{ inputs.os  }}
-        
+
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
       with:
