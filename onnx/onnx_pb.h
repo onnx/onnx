@@ -8,7 +8,7 @@
 // Defines ONNX_EXPORT and ONNX_IMPORT. On Windows, this corresponds to
 // different declarations (dllexport and dllimport). On Linux/Mac, it just
 // resolves to the same "default visibility" setting.
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #if defined(ONNX_BUILD_SHARED_LIBS) || defined(ONNX_BUILD_MAIN_LIB)
 #define ONNX_EXPORT __declspec(dllexport)
 #define ONNX_IMPORT __declspec(dllimport)
@@ -17,7 +17,7 @@
 #define ONNX_IMPORT
 #endif
 #else
-#if defined(__GNUC__)
+#ifdef __GNUC__
 #define ONNX_EXPORT __attribute__((__visibility__("default")))
 #else
 #define ONNX_EXPORT

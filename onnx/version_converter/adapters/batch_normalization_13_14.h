@@ -22,7 +22,7 @@ class BatchNormalization_13_14 final : public Adapter {
       "BatchNormalization outputs 4 and 5 are not "
       "supported in Opset 14.")}
 
-  Node* adapt(std::shared_ptr<Graph>, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> /*unused*/, Node* node) const override {
     adapt_batch_normalization_13_14(node);
     return node;
   }
