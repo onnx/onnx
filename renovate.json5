@@ -17,12 +17,13 @@
       "groupName": "manylinux docker images"
     }
   ],
-  // Custom regex managers for dependencies not auto-detected by Renovate
-  "regexManagers": [
+  // Custom managers for dependencies not auto-detected by Renovate
+  "customManagers": [
     {
       // Detect manylinux Docker images in GitHub Actions workflows
       // Example: uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.10.10-1
-      "fileMatch": ["^\\.github/workflows/.*\\.ya?ml$"],
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/release_linux.yml$/"],
       "matchStrings": [
         "uses:\\s*docker://quay\\.io/pypa/(?<depName>manylinux_[^:]+):(?<currentValue>[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}-[0-9]+)"
       ],
