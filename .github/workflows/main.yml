@@ -143,6 +143,7 @@ jobs:
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
           if [ "${{ matrix.python_version }}" == "3.14" ]; then
+            sudo apt-get update
             sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           fi
 
