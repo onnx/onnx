@@ -72,7 +72,7 @@ jobs:
     uses: ./.github/workflows/release_linux.yml
     with:
       os: "linux"
-      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}    
 
   call-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -107,10 +107,12 @@ jobs:
 
       - name: Ensure build mode is release
         run: |
-          if [ "${{ github.event.inputs.build_mode }}" != "release" ]; then
+          if [ $env:BUILD_MODE != "release" ]; then
             echo "Error: build_mode must be set to 'release' to proceed."
             exit 1
           fi
+        env:
+          BUILD_MODE: ${{ inputs.build_mode }}
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
