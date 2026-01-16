@@ -107,7 +107,7 @@ jobs:
 
       - name: Ensure build mode is release
         run: |
-          if [ $env:BUILD_MODE != "release" ]; then
+          if [ "$BUILD_MODE" != "release" ]; then
             echo "Error: build_mode must be set to 'release' to proceed."
             exit 1
           fi
