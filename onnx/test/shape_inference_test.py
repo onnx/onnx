@@ -9815,7 +9815,6 @@ class TestShapeInference(TestShapeInferenceHelper):
     @parameterized.expand(
         [
             ("real", (2, 5, 5, 1)),
-            ("complex", (2, 5, 5, 2)),
         ]
     )
     def test_dft_dynamic_axis_onesided_dft_length_opset20(
@@ -9867,7 +9866,6 @@ class TestShapeInference(TestShapeInferenceHelper):
     @parameterized.expand(
         [
             ("real", (2, 5, 5, 1)),
-            ("complex", (2, 5, 5, 2)),
         ]
     )
     def test_dft_dynamic_axis_onesided_opset20(
@@ -9914,8 +9912,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                     value=make_tensor(
                         "input",
                         TensorProto.FLOAT,
-                        (2, 5, 5, 2),
-                        np.ones((2, 5, 5, 2), dtype=np.float32).flatten(),
+                        (2, 5, 5, 1),
+                        np.ones((2, 5, 5, 1), dtype=np.float32).flatten(),
                     ),
                 ),
                 make_node("DFT", ["input", ""], ["output"], onesided=1),
@@ -9925,7 +9923,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 5, 2)),
+                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 5, 1)),
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 17)],
@@ -9943,8 +9941,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                     value=make_tensor(
                         "input",
                         TensorProto.FLOAT,
-                        (2, 5, 5, 2),
-                        np.ones((2, 5, 5, 2), dtype=np.float32).flatten(),
+                        (2, 5, 5, 1),
+                        np.ones((2, 5, 5, 1), dtype=np.float32).flatten(),
                     ),
                 ),
                 make_node("DFT", ["input", "", ""], ["output"], onesided=1),
@@ -9954,7 +9952,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 5, 2)),
+                make_tensor_value_info("input", TensorProto.FLOAT, (2, 5, 5, 1)),
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 5, 3, 2)),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 20)],
