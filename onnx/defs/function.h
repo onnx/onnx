@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -166,7 +166,7 @@ class FunctionBuilder {
 
   // Adds variable number of attributes to a node
   template <typename... Args>
-  ONNX_API FunctionBuilder& Add(const char* node_txt, Args... args) {
+  ONNX_API FunctionBuilder& Add(const char* node_txt, const Args&... args) {
     Add(node_txt);
     if constexpr (sizeof...(args) % 2 == 0) {
       AddAttributes(args...);

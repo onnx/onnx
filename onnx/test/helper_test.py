@@ -43,6 +43,21 @@ def _pack_4bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::2] | array_flat[1::2]
 
 
+def _pack_2bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    pad_len = size % 4
+    if pad_len:
+        array_flat.resize([size + (4 - pad_len)], refcheck=False)
+    array_flat &= 0x03
+    array_flat[1::4] <<= 2
+    array_flat[2::4] <<= 4
+    array_flat[3::4] <<= 6
+    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
+
+
 class TestHelperAttributeFunctions(unittest.TestCase):
     def test_attr_float(self) -> None:
         # float
@@ -528,7 +543,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             name="test",
             data_type=TensorProto.BFLOAT16,
             dims=array.shape,
-            vals=array.tobytes(),
+            vals=numpy_helper.tobytes_little_endian(array),
             raw=True,
         )
         np.testing.assert_allclose(numpy_helper.to_array(tensor).view(np.uint16), array)
@@ -690,6 +705,63 @@ class TestHelperTensorFunctions(unittest.TestCase):
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(ynp.view(np.uint8), expected)
 
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT2, TensorProto.INT2),
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    def test_make_2bit_tensor(self, dtype, dims) -> None:
+        type_range = {
+            TensorProto.UINT2: (0, 3),
+            TensorProto.INT2: (-2, 1),
+        }
+        data = np.random.randint(
+            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
+        )
+        y = helper.make_tensor("y", dtype, data.shape, data)
+
+        # Check the expected size of int32_data in bytes
+        expected_data_size = math.ceil(np.prod(data.shape) / 4.0)
+        actual_data_size = len(bytes(y.int32_data))
+        np.testing.assert_equal(actual_data_size, expected_data_size)
+
+        # Check the expected data values.
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(ynp, data)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    def test_2bit_tensor_size(self, dims) -> None:
+        # A bug caused negative int2 values to inflate tensor size.
+        # So, test negative values here.
+        num_elems = np.prod(dims)
+        data = np.array([-2] * num_elems, dtype=np.int8).reshape(dims)
+        y = helper.make_tensor("y", TensorProto.INT2, data.shape, data)
+
+        # Check the expected size of int32_data in bytes
+        expected_data_size = math.ceil(num_elems / 4.0)
+        actual_data_size = len(bytes(y.int32_data))
+        np.testing.assert_equal(actual_data_size, expected_data_size)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT2, TensorProto.INT2), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
+        )
+    )
+    def test_make_2bit_raw_tensor(self, dtype, dims) -> None:
+        data = np.random.randint(0, high=4, size=dims, dtype=np.uint8)
+        packed_data = _pack_2bit(data)
+
+        y = helper.make_tensor(
+            "packed_int2", dtype, dims, packed_data.tobytes(), raw=True
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(ynp.view(np.uint8), data)
+
     def test_make_float4e2m1_tensor(self) -> None:
         y = helper.make_tensor(
             "zero_point",
@@ -802,7 +874,7 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
             sequence_value_info.type,
         )
 
-    def test_make_seuence_value_info(self) -> None:
+    def test_make_sequence_value_info(self) -> None:
         tensor_type_proto = helper.make_tensor_type_proto(elem_type=2, shape=None)
         sequence_type_proto = helper.make_sequence_type_proto(tensor_type_proto)
         sequence_val_info = helper.make_value_info(
@@ -891,9 +963,19 @@ class TestPrintableGraph(unittest.TestCase):
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
-    np_array = np.random.randn(2, 3).astype(
-        helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    )
+    np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
+    if tensor_dtype in {
+        TensorProto.UINT8,
+        TensorProto.UINT16,
+        TensorProto.UINT32,
+        TensorProto.UINT64,
+    }:
+        # Avoid "RuntimeWarning: invalid value encountered in cast" when using
+        # astype() for negative floats.
+        np_array = numpy_helper.create_random_int((2, 3), np_type)
+    else:
+        np_array = np.random.randn(2, 3)
+    np_array = np_array.astype(np_type)
     tensor = helper.make_tensor(
         name="test", data_type=tensor_dtype, dims=np_array.shape, vals=np_array
     )
@@ -920,18 +1002,45 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
     ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
 )
-def test_make_tensor_raw(tensor_dtype: int) -> None:
-    np_array = np.random.randn(2, 3).astype(
-        helper.tensor_dtype_to_np_dtype(tensor_dtype)
-    )
+@pytest.mark.parametrize(
+    "vals_as_bytes",
+    [True, False],
+    ids=["vals_as_bytes", "vals_as_nparray"],
+)
+def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
+    np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
     if tensor_dtype in {
-        TensorProto.FLOAT4E2M1,
-        TensorProto.INT4,
-        TensorProto.UINT4,
+        TensorProto.UINT8,
+        TensorProto.UINT16,
+        TensorProto.UINT32,
+        TensorProto.UINT64,
     }:
-        vals = _pack_4bit(np_array).tobytes()
+        # Avoid "RuntimeWarning: invalid value encountered in cast" when using
+        # astype() for negative floats.
+        np_array = numpy_helper.create_random_int((2, 3), np_type)
     else:
-        vals = np_array.tobytes()
+        np_array = np.random.randn(2, 3)
+    np_array = np_array.astype(np_type)
+
+    if vals_as_bytes:
+        np_array_intermediate = np_array
+
+        if tensor_dtype in {
+            TensorProto.FLOAT4E2M1,
+            TensorProto.INT4,
+            TensorProto.UINT4,
+        }:
+            np_array_intermediate = _pack_4bit(np_array)
+        if tensor_dtype in {
+            TensorProto.INT2,
+            TensorProto.UINT2,
+        }:
+            np_array_intermediate = _pack_2bit(np_array)
+
+        vals = numpy_helper.tobytes_little_endian(np_array_intermediate)
+    else:
+        vals = np_array
+
     tensor = helper.make_tensor(
         name="test",
         data_type=tensor_dtype,

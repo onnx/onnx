@@ -86,7 +86,11 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
                 f"onnxruntime returns a different number of output "
                 f"{len(expected)} != {len(sess)} (ReferenceEvaluator)."
             )
-        look = zip(reversed(expected), reversed(got)) if rev else zip(expected, got)
+        look = (
+            zip(reversed(expected), reversed(got), strict=True)
+            if rev
+            else zip(expected, got, strict=True)
+        )
         for i, (e, g) in enumerate(look):
             if e.shape != g.shape:
                 raise AssertionError(
@@ -812,8 +816,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
             ),
         )
         graph = make_graph([node], "ml", [X], [Y])
-        model = make_model_gen_version(graph, opset_imports=OPSETS)
-        return model
+        return make_model_gen_version(graph, opset_imports=OPSETS)
 
     @staticmethod
     def _get_test_tree_ensemble_regressor(

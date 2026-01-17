@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "data_type_utils.h"
 
@@ -65,7 +65,7 @@ class StringRange final {
   bool RStrip(StringRange str);
   bool LAndRStrip();
   void ParensWhitespaceStrip();
-  size_t Find(const char ch) const;
+  size_t Find(char ch) const;
 
   // These methods provide a way to return the range of the string
   // which was discarded by LStrip(). i.e. We capture the string
@@ -160,7 +160,8 @@ std::string DataTypeUtils::ToString(const TypeProto& type_proto, const std::stri
       return left + "sparse_tensor(" + ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" + right;
     }
     default:
-      ONNX_THROW_EX(std::invalid_argument("Unsupported type proto value case."));
+      ONNX_THROW_EX(
+          std::invalid_argument("Unsupported type proto value case:" + std::to_string(type_proto.value_case())));
   }
 }
 
@@ -178,10 +179,12 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
   type_proto.Clear();
   if (s.LStrip("seq")) {
     s.ParensWhitespaceStrip();
-    return FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
+    FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
+    return;
   } else if (s.LStrip("optional")) {
     s.ParensWhitespaceStrip();
-    return FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_optional_type()->mutable_elem_type());
+    FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_optional_type()->mutable_elem_type());
+    return;
   } else if (s.LStrip("map")) {
     s.ParensWhitespaceStrip();
     size_t key_size = s.Find(',');
@@ -192,7 +195,8 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     StringRange v(s.Data(), s.Size());
     auto key_type = FromDataTypeString(key);
     type_proto.mutable_map_type()->set_key_type(key_type);
-    return FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
+    FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
+    return;
   } else
 #ifdef ONNX_ML
       if (s.LStrip("opaque")) {
@@ -441,6 +445,8 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["float8e8m0"] = TensorProto_DataType_FLOAT8E8M0;
   type_str_to_tensor_data_type_["uint4"] = TensorProto_DataType_UINT4;
   type_str_to_tensor_data_type_["int4"] = TensorProto_DataType_INT4;
+  type_str_to_tensor_data_type_["uint2"] = TensorProto_DataType_UINT2;
+  type_str_to_tensor_data_type_["int2"] = TensorProto_DataType_INT2;
   type_str_to_tensor_data_type_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
 
   for (auto& str_type_pair : type_str_to_tensor_data_type_) {

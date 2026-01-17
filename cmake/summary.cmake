@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Prints accumulated ONNX configuration summary
-function (onnx_print_configuration_summary)
+function(onnx_print_configuration_summary)
   message(STATUS "")
   message(STATUS "******** Summary ********")
   message(STATUS "  CMake version                     : ${CMAKE_VERSION}")
@@ -30,7 +30,9 @@ function (onnx_print_configuration_summary)
   get_target_property(tmp onnx COMPILE_OPTIONS)
   message(STATUS "  onnx compile options              : ${tmp}")
   get_target_property(tmp onnx_proto COMPILE_OPTIONS)
-  message(STATUS "  onnx_proto compile options        : ${tmp}")
+  if(tmp)
+    message(STATUS "  onnx_proto compile options        : ${tmp}")
+  endif()
   get_target_property(tmp onnx COMPILE_DEFINITIONS)
   message(STATUS "  onnx compile definitions          : ${tmp}")
   get_target_property(tmp onnx_proto COMPILE_DEFINITIONS)
@@ -53,7 +55,7 @@ function (onnx_print_configuration_summary)
   endif()
 
   message(STATUS "")
-  message(STATUS "  Protobuf version                   : ${Protobuf_VERSION}")
+  message(STATUS "  Protobuf version                  : ${Protobuf_VERSION}")
   if(EXISTS "${ONNX_PROTOC_EXECUTABLE}")
     message(STATUS "  Protobuf compiler                 : ${ONNX_PROTOC_EXECUTABLE}")
   else()

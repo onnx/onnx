@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/printer.h"
 
@@ -89,7 +89,7 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void print(const T& prim) {
+  void print(const T& prim) {
     output_ << prim;
   }
 
@@ -104,21 +104,21 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void printKeyValuePair(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
+  void printKeyValuePair(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
     if (addsep)
       output_ << "," << '\n';
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     print(val);
   }
 
-  inline void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
+  void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
     output_ << "," << '\n';
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     printQuoted(val);
   }
 
   template <typename Collection>
-  inline void printSet(const char* open, const char* separator, const char* close, const Collection& coll) {
+  void printSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {
@@ -130,7 +130,7 @@ class ProtoPrinter {
   }
 
   template <typename Collection>
-  inline void printIdSet(const char* open, const char* separator, const char* close, const Collection& coll) {
+  void printIdSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {
@@ -275,7 +275,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         break;
       case TensorProto::DataType::TensorProto_DataType_STRING: {
         const char* sep = "{";
-        for (auto& elt : tensor.string_data()) {
+        for (const auto& elt : tensor.string_data()) {
           output_ << sep;
           printQuoted(elt);
           sep = ", ";
@@ -325,7 +325,7 @@ void ProtoPrinter::print(const AttributeProto& attr) {
       break;
     case AttributeProto_AttributeType_STRINGS: {
       const char* sep = "[";
-      for (auto& elt : attr.strings()) {
+      for (const auto& elt : attr.strings()) {
         output_ << sep << "\"" << elt << "\"";
         sep = ", ";
       }
@@ -384,14 +384,14 @@ void ProtoPrinter::print(const NodeProto& node) {
   if ((!has_subgraph) && (node.attribute_size() > 0))
     print(node.attribute());
   printIdSet(" (", ", ", ")", node.input());
-  if ((has_subgraph) && (node.attribute_size() > 0))
+  if (has_subgraph && (node.attribute_size() > 0))
     print(node.attribute());
   output_ << "\n";
 }
 
 void ProtoPrinter::print(const NodeList& nodelist) {
   output_ << "{\n";
-  for (auto& node : nodelist) {
+  for (const auto& node : nodelist) {
     print(node);
   }
   if (indent_level > 3)
@@ -405,12 +405,12 @@ void ProtoPrinter::print(const GraphProto& graph) {
   if ((graph.initializer_size() > 0) || (graph.value_info_size() > 0)) {
     output_ << '\n' << std::setw(indent_level) << ' ' << '<';
     const char* sep = "";
-    for (auto& init : graph.initializer()) {
+    for (const auto& init : graph.initializer()) {
       output_ << sep;
       print(init, true);
       sep = ", ";
     }
-    for (auto& vi : graph.value_info()) {
+    for (const auto& vi : graph.value_info()) {
       output_ << sep;
       print(vi);
       sep = ", ";
@@ -481,7 +481,7 @@ void ProtoPrinter::print(const FunctionProto& fn) {
     ProtoPrinter printer(os);                                  \
     printer.print(proto);                                      \
     return os;                                                 \
-  };
+  }
 
 DEF_OP(TensorShapeProto_Dimension)
 

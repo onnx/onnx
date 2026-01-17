@@ -7,7 +7,6 @@ pytest-cov
 pytest-xdist
 setuptools
 wheel
-ml_dtypes
 lintrunner>=0.10.7
 lintrunner-adapters>=0.12.3
 # Edit additional linter dependencies in requirements-lintrunner.txt

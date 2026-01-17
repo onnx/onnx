@@ -20,6 +20,8 @@ _QUANT_TYPES = {
     TensorProto.INT8,
     TensorProto.UINT16,
     TensorProto.INT16,
+    TensorProto.INT2,
+    TensorProto.UINT2,
     TensorProto.UINT4,
     TensorProto.INT4,
     TensorProto.FLOAT8E4M3FN,
@@ -36,6 +38,8 @@ _QUANT_INTEGER_RANGES = {
     TensorProto.INT16: (-32768, 32767),
     TensorProto.UINT4: (0, 15),
     TensorProto.INT4: (-8, 7),
+    TensorProto.UINT2: (0, 3),
+    TensorProto.INT2: (-2, 1),
 }
 
 
@@ -150,8 +154,7 @@ class _CommonQuantizeLinear(OpRun):
                         x, dtype=tensor_dtype_to_np_dtype(tensor_type)
                     ),
                 )
-            else:
-                return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
+            return (x.astype(tensor_dtype_to_np_dtype(tensor_type)),)
 
         if tensor_type == TensorProto.FLOAT4E2M1:
             x += zero_point
@@ -196,6 +199,27 @@ class QuantizeLinear_21(_CommonQuantizeLinear):
 
 
 class QuantizeLinear_23(_CommonQuantizeLinear):
+    def _run(
+        self,
+        *args,
+        axis: int = 1,
+        saturate: bool = True,
+        block_size: int = 0,
+        output_dtype=None,
+        precision=None,
+    ):
+        # args: x, y_scale, zero_point
+        return super()._run(
+            *args,
+            axis=axis,
+            saturate=saturate,
+            block_size=block_size,
+            output_dtype=output_dtype,
+            precision=precision,
+        )
+
+
+class QuantizeLinear_25(_CommonQuantizeLinear):
     def _run(
         self,
         *args,

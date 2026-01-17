@@ -4,14 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <iostream>
-
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
-#include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
-#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
 #include "onnx/shape_inference/implementation.h"
@@ -118,10 +114,10 @@ square (x) => (y) {
 
   ModelProto model;
   InlineFunctions(model, code);
-  auto& if_node = model.graph().node(0);
-  auto& graph1 = if_node.attribute(0).g();
+  const auto& if_node = model.graph().node(0);
+  const auto& graph1 = if_node.attribute(0).g();
   ASSERT_EQ(graph1.node(0).op_type(), "Mul");
-  auto& graph2 = if_node.attribute(1).g();
+  const auto& graph2 = if_node.attribute(1).g();
   ASSERT_EQ(graph2.node(0).op_type(), "Mul");
   auto num_functions = model.functions_size();
   ASSERT_EQ(num_functions, 0);
@@ -199,10 +195,10 @@ foo (x) => (y)
   ModelProto model;
   InlineFunctions(model, code);
   // Check that valueinfo is propagated from function to main graph.
-  auto& graph = model.graph();
-  auto& temp_new_name = graph.node(0).output(0);
-  auto& valueinfos = graph.value_info();
-  for (auto& valueinfo : valueinfos) {
+  const auto& graph = model.graph();
+  const auto& temp_new_name = graph.node(0).output(0);
+  const auto& valueinfos = graph.value_info();
+  for (const auto& valueinfo : valueinfos) {
     if (valueinfo.name() == temp_new_name) {
       ASSERT_TRUE(valueinfo.has_type());
       ASSERT_TRUE(valueinfo.type().has_tensor_type());
@@ -260,12 +256,12 @@ bar (x) => (y) {
   InlineFunctions(model, code);
 
   // The first node's call, to foo, must be inlined.
-  auto& first_node = model.graph().node(0);
+  const auto& first_node = model.graph().node(0);
   // Check that it is a call to Add
   ASSERT_EQ(first_node.op_type(), "Add");
 
   // The second node's call, to bar, must be inlined.
-  auto& second_node = model.graph().node(1);
+  const auto& second_node = model.graph().node(1);
   // Check that it is a call to Add
   ASSERT_EQ(second_node.op_type(), "Add");
 
@@ -298,19 +294,19 @@ bar (x) => (y) {
   InlineFunctions(model, code, to_inline_set.get());
 
   // The first node's call, to foo, must be inlined.
-  auto& first_node = model.graph().node(0);
+  const auto& first_node = model.graph().node(0);
   // Check that it is a call to Add
   ASSERT_EQ(first_node.op_type(), "Add");
 
   // The second node's call, to bar, must not be inlined.
-  auto& second_node = model.graph().node(1);
+  const auto& second_node = model.graph().node(1);
   // Check that it is a call to bar
   ASSERT_EQ(second_node.op_type(), "bar");
 
   // foo will be removed, bar will remain, in model.functions()
   ASSERT_EQ(model.functions_size(), 1);
 
-  auto& bar_node = model.functions(0).node(0);
+  const auto& bar_node = model.functions(0).node(0);
   // Check that it is a call to Add, due to inlining
   // the call to foo in bar.
   ASSERT_EQ(bar_node.op_type(), "Add");
@@ -334,7 +330,7 @@ foo (x) => (y) {
   InlineFunctions(model, code);
   // Inlining ReduceLogSum (version 17) should convert it to ReduceLogSum (version 18)
   // by promoting axes from attribute to input.
-  auto& node = model.graph().node(1);
+  const auto& node = model.graph().node(1);
   ASSERT_EQ(node.op_type(), "ReduceLogSum");
   ASSERT_EQ(node.input_size(), 2);
   ASSERT_EQ(node.attribute_size(), 0);
@@ -368,7 +364,7 @@ bar (x) => (y) {
   // Check that both ReduceLogSum nodes have been converted.
   ASSERT_EQ(model.graph().node_size(), 4);
   ASSERT_EQ(model.graph().node(0).op_type(), "Constant");
-  auto& node = model.graph().node(1);
+  const auto& node = model.graph().node(1);
   ASSERT_EQ(node.op_type(), "ReduceLogSum");
   ASSERT_EQ(node.input_size(), 2);
   ASSERT_EQ(node.attribute_size(), 0);

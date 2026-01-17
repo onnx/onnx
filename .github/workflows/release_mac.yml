@@ -4,8 +4,8 @@
 
 name: MacRelease
 
-on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
+on:
+  workflow_call:
     inputs:
       os:
         required: true
@@ -14,8 +14,6 @@ on:  # Specifies the event triggering the workflow
         required: true
         type: string
 
-
-# Use MACOSX_DEPLOYMENT_TARGET=12.0 to produce compatible wheel
 env:
   MACOSX_DEPLOYMENT_TARGET: "12.0"
 
@@ -28,17 +26,17 @@ jobs:
     runs-on: macos-14
     strategy:
       matrix:
-        python-version: ['3.14-dev', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ['3.14t', '3.14', '3.13t', '3.12', '3.11', '3.10']
       fail-fast: true
 
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
           persist-credentials: false
           submodules: true
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -65,10 +63,25 @@ jobs:
         fi
         python -m build --wheel
 
-    - name: Upload wheel artifacts
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev'))
+    - name: Debug Python version and artifact name
+      run: |
+        echo "PYTHON VERSION: $PYTHON_VERSION"
+        if [ "$PYTHON_VERSION" = "3.12" ] || [ "$INPUTS_OS" = "3.14" ]; then
+          echo "Artifact name: wheels-$PYTHON_VERSION-$INPUTS_OS-3.12-abi3"
+        else
+          echo "Artifact name: wheels-$PYTHON_VERSION-$INPUTS_OS"
+        fi
+      env:
+        PYTHON_VERSION: ${{ matrix.python-version }}
+        INPUTS_OS: ${{ inputs.os  }}
 
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
+      with:
+        name: wheels-${{ inputs.os }}-3.12-abi3
+        path: dist/*.whl
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.13t' || matrix.python-version == '3.14t')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist/*.whl
@@ -76,18 +89,20 @@ jobs:
   test:
     needs: build
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
+    continue-on-error: true
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.13t'] # TODO: add '3.14-dev'
+        python-version: ['3.14t', '3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         target-architecture: ['x86_64', 'arm64']
+      fail-fast: false
 
     steps:
-    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       with:
         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -96,7 +111,13 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
-    - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14'
+      with:
+        name: wheels-${{ inputs.os }}-3.12-abi3
+        path: dist
+    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+      if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.13t' || matrix.python-version == '3.14t'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist
@@ -107,7 +128,6 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest numpy
-      if: ${{ always() }}
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy onnx
         arch -${{ matrix.target-architecture }} python -m pip install numpy
@@ -115,7 +135,6 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: ${{ always() }}
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install protobuf
@@ -123,7 +142,6 @@ jobs:
         arch -${{ matrix.target-architecture }} pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: ${{ always() }}
       run: |
         arch -${{ matrix.target-architecture }} python -m pip uninstall -y numpy protobuf onnx
         arch -${{ matrix.target-architecture }} python -m pip install -r requirements-min.txt

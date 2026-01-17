@@ -48,6 +48,7 @@ ONNX_DISABLE_STATIC_REGISTRATION = os.getenv("ONNX_DISABLE_STATIC_REGISTRATION")
 ONNX_PREVIEW_BUILD = os.getenv("ONNX_PREVIEW_BUILD") == "1"
 
 USE_MSVC_STATIC_RUNTIME = os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1"
+USE_NINJA = os.getenv("USE_NINJA", "1") != "0"
 DEBUG = os.getenv("DEBUG", "0") == "1"
 COVERAGE = os.getenv("COVERAGE", "0") == "1"
 
@@ -94,10 +95,20 @@ def cd(path):
 
 
 def get_python_execute():
+    """Get the Python executable path for CMake configuration.
+
+    Prefer sys.executable as it represents the currently running Python.
+    Only fall back to directory traversal if sys.executable is invalid.
+    """
     if WINDOWS:
         return sys.executable
-    # Try to search more accurate path, because sys.executable may return a wrong one,
-    # as discussed in https://github.com/python/cpython/issues/84399
+
+    # First, check if sys.executable is valid and usable
+    if os.path.isfile(sys.executable) and os.access(sys.executable, os.X_OK):
+        return sys.executable
+
+    # Fallback: Try to search for Python based on include path
+    # This addresses https://github.com/python/cpython/issues/84399
     python_dir = os.path.abspath(
         os.path.join(sysconfig.get_path("include"), "..", "..")
     )
@@ -108,6 +119,7 @@ def get_python_execute():
         python_bin = os.path.join(python_dir, "bin", "python")
         if os.path.isfile(python_bin):
             return python_bin
+
     return sys.executable
 
 
@@ -174,6 +186,9 @@ class CmakeBuild(setuptools.Command):
                 "-DONNX_BUILD_PYTHON=ON",
                 f"-DONNX_NAMESPACE={ONNX_NAMESPACE}",
             ]
+            if USE_NINJA and not WINDOWS and shutil.which("ninja"):
+                cmake_args.append("-DCMAKE_GENERATOR=Ninja")
+
             if COVERAGE:
                 cmake_args.append("-DONNX_COVERAGE=ON")
             if COVERAGE or DEBUG:
@@ -205,7 +220,10 @@ class CmakeBuild(setuptools.Command):
             if ONNX_DISABLE_STATIC_REGISTRATION:
                 cmake_args.append("-DONNX_DISABLE_STATIC_REGISTRATION=ON")
             if "CMAKE_ARGS" in os.environ:
-                extra_cmake_args = shlex.split(os.environ["CMAKE_ARGS"])
+                extra_cmake_args = shlex.split(
+                    os.environ["CMAKE_ARGS"],
+                    posix=not WINDOWS,
+                )
                 # prevent crossfire with downstream scripts
                 del os.environ["CMAKE_ARGS"]
                 logging.info("Extra cmake args: %s", extra_cmake_args)  # noqa: LOG015
@@ -318,7 +336,7 @@ CMD_CLASS = {
 
 NO_GIL = hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled()
 PY_312_OR_NEWER = sys.version_info >= (3, 12)
-USE_LIMITED_API = not NO_GIL and PY_312_OR_NEWER
+USE_LIMITED_API = not NO_GIL and PY_312_OR_NEWER and platform.system() != "FreeBSD"
 
 macros = []
 if USE_LIMITED_API:

@@ -121,13 +121,13 @@ struct GraphInferenceContext {
 
 class GraphInferencerImpl : public GraphInferencer {
  public:
-  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context) : g_{&g}, context_{&context}, options_() {}
+  GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context) : g_{&g}, context_{&context} {}
   GraphInferencerImpl(GraphProto& g, GraphInferenceContext& context, const ShapeInferenceOptions& options)
       : g_{&g}, context_{&context}, options_(options) {}
 
   std::vector<const TypeProto*> doInferencing(
-      const std::vector<const TypeProto*>& inputTypes,
-      const std::vector<const TensorProto*>& inputData) override;
+      const std::vector<const TypeProto*>& input_types,
+      const std::vector<const TensorProto*>& input_data) override;
 
  private:
   GraphProto* g_;
@@ -418,7 +418,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     // of N unknown values (represented as a TensorShapeProto).
     const TypeProto* type = getInputType(index);
     if ((type != nullptr) && (type->has_tensor_type())) {
-      auto& tensor_type = type->tensor_type();
+      const auto& tensor_type = type->tensor_type();
       if (tensor_type.has_shape()) {
         const TensorShapeProto& shape = tensor_type.shape();
         if ((shape.dim_size() == 1) && (shape.dim(0).has_dim_value())) {
@@ -458,20 +458,20 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
 void checkShapesAndTypes(const TypeProto_Sequence& inferredType, const TypeProto_Sequence& existingType);
 
-void checkShapesAndTypes(const TypeProto& inferredType, const TypeProto& existingType);
+void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existing_type);
 
 template <typename TensorTypeProto>
-void GenerateSymbolicShape(TensorTypeProto* inferredType, SymbolTable& symbolTable);
+void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table);
 
-void MaterializeSymbolicShape(TypeProto* inferredType, SymbolTable& symbolTable);
+void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_table);
 
-void mergeShapesAndTypes(const TypeProto_Tensor& inferredType, TypeProto_Tensor* existingType);
+void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type);
 
-void mergeShapesAndTypes(const TypeProto_SparseTensor& inferredType, TypeProto_SparseTensor* existingType);
+void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type);
 
 void mergeShapesAndTypes(const TypeProto_Sequence& inferredType, TypeProto_Tensor* existingType);
 
-void mergeShapesAndTypes(const TypeProto& inferredType, TypeProto* existingType);
+void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type);
 
 ///
 /// ModelLocalFunctionsMap is a map of function id -> model local function proto
@@ -507,7 +507,7 @@ void InferShapeForFunctionNode(
     InferenceContext& ctx,
     const ShapeInferenceOptions& options = ShapeInferenceOptions(),
     const ModelLocalFunctionsMap& model_local_functions_map = {},
-    SymbolTable* symbolTable = nullptr,
+    SymbolTable* symbol_table = nullptr,
     DataValueMap* generated_shape_data_by_name = nullptr);
 
 ///
@@ -521,7 +521,7 @@ void InferShapeForFunctionNode(
     InferenceContext& ctx,
     const ShapeInferenceOptions& options = ShapeInferenceOptions(),
     const ModelLocalFunctionsMap& model_local_functions_map = {},
-    SymbolTable* symbolTable = nullptr,
+    SymbolTable* symbol_table = nullptr,
     DataValueMap* generated_shape_data_by_name = nullptr);
 
 ///
@@ -533,13 +533,13 @@ void InferShapeForFunctionNode(
 /// for missing optional parameters.
 ///
 std::vector<TypeProto> InferFunctionOutputTypes(
-    const FunctionProto& func_proto,
+    const FunctionProto& function_proto,
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes);
 
 std::string GetErrorWithNodeInfo(const NodeProto& n, const std::runtime_error& err);
 
-void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbolTable);
+void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbol_table);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

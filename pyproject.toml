@@ -145,11 +145,11 @@ lint.select = [
     "UP", # pyupgrade
     "W", # pycodestyle
     "YTT", # flake8-2020
+    "RET", # flake8-return
 ]
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
 lint.ignore = [
-    "B905", # TODO: We have many zip calls without an explicit strict parameter
     "D1", # D1 is for missing docstrings, which is not yet enforced.
     "D205", # D205 Too strict. "1 blank line required between summary line and description"
     "D400",
@@ -168,12 +168,10 @@ lint.ignore = [
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "RUF022", # We may want to keep __all__ unsorted for better readability
     "SIM102", # We don't prefer always combining if branches
-    "SIM103", # We don't always prefer combining if branches
     "SIM108", # We don't always encourage ternary operators
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
     "TRY003", # Messages can be constructed in the exception
-    "UP038", # We don't want to update isinstance calls
 ]
 
 [tool.ruff.lint.flake8-builtins]
@@ -190,7 +188,6 @@ convention = "google"
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/*.pyi" = ["I002"] # from __future__ import annotations` has no effect in stub files
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Prefer inline ignores with `noqa: xxx`.
 # Eventually this list should become empty.
