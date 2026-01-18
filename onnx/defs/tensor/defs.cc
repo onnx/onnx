@@ -291,7 +291,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (inputProduct % outputProduct != 0) {
                 fail_shape_inference("Dimension could not be inferred: incompatible shapes");
               }
-              negativeOneDim->set_dim_value(inputProduct / outputProduct);
+              if (inputProduct == 0) {
+                negativeOneDim->set_dim_param("batch_size");
+              } else {
+                negativeOneDim->set_dim_value(inputProduct / outputProduct);
+              }
             }
           }
         }));
