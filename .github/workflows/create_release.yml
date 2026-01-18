@@ -6,7 +6,7 @@ name: Create Releases
 on:
   schedule:
     # Run weekly on Monday 00:00 UTC
-    - cron:  '00 00 * * MON'
+    - cron:  '0 0 * * MON'
 
   push:
     branches: [main, rel-*]
@@ -58,7 +58,6 @@ on:
         default: 'preview'
 
 permissions:
-
   contents: read
 
 concurrency:
@@ -68,29 +67,28 @@ concurrency:
 jobs:
 
   call-linux:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all') || contains(github.event.pull_request.labels.*.name, 'run release CIs linux')
     uses: ./.github/workflows/release_linux.yml
     with:
       os: "linux"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-win:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs win x86')
     uses: ./.github/workflows/release_win.yml
     with:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
-
   call-mac:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs mac')
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-sdist:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs sdist')
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
@@ -327,4 +325,4 @@ jobs:
     if: (needs.publish_preview_build_to_pypi_weekly.result == 'success' || needs.publish_release_build_to_testpypi.result == 'success')
     uses: ./.github/workflows/preview_source_dist_test.yml
     with:
-      os: "macos"
+      os: "linux"
