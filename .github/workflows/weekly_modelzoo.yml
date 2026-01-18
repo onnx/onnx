@@ -29,30 +29,17 @@ jobs:
       name: Checkout repo
       with:
         persist-credentials: false
-        submodules: recursive
     - name: Set up Python
       uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: '3.12'
 
-    - name: Install dependencies
+    - name: Install ONNX from PyPI
       shell: bash
       run: |
         set -e
         python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-release_build.txt
-
-    - name: Build and install ONNX
-      shell: bash
-      run: |
-        # Install protobuf from source
-        export NUM_CORES=`sysctl -n hw.logicalcpu`
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        # Build ONNX
-        export CC=clang
-        export CXX=clang++
-        export ONNX_ML=1
-        pip install -e . -v
+        python -m pip install -q onnx-weekly
 
     - name: Test all models with onnx.checker, onnx.shape_inference, onnx.version_converter
       run: |
