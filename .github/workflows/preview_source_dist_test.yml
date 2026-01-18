@@ -7,7 +7,7 @@ name: Test source dist of preview build at onnx-weekly
 on:
   schedule:
     
-    - cron:  '00 00 * * 2'
+    - cron:  '0 0 * * 2'
   workflow_call:
     inputs:
       os:
