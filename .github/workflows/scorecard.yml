@@ -31,9 +31,9 @@ jobs:
         uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a
         with:
           results_file: results.sarif
-          results_format: sarif          
+          results_format: sarif
           publish_results: true
-      
+
       - name: "Upload artifact"
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
