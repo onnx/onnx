@@ -173,9 +173,42 @@ class CmakeBuild(setuptools.Command):
             self.jobs = multiprocessing.cpu_count()
 
     def run(self):
+        should_clean = False
+        cmake_cache_file = os.path.join(CMAKE_BUILD_DIR, "CMakeCache.txt")
+
+        if os.path.exists(cmake_cache_file):
+            cached_python = None
+            try:
+                with open(cmake_cache_file, encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        if line.startswith("Python3_EXECUTABLE:FILEPATH="):
+                            cached_python = line.strip().split("=", 1)[1]
+                            break
+            except Exception:  # noqa: BLE001
+                should_clean = True
+
+            if cached_python is None or cached_python != sys.executable:
+                if cached_python:
+                    logging.info(  # noqa: LOG015
+                        "Python interpreter changed (Cached: %s, Current: %s). Cleaning build directory...",
+                        cached_python,
+                        sys.executable,
+                    )
+                else:
+                    logging.info(  # noqa: LOG015
+                        "Could not determine cached Python version. Cleaning build directory..."
+                    )
+                should_clean = True
+
+        if should_clean and os.path.exists(CMAKE_BUILD_DIR):
+            logging.info("Removing stale build directory: %s", CMAKE_BUILD_DIR)  # noqa: LOG015
+            shutil.rmtree(CMAKE_BUILD_DIR)
+
         assert CMAKE, "Could not find cmake in PATH"
 
         os.makedirs(CMAKE_BUILD_DIR, exist_ok=True)
+
+        env = os.environ.copy()
 
         with cd(CMAKE_BUILD_DIR):
             build_type = "Release"
@@ -234,7 +267,7 @@ class CmakeBuild(setuptools.Command):
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
-            subprocess.check_call(cmake_args)
+            subprocess.check_call(cmake_args, env=env)
 
             build_args = [
                 CMAKE,
@@ -250,7 +283,7 @@ class CmakeBuild(setuptools.Command):
                         "--verbose",
                     ]
                 )
-            subprocess.check_call(build_args)
+            subprocess.check_call(build_args, env=env)
 
 
 class BuildPy(setuptools.command.build_py.build_py):
