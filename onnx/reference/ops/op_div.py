@@ -13,7 +13,7 @@ class Div(OpRunBinaryNumpy):
         def func(x, y):
             if issubclass(x.dtype.type, np.integer):
                 assert issubclass(y.dtype.type, np.integer)
-                return x // y
+                return np.floor_divide(x, y)
             return np.divide(x, y)
 
         OpRunBinaryNumpy.__init__(self, func, onnx_node, run_params)

@@ -50,10 +50,17 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
+{int_div_doc}
 (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
         ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+        ReplaceAll(
+            doc,
+            "{int_div_doc}",
+            std::string(name) == "division"
+                ? "For integer inputs, the result is computed using floor division (rounding toward negative infinity).\n"
+                : ""););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);

@@ -39,6 +39,11 @@ class Div(Base):
         z = x // y
         expect(node, inputs=[x, y], outputs=[z], name="test_div_int16")
 
+        x = np.array([-3, 3, -3, 3], dtype=np.int32)
+        y = np.array([2, 2, -2, -2], dtype=np.int32)
+        z = x // y
+        expect(node, inputs=[x, y], outputs=[z], name="test_div_int32_floor")
+
         x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
         y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
         z = x // y

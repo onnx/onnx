@@ -731,6 +731,21 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(x * x, got)
 
+    def test_div_int_floor(self):
+        X = make_tensor_value_info("X", TensorProto.INT32, [None])
+        Y = make_tensor_value_info("Y", TensorProto.INT32, [None])
+        Z = make_tensor_value_info("Z", TensorProto.INT32, [None])
+        node1 = make_node("Div", ["X", "Y"], ["Z"])
+        graph = make_graph([node1], "div", [X, Y], [Z])
+        onnx_model = make_model_gen_version(graph, opset_imports=[make_opsetid("", 14)])
+        check_model(onnx_model)
+        x = np.array([-3, 3, -3, 3], dtype=np.int32)
+        y = np.array([2, 2, -2, -2], dtype=np.int32)
+        expected = np.array([-2, 1, 1, -2], dtype=np.int32)
+        sess = ReferenceEvaluator(onnx_model)
+        got = sess.run(None, {"X": x, "Y": y})[0]
+        assert_allclose(got, expected)
+
     def test_greater(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
