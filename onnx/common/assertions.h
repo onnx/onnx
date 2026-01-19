@@ -26,9 +26,9 @@ struct tensor_error : public assert_error {
 
 std::string barf(const char* fmt, ...);
 
-[[noreturn]] void throw_assert_error(std::string&);
+[[noreturn]] void throw_assert_error(std::string& /*msg*/);
 
-[[noreturn]] void throw_tensor_error(std::string&);
+[[noreturn]] void throw_tensor_error(std::string& /*msg*/);
 
 } // namespace ONNX_NAMESPACE
 
