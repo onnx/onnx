@@ -9,7 +9,7 @@ on:
     branches:
       - main
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 concurrency:
@@ -40,6 +40,6 @@ jobs:
           set +e
           lintrunner f --all-files -v
           exit 0
-      - uses: parkerbxyz/suggest-changes@v3
+      - uses: parkerbxyz/suggest-changes@bd099ea0d10f0e9efeb9e46d604bbe6d7a80bc34
         with:
           comment: 'You can commit the suggested changes from lintrunner.'
