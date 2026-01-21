@@ -63,7 +63,6 @@ jobs:
       os: "macos"
       build_mode: 'scientific'
       python_versions: '3.12'
-      test_python_versions: '3.14,3.13,3.12'
 
   publish_scientific_nightly:
     name: Publish to scientific-python nightly channel
