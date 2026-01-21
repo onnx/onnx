@@ -39,6 +39,7 @@ jobs:
       os: "linux"
       build_mode: 'scientific'
       python_versions: '3.12'
+      test_python_versions: '3.14,3.13,3.12'
 
   call-win:
     uses: andife/onnx/.github/workflows/release_win.yml@scientific
@@ -46,6 +47,7 @@ jobs:
       os: "win"
       build_mode: 'scientific'
       python_versions: '3.12'
+      test_python_versions: '3.14,3.13,3.12'
 
   call-mac:
     uses: andife/onnx/.github/workflows/release_mac.yml@scientific
@@ -53,13 +55,15 @@ jobs:
       os: "macos"
       build_mode: 'scientific'
       python_versions: '3.12'
+      test_python_versions: '3.14,3.13,3.12'
 
-  call-sdist:    
+  call-sdist:
     uses: andife/onnx/.github/workflows/release_sdist.yml@scientific
     with:
       os: "macos"
       build_mode: 'scientific'
       python_versions: '3.12'
+      test_python_versions: '3.14,3.13,3.12'
 
   publish_scientific_nightly:
     name: Publish to scientific-python nightly channel
