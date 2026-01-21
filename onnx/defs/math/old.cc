@@ -816,7 +816,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
         ReplaceAll(doc, "{name}", name);
         ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     if (std::string(name) == "division") {
-      doc += "\nFor integer inputs, the result is computed using floor division (rounding toward negative infinity).\n";
+      doc += "\nFor integer inputs, the result is computed using truncating division (rounding toward zero).\n";
     }
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
@@ -865,7 +865,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
         ReplaceAll(doc, "{name}", name);
         ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     if (std::string(name) == "division") {
-      doc += "\nFor integer inputs, the result is computed using floor division (rounding toward negative infinity).\n";
+      doc += "\nFor integer inputs, the result is computed using truncating division (rounding toward zero).\n";
     }
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T");
@@ -2375,7 +2375,7 @@ Performs element-wise binary {name} (with limited broadcast support).
         ReplaceAll(doc, "{name}", name);
         ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
     if (std::string(name) == "division") {
-      doc += "\nFor integer inputs, the result is computed using floor division (rounding toward negative infinity).\n";
+      doc += "\nFor integer inputs, the result is computed using truncating division (rounding toward zero).\n";
     }
     schema.SetDoc(doc);
     schema.Attr("broadcast", "Pass 1 to enable broadcasting", AttributeProto::INT, static_cast<int64_t>(0));

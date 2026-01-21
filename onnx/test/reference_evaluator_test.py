@@ -731,7 +731,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = sess.run(None, {"X": x})[0]
         assert_allclose(x * x, got)
 
-    def test_div_int_floor(self):
+    def test_div_int_trunc(self):
         X = make_tensor_value_info("X", TensorProto.INT32, [None])
         Y = make_tensor_value_info("Y", TensorProto.INT32, [None])
         Z = make_tensor_value_info("Z", TensorProto.INT32, [None])
@@ -741,7 +741,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         check_model(onnx_model)
         x = np.array([-3, 3, -3, 3], dtype=np.int32)
         y = np.array([2, 2, -2, -2], dtype=np.int32)
-        expected = np.array([-2, 1, 1, -2], dtype=np.int32)
+        expected = np.array([-1, 1, 1, -1], dtype=np.int32)
         sess = ReferenceEvaluator(onnx_model)
         got = sess.run(None, {"X": x, "Y": y})[0]
         assert_allclose(got, expected)

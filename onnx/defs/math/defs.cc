@@ -59,7 +59,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
             doc,
             "{int_div_doc}",
             std::string(name) == "division"
-                ? "For integer inputs, the result is computed using floor division (rounding toward negative infinity).\n"
+                ? "For integer inputs, the result is computed using truncating division (rounding toward zero).\n"
                 : ""););
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
