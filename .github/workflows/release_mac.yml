@@ -135,7 +135,7 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.parse-python-versions.outputs.test-matrix) }}        
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.test-matrix) }}
         target-architecture: ['x86_64', 'arm64']
       fail-fast: false
 
