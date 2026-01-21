@@ -169,6 +169,7 @@ jobs:
           Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname }
         }
 
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       if: steps.build_wheel.outcome == 'success' && inputs.build_mode == 'preview'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}
