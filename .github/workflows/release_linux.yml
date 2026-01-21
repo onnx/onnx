@@ -32,10 +32,14 @@ jobs:
         run: |
           versions="${PYTHON_VERSIONS}"
           # Convert comma-separated to JSON array
-          matrix=$(echo "$versions" | jq -R 'split(",") | map(select(length > 0))')
-          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          matrix=$(echo "$versions" | jq -R -c 'split(",") | map(select(length > 0))')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
         env:
           PYTHON_VERSIONS: ${{ inputs.python_versions }}
+
+      - name: Dump GITHUB_OUTPUT
+        if: always()
+        run: cat "$GITHUB_OUTPUT" || true
 
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
