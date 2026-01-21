@@ -165,7 +165,7 @@ jobs:
         }
 
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: steps.build_wheel.outcome == 'success' && inputs.build_mode == 'preview'
+      if: steps.build_wheel.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}
         path: ./dist
