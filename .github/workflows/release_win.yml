@@ -103,25 +103,16 @@ jobs:
 
     - name: Validate build mode
       run: |
-        switch ("${BUILD_MODE}") {
-          "preview" {
-            Write-Host "Build mode validated: ${BUILD_MODE}"
-            break
-          }
-          "scientific" {
-            Write-Host "Build mode validated: ${BUILD_MODE}"
-            break
-          }
-          "release" {
-            Write-Host "Build mode validated: ${BUILD_MODE}"
-            break
-          }
-          default {
-            Write-Error "Invalid build mode: ${BUILD_MODE}. Must be one of: preview, scientific, release"
+        case "${BUILD_MODE}" in
+          "preview"|"scientific"|"release")
+            echo "Build mode validated: ${BUILD_MODE}"
+            ;;
+          *)
+            echo "Error: Invalid build mode '${BUILD_MODE}'. Must be one of: preview, scientific, release"
             exit 1
-          }
-        }
-      shell: powershell
+            ;;
+        esac
+      shell: bash
       env:
         BUILD_MODE: ${{ inputs.build_mode }}
 
