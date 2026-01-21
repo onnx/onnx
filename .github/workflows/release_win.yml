@@ -17,6 +17,10 @@ on:
         required: false
         type: string
         default: '3.12'
+      test_python_versions:
+        required: false
+        type: string
+        default: ''  # Currently unused - Windows tests in same job as build
 
 permissions:
   contents: read

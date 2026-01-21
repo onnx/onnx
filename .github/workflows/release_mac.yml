@@ -17,6 +17,10 @@ on:
         required: false
         type: string
         default: '3.12'
+      test_python_versions:
+        required: false
+        type: string
+        default: ''  # Currently unused - Mac tests in same job as build
 
 env:
   MACOSX_DEPLOYMENT_TARGET: "12.0"
