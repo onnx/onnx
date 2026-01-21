@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -26,9 +24,9 @@ struct tensor_error : public assert_error {
 
 std::string barf(const char* fmt, ...);
 
-[[noreturn]] void throw_assert_error(std::string&);
+[[noreturn]] void throw_assert_error(std::string& /*msg*/);
 
-[[noreturn]] void throw_tensor_error(std::string&);
+[[noreturn]] void throw_tensor_error(std::string& /*msg*/);
 
 } // namespace ONNX_NAMESPACE
 

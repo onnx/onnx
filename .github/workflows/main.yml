@@ -18,7 +18,7 @@ on:
   merge_group:
   workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions:  # set top-level default permissions as security good practice
   contents: read
 
 concurrency:
@@ -93,6 +93,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
@@ -143,6 +144,7 @@ jobs:
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
           if [ "${{ matrix.python_version }}" == "3.14" ]; then
+            sudo apt-get update
             sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           fi
 
@@ -269,6 +271,7 @@ jobs:
         if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && startsWith(matrix.os,'ubuntu')
         run: |
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
+          sudo apt-get update
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           pip install --prefer-binary "numpy<2.0" pillow
           pytest -s

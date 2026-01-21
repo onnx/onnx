@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
 #include <map>
@@ -2354,9 +2354,9 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     // If no explicit output was given, generate an implicit output by ordering all the
     // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
     // Exclude any labels that occurred more than once, as these cancel out.
-    for (auto i : label_maps) {
-      if (repeated_labels.count(i.first) == 0) {
-        *output_shape.add_dim() = dims_value.dim(i.second);
+    for (const auto& p : label_maps) {
+      if (repeated_labels.count(p.first) == 0) {
+        *output_shape.add_dim() = dims_value.dim(p.second);
       }
     }
   }

@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -231,7 +229,7 @@ operator"" _sym // gcc 4.8.5 insists on having a space (hard error).
 #else
 operator""_sym // clang 17 generates a deprecation warning if there is a space.
 #endif
-    (const char* s, size_t) {
+    (const char* s, size_t /*unused*/) {
   return Symbol(s);
 }
 
