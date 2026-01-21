@@ -44,23 +44,30 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
 static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    if (std::string(name) == "division") {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
-{int_div_doc}
+For integer inputs, the result is computed using truncating division (rounding toward zero).
 (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
-        ReplaceAll(
-            doc,
-            "{int_div_doc}",
-            std::string(name) == "division"
-                ? "For integer inputs, the result is computed using truncating division (rounding toward zero).\n"
-                : ""););
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    } else {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+
+(Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
+)DOC";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    }
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);

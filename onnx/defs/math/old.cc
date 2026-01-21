@@ -807,16 +807,26 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> MathDocGenerator_opset13(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    if (std::string(name) == "division") {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+
+For integer inputs, the result is computed using truncating division (rounding toward zero).
+)DOC";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    } else {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
-    if (std::string(name) == "division") {
-      doc += "\nFor integer inputs, the result is computed using truncating division (rounding toward zero).\n";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     }
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
@@ -856,16 +866,26 @@ ONNX_OPERATOR_SET_SCHEMA(Div, 13, OpSchema().FillUsing(MathDocGenerator_opset13(
 static std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    if (std::string(name) == "division") {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+
+For integer inputs, the result is computed using truncating division (rounding toward zero).
+)DOC";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    } else {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
-    if (std::string(name) == "division") {
-      doc += "\nFor integer inputs, the result is computed using truncating division (rounding toward zero).\n";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     }
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T");
@@ -2368,14 +2388,23 @@ Performs element-wise binary {name} (with limited broadcast support).
 static std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    if (std::string(name) == "division") {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
+Performs element-wise binary {name} (with limited broadcast support).
+{broadcast_doc}
+
+For integer inputs, the result is computed using truncating division (rounding toward zero).
+)DOC";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
+    } else {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
-    if (std::string(name) == "division") {
-      doc += "\nFor integer inputs, the result is computed using truncating division (rounding toward zero).\n";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old););
     }
     schema.SetDoc(doc);
     schema.Attr("broadcast", "Pass 1 to enable broadcasting", AttributeProto::INT, static_cast<int64_t>(0));

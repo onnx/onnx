@@ -14,6 +14,7 @@ class Div(OpRunBinaryNumpy):
             if issubclass(x.dtype.type, np.integer):
                 assert issubclass(y.dtype.type, np.integer)
                 # Truncate toward zero for integer division (C++-style).
+                # Keep integer math to avoid precision loss for large values.
                 q = np.floor_divide(x, y)
                 r = np.remainder(x, y)
                 needs_adjust = (r != 0) & ((x < 0) ^ (y < 0))
