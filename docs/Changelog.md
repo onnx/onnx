@@ -18759,6 +18759,7 @@ This version of the operator has been available since version 13 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -19272,6 +19273,7 @@ This version of the operator has been available since version 14 of the default 
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -19488,6 +19490,7 @@ This version of the operator has been available since version 14 of the default 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
 
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 

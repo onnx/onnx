@@ -414,6 +414,7 @@ expect(node, inputs=[x], outputs=[y], name="test_acosh")
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -20822,6 +20823,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_mod_uint8")
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
+
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -37159,6 +37161,7 @@ expect(
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
 
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
 
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
