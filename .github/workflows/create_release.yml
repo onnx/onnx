@@ -207,6 +207,7 @@ jobs:
       permissions:
         contents: read
         id-token: write
+        attestations: write
 
       steps:
 
@@ -223,6 +224,11 @@ jobs:
             pattern: sdist
             path: dist
             merge-multiple: true
+
+        - name: Sign artifacts with Sigstore
+          uses: sigstore/gh-action-sigstore-python@f514d46b907ebcd5bedc05145c03b69c1edd8b46 # v3.0.0
+          with:
+            inputs: ./dist/*.tar.gz ./dist/*.whl
 
         - name: Upload release build to test.pypi
           id: upload_release_build_to_testpypi
@@ -297,6 +303,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      attestations: write
 
     steps:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
@@ -310,6 +317,11 @@ jobs:
           pattern: sdist
           path: dist
           merge-multiple: true
+
+      - name: Sign artifacts with Sigstore
+        uses: sigstore/gh-action-sigstore-python@f514d46b907ebcd5bedc05145c03b69c1edd8b46 # v3.0.0
+        with:
+          inputs: ./dist/*.tar.gz ./dist/*.whl
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
