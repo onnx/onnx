@@ -11015,7 +11015,6 @@ expect(node, inputs=[x], outputs=[y], name="test_det_nd")
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
   For integer inputs, the result is computed using truncating division (rounding toward zero).
-
   (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 
 #### Version
@@ -11079,6 +11078,11 @@ x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16) + 1
 z = x // y
 expect(node, inputs=[x, y], outputs=[z], name="test_div_int16")
+
+x = np.array([-3, 3, -3, 3], dtype=np.int32)
+y = np.array([2, 2, -2, -2], dtype=np.int32)
+z = np.array([-1, 1, 1, -1], dtype=np.int32)
+expect(node, inputs=[x, y], outputs=[z], name="test_div_int32_trunc")
 
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
