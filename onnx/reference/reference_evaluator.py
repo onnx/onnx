@@ -322,7 +322,7 @@ class ReferenceEvaluator:
             "An instance of LargeContainer should be created before using ReferenceEvaluator."
         )
 
-    def _log_arg(self, a: Any) -> Any:
+    def _log_arg(self, a: Any) -> Any:  # noqa: PLR0911
         if isinstance(a, (str, int, float)):
             return a
         if isinstance(a, np.ndarray):
