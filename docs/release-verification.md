@@ -29,11 +29,11 @@ pypi-attestations verify pypi \
 
 ## References
 
-- PEP 740 – Digital Attestations for Python Packages  
+- PEP 740 – Digital Attestations for Python Packages
   https://peps.python.org/pep-0740/
 
 - Sigstore  
   https://www.sigstore.dev/
 
-- PyPI Attestations  
+- PyPI Attestations
   https://pypi.org/project/pypi-attestations/
