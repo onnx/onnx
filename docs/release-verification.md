@@ -32,7 +32,7 @@ pypi-attestations verify pypi \
 - PEP 740 – Digital Attestations for Python Packages
   https://peps.python.org/pep-0740/
 
-- Sigstore  
+- Sigstore
   https://www.sigstore.dev/
 
 - PyPI Attestations
