@@ -327,6 +327,8 @@ class ReferenceEvaluator:
             return a
         if isinstance(a, np.ndarray):
             if self.verbose < 4:  # noqa: PLR2004
+                if a.size == 0:
+                    return f"{a.dtype}:{a.shape} (empty)"
                 return f"{a.dtype}:{a.shape} in [{a.min()}, {a.max()}]"
             elements = a.ravel().tolist()
             if len(elements) > 5:  # noqa: PLR2004
