@@ -51,24 +51,19 @@ std::string barf(const char* fmt, ...);
 #define ONNX_EXPAND(x) x
 
 // Note: msg must be a string literal
-#define _ONNX_ASSERTM(cond, msg, ...)                                                                \
-  /* NOLINTNEXTLINE */                                                                               \
-  if (_ONNX_EXPECT(!(cond), 0)) {                                                                    \
-    std::string error_msg = ::ONNX_NAMESPACE::barf(                                                  \
-        "%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, __VA_ARGS__); \
-    throw_assert_error(error_msg);                                                                   \
+// The ##__VA_ARGS__ extension removes the trailing comma when __VA_ARGS__ is empty.
+// This is supported by GCC, Clang, and MSVC (since VS 2019 16.6).
+#define ONNX_ASSERTM(cond, msg, ...)                                                                  \
+  /* NOLINTNEXTLINE */                                                                                \
+  if (_ONNX_EXPECT(!(cond), 0)) {                                                                     \
+    std::string error_msg = ::ONNX_NAMESPACE::barf(                                                   \
+        "%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, ##__VA_ARGS__); \
+    throw_assert_error(error_msg);                                                                    \
   }
 
-// The trailing ' ' argument is a hack to deal with the extra comma when ... is empty.
-// Another way to solve this is ##__VA_ARGS__ in _ONNX_ASSERTM, but this is a non-portable
-// extension we shouldn't use.
-#define ONNX_ASSERTM(...) ONNX_EXPAND(_ONNX_ASSERTM(__VA_ARGS__, " "))
-
-#define _TENSOR_ASSERTM(cond, msg, ...)                                                              \
-  if (_ONNX_EXPECT(!(cond), 0)) {                                                                    \
-    std::string error_msg = ::ONNX_NAMESPACE::barf(                                                  \
-        "%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, __VA_ARGS__); \
-    throw_tensor_error(error_msg);                                                                   \
+#define TENSOR_ASSERTM(cond, msg, ...)                                                                \
+  if (_ONNX_EXPECT(!(cond), 0)) {                                                                     \
+    std::string error_msg = ::ONNX_NAMESPACE::barf(                                                   \
+        "%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, ##__VA_ARGS__); \
+    throw_tensor_error(error_msg);                                                                    \
   }
-
-#define TENSOR_ASSERTM(...) ONNX_EXPAND(_TENSOR_ASSERTM(__VA_ARGS__, " "))
