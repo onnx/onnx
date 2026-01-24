@@ -292,7 +292,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
       v->setSizes(tensorShapeProtoToDimensions(tensor_type.shape()));
     }
     if (!vip.type().has_tensor_type()) {
-      v->original_type() = std::make_unique<TypeProto>(vip.type());
+      v->type() = std::make_unique<TypeProto>(vip.type());
     }
     v->setUniqueName(vip.name());
     value_by_name_of[vip.name()] = v;
@@ -384,7 +384,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
       value_by_name_of[gp.output(i).name()]->setSizes(tensorShapeProtoToDimensions(output_tensor_type.shape()));
     }
     if (!gp.output(i).type().has_tensor_type()) {
-      value_by_name_of[gp.output(i).name()]->original_type() = std::make_unique<TypeProto>(gp.output(i).type());
+      value_by_name_of[gp.output(i).name()]->type() = std::make_unique<TypeProto>(gp.output(i).type());
     }
     g->registerOutput(value_by_name_of[gp.output(i).name()]);
   }
@@ -404,7 +404,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
       v->setSizes(tensorShapeProtoToDimensions(tensor_type.shape()));
     }
     if (!gp.value_info(i).type().has_tensor_type()) {
-      v->original_type() = std::make_unique<TypeProto>(gp.value_info(i).type());
+      v->type() = std::make_unique<TypeProto>(gp.value_info(i).type());
     }
   }
 
@@ -621,8 +621,8 @@ static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
     ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
     ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
     encodeTypeProtoTensorType(tensor_type, n);
-  } else if (n->original_type()) {
-    v->mutable_type()->CopyFrom(*n->original_type());
+  } else if (n->type()) {
+    v->mutable_type()->CopyFrom(*n->type());
   }
 }
 

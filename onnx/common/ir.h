@@ -319,7 +319,7 @@ struct Value final {
   int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
   bool has_sizes_{false};
   std::vector<Dimension> sizes_;
-  std::unique_ptr<TypeProto> original_type_;
+  std::unique_ptr<TypeProto> type_;
 
  public:
   Value* setElemType(int32_t elem_type) {
@@ -398,8 +398,8 @@ struct Value final {
     return this;
   }
 
-  std::unique_ptr<TypeProto>& original_type() {
-    return original_type_;
+  std::unique_ptr<TypeProto>& type() {
+    return type_;
   }
 };
 
