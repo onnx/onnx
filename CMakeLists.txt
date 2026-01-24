@@ -437,8 +437,9 @@ if(ONNX_BUILD_PYTHON)
   if(NOT nanobind_FOUND)
     if(FETCHCONTENT_FULLY_DISCONNECTED)
       message(FATAL_ERROR
-        "nanobind not found and FetchContent is disabled. Install nanobind with "
-        "CMake config files (nanobind-devel) or set nanobind_DIR/CMAKE_PREFIX_PATH.")
+        "nanobind not found while FETCHCONTENT_FULLY_DISCONNECTED is ON. "
+        "Provide nanobind locally (nanobind_DIR/CMAKE_PREFIX_PATH) or use a "
+        "FetchContent dependency provider for first-run offline builds.")
     endif()
     include(FetchContent)
 

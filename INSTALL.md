@@ -248,9 +248,10 @@ For full list refer to CMakeLists.txt
   `python -m nanobind --cmake-dir`) if CMake cannot find nanobind. You can also set
   `CMAKE_PREFIX_PATH` instead.
 
-* `FETCHCONTENT_FULLY_DISCONNECTED` can be set to `ON` for offline builds after the first
-  configure has already populated dependencies. To prevent network access on the initial
-  configure, prefer a [dependency provider](https://cmake.org/cmake/help/latest/module/FetchContent.html#dependency-providers)
+* `FETCHCONTENT_FULLY_DISCONNECTED` is intended for subsequent re-configures after
+  dependencies are already populated. It does not prevent network access on the initial
+  configure; for fully offline first-run builds, prefer a
+  [dependency provider](https://cmake.org/cmake/help/latest/module/FetchContent.html#dependency-providers)
   or provide dependencies locally (for example, via `nanobind_DIR` or `CMAKE_PREFIX_PATH`).
 
 ## Common Errors
