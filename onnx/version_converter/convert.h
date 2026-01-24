@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -123,9 +124,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       if (default_versions != op_pair.second.end()) {
         int64_t min_version = version_range.second;
         for (auto& version_pair : default_versions->second) {
-          if (version_pair.first < min_version) {
-            min_version = version_pair.first;
-          }
+          min_version = std::min(version_pair.first, min_version);
         }
         if (min_version > 1) {
           registerAdapter(
