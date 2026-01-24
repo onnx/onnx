@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <cinttypes>
 #include <memory>
 #include <string>
 #include <vector>
@@ -38,11 +39,11 @@ class BroadcastBackwardCompatibility final : public Adapter {
     int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(A_sizes, B_sizes);
     ONNX_ASSERTM(
         req_broadcast != -1,
-        "%s being converted from %lld to %lld does "
+        "%s being converted from %" PRId64 " to %" PRId64 " does "
         "not have broadcastable inputs.",
         name().c_str(),
-        static_cast<long long>(initial_version().version()),
-        static_cast<long long>(target_version().version()))
+        static_cast<int64_t>(initial_version().version()),
+        static_cast<int64_t>(target_version().version()))
     if (req_broadcast == 1) {
       // If conditional is not fulfilled, we have a default broadcast
       // Add broadcast attribute

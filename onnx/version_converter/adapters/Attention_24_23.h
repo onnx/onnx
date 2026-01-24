@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <cinttypes>
+
 #include "onnx/version_converter/adapters/adapter.h"
 
 namespace ONNX_NAMESPACE {
@@ -24,11 +26,11 @@ class Attention_24_23 final : public Adapter {
     if (inputs.size() > 6) {
       ONNX_ASSERTM(
           false,
-          "%s being converted from %lld to %lld has nonpad_kv_seqlen input, "
+          "%s being converted from %" PRId64 " to %" PRId64 " has nonpad_kv_seqlen input, "
           "which is not supported in opset 23. This conversion cannot be performed.",
           name().c_str(),
-          static_cast<long long>(initial_version().version()),
-          static_cast<long long>(target_version().version()));
+          static_cast<int64_t>(initial_version().version()),
+          static_cast<int64_t>(target_version().version()));
     }
   }
 
