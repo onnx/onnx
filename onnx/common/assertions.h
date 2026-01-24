@@ -22,6 +22,9 @@ struct tensor_error : public assert_error {
   explicit tensor_error(const std::string& msg) : assert_error(msg) {}
 };
 
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((format(printf, 1, 2)))
+#endif
 std::string barf(const char* fmt, ...);
 
 [[noreturn]] void throw_assert_error(std::string& /*msg*/);
