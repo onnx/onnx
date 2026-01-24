@@ -6,6 +6,7 @@
 
 #include "onnx/version_converter/helper.h"
 
+#include <cinttypes>
 #include <vector>
 
 namespace ONNX_NAMESPACE {
@@ -71,11 +72,11 @@ void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uin
   ONNX_ASSERTM(
       inputs.size() == num_inputs,
       "%s in opset version 6 can only broadcast"
-      " between %llu inputs",
+      " between %" PRIu64 " inputs",
       name,
-      static_cast<unsigned long long>(num_inputs))
+      num_inputs)
   for (size_t i = 0; i < num_inputs; i++) {
-    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %llu is not available.", static_cast<unsigned long long>(num_inputs))
+    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %zu is not available.", i)
     assertNotParams(inputs[i]->sizes());
   }
 }
