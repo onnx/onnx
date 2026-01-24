@@ -50,10 +50,10 @@ class TypeRestriction : public Adapter {
         std::find(std::begin(unallowed_types_), std::end(unallowed_types_), val->elemType()) ==
             std::end(unallowed_types_),
         "DataType (%d) of Input or Output"
-        " of operator '%s' is unallowed for Opset Version %d.",
+        " of operator '%s' is unallowed for Opset Version %lld.",
         val->elemType(),
         name().c_str(),
-        target_version().version())
+        static_cast<long long>(target_version().version()))
   }
 };
 

@@ -24,11 +24,11 @@ class Attention_24_23 final : public Adapter {
     if (inputs.size() > 6) {
       ONNX_ASSERTM(
           false,
-          "%s being converted from %d to %d has nonpad_kv_seqlen input, "
+          "%s being converted from %lld to %lld has nonpad_kv_seqlen input, "
           "which is not supported in opset 23. This conversion cannot be performed.",
           name().c_str(),
-          initial_version().version(),
-          target_version().version());
+          static_cast<long long>(initial_version().version()),
+          static_cast<long long>(target_version().version()));
     }
   }
 

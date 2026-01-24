@@ -52,8 +52,8 @@ void assert_numpy_multibroadcastable(
   for (size_t i = 0; i < B_sizes.size(); i++) {
     ONNX_ASSERTM(
         B_sizes[i].dim == A_sizes[axis + i].dim || B_sizes[i].dim == 1 || A_sizes[axis + i].dim == 1,
-        "Dimension %d of input %d does not match "
-        "dimension %d of input %d, and neither's value is 1",
+        "Dimension %zu of input %d does not match "
+        "dimension %zu of input %d, and neither's value is 1",
         i,
         B,
         axis + i,
@@ -71,11 +71,11 @@ void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uin
   ONNX_ASSERTM(
       inputs.size() == num_inputs,
       "%s in opset version 6 can only broadcast"
-      " between %d inputs",
+      " between %llu inputs",
       name,
-      num_inputs)
+      static_cast<unsigned long long>(num_inputs))
   for (size_t i = 0; i < num_inputs; i++) {
-    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs)
+    ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %llu is not available.", static_cast<unsigned long long>(num_inputs))
     assertNotParams(inputs[i]->sizes());
   }
 }
