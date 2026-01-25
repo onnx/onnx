@@ -422,6 +422,31 @@ class TestReferenceEvaluator(unittest.TestCase):
             ).lstrip("\n")
             self.assertEqual(log, out)
 
+    def test_reference_evaluator_empty_array_verbose(self):
+        input_tensor = make_tensor_value_info("input", TensorProto.FLOAT, [None, 3])
+        output_tensor = make_tensor_value_info("output", TensorProto.FLOAT, [None, 3])
+
+        node = make_node("Identity", ["input"], ["output"])
+        graph = make_graph([node], "test_empty_array", [input_tensor], [output_tensor])
+        model = make_model(graph)
+
+        for verbose_level in [2, 3, 4, 15]:
+            with self.subTest(level=verbose_level):
+                sess = ReferenceEvaluator(model, verbose=verbose_level)
+
+                empty_input = np.array([], dtype=np.float32).reshape(0, 3)
+
+                stdout = StringIO()
+                with redirect_stdout(stdout):
+                    result = sess.run(None, {"input": empty_input})
+
+                expected = empty_input
+                assert_allclose(result[0], expected)
+                self.assertEqual(result[0].shape, (0, 3))
+
+                out = stdout.getvalue()
+                self.assertIn("Identity", out)
+
     def test_reference_evaluator_lr(self):
         lr, f = TestReferenceEvaluator._linear_regression()
         x = np.array([[0, 1], [2, 3]], dtype=np.float32)
