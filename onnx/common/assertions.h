@@ -53,17 +53,17 @@ std::string barf(const char* fmt, ...);
 // Note: msg must be a string literal
 // The ##__VA_ARGS__ extension removes the trailing comma when __VA_ARGS__ is empty.
 // This is supported by GCC, Clang, and MSVC (since VS 2019 16.6).
-#define ONNX_ASSERTM(cond, msg, ...)                                                                  \
-  /* NOLINTNEXTLINE */                                                                                \
-  if (_ONNX_EXPECT(!(cond), 0)) {                                                                     \
-    std::string error_msg = ::ONNX_NAMESPACE::barf(                                                   \
+#define ONNX_ASSERTM(cond, msg, ...)                                                                   \
+  /* NOLINTNEXTLINE */                                                                                 \
+  if (_ONNX_EXPECT(!(cond), 0)) {                                                                      \
+    std::string error_msg = ::ONNX_NAMESPACE::barf(                                                    \
         "%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, ##__VA_ARGS__); \
-    throw_assert_error(error_msg);                                                                    \
+    throw_assert_error(error_msg);                                                                     \
   }
 
-#define TENSOR_ASSERTM(cond, msg, ...)                                                                \
-  if (_ONNX_EXPECT(!(cond), 0)) {                                                                     \
-    std::string error_msg = ::ONNX_NAMESPACE::barf(                                                   \
+#define TENSOR_ASSERTM(cond, msg, ...)                                                                 \
+  if (_ONNX_EXPECT(!(cond), 0)) {                                                                      \
+    std::string error_msg = ::ONNX_NAMESPACE::barf(                                                    \
         "%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, ##__VA_ARGS__); \
-    throw_tensor_error(error_msg);                                                                    \
+    throw_tensor_error(error_msg);                                                                     \
   }
