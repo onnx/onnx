@@ -8,9 +8,12 @@
 
 #pragma once
 
+#include <cinttypes>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
+#include "onnx/common/assertions.h"
 #include "onnx/version_converter/adapters/type_restriction.h"
 
 namespace ONNX_NAMESPACE {
@@ -30,7 +33,10 @@ class QuantizeLinear_21_20 final : public TypeRestriction {
   void adapt_quantize_linear_21_20(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     if (node->hasAttribute(kblock_size)) {
       if ((node->i(kblock_size) != 0)) {
-        ONNX_ASSERTM(false, "Blocked quantization is not supported for Opset Version %d.", target_version().version())
+        ONNX_ASSERTM(
+            false,
+            "Blocked quantization is not supported for Opset Version %" PRId64 ".",
+            static_cast<int64_t>(target_version().version()))
       }
       node->removeAttribute(kblock_size);
     }
@@ -38,8 +44,8 @@ class QuantizeLinear_21_20 final : public TypeRestriction {
       if (node->i(koutput_dtype) != TensorProto_DataType_UINT8 && node->inputs().size() < 3) {
         ONNX_ASSERTM(
             false,
-            "Attribute output_dtype is not supported for Opset Version %d, supply a zero-point tensor instead",
-            target_version().version())
+            "Attribute output_dtype is not supported for Opset Version %" PRId64 ", supply a zero-point tensor instead",
+            static_cast<int64_t>(target_version().version()))
       }
       node->removeAttribute(koutput_dtype);
     }
@@ -60,7 +66,10 @@ class DequantizeLinear_21_20 final : public TypeRestriction {
   void adapt_dequantize_linear_21_20(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     if (node->hasAttribute(kblock_size)) {
       if ((node->i(kblock_size) != 0)) {
-        ONNX_ASSERTM(false, "Blocked quantization is not supported for Opset Version %d.", target_version().version())
+        ONNX_ASSERTM(
+            false,
+            "Blocked quantization is not supported for Opset Version %" PRId64 ".",
+            static_cast<int64_t>(target_version().version()))
       }
       node->removeAttribute(kblock_size);
     }

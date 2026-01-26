@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <cinttypes>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -43,11 +45,12 @@ class Gemm_7_6 final : public Adapter {
     int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(MN, C_shape);
     ONNX_ASSERTM(
         req_broadcast != -1,
-        "%s being converted from %d to %d does "
+        "%s being converted from %" PRId64 " to %" PRId64
+        " does "
         "not have broadcastable inputs.",
         name().c_str(),
-        initial_version().version(),
-        target_version().version())
+        static_cast<int64_t>(initial_version().version()),
+        static_cast<int64_t>(target_version().version()))
     if (req_broadcast == 1) {
       node->i_(kbroadcast, 1);
     }
