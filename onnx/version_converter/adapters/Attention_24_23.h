@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Attention in default domain from version 24 to 23
 
@@ -26,7 +24,8 @@ class Attention_24_23 final : public Adapter {
     if (inputs.size() > 6) {
       ONNX_ASSERTM(
           false,
-          "%s being converted from %" PRId64 " to %" PRId64 " has nonpad_kv_seqlen input, "
+          "%s being converted from %" PRId64 " to %" PRId64
+          " has nonpad_kv_seqlen input, "
           "which is not supported in opset 23. This conversion cannot be performed.",
           name().c_str(),
           static_cast<int64_t>(initial_version().version()),

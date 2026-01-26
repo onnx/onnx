@@ -22,9 +22,9 @@ std::string barf(const char* fmt, ...) {
 
   va_start(args, fmt);
 
-  // use fixed length for buffer "msg" to avoid buffer overflow
-  // Suppress -Wformat-nonliteral: fmt comes from the variadic parameter,
-  // and call sites are checked via the format attribute on the declaration.
+// use fixed length for buffer "msg" to avoid buffer overflow
+// Suppress -Wformat-nonliteral: fmt comes from the variadic parameter,
+// and call sites are checked via the format attribute on the declaration.
 #if defined(__clang__) || defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
