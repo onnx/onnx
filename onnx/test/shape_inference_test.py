@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 import pytest
 from parameterized import parameterized
+import base64
 
 import onnx.shape_inference
 from onnx import (
@@ -10712,7 +10713,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
-
+   
+    def test_protobuf_default(self) -> None:
+    	# This binary was created with the protobuf reflection API and contains an integer
+    	# attribute whose value is 0 but it's not explicitly serialized, relying on the
+    	# protobuf default for INT64. Apparently such binary cannot be created with the 
+    	# helper. https://github.com/onnx/onnx/issues/7573
+        model_bytes = base64.b64decode(
+          "CAgSBHRlc3Q6TwodCgJpbhIDb3V0IgdGbGF0dGVuKgkKBGF4aXOgAQISAWdaFAoCaW4SDgoMCAESCAoCCAIKAggDYhUKA291dBIOCgwIARIICgIIAQoCCAZCAhAS"
+        );
+        model = onnx.load_model_from_string(model_bytes);
+        self._assert_inferred(model, [])
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
     custom_op_type: str = "CustomOp"
