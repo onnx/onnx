@@ -1167,9 +1167,11 @@ struct Graph final {
   // Erases from graph initializer list, initializer names list, and as a graph input
   // Must have no uses
   void eraseInitializerAndInput(Value* v) {
+    Node* node = v->node();
+    const size_t offset = v->offset();
     eraseInitializer(v->uniqueName());
-    if (v->node() == input_) {
-      eraseInput(v->offset());
+    if (node == input_) {
+      eraseInput(offset);
     }
   }
 
