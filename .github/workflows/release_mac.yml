@@ -53,11 +53,12 @@ jobs:
         ONNX_ML: 1
         CMAKE_OSX_ARCHITECTURES: "arm64;x86_64"
         CMAKE_ARGS: "-DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON"
+        BUILD_MODE: ${{ inputs.build_mode }}
       run: |
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        if [ '${{ inputs.build_mode }}' != 'release' ]; then
+        if [ "$BUILD_MODE" != 'release' ]; then
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
         fi
