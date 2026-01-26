@@ -28,18 +28,17 @@ jobs:
     - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       name: Checkout repo
       with:
+        submodules: recursive
         persist-credentials: false
     - name: Set up Python
       uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
       with:
         python-version: '3.12'
 
-    - name: Install ONNX from PyPI
-      shell: bash
+    - name: Build and install ONNX from source
       run: |
-        set -e
-        python -m pip install -q --upgrade pip
-        python -m pip install -q onnx-weekly
+        python -m pip install --upgrade pip
+        pip install -e ".[reference]" -v
 
     - name: Test all models with onnx.checker, onnx.shape_inference, onnx.version_converter
       run: |
