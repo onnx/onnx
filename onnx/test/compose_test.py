@@ -1046,7 +1046,9 @@ class TestComposeFunctions(unittest.TestCase):
 
         # Value info 'x' from m1 is removed, because there is no longer an input with that name
         out_m3 = compose.merge_models(m1, m4, prefix1="m1/", io_map=[("y", "x")])
-        self.assertEqual(0, len(out_m3.graph.value_info))
+        value_info_names = {vi.name for vi in out_m3.graph.value_info}
+        self.assertNotIn("x", value_info_names)
+        self.assertEqual({"m1/y"}, value_info_names)
 
     def test_merge_preserves_mapped_output_value_info(self) -> None:
         """Mapped outputs should keep their type info as value_info in merged graph."""
