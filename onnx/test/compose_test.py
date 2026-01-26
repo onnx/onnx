@@ -1048,6 +1048,41 @@ class TestComposeFunctions(unittest.TestCase):
         out_m3 = compose.merge_models(m1, m4, prefix1="m1/", io_map=[("y", "x")])
         self.assertEqual(0, len(out_m3.graph.value_info))
 
+    def test_merge_preserves_mapped_output_value_info(self) -> None:
+        """Mapped outputs should keep their type info as value_info in merged graph."""
+        m1_def = """
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            g1 (float[N, 32] X) => (float[N, 32] Y)
+            {
+                Y = Identity(X)
+            }
+            """
+        m2_def = """
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            g2 (float[N, 32] X) => (float[N, 32] Z)
+            {
+                Z = Relu(X)
+            }
+            """
+        m1 = _load_model(m1_def)
+        m2 = _load_model(m2_def)
+        merged = compose.merge_models(m1, m2, io_map=[("Y", "X")])
+        output_names = {o.name for o in merged.graph.output}
+        value_info_by_name = {vi.name: vi for vi in merged.graph.value_info}
+
+        self.assertNotIn("Y", output_names)
+        self.assertIn("Y", value_info_by_name)
+        self.assertEqual(
+            m1.graph.output[0].SerializeToString(),
+            value_info_by_name["Y"].SerializeToString(),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
