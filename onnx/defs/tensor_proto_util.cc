@@ -4,6 +4,7 @@
 
 #include "tensor_proto_util.h"
 
+#include <cstring>
 #include <string>
 #include <vector>
 
