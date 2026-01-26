@@ -9,9 +9,11 @@
 #pragma once
 
 #include <cinttypes>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
+#include "onnx/common/assertions.h"
 #include "onnx/version_converter/adapters/type_restriction.h"
 
 namespace ONNX_NAMESPACE {

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <cstdint>
 
 #include "onnx/version_converter/adapters/adapter.h"
 
