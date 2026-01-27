@@ -442,7 +442,7 @@ class NonMaxSuppression(Base):
         # box1=[0,0,1,1], box2=[0.5,0.5,1.5,1.5]
         # Intersection area = 0.5 * 0.5 = 0.25
         # Union area = 1.0 + 1.0 - 0.25 = 1.75
-        # IoU = 0.25 / 1.75 ≈ 0.1428571492433548 (as float32)
+        # IoU = 0.25 / 1.75 (exact value computed below as float32)
         boxes = np.array(
             [
                 [
