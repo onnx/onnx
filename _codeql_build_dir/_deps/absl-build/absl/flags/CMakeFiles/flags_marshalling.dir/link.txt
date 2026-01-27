@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_flags_marshalling.a CMakeFiles/flags_marshalling.dir/marshalling.cc.o
-/usr/bin/ranlib libabsl_flags_marshalling.a

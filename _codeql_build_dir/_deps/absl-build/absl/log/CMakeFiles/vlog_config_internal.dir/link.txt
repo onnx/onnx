@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_vlog_config_internal.a CMakeFiles/vlog_config_internal.dir/internal/vlog_config.cc.o
-/usr/bin/ranlib libabsl_vlog_config_internal.a

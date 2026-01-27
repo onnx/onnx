@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_random_internal_platform.a CMakeFiles/random_internal_platform.dir/internal/randen_round_keys.cc.o
-/usr/bin/ranlib libabsl_random_internal_platform.a

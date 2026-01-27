@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_leak_check.a CMakeFiles/leak_check.dir/leak_check.cc.o
-/usr/bin/ranlib libabsl_leak_check.a

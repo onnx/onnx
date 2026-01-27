@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_bad_variant_access.a CMakeFiles/bad_variant_access.dir/bad_variant_access.cc.o
-/usr/bin/ranlib libabsl_bad_variant_access.a

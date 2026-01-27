@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_log_internal_fnmatch.a CMakeFiles/log_internal_fnmatch.dir/internal/fnmatch.cc.o
-/usr/bin/ranlib libabsl_log_internal_fnmatch.a
