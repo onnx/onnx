@@ -422,7 +422,7 @@ class NonMaxSuppression(Base):
     @staticmethod
     def export_nonmaxsuppression_iou_threshold_boundary() -> None:
         """Test boundary condition where IoU exactly equals threshold.
-        
+
         This test verifies that the comparison is strict (>), not inclusive (>=).
         When IoU exactly equals the threshold, boxes should be KEPT, not suppressed.
         This follows PyTorch's NMS implementation.
