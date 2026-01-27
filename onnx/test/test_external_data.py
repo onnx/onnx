@@ -807,6 +807,51 @@ class TestExternalDataToArrayWithPath(TestExternalDataToArray):
         return pathlib.Path(self._model_file_path)
 
 
+class TestSymlinkNotAllowed(TestLoadExternalDataBase):
+    """Essential test to check that onnx (validate) C++ code will not allow symlinks as external data files."""
+
+    @unittest.skipIf(os.name == "nt", reason="Skip symlink test on Windows")
+    def test_check_model_with_symlink(self) -> None:
+        """Test that symlinks are not allowed as external data files."""
+        # Create a real file
+        real_file_path = os.path.join(self.temp_dir, "real_data.bin")
+        with open(real_file_path, "wb") as f:
+            f.write(b"test data")
+
+        # Create a symlink to the real file
+        symlink_path = os.path.join(self.temp_dir, "symlink_data.bin")
+        os.symlink(real_file_path, symlink_path)
+
+        # Create a model that references the symlink
+        tensor = from_array(np.array(self.initializer_value))
+        tensor.name = "input_value"
+        set_external_data(tensor, location="symlink_data.bin")
+        tensor.ClearField("raw_data")
+        tensor.data_location = onnx.TensorProto.EXTERNAL
+
+        inputs = [
+            helper.make_tensor_value_info(
+                "input_value", onnx.TensorProto.FLOAT, self.initializer_value.shape
+            )
+        ]
+
+        graph = helper.make_graph(
+            [],
+            "test",
+            inputs,
+            [],
+            initializer=[tensor],
+        )
+        model = helper.make_model(graph)
+        model_filename = self.get_temp_model_filename()
+        onnx.save(model, model_filename)
+
+        # Checker should reject the model because it uses a symlink
+        with self.assertRaises(onnx.checker.ValidationError) as cm:
+            checker.check_model(model_filename)
+        self.assertIn("symbolic link", str(cm.exception))
+
+
 class TestFunctionsAndSubGraphs(unittest.TestCase):
     def setUp(self) -> None:
         self._temp_dir_obj = tempfile.TemporaryDirectory()

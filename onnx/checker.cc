@@ -1022,6 +1022,15 @@ std::string resolve_external_data_location(
         ", but it doesn't exist or is not accessible.");
   }
   // Do not allow symlinks or directories.
+  // Check for symlinks first before checking is_regular_file, as is_regular_file follows symlinks by default.
+  if (data_path.empty() || (data_path_str[0] != '#' && std::filesystem::is_symlink(data_path))) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        data_path_str,
+        ", but it is a symbolic link.");
+  }
   if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path))) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
