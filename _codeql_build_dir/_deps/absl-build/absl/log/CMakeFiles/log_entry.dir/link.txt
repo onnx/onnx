@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_log_entry.a CMakeFiles/log_entry.dir/log_entry.cc.o
-/usr/bin/ranlib libabsl_log_entry.a

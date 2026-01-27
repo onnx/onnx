@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_exponential_biased.a CMakeFiles/exponential_biased.dir/internal/exponential_biased.cc.o
-/usr/bin/ranlib libabsl_exponential_biased.a

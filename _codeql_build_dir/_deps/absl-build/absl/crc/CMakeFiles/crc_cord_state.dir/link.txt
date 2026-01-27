@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_crc_cord_state.a CMakeFiles/crc_cord_state.dir/internal/crc_cord_state.cc.o
-/usr/bin/ranlib libabsl_crc_cord_state.a

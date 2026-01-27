@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_utf8_for_code_point.a CMakeFiles/utf8_for_code_point.dir/internal/utf8_for_code_point.cc.o
-/usr/bin/ranlib libabsl_utf8_for_code_point.a

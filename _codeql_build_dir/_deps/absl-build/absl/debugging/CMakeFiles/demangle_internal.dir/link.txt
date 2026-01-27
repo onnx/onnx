@@ -1,2 +1,0 @@
-/usr/bin/ar qc libabsl_demangle_internal.a CMakeFiles/demangle_internal.dir/internal/demangle.cc.o
-/usr/bin/ranlib libabsl_demangle_internal.a
