@@ -438,26 +438,27 @@ class NonMaxSuppression(Base):
             ],
             outputs=["selected_indices"],
         )
-        # Two boxes with 50% overlap: box1=[0,0,1,1], box2=[0.5,0.5,1.5,1.5]
+        # Two boxes with 50% overlap in each dimension
+        # box1=[0,0,1,1], box2=[0.5,0.5,1.5,1.5]
         # Intersection area = 0.5 * 0.5 = 0.25
         # Union area = 1.0 + 1.0 - 0.25 = 1.75
-        # IoU = 0.25 / 1.75 = 0.142857... ≈ 0.1429
-        # Setting threshold to exactly this value tests the boundary
+        # IoU = 0.25 / 1.75 ≈ 0.1428571492433548 (as float32)
         boxes = np.array(
             [
                 [
                     [0.0, 0.0, 1.0, 1.0],  # box 0
-                    [0.5, 0.5, 1.5, 1.5],  # box 1 - overlaps box 0 with IoU ~0.1429
+                    [0.5, 0.5, 1.5, 1.5],  # box 1 - overlaps box 0
                 ]
             ]
         ).astype(np.float32)
         scores = np.array([[[0.9, 0.8]]]).astype(np.float32)
         max_output_boxes_per_class = np.array([3]).astype(np.int64)
-        # Set threshold to approximately the IoU of the two boxes
-        # With strict >, both boxes should be selected since IoU is not > threshold
-        iou_threshold = np.array([0.142857]).astype(np.float32)
+        # Compute the exact IoU value and use it as threshold
+        # This ensures the threshold exactly equals the IoU
+        exact_iou = np.float32(0.25 / 1.75)
+        iou_threshold = np.array([exact_iou]).astype(np.float32)
         score_threshold = np.array([0.0]).astype(np.float32)
-        # Both boxes should be selected because IoU ~= threshold, not > threshold
+        # Both boxes should be selected because IoU == threshold (not > threshold)
         selected_indices = np.array([[0, 0, 0], [0, 0, 1]]).astype(np.int64)
 
         expect(
