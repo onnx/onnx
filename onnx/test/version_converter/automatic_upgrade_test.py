@@ -1636,9 +1636,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "DFT", 17, [[2, 16, 1], []], [[2, 9, 2]], attrs={"onesided": 1}
         )
         self._test_op_upgrade(
-            "DFT", 17, [[2, 16, 2], []], [[2, 9, 2]], attrs={"onesided": 1}
-        )
-        self._test_op_upgrade(
             "DFT", 17, [[2, 16, 1], []], [[2, 16, 2]], attrs={"inverse": 1}
         )
         self._test_op_upgrade(

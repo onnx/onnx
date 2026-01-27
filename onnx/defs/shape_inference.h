@@ -161,14 +161,20 @@ inline int64_t getAttribute(const InferenceContext& ctx, const std::string& attr
   const auto* attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
-  return defaultValue;
+  else if (nullptr != attr_proto)
+    return 0; // protobuf default for integers
+  else
+    return defaultValue;
 }
 
 inline int64_t getAttribute(const DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   const auto* attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
-  return defaultValue;
+  else if (nullptr != attr_proto)
+    return 0; // protobuf default for integers
+  else
+    return defaultValue;
 }
 
 inline std::string
@@ -176,7 +182,10 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
   const auto* attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_s())
     return attr_proto->s();
-  return defaultValue;
+  else if (nullptr != attr_proto)
+    return ""; // protobuf default for strings
+  else
+    return defaultValue;
 }
 
 inline TensorShapeProto::Dimension operator*(

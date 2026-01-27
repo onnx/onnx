@@ -319,6 +319,7 @@ struct Value final {
   int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
   bool has_sizes_{false};
   std::vector<Dimension> sizes_;
+  std::unique_ptr<TypeProto> type_;
 
  public:
   Value* setElemType(int32_t elem_type) {
@@ -395,6 +396,10 @@ struct Value final {
       setUniqueName(from->uniqueName());
     }
     return this;
+  }
+
+  std::unique_ptr<TypeProto>& type() {
+    return type_;
   }
 };
 
@@ -966,7 +971,7 @@ struct Graph final {
 
   void addInitializer(Tensor& initializer) {
     if (initializer.name().empty()) {
-      initializer.setName(toVarName(getNextUnique()));
+      initializer.setName(getNextUniqueName());
     }
     initializers_.push_back(initializer);
     initializer_names_.push_back(initializer.name());
@@ -1051,6 +1056,10 @@ struct Graph final {
       next_unique_name = toVarName(++next_unique_);
     }
     return next_unique_;
+  }
+
+  std::string getNextUniqueName() {
+    return toVarName(getNextUnique());
   }
 
   // These invocations of begin() on output of function are OK
@@ -1156,7 +1165,7 @@ struct Graph final {
   }
 
   Value* addInitializerAndInput(const Tensor& initializer) {
-    return addInitializerAndInput(initializer, toVarName(getNextUnique()));
+    return addInitializerAndInput(initializer, getNextUniqueName());
   }
 
   // Erases from graph initializer list, initializer names list, and as a graph input
@@ -1317,7 +1326,7 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
     newValue->setUniqueName(unique_name);
     // The "unique" semantic of unique_name should be kept or uses()
     // will return an incorrect result when the value is used in subgraph
-    this->setUniqueName(toVarName(graph->getNextUnique()), false);
+    this->setUniqueName(graph->getNextUniqueName(), false);
   }
   newValue->uses_in_current_graph_.reserve(this->uses_in_current_graph_.size());
   for (auto u : uses_in_current_graph_) {
