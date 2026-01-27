@@ -1,6 +1,7 @@
 - Feature Name: (fill me in with a unique ident, `my_awesome_feature`)
 - Start Date: (fill me in with today's date, YYYY-MM-DD)
 - RFC PR: [onnx/onnx#0000](https://github.com/onnx/onnx/pull/0000)
+- Status: (one of "under discussion, "accepted", "superseded", "rejected")
 
 ## Summary
 [summary]: #summary
