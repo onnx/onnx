@@ -131,7 +131,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "iou_threshold",
-            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.",
+            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Boxes with IoU strictly greater than this threshold are suppressed. It is scalar. Value range [0, 1]. Default to 0.",
             "tensor(float)",
             OpSchema::Optional)
         .Input(
