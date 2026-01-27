@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_vlog_config_internal
+Description: Abseil vlog_config_internal library
+URL: https://abseil.io/
+Version: 20250127
+Requires: absl_base = 20250127, absl_config = 20250127, absl_core_headers = 20250127, absl_log_internal_fnmatch = 20250127, absl_memory = 20250127, absl_no_destructor = 20250127, absl_strings = 20250127, absl_synchronization = 20250127, absl_optional = 20250127
+Libs: -L${libdir}  -labsl_vlog_config_internal 
+Cflags: -I${includedir} -DNOMINMAX

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_spinlock_wait.a CMakeFiles/spinlock_wait.dir/internal/spinlock_wait.cc.o
+/usr/bin/ranlib libabsl_spinlock_wait.a

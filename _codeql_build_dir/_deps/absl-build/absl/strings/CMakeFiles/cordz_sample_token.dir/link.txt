@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_cordz_sample_token.a CMakeFiles/cordz_sample_token.dir/internal/cordz_sample_token.cc.o
+/usr/bin/ranlib libabsl_cordz_sample_token.a

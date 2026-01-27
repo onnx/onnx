@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_flags_program_name.a CMakeFiles/flags_program_name.dir/internal/program_name.cc.o
+/usr/bin/ranlib libabsl_flags_program_name.a

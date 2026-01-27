@@ -1,0 +1,2 @@
+/usr/bin/ar qc libutf8_validity.a CMakeFiles/utf8_validity.dir/utf8_range.c.o
+/usr/bin/ranlib libutf8_validity.a

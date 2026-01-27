@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_cordz_sample_token
+Description: Abseil cordz_sample_token library
+URL: https://abseil.io/
+Version: 20250127
+Requires: absl_config = 20250127, absl_cordz_handle = 20250127, absl_cordz_info = 20250127
+Libs: -L${libdir}  -labsl_cordz_sample_token 
+Cflags: -I${includedir} -DNOMINMAX

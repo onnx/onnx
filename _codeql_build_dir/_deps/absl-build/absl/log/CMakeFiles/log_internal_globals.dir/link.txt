@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_log_internal_globals.a CMakeFiles/log_internal_globals.dir/internal/globals.cc.o
+/usr/bin/ranlib libabsl_log_internal_globals.a
