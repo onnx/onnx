@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_flags_reflection
+Description: Abseil flags_reflection library
+URL: https://abseil.io/
+Version: 20250127
+Requires: absl_config = 20250127, absl_flags_commandlineflag = 20250127, absl_flags_private_handle_accessor = 20250127, absl_flags_config = 20250127, absl_strings = 20250127, absl_synchronization = 20250127, absl_flat_hash_map = 20250127, absl_no_destructor = 20250127
+Libs: -L${libdir}  -labsl_flags_reflection 
+Cflags: -I${includedir} -DNOMINMAX

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_status.a CMakeFiles/status.dir/internal/status_internal.cc.o CMakeFiles/status.dir/status.cc.o CMakeFiles/status.dir/status_payload_printer.cc.o
+/usr/bin/ranlib libabsl_status.a

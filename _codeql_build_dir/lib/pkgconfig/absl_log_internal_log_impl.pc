@@ -1,0 +1,12 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: absl_log_internal_log_impl
+Description: Abseil log_internal_log_impl library
+URL: https://abseil.io/
+Version: 20250127
+Requires: absl_log_internal_conditions = 20250127, absl_log_internal_message = 20250127, absl_log_internal_strip = 20250127, absl_absl_vlog_is_on = 20250127
+Libs: -L${libdir}  
+Cflags: -I${includedir} -DNOMINMAX

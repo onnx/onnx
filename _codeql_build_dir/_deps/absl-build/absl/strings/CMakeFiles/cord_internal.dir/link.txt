@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_cord_internal.a CMakeFiles/cord_internal.dir/internal/cord_internal.cc.o CMakeFiles/cord_internal.dir/internal/cord_rep_btree.cc.o CMakeFiles/cord_internal.dir/internal/cord_rep_btree_navigator.cc.o CMakeFiles/cord_internal.dir/internal/cord_rep_btree_reader.cc.o CMakeFiles/cord_internal.dir/internal/cord_rep_crc.cc.o CMakeFiles/cord_internal.dir/internal/cord_rep_consume.cc.o
+/usr/bin/ranlib libabsl_cord_internal.a

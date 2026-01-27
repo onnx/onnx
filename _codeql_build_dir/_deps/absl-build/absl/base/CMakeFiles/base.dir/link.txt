@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_base.a CMakeFiles/base.dir/internal/cycleclock.cc.o CMakeFiles/base.dir/internal/spinlock.cc.o CMakeFiles/base.dir/internal/sysinfo.cc.o CMakeFiles/base.dir/internal/thread_identity.cc.o CMakeFiles/base.dir/internal/unscaledcycleclock.cc.o
+/usr/bin/ranlib libabsl_base.a

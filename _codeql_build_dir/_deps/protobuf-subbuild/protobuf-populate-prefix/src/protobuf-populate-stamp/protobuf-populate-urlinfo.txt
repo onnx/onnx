@@ -1,0 +1,12 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=url
+command=/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/onnx/onnx/_codeql_build_dir/_deps/protobuf-subbuild/protobuf-populate-prefix/src/protobuf-populate-stamp/download-protobuf-populate.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/onnx/onnx/_codeql_build_dir/_deps/protobuf-subbuild/protobuf-populate-prefix/src/protobuf-populate-stamp/verify-protobuf-populate.cmake;COMMAND;/usr/local/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/runner/work/onnx/onnx/_codeql_build_dir/_deps/protobuf-subbuild/protobuf-populate-prefix/src/protobuf-populate-stamp/extract-protobuf-populate.cmake
+source_dir=/home/runner/work/onnx/onnx/_codeql_build_dir/_deps/protobuf-src
+work_dir=/home/runner/work/onnx/onnx/_codeql_build_dir/_deps
+url(s)=https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz
+hash=SHA1=da10aaa3bf779735a8a9acde1256a47ce5d148be
+      no_extract=
+

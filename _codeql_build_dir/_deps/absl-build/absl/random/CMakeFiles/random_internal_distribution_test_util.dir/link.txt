@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_random_internal_distribution_test_util.a CMakeFiles/random_internal_distribution_test_util.dir/internal/chi_square.cc.o CMakeFiles/random_internal_distribution_test_util.dir/internal/distribution_test_util.cc.o
+/usr/bin/ranlib libabsl_random_internal_distribution_test_util.a

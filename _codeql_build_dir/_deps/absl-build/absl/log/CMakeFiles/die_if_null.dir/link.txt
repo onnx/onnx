@@ -1,0 +1,2 @@
+/usr/bin/ar qc libabsl_die_if_null.a CMakeFiles/die_if_null.dir/die_if_null.cc.o
+/usr/bin/ranlib libabsl_die_if_null.a
