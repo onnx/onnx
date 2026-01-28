@@ -1,6 +1,6 @@
-# Copyright (c) ONNX Project Contributors
-#
-# SPDX-License-Identifier: Apache-2.0
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #ifndef ONNX_ONNX_PB_H
 #define ONNX_ONNX_PB_H
