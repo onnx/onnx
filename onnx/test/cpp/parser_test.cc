@@ -2,12 +2,12 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <string>
+
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
-
-using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 namespace Test {

@@ -17,8 +17,6 @@
 
 namespace ONNX_NAMESPACE {
 
-using namespace ONNX_NAMESPACE::Common;
-
 using IdList = google::protobuf::RepeatedPtrField<std::string>;
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
@@ -220,10 +218,10 @@ class ParserBase {
   }
 
   template <typename... Args>
-  Status ParseError(const Args&... args) {
-    return Status(
-        StatusCategory::NONE,
-        StatusCode::FAIL,
+  Common::Status ParseError(const Args&... args) {
+    return Common::Status(
+        Common::StatusCategory::NONE,
+        Common::StatusCode::FAIL,
         ONNX_NAMESPACE::MakeString(
             "[ParseError at position ", GetCurrentPos(), "]\n", "Error context: ", GetErrorContext(), "\n", args...));
   }
@@ -256,10 +254,10 @@ class ParserBase {
     return false;
   }
 
-  Status Match(char ch, bool skipspace = true) {
+  Common::Status Match(char ch, bool skipspace = true) {
     if (!Matches(ch, skipspace))
       return ParseError("Expected character ", ch, " not found.");
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   bool EndOfInput() {
@@ -274,29 +272,29 @@ class ParserBase {
     std::string value;
   };
 
-  Status Parse(Literal& result);
+  Common::Status Parse(Literal& result);
 
-  Status Parse(int64_t& val) {
+  Common::Status Parse(int64_t& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
     std::string s = literal.value;
     val = std::stoll(s);
-    return Status::OK();
+    return Common::Status::OK();
   }
 
-  Status Parse(uint64_t& val) {
+  Common::Status Parse(uint64_t& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::INT_LITERAL)
       return ParseError("Integer value expected, but not found.");
     std::string s = literal.value;
     val = std::stoull(s);
-    return Status::OK();
+    return Common::Status::OK();
   }
 
-  Status Parse(float& val) {
+  Common::Status Parse(float& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     switch (literal.type) {
@@ -307,10 +305,10 @@ class ParserBase {
       default:
         return ParseError("Unexpected literal type.");
     }
-    return Status::OK();
+    return Common::Status::OK();
   }
 
-  Status Parse(double& val) {
+  Common::Status Parse(double& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     switch (literal.type) {
@@ -321,17 +319,17 @@ class ParserBase {
       default:
         return ParseError("Unexpected literal type.");
     }
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   // Parse a string-literal enclosed within double-quotes.
-  Status Parse(std::string& val) {
+  Common::Status Parse(std::string& val) {
     Literal literal;
     CHECK_PARSER_STATUS(Parse(literal))
     if (literal.type != LiteralType::STRING_LITERAL)
       return ParseError("String value expected, but not found.");
     val = literal.value;
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   // Parse an identifier, including keywords. If none found, this will
@@ -347,26 +345,26 @@ class ParserBase {
     return std::string(from, next_ - from);
   }
 
-  Status ParseIdentifier(std::string& id) {
+  Common::Status ParseIdentifier(std::string& id) {
     id = ParseOptionalIdentifier();
     if (id.empty())
       return ParseError("Identifier expected but not found.");
-    return Status::OK();
+    return Common::Status::OK();
   }
 
-  Status ParseQuotableIdentifier(std::string& id) {
+  Common::Status ParseQuotableIdentifier(std::string& id) {
     if (NextChar() == '"') {
       return Parse(id);
     }
     return ParseIdentifier(id);
   }
 
-  Status ParseOptionalQuotableIdentifier(std::string& id) {
+  Common::Status ParseOptionalQuotableIdentifier(std::string& id) {
     if (NextChar() == '"') {
       return Parse(id);
     }
     id = ParseOptionalIdentifier();
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   // Parse an optional quotable identifier, and return whether an identifier was found
@@ -382,14 +380,14 @@ class ParserBase {
   //
   // This is mostly for some backward compatibility. "" is a simpler way to represent an
   // empty identifier that is less confusing and is recommended.
-  Status ParseOptionalQuotableIdentifier(std::string& id, bool& id_found) {
+  Common::Status ParseOptionalQuotableIdentifier(std::string& id, bool& id_found) {
     if (NextChar() == '"') {
       id_found = true;
       return Parse(id);
     }
     id = ParseOptionalIdentifier();
     id_found = !id.empty() || NextChar() == ',';
-    return Status::OK();
+    return Common::Status::OK();
   }
 
   std::string PeekIdentifier() {
@@ -399,11 +397,11 @@ class ParserBase {
     return id;
   }
 
-  Status Parse(KeyWordMap::KeyWord& keyword) {
+  Common::Status Parse(KeyWordMap::KeyWord& keyword) {
     std::string id;
     CHECK_PARSER_STATUS(ParseIdentifier(id))
     keyword = KeyWordMap::Lookup(id);
-    return Status::OK();
+    return Common::Status::OK();
   }
 
  protected:
@@ -419,64 +417,64 @@ class OnnxParser : public ParserBase {
  public:
   explicit OnnxParser(const char* cstr) : ParserBase(cstr) {}
 
-  ONNX_API Status Parse(TensorShapeProto& shape);
+  ONNX_API Common::Status Parse(TensorShapeProto& shape);
 
-  ONNX_API Status Parse(TypeProto& typeProto);
+  ONNX_API Common::Status Parse(TypeProto& typeProto);
 
-  ONNX_API Status Parse(StringStringList& stringStringList);
+  ONNX_API Common::Status Parse(StringStringList& stringStringList);
 
-  ONNX_API Status Parse(TensorProto& tensorProto);
+  ONNX_API Common::Status Parse(TensorProto& tensorProto);
 
-  ONNX_API Status Parse(AttributeProto& attr);
+  ONNX_API Common::Status Parse(AttributeProto& attr);
 
-  ONNX_API Status Parse(AttributeProto& attr, std::string& name);
+  ONNX_API Common::Status Parse(AttributeProto& attr, std::string& name);
 
-  ONNX_API Status Parse(AttrList& attrlist);
+  ONNX_API Common::Status Parse(AttrList& attrlist);
 
-  ONNX_API Status Parse(NodeProto& node);
+  ONNX_API Common::Status Parse(NodeProto& node);
 
-  ONNX_API Status Parse(NodeList& nodelist);
+  ONNX_API Common::Status Parse(NodeList& nodelist);
 
-  ONNX_API Status Parse(GraphProto& graph);
+  ONNX_API Common::Status Parse(GraphProto& graph);
 
-  ONNX_API Status Parse(FunctionProto& fn);
+  ONNX_API Common::Status Parse(FunctionProto& fn);
 
-  ONNX_API Status Parse(ModelProto& model);
+  ONNX_API Common::Status Parse(ModelProto& model);
 
   template <typename T>
-  static Status Parse(T& parsedData, const char* input) {
+  static Common::Status Parse(T& parsedData, const char* input) {
     OnnxParser parser(input);
     return parser.Parse(parsedData);
   }
 
  private:
-  Status Parse(std::string name, GraphProto& graph);
+  Common::Status Parse(std::string name, GraphProto& graph);
 
-  Status Parse(IdList& idlist);
+  Common::Status Parse(IdList& idlist);
 
-  Status Parse(char open, IdList& idlist, char close);
+  Common::Status Parse(char open, IdList& idlist, char close);
 
-  Status Parse(IdList& idlist, AttrList& attrlist);
+  Common::Status Parse(IdList& idlist, AttrList& attrlist);
 
-  Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
+  Common::Status Parse(char open, IdList& idlist, AttrList& attrlist, char close);
 
-  Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
+  Common::Status ParseSingleAttributeValue(AttributeProto& attr, AttributeProto_AttributeType expected);
 
-  Status Parse(ValueInfoProto& valueinfo);
+  Common::Status Parse(ValueInfoProto& valueinfo);
 
-  Status ParseGraphInputOutput(ValueInfoList& vilist);
+  Common::Status ParseGraphInputOutput(ValueInfoList& vilist);
 
-  Status ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist);
+  Common::Status ParseFunctionInputOutput(IdList& idlist, ValueInfoList& vilist);
 
-  Status Parse(char open, ValueInfoList& vilist, char close);
+  Common::Status Parse(char open, ValueInfoList& vilist, char close);
 
-  Status ParseInput(ValueInfoList& inputs, TensorList& initializers);
+  Common::Status ParseInput(ValueInfoList& inputs, TensorList& initializers);
 
-  Status ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers);
+  Common::Status ParseValueInfo(ValueInfoList& value_infos, TensorList& initializers);
 
-  Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
+  Common::Status Parse(TensorProto& tensorProto, const TypeProto& tensorTypeProto);
 
-  Status Parse(OpsetIdList& opsets);
+  Common::Status Parse(OpsetIdList& opsets);
 
   bool NextIsType();
 

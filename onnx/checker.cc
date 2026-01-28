@@ -5,7 +5,9 @@
 #include "onnx/checker.h"
 
 #include <filesystem>
+#include <iostream>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -910,9 +912,9 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
       fail_check("model with IR version >= 3 must specify opset_import for ONNX");
     }
   } else {
-    if (opset_imports.empty())
+    if (opset_imports.empty()) {
       opset_imports[ONNX_DOMAIN] = 1;
-    else {
+    } else {
       fail_check("model with IR version < 3 cannot have opset_import specified");
     }
   }

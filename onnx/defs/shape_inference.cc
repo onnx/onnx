@@ -4,6 +4,8 @@
 
 #include "shape_inference.h"
 
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "onnx/defs/data_type_utils.h"

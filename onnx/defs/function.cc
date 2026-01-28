@@ -4,6 +4,10 @@
 
 #include "onnx/defs/function.h"
 
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
 

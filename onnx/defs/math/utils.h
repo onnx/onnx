@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"

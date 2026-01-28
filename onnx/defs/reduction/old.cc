@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <functional>
+#include <string>
+#include <vector>
 
 #include "onnx/defs/reduction/utils.h"
 #include "onnx/defs/schema.h"

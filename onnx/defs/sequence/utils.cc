@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <numeric>
 #include <string>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace defs {

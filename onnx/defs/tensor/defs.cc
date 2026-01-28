@@ -6,6 +6,9 @@
 #include <cmath>
 #include <numeric>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"
@@ -139,9 +142,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
-                      .c_str());
+              builder.Add(MakeString(
+                              "output = Cast <to= ",
+                              static_cast<int64_t>(target_elt_type),
+                              ", saturate: int = @saturate> (input)")
+                              .c_str());
               schema.BuildFunction(functionProto);
               return true;
             }));

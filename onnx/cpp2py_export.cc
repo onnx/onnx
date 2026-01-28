@@ -12,6 +12,7 @@
 #include <nanobind/stl/unordered_set.h>
 #include <nanobind/stl/vector.h>
 
+#include <algorithm>
 #include <climits>
 #include <limits>
 #include <string>
@@ -87,7 +88,7 @@ ONNX_DEFINE_TYPE_CASTER(FunctionProto, "onnx.FunctionProto")
 
 namespace ONNX_NAMESPACE {
 namespace nb = nanobind;
-using namespace nanobind::literals;
+using nanobind::literals::operator""_a;
 
 template <typename ProtoType>
 static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
