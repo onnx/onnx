@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <iostream>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/defs/parser.h"
@@ -70,7 +73,7 @@ static void Dump(const Type& t) {
     std::cout << "Dim " << i << " Value:" << (y ? ONNX_NAMESPACE::to_string(x.dim_value()) : "<unset>")
               << ", Param:" << (z ? x.dim_param() : "<unset>") << "\n";
   }
-};
+}
 
 TEST(ShapeInferenceTest, mergeShapeInfo_HasShape) {
   // source has shape, target doesn't

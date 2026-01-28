@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <string>
+#include <unordered_map>
+
 #include "gtest/gtest.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"

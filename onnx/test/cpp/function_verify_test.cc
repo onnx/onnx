@@ -2,8 +2,13 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <algorithm>
 #include <iostream>
 #include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"

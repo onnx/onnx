@@ -87,7 +87,7 @@ class ArrayRef {
 
   /// Construct an ArrayRef from a std::initializer_list.
   /*implicit*/ ArrayRef(const std::initializer_list<T>& Vec)
-      : Data(Vec.begin() == Vec.end() ? (T*)nullptr : Vec.begin()), Length(Vec.size()) {}
+      : Data(Vec.begin() == Vec.end() ? static_cast<T*>(nullptr) : Vec.begin()), Length(Vec.size()) {}
 
   /// @}
   /// @name Simple Operations

@@ -50,8 +50,9 @@ Status ParserBase::Parse(Literal& result) {
         // Copy current char, if not escape, or next char otherwise.
         target.push_back(*from != '\\' ? (*from) : *(++from));
       }
-    } else
+    } else {
       result.value = std::string(from + 1, next_ - from - 2); // skip enclosing quotes
+    }
     return Status::OK();
   }
 

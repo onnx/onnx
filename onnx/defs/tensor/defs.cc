@@ -143,7 +143,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
               builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
+                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
                       .c_str());
               schema.BuildFunction(functionProto);
               return true;

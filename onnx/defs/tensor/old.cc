@@ -580,7 +580,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
               builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
+                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
                       .c_str());
               schema.BuildFunction(functionProto);
               return true;
@@ -645,7 +645,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
               builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
+                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
                       .c_str());
               schema.BuildFunction(functionProto);
               return true;
@@ -710,7 +710,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
               builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
+                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
                       .c_str());
               schema.BuildFunction(functionProto);
               return true;
@@ -809,7 +809,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
               builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
+                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
                       .c_str());
               schema.BuildFunction(functionProto);
               return true;
@@ -891,7 +891,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add("output = Cast (input)", "to", (int64_t)(target_elt_type));
+              builder.Add("output = Cast (input)", "to", static_cast<int64_t>(target_elt_type));
               schema.BuildFunction(functionProto);
               return true;
             }));
@@ -6094,7 +6094,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           std::vector<int64_t> axes;
           if (!getRepeatedAttribute(ctx, "axes", axes)) {
-            for (int i = 0; (size_t)i < starts.size(); ++i) {
+            for (size_t i = 0; i < starts.size(); ++i) {
               axes.push_back(i);
             }
           } else if (axes.size() != starts.size()) {
@@ -6109,7 +6109,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Negative axes were not explicitly discussed in the spec before opset-10.
             // Hence, they are officially not part of the spec, but some models/runtimes may use them.
             // So we perform simple rank inference in this case.
-            for (size_t i = 0; (int64_t)i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+            for (int i = 0; i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             }
             return;
@@ -6117,7 +6117,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-          for (size_t i = 0, j = 0; (int64_t)i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+          for (size_t i = 0, j = 0; static_cast<int64_t>(i) < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
             auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
               // There's a lot of potential behaviors. For now just

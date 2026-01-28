@@ -544,11 +544,10 @@ class ShapeInferenceImplBase {
     if (iter != value_types_by_name.end()) {
       checkShapesAndTypes(initializer_type, *iter->second);
       // CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
-    }
-    // Support IR>=4: some tensors can only exist in initializer and not in input
-    // So shape_inference should make use of initializer shapes
-    // Store initializer shape info in value_info as well
-    else if (ir_version >= 4) {
+    } else if (ir_version >= 4) {
+      // Support IR>=4: some tensors can only exist in initializer and not in input
+      // So shape_inference should make use of initializer shapes
+      // Store initializer shape info in value_info as well
       initializer_type_list.push_back(std::move(initializer_type));
       value_types_by_name[name] = &initializer_type_list.back();
     }
@@ -618,8 +617,9 @@ class ShapeInferenceImplBase {
         // TODO: investigate whether we can eliminate use of temporary copy
         types_cache[i] = *type_ptr;
         value_types_by_name[parameter_name] = &types_cache[i];
-      } else
+      } else {
         value_types_by_name[parameter_name] = nullptr;
+      }
     }
 
     // Create a temporary initializer value map
