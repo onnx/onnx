@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <string>
+
 #ifdef _WIN32
 // windows.h has preproc definitions for min and max, which prevents from using std::min and std::max.
 //  defining NOMINMAX disables the preproc macro.

@@ -4,6 +4,10 @@
 
 #include <algorithm>
 #include <map>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/doc_strings.h"

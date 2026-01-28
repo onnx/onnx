@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <memory>
+#include <string>
 
 #include "onnx/string_utils.h"
 
