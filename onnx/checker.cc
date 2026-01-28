@@ -4,7 +4,7 @@
 
 #include "onnx/checker.h"
 
-#include <filesystem>  // NOLINT(build/c++17)
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <unordered_map>
