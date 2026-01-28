@@ -626,6 +626,13 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
         fail_check(name + " in initializer but not in graph input");
       }
     } else {
+      if (parent_lex.this_or_ancestor_graph_has(name)) {
+        fail_check(
+            "Graph must be in single static assignment (SSA) form, however '",
+            name,
+            "' has been used as initializer names multiple times.");
+      }
+
       // An initializer is allowed to have the same name as an input,
       // but is not required to (for IR_VERSION >= 4)
       lex_ctx.add(name);
