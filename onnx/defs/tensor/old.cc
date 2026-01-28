@@ -579,9 +579,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add(
-                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
-                      .c_str());
+              builder.Add(MakeString(
+                              "output = Cast <to= ",
+                              static_cast<int64_t>(target_elt_type),
+                              ", saturate: int = @saturate> (input)")
+                              .c_str());
               schema.BuildFunction(functionProto);
               return true;
             }));
@@ -644,9 +646,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add(
-                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
-                      .c_str());
+              builder.Add(MakeString(
+                              "output = Cast <to= ",
+                              static_cast<int64_t>(target_elt_type),
+                              ", saturate: int = @saturate> (input)")
+                              .c_str());
               schema.BuildFunction(functionProto);
               return true;
             }));
@@ -709,9 +713,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add(
-                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
-                      .c_str());
+              builder.Add(MakeString(
+                              "output = Cast <to= ",
+                              static_cast<int64_t>(target_elt_type),
+                              ", saturate: int = @saturate> (input)")
+                              .c_str());
               schema.BuildFunction(functionProto);
               return true;
             }));
@@ -808,9 +814,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add(
-                  MakeString("output = Cast <to= ", static_cast<int64_t>(target_elt_type), ", saturate: int = @saturate> (input)")
-                      .c_str());
+              builder.Add(MakeString(
+                              "output = Cast <to= ",
+                              static_cast<int64_t>(target_elt_type),
+                              ", saturate: int = @saturate> (input)")
+                              .c_str());
               schema.BuildFunction(functionProto);
               return true;
             }));
@@ -6117,7 +6125,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-          for (size_t i = 0, j = 0; static_cast<int64_t>(i) < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+          for (size_t i = 0, j = 0; static_cast<int64_t>(i) < ctx.getInputType(0)->tensor_type().shape().dim_size();
+               ++i) {
             auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
               // There's a lot of potential behaviors. For now just
