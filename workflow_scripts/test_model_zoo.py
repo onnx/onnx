@@ -17,11 +17,9 @@ from onnx import hub, version_converter
 
 MIN_SHAPE_INFERENCE_OPSET = 4
 
-
 def skip_model(error_message: str, skip_list: list[str], model_name: str):
     print(error_message)
     skip_list.append(model_name)
-
 
 def main():
     parser = argparse.ArgumentParser(description="Test settings")
