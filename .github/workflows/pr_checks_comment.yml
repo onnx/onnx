@@ -22,6 +22,14 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Debug workflow run info
+        run: |
+          echo "=== Workflow Run Info ==="
+          echo "Workflow run ID: ${{ github.event.workflow_run.id }}"
+          echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "Workflow run event: ${{ github.event.workflow_run.event }}"
+          echo "Head branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Head SHA: ${{ github.event.workflow_run.head_sha }}"
       - name: Download artifacts
         id: download
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
@@ -31,19 +39,42 @@ jobs:
           path: pr_artifacts/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Debug download result
+        run: |
+          echo "=== Download Result ==="
+          echo "Download outcome: ${{ steps.download.outcome }}"
+          echo "Listing pr_artifacts directory:"
+          ls -la pr_artifacts/ 2>/dev/null || echo "Directory does not exist"
       - name: Get PR number
         if: steps.download.outcome == 'success'
         id: pr
-        run: echo "number=$(cat pr_artifacts/pr_number)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "=== PR Number ==="
+          cat pr_artifacts/pr_number
+          echo "number=$(cat pr_artifacts/pr_number)" >> "$GITHUB_OUTPUT"
       - name: Check if diff is empty
         if: steps.download.outcome == 'success'
         id: diff
         run: |
+          echo "=== Diff Check ==="
+          echo "Diff file size: $(wc -c < pr_artifacts/lintrunner.diff) bytes"
+          echo "Diff file lines: $(wc -l < pr_artifacts/lintrunner.diff) lines"
           if [ -s pr_artifacts/lintrunner.diff ]; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Diff has changes, showing first 50 lines:"
+            head -50 pr_artifacts/lintrunner.diff
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "Diff is empty, no changes to apply"
           fi
+      - name: Debug before checkout
+        if: steps.download.outcome == 'success'
+        run: |
+          echo "=== Pre-Checkout Debug ==="
+          echo "Download outcome: ${{ steps.download.outcome }}"
+          echo "Has changes: ${{ steps.diff.outputs.has_changes }}"
+          echo "PR number: ${{ steps.pr.outputs.number }}"
+          echo "Will checkout: ${{ steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true' }}"
       - name: Checkout PR
         if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
@@ -52,7 +83,15 @@ jobs:
           persist-credentials: false
       - name: Apply lintrunner fixes
         if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
-        run: git apply pr_artifacts/lintrunner.diff
+        run: |
+          echo "=== Applying Diff ==="
+          echo "Current directory: $(pwd)"
+          echo "Git status before apply:"
+          git status --short
+          echo "Applying diff..."
+          git apply pr_artifacts/lintrunner.diff
+          echo "Git status after apply:"
+          git status --short
       - name: Suggest changes
         if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
         uses: parkerbxyz/suggest-changes@bd099ea0d10f0e9efeb9e46d604bbe6d7a80bc34
