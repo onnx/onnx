@@ -23,13 +23,19 @@ jobs:
       pull-requests: write
     steps:
       - name: Debug workflow run info
+        env:
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WORKFLOW_EVENT: ${{ github.event.workflow_run.event }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           echo "=== Workflow Run Info ==="
-          echo "Workflow run ID: ${{ github.event.workflow_run.id }}"
-          echo "Workflow run conclusion: ${{ github.event.workflow_run.conclusion }}"
-          echo "Workflow run event: ${{ github.event.workflow_run.event }}"
-          echo "Head branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "Head SHA: ${{ github.event.workflow_run.head_sha }}"
+          echo "Workflow run ID: $WORKFLOW_RUN_ID"
+          echo "Workflow run conclusion: $WORKFLOW_CONCLUSION"
+          echo "Workflow run event: $WORKFLOW_EVENT"
+          echo "Head branch: $HEAD_BRANCH"
+          echo "Head SHA: $HEAD_SHA"
       - name: Download artifacts
         id: download
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
@@ -40,9 +46,11 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Debug download result
+        env:
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
         run: |
           echo "=== Download Result ==="
-          echo "Download outcome: ${{ steps.download.outcome }}"
+          echo "Download outcome: $DOWNLOAD_OUTCOME"
           echo "Listing pr_artifacts directory:"
           ls -la pr_artifacts/ 2>/dev/null || echo "Directory does not exist"
       - name: Get PR number
@@ -69,11 +77,15 @@ jobs:
           fi
       - name: Debug before checkout
         if: steps.download.outcome == 'success'
+        env:
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+          HAS_CHANGES: ${{ steps.diff.outputs.has_changes }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
           echo "=== Pre-Checkout Debug ==="
-          echo "Download outcome: ${{ steps.download.outcome }}"
-          echo "Has changes: ${{ steps.diff.outputs.has_changes }}"
-          echo "PR number: ${{ steps.pr.outputs.number }}"
+          echo "Download outcome: $DOWNLOAD_OUTCOME"
+          echo "Has changes: $HAS_CHANGES"
+          echo "PR number: $PR_NUMBER"
           echo "Will checkout: ${{ steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true' }}"
       - name: Checkout PR
         if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
