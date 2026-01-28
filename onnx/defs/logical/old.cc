@@ -6,8 +6,6 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace ONNX_NAMESPACE;
-
 namespace ONNX_NAMESPACE {
 
 static std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset12(const char* name) {
