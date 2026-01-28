@@ -2052,8 +2052,9 @@ static bool BuildContextDependentFunctionBody(
     if (!float_input) {
       builder.Add("const_zero_casted = Cast (const_zero_float)", "to", static_cast<int64_t>(input_type))
           .Add("input_gather_element_transform = Where (mask, const_zero_casted, input_gather_element)");
-    } else
+    } else {
       builder.Add("input_gather_element_transform = Where (mask, const_zero_float, input_gather_element)");
+    }
     builder.Add("loss_NCdd = Neg (input_gather_element_transform)");
     builder.Add("loss_N1dd = Slice (loss_NCdd, const_zero, const_one, const_one)");
 
@@ -2063,8 +2064,9 @@ static bool BuildContextDependentFunctionBody(
       if (!float_input) {
         builder.Add("const_one_casted = Cast (const_one_float)", "to", static_cast<int64_t>(input_type))
             .Add("weight_gather = Where (squeeze_mask, const_zero_casted, const_one_casted)");
-      } else
+      } else {
         builder.Add("weight_gather = Where (squeeze_mask, const_zero_float, const_one_float)");
+      }
 
     } else {
       builder.Add("weight_gather_temp = Gather (weight, transform_targets)");
