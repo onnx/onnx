@@ -7550,6 +7550,31 @@ y = np.fft.ifft(x, axis=0)
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 expect(node, inputs=[x, axis], outputs=[y], name="test_dft_inverse")
+
+# Test RFFT (Real FFT): real input -> one-sided complex output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], onesided=1
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.rfft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_rfft")
+
+# Test IRFFT (Inverse Real FFT): one-sided complex input -> real output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], onesided=1, inverse=1
+)
+# Create one-sided complex input (6 bins for signal length 10)
+x = np.fft.rfft(np.arange(0, 100).reshape(10, 10), axis=0).astype(np.complex64)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.irfft(x, n=10, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+y = y.reshape(1, 10, 10, 1).astype(np.float32)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_irfft")
 ```
 
 </details>
@@ -7601,6 +7626,41 @@ expect(
     inputs=[x],
     outputs=[y],
     name="test_dft_inverse_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
+
+# Test RFFT (Real FFT): real input -> one-sided complex output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x"], outputs=["y"], onesided=1, axis=1
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+y = np.fft.rfft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_rfft_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
+
+# Test IRFFT (Inverse Real FFT): one-sided complex input -> real output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x"], outputs=["y"], onesided=1, inverse=1, axis=1
+)
+# Create one-sided complex input (6 bins for signal length 10)
+x = np.fft.rfft(np.arange(0, 100).reshape(10, 10), axis=0).astype(np.complex64)
+y = np.fft.irfft(x, n=10, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+y = y.reshape(1, 10, 10, 1).astype(np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_irfft_opset19",
     opset_imports=[onnx.helper.make_opsetid("", 19)],
 )
 ```
@@ -12944,7 +13004,8 @@ x = np.array(
     dtype=np.float32,
 )
 l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
-y = x / l2_norm_axis_0
+# When norm is 0, output is 0 (0/0 = 0)
+y = np.where(l2_norm_axis_0 == 0, 0, x / l2_norm_axis_0)
 expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
 ```
 
