@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <cassert>
+#include <string>
+#include <vector>
 
 #include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/doc_strings.h"

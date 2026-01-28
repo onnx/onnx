@@ -5,6 +5,7 @@
 #include "onnx/defs/generator/utils.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 

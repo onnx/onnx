@@ -10,6 +10,7 @@
 #include <cctype>
 #include <limits>
 #include <string>
+#include <unordered_map>
 
 #include "onnx/common/common.h"
 
