@@ -1,6 +1,8 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
-include(CTest)
+include(CTest)  
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(UT_NAME ${PROJECT_NAME}_gtests)
