@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
 #include <map>
@@ -44,16 +44,30 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
 static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    if (std::string(name) == "division") {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+
+For integer inputs, the result is computed using truncating division (rounding toward zero).
+(Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
+)DOC";
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    } else {
+      POPULATE_OP_DOC_STR(
+          doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 
 (Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+          ReplaceAll(doc, "{name}", name);
+          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+    }
     schema.SetDoc(doc);
     schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
@@ -2354,9 +2368,9 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     // If no explicit output was given, generate an implicit output by ordering all the
     // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
     // Exclude any labels that occurred more than once, as these cancel out.
-    for (auto i : label_maps) {
-      if (repeated_labels.count(i.first) == 0) {
-        *output_shape.add_dim() = dims_value.dim(i.second);
+    for (const auto& p : label_maps) {
+      if (repeated_labels.count(p.first) == 0) {
+        *output_shape.add_dim() = dims_value.dim(p.second);
       }
     }
   }
@@ -2620,10 +2634,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(DFT_ver20_doc)
         .Attr(
             "onesided",
-            "If `onesided` is `1` and input is real, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because "
-            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, "
+            "If `onesided` is `1`, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are used or returned "
+            "because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, "
             "where `m` denotes \"all other dimensions\" DFT was not applied on. "
-            "If the input tensor is complex, onesided output is not possible. "
+            "When `onesided=1` and `inverse=0` (forward DFT), only real input is supported and a one-sided complex spectrum is returned (RFFT). "
+            "When `onesided=1` and `inverse=1` (inverse DFT), only complex input is supported and a full real signal is returned (IRFFT). "
             "Value can be `0` or `1`. Default is `0`.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
@@ -2648,7 +2663,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "dft_length",
             "The length of the signal as a scalar. "
             "If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. "
-            "If less than the axis dimension, only the first `dft_length` values will be used as the signal. ",
+            "If less than the axis dimension, only the first `dft_length` values will be used as the signal. "
+            "If not provided, the default `dft_length = signal_dim_axis`, except for the IRFFT case (`onesided=1`, `inverse=1`), in which case the default dft_length is `2 * (signal_dim_axis - 1)`.",
             "T2",
             OpSchema::Optional,
             true,
@@ -2669,11 +2685,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "The Fourier Transform of the input vector. "
-            "If `onesided` is `0`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. "
-            "If `axis=0` and `onesided` is `1`, the following shape is expected: `[floor(signal_dim0/2)+1][signal_dim1][signal_dim2]...[signal_dimN][2]`. "
-            "If `axis=1` and `onesided` is `1`, the following shape is expected: `[signal_dim0][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]`. "
-            "If `axis=N` and `onesided` is `1`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]`. "
-            "The `signal_dim` at the specified `axis` is equal to the `dft_length`.",
+            "For standard DFT (`onesided=0`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]` (complex), with `signal_dim_axis = dft_length`. "
+            "For RFFT (`onesided=1`, `inverse=0`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]` (one-sided complex), with `signal_dim_axis = floor(dft_length/2) + 1`. "
+            "For IRFFT (`onesided=1`, `inverse=1`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]` (real), where `signal_dim_axis = dft_length`.",
             "T1")
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain scalar length types to integers.")
@@ -2685,10 +2699,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           const size_t dft_length_arg_index = 1;
           const size_t axis_arg_index = 2;
           const size_t output_index = 0;
-
-          if (inverse && is_onesided) {
-            fail_shape_inference("is_onesided and inverse attributes cannot be enabled at the same time");
-          }
 
           propagateElemTypeFromInputToOutput(ctx, input_arg_index, output_index);
           if (!hasInputShape(ctx, input_arg_index)) {
@@ -2702,6 +2712,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           const int64_t rank = input_shape.dim_size();
           if (rank < 2) {
             fail_shape_inference("input tensor must have rank >= 2, including the complex dimension.");
+          }
+
+          // check the inputs are correct types for one-sided DFT
+          if (is_onesided) {
+            auto last_dim = input_shape.dim(rank - 1);
+            if (inverse) {
+              // Check last dimension is 2 (complex input required)
+              if (last_dim.has_dim_value() && last_dim.dim_value() != 2) {
+                fail_shape_inference("inverse one-sided DFT requires complex input (last dimension must be 2)");
+              }
+            } else {
+              // Check last dimension is 1 (real input required)
+              if (last_dim.has_dim_value() && last_dim.dim_value() != 1) {
+                fail_shape_inference("one-sided DFT requires real input (last dimension must be 1)");
+              }
+            }
           }
 
           // In general the output shape will match the input shape exactly
@@ -2718,17 +2744,29 @@ ONNX_OPERATOR_SET_SCHEMA(
               for (int i = 0; i < rank; ++i) {
                 new_shape_proto.add_dim();
               }
-              // Coerce the last dimension to 2.
+              // Set last dimension based on operation type
               ONNX_ASSERTM(
                   rank == static_cast<int64_t>(new_shape_proto.dim_size()),
                   "rank should be equal to new_shape_proto.dim_size()");
-              new_shape_proto.mutable_dim(rank - 1)->set_dim_value(2);
+              if (inverse && is_onesided) {
+                // IRFFT: output is real-valued
+                new_shape_proto.mutable_dim(rank - 1)->set_dim_value(1);
+              } else {
+                // Complex output
+                new_shape_proto.mutable_dim(rank - 1)->set_dim_value(2);
+              }
               updateOutputShape(ctx, output_index, new_shape_proto);
               return;
             } else {
-              // Coerce the last dimension to 2.
+              // Set last dimension based on operation type
               int dim_size = result_shape_proto.dim_size();
-              result_shape_proto.mutable_dim(dim_size - 1)->set_dim_value(2);
+              if (inverse && is_onesided) {
+                // IRFFT: output is real-valued
+                result_shape_proto.mutable_dim(dim_size - 1)->set_dim_value(1);
+              } else {
+                // Complex output
+                result_shape_proto.mutable_dim(dim_size - 1)->set_dim_value(2);
+              }
               updateOutputShape(ctx, output_index, result_shape_proto);
               return;
             }
@@ -2764,7 +2802,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // If dft_length is specified, then we should honor the shape.
           // Set the output dimension to match the dft_length on the axis.
-          // If onesided this will be adjusted in the next block
           if (ctx.hasInput(dft_length_arg_index)) {
             // dft_length is provided
             const TensorProto* dft_length = ctx.getInputData(dft_length_arg_index);
@@ -2776,30 +2813,45 @@ ONNX_OPERATOR_SET_SCHEMA(
                 fail_shape_inference("dft_length input must be a scalar.");
               }
               auto dft_length_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(dft_length);
-              result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
-            }
-          }
 
-          // When DFT is onesided, the output shape is half the size of the input shape
-          // along the specified axis.
-          if (is_onesided) {
+              // For RFFT, output size on signal axis is floor(dft_length/2) + 1
+              if (is_onesided && !inverse) {
+                // RFFT: one-sided output
+                auto half_signal_size = (dft_length_value >> 1) + 1;
+                result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
+              } else {
+                // Standard FFT/IFFT and IRFFT: full length
+                result_shape_proto.mutable_dim(axis_idx)->set_dim_value(dft_length_value);
+              }
+            }
+          } else if (is_onesided) {
             auto axis_dimension = result_shape_proto.dim(axis_idx);
-            // We need to update the output shape dimension along the specified axis,
-            // but sometimes the dimension will be a free dimension or be otherwise unset.
-            // Only perform inference when a input dimension value exists.
             if (axis_dimension.has_dim_value()) {
-              auto original_signal_size = axis_dimension.dim_value();
-              auto half_signal_size = (original_signal_size >> 1) + 1;
-              result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
+              auto axis_dimension_value = axis_dimension.dim_value();
+              if (inverse) {
+                // IRFFT without explicit dft_length: cannot reliably infer full signal length
+                // Default to even length: N = 2 * (input_size - 1)
+                auto full_signal_size = 2 * (axis_dimension_value - 1);
+                result_shape_proto.mutable_dim(axis_idx)->set_dim_value(full_signal_size);
+              } else {
+                // RFFT without explicit dft_length: infer one-sided output size from input
+                auto half_signal_size = (axis_dimension_value >> 1) + 1;
+                result_shape_proto.mutable_dim(axis_idx)->set_dim_value(half_signal_size);
+              }
             } else {
-              // Clear the value and param (which would otherwise be inherited from the input).
               result_shape_proto.mutable_dim(axis_idx)->clear_dim_value();
               result_shape_proto.mutable_dim(axis_idx)->clear_dim_param();
             }
           }
 
-          // Coerce the last dimension to 2.
-          result_shape_proto.mutable_dim(static_cast<int>(rank - 1))->set_dim_value(2);
+          // Set the last dimension based on whether output is real or complex
+          if (is_onesided && inverse) {
+            // IRFFT: complex input -> real output (last dim = 1)
+            result_shape_proto.mutable_dim(static_cast<int>(rank - 1))->set_dim_value(1);
+          } else {
+            // All other cases: complex output (last dim = 2)
+            result_shape_proto.mutable_dim(static_cast<int>(rank - 1))->set_dim_value(2);
+          }
 
           updateOutputShape(ctx, output_index, result_shape_proto);
         }));

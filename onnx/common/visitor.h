@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 #include "onnx/common/common.h"
@@ -19,19 +17,19 @@ namespace internal {
 struct Visitor {
   virtual void VisitGraph(const GraphProto& graph) {
     if (ProcessGraph(graph))
-      for (auto& node : graph.node())
+      for (const auto& node : graph.node())
         VisitNode(node);
   }
 
   virtual void VisitFunction(const FunctionProto& function) {
     if (ProcessFunction(function))
-      for (auto& node : function.node())
+      for (const auto& node : function.node())
         VisitNode(node);
   }
 
   virtual void VisitNode(const NodeProto& node) {
     if (ProcessNode(node)) {
-      for (auto& attr : node.attribute()) {
+      for (const auto& attr : node.attribute()) {
         VisitAttribute(attr);
       }
     }
@@ -42,7 +40,7 @@ struct Visitor {
       if (attr.has_g()) {
         VisitGraph(attr.g());
       }
-      for (auto& graph : attr.graphs())
+      for (const auto& graph : attr.graphs())
         VisitGraph(graph);
     }
   }

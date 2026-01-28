@@ -1,13 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Add in default domain from version 6 to 5
 
 #pragma once
 
+#include <cinttypes>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,7 +26,7 @@ class TypeRestriction : public Adapter {
       const std::vector<TensorProto_DataType>& unallowed_types)
       : Adapter(op_name, initial, target), unallowed_types_(unallowed_types) {}
 
-  void adapt_type_restriction(const std::shared_ptr<Graph>&, const Node* node) const {
+  void adapt_type_restriction(const std::shared_ptr<Graph>& /*unused*/, const Node* node) const {
     // Since consumed_inputs is optional, no need to add it (as in batchnorm)
     // Iterate over all inputs and outputs
     for (const Value* input : node->inputs()) {
@@ -50,10 +50,10 @@ class TypeRestriction : public Adapter {
         std::find(std::begin(unallowed_types_), std::end(unallowed_types_), val->elemType()) ==
             std::end(unallowed_types_),
         "DataType (%d) of Input or Output"
-        " of operator '%s' is unallowed for Opset Version %d.",
+        " of operator '%s' is unallowed for Opset Version %" PRId64 ".",
         val->elemType(),
         name().c_str(),
-        target_version().version())
+        static_cast<int64_t>(target_version().version()))
   }
 };
 
