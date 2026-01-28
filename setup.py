@@ -173,6 +173,10 @@ class CmakeBuild(setuptools.Command):
             self.jobs = multiprocessing.cpu_count()
 
     def run(self):
+        if os.path.exists(CMAKE_BUILD_DIR):
+            logging.info("Removing stale build directory: %s", CMAKE_BUILD_DIR) # noqa: LOG015
+            shutil.rmtree(CMAKE_BUILD_DIR)
+
         assert CMAKE, "Could not find cmake in PATH"
 
         os.makedirs(CMAKE_BUILD_DIR, exist_ok=True)
