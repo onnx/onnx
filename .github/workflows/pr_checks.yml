@@ -23,6 +23,20 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Debug PR info
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "=== PR Info ==="
+          echo "PR number: $PR_NUMBER"
+          echo "PR head SHA: $PR_HEAD_SHA"
+          echo "PR base ref: $PR_BASE_REF"
+          echo "Repository: $REPOSITORY"
+          echo "Run ID: $RUN_ID"
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
@@ -36,16 +50,48 @@ jobs:
           lintrunner init
       - name: Run lintrunner on all files
         run: |
+          echo "=== Running lintrunner ==="
           set +e
           lintrunner f --all-files -v
+          LINT_EXIT_CODE=$?
+          echo "Lintrunner exit code: $LINT_EXIT_CODE"
+          echo "=== Git status after lintrunner ==="
+          git status --short
           exit 0
       - name: Save PR number and diff
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          echo "=== Creating artifacts ==="
           mkdir -p ./pr_artifacts
-          echo "${{ github.event.pull_request.number }}" > ./pr_artifacts/pr_number
+          echo "$PR_NUMBER" > ./pr_artifacts/pr_number
+          echo "PR number saved: $(cat ./pr_artifacts/pr_number)"
+
+          echo "=== Generating diff ==="
           git diff > ./pr_artifacts/lintrunner.diff
+
+          echo "=== Diff stats ==="
+          echo "Diff file size: $(wc -c < ./pr_artifacts/lintrunner.diff) bytes"
+          echo "Diff file lines: $(wc -l < ./pr_artifacts/lintrunner.diff) lines"
+
+          if [ -s ./pr_artifacts/lintrunner.diff ]; then
+            echo "Diff has content, showing first 30 lines:"
+            head -30 ./pr_artifacts/lintrunner.diff
+          else
+            echo "Diff is empty (no changes from lintrunner)"
+          fi
+
+          echo "=== Listing pr_artifacts directory ==="
+          ls -la ./pr_artifacts/
       - name: Upload artifacts
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: pr-artifacts
           path: pr_artifacts/
+      - name: Debug upload result
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "=== Upload completed ==="
+          echo "Artifacts should now be available with name: pr-artifacts"
+          echo "Run ID for download: $RUN_ID"
