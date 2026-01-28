@@ -12,6 +12,7 @@
 #include <nanobind/stl/unordered_set.h>
 #include <nanobind/stl/vector.h>
 
+#include <algorithm>
 #include <climits>
 #include <limits>
 #include <string>

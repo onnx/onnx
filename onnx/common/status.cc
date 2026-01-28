@@ -2,10 +2,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "status.h"
+#include "onnx/common/status.h"
 
 #include <cassert>
 #include <memory>
+#include <string>
 
 #include "onnx/string_utils.h"
 
