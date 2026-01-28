@@ -18187,6 +18187,9 @@ expect(
 ### <a name="LpNormalization"></a><a name="lpnormalization">**LpNormalization**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
+  The output is computed as: `output = input / Lp_norm(input, axis)`.
+  When the Lp norm is zero (i.e., all elements along the axis are zero),
+  the output is defined to be zero to avoid division by zero.
 
 #### Version
 
@@ -18307,7 +18310,8 @@ x = np.array(
     dtype=np.float32,
 )
 l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
-y = x / l2_norm_axis_0
+# When norm is 0, output is 0 (0/0 = 0)
+y = np.where(l2_norm_axis_0 == 0, 0, x / l2_norm_axis_0)
 expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
 ```
 
