@@ -13,8 +13,6 @@
 #include "onnx/defs/shape_inference.h"
 #include "onnx/shape_inference/implementation.h"
 
-using namespace ONNX_NAMESPACE::shape_inference;
-
 namespace ONNX_NAMESPACE {
 // onnx/defs/controlflow/old.cc
 // NOLINTNEXTLINE(misc-use-internal-linkage)
@@ -404,10 +402,10 @@ static void doInferencingTest(bool use_scan_opset8) {
   opset_imports[ONNX_DOMAIN] = 8; // Scan is v8
 
   const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
-  SymbolTableImpl symbolTable;
+  shape_inference::SymbolTableImpl symbolTable;
   symbolTable.addFromGraph(subgraph);
-  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, &symbolTable);
-  GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
+  shape_inference::GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports, &symbolTable);
+  shape_inference::GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
 
   // loop_state_in and scan_in are the two inputs.
   // order in subgraphInputTypes matches their order as graph inputs.
@@ -488,7 +486,7 @@ static void doInferencingTest(bool use_scan_opset8) {
   valueTypesByName["loop_state_start"] = &loop_state_in_tensor;
   valueTypesByName["scan_op_in"] = &scan_in_tensor;
 
-  InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, options, {}, &graphInfCtx);
+  shape_inference::InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, options, {}, &graphInfCtx);
   if (use_scan_opset8)
     ScanInferenceFunctionOpset8(ctx);
   else
@@ -622,7 +620,7 @@ TEST(ShapeInferenceTest, CheckShapesAndTypesTest) {
   auto* tensor_exist_type = tensor_exist.mutable_tensor_type();
   tensor_exist_type->set_elem_type(TensorProto_DataType_UINT8);
 
-  EXPECT_THROW(checkShapesAndTypes(tensor_infer, tensor_exist), ONNX_NAMESPACE::InferenceError);
+  EXPECT_THROW(shape_inference::checkShapesAndTypes(tensor_infer, tensor_exist), ONNX_NAMESPACE::InferenceError);
 #endif
 }
 

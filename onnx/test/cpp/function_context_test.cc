@@ -13,8 +13,6 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
-using namespace ONNX_NAMESPACE::checker;
-
 namespace ONNX_NAMESPACE {
 namespace Test {
 
@@ -72,10 +70,9 @@ BuildFloatFunctionBody(const FunctionBodyBuildContext& /*ctx*/, const OpSchema& 
   // Create a scalar-tensor constant 2.0 of float type:
   auto two_as_tensor = ToTensor(2.0, TensorProto_DataType::TensorProto_DataType_FLOAT);
 
-  std::vector<FunctionBodyHelper::NodeDef> body{
-      // nodes: {outputs, op, inputs, attributes}
-      {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-      {{"Y"}, "Mul", {"X", "Two"}}};
+  std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
+                                                {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
+                                                {{"Y"}, "Mul", {"X", "Two"}}};
 
   return BuildFunctionProto(functionProto, schema, body);
 }
@@ -114,12 +111,12 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_EQ(fnProto.node_size(), 2);
 
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 12}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(fnProto, checkerCtx, lexicalScope);
+  checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
 // A polymorphic context-dependent function test-case.
@@ -133,10 +130,9 @@ BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, F
   auto elem_type = static_cast<TensorProto_DataType>(tp->tensor_type().elem_type());
   auto two_as_tensor = ToTensor(2.0, elem_type);
 
-  std::vector<FunctionBodyHelper::NodeDef> body{
-      // nodes: {outputs, op, inputs, attributes}
-      {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
-      {{"Y"}, "Mul", {"X", "Two"}}};
+  std::vector<FunctionBodyHelper::NodeDef> body{// nodes: {outputs, op, inputs, attributes}
+                                                {{"Two"}, "Constant", {}, {{"value", two_as_tensor}}},
+                                                {{"Y"}, "Mul", {"X", "Two"}}};
 
   return BuildFunctionProto(functionProto, schema, body);
 }
@@ -271,12 +267,12 @@ TEST(FunctionAPITest, TypeContextTest) {
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_EQ(fnProto.node_size(), 2);
 
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 12}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(fnProto, checkerCtx, lexicalScope);
+  checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
 } // namespace Test

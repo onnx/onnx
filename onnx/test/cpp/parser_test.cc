@@ -9,8 +9,6 @@
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
 
-using namespace ONNX_NAMESPACE;
-
 namespace ONNX_NAMESPACE {
 namespace Test {
 

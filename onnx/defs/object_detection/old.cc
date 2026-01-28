@@ -6,7 +6,6 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
-using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
