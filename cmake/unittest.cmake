@@ -1,6 +1,8 @@
+# Copyright (c) ONNX Project Contributors
+#
 # SPDX-License-Identifier: Apache-2.0
 
-include(CTest)
+include(CTest)  
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(UT_NAME ${PROJECT_NAME}_gtests)
@@ -21,6 +23,6 @@ if(ONNX_GENERATE_TEST_REPORTS)
       APPEND
         TEST_ARGS
         "--gtest_output=xml:$<SHELL_PATH:$<TARGET_FILE:${UT_NAME}>.$<CONFIG>.results.xml>")
-endif()
+endif()    
 
 add_test(NAME ${UT_NAME} COMMAND ${UT_NAME} ${TEST_ARGS})
