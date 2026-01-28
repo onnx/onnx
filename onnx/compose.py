@@ -264,6 +264,17 @@ def merge_graphs(
 
     g.value_info.extend(g1.value_info)
     g.value_info.extend([vi for vi in g2.value_info if vi.name not in io_map_g2_ins])
+    value_info_names = {vi.name for vi in g.value_info}
+    output_names = {o.name for o in g.output}
+    g.value_info.extend(
+        [
+            o
+            for o in g1.output
+            if o.name in io_map_g1_outs
+            and o.name not in value_info_names
+            and o.name not in output_names
+        ]
+    )
 
     g.name = name if name is not None else "_".join([g1.name, g2.name])
 
