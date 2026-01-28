@@ -6,7 +6,13 @@ from __future__ import annotations
 import unittest
 
 import onnx
-from onnx import parser, printer
+from onnx import (
+    TensorProto,
+    checker,
+    helper,
+    parser,
+    printer,
+)
 
 
 class TestBasicFunctions(unittest.TestCase):
@@ -34,6 +40,69 @@ class TestBasicFunctions(unittest.TestCase):
         # to be identical.
         self.assertEqual(text1, text2)
         self.check_graph(graph2)
+
+
+class TestPrintableGraph(unittest.TestCase):
+    def test_initializer_with_matching_graph_input(self) -> None:
+        add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
+        value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
+
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+                helper.make_tensor_value_info("Y_Initializer", TensorProto.FLOAT, [1]),
+            ],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],  # outputs
+            [
+                helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])
+            ],  # initializers
+            doc_string=None,
+            value_info=value_info,
+        )
+
+        graph_str = printer.to_text(graph)
+        self.assertIn(
+            "test (float[1] X, float[1] Y_Initializer) => (float[1] Z)",
+            graph_str,
+        )
+
+    def test_initializer_no_matching_graph_input(self) -> None:
+        add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
+        value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
+
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],  # outputs
+            [
+                helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])
+            ],  # initializers
+            doc_string=None,
+            value_info=value_info,
+        )
+
+        graph_str = printer.to_text(graph)
+        self.assertIn("test (float[1] X) => (float[1] Z)", graph_str)
+
+    def test_unknown_dimensions(self) -> None:
+        graph = helper.make_graph(
+            [helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [None])],  # inputs
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [None])],  # outputs
+            [
+                helper.make_tensor("Y_Initializer", TensorProto.FLOAT, [1], [1])
+            ],  # initializers
+            doc_string=None,
+        )
+        model = helper.make_model(graph)
+        checker.check_model(model)
+
+        graph_str = printer.to_text(graph)
+        self.assertIn("test (float[?] X) => (float[?] Z)", graph_str)
 
 
 if __name__ == "__main__":
