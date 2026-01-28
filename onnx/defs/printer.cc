@@ -5,6 +5,7 @@
 #include "onnx/defs/printer.h"
 
 #include <iomanip>
+#include <string>
 
 #include "onnx/defs/tensor_proto_util.h"
 

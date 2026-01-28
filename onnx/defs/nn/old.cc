@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
+#include <vector>
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"

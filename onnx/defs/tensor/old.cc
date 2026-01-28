@@ -6,6 +6,10 @@
 #include <cmath>
 #include <numeric>
 #include <optional>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"

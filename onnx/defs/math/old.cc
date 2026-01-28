@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <functional>
+#include <limits>
+#include <string>
+#include <vector>
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"

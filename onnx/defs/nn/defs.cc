@@ -3,6 +3,8 @@
  */
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/doc_strings.h"
