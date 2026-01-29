@@ -3412,6 +3412,12 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (4, 5, 6))]
         )
 
+    def test_softmax_scalar_invalid(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ())], [make_node("Softmax", ["x"], "z")], []
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def test_hardmax_2d(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (4, 5))], [make_node("Hardmax", ["x"], "z")], []
@@ -3429,6 +3435,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (4, 5, 6))]
         )
+
+    def test_hardmax_scalar_invalid(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ())], [make_node("Hardmax", ["x"], "z")], []
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def test_logsoftmax_2d(self) -> None:
         graph = self._make_graph(
@@ -3449,6 +3461,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (4, 5, 6))]
         )
+
+    def test_logsoftmax_scalar_invalid(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ())], [make_node("LogSoftmax", ["x"], "z")], []
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def test_logsoftmax_3d_negative_axis(self) -> None:
         graph = self._make_graph(
