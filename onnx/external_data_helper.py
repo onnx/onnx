@@ -199,12 +199,22 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 
     # Let's check the tensor location is valid.
     location_path = pathlib.Path(info.location)
-    if location_path.is_absolute():
-        raise ValueError(f"Tensor {tensor.name!r} is external and must not be defined with an absolute path such as {info.location!r}")
+    if location_path.is_absolute() and len(location_path.parts) > 1:
+        raise ValueError(
+            f"Tensor {tensor.name!r} is external and must not be defined "
+            f"with an absolute path such as {info.location!r}, "
+            f"base_path={base_path!r}"
+        )
     if ".." in location_path.parts:
-        raise ValueError(f"Tensor {tensor.name!r} is external and must be placed in folder {base_path!r}, '..' is not needed.")
+        raise ValueError(
+            f"Tensor {tensor.name!r} is external and must be placed in folder "
+            f"{base_path!r}, '..' is not needed in {info.location!r}."
+        )
     if location_path.name in ('.', '..'):
-        raise ValueError(f"Tensor {tensor.name!r} is external and its name {info.location!r} is invalid.")
+        raise ValueError(
+            f"Tensor {tensor.name!r} is external and its name "
+            f"{info.location!r} is invalid."
+        )
 
     external_data_file_path = os.path.join(base_path, info.location)
 
