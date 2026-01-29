@@ -6,6 +6,9 @@
 #include <cmath>
 #include <numeric>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"
@@ -139,9 +142,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
-                      .c_str());
+              builder.Add(MakeString(
+                              "output = Cast <to= ",
+                              static_cast<int64_t>(target_elt_type),
+                              ", saturate: int = @saturate> (input)")
+                              .c_str());
               schema.BuildFunction(functionProto);
               return true;
             }));
@@ -686,9 +691,6 @@ result = [
 )DOC";
 
 static void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t step) {
-  auto clamp = [](int64_t val, int64_t min, int64_t max) -> int64_t {
-    return (val < min) ? min : (val > max) ? max : val;
-  };
   // process step
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
@@ -697,16 +699,16 @@ static void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t
   if (start < 0)
     start += input_rank;
   if (step < 0)
-    start = clamp(start, 0, input_rank - 1);
+    start = std::clamp(start, static_cast<int64_t>(0), input_rank - 1);
   else
-    start = clamp(start, 0, input_rank);
+    start = std::clamp(start, static_cast<int64_t>(0), input_rank);
   // process end
   if (end < 0)
     end += input_rank;
   if (step < 0)
-    end = clamp(end, -1, input_rank - 1);
+    end = std::clamp(end, static_cast<int64_t>(-1), input_rank - 1);
   else
-    end = clamp(end, 0, input_rank);
+    end = std::clamp(end, static_cast<int64_t>(0), input_rank);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(

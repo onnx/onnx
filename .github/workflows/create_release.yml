@@ -6,7 +6,7 @@ name: Create Releases
 on:
   schedule:
     # Run weekly on Monday 00:00 UTC
-    - cron:  '00 00 * * MON'
+    - cron:  '0 0 * * MON'
 
   push:
     branches: [main, rel-*]
@@ -58,7 +58,6 @@ on:
         default: 'preview'
 
 permissions:
-
   contents: read
 
 concurrency:
@@ -80,7 +79,6 @@ jobs:
     with:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
-
 
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -107,10 +105,12 @@ jobs:
 
       - name: Ensure build mode is release
         run: |
-          if [ "${{ github.event.inputs.build_mode }}" != "release" ]; then
+          if [ "$BUILD_MODE" != "release" ]; then
             echo "Error: build_mode must be set to 'release' to proceed."
             exit 1
           fi
+        env:
+          BUILD_MODE: ${{ github.event.inputs.build_mode }}
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
@@ -325,4 +325,4 @@ jobs:
     if: (needs.publish_preview_build_to_pypi_weekly.result == 'success' || needs.publish_release_build_to_testpypi.result == 'success')
     uses: ./.github/workflows/preview_source_dist_test.yml
     with:
-      os: "macos"
+      os: "linux"

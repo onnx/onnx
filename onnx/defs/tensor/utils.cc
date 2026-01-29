@@ -516,5 +516,5 @@ std::function<void(OpSchema&)> PadDocGenerator(
       }
     });
   };
-};
+}
 } // namespace ONNX_NAMESPACE

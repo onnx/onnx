@@ -9,7 +9,7 @@
 
 namespace ONNX_NAMESPACE {
 
-#if defined(__ANDROID__)
+#ifdef __ANDROID__
 template <typename T>
 std::string to_string(T value) {
   std::ostringstream os;
