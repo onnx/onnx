@@ -114,3 +114,4 @@ docs/docsgen/**/*.pb
 .python-version
 .pixi/**
 =0.*
+_codeql_build_dir/
