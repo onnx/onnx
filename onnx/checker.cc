@@ -5,7 +5,9 @@
 #include "onnx/checker.h"
 
 #include <filesystem>
+#include <iostream>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -916,9 +918,9 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
       fail_check("model with IR version >= 3 must specify opset_import for ONNX");
     }
   } else {
-    if (opset_imports.empty())
+    if (opset_imports.empty()) {
       opset_imports[ONNX_DOMAIN] = 1;
-    else {
+    } else {
       fail_check("model with IR version < 3 cannot have opset_import specified");
     }
   }
@@ -1006,11 +1008,11 @@ std::string resolve_external_data_location(
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
-        ") should be file inside the ",
+        ") should be file inside '",
         base_dir,
-        ", but the '",
+        "', but '",
         location,
-        "' points outside the directory");
+        "' points outside the directory.");
   }
   auto data_path = base_dir_path / relative_path;
 #ifdef _WIN32
@@ -1018,23 +1020,31 @@ std::string resolve_external_data_location(
 #else
   auto data_path_str = data_path.native();
 #endif
-  // Check whether the file exists
-  if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::exists(data_path))) {
+  // Do not allow symlinks or directories.
+  if (data_path.empty() || std::filesystem::is_symlink(data_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
         data_path_str,
-        ", but it doesn't exist or is not accessible.");
+        ", but it is a symbolic link.");
   }
-  // Do not allow symlinks or directories.
-  if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path))) {
+  if (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
         data_path_str,
         ", but it is not regular file.");
+  }
+  // Check whether the file exists
+  if (data_path_str[0] != '#' && !std::filesystem::exists(data_path)) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        data_path_str,
+        ", but it doesn't exist or is not accessible.");
   }
   return data_path_str;
 }

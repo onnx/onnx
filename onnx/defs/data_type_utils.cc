@@ -5,6 +5,8 @@
 #include "data_type_utils.h"
 
 #include <cctype>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace ONNX_NAMESPACE {

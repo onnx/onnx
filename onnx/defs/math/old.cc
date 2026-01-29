@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <functional>
+#include <limits>
+#include <string>
+#include <vector>
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
@@ -81,8 +84,9 @@ static bool BuildContextDependentFunctionBody_opset13(
     if (!float_input) {
       builder.Add("const_zero_casted = Cast (const_zero_float)", "to", static_cast<int64_t>(input_type))
           .Add("input_gather_element_transform = Where (mask, const_zero_casted, input_gather_element)");
-    } else
+    } else {
       builder.Add("input_gather_element_transform = Where (mask, const_zero_float, input_gather_element)");
+    }
     builder.Add("loss_NCdd = Neg (input_gather_element_transform)");
     builder.Add("loss_N1dd = Slice (loss_NCdd, const_zero, const_one, const_one)");
 
@@ -92,8 +96,9 @@ static bool BuildContextDependentFunctionBody_opset13(
       if (!float_input) {
         builder.Add("const_one_casted = Cast (const_one_float)", "to", static_cast<int64_t>(input_type))
             .Add("weight_gather = Where (squeeze_mask, const_zero_casted, const_one_casted)");
-      } else
+      } else {
         builder.Add("weight_gather = Where (squeeze_mask, const_zero_float, const_one_float)");
+      }
 
     } else {
       builder.Add("weight_gather_temp = Gather (weight, transform_targets)");
@@ -961,7 +966,7 @@ and contains the {name} values of the corresponding input.
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+    schema.TypeAndShapeInferenceFunction([name](InferenceContext& ctx) {
       // Type inference
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -973,6 +978,9 @@ and contains the {name} values of the corresponding input.
       // Validate the value of 'axis'
       const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       int r = input_shape.dim_size();
+      if (r == 0) {
+        fail_shape_inference("Input rank must be >= 1 for ", name, ".");
+      }
       int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
       if (axis < -r || axis >= r) {
         fail_shape_inference("'axis' must be in [", -r, " , ", (r - 1), "]. Its actual value is: ", axis);
