@@ -16,28 +16,34 @@ namespace Test {
 
 TEST(CHECKER, ValidDataLocationTest) {
   EXPECT_THROW(
-    ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "..", "tensor_name"),
-    ONNX_NAMESPACE::checker::ValidationError);
+      ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "..", "tensor_name"),
+      ONNX_NAMESPACE::checker::ValidationError);
   EXPECT_THROW(
-    ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "/usr/any", "tensor_name"),
-    ONNX_NAMESPACE::checker::ValidationError);
+      ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "/usr/any", "tensor_name"),
+      ONNX_NAMESPACE::checker::ValidationError);
   EXPECT_THROW(
-    ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "./sub/example", "tensor_name"),
-    ONNX_NAMESPACE::checker::ValidationError);
+      ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "./sub/example", "tensor_name"),
+      ONNX_NAMESPACE::checker::ValidationError);
   EXPECT_THROW(
-    ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "sub/example", "tensor_name"),
-    ONNX_NAMESPACE::checker::ValidationError);
+      ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "sub/example", "tensor_name"),
+      ONNX_NAMESPACE::checker::ValidationError);
 }
 
 TEST(CHECKER, ValidDataLocationSymLinkTest) {
   fs::path tempDir = fs::temp_directory_path() / "symlink_test";
   fs::create_directories(tempDir);
+  fs::permissions(tempDir, fs::perms::owner_all, fs::perm_options::replace);
   fs::path target = tempDir / "model.data";
   fs::path link = tempDir / "link.data";
   fs::create_symlink(target, link);
+#ifdef WIN32
+  std::string location = link.u8string();
+#else
+  std::string location = link.c_str();
+#endif
   EXPECT_THROW(
-    ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", link.filename().c_str(), "tensor_name"),
-    ONNX_NAMESPACE::checker::ValidationError);
+      ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", location, "tensor_name"),
+      ONNX_NAMESPACE::checker::ValidationError);
   fs::remove(link);
   fs::remove(target);
   fs::remove(tempDir);
