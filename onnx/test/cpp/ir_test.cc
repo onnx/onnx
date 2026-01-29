@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <memory>
+#include <string>
+
 #include "gtest/gtest.h"
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"

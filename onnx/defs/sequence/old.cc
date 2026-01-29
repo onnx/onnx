@@ -15,4 +15,4 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             OpSchema::all_tensor_sequence_types())));
 
-}
+} // namespace ONNX_NAMESPACE

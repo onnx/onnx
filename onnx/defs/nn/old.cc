@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
+#include <vector>
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
@@ -1897,7 +1899,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             FunctionBodyHelper::BuildNodes(
                 {// nodes: {outputs, op, inputs, attributes}
                  FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-                 FunctionBodyHelper::Const<float>("Epsilon", float(1e-9)),
+                 FunctionBodyHelper::Const<float>("Epsilon", static_cast<float>(1e-9)),
                  {{"X_RM"}, "ReduceMean", {"X"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
                  {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
                  {{"X_squared"}, "Pow", {"X", "Exponent"}},
@@ -4129,7 +4131,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("X3D = Reshape(XReshaped, Shape3D)")
 
                   // Calculate statistics
-                  .Const1D("Axes2", (int64_t)2)
+                  .Const1D("Axes2", static_cast<int64_t>(2))
                   .Add("Mean = ReduceMean (X3D, Axes2)")
                   .Add("Square = Mul (X3D, X3D)")
                   .Add("MeanOfSquare = ReduceMean (Square, Axes2)")

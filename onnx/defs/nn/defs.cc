@@ -3,6 +3,8 @@
  */
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/doc_strings.h"
@@ -2758,7 +2760,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("X3D = Reshape (XReshaped, Shape3D)")
 
                   // Calculate statistics
-                  .Const1D("Axes2", (int64_t)2)
+                  .Const1D("Axes2", static_cast<int64_t>(2))
                   .Add("Mean = ReduceMean (X3D, Axes2)")
                   .Add("Square = Mul (X3D, X3D)")
                   .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
@@ -2916,7 +2918,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   axis >= 0 // number of axes that are reduced =
                       ? "PosAxis = Identity (Axis)" // axis: scalar
                       : "PosAxis = Add (Rank, Axis)") // rank + axis : scalar
-              .Const("One", (int64_t)1)
+              .Const("One", static_cast<int64_t>(1))
               .Add("ReduceAxes = Range(PosAxis, Rank, One)")
               .Add("XU = Cast (X)", "to", U);
           builder.Add("XSquared = Mul (XU, XU)")
@@ -3148,9 +3150,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           // NewShape = [batch_size, sequence_length, num_heads, head_size]
 
           // Reshape tensor to 4D if input is 3D
-          builder.Const1D("Zero1D", (int64_t)0)
+          builder.Const1D("Zero1D", static_cast<int64_t>(0))
               .Const1D("NumHeads", num_heads) // num_heads
-              .Const1D("NegOne", (int64_t)(-1)); // head_size, inferred from other dimensions
+              .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
 
           if (is_input_4d == 0) {
             builder.Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
@@ -3171,7 +3173,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             builder.Add("RotaryEmbedDim = Identity(HeadSize)");
           }
-          builder.Const1D("Two1D", (int64_t)2)
+          builder.Const1D("Two1D", static_cast<int64_t>(2))
               .Add("NoRotateLength = Sub(HeadSize, RotaryEmbedDim)")
               .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
           // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
@@ -3233,8 +3235,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                                                                             // input[:,:,:,rotary_embedding_dim/2:rotary_embedding_dim]
           } else {
             // For interleaved rotation, slices are created as follows,
-            builder.Const1D("One1D", (int64_t)1)
-                .Const1D("AxesRotaryDim", (int64_t)3)
+            builder.Const1D("One1D", static_cast<int64_t>(1))
+                .Const1D("AxesRotaryDim", static_cast<int64_t>(3))
                 .Add("RotaryEmbedDimInclusive = Add(RotaryEmbedDim, One1D)")
                 .Add(
                     "X1 = Slice(XToRotate, Zero1D, RotaryEmbedDim, AxesRotaryDim, Two1D)") // shape of X1 =

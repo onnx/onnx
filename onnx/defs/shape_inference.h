@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -884,8 +884,9 @@ inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int d
 inline void unifyDim(Dim& dim, int64_t value) {
   if (dim.has_dim_value()) {
     checkDimEquality(dim.dim_value(), value);
-  } else
+  } else {
     dim.set_dim_value(value);
+  }
 }
 
 // target-shape = Union (target-shape, source_shape)
