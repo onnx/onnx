@@ -1002,11 +1002,11 @@ std::string resolve_external_data_location(
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
-        ") should be file inside the ",
+        ") should be file inside '",
         base_dir,
-        ", but the '",
+        "', but '",
         location,
-        "' points outside the directory");
+        "' points outside the directory.");
   }
   auto data_path = base_dir_path / relative_path;
 #ifdef _WIN32
@@ -1014,23 +1014,31 @@ std::string resolve_external_data_location(
 #else
   auto data_path_str = data_path.native();
 #endif
-  // Check whether the file exists
-  if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::exists(data_path))) {
+  // Do not allow symlinks or directories.
+  if (data_path.empty() || std::filesystem::is_symlink(data_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
         data_path_str,
-        ", but it doesn't exist or is not accessible.");
+        ", but it is a symbolic link.");
   }
-  // Do not allow symlinks or directories.
-  if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path))) {
+  if (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
         data_path_str,
         ", but it is not regular file.");
+  }
+  // Check whether the file exists
+  if (data_path_str[0] != '#' && !std::filesystem::exists(data_path)) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        data_path_str,
+        ", but it doesn't exist or is not accessible.");
   }
   return data_path_str;
 }
