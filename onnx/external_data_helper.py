@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import re
 import sys
 import uuid
@@ -185,12 +186,26 @@ def convert_model_from_external_data(model: ModelProto) -> None:
 
 def save_external_data(tensor: TensorProto, base_path: str) -> None:
     """Writes tensor data to an external file according to information in the `external_data` field.
+    The function checks the external is a valid name and located in folder `base_path`.
 
     Arguments:
         tensor (TensorProto): Tensor object to be serialized
         base_path: System path of a folder where tensor data is to be stored
+
+    Raises:
+        ValueError: If the external file is invalid.
     """
     info = ExternalDataInfo(tensor)
+
+    # Let's check the tensor location is valid.
+    location_path = pathlib.Path(info.location)
+    if location_path.is_absolute():
+        raise ValueError(f"Tensor {tensor.name!r} is external and must not be defined with an absolute path such as {info.location!r}")
+    if ".." in location_path.parts:
+        raise ValueError(f"Tensor {tensor.name!r} is external and must be placed in folder {base_path!r}, '..' is not needed.")
+    if location_path.name in ('.', '..'):
+        raise ValueError(f"Tensor {tensor.name!r} is external and its name {info.location!r} is invalid.")
+
     external_data_file_path = os.path.join(base_path, info.location)
 
     # Retrieve the tensor's data from raw_data or load external file
