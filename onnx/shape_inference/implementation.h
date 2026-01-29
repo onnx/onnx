@@ -393,7 +393,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     // Otherwise, gets it from initializer if it exists
     const auto* input_data = allInputData_[index];
     // Only scalar (0D tensor) or 1D tensor can be converted for now
-    // TODO: It should support tensors with more dimension on demand
+    // TODO(ONNX): It should support tensors with more dimension on demand
     if (input_data != nullptr && (input_data->dims_size() == 0 || input_data->dims_size() == 1)) {
       TensorShapeProto tsp;
 

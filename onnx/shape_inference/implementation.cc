@@ -523,7 +523,7 @@ class ShapeInferenceImplBase {
       });
     }
     ONNX_CATCH(const std::runtime_error& err) {
-      // TODO: Fix this. Unclear if this should be remapped to a shape inference error.
+      // TODO(ONNX): Fix this. Unclear if this should be remapped to a shape inference error.
       // Need to rationalize the different types of exceptions that can be thrown.
       // See: https://github.com/onnx/onnx/pull/5519
       ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
@@ -614,7 +614,7 @@ class ShapeInferenceImplBase {
       // nullptr is valid, and indicates a missing optional input
       if (type_ptr != nullptr) {
         // Use a temporary copy of original type.
-        // TODO: investigate whether we can eliminate use of temporary copy
+        // TODO(ONNX): investigate whether we can eliminate use of temporary copy
         types_cache[i] = *type_ptr;
         value_types_by_name[parameter_name] = &types_cache[i];
       } else {
@@ -707,7 +707,7 @@ class ShapeInferenceImplBase {
     // Throw shape inference error if any. Error mode right now only supports 0 and 1.
     // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatibility
     // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
-    // TODO: Add a more granular way for exception handling.
+    // TODO(ONNX): Add a more granular way for exception handling.
     if (!errors.empty() && options.error_mode > 0) {
       std::string full_errors = "Inference error(s): ";
       for (const std::string& error : inference_errors) {
@@ -990,7 +990,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes) {
-  // TODO: if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
+  // TODO(ONNX): if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
   // we can add them to the Python API. For now we just assume the default options.
   ShapeInferenceOptions options{true, 1, false};
   FunctionInferenceContext ctx(function_proto, input_types, attributes, options);

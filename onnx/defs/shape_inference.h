@@ -834,7 +834,7 @@ inline void unifyDim(const Dim& dim1, const Dim& dim2) {
     checkDimEquality(dim1.dim_value(), dim2.dim_value());
 }
 
-// TODO: The functionality of unifyDim is similar to that of
+// TODO(ONNX): The functionality of unifyDim is similar to that of
 // mergeInDimensionInfo. However, the error messages are different. Leaving this
 // duplication in-place to preserve error message content.
 inline void unifyDim(const Dim& source_dim, Dim& target_dim) {

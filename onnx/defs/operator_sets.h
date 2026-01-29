@@ -1420,7 +1420,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, QuantizeLinear);
 class OpSet_Onnx_ver25 {
  public:
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
-    // TODO: Remove after introducing the first schema to opset 25
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, CastLike)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Constant)>());
