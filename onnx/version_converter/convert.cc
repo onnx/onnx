@@ -33,7 +33,7 @@ void DefaultVersionConverter::convert_graph(
     const OpSetID& target_version) const {
   assertNonNull(g);
 
-  // TODO: Move to Inter-Domain Converter
+  // TODO(ONNX): Move to Inter-Domain Converter
   // Get initial model versions
   // std::vector<OpSetID> initial_versions = g->opset_versions_mutable();
 
