@@ -15,6 +15,7 @@ namespace ONNX_NAMESPACE {
 namespace Test {
 
 TEST(CHECKER, ValidDataLocationTest) {
+#ifndef ONNX_NO_EXCEPTIONS
   EXPECT_THROW(
       ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "..", "tensor_name"),
       ONNX_NAMESPACE::checker::ValidationError);
@@ -27,9 +28,11 @@ TEST(CHECKER, ValidDataLocationTest) {
   EXPECT_THROW(
       ONNX_NAMESPACE::checker::resolve_external_data_location("localfolder", "sub/example", "tensor_name"),
       ONNX_NAMESPACE::checker::ValidationError);
+#endif
 }
 
 TEST(CHECKER, ValidDataLocationSymLinkTest) {
+#ifndef ONNX_NO_EXCEPTIONS
   fs::path tempDir = fs::temp_directory_path() / "symlink_test-%%%%%%"; // NOSONAR
   fs::create_directories(tempDir);
   fs::path target = tempDir / "model.data";
@@ -46,6 +49,7 @@ TEST(CHECKER, ValidDataLocationSymLinkTest) {
   fs::remove(link);
   fs::remove(target);
   fs::remove(tempDir);
+#endif
 }
 
 } // namespace Test
