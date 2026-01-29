@@ -30,7 +30,7 @@ TEST(CHECKER, ValidDataLocationTest) {
 }
 
 TEST(CHECKER, ValidDataLocationSymLinkTest) {
-  fs::path tempDir = fs::temp_directory_path() / "symlink_test-%%%%%%";  // NOSONAR
+  fs::path tempDir = fs::temp_directory_path() / "symlink_test-%%%%%%"; // NOSONAR
   fs::create_directories(tempDir);
   fs::path target = tempDir / "model.data";
   fs::path link = tempDir / "link.data";
