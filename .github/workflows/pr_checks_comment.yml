@@ -42,7 +42,7 @@ jobs:
         continue-on-error: true
         with:
           name: pr-artifacts
-          path: pr_artifacts/
+          path: /tmp/pr_artifacts/
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Debug download result
@@ -52,25 +52,25 @@ jobs:
           echo "=== Download Result ==="
           echo "Download outcome: $DOWNLOAD_OUTCOME"
           echo "Listing pr_artifacts directory:"
-          ls -la pr_artifacts/ 2>/dev/null || echo "Directory does not exist"
+          ls -la /tmp/pr_artifacts/ 2>/dev/null || echo "Directory does not exist"
       - name: Get PR number
         if: steps.download.outcome == 'success'
         id: pr
         run: |
           echo "=== PR Number ==="
-          cat pr_artifacts/pr_number
-          echo "number=$(cat pr_artifacts/pr_number)" >> "$GITHUB_OUTPUT"
+          cat /tmp/pr_artifacts/pr_number
+          echo "number=$(cat /tmp/pr_artifacts/pr_number)" >> "$GITHUB_OUTPUT"
       - name: Check if diff is empty
         if: steps.download.outcome == 'success'
         id: diff
         run: |
           echo "=== Diff Check ==="
-          echo "Diff file size: $(wc -c < pr_artifacts/lintrunner.diff) bytes"
-          echo "Diff file lines: $(wc -l < pr_artifacts/lintrunner.diff) lines"
-          if [ -s pr_artifacts/lintrunner.diff ]; then
+          echo "Diff file size: $(wc -c < /tmp/pr_artifacts/lintrunner.diff) bytes"
+          echo "Diff file lines: $(wc -l < /tmp/pr_artifacts/lintrunner.diff) lines"
+          if [ -s /tmp/pr_artifacts/lintrunner.diff ]; then
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
             echo "Diff has changes, showing first 50 lines:"
-            head -50 pr_artifacts/lintrunner.diff
+            head -50 /tmp/pr_artifacts/lintrunner.diff
           else
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "Diff is empty, no changes to apply"
@@ -101,7 +101,7 @@ jobs:
           echo "Git status before apply:"
           git status --short
           echo "Applying diff..."
-          git apply pr_artifacts/lintrunner.diff
+          git apply /tmp/pr_artifacts/lintrunner.diff
           echo "Git status after apply:"
           git status --short
       - name: Suggest changes
