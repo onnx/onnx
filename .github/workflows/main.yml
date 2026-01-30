@@ -193,7 +193,7 @@ jobs:
 
       - name: Run Python tests
         run: |
-          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
+          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml ${{startsWith(matrix.os, 'windows') && '' || '-n auto --dist loadscope'}}
 
       - name: Run C++ tests
         if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
