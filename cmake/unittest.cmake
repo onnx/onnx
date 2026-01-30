@@ -17,7 +17,7 @@ else()
 endif()
 set(TEST_ARGS)
 if(ONNX_GENERATE_TEST_REPORTS)
-  # generate a report file next to the test program
+  # generate a report file next to the test program   
   list(
       APPEND
         TEST_ARGS
