@@ -25,4 +25,4 @@ The outcome of this process may either lead to the proposal being accepted or re
 
 Generally, an accepted RFC should be a fairly stable and final affair due to a rigorous review process leading to the acceptance in the first place.
 However, new circumstances and ideas may arise after an RFC has been accepted.
-In such cases we may either choose to re-open the accepted RFC, or to create a new RFC. 
+In such cases we may either choose to re-open the accepted RFC, or to create a new RFC.
