@@ -10,14 +10,12 @@ function(add_onnx_hardening_flags target)
   if(MSVC)
     # MSVC hardening flags
     target_compile_options(${target} PRIVATE
-      /GS           # Buffer security check
-      /DYNAMICBASE  # ASLR
-      /NXCOMPAT     # Data Execution Prevention
-      /guard:cf     # Control Flow Guard
+      /GS           # Buffer security check      
+      /GUARD:CF     # Control Flow Guard
     )
     target_link_options(${target} PRIVATE
-      /DYNAMICBASE
-      /NXCOMPAT
+      /DYNAMICBASE  # ASLR
+      /NXCOMPAT     # Data Execution Prevention
       /GUARD:CF
     )
   else()
