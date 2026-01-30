@@ -128,6 +128,12 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   }
   int64_t nelem = 1;
   for (auto x : tensor.dims()) {
+    if (x < 0) {
+      fail_check("TensorProto (tensor name: ", tensor.name(), ") has negative dimension.");
+    }
+    if (x != 0 && nelem > INT64_MAX / x) {
+      fail_check("TensorProto (tensor name: ", tensor.name(), ") has too many elements (integer overflow).");
+    }
     nelem *= x;
   }
   if (nelem == 0 && num_value_fields != 0) {
