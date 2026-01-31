@@ -1816,8 +1816,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if H or W is not a
-              // multiple of blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -1897,8 +1895,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if C is not a multiple of
-              // blocksize*blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -2742,7 +2738,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("OneHot node must have three inputs.");
           }
           // Input 'depth' must be a scalar or a single-element vector.
-          // TODO: Ideally to match spec for this input only Scalar should
+          // TODO(ONNX): Ideally to match spec for this input only Scalar should
           // be allowed. Making this change now can affect backward
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar

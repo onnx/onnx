@@ -88,7 +88,6 @@ ONNX_DEFINE_TYPE_CASTER(FunctionProto, "onnx.FunctionProto")
 
 namespace ONNX_NAMESPACE {
 namespace nb = nanobind;
-using nanobind::literals::operator""_a;
 
 template <typename ProtoType>
 static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
@@ -148,7 +147,7 @@ static std::unordered_map<std::string, nb::bytes> CallNodeInferenceFunction(
   shape_inference::GraphInferenceContext graphInferenceContext(
       valueTypes.second, opsetImports, nullptr, {}, OpSchemaRegistry::Instance(), nullptr, irVersion);
   // Construct inference context and get results - may throw InferenceError
-  // TODO: if it is desirable for infer_node_outputs to provide check_type, strict_mode, data_prop,
+  // TODO(ONNX): if it is desirable for infer_node_outputs to provide check_type, strict_mode, data_prop,
   // we can add them to the Python API. For now we just assume the default options.
   ShapeInferenceOptions options{false, 0, false};
   shape_inference::InferenceContextImpl ctx(
@@ -518,16 +517,16 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type, const std::string& domain) -> bool {
             return OpSchemaRegistry::Schema(op_type, domain) != nullptr;
           },
-          "op_type"_a,
-          "domain"_a = ONNX_DOMAIN)
+          nb::arg("op_type"),
+          nb::arg("domain") = ONNX_DOMAIN)
       .def(
           "has_schema",
           [](const std::string& op_type, int max_inclusive_version, const std::string& domain) -> bool {
             return OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain) != nullptr;
           },
-          "op_type"_a,
-          "max_inclusive_version"_a,
-          "domain"_a = ONNX_DOMAIN)
+          nb::arg("op_type"),
+          nb::arg("max_inclusive_version"),
+          nb::arg("domain") = ONNX_DOMAIN)
       .def(
           "schema_version_map",
           []() -> std::unordered_map<std::string, std::pair<int, int>> {
@@ -544,9 +543,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             }
             return *schema;
           },
-          "op_type"_a,
-          "max_inclusive_version"_a,
-          "domain"_a = ONNX_DOMAIN,
+          nb::arg("op_type"),
+          nb::arg("max_inclusive_version"),
+          nb::arg("domain") = ONNX_DOMAIN,
           "Return the schema of the operator *op_type* and for a specific version.")
       .def(
           "get_schema",
@@ -557,8 +556,8 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             }
             return *schema;
           },
-          "op_type"_a,
-          "domain"_a = ONNX_DOMAIN,
+          nb::arg("op_type"),
+          nb::arg("domain") = ONNX_DOMAIN,
           "Return the schema of the operator *op_type* and for a specific version.")
       .def(
           "get_all_schemas",
@@ -578,22 +577,22 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               obj.UpdateDomainToVersion(domain, min_version, max_version, last_release_version);
             }
           },
-          "domain"_a,
-          "min_version"_a,
-          "max_version"_a,
-          "last_release_version"_a = -1,
+          nb::arg("domain"),
+          nb::arg("min_version"),
+          nb::arg("max_version"),
+          nb::arg("last_release_version") = -1,
           "Set the version range and last release version of the specified domain.")
       .def(
           "register_schema",
           [](OpSchema schema) { RegisterSchema(std::move(schema), 0, true, true); },
-          "schema"_a,
+          nb::arg("schema"),
           "Register a user provided OpSchema.")
       .def(
           "deregister_schema",
           &DeregisterSchema,
-          "op_type"_a,
-          "version"_a,
-          "domain"_a,
+          nb::arg("op_type"),
+          nb::arg("version"),
+          nb::arg("domain"),
           "Deregister the specified OpSchema.");
 
   // Submodule `checker`
@@ -677,20 +676,20 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ParseProtoFromPyBytes(&proto, bytes);
         checker::check_model(proto, full_check, skip_opset_compatibility_check, check_custom_domain);
       },
-      "bytes"_a,
-      "full_check"_a = false,
-      "skip_opset_compatibility_check"_a = false,
-      "check_custom_domain"_a = false);
+      nb::arg("bytes"),
+      nb::arg("full_check") = false,
+      nb::arg("skip_opset_compatibility_check") = false,
+      nb::arg("check_custom_domain") = false);
 
   checker.def(
       "check_model_path",
       static_cast<void (*)(
           const std::string& path, bool full_check, bool skip_opset_compatibility_check, bool check_custom_domain)>(
           &checker::check_model),
-      "path"_a,
-      "full_check"_a = false,
-      "skip_opset_compatibility_check"_a = false,
-      "check_custom_domain"_a = false);
+      nb::arg("path"),
+      nb::arg("full_check") = false,
+      nb::arg("skip_opset_compatibility_check") = false,
+      nb::arg("check_custom_domain") = false);
 
   checker.def("_resolve_external_data_location", &checker::resolve_external_data_location);
 
@@ -843,10 +842,10 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         proto.SerializeToString(&out);
         return nb::bytes(out.c_str(), out.size());
       },
-      "bytes"_a,
-      "check_type"_a = false,
-      "strict_mode"_a = false,
-      "data_prop"_a = false);
+      nb::arg("bytes"),
+      nb::arg("check_type") = false,
+      nb::arg("strict_mode") = false,
+      nb::arg("data_prop") = false);
 
   shape_inference.def(
       "infer_shapes_path",

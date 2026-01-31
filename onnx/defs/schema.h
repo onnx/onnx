@@ -465,6 +465,9 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
   ATTR_SETTER_WITH_DEFAULT_VALUE(float)
   ATTR_SETTER_WITH_DEFAULT_VALUE(std::string)
+  // Overload for const char* default value to prevent implicit conversion to bool
+  OpSchema&
+  Attr(const char* name, const char* description, AttributeProto::AttributeType type, const char* defaultValue);
   ATTR_SETTER_WITH_DEFAULT_VALUE(TensorProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
