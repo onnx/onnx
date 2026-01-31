@@ -263,6 +263,15 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
       case TensorProto::DataType::TensorProto_DataType_UINT8:
       case TensorProto::DataType::TensorProto_DataType_UINT16:
       case TensorProto::DataType::TensorProto_DataType_BOOL:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_BFLOAT16:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FN:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E4M3FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT8E5M2FNUZ:
+      case TensorProto::DataType::TensorProto_DataType_UINT4:
+      case TensorProto::DataType::TensorProto_DataType_INT4:
+      case TensorProto::DataType::TensorProto_DataType_FLOAT4E2M1:
         printSet(" {", ",", "}", tensor.int32_data());
         break;
       case TensorProto::DataType::TensorProto_DataType_INT64:
