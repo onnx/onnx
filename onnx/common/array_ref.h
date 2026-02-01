@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -89,7 +87,7 @@ class ArrayRef {
 
   /// Construct an ArrayRef from a std::initializer_list.
   /*implicit*/ ArrayRef(const std::initializer_list<T>& Vec)
-      : Data(Vec.begin() == Vec.end() ? (T*)nullptr : Vec.begin()), Length(Vec.size()) {}
+      : Data(Vec.begin() == Vec.end() ? static_cast<T*>(nullptr) : Vec.begin()), Length(Vec.size()) {}
 
   /// @}
   /// @name Simple Operations

@@ -1,15 +1,18 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/schema.h"
 
+#include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
@@ -1722,7 +1725,7 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
 OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
   static DomainToVersionRange domain_to_version_range;
   return domain_to_version_range;
-};
+}
 
 // Private method used by OpSchemaRegisterOnce and OpSchemaRegistry::map()
 OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {
@@ -1762,8 +1765,8 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-            "%u schema were exposed from operator sets and automatically placed into the static registry.  "
-            "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",
+            "%zu schema were exposed from operator sets and automatically placed into the static registry.  "
+            "%zu were expected based on calls to registration macros. Operator set functions may need to be updated.",
             dbg_registered_schema_count,
             ONNX_DBG_GET_COUNT_IN_OPSETS());
       }

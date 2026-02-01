@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for all ops that remove consumed_inputs
 
@@ -25,6 +23,11 @@ class Split_13_12 : public Adapter {
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     // Identify if 'split' is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
+    // Check if split input is provided (it's optional)
+    if (inputs.size() <= 1) {
+      // No split input provided, nothing to convert
+      return node;
+    }
     // Get 'split' from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];

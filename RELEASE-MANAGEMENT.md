@@ -18,7 +18,7 @@ Branch cuts for a new release are planned every 4 months. However, the times can
 | 1.17.0 | XYZ | XYZ | Not planned |
 | 1.18.0 | Mar 2025 | May 2025 | Not planned |
 | 1.19.0 | 31. July 2025 | 27. August 2025 | 9. October 2025 |
-| 1.20.0  | 31. October 2025 | November 2025 | tbd |
+| 1.20.0  | 31. October 2025 | November 2025 | January 2026 |
 | 1.21.0 (tbd) | February 2026 | March 2026 | tbd |
 
 Release Compatibility Matrix
@@ -35,7 +35,7 @@ Planned changes for future releases as listed in the table below are subject to 
 | 1.18 | 3.9-3.13, 3.13t (win, mac) | --- | 3.18 | v25.1 | manylinux2014 |
 | 1.19 | 3.9-3.13, 3.13t (win, mac, linux) | --- | 3.24 | v25.1 | manylinux2014 |
 | 1.19.1 | 3.9-3.13, 3.13t (win, mac, linux) | --- | 3.24 | v25.1 | manylinux2014 |
-| *1.20* | *3.10-3.13, 3.13t (win, mac, linux), 3.14* | --- | --- | *v25.1* | *manylinux2_28* |
+| 1.20 | *3.10-3.13, 3.13t (win, mac, linux), 3.14* | 3.26 | --- | v25.1 | manylinux2_28 |
 | *1.21* | | | | *manylinux2_28* |
 
 Releases

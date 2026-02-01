@@ -2,24 +2,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <string>
+
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
-using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-static constexpr const char* RoiAlign_ver22_doc = R"DOC(
-Region of Interest (RoI) align operation described in the
-[Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
-RoiAlign consumes an input tensor X and region of interests (rois)
-to apply pooling across each RoI; it produces a 4-D tensor of shape
-(num_rois, C, output_height, output_width).
-
-RoiAlign is proposed to avoid the misalignment by removing
-quantizations while converting from original image into feature
-map and from feature map into RoI feature; in each ROI bin,
-the value of the sampled locations are computed directly
-through bilinear interpolation.
-)DOC";
+static const char* const RoiAlign_ver22_doc = kDoc_RoiAlign_ver16;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
@@ -121,15 +111,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static constexpr const char* NonMaxSuppression_ver11_doc = R"DOC(
-Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
-Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
-Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
-orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
-result in the same boxes being selected by the algorithm.
-The selected_indices output is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
-The bounding box coordinates corresponding to the selected indices can then be obtained using the Gather or GatherND operation.
-)DOC";
+static const char* const NonMaxSuppression_ver11_doc = kDoc_NonMaxSuppression_ver10;
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonMaxSuppression,
@@ -150,7 +132,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "iou_threshold",
-            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.",
+            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Boxes with IoU strictly greater than this threshold are suppressed. It is scalar. Value range [0, 1]. Default to 0.",
             "tensor(float)",
             OpSchema::Optional)
         .Input(

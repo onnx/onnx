@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Reshape in default domain from version 5 to 4
 
@@ -11,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 
@@ -24,6 +23,11 @@ class Reshape_5_4 final : public Adapter {
   void adapt_reshape_5_4(const std::shared_ptr<Graph>& graph, Node* node) const {
     // Identify if shape is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
+    // Check if shape input is provided (it's optional in some contexts)
+    if (inputs.size() <= 1) {
+      // No shape input provided, nothing to convert
+      return;
+    }
     // Get shape from initializer or constant operator, not actual shape
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];

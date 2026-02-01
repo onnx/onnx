@@ -1,8 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"

@@ -1,14 +1,10 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "gtest/gtest.h"
 #include "onnx/defs/operator_sets.h"
 #include "onnx/defs/schema.h"
-
-using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 namespace Test {

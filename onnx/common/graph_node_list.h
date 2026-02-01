@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -131,7 +129,7 @@ struct generic_graph_node_list final {
   generic_graph_node_list reverse() {
     return generic_graph_node_list(head, d == kNextDirection ? kPrevDirection : kNextDirection);
   }
-  const generic_graph_node_list reverse() const {
+  generic_graph_node_list reverse() const {
     return generic_graph_node_list(head, d == kNextDirection ? kPrevDirection : kNextDirection);
   }
   generic_graph_node_list(T* head, size_t d) : head(head), d(d) {}
