@@ -38,7 +38,7 @@ jobs:
           echo "Head SHA: $HEAD_SHA"
       - name: Download artifacts
         id: download
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         continue-on-error: true
         with:
           name: pr-artifacts
@@ -89,7 +89,7 @@ jobs:
           echo "Will checkout: ${{ steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true' }}"
       - name: Checkout PR
         if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: refs/pull/${{ steps.pr.outputs.number }}/head
           persist-credentials: false
