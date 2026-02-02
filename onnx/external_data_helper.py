@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from multiprocessing import Value
 import os
 import re
 import sys
@@ -191,6 +192,13 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
         base_path: System path of a folder where tensor data is to be stored
     """
     info = ExternalDataInfo(tensor)
+    
+    # Validate path traversal is not being attempted
+    if os.path.isabs(info.location) or ".." in info.location:
+        raise ValueError(
+            f"Unsafe path in location: {info.location}. Absolute paths and path traversals are not allowed."
+        )
+
     external_data_file_path = os.path.join(base_path, info.location)
 
     # Retrieve the tensor's data from raw_data or load external file

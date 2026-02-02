@@ -10,6 +10,7 @@ import tempfile
 import unittest
 import uuid
 from typing import TYPE_CHECKING, Any
+from unittest.mock import patch
 
 import numpy as np
 import parameterized
@@ -27,9 +28,11 @@ from onnx import (
 from onnx.external_data_helper import (
     convert_model_from_external_data,
     convert_model_to_external_data,
+    ExternalDataInfo,
     load_external_data_for_model,
     load_external_data_for_tensor,
-    set_external_data,
+    save_external_data,
+    set_external_data
 )
 from onnx.numpy_helper import from_array, to_array
 
@@ -194,6 +197,46 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
                 tensors.append(tensor)
 
         return tensors
+    
+    def _save_external_data_without_validation(
+        self,
+        tensor: TensorProto, 
+        base_path: str
+    ) -> None:
+        """
+        Test helper: Writes tensor data to external file WITHOUT path validation.
+        Used in test_save_external_invalid_single_file_data_and_check
+        """
+        info = ExternalDataInfo(tensor)
+        external_data_file_path = os.path.join(base_path, info.location)
+
+        # Retrieve the tensor's data from raw_data
+        if not tensor.HasField("raw_data"):
+            raise ValueError("raw_data field doesn't exist.")
+
+        # Create directory if needed
+        external_data_dir = os.path.dirname(external_data_file_path)
+        if external_data_dir and not os.path.exists(external_data_dir):
+            os.makedirs(external_data_dir, exist_ok=True)
+
+        # Create file if it doesn't exist
+        if not os.path.isfile(external_data_file_path):
+            with open(external_data_file_path, "ab"):
+                pass
+
+        # Open file for reading and writing at random locations ('r+b')
+        with open(external_data_file_path, "r+b") as data_file:
+            data_file.seek(0, 2)
+            if info.offset is not None:
+                # Pad file to required offset if needed
+                file_size = data_file.tell()
+                if info.offset > file_size:
+                    data_file.write(b"\0" * (info.offset - file_size))
+
+                data_file.seek(info.offset)
+            offset = data_file.tell()
+            data_file.write(tensor.raw_data)
+            set_external_data(tensor, info.location, offset, data_file.tell() - offset)
 
     def test_load_external_single_file_data(self) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
@@ -253,8 +296,10 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
             model,
             location=traversal_external_data_location,
         )
-
-        onnx.save_model(model, new_model_filepath, self.serialization_format)
+        
+        with patch("onnx.external_data_helper.save_external_data", side_effect=self._save_external_data_without_validation):
+            onnx.save_model(model, new_model_filepath, self.serialization_format)
+            
         if use_model_path:
             with self.assertRaises(onnx.checker.ValidationError):
                 _ = onnx.load_model(new_model_filepath, self.serialization_format)
@@ -566,6 +611,97 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
         # If raw_data and external tensor exist at the same time, override existing raw_data
         load_external_data_for_tensor(initializer_tensor, self.temp_dir)
         self.assertEqual(initializer_tensor.raw_data, original_raw_data)
+
+
+class TestSaveExternalDataPathValidation(unittest.TestCase):
+    
+    def setUp(self) -> None:
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
+        self.temp_dir: str = self._temp_dir_obj.name
+
+    def tearDown(self) -> None:
+        self._temp_dir_obj.cleanup()
+    
+    def create_tensor_with_location(self, location: str) -> TensorProto:
+        """Helper to create a TensorProto with external data location."""
+        tensor = TensorProto()
+        tensor.raw_data = b"test_data_content"
+        ext_data = tensor.external_data.add()
+        ext_data.key = "location"
+        ext_data.value = location
+        return tensor
+    
+    def test_valid_relative_path(self):
+        """Test that valid relative paths are accepted."""
+        tensor = self.create_tensor_with_location("data/tensor.bin")
+        
+        os.makedirs(os.path.join(self.temp_dir, "data"), exist_ok=True)
+        save_external_data(tensor, self.temp_dir)
+        
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "data", "tensor.bin")))
+    
+    def test_valid_simple_filename(self):
+        """Test that simple filenames are accepted."""
+        tensor = self.create_tensor_with_location("tensor.bin")
+        
+        save_external_data(tensor, self.temp_dir)
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "tensor.bin")))
+    
+    @unittest.skipIf(os.name != 'nt', "Windows paths only relevant on Windows")
+    def test_reject_absolute_path_windows(self):
+        """Test that absolute Windows paths are rejected."""
+        # Use a safe but still absolute Windows path
+        tensor = self.create_tensor_with_location("C:\\absolute\\path\\tensor.bin")
+        
+        with self.assertRaisesRegex(ValueError, "Unsafe path"):
+            save_external_data(tensor, self.temp_dir)
+
+    @unittest.skipIf(os.name == 'nt', "Unix-style absolute paths behave differently on Windows")
+    def test_reject_absolute_path_unix(self):
+        """Test that absolute Unix paths are rejected."""
+        # Use a safe but still absolute Unix path
+        tensor = self.create_tensor_with_location("/tmp/absolute/path/tensor.bin")
+        
+        with self.assertRaisesRegex(ValueError, "Unsafe path"):
+            save_external_data(tensor, self.temp_dir)
+
+            
+    def test_reject_parent_directory_traversal(self):
+        """Test that parent directory traversal (..) is rejected."""
+        tensor = self.create_tensor_with_location("../../../etc/passwd")
+        
+        with self.assertRaisesRegex(ValueError, "Unsafe path"):
+            save_external_data(tensor, self.temp_dir)
+    
+    def test_reject_single_parent_directory(self):
+        """Test that even a single .. is rejected."""
+        tensor = self.create_tensor_with_location("../tensor.bin")
+        
+        with self.assertRaisesRegex(ValueError, "Unsafe path"):
+            save_external_data(tensor, self.temp_dir)
+    
+    def test_reject_hidden_traversal_in_middle(self):
+        """Test that .. in the middle of a path is rejected."""
+        tensor = self.create_tensor_with_location("data/../../../etc/passwd")
+        
+        with self.assertRaisesRegex(ValueError, "Unsafe path"):
+            save_external_data(tensor, self.temp_dir)
+    
+    def test_valid_path_with_dots(self):
+        """Test that paths with single dots (current directory) work."""
+        tensor = self.create_tensor_with_location("./tensor.bin")
+        
+        save_external_data(tensor, self.temp_dir)
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "tensor.bin")))
+    
+    def test_valid_nested_path(self):
+        """Test that deeply nested valid paths work."""
+        tensor = self.create_tensor_with_location("models/v1/weights/tensor.bin")
+        
+        os.makedirs(os.path.join(self.temp_dir, "models", "v1", "weights"), exist_ok=True)
+        save_external_data(tensor, self.temp_dir)
+        
+        self.assertTrue(os.path.isfile(os.path.join(self.temp_dir, "models", "v1", "weights", "tensor.bin")))
 
 
 @parameterized.parameterized_class(
