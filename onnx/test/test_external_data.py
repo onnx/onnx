@@ -664,7 +664,6 @@ class TestSaveExternalDataPathValidation(unittest.TestCase):
         
         with self.assertRaisesRegex(ValueError, "Unsafe path"):
             save_external_data(tensor, self.temp_dir)
-
             
     def test_reject_parent_directory_traversal(self):
         """Test that parent directory traversal (..) is rejected."""
