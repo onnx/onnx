@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/inliner/inliner.h"
 
@@ -27,8 +25,6 @@ namespace ONNX_NAMESPACE {
 namespace inliner {
 
 namespace { // internal/private API
-
-using namespace internal;
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
@@ -84,7 +80,7 @@ struct OpsetMap : public OpsetMapBase {
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
-class NameGenerator : private Visitor {
+class NameGenerator : private internal::Visitor {
  public:
   explicit NameGenerator(const GraphProto& graph) : index_(0) {
     NameGenerator::VisitGraph(graph);
@@ -159,7 +155,7 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class InliningRenamer : public MutableVisitor {
+class InliningRenamer : public internal::MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
@@ -325,7 +321,7 @@ class InliningRenamer : public MutableVisitor {
 // In the case of variables referenced in sub-graphs, only non-local variables
 // are treated as implicit inputs.
 
-class ComputeInputs : private Visitor {
+class ComputeInputs : private internal::Visitor {
  private:
   std::vector<std::unordered_set<std::string>> namescopes;
 

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <functional>
+#include <string>
 
 #include "onnx/defs/reduction/utils.h"
 #include "onnx/defs/schema.h"

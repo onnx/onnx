@@ -1,14 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Version converter interface for ONNX models between different opset versions.
 
 #pragma once
 
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>

@@ -4,12 +4,15 @@
 
 #include "onnx/defs/schema.h"
 
+#include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
@@ -1722,7 +1725,7 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
 OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
   static DomainToVersionRange domain_to_version_range;
   return domain_to_version_range;
-};
+}
 
 // Private method used by OpSchemaRegisterOnce and OpSchemaRegistry::map()
 OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {

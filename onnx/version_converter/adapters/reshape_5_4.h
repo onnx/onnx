@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Reshape in default domain from version 5 to 4
 
@@ -11,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "onnx/version_converter/adapters/adapter.h"
 
