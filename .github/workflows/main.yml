@@ -192,14 +192,14 @@ jobs:
           python -m pip install -r requirements-release_test.txt
 
       - name: Run Python tests
-        if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
+        #  if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
 
-      - name: Run Python tests (windows)
-        if: (matrix.os == 'windows-latest')
-        run: |
-          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml --dist loadscope
+      # - name: Run Python tests (windows)
+      #   if: (matrix.os == 'windows-latest')
+      #   run: |
+      #     pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml --dist loadscope
 
       - name: Run C++ tests
         if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
