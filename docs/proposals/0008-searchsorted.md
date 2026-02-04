@@ -1,11 +1,16 @@
+<!--
+Copyright (c) ONNX Project Contributors
+-->
+
+<!--- SPDX-License-Identifier: Apache-2.0 -->
 - Feature Name: Add Searchsorted operator to `ai.onnx`
 - Start Date: 2026-04-02
-- RFC PR: [onnx/onnx#0000](https://github.com/onnx/onnx/pull/0000)
+- RFC PR: [onnx/onnx#7646](https://github.com/onnx/onnx/pull/7646)
 - Authors:
   - cbourjau
 
 
-## Addition `searchsorted` to the `ai.onnx` domain
+## Add `searchsorted` to the `ai.onnx` domain
 [summary]: #summary
 
 This RFC proposes the addition of the `Searchsorted` operator to the `ai.onnx` domain.
@@ -24,7 +29,7 @@ Thus, a specialized and standardized operator allows for a portable and cleaner 
 
 The following description is based on the array-api [documentation](https://data-apis.org/array-api/draft/API_specification/generated/array_api.searchsorted.html#searchsorted) and has been adapted to fit the ONNX standard.
 
-
+```
 Finds the indices into ``x1`` such that, if the corresponding elements in ``x2`` were inserted before the indices, the order of ``x1``, when sorted in ascending order, would be preserved.
 
 **Notes**
@@ -70,7 +75,7 @@ A tensor of indices with the same shape as ``x2``.
 
 **`T`**: tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)
 **`Tind`**: tensor(int64)
-
+```
 
 
 ## Reference-level explanation
