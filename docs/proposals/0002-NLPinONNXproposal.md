@@ -3,6 +3,12 @@ Copyright (c) ONNX Project Contributors
 -->
 
 <!--- SPDX-License-Identifier: Apache-2.0 -->
+- Feature Name: NLP in ONNX
+- Start Date: 2019-04-29
+- RFC PR: [onnx/onnx#1975](https://github.com/onnx/onnx/pull/1975)
+- Status: unclear (historical)
+- Authors:
+  - jspisak
 
 ## Background
 
