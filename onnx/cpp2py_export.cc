@@ -849,6 +849,21 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "data_prop"_a = false);
 
   shape_inference.def(
+      "infer_types",
+      [](const nb::bytes& bytes, bool check_type, bool strict_mode) {
+        ModelProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, false, false};
+        shape_inference::InferShapes(proto, OpSchemaRegistry::Instance(), options);
+        std::string out;
+        proto.SerializeToString(&out);
+        return nb::bytes(out.c_str(), out.size());
+      },
+      "bytes"_a,
+      "check_type"_a = false,
+      "strict_mode"_a = false);
+
+  shape_inference.def(
       "infer_shapes_path",
       [](const std::string& model_path,
          const std::string& output_path,
@@ -858,6 +873,20 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, data_prop};
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
       });
+
+  shape_inference.def(
+      "infer_types_path",
+      [](const std::string& model_path,
+         const std::string& output_path,
+         bool check_type,
+         bool strict_mode) -> void {
+        ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, false, false};
+        shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
+      },
+      "model_path"_a,
+      "output_path"_a = "",
+      "check_type"_a = false,
+      "strict_mode"_a = false);
 
   shape_inference.def(
       "infer_function_output_types",

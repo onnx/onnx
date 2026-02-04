@@ -28,8 +28,17 @@ struct ShapeInferenceOptions {
   // Enables data propagation for limited operators
   // to perform shape computation
   bool enable_data_propagation;
-  explicit ShapeInferenceOptions(bool check_type_val = false, int strict_mode_val = 0, bool data_prop_val = false)
-      : check_type(check_type_val), error_mode(strict_mode_val), enable_data_propagation(data_prop_val) {}
+  // If false, only infer types and skip shape propagation/validation.
+  bool infer_shapes;
+  explicit ShapeInferenceOptions(
+      bool check_type_val = false,
+      int strict_mode_val = 0,
+      bool data_prop_val = false,
+      bool infer_shapes_val = true)
+      : check_type(check_type_val),
+        error_mode(strict_mode_val),
+        enable_data_propagation(data_prop_val),
+        infer_shapes(infer_shapes_val) {}
 };
 
 // Maintains a SymbolTable for symbolic shape inference
