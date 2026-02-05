@@ -219,9 +219,13 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         attribute_tensor = new_model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
-    @parameterized.parameterized.expand(itertools.product((True, False), (True, False)))
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (True, False),
+        )
+    )
     def test_save_external_invalid_single_file_data_and_check(
-        self, use_absolute_path: bool, use_model_path: bool
+        self, use_absolute_path: bool
     ) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
 
@@ -254,16 +258,8 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
             location=traversal_external_data_location,
         )
 
-        onnx.save_model(model, new_model_filepath, self.serialization_format)
-        if use_model_path:
-            with self.assertRaises(onnx.checker.ValidationError):
-                _ = onnx.load_model(new_model_filepath, self.serialization_format)
-        else:
-            onnx_model = onnx.load_model(
-                new_model_filepath, self.serialization_format, load_external_data=False
-            )
-            with self.assertRaises(onnx.checker.ValidationError):
-                load_external_data_for_model(onnx_model, external_data_dir)
+        with self.assertRaises(onnx.checker.ValidationError):
+            onnx.save_model(model, new_model_filepath, self.serialization_format)
 
 
 @parameterized.parameterized_class(
