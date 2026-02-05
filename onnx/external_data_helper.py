@@ -11,6 +11,7 @@ import uuid
 from itertools import chain
 from typing import TYPE_CHECKING
 
+import onnx.checker as onnx_checker
 import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx.onnx_pb import (
     AttributeProto,
@@ -200,18 +201,18 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     # Let's check the tensor location is valid.
     location_path = pathlib.Path(info.location)
     if location_path.is_absolute() and len(location_path.parts) > 1:
-        raise ValueError(
+        raise onnx_checker.ValidationError(
             f"Tensor {tensor.name!r} is external and must not be defined "
             f"with an absolute path such as {info.location!r}, "
             f"base_path={base_path!r}"
         )
     if ".." in location_path.parts:
-        raise ValueError(
+        raise onnx_checker.ValidationError(
             f"Tensor {tensor.name!r} is external and must be placed in folder "
             f"{base_path!r}, '..' is not needed in {info.location!r}."
         )
-    if location_path.name in ('.', '..'):
-        raise ValueError(
+    if location_path.name in (".", ".."):
+        raise onnx_checker.ValidationError(
             f"Tensor {tensor.name!r} is external and its name "
             f"{info.location!r} is invalid."
         )
@@ -220,7 +221,7 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 
     # Retrieve the tensor's data from raw_data or load external file
     if not tensor.HasField("raw_data"):
-        raise ValueError("raw_data field doesn't exist.")
+        raise onnx_checker.ValidationError("raw_data field doesn't exist.")
 
     # Create file if it doesn't exist
     if not os.path.isfile(external_data_file_path):

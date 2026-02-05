@@ -254,16 +254,12 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
             location=traversal_external_data_location,
         )
 
-        onnx.save_model(model, new_model_filepath, self.serialization_format)
         if use_model_path:
             with self.assertRaises(onnx.checker.ValidationError):
-                _ = onnx.load_model(new_model_filepath, self.serialization_format)
+                onnx.save_model(model, new_model_filepath, self.serialization_format)
         else:
-            onnx_model = onnx.load_model(
-                new_model_filepath, self.serialization_format, load_external_data=False
-            )
             with self.assertRaises(onnx.checker.ValidationError):
-                load_external_data_for_model(onnx_model, external_data_dir)
+                onnx.save_model(model, new_model_filepath, self.serialization_format)
 
 
 @parameterized.parameterized_class(
