@@ -9,6 +9,10 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 def compute_log_sum_exp(data, axes, keepdims):
+    # Cast integer types to float64 since log/exp operations produce floats
+    # and we need to handle -inf assignments
+    if np.issubdtype(data.dtype, np.integer):
+        data = data.astype(np.float64)
     data_max = data.copy()
     ind = np.isinf(data_max)
     data_max[ind] = -np.inf
