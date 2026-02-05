@@ -449,9 +449,8 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
     }
   }
 
-  // TODO: Use std::move when it is fully supported on all protobuf platforms used
   for (auto& function_node : function_nodes)
-    *nodes.Add() = function_node;
+    *nodes.Add() = std::move(function_node);
   function_nodes.Clear();
 
   auto converted = ONNX_NAMESPACE::version_conversion::ConvertVersion(function_as_model, target_version);
@@ -552,7 +551,7 @@ struct InlinerImpl {
 
       // Check if this node has a schema defined function proto.
       if (op_schema->HasContextDependentFunction()) {
-        shape_inference::InferShapes(model); // TODO: do shape inference incrementally
+        shape_inference::InferShapes(model); // TODO(ONNX): do shape inference incrementally
         std::vector<TypeProto> input_types;
         for (const auto& input : node.input()) {
           input_types.emplace_back(GetType(model, input));
@@ -602,9 +601,6 @@ struct InlinerImpl {
           append_node(callee_node);
       } else {
         // Append node without inlining.
-        // TODO: use std::move instead of copying. Use of move doesn't seem to work with
-        // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-
         for (auto& attr : *node.mutable_attribute()) {
           if (attr.has_g()) {
             ProcessGraph(*attr.mutable_g());
@@ -614,7 +610,7 @@ struct InlinerImpl {
           }
         }
 
-        *nodes.Add() = node;
+        *nodes.Add() = std::move(node);
       }
     };
     for (auto& node : original_nodes) {
