@@ -9,11 +9,11 @@
 #include <utility>
 #include <vector>
 
-#include "attr_proto_util.h"
 #include "onnx/common/status.h"
+#include "onnx/defs/attr_proto_util.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
-#include "tensor_proto_util.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 // Helper function to expand a function node given the function proto

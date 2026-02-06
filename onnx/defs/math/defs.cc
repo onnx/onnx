@@ -505,7 +505,7 @@ to the tensor elementwise.
 
 )DOC";
 
-static std::string gelu_default_approx = "none";
+static constexpr const char* gelu_default_approx = "none";
 
 static bool BuildContextDependentFunctionBodyGelu(
     const FunctionBodyBuildContext& ctx,

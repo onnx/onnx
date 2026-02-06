@@ -4513,8 +4513,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if H or W is not a
-              // multiple of blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -4586,8 +4584,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if C is not a multiple of
-              // blocksize*blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -5729,7 +5725,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("rank must be greater than axis");
           }
           if (axis < 0) {
-            return; // TODO: check if negative axis must be supported
+            return;
           }
 
           bool all_lengths_known = true;
@@ -6108,7 +6104,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else if (axes.size() != starts.size()) {
             fail_shape_inference("Attribute axes has incorrect length");
           } else if (!std::is_sorted(axes.begin(), axes.end())) {
-            // TODO support shape inference for unsorted axes
+            // TODO(ONNX) support shape inference for unsorted axes
             return;
           }
 
@@ -6117,7 +6113,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Negative axes were not explicitly discussed in the spec before opset-10.
             // Hence, they are officially not part of the spec, but some models/runtimes may use them.
             // So we perform simple rank inference in this case.
-            for (int i = 0; i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+            for (size_t i = 0; static_cast<int64_t>(i) < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
             }
             return;
@@ -6441,8 +6437,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if C is not a multiple of
-              // blocksize*blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -6729,7 +6723,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("OneHot node must have three inputs.");
           }
           // Input 'depth' must be a scalar or a single-element vector.
-          // TODO: Ideally to match spec for this input only allow Scalar should
+          // TODO(ONNX): Ideally to match spec for this input only allow Scalar should
           // be allowed. Making this change now can affect backward
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar

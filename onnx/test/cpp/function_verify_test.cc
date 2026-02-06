@@ -38,7 +38,7 @@ static void GetFunctionProtoOpsetImport(
 
 static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* function_proto, int& counter) {
   // This is a simple partial type-checker for a function-body.
-  // TODO: Revisit to make the type-checker more complete.
+  // TODO(ONNX): Revisit to make the type-checker more complete.
   TENSOR_TYPES_MAP tc_map;
   std::set<std::string> primitive_types(OpSchema::all_tensor_types().begin(), OpSchema::all_tensor_types().end());
   for (const auto& input : function_op.inputs()) {

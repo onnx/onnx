@@ -35,15 +35,12 @@
 
 namespace ONNX_NAMESPACE {
 
-namespace { // internal/private API
-
-std::string toVarName(size_t i) {
+// internal/private API
+static inline std::string toVarName(size_t i) {
   std::ostringstream oss;
   oss << "_v_" << i;
   return oss.str();
 }
-
-} // namespace
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -376,7 +373,6 @@ struct Value final {
   }
   Graph* owningGraph();
   const Graph* owningGraph() const;
-  // TODO: make this more const correct
   use_list uses() const;
 
   // Replaces all uses of this node with 'newValue'.
@@ -566,7 +562,7 @@ struct Node : public Attributes<Node> {
     ONNX_ASSERT(inputs_.size() == 1)
     return inputs_.at(0);
   }
-  Value* output() const {
+  const Value* output() const {
     ONNX_ASSERT(outputs_.size() == 1)
     return outputs_.at(0);
   }
@@ -759,7 +755,6 @@ struct Node : public Attributes<Node> {
   //
   // Example usage: if(auto s = n.cast<Select>()) { ... }
   //
-  // TODO: Make this const correct
   template <typename T>
   T* cast() {
     if (T::Kind == kind())
@@ -767,9 +762,20 @@ struct Node : public Attributes<Node> {
     return nullptr;
   }
   template <typename T>
+  const T* cast() const {
+    if (T::Kind == kind())
+      return static_cast<const T*>(this);
+    return nullptr;
+  }
+  template <typename T>
   T* expect() {
     ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
     return static_cast<T*>(this);
+  }
+  template <typename T>
+  const T* expect() const {
+    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
+    return static_cast<const T*>(this);
   }
 
   virtual ~Node() = default;
