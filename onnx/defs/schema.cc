@@ -4,12 +4,15 @@
 
 #include "onnx/defs/schema.h"
 
+#include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
@@ -488,6 +491,14 @@ OpSchema& OpSchema::Attr(const char* name, const char* description, AttributePro
   return Attr(std::string(name), std::string(description), type, required);
 }
 
+OpSchema& OpSchema::Attr(
+    const char* name,
+    const char* description,
+    AttributeProto::AttributeType type,
+    const char* defaultValue) {
+  return Attr(std::string(name), std::string(description), type, std::string(defaultValue));
+}
+
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                                                           \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
@@ -776,7 +787,7 @@ bool OpSchema::BuildContextDependentFunction(
 // in opset_version_to_function_builder_) has predefined opset_imports. Before returning the function, we shall
 // update the predefined opset_imports so that it is consistent with the requested version.
 // Note that this call only update opset_import of the default domain.
-// TODO: extend this call to work for no-default domains.
+// TODO(ONNX): extend this call to work for no-default domains.
 void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int requested_opset_version) const {
   bool opset_import_exist = false;
   for (int i = 0; i < function_proto.opset_import_size(); i++) {
@@ -881,7 +892,7 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
 // When they are not the same, it is necessary to verify that ops used to define the function
 // are not updated between function_since_version and requested_opset_version (include requested_opset_version).
 // this call only validate ops in the default domain.
-// TODO: validate ops in other domains.
+// TODO(ONNX): validate ops in other domains.
 bool OpSchema::ValidateReferencedOpsInFunction(
     const FunctionProto* function,
     int requested_opset_version,
@@ -1722,7 +1733,7 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
 OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
   static DomainToVersionRange domain_to_version_range;
   return domain_to_version_range;
-};
+}
 
 // Private method used by OpSchemaRegisterOnce and OpSchemaRegistry::map()
 OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {

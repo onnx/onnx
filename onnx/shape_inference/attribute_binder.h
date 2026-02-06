@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
+#include <string>
+#include <unordered_map>
+
 #include "onnx/common/visitor.h"
 
 namespace ONNX_NAMESPACE {

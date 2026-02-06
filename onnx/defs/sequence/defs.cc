@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
@@ -561,7 +564,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
 
   std::vector<FunctionBodyHelper::NodeDef> nodes;
 
-  // TODO: figure out a way to prevent name collisions?
+  // TODO(ONNX): figure out a way to prevent name collisions?
   auto first_input_name = functionProto.input(0);
   std::string prefix = MakeString("SequenceMap_", first_input_name);
   std::string seqlen = prefix + "_seqlen";
