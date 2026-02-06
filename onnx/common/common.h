@@ -13,10 +13,10 @@
     abort();                                              \
   } while (false)
 
-#define ONNX_THROW_EX(ex)                \
-  do {                                   \
-    std::cerr << ex.what() << std::endl; \
-    abort();                             \
+#define ONNX_THROW_EX(ex)                              \
+  do {                                                 \
+    std::cerr << ex.what() << std::endl; /* NOLINT */ \
+    abort();                                           \
   } while (false)
 
 #define ONNX_TRY if (true)
