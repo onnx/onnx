@@ -261,7 +261,12 @@ def gen_overall_test_coverage(
 
 
 def gen_spdx(f: IO[Any]) -> None:
+    # REUSE-IgnoreStart
+    # This source file intentionally writes an SPDX header into the generated
+    # output file. The literal string would confuse the REUSE linter when
+    # scanning this source file; ignore this region for REUSE.
     f.write("<!--- SPDX-License-Identifier: Apache-2.0 -->\n")
+    # REUSE-IgnoreEnd
 
 
 def main() -> None:

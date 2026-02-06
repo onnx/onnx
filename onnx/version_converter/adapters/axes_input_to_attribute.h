@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for all ops that remove consumed_inputs
 
@@ -26,6 +24,11 @@ class AxesInputToAttribute : public Adapter {
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     // Identify if axes is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
+    // Check if axes input is provided (it's optional)
+    if (inputs.size() <= 1) {
+      // No axes input provided, nothing to convert
+      return node;
+    }
     // Get axes from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];

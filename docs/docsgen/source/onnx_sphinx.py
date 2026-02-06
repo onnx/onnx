@@ -886,7 +886,7 @@ def _copy_repo_docs(app):
 
 def setup(app):
     """Sphinx extension `onnx_sphinx` displays documentation
-    on ONN Operators.
+    on ONNX Operators.
     """
     import sphinx
 

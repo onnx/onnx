@@ -1,13 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Gemm in default domain from version 7 to 6
 
 #pragma once
 
+#include <cinttypes>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -20,7 +20,7 @@ class Gemm_7_6 final : public Adapter {
  public:
   explicit Gemm_7_6() : Adapter("Gemm", OpSetID(7), OpSetID(6)) {}
 
-  void adapt_gemm_7_6(const std::shared_ptr<Graph>&, Node* node) const {
+  void adapt_gemm_7_6(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     const ArrayRef<Value*>& inputs = node->inputs();
     assertInputsAvailable(inputs, name().c_str(), 3);
     const auto& A_shape = inputs[0]->sizes();
@@ -28,7 +28,7 @@ class Gemm_7_6 final : public Adapter {
     // Determine if C is broadcastable
     const auto& C_shape = inputs[2]->sizes();
     // Create (M, N) to input to numpy_unibroadcastable
-    // TODO: Reconcile fact that shapes aren't determined for 1st 2 inputs
+    // TODO(ONNX): Reconcile fact that shapes aren't determined for 1st 2 inputs
     std::vector<Dimension> MN;
     if (node->hasAttribute(ktransA) && node->i(ktransA) == 1) {
       MN.emplace_back(A_shape[1]);
@@ -43,11 +43,12 @@ class Gemm_7_6 final : public Adapter {
     int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(MN, C_shape);
     ONNX_ASSERTM(
         req_broadcast != -1,
-        "%s being converted from %d to %d does "
+        "%s being converted from %" PRId64 " to %" PRId64
+        " does "
         "not have broadcastable inputs.",
         name().c_str(),
-        initial_version().version(),
-        target_version().version())
+        static_cast<int64_t>(initial_version().version()),
+        static_cast<int64_t>(target_version().version()))
     if (req_broadcast == 1) {
       node->i_(kbroadcast, 1);
     }

@@ -47,3 +47,8 @@ class Cast_19(OpRun):
 class Cast_24(OpRun):
     def _run(self, x, to=None, saturate=None, round_mode=None):
         return (cast_to(x, to, saturate, round_mode),)
+
+
+class Cast_25(OpRun):
+    def _run(self, x, to=None, saturate=None, round_mode=None):
+        return (cast_to(x, to, saturate, round_mode),)

@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <string>
+
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
@@ -55,7 +57,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           propagateElemTypeFromDtypeToOutput(ctx, TensorProto::UINT8, 0);
           auto output_type = ctx.getOutputType(0);
-          auto* sh = output_type->mutable_tensor_type()->mutable_shape();
+          auto sh = output_type->mutable_tensor_type()->mutable_shape();
           sh->clear_dim();
           sh->add_dim();
           sh->add_dim();

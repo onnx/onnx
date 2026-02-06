@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <list>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -220,7 +221,7 @@ void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_t
   }
   for (int i = 0; i < inferred_type->shape().dim_size(); ++i) {
     // set a symbol if it doesn't have dim_value and dim_param
-    auto* dim = inferred_type->mutable_shape()->mutable_dim(i);
+    auto dim = inferred_type->mutable_shape()->mutable_dim(i);
     if (!dim->has_dim_value() && !dim->has_dim_param()) {
       dim->set_dim_param(symbol_table.createNew());
     }
@@ -283,20 +284,15 @@ class InferredTypes {
       *p->mutable_type() = type;
       return p->mutable_type();
     } else {
-      auto* p = new TypeProto(type);
-      types.push_back(p);
-      return p;
+      types.emplace_back(std::make_unique<TypeProto>(type));
+      return types.back().get();
     }
   }
 
-  ~InferredTypes() {
-    for (auto* p : types) {
-      delete p;
-    }
-  }
+  ~InferredTypes() = default;
 
  private:
-  std::vector<TypeProto*> types;
+  std::vector<std::unique_ptr<TypeProto>> types;
   GraphProto* graph_ptr;
   ONNX_DISALLOW_COPY_ASSIGNMENT_AND_MOVE(InferredTypes);
 };
@@ -307,7 +303,7 @@ static void BindValuesOnCall(
     const NodeProto& caller,
     DataValueMap& callee_map,
     const FunctionProto& callee) {
-  auto num_inputs = (std::min)(caller.input_size(), callee.input_size());
+  auto num_inputs = std::min(caller.input_size(), callee.input_size());
   for (int i = 0; i < num_inputs; ++i) {
     const std::string& actual = caller.input(i);
     const std::string& formal = callee.input(i);
@@ -326,7 +322,7 @@ static void BindValuesOnReturn(
     const FunctionProto& callee,
     DataValueMap& caller_map,
     const NodeProto& caller) {
-  auto num_outputs = (std::min)(caller.output_size(), callee.output_size());
+  auto num_outputs = std::min(caller.output_size(), callee.output_size());
   for (int i = 0; i < num_outputs; ++i) {
     const std::string& actual = caller.output(i);
     const std::string& formal = callee.output(i);
@@ -459,7 +455,7 @@ class ShapeInferenceImplBase {
       }
     }
     auto domain_version = dit->second;
-    const auto schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
+    const auto* const schema = schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
         n,
         value_types_by_name,
@@ -527,7 +523,7 @@ class ShapeInferenceImplBase {
       });
     }
     ONNX_CATCH(const std::runtime_error& err) {
-      // TODO: Fix this. Unclear if this should be remapped to a shape inference error.
+      // TODO(ONNX): Fix this. Unclear if this should be remapped to a shape inference error.
       // Need to rationalize the different types of exceptions that can be thrown.
       // See: https://github.com/onnx/onnx/pull/5519
       ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
@@ -548,11 +544,10 @@ class ShapeInferenceImplBase {
     if (iter != value_types_by_name.end()) {
       checkShapesAndTypes(initializer_type, *iter->second);
       // CheckTensorShapesAndTypes(*initializer_tensor_type, *iter->second->mutable_tensor_type());
-    }
-    // Support IR>=4: some tensors can only exist in initializer and not in input
-    // So shape_inference should make use of initializer shapes
-    // Store initializer shape info in value_info as well
-    else if (ir_version >= 4) {
+    } else if (ir_version >= 4) {
+      // Support IR>=4: some tensors can only exist in initializer and not in input
+      // So shape_inference should make use of initializer shapes
+      // Store initializer shape info in value_info as well
       initializer_type_list.push_back(std::move(initializer_type));
       value_types_by_name[name] = &initializer_type_list.back();
     }
@@ -614,16 +609,17 @@ class ShapeInferenceImplBase {
     const auto num_func_inputs = func_proto.input_size();
     std::vector<TypeProto> types_cache(num_func_inputs);
     for (int i = 0; i < num_func_inputs; ++i) {
-      auto& parameter_name = func_proto.input().Get(i);
-      auto* type_ptr = (i < num_actual_inputs) ? ctx.getInputType(i) : nullptr;
+      const auto& parameter_name = func_proto.input().Get(i);
+      const auto* const type_ptr = (i < num_actual_inputs) ? ctx.getInputType(i) : nullptr;
       // nullptr is valid, and indicates a missing optional input
       if (type_ptr != nullptr) {
         // Use a temporary copy of original type.
-        // TODO: investigate whether we can eliminate use of temporary copy
+        // TODO(ONNX): investigate whether we can eliminate use of temporary copy
         types_cache[i] = *type_ptr;
         value_types_by_name[parameter_name] = &types_cache[i];
-      } else
+      } else {
         value_types_by_name[parameter_name] = nullptr;
+      }
     }
 
     // Create a temporary initializer value map
@@ -639,20 +635,20 @@ class ShapeInferenceImplBase {
     }
 
     std::unordered_map<std::string, const AttributeProto*> attr_map;
-    for (auto& attr : func_proto.attribute()) {
+    for (const auto& attr : func_proto.attribute()) {
       if (ctx.getAttribute(attr) != nullptr) {
         attr_map[attr] = ctx.getAttribute(attr);
       }
     }
 
-    for (auto& default_value : func_proto.attribute_proto()) {
+    for (const auto& default_value : func_proto.attribute_proto()) {
       const std::string& name = default_value.name();
       const AttributeProto* value = ctx.getAttribute(name);
       attr_map[name] = (value != nullptr) ? value : &default_value;
     }
 
     internal::AttributeBinder attribute_binder(attr_map);
-    for (auto& n : func_proto.node()) {
+    for (const auto& n : func_proto.node()) {
       Process(n, attribute_binder);
     }
 
@@ -663,7 +659,7 @@ class ShapeInferenceImplBase {
       if (iter != value_types_by_name.cend()) {
         // Copy the type info to ctx
         // to pass back to main graph
-        auto type_proto = ctx.getOutputType(i);
+        auto* type_proto = ctx.getOutputType(i);
         type_proto->CopyFrom(*(iter->second));
       }
     }
@@ -707,11 +703,11 @@ class ShapeInferenceImplBase {
   }
 
   void FinalizeShapeInference() {
-    auto& errors = getErrors();
+    const auto& errors = getErrors();
     // Throw shape inference error if any. Error mode right now only supports 0 and 1.
     // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatibility
     // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
-    // TODO: Add a more granular way for exception handling.
+    // TODO(ONNX): Add a more granular way for exception handling.
     if (!errors.empty() && options.error_mode > 0) {
       std::string full_errors = "Inference error(s): ";
       for (const std::string& error : inference_errors) {
@@ -994,7 +990,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes) {
-  // TODO: if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
+  // TODO(ONNX): if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
   // we can add them to the Python API. For now we just assume the default options.
   ShapeInferenceOptions options{true, 1, false};
   FunctionInferenceContext ctx(function_proto, input_types, attributes, options);
@@ -1101,7 +1097,7 @@ std::string GetErrorWithNodeInfo(const NodeProto& n, const std::runtime_error& e
 void TraverseGraphsToAddExistingSymbols(const GraphProto& g, SymbolTable& symbol_table) {
   symbol_table.addFromGraph(g);
   for (const auto& n : g.node()) {
-    for (auto& attr : n.attribute()) {
+    for (const auto& attr : n.attribute()) {
       if (attr.has_g()) {
         TraverseGraphsToAddExistingSymbols(attr.g(), symbol_table);
       }

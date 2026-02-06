@@ -74,6 +74,7 @@ VERSION_TABLE: VersionTableType = [
     ("1.18.0", 11, 23, 5, 1),
     ("1.19.0", 12, 24, 5, 1),
     ("1.19.1", 12, 24, 5, 1),
+    ("1.20.0", 13, 25, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -371,6 +372,21 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
     return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
 
 
+def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
+    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
+    # Create a 1D copy
+    array_flat = array.ravel().view(np.uint8).copy()
+    size = array.size
+    pad_len = size % 4
+    if pad_len:
+        array_flat.resize([size + (4 - pad_len)], refcheck=False)
+    array_flat &= 0x03
+    array_flat[1::4] <<= 2
+    array_flat[2::4] <<= 4
+    array_flat[3::4] <<= 6
+    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
+
+
 def make_tensor(
     name: str,
     data_type: int,
@@ -406,9 +422,11 @@ def make_tensor(
     np_dtype = tensor_dtype_to_np_dtype(data_type)
 
     if raw:
-        # NumPy doesn't have INT4/FP4. It is packed in couples to UINT8 buffers.
+        # NumPy doesn't have INT2/INT4/FP4. It is packed in couples to UINT8 buffers.
         if data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
             expected_size_bytes = 0.5
+        elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
+            expected_size_bytes = 0.25
         else:
             expected_size_bytes = np_dtype.itemsize
         expected_size_bytes *= math.prod(dims)
@@ -420,6 +438,8 @@ def make_tensor(
                 TensorProto.FLOAT4E2M1,
             }:
                 vals = onnx.numpy_helper._pack_4bitx2(vals)
+            elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
+                vals = onnx.numpy_helper._pack_2bitx4(vals)
 
             raw_data = onnx.numpy_helper.tobytes_little_endian(vals)
         elif isinstance(vals, bytes):
@@ -473,6 +493,9 @@ def make_tensor(
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
         vals = _pack_4bitx2(vals)  # type: ignore[union-attr,arg-type]
+    elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
+        # Convert to packed 2-bit representation
+        vals = _pack_2bitx4(vals)  # type: ignore[union-attr,arg-type]
     elif data_type == TensorProto.BOOL:
         vals = vals.astype(np.uint8)  # type: ignore[union-attr]
 

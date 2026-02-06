@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/inliner/inliner.h"
 
@@ -27,8 +25,6 @@ namespace ONNX_NAMESPACE {
 namespace inliner {
 
 namespace { // internal/private API
-
-using namespace internal;
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
@@ -84,7 +80,7 @@ struct OpsetMap : public OpsetMapBase {
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
-class NameGenerator : private Visitor {
+class NameGenerator : private internal::Visitor {
  public:
   explicit NameGenerator(const GraphProto& graph) : index_(0) {
     NameGenerator::VisitGraph(graph);
@@ -159,7 +155,7 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class InliningRenamer : public MutableVisitor {
+class InliningRenamer : public internal::MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
@@ -325,7 +321,7 @@ class InliningRenamer : public MutableVisitor {
 // In the case of variables referenced in sub-graphs, only non-local variables
 // are treated as implicit inputs.
 
-class ComputeInputs : private Visitor {
+class ComputeInputs : private internal::Visitor {
  private:
   std::vector<std::unordered_set<std::string>> namescopes;
 
@@ -338,7 +334,7 @@ class ComputeInputs : private Visitor {
   }
 
   bool IsLocalVar(const std::string& name) const {
-    for (auto& scope : namescopes) {
+    for (const auto& scope : namescopes) {
       if (scope.count(name) > 0) {
         return true;
       }
@@ -348,23 +344,23 @@ class ComputeInputs : private Visitor {
 
   void VisitGraph(const GraphProto& graph) override {
     namescopes.emplace_back();
-    for (auto& x : graph.input())
+    for (const auto& x : graph.input())
       CurrentScope().insert(x.name());
-    for (auto& init : graph.initializer())
+    for (const auto& init : graph.initializer())
       CurrentScope().insert(init.name());
-    for (auto& n : graph.node())
+    for (const auto& n : graph.node())
       VisitNode(n);
     namescopes.pop_back();
   }
 
   bool ProcessNode(const NodeProto& node) override {
-    for (auto& var : node.input()) {
+    for (const auto& var : node.input()) {
       if (!var.empty() && !IsLocalVar(var)) {
         result.push_back(var);
       }
     }
     if (InNestedScope()) {
-      for (auto& var : node.output()) {
+      for (const auto& var : node.output()) {
         if (!var.empty()) {
           CurrentScope().insert(var);
         }
@@ -399,15 +395,15 @@ ConstNodeMap FindConstantNodes(const GraphProto& graph) {
 }
 
 const TypeProto& GetType(const ModelProto& model, const std::string& var) {
-  for (auto& vi : model.graph().value_info()) {
+  for (const auto& vi : model.graph().value_info()) {
     if (vi.name() == var)
       return vi.type();
   }
-  for (auto& vi : model.graph().input()) {
+  for (const auto& vi : model.graph().input()) {
     if (vi.name() == var)
       return vi.type();
   }
-  for (auto& vi : model.graph().output()) {
+  for (const auto& vi : model.graph().output()) {
     if (vi.name() == var)
       return vi.type();
   }
@@ -453,9 +449,8 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
     }
   }
 
-  // TODO: Use std::move when it is fully supported on all protobuf platforms used
   for (auto& function_node : function_nodes)
-    *nodes.Add() = function_node;
+    *nodes.Add() = std::move(function_node);
   function_nodes.Clear();
 
   auto converted = ONNX_NAMESPACE::version_conversion::ConvertVersion(function_as_model, target_version);
@@ -463,9 +458,9 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
   function_nodes.Swap(converted.mutable_graph()->mutable_node());
 
   // Append new initializers to main graph initializers
-  for (auto& added_initializer : converted.graph().initializer())
+  for (const auto& added_initializer : converted.graph().initializer())
     *model.mutable_graph()->mutable_initializer()->Add() = added_initializer;
-  for (auto& added_initializer : converted.graph().sparse_initializer())
+  for (const auto& added_initializer : converted.graph().sparse_initializer())
     *model.mutable_graph()->mutable_sparse_initializer()->Add() = added_initializer;
 }
 
@@ -538,7 +533,7 @@ struct InlinerImpl {
     }
     if (schema_registry != nullptr) {
       int64_t domain_version = GetDomainVersion(model, domain);
-      const auto* op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
+      const auto* const op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
 
       if (op_schema == nullptr) {
         // If the schema is not found, we cannot inline the function.
@@ -556,7 +551,7 @@ struct InlinerImpl {
 
       // Check if this node has a schema defined function proto.
       if (op_schema->HasContextDependentFunction()) {
-        shape_inference::InferShapes(model); // TODO: do shape inference incrementally
+        shape_inference::InferShapes(model); // TODO(ONNX): do shape inference incrementally
         std::vector<TypeProto> input_types;
         for (const auto& input : node.input()) {
           input_types.emplace_back(GetType(model, input));
@@ -596,7 +591,7 @@ struct InlinerImpl {
         for (const auto& x : node.output())
           actual_parameters.insert(x);
         // Append valueinfos of called function
-        for (auto& callee_vi : callee.value_info()) {
+        for (const auto& callee_vi : callee.value_info()) {
           if (actual_parameters.count(callee_vi.name()) == 0) {
             *value_infos.Add() = callee_vi;
           }
@@ -606,9 +601,6 @@ struct InlinerImpl {
           append_node(callee_node);
       } else {
         // Append node without inlining.
-        // TODO: use std::move instead of copying. Use of move doesn't seem to work with
-        // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-
         for (auto& attr : *node.mutable_attribute()) {
           if (attr.has_g()) {
             ProcessGraph(*attr.mutable_g());
@@ -618,7 +610,7 @@ struct InlinerImpl {
           }
         }
 
-        *nodes.Add() = node;
+        *nodes.Add() = std::move(node);
       }
     };
     for (auto& node : original_nodes) {
@@ -657,7 +649,7 @@ struct InlinerImpl {
     // Otherwise, we cannot inline, since currently version-conversion supports only
     // standard ONNX domain.
 
-    for (auto& function : model.functions()) {
+    for (const auto& function : model.functions()) {
       auto mismatches = model_imports.Mismatches(function);
       auto iter = mismatches.find(ONNX_DOMAIN);
       int64_t target_onnx_version = kNoConversion;

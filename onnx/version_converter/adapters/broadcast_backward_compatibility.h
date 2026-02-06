@@ -1,13 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for broadcasting ops in default domain from version 7 to 6
 
 #pragma once
 
+#include <cinttypes>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,7 +22,7 @@ class BroadcastBackwardCompatibility final : public Adapter {
   explicit BroadcastBackwardCompatibility(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
-  void adapt_broadcast_backward_compatibility(const std::shared_ptr<Graph>&, Node* node) const {
+  void adapt_broadcast_backward_compatibility(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     // Verify that broadcasts are allowed in limited spec of opset version 6
     // Multidirectional broadcasting, as defined in Broadcasting.md
     // MathDocGenerator provides differences
@@ -38,11 +38,12 @@ class BroadcastBackwardCompatibility final : public Adapter {
     int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(A_sizes, B_sizes);
     ONNX_ASSERTM(
         req_broadcast != -1,
-        "%s being converted from %d to %d does "
+        "%s being converted from %" PRId64 " to %" PRId64
+        " does "
         "not have broadcastable inputs.",
         name().c_str(),
-        initial_version().version(),
-        target_version().version())
+        static_cast<int64_t>(initial_version().version()),
+        static_cast<int64_t>(target_version().version()))
     if (req_broadcast == 1) {
       // If conditional is not fulfilled, we have a default broadcast
       // Add broadcast attribute

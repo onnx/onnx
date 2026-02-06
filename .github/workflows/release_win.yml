@@ -1,0 +1,171 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: WindowsRelease (aarch64, x86, x64)
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      build_mode:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    if: github.event_name != 'pull_request' || startsWith(github.base_ref, 'rel-') || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.14t', '3.13t','3.12','3.11','3.10']
+        architecture: ['x64','x86','arm64']
+        exclude:
+          # x86 exclusions
+          - python-version: '3.14t'
+            architecture: 'x86'
+          - python-version: '3.13t'
+            architecture: 'x86'
+          - python-version: '3.14-dev'
+            architecture: 'x86'
+          # arm64 exclusions
+          - python-version: '3.10'
+            architecture: 'arm64'
+
+    runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2022' }} # Pick OS runner based on architecture
+
+    steps:
+    - name: Checkout ONNX
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+         submodules: 'recursive'
+         persist-credentials: false
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        architecture: ${{ matrix.architecture }}
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+      with:
+        msbuild-architecture: ${{ matrix.architecture }}
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install -q --upgrade pip
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
+          sed -i '' '/-r requirements-reference.txt/d' requirements-release_build.txt
+        }
+
+        python -m pip install -r requirements-release_build.txt
+
+        if ('${{ matrix.architecture }}' -eq 'x64') {
+          python -m pip install cmake
+        }
+
+    - name: Build ONNX wheel
+      id: build_wheel
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
+      run: |
+        # Select correct cmake architecture
+        $cmake_arch = 'x64'
+        if ('${{ matrix.architecture }}' -eq 'x86') {
+          $cmake_arch = 'Win32'
+        }
+        elseif ('${{ matrix.architecture }}' -eq 'arm64') {
+          $cmake_arch = 'ARM64'
+        }
+        # Build protobuf with correct architecture
+        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch $cmake_arch
+        # Build ONNX wheel
+        echo "Install ONNX"
+        $Env:ONNX_ML = 1
+        $Env:CMAKE_ARGS = "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_HARDENING=ON"
+
+        # Preview build logic (same for all arches)
+        if ($env:BUILD_MODE -ne 'release') {
+          echo "Build preview build whl package"
+          (Get-Content -Path 'pyproject.toml') |
+            ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } |
+            Set-Content -Path 'pyproject.toml'
+
+          $Env:ONNX_PREVIEW_BUILD = 1
+        }
+
+        python -m build --wheel
+
+        # ARM64 wheels should not install dependencies (no wheels available)
+        if ('${{ matrix.architecture }}' -eq 'arm64') {
+          Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname --no-deps }
+        }
+        else {
+          Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname }
+        }
+
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview')
+      with:
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}
+        path: ./dist
+
+    - name: Check abi3 compatibility with abi3audit
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then
+            echo "Exactly one wheel file found."
+        else
+            echo "Multiple or no wheel files found."
+        fi
+        for whl in dist/*.whl; do
+          echo "Checking abi3 compatibility for $whl"
+          python -m pip install -q abi3audit
+          python -m abi3audit -v "$whl"
+        done
+      shell: bash
+
+    - name: Test the installed wheel
+      if: steps.build_wheel.outcome == 'success' &&
+          matrix.python-version != '3.13t' &&
+          matrix.architecture != 'arm64'
+      run: |
+        python -m pip install -q -r requirements-release_test.txt
+        pytest
+
+    - name: Verify ONNX with the latest numpy
+      if: steps.build_wheel.outcome == 'success' &&
+          matrix.python-version != '3.13t' &&
+          matrix.architecture != 'arm64'
+      run: |
+        python -m pip uninstall -y numpy onnx
+        python -m pip install numpy
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest
+
+    - name: Verify ONNX with the latest protobuf
+      if: steps.build_wheel.outcome == 'success' &&
+          matrix.python-version != '3.13t' &&
+          matrix.architecture != 'arm64'
+      run: |
+        python -m pip uninstall -y protobuf onnx
+        python -m pip install protobuf
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest
+
+    - name: Verify ONNX with the minimumly supported packages
+      if: steps.build_wheel.outcome == 'success' &&
+          matrix.python-version != '3.13t' &&
+          matrix.architecture != 'arm64'
+      run: |
+        python -m pip uninstall -y protobuf numpy onnx
+        python -m pip install -r requirements-min.txt
+        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
+        pytest

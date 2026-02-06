@@ -1,15 +1,18 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/schema.h"
 
+#include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
@@ -155,7 +158,7 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
       if (all_types.size() == 1) {
         *param_type = Utils::DataTypeUtils::ToTypeProto(*all_types.begin());
       } else if (type_constraints.find(type_str) != type_constraints.end()) {
-        auto data_type = Utils::DataTypeUtils::ToType(type_constraints[type_str]);
+        const auto* const data_type = Utils::DataTypeUtils::ToType(type_constraints[type_str]);
         *param_type = Utils::DataTypeUtils::ToTypeProto(data_type);
       } else {
         output_type_found = false;
@@ -245,7 +248,7 @@ void OpSchema::Verify(const NodeProto& node) const {
 
     if (!seen_attr_names.insert(name).second) {
       fail_check("Attribute '", name, "' appeared multiple times.");
-    };
+    }
 
     const auto& search = attributes_.find(name);
     AttributeProto::AttributeType expected_type{};
@@ -488,6 +491,14 @@ OpSchema& OpSchema::Attr(const char* name, const char* description, AttributePro
   return Attr(std::string(name), std::string(description), type, required);
 }
 
+OpSchema& OpSchema::Attr(
+    const char* name,
+    const char* description,
+    AttributeProto::AttributeType type,
+    const char* defaultValue) {
+  return Attr(std::string(name), std::string(description), type, std::string(defaultValue));
+}
+
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                                                           \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
@@ -711,7 +722,7 @@ OpSchema& OpSchema::TypeConstraint(
     const char* description) {
   std::vector<std::string> constraints_vector;
   constraints_vector.reserve(constraints.size());
-  for (auto constraint : constraints) {
+  for (const auto* const constraint : constraints) {
     constraints_vector.emplace_back(constraint);
   }
 
@@ -721,7 +732,7 @@ OpSchema& OpSchema::TypeConstraint(
 void OpSchema::ParseAndSetTypes(
     /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters) {
   for (auto& formal_parameter : *formal_parameters) {
-    auto& type = formal_parameter.GetTypeStr();
+    const auto& type = formal_parameter.GetTypeStr();
     DataTypeSet allowed_types;
     auto it = type_constraints_.find(type);
     if (it != type_constraints_.end()) {
@@ -776,7 +787,7 @@ bool OpSchema::BuildContextDependentFunction(
 // in opset_version_to_function_builder_) has predefined opset_imports. Before returning the function, we shall
 // update the predefined opset_imports so that it is consistent with the requested version.
 // Note that this call only update opset_import of the default domain.
-// TODO: extend this call to work for no-default domains.
+// TODO(ONNX): extend this call to work for no-default domains.
 void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int requested_opset_version) const {
   bool opset_import_exist = false;
   for (int i = 0; i < function_proto.opset_import_size(); i++) {
@@ -822,7 +833,7 @@ OpSchema& OpSchema::FunctionBody(const std::vector<NodeProto>& func_nodes, int o
   }
   auto function_proto = std::make_shared<FunctionProto>();
   for (const auto& node : func_nodes) {
-    auto new_node = function_proto->add_node();
+    auto* new_node = function_proto->add_node();
     new_node->CopyFrom(node);
   }
 
@@ -842,12 +853,12 @@ OpSchema& OpSchema::FunctionBody(
   }
 
   auto function_proto = std::make_shared<FunctionProto>();
-  for (auto& relied_opset : relied_opsets) {
+  for (const auto& relied_opset : relied_opsets) {
     *(function_proto->mutable_opset_import()->Add()) = relied_opset;
   }
 
   for (const auto& node : func_nodes) {
-    auto new_node = function_proto->add_node();
+    auto* new_node = function_proto->add_node();
     new_node->CopyFrom(node);
   }
   // opset import may have been set
@@ -881,7 +892,7 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
 // When they are not the same, it is necessary to verify that ops used to define the function
 // are not updated between function_since_version and requested_opset_version (include requested_opset_version).
 // this call only validate ops in the default domain.
-// TODO: validate ops in other domains.
+// TODO(ONNX): validate ops in other domains.
 bool OpSchema::ValidateReferencedOpsInFunction(
     const FunctionProto* function,
     int requested_opset_version,
@@ -891,7 +902,7 @@ bool OpSchema::ValidateReferencedOpsInFunction(
   if (requested_opset_version == function_since_version) {
     return all_ops_are_invalid;
   }
-  for (auto& node : function->node()) {
+  for (const auto& node : function->node()) {
     if (node.domain().empty() || node.domain() == "ai.onnx") {
       const OpSchema* op1 =
           OpSchemaRegistry::Instance()->GetSchema(node.op_type(), requested_opset_version, node.domain());
@@ -920,13 +931,13 @@ void OpSchema::BuildFunction(FunctionProto& function_body) const {
   function_body.set_name(this->name_);
   function_body.set_doc_string(this->doc_);
   function_body.set_domain(this->domain_);
-  for (auto& i : inputs_) {
+  for (const auto& i : inputs_) {
     function_body.add_input(i.GetName());
   }
-  for (auto& o : outputs_) {
+  for (const auto& o : outputs_) {
     function_body.add_output(o.GetName());
   }
-  for (auto& a : attributes_) {
+  for (const auto& a : attributes_) {
     function_body.add_attribute(a.first);
   }
 
@@ -993,6 +1004,21 @@ const std::vector<std::string>& OpSchema::all_numeric_types_ir12() {
       "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)",
       "tensor(uint4)",        "tensor(int4)",           "tensor(float4e2m1)", "tensor(float8e8m0)"};
   return all_numeric_types_ir12;
+}
+
+const std::vector<std::string>& OpSchema::all_numeric_types_ir13() {
+  static const std::vector<std::string> all_numeric_types_ir13 = {"tensor(uint8)",        "tensor(uint16)",
+                                                                  "tensor(uint32)",       "tensor(uint64)",
+                                                                  "tensor(int8)",         "tensor(int16)",
+                                                                  "tensor(int32)",        "tensor(int64)",
+                                                                  "tensor(float16)",      "tensor(float)",
+                                                                  "tensor(double)",       "tensor(bfloat16)",
+                                                                  "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
+                                                                  "tensor(float8e5m2)",   "tensor(float8e5m2fnuz)",
+                                                                  "tensor(uint4)",        "tensor(int4)",
+                                                                  "tensor(float4e2m1)",   "tensor(float8e8m0)",
+                                                                  "tensor(uint2)",        "tensor(int2)"};
+  return all_numeric_types_ir13;
 }
 
 const std::vector<std::string>& OpSchema::all_numeric_types_ir11() {
@@ -1273,6 +1299,34 @@ const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir12() {
   return all_non_complex_tensor_types_ir12;
 }
 
+const std::vector<std::string>& OpSchema::all_tensor_types_ir13() {
+  static const std::vector<std::string> all_tensor_types_ir13 = {"tensor(uint8)",        "tensor(uint16)",
+                                                                 "tensor(uint32)",       "tensor(uint64)",
+                                                                 "tensor(int8)",         "tensor(int16)",
+                                                                 "tensor(int32)",        "tensor(int64)",
+                                                                 "tensor(bfloat16)",     "tensor(float16)",
+                                                                 "tensor(float)",        "tensor(double)",
+                                                                 "tensor(string)",       "tensor(bool)",
+                                                                 "tensor(complex64)",    "tensor(complex128)",
+                                                                 "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
+                                                                 "tensor(float8e5m2)",   "tensor(float8e5m2fnuz)",
+                                                                 "tensor(uint4)",        "tensor(int4)",
+                                                                 "tensor(float4e2m1)",   "tensor(float8e8m0)",
+                                                                 "tensor(uint2)",        "tensor(int2)"};
+  return all_tensor_types_ir13;
+}
+
+const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir13() {
+  static const std::vector<std::string> all_non_complex_tensor_types_ir13 = {
+      "tensor(uint8)",      "tensor(uint16)",         "tensor(uint32)",       "tensor(uint64)",
+      "tensor(int8)",       "tensor(int16)",          "tensor(int32)",        "tensor(int64)",
+      "tensor(bfloat16)",   "tensor(float16)",        "tensor(float)",        "tensor(double)",
+      "tensor(string)",     "tensor(bool)",           "tensor(float8e4m3fn)", "tensor(float8e4m3fnuz)",
+      "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(uint4)",        "tensor(int4)",
+      "tensor(float4e2m1)", "tensor(float8e8m0)",     "tensor(uint2)",        "tensor(int2)"};
+  return all_non_complex_tensor_types_ir13;
+}
+
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
   static const std::vector<std::string> all_tensor_sequence_types = {
       "seq(tensor(uint8))",
@@ -1363,6 +1417,24 @@ const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir12() {
       "seq(tensor(float8e5m2))", "seq(tensor(float8e5m2fnuz))", "seq(tensor(uint4))",
       "seq(tensor(int4))",       "seq(tensor(float4e2m1))",     "seq(tensor(float8e8m0))"};
   return all_tensor_sequence_types_ir12;
+}
+
+const std::vector<std::string>& OpSchema::all_tensor_sequence_types_ir13() {
+  static const std::vector<std::string> all_tensor_sequence_types_ir13 = {
+      "seq(tensor(uint8))",        "seq(tensor(uint16))",
+      "seq(tensor(uint32))",       "seq(tensor(uint64))",
+      "seq(tensor(int8))",         "seq(tensor(int16))",
+      "seq(tensor(int32))",        "seq(tensor(int64))",
+      "seq(tensor(bfloat16))",     "seq(tensor(float16))",
+      "seq(tensor(float))",        "seq(tensor(double))",
+      "seq(tensor(string))",       "seq(tensor(bool))",
+      "seq(tensor(complex64))",    "seq(tensor(complex128))",
+      "seq(tensor(float8e4m3fn))", "seq(tensor(float8e4m3fnuz))",
+      "seq(tensor(float8e5m2))",   "seq(tensor(float8e5m2fnuz))",
+      "seq(tensor(uint4))",        "seq(tensor(int4))",
+      "seq(tensor(float4e2m1))",   "seq(tensor(float8e8m0))",
+      "seq(tensor(uint2))",        "seq(tensor(int2))"};
+  return all_tensor_sequence_types_ir13;
 }
 
 const std::vector<std::string>& OpSchema::all_optional_types() {
@@ -1468,6 +1540,25 @@ const std::vector<std::string>& OpSchema::all_optional_types_ir12() {
   return all_optional_types;
 }
 
+const std::vector<std::string>& OpSchema::all_optional_types_ir13() {
+  static const std::vector<std::string> all_optional_types = {
+      "optional(seq(tensor(uint8)))",      "optional(seq(tensor(uint16)))", "optional(seq(tensor(uint32)))",
+      "optional(seq(tensor(uint64)))",     "optional(seq(tensor(int8)))",   "optional(seq(tensor(int16)))",
+      "optional(seq(tensor(int32)))",      "optional(seq(tensor(int64)))",  "optional(seq(tensor(bfloat16)))",
+      "optional(seq(tensor(float16)))",    "optional(seq(tensor(float)))",  "optional(seq(tensor(double)))",
+      "optional(seq(tensor(string)))",     "optional(seq(tensor(bool)))",   "optional(seq(tensor(complex64)))",
+      "optional(seq(tensor(complex128)))", "optional(tensor(uint8))",       "optional(tensor(uint16))",
+      "optional(tensor(uint32))",          "optional(tensor(uint64))",      "optional(tensor(int8))",
+      "optional(tensor(int16))",           "optional(tensor(int32))",       "optional(tensor(int64))",
+      "optional(tensor(bfloat16))",        "optional(tensor(float16))",     "optional(tensor(float))",
+      "optional(tensor(double))",          "optional(tensor(string))",      "optional(tensor(bool))",
+      "optional(tensor(complex64))",       "optional(tensor(complex128))",  "optional(tensor(float8e4m3fn))",
+      "optional(tensor(float8e4m3fnuz))",  "optional(tensor(float8e5m2))",  "optional(tensor(float8e5m2fnuz))",
+      "optional(tensor(uint4))",           "optional(tensor(int4))",        "optional(tensor(float4e2m1))",
+      "optional(tensor(float8e8m0))",      "optional(tensor(uint2))",       "optional(tensor(int2))"};
+  return all_optional_types;
+}
+
 void OpSchema::Finalize() {
 #define ENFORCE(x)                                                                                      \
   do {                                                                                                  \
@@ -1535,10 +1626,6 @@ void OpSchema::Finalize() {
 
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
-
-  if (HasContextDependentFunction()) {
-    ENFORCE(node_determinism_ != NodeDeterminism::Unknown);
-  }
 
   for (auto& func : opset_version_to_function_body_) {
     BuildFunction(*func.second);
@@ -1646,7 +1733,7 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
 OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
   static DomainToVersionRange domain_to_version_range;
   return domain_to_version_range;
-};
+}
 
 // Private method used by OpSchemaRegisterOnce and OpSchemaRegistry::map()
 OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {
@@ -1686,8 +1773,8 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-            "%u schema were exposed from operator sets and automatically placed into the static registry.  "
-            "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",
+            "%zu schema were exposed from operator sets and automatically placed into the static registry.  "
+            "%zu were expected based on calls to registration macros. Operator set functions may need to be updated.",
             dbg_registered_schema_count,
             ONNX_DBG_GET_COUNT_IN_OPSETS());
       }
@@ -1724,6 +1811,14 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
     numReplaced++;
   }
   return numReplaced;
+}
+
+bool IsOnnxStaticRegistrationDisabled() {
+#ifdef __ONNX_DISABLE_STATIC_REGISTRATION
+  return true;
+#else
+  return false;
+#endif
 }
 
 } // namespace ONNX_NAMESPACE

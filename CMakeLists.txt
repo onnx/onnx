@@ -48,6 +48,7 @@ option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_ASAN "Build ONNX with ASAN" OFF)
+option(ONNX_HARDENING "Build with compiler hardening flags (OpenSSF guidelines)" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
@@ -397,8 +398,6 @@ relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
                                onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
 
-add_library(onnx_proto_object OBJECT ${ONNX_PROTO_SRCS})
-
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
     "${ONNX_ROOT}/onnx/test/cpp/*.cc"
@@ -414,60 +413,41 @@ if(ONNX_USE_LITE_PROTO)
     set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf-lite)
   endif()
 endif()
-add_onnx_global_defines(onnx_proto_object)
-target_include_directories(onnx_proto_object PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
-if(MSVC)
-  # For disabling Protobuf related warnings
-  set(protobuf_warnings
-    /wd4146 # unary minus operator applied to unsigned type,
-            # result still unsigned
-    /wd4244 # 'argument': conversion from 'google::
-            # protobuf::uint64' to 'int', possible
-            # loss of data
-    /wd4267 # Conversion from 'size_t' to 'int',
-            # possible loss of data
-    /wd4141 # 'inline': used more than once
-  )
-endif()
-add_library(onnx_proto)
-target_link_libraries(onnx_proto PUBLIC $<BUILD_INTERFACE:onnx_proto_object>)
+add_library(onnx_proto ${ONNX_PROTO_SRCS})
+add_onnx_global_defines(onnx_proto)
 
-# onnx_object and onnx_proto_object are collections of C++ object files.
-# They are introduced to help onnx_cpp2py_export bypass library boundaries and use ONNX private symbols.
-add_library(onnx_object OBJECT ${ONNX_SRCS})
-add_dependencies(onnx_object onnx_proto_object)
-target_include_directories(onnx_object PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
-set_target_properties(onnx_object PROPERTIES CXX_VISIBILITY_PRESET hidden)
-set_target_properties(onnx_object PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
-target_include_directories(onnx_object PUBLIC $<BUILD_INTERFACE:${ONNX_ROOT}>)
-add_onnx_global_defines(onnx_object)
-target_link_libraries(onnx_proto_object PUBLIC ${LINKED_PROTOBUF_TARGET})
-target_link_libraries(onnx_object PUBLIC ${LINKED_PROTOBUF_TARGET})
-foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
-  if(TARGET ${ABSL_USED_TARGET})
-    target_link_libraries(onnx_proto_object PUBLIC ${ABSL_USED_TARGET})
-    target_link_libraries(onnx_object PUBLIC ${ABSL_USED_TARGET})
-  endif()
-endforeach()
-add_library(onnx)
-target_link_libraries(onnx PUBLIC $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
-target_include_directories(onnx PUBLIC $<INSTALL_INTERFACE:include>)
-
-target_compile_options(onnx_object PUBLIC ${protobuf_warnings})
-target_compile_options(onnx_proto_object PUBLIC ${protobuf_warnings})
+add_library(onnx ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+add_dependencies(onnx onnx_proto)
+set_source_files_properties(${ONNX_SRCS} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
   # find system nanobind
-  find_package(nanobind)
+  if(NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL "")
+    execute_process(
+      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake-dir
+      RESULT_VARIABLE NANOBIND_CMAKE_RESULT
+      OUTPUT_VARIABLE NANOBIND_CMAKE_DIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NANOBIND_CMAKE_RESULT EQUAL 0 AND EXISTS "${NANOBIND_CMAKE_DIR}")
+      set(nanobind_DIR "${NANOBIND_CMAKE_DIR}")
+    endif()
+  endif()
+  find_package(nanobind CONFIG QUIET)
   if(NOT nanobind_FOUND)
+    if(FETCHCONTENT_FULLY_DISCONNECTED)
+      message(FATAL_ERROR
+        "nanobind not found while FETCHCONTENT_FULLY_DISCONNECTED is ON. "
+        "Provide nanobind locally (nanobind_DIR/CMAKE_PREFIX_PATH) or use a "
+        "FetchContent dependency provider for first-run offline builds.")
+    endif()
     include(FetchContent)
 
     FetchContent_Declare(
       nanobind
       GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      GIT_TAG v2.8.0
+      GIT_TAG v2.10.2
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
@@ -477,33 +457,15 @@ if(ONNX_BUILD_PYTHON)
   nanobind_add_module(
     onnx_cpp2py_export
     NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
-    "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-
-  target_link_libraries(onnx_cpp2py_export PRIVATE $<BUILD_INTERFACE:onnx_object> $<BUILD_INTERFACE:onnx_proto_object>)
-  # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
-  # (std::filesystem::__cxx11::path::_M_split_cmpts()) on gcc 8
-  if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
-    target_link_libraries(onnx_cpp2py_export PRIVATE "-lstdc++fs")
-  endif()
+    "${ONNX_ROOT}/onnx/cpp2py_export.cc" ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+  add_dependencies(onnx_cpp2py_export onnx)
 endif()
 
-if(MSVC)
-  add_msvc_runtime_flag(onnx_proto_object)
-  add_msvc_runtime_flag(onnx_object)
-  if(TARGET onnx_cpp2py_export)
-    add_msvc_runtime_flag(onnx_cpp2py_export)
-  endif()
-  if(ONNX_WERROR)
-    target_compile_options(onnx_object PRIVATE "/WX")
-  endif()
-else()
-  target_compile_options(onnx_object PRIVATE -Wall -Wextra)
-  if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
-    target_compile_options(onnx_object PRIVATE "-Wno-stringop-overflow")
-  endif()
-  if(ONNX_WERROR)
-    target_compile_options(onnx_object PRIVATE "-Werror")
-  endif()
+add_onnx_compile_options(onnx_proto)
+add_onnx_compile_options(onnx)
+if(TARGET onnx_cpp2py_export)
+  add_onnx_global_defines(onnx_cpp2py_export)
+  add_onnx_compile_options(onnx_cpp2py_export)
 endif()
 if(ONNX_USE_ASAN AND NOT MSVC)
   find_package(Sanitizer REQUIRED)

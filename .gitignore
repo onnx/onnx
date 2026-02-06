@@ -113,3 +113,5 @@ docs/docsgen/**/*.pb
 # PyEnv files
 .python-version
 .pixi/**
+=0.*
+_codeql_build_dir/

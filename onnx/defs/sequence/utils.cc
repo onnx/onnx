@@ -1,11 +1,12 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 #include "onnx/defs/sequence/utils.h"
 
 #include <algorithm>
 #include <numeric>
 #include <string>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace defs {
@@ -59,7 +60,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
             static_cast<int64_t>(1))
         .SetDoc(SplitToSequence_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          const auto input0_type = ctx.getInputType(0);
+          const auto* const input0_type = ctx.getInputType(0);
           if (nullptr == input0_type) {
             fail_type_inference("Input type for input at index 0 is null. Type info is expected.")
           }
@@ -86,7 +87,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
           int64_t keepdims = 1;
           if (num_inputs == 1) {
             // input split is omitted, default to split by 1.
-            auto attr_proto = ctx.getAttribute("keepdims");
+            const auto* const attr_proto = ctx.getAttribute("keepdims");
             if (attr_proto) {
               keepdims = attr_proto->i();
             }

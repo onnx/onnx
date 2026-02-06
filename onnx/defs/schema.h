@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -44,7 +44,7 @@ struct FunctionBodyBuildContextImpl : public FunctionBodyBuildContext {
   // will not be sufficient for functions that do use the type-context.
   explicit FunctionBodyBuildContextImpl(const NodeProto& node_proto, const std::vector<TypeProto>& input_types = {})
       : node_proto_(node_proto), input_types_(input_types) {
-    for (auto& attr : node_proto.attribute()) {
+    for (const auto& attr : node_proto.attribute()) {
       attributesByName_[attr.name()] = &attr;
     }
   }
@@ -331,7 +331,7 @@ class OpSchema final {
   }
 
   // Check if input and output types fall into valid set and match each other
-  ONNX_API void CheckInputOutputType(struct InferenceContext&) const;
+  ONNX_API void CheckInputOutputType(struct InferenceContext& /*ctx*/) const;
 
   /**
    * @brief Verifies if a NodeProto matches the pattern specified in
@@ -465,6 +465,9 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
   ATTR_SETTER_WITH_DEFAULT_VALUE(float)
   ATTR_SETTER_WITH_DEFAULT_VALUE(std::string)
+  // Overload for const char* default value to prevent implicit conversion to bool
+  OpSchema&
+  Attr(const char* name, const char* description, AttributeProto::AttributeType type, const char* defaultValue);
   ATTR_SETTER_WITH_DEFAULT_VALUE(TensorProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
@@ -596,6 +599,8 @@ class OpSchema final {
 
   ONNX_API static const std::vector<std::string>& numeric_types_for_math_reduction();
 
+  ONNX_API static const std::vector<std::string>& all_numeric_types_ir13();
+
   ONNX_API static const std::vector<std::string>& all_numeric_types_ir12();
 
   ONNX_API static const std::vector<std::string>& all_numeric_types_ir11();
@@ -640,6 +645,10 @@ class OpSchema final {
 
   ONNX_API static const std::vector<std::string>& all_non_complex_tensor_types_ir12();
 
+  ONNX_API static const std::vector<std::string>& all_tensor_types_ir13();
+
+  ONNX_API static const std::vector<std::string>& all_non_complex_tensor_types_ir13();
+
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types();
 
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir4();
@@ -652,6 +661,8 @@ class OpSchema final {
 
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir12();
 
+  ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir13();
+
   ONNX_API static const std::vector<std::string>& all_optional_types();
 
   ONNX_API static const std::vector<std::string>& all_optional_types_ir4();
@@ -663,6 +674,8 @@ class OpSchema final {
   ONNX_API static const std::vector<std::string>& all_optional_types_ir11();
 
   ONNX_API static const std::vector<std::string>& all_optional_types_ir12();
+
+  ONNX_API static const std::vector<std::string>& all_optional_types_ir13();
 
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for templated/macro ops.
@@ -799,7 +812,7 @@ class OpSchema final {
   }
 
   ONNX_API OpSchema& SetContextDependentFunctionBodyBuilder(
-      ContextDependentFunctionBodyBuilder,
+      ContextDependentFunctionBodyBuilder /*functionBuilder*/,
       int opset_version = kUninitializedSinceVersion);
 
   ONNX_API bool BuildContextDependentFunction(
@@ -816,12 +829,12 @@ class OpSchema final {
   // Build function with information stored in opschema
   ONNX_API void BuildFunction(FunctionProto& function_body) const;
 
-  NodeDeterminism GetNodeDeterminism() const;
-  OpSchema& SetNodeDeterminism(NodeDeterminism node_determinism);
+  ONNX_API NodeDeterminism GetNodeDeterminism() const;
+  ONNX_API OpSchema& SetNodeDeterminism(NodeDeterminism node_determinism);
 
  private:
   void ParseAndSetTypes(
-      /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
+      /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters);
   bool ValidateReferencedOpsInFunction(
       const FunctionProto* function,
       int requested_opset_version,
@@ -908,7 +921,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 25);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 26);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
@@ -918,7 +931,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 24;
+      last_release_version_map_[ONNX_DOMAIN] = 25;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
@@ -1025,8 +1038,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     OpSchemaRegisterImpl(OpSchema&& op_schema, int opset_version_to_load = 0, bool fail_duplicate_schema = true) {
       op_schema.Finalize();
       auto& m = GetMapWithoutEnsuringRegistration();
-      auto& op_name = op_schema.Name();
-      auto& op_domain = op_schema.domain();
+      const auto& op_name = op_schema.Name();
+      const auto& op_domain = op_schema.domain();
       auto& schema_ver_map = m[op_name][op_domain];
       auto ver = op_schema.SinceVersion();
       if (OpSchema::kUninitializedSinceVersion == ver) {
@@ -1158,7 +1171,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // Return the schema with biggest version, which is not greater than specified
   // <maxInclusiveVersion> in specified domain. Domain with default value
   // ONNX_DOMAIN means ONNX.
-  static const OpSchema*
+  ONNX_API static const OpSchema*
   Schema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
@@ -1185,16 +1198,16 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   ONNX_API static OpSchemaRegistry* Instance();
 
   // NOLINTNEXTLINE(google-default-arguments)
-  const OpSchema* GetSchema(
+  ONNX_API const OpSchema* GetSchema(
       const std::string& key,
       const int maxInclusiveVersion,
       const std::string& domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
-  static void SetLoadedSchemaVersion(int target_version) {
+  ONNX_API static void SetLoadedSchemaVersion(int target_version) {
     loaded_schema_version = target_version;
   }
-  static int GetLoadedSchemaVersion() {
+  ONNX_API static int GetLoadedSchemaVersion() {
     return loaded_schema_version;
   }
 
@@ -1324,7 +1337,7 @@ class DbgOperatorSetTracker {
 #define ONNX_OPERATOR_SET_SCHEMA_EX(name, domain, domain_str, ver, dbg_included_in_static_opset, impl)  \
   class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name);                                         \
   template <>                                                                                           \
-  OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {                      \
+  ONNX_API OpSchema GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(domain, ver, name)>() {             \
     return impl.SetName(#name).SetDomain(domain_str).SinceVersion(ver).SetLocation(__FILE__, __LINE__); \
   }                                                                                                     \
   ONNX_OPERATOR_SET_SCHEMA_DEBUG_VARIABLE(domain, ver, name, dbg_included_in_static_opset)

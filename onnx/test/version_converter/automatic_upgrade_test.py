@@ -354,6 +354,15 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
     def test_Cos(self) -> None:
         self._test_op_upgrade("Cos", 7)
 
+    def test_CumProd(self) -> None:
+        self._test_op_upgrade(
+            "CumProd",
+            26,
+            [[3, 4, 5], []],
+            [[3, 4, 5]],
+            [TensorProto.FLOAT, TensorProto.INT64],
+        )
+
     def test_Cumsum(self) -> None:
         self._test_op_upgrade(
             "CumSum",
@@ -1625,9 +1634,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade("DFT", 17, [[2, 16, 2], []], [[2, 16, 2]])
         self._test_op_upgrade(
             "DFT", 17, [[2, 16, 1], []], [[2, 9, 2]], attrs={"onesided": 1}
-        )
-        self._test_op_upgrade(
-            "DFT", 17, [[2, 16, 2], []], [[2, 9, 2]], attrs={"onesided": 1}
         )
         self._test_op_upgrade(
             "DFT", 17, [[2, 16, 1], []], [[2, 16, 2]], attrs={"inverse": 1}

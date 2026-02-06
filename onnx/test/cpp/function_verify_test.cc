@@ -1,11 +1,14 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
+#include <algorithm>
 #include <iostream>
 #include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
@@ -18,7 +21,6 @@
 
 namespace ONNX_NAMESPACE {
 namespace Test {
-using namespace checker;
 using TENSOR_TYPES_MAP = std::unordered_map<std::string, std::vector<std::string>>;
 
 static void GetFunctionProtoOpsetImport(
@@ -36,7 +38,7 @@ static void GetFunctionProtoOpsetImport(
 
 static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* function_proto, int& counter) {
   // This is a simple partial type-checker for a function-body.
-  // TODO: Revisit to make the type-checker more complete.
+  // TODO(ONNX): Revisit to make the type-checker more complete.
   TENSOR_TYPES_MAP tc_map;
   std::set<std::string> primitive_types(OpSchema::all_tensor_types().begin(), OpSchema::all_tensor_types().end());
   for (const auto& input : function_op.inputs()) {
@@ -58,7 +60,7 @@ static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProt
   std::unordered_map<std::string, int> op_set;
   GetFunctionProtoOpsetImport(function_op, function_proto, op_set);
 
-  for (auto& node : function_proto->node()) {
+  for (const auto& node : function_proto->node()) {
     const std::string& op_type = node.op_type();
     std::unordered_map<std::string, int>::const_iterator it = op_set.find(node.domain());
     if (it == op_set.end()) {
@@ -84,7 +86,7 @@ static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProt
         auto formal_i = std::min(i, num_formal_inputs - 1);
         const auto& types = schema->inputs().at(formal_i).GetTypes();
         std::unordered_set<std::string> allowed_types;
-        for (auto& s : types) {
+        for (const auto& s : types) {
           allowed_types.insert(*s);
         }
         for (auto& actual_type : iter->second) {
@@ -132,7 +134,7 @@ struct FunctionOpAttributeMap {
     auto& schema_test_cases = map[key("", opname, opset_version)];
     schema_test_cases.emplace_back();
     auto& test_case = schema_test_cases.back();
-    for (auto attr_text : attributes) {
+    for (const auto* const attr_text : attributes) {
       test_case.emplace_back();
       OnnxParser::Parse(test_case.back(), attr_text);
     }
@@ -208,7 +210,7 @@ struct FunctionTypeChecker {
     for (auto& pair : typeVarBindings) {
       ostr << pair.first << " = " << *pair.second << ", ";
     }
-    for (auto& attr : attrs) {
+    for (const auto& attr : attrs) {
       ostr << attr << ", ";
     }
     ostr << "}\n" << error << "\n";
@@ -220,7 +222,7 @@ struct FunctionTypeChecker {
     for (auto& pair : typeVarBindings) {
       std::cout << pair.first << " = " << *pair.second << ", ";
     }
-    for (auto& attr : attrs) {
+    for (const auto& attr : attrs) {
       std::cout << attr << ", ";
     }
     std::cout << "}\n";
@@ -230,11 +232,11 @@ struct FunctionTypeChecker {
   // to all type-variables used in the op schema, and invoke the type-checker for
   // each possible instantiation.
   void forTypeVar(size_t i) {
-    auto& typeConstraintVector = schema.typeConstraintParams();
+    const auto& typeConstraintVector = schema.typeConstraintParams();
     if (i < typeConstraintVector.size()) {
       std::string typeVar = typeConstraintVector[i].type_param_str;
-      auto& values = schema.typeConstraintMap().at(typeVar).first;
-      for (auto typeValue : values) {
+      const auto& values = schema.typeConstraintMap().at(typeVar).first;
+      for (const auto* const typeValue : values) {
         typeVarBindings[typeVar] = typeValue;
         // Now, process remaining type-variables
         forTypeVar(i + 1);
@@ -260,7 +262,7 @@ struct FunctionTypeChecker {
       input_types.push_back(Utils::DataTypeUtils::ToTypeProto(datatype));
     }
 
-    for (auto& attribute_vals : *attribute_cases) {
+    for (const auto& attribute_vals : *attribute_cases) {
       ONNX_TRY {
         shape_inference::InferFunctionOutputTypes(function_proto, input_types, attribute_vals);
       }
@@ -273,7 +275,7 @@ struct FunctionTypeChecker {
   std::string checkAll() {
     if (!attribute_cases->empty())
       forTypeVar(0);
-    std::string all_errors = "";
+    std::string all_errors;
     for (const std::string& error : errors)
       all_errors += error;
     return all_errors;
@@ -285,7 +287,7 @@ static void VerifyFunction(const OpSchema& op, const FunctionProto* function_pro
   if (!function_proto) {
     fail_check("Cannot get function body for op '", op.Name(), "'");
   }
-  CheckerContext ctx;
+  checker::CheckerContext ctx;
   std::unordered_map<std::string, int> op_set;
   GetFunctionProtoOpsetImport(op, function_proto, op_set);
   auto version_range = OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(op.domain());
@@ -295,11 +297,11 @@ static void VerifyFunction(const OpSchema& op, const FunctionProto* function_pro
 
   ctx.set_opset_imports(op_set);
   ctx.set_is_main_graph(false);
-  LexicalScopeContext lex_ctx;
+  checker::LexicalScopeContext lex_ctx;
   ONNX_TRY {
-    check_function(*function_proto, ctx, lex_ctx);
+    checker::check_function(*function_proto, ctx, lex_ctx);
   }
-  ONNX_CATCH(ValidationError & ex) {
+  ONNX_CATCH(checker::ValidationError & ex) {
     ONNX_HANDLE_EXCEPTION([&]() { fail_check(ex.what()); });
   }
 
@@ -330,7 +332,7 @@ TEST(FunctionVerification, VerifyFunctionOps) {
       ++function_counter;
       std::vector<int> function_versions = s.function_opset_versions();
       for (int function_version : function_versions) {
-        auto function_body = s.GetFunction(function_version);
+        const auto* const function_body = s.GetFunction(function_version);
         VerifyFunction(s, function_body, verified_counter);
       }
     }
@@ -348,7 +350,7 @@ TEST(FunctionVerification, VerifyFunctionExpandHelper) {
   NodeProto* new_node = graph.add_node();
   new_node->set_op_type("MeanVarianceNormalization");
 
-  const auto* schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
+  const auto* const schema = OpSchemaRegistry::Schema("MeanVarianceNormalization", 9, "");
   const FunctionProto* func = schema->GetFunction();
   const auto default_axes_attribute = schema->attributes().at("axes").default_value;
 
@@ -388,9 +390,9 @@ static void RegisterFunctionSchema() {
               {// nodes: {outputs, op, inputs, attributes}
                FunctionBodyHelper::Const<float>("Q_Min", 0.f),
                FunctionBodyHelper::Const<float>("Q_Max", 255.f),
-               {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
+               {{"X_Min"}, "ReduceMin", {"x"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}},
                {{"X_Min_Adjusted"}, "Min", {"X_Min", "Q_Min"}},
-               {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", int64_t(0))}},
+               {{"X_Max"}, "ReduceMax", {"x"}, {MakeAttribute("keepdims", static_cast<int64_t>(0))}},
                {{"X_Max_Adjusted"}, "Max", {"X_Max", "Q_Min"}},
                {{"X_Range"}, "Sub", {"X_Max_Adjusted", "X_Min_Adjusted"}},
                {{"Scale"}, "Div", {"X_Range", "Q_Max"}},
@@ -398,7 +400,7 @@ static void RegisterFunctionSchema() {
                {{"Initial_ZeroPoint_FP"}, "Sub", {"Q_Min", "Min_Scaled"}},
                {{"Clipped_ZeroPoint_FP"}, "Clip", {"Initial_ZeroPoint_FP", "Q_Min", "Q_Max"}},
                {{"Rounded_ZeroPoint_FP"}, "Round", {"Clipped_ZeroPoint_FP"}},
-               {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", int64_t(2))}},
+               {{"Zeropoint"}, "Cast", {"Rounded_ZeroPoint_FP"}, {MakeAttribute("to", static_cast<int64_t>(2))}},
                {{"y_scale"}, "Identity", {"Scale"}},
                {{"y_zero_point"}, "Identity", {"Zeropoint"}},
                {{"y"}, "QuantizeLinear", {"x", "Scale", "Zeropoint"}}}),
@@ -421,7 +423,7 @@ static void RegisterFunctionSchema() {
 TEST(FunctionVerification, VerifyFunctionBodyWithMultipleDomains) {
   RegisterFunctionSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("DynamicQuantizeLinear_Fake", 2, AI_ONNX_ML_DOMAIN);
+  const auto* const schema = OpSchemaRegistry::Schema("DynamicQuantizeLinear_Fake", 2, AI_ONNX_ML_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_TRUE(schema->HasFunction());
   EXPECT_FALSE(schema->HasContextDependentFunction());
@@ -429,12 +431,12 @@ TEST(FunctionVerification, VerifyFunctionBodyWithMultipleDomains) {
   const FunctionProto* fnProto = schema->GetFunction();
   EXPECT_EQ(fnProto->node_size(), 16);
 
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{AI_ONNX_ML_DOMAIN, 2}, {"", 13}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(*fnProto, checkerCtx, lexicalScope);
+  checker::check_function(*fnProto, checkerCtx, lexicalScope);
 }
 
 TEST(FunctionVerification, VerifyModelLocalFunctions) {
@@ -486,7 +488,7 @@ foo (x) => (y) {
   ModelProto model;
   auto status = OnnxParser::Parse(model, code);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-  check_model(model);
+  checker::check_model(model);
 
   ShapeInferenceOptions options{true, 1, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
@@ -552,7 +554,7 @@ foo (x) => (y) {
   auto status = OnnxParser::Parse(model, code);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
 
-  check_model(model);
+  checker::check_model(model);
 
   ShapeInferenceOptions options{true, 1, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);

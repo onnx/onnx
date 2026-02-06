@@ -5,7 +5,9 @@
 #include "onnx/checker.h"
 
 #include <filesystem>
+#include <iostream>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -178,6 +180,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::FLOAT8E8M0:
       case TensorProto::UINT4:
       case TensorProto::INT4:
+      case TensorProto::UINT2:
+      case TensorProto::INT2:
       case TensorProto::FLOAT4E2M1:
         check_field(int32_data);
         break;
@@ -546,7 +550,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
   for (const auto& attr : node.attribute()) {
     if (!seen_attr_names.insert(attr.name()).second) {
       fail_check("Attribute '", attr.name(), "' appeared multiple times.");
-    };
+    }
 
     check_attribute(attr, ctx, lex_ctx);
   }
@@ -556,7 +560,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx, const LexicalS
     return;
   }
 
-  const auto* schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
+  const auto* const schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
   if (!schema) {
     if (node.domain() == ONNX_DOMAIN || node.domain() == AI_ONNX_ML_DOMAIN || node.domain() == "ai.onnx" ||
         node.domain() == AI_ONNX_TRAINING_DOMAIN || ctx.check_custom_domain()) {
@@ -590,7 +594,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   LexicalScopeContext lex_ctx{parent_lex};
 
   for (const auto& value_info : graph.input()) {
-    // TODO: If shadowing isn't allowed, this should maybe use
+    // TODO(ONNX): If shadowing isn't allowed, this should maybe use
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(value_info.name())) {
       fail_check(
@@ -740,10 +744,10 @@ void check_opset_compatibility(
     return;
   }
 
-  const auto* schema_for_model_import =
+  const auto* const schema_for_model_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), model_opset_version, node.domain());
 
-  const auto* schema_for_function_import =
+  const auto* const schema_for_function_import =
       ctx.get_schema_registry()->GetSchema(node.op_type(), func_opset_version, node.domain());
 
   if (!schema_for_model_import && !schema_for_function_import) {
@@ -801,7 +805,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   CheckerContext ctx_copy = ctx;
 
   std::unordered_map<std::string, int> func_opset_imports;
-  for (auto& relied_opset : function.opset_import()) {
+  for (const auto& relied_opset : function.opset_import()) {
     func_opset_imports[relied_opset.domain()] = static_cast<int>(relied_opset.version());
   }
 
@@ -810,7 +814,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   LexicalScopeContext lex_ctx{parent_lex};
 
   for (const auto& input : function.input()) {
-    // TODO: If shadowing isn't allowed, this should maybe use
+    // TODO(ONNX): If shadowing isn't allowed, this should maybe use
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(input)) {
       fail_check(
@@ -908,9 +912,9 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
       fail_check("model with IR version >= 3 must specify opset_import for ONNX");
     }
   } else {
-    if (opset_imports.empty())
+    if (opset_imports.empty()) {
       opset_imports[ONNX_DOMAIN] = 1;
-    else {
+    } else {
       fail_check("model with IR version < 3 cannot have opset_import specified");
     }
   }
@@ -920,7 +924,7 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
 
   if (ctx.get_ir_version() >= 0x00000008) {
     check_model_local_functions(model, ctx, lex_ctx);
-    // TODO: check consistency between local functions and ops referencing it.
+    // TODO(ONNX): check consistency between local functions and ops referencing it.
   }
 }
 
@@ -998,11 +1002,11 @@ std::string resolve_external_data_location(
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
-        ") should be file inside the ",
+        ") should be file inside '",
         base_dir,
-        ", but the '",
+        "', but '",
         location,
-        "' points outside the directory");
+        "' points outside the directory.");
   }
   auto data_path = base_dir_path / relative_path;
 #ifdef _WIN32
@@ -1010,23 +1014,31 @@ std::string resolve_external_data_location(
 #else
   auto data_path_str = data_path.native();
 #endif
-  // Check whether the file exists
-  if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::exists(data_path))) {
+  // Do not allow symlinks or directories.
+  if (data_path.empty() || std::filesystem::is_symlink(data_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
         data_path_str,
-        ", but it doesn't exist or is not accessible.");
+        ", but it is a symbolic link.");
   }
-  // Do not allow symlinks or directories.
-  if (data_path.empty() || (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path))) {
+  if (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
         tensor_name,
         ") should be stored in ",
         data_path_str,
         ", but it is not regular file.");
+  }
+  // Check whether the file exists
+  if (data_path_str[0] != '#' && !std::filesystem::exists(data_path)) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        data_path_str,
+        ", but it doesn't exist or is not accessible.");
   }
   return data_path_str;
 }

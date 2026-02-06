@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -16,6 +14,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -36,15 +35,12 @@
 
 namespace ONNX_NAMESPACE {
 
-namespace { // internal/private API
-
-std::string toVarName(size_t i) {
+// internal/private API
+static inline std::string toVarName(size_t i) {
   std::ostringstream oss;
   oss << "_v_" << i;
   return oss.str();
 }
-
-} // namespace
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -187,7 +183,7 @@ struct Attributes {
   void copyAttributes(const Attributes& rhs) {
     values_.clear();
     values_.reserve(rhs.values_.size());
-    for (auto& i : rhs.values_) {
+    for (const auto& i : rhs.values_) {
       values_.push_back(i->clone());
     }
   }
@@ -208,7 +204,7 @@ struct Attributes {
   std::vector<Symbol> attributeNames() const {
     std::vector<Symbol> names;
     names.reserve(values_.size());
-    for (auto& a : values_)
+    for (const auto& a : values_)
       names.push_back(a->name);
     return names;
   }
@@ -321,6 +317,7 @@ struct Value final {
   int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
   bool has_sizes_{false};
   std::vector<Dimension> sizes_;
+  std::unique_ptr<TypeProto> type_;
 
  public:
   Value* setElemType(int32_t elem_type) {
@@ -357,7 +354,7 @@ struct Value final {
       return unique_name_;
     return toVarName(unique());
   }
-  Value* setUniqueName(const std::string& name, bool rename_subgraph_captured_nodes = true);
+  Value* setUniqueName(const std::string& name, bool update_related_names = true);
   Value* setStage(size_t s) {
     stage_ = s;
     return this;
@@ -376,7 +373,6 @@ struct Value final {
   }
   Graph* owningGraph();
   const Graph* owningGraph() const;
-  // TODO: make this more const correct
   use_list uses() const;
 
   // Replaces all uses of this node with 'newValue'.
@@ -397,6 +393,10 @@ struct Value final {
       setUniqueName(from->uniqueName());
     }
     return this;
+  }
+
+  std::unique_ptr<TypeProto>& type() {
+    return type_;
   }
 };
 
@@ -535,7 +535,7 @@ struct Node : public Attributes<Node> {
     return {outputs_.data(), outputs_.size()};
   }
   bool hasUses() const {
-    for (auto o : outputs()) {
+    for (const auto* o : outputs()) {
       if (!o->uses().empty())
         return true;
     }
@@ -562,7 +562,7 @@ struct Node : public Attributes<Node> {
     ONNX_ASSERT(inputs_.size() == 1)
     return inputs_.at(0);
   }
-  Value* output() const {
+  const Value* output() const {
     ONNX_ASSERT(outputs_.size() == 1)
     return outputs_.at(0);
   }
@@ -625,7 +625,7 @@ struct Node : public Attributes<Node> {
     ONNX_ASSERT(from->owningGraph() == graph_)
     ONNX_ASSERT(to->owningGraph() == graph_)
     size_t i = 0;
-    for (auto input : inputs()) {
+    for (const auto* input : inputs()) {
       if (input == from)
         replaceInput(i, to);
       i++;
@@ -755,7 +755,6 @@ struct Node : public Attributes<Node> {
   //
   // Example usage: if(auto s = n.cast<Select>()) { ... }
   //
-  // TODO: Make this const correct
   template <typename T>
   T* cast() {
     if (T::Kind == kind())
@@ -763,9 +762,20 @@ struct Node : public Attributes<Node> {
     return nullptr;
   }
   template <typename T>
+  const T* cast() const {
+    if (T::Kind == kind())
+      return static_cast<const T*>(this);
+    return nullptr;
+  }
+  template <typename T>
   T* expect() {
     ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
     return static_cast<T*>(this);
+  }
+  template <typename T>
+  const T* expect() const {
+    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
+    return static_cast<const T*>(this);
   }
 
   virtual ~Node() = default;
@@ -786,7 +796,7 @@ struct Node : public Attributes<Node> {
   // or erasing the entry from the list.
   Value* dropInput(size_t i) {
     ONNX_ASSERT(i < inputs_.size())
-    auto input_node = inputs_[i];
+    auto* input_node = inputs_[i];
     auto use_it = findUseForInput(i);
     input_node->uses_in_current_graph_.erase(use_it);
     inputs_[i] = nullptr;
@@ -940,11 +950,11 @@ struct Graph final {
           }
         }
       }
-      const auto found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
+      const auto* const found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
       if (found_in != node->inputs().end()) {
         return false;
       }
-      const auto found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
+      const auto* const found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
       if (found_out != node->outputs().end()) {
         return false;
       }
@@ -968,7 +978,7 @@ struct Graph final {
 
   void addInitializer(Tensor& initializer) {
     if (initializer.name().empty()) {
-      initializer.setName(toVarName(getNextUnique()));
+      initializer.setName(getNextUniqueName());
     }
     initializers_.push_back(initializer);
     initializer_names_.push_back(initializer.name());
@@ -1055,6 +1065,10 @@ struct Graph final {
     return next_unique_;
   }
 
+  std::string getNextUniqueName() {
+    return toVarName(getNextUnique());
+  }
+
   // These invocations of begin() on output of function are OK
   // because graph_node_list is non-owning, so it doesn't matter
   // if it immediately dies after the invocation.
@@ -1117,15 +1131,15 @@ struct Graph final {
 
   Node* create(NodeKind kind, size_t num_outputs = 1) {
     // NB: Node constructor adds node to all_nodes
-    auto n = new Node(this, kind);
+    auto* n = new Node(this, kind);
     for (size_t i = 0; i < num_outputs; i++)
       n->addOutput();
     return n;
   }
 
   Node* create(NodeKind kind, ArrayRef<Value*> inputs, size_t num_outputs = 1) {
-    auto n = create(kind, num_outputs);
-    for (auto i : inputs)
+    auto* n = create(kind, num_outputs);
+    for (auto* i : inputs)
       n->addInput(i);
     return n;
   }
@@ -1158,7 +1172,7 @@ struct Graph final {
   }
 
   Value* addInitializerAndInput(const Tensor& initializer) {
-    return addInitializerAndInput(initializer, toVarName(getNextUnique()));
+    return addInitializerAndInput(initializer, getNextUniqueName());
   }
 
   // Erases from graph initializer list, initializer names list, and as a graph input
@@ -1319,7 +1333,7 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
     newValue->setUniqueName(unique_name);
     // The "unique" semantic of unique_name should be kept or uses()
     // will return an incorrect result when the value is used in subgraph
-    this->setUniqueName(toVarName(graph->getNextUnique()), false);
+    this->setUniqueName(graph->getNextUniqueName(), false);
   }
   newValue->uses_in_current_graph_.reserve(this->uses_in_current_graph_.size());
   for (auto u : uses_in_current_graph_) {

@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/schema.h"
 
@@ -34,7 +34,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (numOutputs != 1) {
             fail_type_inference("OptionalHasElement is expected to have 1 output.");
           }
-          auto* output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
+          auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::BOOL);
           output_tensor_type->mutable_shape()->Clear();
         }));

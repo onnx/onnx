@@ -1,6 +1,9 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#include <string>
+#include <vector>
 
 #include "onnx/defs/schema.h"
 
@@ -271,14 +274,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* nodes_values = ctx.getAttribute("nodes_values");
-          auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
-          auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
-          auto* nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
-          auto* class_weights = ctx.getAttribute("class_weights");
-          auto* class_weights_as_tensor = ctx.getAttribute("class_weights_as_tensor");
-          auto* base_values = ctx.getAttribute("base_values");
-          auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
+          auto nodes_values = ctx.getAttribute("nodes_values");
+          auto nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
+          auto nodes_hitrates = ctx.getAttribute("nodes_hitrates");
+          auto nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
+          auto class_weights = ctx.getAttribute("class_weights");
+          auto class_weights_as_tensor = ctx.getAttribute("class_weights_as_tensor");
+          auto base_values = ctx.getAttribute("base_values");
+          auto base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
 
           if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
             fail_shape_inference(
@@ -502,14 +505,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::TENSOR,
             OPTIONAL_VALUE)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto* nodes_values = ctx.getAttribute("nodes_values");
-          auto* nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
-          auto* nodes_hitrates = ctx.getAttribute("nodes_hitrates");
-          auto* nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
-          auto* target_weights = ctx.getAttribute("target_weights");
-          auto* target_weights_as_tensor = ctx.getAttribute("target_weights_as_tensor");
-          auto* base_values = ctx.getAttribute("base_values");
-          auto* base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
+          auto nodes_values = ctx.getAttribute("nodes_values");
+          auto nodes_values_as_tensor = ctx.getAttribute("nodes_values_as_tensor");
+          auto nodes_hitrates = ctx.getAttribute("nodes_hitrates");
+          auto nodes_hitrates_as_tensor = ctx.getAttribute("nodes_hitrates_as_tensor");
+          auto target_weights = ctx.getAttribute("target_weights");
+          auto target_weights_as_tensor = ctx.getAttribute("target_weights_as_tensor");
+          auto base_values = ctx.getAttribute("base_values");
+          auto base_values_as_tensor = ctx.getAttribute("base_values_as_tensor");
 
           if (nullptr != nodes_values && nullptr != nodes_values_as_tensor) {
             fail_shape_inference(
