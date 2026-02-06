@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstdint>
 #include <functional>
 #include <iostream>
@@ -37,9 +38,9 @@ namespace ONNX_NAMESPACE {
 namespace { // internal/private API
 
 std::string toVarName(size_t i) {
-  std::ostringstream oss;
-  oss << "_v_" << i;
-  return oss.str();
+  std::array<char, 24> buf;
+  auto [ptr, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), i);
+  return std::string("_v_") + std::string(buf.data(), ptr);
 }
 
 } // namespace
@@ -854,8 +855,10 @@ class OpSetID final {
   // target must be in the form "<domain>&<version>"
   static OpSetID fromString(const std::string& target) {
     ONNX_TRY {
-      std::string new_domain = target.substr(0, target.find('$'));
-      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find('$') + 1, target.length()));
+      auto pos = target.find('$');
+      std::string new_domain = target.substr(0, pos);
+      int64_t new_version = 0;
+      std::from_chars(target.data() + pos + 1, target.data() + target.size(), new_version);
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
