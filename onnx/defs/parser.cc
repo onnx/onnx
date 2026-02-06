@@ -10,6 +10,7 @@
 #include <cctype>
 #include <limits>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 #include "onnx/common/common.h"
@@ -137,7 +138,8 @@ bool ParserBase::NextIsValidFloatString() {
 
     std::transform(
         candidate.begin(), candidate.end(), candidate.begin(), [](unsigned char c) { return std::tolower(c); });
-    if (candidate == std::string("inf") || candidate == std::string("infinity") || candidate == std::string("nan")) {
+    if (candidate == std::string_view("inf") || candidate == std::string_view("infinity") ||
+        candidate == std::string_view("nan")) {
       return true;
     }
   }
