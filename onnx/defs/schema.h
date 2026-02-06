@@ -924,6 +924,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[ONNX_DOMAIN] = std::make_pair(1, 26);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 5);
       map_[AI_ONNX_TRAINING_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_PREVIEW_DOMAIN] = std::make_pair(1, 1);
       // ONNX's preview domain contains operators subject to change, so
       // versioning is not meaningful and that domain should have only one
       // version.
@@ -934,6 +935,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       last_release_version_map_[ONNX_DOMAIN] = 25;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
+      last_release_version_map_[AI_ONNX_PREVIEW_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
     }
 
@@ -1297,6 +1299,9 @@ ONNX_API OpSchema GetOpSchema();
 
 #define ONNX_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxTraining, AI_ONNX_TRAINING_DOMAIN, ver, true, impl)
+
+#define ONNX_PREVIEW_OPERATOR_SET_SCHEMA(name, ver, impl) \
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxPreview, AI_ONNX_PREVIEW_DOMAIN, ver, true, impl)
 
 #define ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxPreview, AI_ONNX_PREVIEW_TRAINING_DOMAIN, ver, true, impl)
