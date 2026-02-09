@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstdint>
 #include <functional>
 #include <iostream>
@@ -58,21 +59,16 @@ struct Value;
 
 class ResourceGuard final {
   std::function<void()> destructor_;
-  bool released_{false};
 
  public:
   ONNX_DISALLOW_COPY_AND_ASSIGN(ResourceGuard);
+  ResourceGuard(ResourceGuard&&) = delete;
+  ResourceGuard& operator=(ResourceGuard&&) = delete;
+
   explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)) {}
-  ResourceGuard(ResourceGuard&& other) = default;
-  ResourceGuard& operator=(ResourceGuard&& other) = default;
 
   ~ResourceGuard() {
-    if (!released_)
-      destructor_();
-  }
-
-  void release() {
-    released_ = true;
+    destructor_();
   }
 };
 
@@ -853,16 +849,26 @@ class OpSetID final {
 
   explicit OpSetID(std::string domain, int64_t version) : domain_(std::move(domain)), version_(version) {}
 
-  // target must be in the form "<domain>&<version>"
+  // target must be in the form "<domain>$<version>"
   std::string toString() const {
     return domain_ + "$" + ONNX_NAMESPACE::to_string(version_);
   }
 
-  // target must be in the form "<domain>&<version>"
+  // target must be in the form "<domain>$<version>"
   static OpSetID fromString(const std::string& target) {
     ONNX_TRY {
-      std::string new_domain = target.substr(0, target.find('$'));
-      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find('$') + 1, target.length()));
+      auto pos = target.find('$');
+      if (pos == std::string::npos) {
+        ONNX_THROW("Invalid OpSetID string '", target, "': must be in the form \"<domain>$<version>\"");
+      }
+      std::string new_domain = target.substr(0, pos);
+      const char* version_start = target.data() + pos + 1;
+      const char* version_end = target.data() + target.size();
+      int64_t new_version = 0;
+      auto result = std::from_chars(version_start, version_end, new_version);
+      if (result.ec != std::errc{} || result.ptr != version_end) {
+        ONNX_THROW("Invalid OpSetID string '", target, "': must be in the form \"<domain>$<version>\"");
+      }
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
@@ -968,7 +974,7 @@ struct Graph final {
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  const std::string& docString() {
+  const std::string& docString() const {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {

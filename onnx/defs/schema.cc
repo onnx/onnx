@@ -136,10 +136,10 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
-      auto p = type_constraints.emplace(type_str, *type_proto);
-      if (!p.second) {
+      auto [it, inserted] = type_constraints.emplace(type_str, *type_proto);
+      if (!inserted) {
         // failed to insert a new element due to a duplication, now check consistency
-        if (p.first->second != *type_proto) {
+        if (it->second != *type_proto) {
           fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
         }
       }
@@ -250,7 +250,7 @@ void OpSchema::Verify(const NodeProto& node) const {
       fail_check("Attribute '", name, "' appeared multiple times.");
     }
 
-    const auto& search = attributes_.find(name);
+    const auto search = attributes_.find(name);
     AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
@@ -321,8 +321,7 @@ void OpSchema::Verify(const NodeProto& node) const {
         fail_check("Attribute '", name, " has unknown expected type");
     }
   }
-  for (const auto& pair : attributes_) {
-    const auto& attr = pair.second;
+  for (const auto& [_, attr] : attributes_) {
     if (!attr.required) {
       continue;
     }
@@ -734,9 +733,9 @@ void OpSchema::ParseAndSetTypes(
   for (auto& formal_parameter : *formal_parameters) {
     const auto& type = formal_parameter.GetTypeStr();
     DataTypeSet allowed_types;
-    auto it = type_constraints_.find(type);
-    if (it != type_constraints_.end()) {
-      allowed_types = it->second.first;
+    if (auto it = type_constraints_.find(type); it != type_constraints_.end()) {
+      auto& [types, description] = it->second;
+      allowed_types = types;
     } else {
       allowed_types.emplace(Utils::DataTypeUtils::ToType(type));
     }
@@ -878,8 +877,8 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
   auto it = opset_version_to_function_body_.upper_bound(requested_opset_version);
   if (it != opset_version_to_function_body_.begin()) {
     --it;
-    int function_since_version = it->first;
-    const FunctionProto* function = it->second.get();
+    auto& [function_since_version, func_ptr] = *it;
+    const FunctionProto* function = func_ptr.get();
     if (!validate || ValidateReferencedOpsInFunction(function, requested_opset_version, function_since_version)) {
       return function;
     }
@@ -1627,15 +1626,15 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
 
-  for (auto& func : opset_version_to_function_body_) {
-    BuildFunction(*func.second);
+  for (auto& [_, func_body] : opset_version_to_function_body_) {
+    BuildFunction(*func_body);
   }
 }
 
 OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
   if (node_determinism_ == NodeDeterminism::Unknown) {
-    for (const auto& attr : attributes()) {
-      switch (attr.second.type) {
+    for (const auto& [_, attr] : attributes()) {
+      switch (attr.type) {
         case AttributeProto::GRAPH:
         case AttributeProto::GRAPHS:
           return NodeDeterminism::NonDeterministic;
@@ -1681,8 +1680,8 @@ OpSchema& OpSchema::SetNodeDeterminism(NodeDeterminism node_determinism) {
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
     out << "Attributes:" << '\n';
-    for (const auto& pair : schema.attributes_) {
-      out << "  " << pair.second.name << " : " << pair.second.description << '\n';
+    for (const auto& [_, attr] : schema.attributes_) {
+      out << "  " << attr.name << " : " << attr.description << '\n';
     }
   }
   if (schema.max_input_ > 0) {
