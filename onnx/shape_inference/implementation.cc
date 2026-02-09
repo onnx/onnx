@@ -941,23 +941,23 @@ struct FunctionInferenceContext : public InferenceContext {
     return (index < output_types_.size()) ? &output_types_[index] : nullptr;
   }
 
-  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override {
-    ONNX_UNUSED_PARAMETER(attribute_name); // This method is unused for function-type-inference.
+  // This method is unused for function-type-inference.
+  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name [[maybe_unused]]) override {
     return nullptr;
   }
 
-  const TensorProto* getInputData(size_t index) const override {
-    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of statically known input values.
+  // This inference doesn't take advantage of statically known input values.
+  const TensorProto* getInputData(size_t index [[maybe_unused]]) const override {
     return nullptr;
   }
 
-  const SparseTensorProto* getInputSparseData(size_t index) const override {
-    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of statically known input values.
+  // This inference doesn't take advantage of statically known input values.
+  const SparseTensorProto* getInputSparseData(size_t index [[maybe_unused]]) const override {
     return nullptr;
   }
 
-  const TensorShapeProto* getSymbolicInput(size_t index) const override {
-    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of data-propagation.
+  // This inference doesn't take advantage of data-propagation.
+  const TensorShapeProto* getSymbolicInput(size_t index [[maybe_unused]]) const override {
     return nullptr;
   }
 
