@@ -59,21 +59,16 @@ struct Value;
 
 class ResourceGuard final {
   std::function<void()> destructor_;
-  bool released_{false};
 
  public:
   ONNX_DISALLOW_COPY_AND_ASSIGN(ResourceGuard);
+  ResourceGuard(ResourceGuard&&) = delete;
+  ResourceGuard& operator=(ResourceGuard&&) = delete;
+
   explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)) {}
-  ResourceGuard(ResourceGuard&& other) = default;
-  ResourceGuard& operator=(ResourceGuard&& other) = default;
 
   ~ResourceGuard() {
-    if (!released_)
-      destructor_();
-  }
-
-  void release() {
-    released_ = true;
+    destructor_();
   }
 };
 
@@ -979,7 +974,7 @@ struct Graph final {
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  const std::string& docString() {
+  const std::string& docString() const {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {
