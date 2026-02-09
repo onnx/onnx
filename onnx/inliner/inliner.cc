@@ -524,10 +524,10 @@ struct InlinerImpl {
     }
 
     if (function_map != nullptr) {
-      auto iter = this->function_map->find(GetCalleeId(node));
-      if (iter != this->function_map->end()) {
-        callee = *iter->second.first;
-        target_version = iter->second.second;
+      if (auto iter = this->function_map->find(GetCalleeId(node)); iter != this->function_map->end()) {
+        auto& [func_ptr, version] = iter->second;
+        callee = *func_ptr;
+        target_version = version;
         return true;
       }
     }

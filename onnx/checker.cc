@@ -825,16 +825,16 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_set<std::string> outputs;
   for (const auto& output : function.output()) {
-    auto result = outputs.insert(output);
-    if (!result.second) {
+    auto [it, inserted] = outputs.insert(output);
+    if (!inserted) {
       fail_check("function (", function.name(), ") should not have duplicate outputs specified.");
     }
   }
 
   std::unordered_set<std::string> attrs;
   for (const auto& attr : function.attribute()) {
-    auto result = attrs.insert(attr);
-    if (!result.second) {
+    auto [it, inserted] = attrs.insert(attr);
+    if (!inserted) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }

@@ -114,9 +114,9 @@ static std::pair<std::vector<Ts>, std::unordered_map<std::string, T*>> ParseProt
   std::vector<Ts> values(bytesMap.size());
   std::unordered_map<std::string, T*> result;
   size_t i = 0;
-  for (const auto& kv : bytesMap) {
-    ParseProtoFromPyBytes(&values[i], kv.second);
-    result[kv.first] = &values[i];
+  for (const auto& [key, bytes] : bytesMap) {
+    ParseProtoFromPyBytes(&values[i], bytes);
+    result[key] = &values[i];
     i++;
   }
   // C++ guarantees that the pointers remain valid after std::vector<Ts> is moved.
