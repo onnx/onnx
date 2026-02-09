@@ -321,7 +321,7 @@ void OpSchema::Verify(const NodeProto& node) const {
         fail_check("Attribute '", name, " has unknown expected type");
     }
   }
-  for (const auto& [attr_name, attr] : attributes_) {
+  for (const auto& [_, attr] : attributes_) {
     if (!attr.required) {
       continue;
     }
@@ -1626,14 +1626,14 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
 
-  for (auto& [version, func_body] : opset_version_to_function_body_) {
+  for (auto& [_, func_body] : opset_version_to_function_body_) {
     BuildFunction(*func_body);
   }
 }
 
 OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
   if (node_determinism_ == NodeDeterminism::Unknown) {
-    for (const auto& [attr_name, attr] : attributes()) {
+    for (const auto& [_, attr] : attributes()) {
       switch (attr.type) {
         case AttributeProto::GRAPH:
         case AttributeProto::GRAPHS:
@@ -1680,7 +1680,7 @@ OpSchema& OpSchema::SetNodeDeterminism(NodeDeterminism node_determinism) {
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
     out << "Attributes:" << '\n';
-    for (const auto& [attr_name, attr] : schema.attributes_) {
+    for (const auto& [_, attr] : schema.attributes_) {
       out << "  " << attr.name << " : " << attr.description << '\n';
     }
   }
@@ -1784,9 +1784,9 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
 #ifndef NDEBUG
     static size_t GetRegisteredSchemaCount() {
       size_t count = 0;
-      for (auto& [op_name, domain_map] : GetMapWithoutEnsuringRegistration()) {
-        for (auto& [domain, version_map] : domain_map) {
-          count += version_map.size();
+      for (auto& x : GetMapWithoutEnsuringRegistration()) {
+        for (auto& y : x.second) {
+          count += y.second.size();
         }
       }
       return count;

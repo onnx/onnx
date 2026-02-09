@@ -1133,7 +1133,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     auto& schema_map = GetMapWithoutEnsuringRegistration();
     // schema_map stores operator schemas in the format of
     // <OpName, <Domain, <OperatorSetVersion, OpSchema>>>
-    for (auto&& [op_name, domain_map] : schema_map) {
+    for (auto&& [_, domain_map] : schema_map) {
       if (domain_map.count(domain)) {
         auto& opset_version_schema_map = domain_map[domain];
         // Invalidates ver-schema pairs and frees memory, leaving m[op_name][op_domain] empty
@@ -1227,10 +1227,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
  public:
   static std::vector<OpSchema> get_all_schemas_with_history() {
     std::vector<OpSchema> r;
-    for (auto& [op_name, domain_map] : map()) {
-      for (auto& [domain, version_map] : domain_map) {
-        for (auto& [version, schema] : version_map) {
-          r.emplace_back(schema);
+    for (auto& x : map()) {
+      for (auto& y : x.second) {
+        for (auto& z : y.second) {
+          r.emplace_back(z.second);
         }
       }
     }
@@ -1239,10 +1239,10 @@ class OpSchemaRegistry final : public ISchemaRegistry {
 
   static std::vector<OpSchema> get_all_schemas() {
     std::vector<OpSchema> r;
-    for (auto& [op_name, domain_map] : map()) {
-      for (auto& [domain, version_map] : domain_map) {
-        if (!version_map.empty()) {
-          r.emplace_back(version_map.rbegin()->second);
+    for (auto& x : map()) {
+      for (auto& y : x.second) {
+        if (!y.second.empty()) {
+          r.emplace_back(y.second.rbegin()->second);
         }
       }
     }
@@ -1346,9 +1346,9 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                     \
-  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce op_schema_register_once##name##Counter [[maybe_unused]] = \
-      ONNX_NAMESPACE::OpSchema(#name, __FILE__, __LINE__)
+#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                       \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce op_schema_register_once##name##Counter \
+      [[maybe_unused]] = ONNX_NAMESPACE::OpSchema(#name, __FILE__, __LINE__)
 
 ONNX_API inline std::string GenerateOptionalArgumentsDoc() {
   return "This operator has **optional** inputs/outputs. "

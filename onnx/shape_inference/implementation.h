@@ -441,7 +441,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     if (index >= outputIndexToNameMap_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
-    auto [it, inserted] = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tsp)});
+    auto [_, inserted] = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tsp)});
     if (!inserted) {
       fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
     }

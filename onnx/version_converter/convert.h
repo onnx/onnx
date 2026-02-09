@@ -121,13 +121,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
       const auto default_versions = domain_map.find("");
       if (default_versions != domain_map.end()) {
         int64_t min_version = version_range.second;
-        for (auto& [version, schema] : default_versions->second) {
+        for (auto& [version, _] : default_versions->second) {
           min_version = std::min(version, min_version);
         }
         if (min_version > 1) {
           registerAdapter(
-              std::make_unique<NoPreviousVersionAdapter>(
-                  op_name, OpSetID(min_version), OpSetID(min_version - 1)));
+              std::make_unique<NoPreviousVersionAdapter>(op_name, OpSetID(min_version), OpSetID(min_version - 1)));
         }
       }
     }
