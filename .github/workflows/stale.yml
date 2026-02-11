@@ -3,10 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # This workflow warns and then closes issues and PRs that have had no activity for a specified amount of time.
-#
-# You can adjust the behavior by modifying this file.
-# For more information, see:
-# https://github.com/actions/stale
+# For more information, see: # https://github.com/actions/stale
+
 name: Mark stale issues and pull requests
 
 on:
@@ -28,8 +26,8 @@ jobs:
     - uses: actions/stale@997185467fa4f803885201cee163a9f38240193d # v10.1.1
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        days-before-stale: 365
-        days-before-close: 21
+        days-before-stale: 565
+        days-before-close: 41
         ascending: true
         exempt-issue-labels: bug,no-stale
         exempt-pr-labels: no-stale,contributions welcome
