@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstdint>
 #include <functional>
 #include <iostream>
@@ -35,15 +36,12 @@
 
 namespace ONNX_NAMESPACE {
 
-namespace { // internal/private API
-
-std::string toVarName(size_t i) {
+// internal/private API
+static inline std::string toVarName(size_t i) {
   std::ostringstream oss;
   oss << "_v_" << i;
   return oss.str();
 }
-
-} // namespace
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -61,21 +59,16 @@ struct Value;
 
 class ResourceGuard final {
   std::function<void()> destructor_;
-  bool released_{false};
 
  public:
   ONNX_DISALLOW_COPY_AND_ASSIGN(ResourceGuard);
+  ResourceGuard(ResourceGuard&&) = delete;
+  ResourceGuard& operator=(ResourceGuard&&) = delete;
+
   explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)) {}
-  ResourceGuard(ResourceGuard&& other) = default;
-  ResourceGuard& operator=(ResourceGuard&& other) = default;
 
   ~ResourceGuard() {
-    if (!released_)
-      destructor_();
-  }
-
-  void release() {
-    released_ = true;
+    destructor_();
   }
 };
 
@@ -376,7 +369,6 @@ struct Value final {
   }
   Graph* owningGraph();
   const Graph* owningGraph() const;
-  // TODO: make this more const correct
   use_list uses() const;
 
   // Replaces all uses of this node with 'newValue'.
@@ -566,7 +558,7 @@ struct Node : public Attributes<Node> {
     ONNX_ASSERT(inputs_.size() == 1)
     return inputs_.at(0);
   }
-  Value* output() const {
+  const Value* output() const {
     ONNX_ASSERT(outputs_.size() == 1)
     return outputs_.at(0);
   }
@@ -759,7 +751,6 @@ struct Node : public Attributes<Node> {
   //
   // Example usage: if(auto s = n.cast<Select>()) { ... }
   //
-  // TODO: Make this const correct
   template <typename T>
   T* cast() {
     if (T::Kind == kind())
@@ -767,9 +758,20 @@ struct Node : public Attributes<Node> {
     return nullptr;
   }
   template <typename T>
+  const T* cast() const {
+    if (T::Kind == kind())
+      return static_cast<const T*>(this);
+    return nullptr;
+  }
+  template <typename T>
   T* expect() {
     ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
     return static_cast<T*>(this);
+  }
+  template <typename T>
+  const T* expect() const {
+    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
+    return static_cast<const T*>(this);
   }
 
   virtual ~Node() = default;
@@ -847,16 +849,26 @@ class OpSetID final {
 
   explicit OpSetID(std::string domain, int64_t version) : domain_(std::move(domain)), version_(version) {}
 
-  // target must be in the form "<domain>&<version>"
+  // target must be in the form "<domain>$<version>"
   std::string toString() const {
     return domain_ + "$" + ONNX_NAMESPACE::to_string(version_);
   }
 
-  // target must be in the form "<domain>&<version>"
+  // target must be in the form "<domain>$<version>"
   static OpSetID fromString(const std::string& target) {
     ONNX_TRY {
-      std::string new_domain = target.substr(0, target.find('$'));
-      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find('$') + 1, target.length()));
+      auto pos = target.find('$');
+      if (pos == std::string::npos) {
+        ONNX_THROW("Invalid OpSetID string '", target, "': must be in the form \"<domain>$<version>\"");
+      }
+      std::string new_domain = target.substr(0, pos);
+      const char* version_start = target.data() + pos + 1;
+      const char* version_end = target.data() + target.size();
+      int64_t new_version = 0;
+      auto result = std::from_chars(version_start, version_end, new_version);
+      if (result.ec != std::errc{} || result.ptr != version_end) {
+        ONNX_THROW("Invalid OpSetID string '", target, "': must be in the form \"<domain>$<version>\"");
+      }
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
@@ -962,7 +974,7 @@ struct Graph final {
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  const std::string& docString() {
+  const std::string& docString() const {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {
@@ -1264,9 +1276,9 @@ struct Graph final {
   }
 };
 
-inline Value::Value(Node* node_, size_t offset_)
-    : node_(node_), offset_(offset_), unique_(node_->graph_->getNextUnique()), stage_(node_->graph_->new_node_stage_) {
-  node_->graph_->all_values.emplace(this);
+inline Value::Value(Node* node, size_t offset)
+    : node_(node), offset_(offset), unique_(node->graph_->getNextUnique()), stage_(node->graph_->new_node_stage_) {
+  node->graph_->all_values.emplace(this);
 }
 
 inline Graph* Value::owningGraph() {

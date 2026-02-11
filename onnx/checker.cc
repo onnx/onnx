@@ -4,7 +4,7 @@
 
 #include "onnx/checker.h"
 
-#include <filesystem>
+#include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -594,7 +594,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   LexicalScopeContext lex_ctx{parent_lex};
 
   for (const auto& value_info : graph.input()) {
-    // TODO: If shadowing isn't allowed, this should maybe use
+    // TODO(ONNX): If shadowing isn't allowed, this should maybe use
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(value_info.name())) {
       fail_check(
@@ -814,7 +814,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   LexicalScopeContext lex_ctx{parent_lex};
 
   for (const auto& input : function.input()) {
-    // TODO: If shadowing isn't allowed, this should maybe use
+    // TODO(ONNX): If shadowing isn't allowed, this should maybe use
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(input)) {
       fail_check(
@@ -825,16 +825,14 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_set<std::string> outputs;
   for (const auto& output : function.output()) {
-    auto result = outputs.insert(output);
-    if (!result.second) {
+    if (!outputs.insert(output).second) {
       fail_check("function (", function.name(), ") should not have duplicate outputs specified.");
     }
   }
 
   std::unordered_set<std::string> attrs;
   for (const auto& attr : function.attribute()) {
-    auto result = attrs.insert(attr);
-    if (!result.second) {
+    if (!attrs.insert(attr).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
@@ -924,7 +922,7 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
 
   if (ctx.get_ir_version() >= 0x00000008) {
     check_model_local_functions(model, ctx, lex_ctx);
-    // TODO: check consistency between local functions and ops referencing it.
+    // TODO(ONNX): check consistency between local functions and ops referencing it.
   }
 }
 

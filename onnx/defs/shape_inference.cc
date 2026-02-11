@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "shape_inference.h"
+#include "onnx/defs/shape_inference.h"
 
 #include <string>
 #include <utility>
