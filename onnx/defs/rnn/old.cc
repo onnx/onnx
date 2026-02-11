@@ -394,7 +394,7 @@ static std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "Specify if the RNN is forward, reverse, or bidirectional. "
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
-        std::string("foward"));
+        std::string("foward")); // reviewdog:ignore[misspell], don't fix that typo, it's fixed in newer versions
     schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
