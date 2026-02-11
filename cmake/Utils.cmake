@@ -72,14 +72,25 @@ function(add_onnx_hardening_flags target)
   endif()
 endfunction()
 
-# Add MSVC RunTime Flag
+# Adjusts the MSVC_RUNTIME_LIBRARY property for a given target.
+# If CMAKE_MSVC_RUNTIME_LIBRARY is defined, we assume the user wants to explicitly use that value.
+# If not, we respect ONNX_USE_MSVC_STATIC_RUNTIME and delegate to the static/dynamic lib respectively,
+# with Debug builds using the debug libs.
 function(add_msvc_runtime_flag lib)
-  if(ONNX_USE_MSVC_STATIC_RUNTIME)
-    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MT>
-                                          $<$<CONFIG:Debug>:/MTd>)
+  if(DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+    # Don't do anything here and respect parent-project provided value.
+    # CMake will have already associated the default value with our target.
+    message(STATUS "Ignoring ONNX_USE_MSVC_STATIC_RUNTIME since CMAKE_MSVC_RUNTIME_LIBRARY is defined.")
   else()
-    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MD>
-                                          $<$<CONFIG:Debug>:/MDd>)
+    if(ONNX_USE_MSVC_STATIC_RUNTIME)
+      set_target_properties(${lib} PROPERTIES
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+      )
+    else()
+      set_target_properties(${lib} PROPERTIES
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+      )
+    endif()
   endif()
 endfunction()
 
