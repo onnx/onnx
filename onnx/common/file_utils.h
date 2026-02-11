@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <filesystem>  // NOLINT(build/c++17)
+#include <filesystem> // NOLINT(build/c++17)
 #include <fstream>
 #include <string>
 
