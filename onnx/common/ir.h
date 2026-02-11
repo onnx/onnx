@@ -443,7 +443,7 @@ struct Node : public Attributes<Node> {
   std::string overload_;
 
  protected:
-  Node(Graph* graph, NodeKind kind); // defined after graph
+  Node(Graph* graph_, NodeKind kind_); // defined after graph
 
  public:
   bool has_name() const {
@@ -1362,7 +1362,7 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
   assert(this->uses().empty());
 }
 
-inline Node::Node(Graph* graph, NodeKind kind) : kind_(kind), graph_(graph), stage_(graph->new_node_stage_) {
+inline Node::Node(Graph* graph_, NodeKind kind_) : kind_(kind_), graph_(graph_), stage_(graph_->new_node_stage_) {
   graph_->all_nodes.emplace(this);
 }
 
