@@ -508,8 +508,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (delta_val == 0) {
             return;
           }
-          int64_t n = std::max<int64_t>(
-              static_cast<int64_t>(ceil(static_cast<double>(limit_val - start_val) / delta_val)), 0);
+          int64_t n =
+              std::max<int64_t>(static_cast<int64_t>(ceil(static_cast<double>(limit_val - start_val) / delta_val)), 0);
           // Cap output size to avoid excessive memory usage
           if (n > 1000) {
             return;

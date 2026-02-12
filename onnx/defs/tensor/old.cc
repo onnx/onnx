@@ -5060,7 +5060,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput).PartialDataPropagationFunction(IdentityDataPropagator));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5080,7 +5081,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput).PartialDataPropagationFunction(IdentityDataPropagator));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5100,7 +5102,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput).PartialDataPropagationFunction(IdentityDataPropagator));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5120,7 +5123,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput).PartialDataPropagationFunction(IdentityDataPropagator));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5130,7 +5134,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "Tensor to copy input into.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput).PartialDataPropagationFunction(IdentityDataPropagator));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5140,7 +5145,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input tensor", "T")
         .Output(0, "output", "Tensor to copy input into.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput).PartialDataPropagationFunction(IdentityDataPropagator));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
@@ -7131,7 +7137,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor and sequence types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput).PartialDataPropagationFunction(IdentityDataPropagator));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 static const char* const Where_ver9_doc = kDoc_Where_ver9;
 
@@ -7448,7 +7455,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput).PartialDataPropagationFunction(IdentityDataPropagator));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 static const char* const Reshape_ver14_doc = Reshape_ver24_doc;
 
