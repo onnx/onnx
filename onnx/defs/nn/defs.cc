@@ -202,7 +202,8 @@ ONNX_API void convPoolShapeInference(
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
-    auto output_dim = (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+    auto output_dim =
+        (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
 
     if (ceil_mode == 1 && output_dim.has_dim_value() && input_dim.has_dim_value()) {
       if ((output_dim.dim_value() - 1) * strides[i] >= (input_dim.dim_value() + pads[i])) {

@@ -246,7 +246,6 @@ class TestDataPropagation(TestShapeInferenceHelper):
         output = inferred_model.graph.output[0]
         self.assertEqual(output.type.tensor_type.shape.dim[0].dim_value, 256)
 
-
     def test_symbolic_add_produces_expression(self) -> None:
         """Shape → Add → Reshape: symbolic dim expression propagates to Reshape output."""
         model = onnx.parser.parse_model(
@@ -340,7 +339,9 @@ class TestDataPropagation(TestShapeInferenceHelper):
         dims = list(output.type.tensor_type.shape.dim)
         assert len(dims) == 2
         # First dim should be a symbolic expression containing "N"
-        assert dims[0].dim_param, f"Expected dim_param, got dim_value={dims[0].dim_value}"
+        assert dims[0].dim_param, (
+            f"Expected dim_param, got dim_value={dims[0].dim_value}"
+        )
         assert "N" in dims[0].dim_param
         # Second dim should be concrete 5
         assert dims[1].dim_value == 5

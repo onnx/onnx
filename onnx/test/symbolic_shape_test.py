@@ -146,9 +146,7 @@ class TestSymbolicShape(unittest.TestCase):
                 helper.make_tensor_value_info("D", TensorProto.FLOAT, [2, "_d1"]),
             ],
             outputs=[
-                helper.make_tensor_value_info(
-                    "output", TensorProto.FLOAT, [2, "_d0"]
-                )
+                helper.make_tensor_value_info("output", TensorProto.FLOAT, [2, "_d0"])
             ],
         )
 

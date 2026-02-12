@@ -2260,7 +2260,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             # (H + 2 - 3)/1 + 1 = "H + 2 - 3 + 1"
-            [make_tensor_value_info("z", TensorProto.FLOAT, (1, 16, "H + 2 - 3 + 1", "W + 2 - 3 + 1"))],
+            [
+                make_tensor_value_info(
+                    "z", TensorProto.FLOAT, (1, 16, "H + 2 - 3 + 1", "W + 2 - 3 + 1")
+                )
+            ],
         )
 
     def test_conv_symbolic_spatial_dims_with_stride(self) -> None:
@@ -2275,7 +2279,13 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             # (H + 2 - 3)/2 + 1
-            [make_tensor_value_info("z", TensorProto.FLOAT, (1, 16, "(H + 2 - 3)/2 + 1", "(W + 2 - 3)/2 + 1"))],
+            [
+                make_tensor_value_info(
+                    "z",
+                    TensorProto.FLOAT,
+                    (1, 16, "(H + 2 - 3)/2 + 1", "(W + 2 - 3)/2 + 1"),
+                )
+            ],
         )
 
     def test_conv_symbolic_spatial_dims_auto_pad_same_upper(self) -> None:
@@ -2305,7 +2315,11 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             # auto_pad=SAME with stride=2: output = ceil(input / stride) = (input + 1) / 2
-            [make_tensor_value_info("z", TensorProto.FLOAT, (1, 16, "(H + 1)/2", "(W + 1)/2"))],
+            [
+                make_tensor_value_info(
+                    "z", TensorProto.FLOAT, (1, 16, "(H + 1)/2", "(W + 1)/2")
+                )
+            ],
         )
 
     def test_attention_4d(self) -> None:
@@ -3829,7 +3843,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             # (H + 2 - 3)/1 + 1 = "H + 2 - 3 + 1"
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 3, "H + 2 - 3 + 1", "W + 2 - 3 + 1"))]
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, (1, 3, "H + 2 - 3 + 1", "W + 2 - 3 + 1")
+                )
+            ],
         )
 
     def test_maxpool_symbolic_spatial_dims_with_stride(self) -> None:
@@ -3849,7 +3868,14 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             # (H + 2 - 3)/2 + 1
-            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 3, "(H + 2 - 3)/2 + 1", "(W + 2 - 3)/2 + 1"))]
+            graph,
+            [
+                make_tensor_value_info(
+                    "Y",
+                    TensorProto.FLOAT,
+                    (1, 3, "(H + 2 - 3)/2 + 1", "(W + 2 - 3)/2 + 1"),
+                )
+            ],
         )
 
     def test_averagepool(self) -> None:
@@ -7426,7 +7452,10 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_pad_symbolic_dims(self) -> None:
         graph = self._make_graph(
-            [("x", TensorProto.FLOAT, ("N", 3, "H", "W")), ("pads", TensorProto.INT64, (8,))],
+            [
+                ("x", TensorProto.FLOAT, ("N", 3, "H", "W")),
+                ("pads", TensorProto.INT64, (8,)),
+            ],
             [make_node("Pad", ["x", "pads"], "y")],
             [],
             initializer=[
@@ -7434,7 +7463,12 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
         self._assert_inferred(
-            graph, [make_tensor_value_info("y", TensorProto.FLOAT, ("N", 3, "H + 2", "W + 2"))]
+            graph,
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.FLOAT, ("N", 3, "H + 2", "W + 2")
+                )
+            ],
         )
 
     def test_gatherelements_basic(self) -> None:
