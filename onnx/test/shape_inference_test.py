@@ -2322,6 +2322,22 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_add_broadcast_symbolic_conflict_gets_new_dim(self) -> None:
+        """When two different symbolic dims are broadcast, the result gets a new generated name."""
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, ("N", "M")),
+                ("y", TensorProto.FLOAT, ("N", "K")),
+            ],
+            [make_node("Add", ["x", "y"], "z")],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            # N matches N, but M vs K conflict → new generated dim _d0
+            [make_tensor_value_info("z", TensorProto.FLOAT, ("N", "_d0"))],
+        )
+
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
             [
