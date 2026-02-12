@@ -4996,8 +4996,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info(
-                    "loop_state_final", TensorProto.FLOAT, None
-                ),  # shape may change between iterations
+                    "loop_state_final", TensorProto.FLOAT, ()
+                ),  # shape propagated from subgraph output
                 make_tensor_value_info("loop_output", TensorProto.FLOAT, (None, 3)),
             ],
         )

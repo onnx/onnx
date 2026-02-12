@@ -113,63 +113,20 @@ def _load_expected_output_shapes(
 # Tests with expanded (multi-node) function bodies where shape inference
 # cannot propagate shapes through the expanded graph.
 _SKIP_EXPANDED_MODELS: set[str] = {
-    # AffineGrid expanded models — complex If/subgraph patterns
+    # AffineGrid expanded — float arithmetic in grid construction can't propagate
+    # through data propagation (only supports integer dim_values)
     "test_affine_grid_2d_align_corners_expanded",
     "test_affine_grid_2d_expanded",
     "test_affine_grid_3d_align_corners_expanded",
     "test_affine_grid_3d_expanded",
-    # LayerNormalization expanded models — ReduceMean axes depend on Range
-    # whose inputs require evaluation through Sub/Cast/Add chain
-    "test_layer_normalization_2d_axis0_expanded",
-    "test_layer_normalization_2d_axis0_expanded_ver18",
-    "test_layer_normalization_2d_axis1_expanded",
-    "test_layer_normalization_2d_axis1_expanded_ver18",
-    "test_layer_normalization_2d_axis_negative_1_expanded",
-    "test_layer_normalization_2d_axis_negative_1_expanded_ver18",
-    "test_layer_normalization_2d_axis_negative_2_expanded",
-    "test_layer_normalization_2d_axis_negative_2_expanded_ver18",
-    "test_layer_normalization_3d_axis0_epsilon_expanded",
-    "test_layer_normalization_3d_axis0_epsilon_expanded_ver18",
-    "test_layer_normalization_3d_axis1_epsilon_expanded",
-    "test_layer_normalization_3d_axis1_epsilon_expanded_ver18",
-    "test_layer_normalization_3d_axis2_epsilon_expanded",
-    "test_layer_normalization_3d_axis2_epsilon_expanded_ver18",
-    "test_layer_normalization_3d_axis_negative_1_epsilon_expanded",
-    "test_layer_normalization_3d_axis_negative_1_epsilon_expanded_ver18",
-    "test_layer_normalization_3d_axis_negative_2_epsilon_expanded",
-    "test_layer_normalization_3d_axis_negative_2_epsilon_expanded_ver18",
-    "test_layer_normalization_3d_axis_negative_3_epsilon_expanded",
-    "test_layer_normalization_3d_axis_negative_3_epsilon_expanded_ver18",
-    "test_layer_normalization_4d_axis0_expanded",
-    "test_layer_normalization_4d_axis0_expanded_ver18",
-    "test_layer_normalization_4d_axis1_expanded",
-    "test_layer_normalization_4d_axis1_expanded_ver18",
-    "test_layer_normalization_4d_axis2_expanded",
-    "test_layer_normalization_4d_axis2_expanded_ver18",
-    "test_layer_normalization_4d_axis3_expanded",
-    "test_layer_normalization_4d_axis3_expanded_ver18",
-    "test_layer_normalization_4d_axis_negative_1_expanded",
-    "test_layer_normalization_4d_axis_negative_1_expanded_ver18",
-    "test_layer_normalization_4d_axis_negative_2_expanded",
-    "test_layer_normalization_4d_axis_negative_2_expanded_ver18",
-    "test_layer_normalization_4d_axis_negative_3_expanded",
-    "test_layer_normalization_4d_axis_negative_3_expanded_ver18",
-    "test_layer_normalization_4d_axis_negative_4_expanded",
-    "test_layer_normalization_4d_axis_negative_4_expanded_ver18",
-    "test_layer_normalization_default_axis_expanded",
-    "test_layer_normalization_default_axis_expanded_ver18",
-    # Range expanded models — Loop trip count requires full constant evaluation
+    # Range expanded — Loop trip count depends on float arithmetic
+    # (data propagation only supports integer values)
     "test_range_float_type_positive_delta_expanded",
     "test_range_int32_type_negative_delta_expanded",
 }
 
 # Tests requiring strict_mode=False or with known C++ inference limitations.
-_SKIP_KNOWN_LIMITATIONS: set[str] = {
-    # Loop with subgraph — shape inference across subgraphs is limited
-    "test_loop11",
-    # MaxUnpool with output_shape input — C++ inference doesn't read initializer value
-    "test_maxunpool_export_with_output_shape",
-}
+_SKIP_KNOWN_LIMITATIONS: set[str] = set()
 
 # Tests that need strict_mode=False to pass.
 _STRICT_MODE_FALSE: set[str] = {

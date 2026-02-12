@@ -510,8 +510,16 @@ static void maxUnpoolShapeInference_opset11(InferenceContext& ctx) {
         fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
-    return; // 'output_shape' is specified as input. Actual shape will be
-            // determined at runtime.
+    // If output_shape data is available, use it to set the output shape.
+    const TensorProto* output_shape_data = ctx.getInputData(2);
+    if (output_shape_data != nullptr) {
+      const auto values = ParseData<int64_t>(output_shape_data);
+      auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      for (const auto& v : values) {
+        final_output_shape->add_dim()->set_dim_value(v);
+      }
+    }
+    return;
   }
 
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -2628,8 +2636,16 @@ static void maxUnpoolShapeInference1(InferenceContext& ctx) {
         fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
-    return; // 'output_shape' is specified as input. Actual shape will be
-            // determined at runtime.
+    // If output_shape data is available, use it to set the output shape.
+    const TensorProto* output_shape_data = ctx.getInputData(2);
+    if (output_shape_data != nullptr) {
+      const auto values = ParseData<int64_t>(output_shape_data);
+      auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      for (const auto& v : values) {
+        final_output_shape->add_dim()->set_dim_value(v);
+      }
+    }
+    return;
   }
 
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();

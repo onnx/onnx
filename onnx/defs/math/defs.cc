@@ -49,6 +49,8 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
           expr = s0 + " - " + wrapIfCompound(s1);
         } else if (op_type == "Mul") {
           expr = wrapIfCompound(s0) + "*" + wrapIfCompound(s1);
+        } else if (op_type == "Div") {
+          expr = wrapIfCompound(s0) + "/" + wrapIfCompound(s1);
         } else {
           // Unsupported op — leave dim empty
           tsp.mutable_dim()->Add();
@@ -60,6 +62,17 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
       }
     }
   }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
+// Propagates data unchanged from input to output (for unary ops like Ceil, Floor
+// that are identity on integer dim_values stored in TensorShapeProto).
+static void UnaryIdentityDataPropagator(DataPropagationContext& ctx) {
+  const auto* input = ctx.getInputData(0);
+  if (input == nullptr) {
+    return;
+  }
+  TensorShapeProto tsp(*input);
   ctx.addOutputData(0, std::move(tsp));
 }
 
@@ -182,7 +195,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(MathDocGenerator("multiplication"))
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Mul"); }));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 14, OpSchema().FillUsing(MathDocGenerator("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    14,
+    OpSchema().FillUsing(MathDocGenerator("division")).PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+      MathOpDataPropagator(ctx, "Div");
+    }));
 
 static const char* const Neg_ver13_doc = kDoc_Neg_ver6;
 
@@ -204,7 +222,23 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(bfloat16)"},
             "Constrain input and output types to signed numeric tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          const auto* input = ctx.getInputData(0);
+          if (input == nullptr) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (int i = 0; i < input->dim_size(); ++i) {
+            const auto& dim = input->dim(i);
+            if (dim.has_dim_value()) {
+              tsp.mutable_dim()->Add()->set_dim_value(-dim.dim_value());
+            } else {
+              tsp.mutable_dim()->Add();
+            }
+          }
+          ctx.addOutputData(0, std::move(tsp));
+        }));
 
 static constexpr const char* Abs_ver13_doc = R"DOC(
 Absolute takes one input data (Tensor<T>) and produces one output data
@@ -257,7 +291,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(UnaryIdentityDataPropagator));
 
 static constexpr const char* Ceil_ver13_doc = R"DOC(
 Ceil takes one input data (Tensor<T>) and produces one output data
@@ -276,7 +311,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(UnaryIdentityDataPropagator));
 
 static const char* const Sqrt_ver13_doc = kDoc_Sqrt_ver6;
 
@@ -322,7 +358,23 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         )ONNX",
             18)
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          const auto* input = ctx.getInputData(0);
+          if (input == nullptr) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (int i = 0; i < input->dim_size(); ++i) {
+            const auto& dim = input->dim(i);
+            if (dim.has_dim_value()) {
+              tsp.mutable_dim()->Add()->set_dim_value(std::max(static_cast<int64_t>(0), dim.dim_value()));
+            } else {
+              tsp.mutable_dim()->Add();
+            }
+          }
+          ctx.addOutputData(0, std::move(tsp));
+        }));
 
 static const char* const LeakyRelu_ver16_doc = kDoc_LeakyRelu_ver1;
 

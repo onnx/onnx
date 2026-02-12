@@ -15,6 +15,81 @@
 
 namespace ONNX_NAMESPACE {
 
+// Data propagation helpers for old op versions.
+
+// Propagates data unchanged from input to output (for unary ops like Ceil, Floor
+// that are identity on integer dim_values stored in TensorShapeProto).
+static void UnaryIdentityDataPropagator_old(DataPropagationContext& ctx) {
+  const auto* input = ctx.getInputData(0);
+  if (input == nullptr) {
+    return;
+  }
+  TensorShapeProto tsp(*input);
+  ctx.addOutputData(0, std::move(tsp));
+}
+
+// Neg: negate all dim_values.
+static void NegDataPropagator_old(DataPropagationContext& ctx) {
+  const auto* input = ctx.getInputData(0);
+  if (input == nullptr) {
+    return;
+  }
+  TensorShapeProto tsp;
+  for (int i = 0; i < input->dim_size(); ++i) {
+    const auto& dim = input->dim(i);
+    if (dim.has_dim_value()) {
+      tsp.mutable_dim()->Add()->set_dim_value(-dim.dim_value());
+    } else {
+      tsp.mutable_dim()->Add();
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
+// Relu: max(0, dim_value) for each element.
+static void ReluDataPropagator_old(DataPropagationContext& ctx) {
+  const auto* input = ctx.getInputData(0);
+  if (input == nullptr) {
+    return;
+  }
+  TensorShapeProto tsp;
+  for (int i = 0; i < input->dim_size(); ++i) {
+    const auto& dim = input->dim(i);
+    if (dim.has_dim_value()) {
+      tsp.mutable_dim()->Add()->set_dim_value(std::max(static_cast<int64_t>(0), dim.dim_value()));
+    } else {
+      tsp.mutable_dim()->Add();
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
+// Div data propagation for old versions (binary elementwise integer division).
+static void DivDataPropagator_old(DataPropagationContext& ctx) {
+  const auto* input_0 = ctx.getInputData(0);
+  const auto* input_1 = ctx.getInputData(1);
+  if (input_0 == nullptr || input_1 == nullptr) {
+    return;
+  }
+  int size_0 = input_0->dim_size();
+  int size_1 = input_1->dim_size();
+  if (size_0 != size_1 && size_0 != 1 && size_1 != 1) {
+    return;
+  }
+  TensorShapeProto tsp;
+  int size_out = size_0 == 1 ? size_1 : size_0;
+  for (int i = 0; i < size_out; ++i) {
+    const auto& d0 = input_0->dim(size_0 == 1 ? 0 : i);
+    const auto& d1 = input_1->dim(size_1 == 1 ? 0 : i);
+    if (d0.has_dim_value() && d1.has_dim_value() && d1.dim_value() != 0) {
+      tsp.mutable_dim()->Add()->set_dim_value(d0.dim_value() / d1.dim_value());
+    } else {
+      tsp.mutable_dim()->Add();
+    }
+  }
+  ctx.addOutputData(0, std::move(tsp));
+}
+
 static bool BuildContextDependentFunctionBody_opset13(
     const FunctionBodyBuildContext& ctx,
     const OpSchema& schema,
@@ -866,7 +941,10 @@ ONNX_OPERATOR_SET_SCHEMA(Sub, 13, OpSchema().FillUsing(MathDocGenerator_opset13(
 
 ONNX_OPERATOR_SET_SCHEMA(Mul, 13, OpSchema().FillUsing(MathDocGenerator_opset13("multiplication")));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 13, OpSchema().FillUsing(MathDocGenerator_opset13("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    13,
+    OpSchema().FillUsing(MathDocGenerator_opset13("division")).PartialDataPropagationFunction(DivDataPropagator_old));
 
 static std::function<void(OpSchema&)> MathDocGenerator_opset_7(const char* name) {
   return [=](OpSchema& schema) {
@@ -917,7 +995,10 @@ ONNX_OPERATOR_SET_SCHEMA(Sub, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("
 
 ONNX_OPERATOR_SET_SCHEMA(Mul, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("multiplication")));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 7, OpSchema().FillUsing(MathDocGenerator_opset_7("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    7,
+    OpSchema().FillUsing(MathDocGenerator_opset_7("division")).PartialDataPropagationFunction(DivDataPropagator_old));
 
 static std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator_opset_11(const char* name, const char* description) {
   return [=](OpSchema& schema) {
@@ -1069,7 +1150,8 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(float16)",
              "tensor(double)"},
             "Constrain input and output types to signed numeric tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(NegDataPropagator_old));
 
 static constexpr const char* Abs_ver6_doc = R"DOC(
 Absolute takes one input data (Tensor<T>) and produces one output data
@@ -1119,7 +1201,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(UnaryIdentityDataPropagator_old));
 
 static constexpr const char* Ceil_ver6_doc = R"DOC(
 Ceil takes one input data (Tensor<T>) and produces one output data
@@ -1138,7 +1221,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(UnaryIdentityDataPropagator_old));
 
 static const char* const Sqrt_ver6_doc = kDoc_Sqrt_ver6;
 
@@ -1168,7 +1252,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(ReluDataPropagator_old));
 
 static const char* const Relu_ver13_doc = Relu_ver6_doc;
 
@@ -1183,7 +1268,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(ReluDataPropagator_old));
 
 static const char* const Exp_ver6_doc = kDoc_Exp_ver6;
 
@@ -2440,7 +2526,10 @@ ONNX_OPERATOR_SET_SCHEMA(Sub, 1, OpSchema().FillUsing(MathDocGenerator_old("subt
 
 ONNX_OPERATOR_SET_SCHEMA(Mul, 1, OpSchema().FillUsing(MathDocGenerator_old("multiplication")));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 1, OpSchema().FillUsing(MathDocGenerator_old("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    1,
+    OpSchema().FillUsing(MathDocGenerator_old("division")).PartialDataPropagationFunction(DivDataPropagator_old));
 
 ONNX_OPERATOR_SET_SCHEMA(Add, 6, OpSchema().FillUsing(MathDocGenerator_old_opset6("addition")));
 
@@ -2448,7 +2537,12 @@ ONNX_OPERATOR_SET_SCHEMA(Sub, 6, OpSchema().FillUsing(MathDocGenerator_old_opset
 
 ONNX_OPERATOR_SET_SCHEMA(Mul, 6, OpSchema().FillUsing(MathDocGenerator_old_opset6("multiplication")));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 6, OpSchema().FillUsing(MathDocGenerator_old_opset6("division")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Div,
+    6,
+    OpSchema()
+        .FillUsing(MathDocGenerator_old_opset6("division"))
+        .PartialDataPropagationFunction(DivDataPropagator_old));
 
 static const char* const Pow_ver1_doc = Pow_ver13_doc;
 
@@ -2516,7 +2610,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors."));
+            "Constrain input and output types to float tensors.")
+        .PartialDataPropagationFunction(NegDataPropagator_old));
 
 static const char* const Abs_ver1_doc = Abs_ver6_doc;
 
@@ -2570,7 +2665,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors."));
+            "Constrain input and output types to float tensors.")
+        .PartialDataPropagationFunction(UnaryIdentityDataPropagator_old));
 
 static const char* const Ceil_ver1_doc = Ceil_ver6_doc;
 
@@ -2588,7 +2684,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors."));
+            "Constrain input and output types to float tensors.")
+        .PartialDataPropagationFunction(UnaryIdentityDataPropagator_old));
 
 static const char* const Sqrt_ver1_doc = Sqrt_ver6_doc;
 
@@ -2624,7 +2721,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors."));
+            "Constrain input and output types to float tensors.")
+        .PartialDataPropagationFunction(ReluDataPropagator_old));
 
 static const char* const LeakyRelu_ver1_doc = kDoc_LeakyRelu_ver1;
 
