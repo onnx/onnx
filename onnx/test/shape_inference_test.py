@@ -2233,6 +2233,36 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, None)]
         )
 
+    def test_conv_symbolic_spatial_dims(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 3, "H", "W")),
+                ("y", TensorProto.FLOAT, (16, 3, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", pads=[1, 1, 1, 1])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            # (H + 2 - 3)/1 + 1 = "H + 2 - 3 + 1"
+            [make_tensor_value_info("z", TensorProto.FLOAT, (1, 16, "H + 2 - 3 + 1", "W + 2 - 3 + 1"))],
+        )
+
+    def test_conv_symbolic_spatial_dims_with_stride(self) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 3, "H", "W")),
+                ("y", TensorProto.FLOAT, (16, 3, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", strides=[2, 2], pads=[1, 1, 1, 1])],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            # (H + 2 - 3)/2 + 1
+            [make_tensor_value_info("z", TensorProto.FLOAT, (1, 16, "(H + 2 - 3)/2 + 1", "(W + 2 - 3)/2 + 1"))],
+        )
+
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
             [
@@ -3726,6 +3756,45 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))]
+        )
+
+    def test_maxpool_symbolic_spatial_dims(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 3, "H", "W"))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[3, 3],
+                    pads=[1, 1, 1, 1],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            # (H + 2 - 3)/1 + 1 = "H + 2 - 3 + 1"
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 3, "H + 2 - 3 + 1", "W + 2 - 3 + 1"))]
+        )
+
+    def test_maxpool_symbolic_spatial_dims_with_stride(self) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 3, "H", "W"))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[3, 3],
+                    strides=[2, 2],
+                    pads=[1, 1, 1, 1],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            # (H + 2 - 3)/2 + 1
+            graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (1, 3, "(H + 2 - 3)/2 + 1", "(W + 2 - 3)/2 + 1"))]
         )
 
     def test_averagepool(self) -> None:

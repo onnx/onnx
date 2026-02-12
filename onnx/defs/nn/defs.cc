@@ -165,27 +165,27 @@ ONNX_API void convPoolShapeInference(
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
   for (int i = 0; i < kernel_shape_size; ++i) {
     auto* newdim = output_shape->add_dim();
-    if (!input_shape.dim(2 + i).has_dim_value()) {
+    if (!input_shape.dim(2 + i).has_dim_value() && !input_shape.dim(2 + i).has_dim_param()) {
       continue;
     }
-    // how big is the input, including padding
-    int64_t input_size = input_shape.dim(2 + i).dim_value();
-    int64_t effective_input_size = input_size + pads[i] + pads[i + kernel_shape_size];
+    // Use Dim arithmetic to support both concrete and symbolic input dims.
+    // For concrete dims this produces dim_value; for symbolic dims it
+    // produces a dim_param expression string.
+    auto input_dim = input_shape.dim(2 + i);
+    auto effective_input_dim = input_dim + (pads[i] + pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
     auto ceil_mode = getAttribute(ctx, "ceil_mode", 0);
 
-    int64_t output_size =
-        (effective_input_size - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
-    if (ceil_mode == 1 && (output_size - 1) * strides[i] >= (input_size + pads[i])) {
-      // we need to match pytorch's behavior of "Sliding windows that would start in the right padded region are
-      // ignored." (https://pytorch.org/docs/stable/generated/torch.nn.MaxPool1d.html#maxpool1d). this code follows the
-      // same logic as PyTorch's C++ implementation:
-      // https://github.com/pytorch/pytorch/blob/f1cdb39da3850c47d51ec6a5b1ae864c32b3accf/aten/src/ATen/native/Pool.h#L54C21-L54C21
-      --output_size;
+    auto output_dim = (effective_input_dim - effective_kernel_shape[i] + (ceil_mode ? strides[i] - 1 : 0)) / strides[i] + 1;
+
+    if (ceil_mode == 1 && output_dim.has_dim_value() && input_dim.has_dim_value()) {
+      if ((output_dim.dim_value() - 1) * strides[i] >= (input_dim.dim_value() + pads[i])) {
+        output_dim.set_dim_value(output_dim.dim_value() - 1);
+      }
     }
 
-    newdim->set_dim_value(output_size);
+    *newdim = output_dim;
   }
 
   if (ctx.getNumOutputs() > 1) {
