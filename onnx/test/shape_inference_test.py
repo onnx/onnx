@@ -10216,7 +10216,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("signal", TensorProto.FLOAT, (2, 10, 1)),
                 make_tensor_value_info("frame_step", TensorProto.INT64, ()),
                 make_tensor_value_info("window", TensorProto.INT64, (5,)),
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 3, 2)),
             ],
         )
 
@@ -10266,7 +10266,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("frame_step", TensorProto.INT64, ()),
                 make_tensor_value_info("window", TensorProto.INT64, (5,)),
                 make_tensor_value_info("frame_length", TensorProto.INT64, ()),
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 3, 2)),
             ],
         )
 
@@ -10309,7 +10309,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("signal", TensorProto.FLOAT, (2, 10, 1)),
                 make_tensor_value_info("frame_step", TensorProto.INT64, ()),
                 make_tensor_value_info("frame_length", TensorProto.INT64, ()),
-                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 3, 2)),
             ],
         )
 
