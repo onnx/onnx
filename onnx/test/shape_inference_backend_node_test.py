@@ -219,13 +219,16 @@ _SKIP_EXPANDED_MODELS: set[str] = {
 
 # Tests requiring strict_mode=False or with known C++ inference limitations.
 _SKIP_KNOWN_LIMITATIONS: set[str] = {
-    # MeanVarianceNormalization fails with strict_mode=True
-    # (see test_backend_test.py test_kwargs)
-    "test_mvn",
     # Loop with subgraph — shape inference across subgraphs is limited
     "test_loop11",
     # MaxUnpool with output_shape input — C++ inference doesn't read initializer value
     "test_maxunpool_export_with_output_shape",
+}
+
+# Tests that need strict_mode=False to pass.
+_STRICT_MODE_FALSE: set[str] = {
+    # MeanVarianceNormalization fails with strict_mode=True
+    "test_mvn",
 }
 
 _SKIP_TESTS: set[str] = _SKIP_EXPANDED_MODELS | _SKIP_KNOWN_LIMITATIONS
@@ -256,8 +259,9 @@ class ShapeInferenceBackendNodeTest(unittest.TestCase):
         _clear_output_type_info(model)
 
         # Run shape inference
+        strict = test_name not in _STRICT_MODE_FALSE
         inferred_model = onnx.shape_inference.infer_shapes(
-            model, check_type=True, strict_mode=True
+            model, check_type=True, strict_mode=strict
         )
 
         # Build lookup from inferred model
