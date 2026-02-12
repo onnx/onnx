@@ -25,17 +25,13 @@ import onnx.backend.test
 import onnx.shape_inference
 from onnx import TensorProto, TypeProto
 
-_NODE_TEST_DIR = (
-    pathlib.Path(onnx.backend.test.__file__).parent / "data" / "node"
-)
+_NODE_TEST_DIR = pathlib.Path(onnx.backend.test.__file__).parent / "data" / "node"
 
 
 def _discover_tests() -> list[str]:
     """Return sorted list of test directory names that have model.onnx."""
     return sorted(
-        d.name
-        for d in _NODE_TEST_DIR.iterdir()
-        if (d / "model.onnx").exists()
+        d.name for d in _NODE_TEST_DIR.iterdir() if (d / "model.onnx").exists()
     )
 
 
@@ -260,12 +256,9 @@ class ShapeInferenceBackendNodeTest(unittest.TestCase):
         _clear_output_type_info(model)
 
         # Run shape inference
-        try:
-            inferred_model = onnx.shape_inference.infer_shapes(
-                model, check_type=True, strict_mode=True
-            )
-        except Exception as e:
-            self.fail(f"Shape inference raised {type(e).__name__}: {e}")
+        inferred_model = onnx.shape_inference.infer_shapes(
+            model, check_type=True, strict_mode=True
+        )
 
         # Build lookup from inferred model
         inferred_outputs = {o.name: o for o in inferred_model.graph.output}
@@ -285,7 +278,7 @@ class ShapeInferenceBackendNodeTest(unittest.TestCase):
             if exp_dtype == 0 and exp_shape is None:
                 continue
 
-            if exp_dtype != 0 and inf_dtype != exp_dtype:
+            if exp_dtype not in {0, inf_dtype}:
                 errors.append(
                     f"Output '{name}': dtype mismatch: "
                     f"expected {TensorProto.DataType.Name(exp_dtype)}, "
@@ -299,7 +292,7 @@ class ShapeInferenceBackendNodeTest(unittest.TestCase):
                         f"expected {exp_shape}, got {inf_shape}"
                     )
                 else:
-                    for i, (e, g) in enumerate(zip(exp_shape, inf_shape)):
+                    for i, (e, g) in enumerate(zip(exp_shape, inf_shape, strict=False)):
                         # Allow symbolic dims in inferred (dim_param)
                         if isinstance(g, str):
                             continue
