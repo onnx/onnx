@@ -18,6 +18,14 @@
 
 namespace ONNX_NAMESPACE {
 
+static void IdentityDataPropagator(DataPropagationContext& ctx) {
+  const auto* input_data = ctx.getInputData(0);
+  if (input_data != nullptr) {
+    TensorShapeProto tsp(*input_data);
+    ctx.addOutputData(0, std::move(tsp));
+  }
+}
+
 static const char* const Cast_ver25_doc = kDoc_Cast_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -2592,7 +2600,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 static const char* const Compress_ver11_doc = kDoc_Compress_ver9;
 

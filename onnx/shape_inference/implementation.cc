@@ -422,6 +422,17 @@ class ShapeInferenceImplBase {
         }
       }
     }
+
+    // Identity forwards constant data from input to output, enabling
+    // downstream ops (e.g. Range) to see through Identity wrappers.
+    if (IsOnnxDomainOp(n, "Identity") && n.input().size() == 1 && n.output().size() == 1) {
+      const std::string& input_name = n.input(0);
+      const std::string& output_name = n.output(0);
+      auto it = input_data_by_name.find(input_name);
+      if (it != input_data_by_name.end()) {
+        input_data_by_name[output_name] = it->second;
+      }
+    }
   }
 
   void ProcessCall(const NodeProto& caller, const FunctionProto& callee, InferenceContext& ctx) {
@@ -505,6 +516,59 @@ class ShapeInferenceImplBase {
         DataPropagationContextImpl data_propagation_ctx(
             n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name);
         schema->GetDataPropagationFunction()(data_propagation_ctx);
+        // Bridge propagated shape data to input_data_by_name so that downstream
+        // shape inference functions (which use getInputData returning TensorProto*)
+        // can see values produced by data propagation (stored as TensorShapeProto).
+        for (int i = 0; i < n.output_size(); ++i) {
+          const auto& output_name = n.output(i);
+          if (output_name.empty()) {
+            continue;
+          }
+          // Skip if already available as TensorProto
+          if (input_data_by_name.count(output_name)) {
+            continue;
+          }
+          auto it = generated_shape_data_by_name->find(output_name);
+          if (it == generated_shape_data_by_name->end()) {
+            continue;
+          }
+          const auto& tsp = it->second;
+          // Only convert if all dims have concrete values
+          bool all_concrete = tsp.dim_size() > 0;
+          for (const auto& dim : tsp.dim()) {
+            if (!dim.has_dim_value()) {
+              all_concrete = false;
+              break;
+            }
+          }
+          if (all_concrete) {
+            // Determine the element type from the output's inferred type
+            auto type_iter = value_types_by_name.find(output_name);
+            int elem_type = TensorProto::INT64; // default
+            if (type_iter != value_types_by_name.end() && type_iter->second != nullptr &&
+                type_iter->second->has_tensor_type()) {
+              elem_type = type_iter->second->tensor_type().elem_type();
+            }
+            std::vector<int64_t> values;
+            values.reserve(tsp.dim_size());
+            for (const auto& dim : tsp.dim()) {
+              values.push_back(dim.dim_value());
+            }
+            // Create TensorProto with the correct data type
+            TensorProto tensor_proto;
+            tensor_proto.set_data_type(elem_type);
+            if (tsp.dim_size() == 1) {
+              // Scalar
+            } else {
+              tensor_proto.add_dims(tsp.dim_size());
+            }
+            for (auto val : values) {
+              tensor_proto.add_int64_data(val);
+            }
+            input_data_by_name_holder[output_name] = std::move(tensor_proto);
+            input_data_by_name[output_name] = &input_data_by_name_holder[output_name];
+          }
+        }
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {

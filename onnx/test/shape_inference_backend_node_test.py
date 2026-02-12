@@ -113,12 +113,13 @@ def _load_expected_output_shapes(
 # Tests with expanded (multi-node) function bodies where shape inference
 # cannot propagate shapes through the expanded graph.
 _SKIP_EXPANDED_MODELS: set[str] = {
-    # AffineGrid expanded models
+    # AffineGrid expanded models — complex If/subgraph patterns
     "test_affine_grid_2d_align_corners_expanded",
     "test_affine_grid_2d_expanded",
     "test_affine_grid_3d_align_corners_expanded",
     "test_affine_grid_3d_expanded",
-    # LayerNormalization expanded models
+    # LayerNormalization expanded models — ReduceMean axes depend on Range
+    # whose inputs require evaluation through Sub/Cast/Add chain
     "test_layer_normalization_2d_axis0_expanded",
     "test_layer_normalization_2d_axis0_expanded_ver18",
     "test_layer_normalization_2d_axis1_expanded",
@@ -157,62 +158,7 @@ _SKIP_EXPANDED_MODELS: set[str] = {
     "test_layer_normalization_4d_axis_negative_4_expanded_ver18",
     "test_layer_normalization_default_axis_expanded",
     "test_layer_normalization_default_axis_expanded_ver18",
-    # RMSNormalization expanded models
-    "test_rms_normalization_2d_axis0_expanded",
-    "test_rms_normalization_2d_axis1_expanded",
-    "test_rms_normalization_2d_axis_negative_1_expanded",
-    "test_rms_normalization_2d_axis_negative_2_expanded",
-    "test_rms_normalization_3d_axis0_epsilon_expanded",
-    "test_rms_normalization_3d_axis1_epsilon_expanded",
-    "test_rms_normalization_3d_axis2_epsilon_expanded",
-    "test_rms_normalization_3d_axis_negative_1_epsilon_expanded",
-    "test_rms_normalization_3d_axis_negative_2_epsilon_expanded",
-    "test_rms_normalization_3d_axis_negative_3_epsilon_expanded",
-    "test_rms_normalization_4d_axis0_expanded",
-    "test_rms_normalization_4d_axis1_expanded",
-    "test_rms_normalization_4d_axis2_expanded",
-    "test_rms_normalization_4d_axis3_expanded",
-    "test_rms_normalization_4d_axis_negative_1_expanded",
-    "test_rms_normalization_4d_axis_negative_2_expanded",
-    "test_rms_normalization_4d_axis_negative_3_expanded",
-    "test_rms_normalization_4d_axis_negative_4_expanded",
-    "test_rms_normalization_default_axis_expanded",
-    # SoftmaxCrossEntropyLoss expanded models
-    "test_sce_NCd1_mean_weight_negative_ii_expanded",
-    "test_sce_NCd1_mean_weight_negative_ii_log_prob_expanded",
-    "test_sce_NCd1d2d3_none_no_weight_negative_ii_expanded",
-    "test_sce_NCd1d2d3_none_no_weight_negative_ii_log_prob_expanded",
-    "test_sce_NCd1d2d3_sum_weight_high_ii_expanded",
-    "test_sce_NCd1d2d3_sum_weight_high_ii_log_prob_expanded",
-    "test_sce_NCd1d2d3d4d5_mean_weight_expanded",
-    "test_sce_NCd1d2d3d4d5_mean_weight_log_prob_expanded",
-    "test_sce_NCd1d2d3d4d5_none_no_weight_expanded",
-    "test_sce_NCd1d2d3d4d5_none_no_weight_log_prob_expanded",
-    "test_sce_mean_3d_expanded",
-    "test_sce_mean_3d_log_prob_expanded",
-    "test_sce_mean_expanded",
-    "test_sce_mean_log_prob_expanded",
-    "test_sce_mean_no_weight_ii_3d_expanded",
-    "test_sce_mean_no_weight_ii_3d_log_prob_expanded",
-    "test_sce_mean_no_weight_ii_4d_expanded",
-    "test_sce_mean_no_weight_ii_4d_log_prob_expanded",
-    "test_sce_mean_no_weight_ii_expanded",
-    "test_sce_mean_no_weight_ii_log_prob_expanded",
-    "test_sce_mean_weight_expanded",
-    "test_sce_mean_weight_ii_3d_expanded",
-    "test_sce_mean_weight_ii_3d_log_prob_expanded",
-    "test_sce_mean_weight_ii_4d_expanded",
-    "test_sce_mean_weight_ii_4d_log_prob_expanded",
-    "test_sce_mean_weight_ii_expanded",
-    "test_sce_mean_weight_ii_log_prob_expanded",
-    "test_sce_mean_weight_log_prob_expanded",
-    "test_sce_none_expanded",
-    "test_sce_none_log_prob_expanded",
-    "test_sce_none_weights_expanded",
-    "test_sce_none_weights_log_prob_expanded",
-    "test_sce_sum_expanded",
-    "test_sce_sum_log_prob_expanded",
-    # Range expanded models
+    # Range expanded models — Loop trip count requires full constant evaluation
     "test_range_float_type_positive_delta_expanded",
     "test_range_int32_type_negative_delta_expanded",
 }
@@ -261,7 +207,7 @@ class ShapeInferenceBackendNodeTest(unittest.TestCase):
         # Run shape inference
         strict = test_name not in _STRICT_MODE_FALSE
         inferred_model = onnx.shape_inference.infer_shapes(
-            model, check_type=True, strict_mode=strict
+            model, check_type=True, strict_mode=strict, data_prop=True
         )
 
         # Build lookup from inferred model
