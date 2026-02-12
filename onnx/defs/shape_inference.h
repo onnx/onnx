@@ -40,7 +40,7 @@ class SymbolTable {
   virtual void addFromGraph(const GraphProto& g) = 0;
   // Creates a new symbol which is not duplicate as any existing one
   std::string createNew() {
-    return createNew("unk__");
+    return createNew("_d");
   }
   virtual std::string createNew(const std::string& symbol_prefix) = 0;
   virtual ~SymbolTable() = default;

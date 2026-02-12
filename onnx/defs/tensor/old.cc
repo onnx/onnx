@@ -4654,9 +4654,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim(i);
-              auto output_dim = output_shape->add_dim();
+              auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+              } else if (input_dim.has_dim_param()) {
+                if (repeats_data[i] == 1) {
+                  *output_dim = input_dim;
+                } else {
+                  *output_dim = input_dim * repeats_data[i];
+                }
               }
             }
           } else {

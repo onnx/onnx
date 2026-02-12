@@ -448,6 +448,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           bool all_lengths_known = true;
           int total_length = 0;
+          // Accumulate axis dim using Dim arithmetic to support symbolic dims
+          TensorShapeProto::Dimension axis_dim;
+          axis_dim.set_dim_value(0);
+          bool has_any_axis_info = true;
 
           auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
@@ -468,6 +472,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 } else {
                   all_lengths_known = false;
                 }
+                if (has_any_axis_info && (shape.dim(j).has_dim_value() || shape.dim(j).has_dim_param())) {
+                  axis_dim = axis_dim + shape.dim(j);
+                } else {
+                  has_any_axis_info = false;
+                }
               } else {
                 auto& output_dim = *output_shape->mutable_dim(j);
                 const auto& input_dim = shape.dim(j);
@@ -478,6 +487,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (all_lengths_known) {
             output_shape->mutable_dim(axis)->set_dim_value(total_length);
+          } else if (has_any_axis_info && axis_dim.has_dim_param()) {
+            *output_shape->mutable_dim(axis) = axis_dim;
           }
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
@@ -1973,9 +1984,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim(i);
-              auto output_dim = output_shape->add_dim();
+              auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+              } else if (input_dim.has_dim_param()) {
+                if (repeats_data[i] == 1) {
+                  *output_dim = input_dim;
+                } else {
+                  *output_dim = input_dim * repeats_data[i];
+                }
               }
             }
           } else {

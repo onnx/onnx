@@ -162,16 +162,41 @@ ONNX_API void convPoolShapeInference(
     *output_shape->add_dim() = second_input_shape.dim(0);
   }
 
+  // Detect SAME auto_pad for symbolic dim handling below.
+  // auto_pad is only effective when explicit pads are not specified.
+  bool is_same_pad = false;
+  {
+    std::vector<int64_t> explicit_pads;
+    if (!getRepeatedAttribute(ctx, "pads", explicit_pads)) {
+      const auto* const ap = ctx.getAttribute("auto_pad");
+      if (ap && (ap->s() == "SAME_UPPER" || ap->s() == "SAME_LOWER")) {
+        is_same_pad = true;
+      }
+    }
+  }
+
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
   for (int i = 0; i < kernel_shape_size; ++i) {
     auto* newdim = output_shape->add_dim();
     if (!input_shape.dim(2 + i).has_dim_value() && !input_shape.dim(2 + i).has_dim_param()) {
       continue;
     }
+
+    auto input_dim = input_shape.dim(2 + i);
+
+    // For SAME auto_pad with symbolic dims, output = ceil(input / stride)
+    if (is_same_pad && input_dim.has_dim_param()) {
+      if (strides[i] == 1) {
+        *newdim = input_dim;
+      } else {
+        *newdim = (input_dim + (strides[i] - 1)) / strides[i];
+      }
+      continue;
+    }
+
     // Use Dim arithmetic to support both concrete and symbolic input dims.
     // For concrete dims this produces dim_value; for symbolic dims it
     // produces a dim_param expression string.
-    auto input_dim = input_shape.dim(2 + i);
     auto effective_input_dim = input_dim + (pads[i] + pads[i + kernel_shape_size]);
 
     // default is floor mode .i.e. ceil_mode is set to 0
@@ -445,17 +470,14 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
   for (int i = 0; i < kernel_shape_size; ++i) {
     auto* newdim = final_output_shape->add_dim();
-    if (!input_shape.dim(2 + i).has_dim_value()) {
+    if (!input_shape.dim(2 + i).has_dim_value() && !input_shape.dim(2 + i).has_dim_param()) {
       continue;
     }
 
-    int64_t newdim_value = strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += kernel_shape[i];
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
+    auto input_dim = input_shape.dim(2 + i);
+    auto output_dim = (input_dim - 1) * strides[i] + (kernel_shape[i] - pads[i] - pads[i + kernel_shape_size]);
 
-    // add in the initial position
-    newdim->set_dim_value(newdim_value);
+    *newdim = output_dim;
   }
 }
 
