@@ -33,7 +33,7 @@ class CommonLSTM(OpRun):
         C_0: np.ndarray,
         P: np.ndarray,
         num_directions: int,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
@@ -67,11 +67,13 @@ class CommonLSTM(OpRun):
 
         if self.layout == 0:
             Y_h = Y[-1]
+            Y_c = C_t
         else:
             Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
+            Y_c = np.transpose(C_t, [1, 0, 2])
 
-        return Y, Y_h
+        return Y, Y_h, Y_c
 
     def _run(
         self,
@@ -143,11 +145,15 @@ class CommonLSTM(OpRun):
                 f"and operator {self.__class__.__name__!r}."
             )
 
-        Y, Y_h = self._step(
+        Y, Y_h, Y_c = self._step(
             X, R, B, W, initial_h, initial_c, P, num_directions=num_directions
         )
         Y = Y.astype(X.dtype)
-        return (Y,) if self.n_outputs == 1 else (Y, Y_h.astype(X.dtype))
+        if self.n_outputs == 1:
+            return (Y,)
+        if self.n_outputs == 2:
+            return (Y, Y_h.astype(X.dtype))
+        return (Y, Y_h.astype(X.dtype), Y_c.astype(X.dtype))
 
 
 class LSTM(CommonLSTM):
