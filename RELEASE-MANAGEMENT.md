@@ -36,7 +36,7 @@ Planned changes for future releases as listed in the table below are subject to 
 | 1.19 | 3.9-3.13, 3.13t (win, mac, linux) | --- | 3.24 | v25.1 | manylinux2014 |
 | 1.19.1 | 3.9-3.13, 3.13t (win, mac, linux) | --- | 3.24 | v25.1 | manylinux2014 |
 | 1.20 | *3.10-3.13, 3.13t (win, mac, linux), 3.14* | 3.26 | --- | v25.1 | manylinux2_28 |
-| *1.21* | | | | *manylinux2_28* |
+| *1.21* | | 3.26 | | *manylinux2_28* |
 
 Releases
 --------
