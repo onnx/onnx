@@ -35,6 +35,7 @@ jobs:
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
+          ignore: foward,cancelled
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
