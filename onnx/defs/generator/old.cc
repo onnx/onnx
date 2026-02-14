@@ -6,6 +6,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
+#include <cmath>
 
 namespace ONNX_NAMESPACE {
 
