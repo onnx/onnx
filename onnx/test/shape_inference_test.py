@@ -442,34 +442,6 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     @parameterized.expand(all_versions_for("BitCast"))
-    def test_bitcast_size_decrease(self, _, version) -> None:
-        # Test bitcast to smaller type (float32 -> int16): last dim multiplied by 2
-        graph = self._make_graph(
-            [("x", TensorProto.FLOAT, (2, 4, 6))],
-            [make_node("BitCast", ["x"], ["y"], to=TensorProto.INT16)],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [make_tensor_value_info("y", TensorProto.INT16, (2, 4, 12))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
-
-    @parameterized.expand(all_versions_for("BitCast"))
-    def test_bitcast_size_increase(self, _, version) -> None:
-        # Test bitcast to larger type (int16 -> float32): last dim divided by 2
-        graph = self._make_graph(
-            [("x", TensorProto.INT16, (2, 4, 8))],
-            [make_node("BitCast", ["x"], ["y"], to=TensorProto.FLOAT)],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [make_tensor_value_info("y", TensorProto.FLOAT, (2, 4, 4))],
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
-
-    @parameterized.expand(all_versions_for("BitCast"))
     def test_bitcast_scalar(self, _, version) -> None:
         # Test bitcast with scalar input (same size)
         graph = self._make_graph(
@@ -485,15 +457,15 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(all_versions_for("BitCast"))
     def test_bitcast_1d(self, _, version) -> None:
-        # Test bitcast with 1D tensor
+        # Test bitcast with 1D tensor (float32 -> uint32, same size)
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (8,))],
-            [make_node("BitCast", ["x"], ["y"], to=TensorProto.UINT8)],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.UINT32)],
             [],
         )
         self._assert_inferred(
             graph,
-            [make_tensor_value_info("y", TensorProto.UINT8, (32,))],
+            [make_tensor_value_info("y", TensorProto.UINT32, (8,))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
@@ -508,6 +480,34 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [make_tensor_value_info("y", TensorProto.INT64, (3, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_int8_to_uint8(self, _, version) -> None:
+        # Test bitcast between 8-bit types (int8 -> uint8)
+        graph = self._make_graph(
+            [("x", TensorProto.INT8, (4, 6))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.UINT8)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (4, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_float16_to_int16(self, _, version) -> None:
+        # Test bitcast between 16-bit types (float16 -> int16)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT16, (2, 3))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.INT16)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT16, (2, 3))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
