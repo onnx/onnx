@@ -358,17 +358,15 @@ Here's a complete example of updating the `Add` operator from version 13 to vers
 - [Version Converter Documentation](VersionConverter.md) - Information about version adapters
 - [Operator Conventions](OpConventions.md) - Best practices for operator design
 
-## Summary
+## Quick Reference Summary
 
-When updating an operator version, remember to:
+When updating an operator version, ensure you complete all 7 steps in the [Complete Checklist](#complete-checklist):
 
-✅ Increment the domain version in `schema.h`  
-✅ Preserve old schema in `old.cc`  
-✅ Update schema in `defs.cc` with new `SinceVersion()`  
-✅ Register new version in `operator_sets.h`  
-✅ Add version adapter in `convert.h`  
-✅ Add upgrade/downgrade tests  
-✅ Update backend tests  
-✅ Generate documentation with `tools/update_doc.sh`  
+✅ **Schema Update**: Increment domain version + update SinceVersion()  
+✅ **Preserve History**: Move old schema to `old.cc`  
+✅ **Register**: Add to `operator_sets.h`  
+✅ **Version Conversion**: Add adapter in `convert.h`  
+✅ **Testing**: Backend tests + upgrade/downgrade tests  
+✅ **Documentation**: Run `tools/update_doc.sh`
 
-Following this checklist ensures proper versioning, maintains backward compatibility, and keeps the ONNX specification consistent and well-tested.
+See the detailed sections above for file locations, code examples, and best practices for each step.
