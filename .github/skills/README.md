@@ -1,0 +1,44 @@
+# ONNX GitHub Copilot Skills
+
+This directory contains GitHub Copilot skills - reusable guides and checklists that help developers perform common tasks in the ONNX repository.
+
+## Available Skills
+
+### [Update Operator](update-operator.md)
+A comprehensive checklist for updating an existing ONNX operator to a new version. Use this when making breaking changes to an operator's signature, behavior, or supported types.
+
+**When to use:**
+- Adding/removing/renaming operator attributes
+- Modifying operator inputs or outputs
+- Changing operator behavior
+- Adding support for new data types
+
+## How to Use Skills
+
+Skills are reference documents that provide:
+- Step-by-step checklists
+- File locations and code examples
+- Best practices and conventions
+- Links to related documentation
+
+You can reference these skills when:
+- Working on operator updates
+- Reviewing pull requests
+- Onboarding new contributors
+- Ensuring consistency across changes
+
+## Contributing
+
+To add a new skill:
+1. Create a new markdown file in this directory
+2. Follow the structure of existing skills
+3. Include clear checklists and examples
+4. Add links to relevant documentation
+5. Update this README with the new skill
+
+## Related Documentation
+
+- [Adding New Operators](../../docs/AddNewOp.md)
+- [Updating Operators](../../docs/UpdatingOperator.md)
+- [ONNX Versioning](../../docs/Versioning.md)
+- [Version Converter](../../docs/VersionConverter.md)
