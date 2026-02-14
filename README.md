@@ -22,7 +22,7 @@ ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in m
 
 # 🚀 Quick Start
 
-Get started with ONNX in 5 minutes! 
+Get started with ONNX in 5 minutes!
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/onnx/onnx/blob/main/examples/quickstart.ipynb)
 
