@@ -1,0 +1,36 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test Quick Start Notebook
+
+on:
+  pull_request:
+    paths:
+      - 'examples/quickstart.ipynb'
+  push:
+    branches: [main]
+    paths:
+      - 'examples/quickstart.ipynb'
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly
+
+jobs:
+  test-notebook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          pip install jupyter nbconvert
+          pip install onnx torch onnxruntime numpy
+      
+      - name: Execute notebook
+        run: |
+          jupyter nbconvert --to notebook --execute examples/quickstart.ipynb
