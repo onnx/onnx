@@ -1244,15 +1244,14 @@ the tensor elementwise.
 )DOC";
 
 const char kDoc_BitCast_ver26[] = R"DOC(
-This operator outputs a tensor with the same underlying bits as the input tensor,
-but reinterpreted as a different data type specified by the 'to' attribute.
-Unlike Cast, BitCast does not transform values—the output has the same binary
-representation as the input, just viewed as a new data type. Bitcasting to or from
-strings is not supported.
+Reinterprets the binary representation of a tensor as a different data type,
+specified by the 'to' attribute. Unlike Cast, BitCast preserves the exact bit
+pattern without any value conversion.
 
 The target data type must have the same bit-width as the input data type.
 The output tensor has the same shape as the input tensor.
-Implementations must treat the bytes as-if little endian.
+All types except string are supported. Implementations must treat the
+underlying bytes as little endian.
 )DOC";
 
 #else

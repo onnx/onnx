@@ -159,7 +159,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "to",
             "The data type to which the input tensor is bitwise reinterpreted. "
-            "Strictly must be one of the non-string types from DataType enum in TensorProto. "
+            "Must be one of the non-string types from DataType enum in TensorProto. "
             "The target type must have the same bit-width as the input type.",
             AttributeProto::INT)
         .Input(0, "input", "Input tensor to be bitcast.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
@@ -174,12 +174,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T1",
-            OpSchema::all_non_complex_tensor_types_ir13(),
-            "Constrain input types. Bitcasting from complex or string types is not supported.")
+            OpSchema::all_non_string_tensor_types_ir13(),
+            "Constrain input types. Bitcasting from string is not supported.")
         .TypeConstraint(
             "T2",
-            OpSchema::all_non_complex_tensor_types_ir13(),
-            "Constrain output types. Bitcasting to complex or string types is not supported.")
+            OpSchema::all_non_string_tensor_types_ir13(),
+            "Constrain output types. Bitcasting to string is not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
 

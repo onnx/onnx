@@ -132,3 +132,16 @@ class BitCast(Base):
         x = np.array([1, 32768, 65535], dtype=np.uint16)
         y = x.view(np.int16)
         expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint16_to_int16")
+
+    @staticmethod
+    def export_bitcast_bool_to_uint8() -> None:
+        """Test bitcasting from bool to uint8 (same size)."""
+        node = onnx.helper.make_node(
+            "BitCast",
+            inputs=["x"],
+            outputs=["y"],
+            to=onnx.TensorProto.UINT8,
+        )
+        x = np.array([True, False, True, False], dtype=np.bool_)
+        y = x.view(np.uint8)
+        expect(node, inputs=[x], outputs=[y], name="test_bitcast_bool_to_uint8")
