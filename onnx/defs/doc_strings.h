@@ -77,6 +77,7 @@ extern const char kDoc_NonMaxSuppression_ver10[];
 extern const char kDoc_Log_ver6[];
 extern const char kDoc_EyeLike_ver9[];
 extern const char kDoc_Reshape_ver24[];
+extern const char kDoc_BitCast_ver26[];
 extern const char kDoc_Compress_ver9[];
 extern const char kDoc_PRelu_ver7[];
 extern const char kDoc_Neg_ver6[];

@@ -1243,6 +1243,18 @@ Neg takes one input data (Tensor<T>) and produces one output data
 the tensor elementwise.
 )DOC";
 
+const char kDoc_BitCast_ver26[] = R"DOC(
+This operator outputs a tensor with the same underlying bits as the input tensor,
+but reinterpreted as a different data type specified by the 'to' attribute.
+Unlike Cast, BitCast does not transform values—the output has the same binary
+representation as the input, just viewed as a new data type. Bitcasting to or from
+strings is not supported.
+
+The target data type must have the same bit-width as the input data type.
+The output tensor has the same shape as the input tensor.
+Implementations must treat the bytes as-if little endian.
+)DOC";
+
 #else
 const char kDoc_GRU_ver14[] = "";
 const char kDoc_Squeeze_ver24[] = "";
@@ -1317,6 +1329,7 @@ const char kDoc_Log_ver6[] = "";
 const char kDoc_EyeLike_ver9[] = "";
 const char kDoc_Reshape_ver24[] = "";
 const char kDoc_Compress_ver9[] = "";
+const char kDoc_BitCast_ver26[] = "";
 const char kDoc_PRelu_ver7[] = "";
 const char kDoc_Neg_ver6[] = "";
 #endif
