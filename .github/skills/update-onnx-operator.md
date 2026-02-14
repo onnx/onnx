@@ -1,4 +1,10 @@
-# Update ONNX Operator Skill
+---
+name: update-onnx-operator
+description: Guide for updating an existing ONNX operator to a new version when making breaking changes to its signature, behavior, or supported types.
+license: Apache-2.0
+---
+
+# Update ONNX Operator
 
 This skill helps you update an existing ONNX operator to a new version when making breaking changes.
 
