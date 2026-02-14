@@ -956,7 +956,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-        static constexpr const char* Range_ver11_doc = R"DOC(
+static constexpr const char* Range_ver11_doc = R"DOC(
 Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
 up to `limit` (exclusive).
 
@@ -1081,6 +1081,5 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
         }));
-
 
 } // namespace ONNX_NAMESPACE
