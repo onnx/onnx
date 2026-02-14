@@ -10,6 +10,7 @@
 #include <array>
 #include <cstdarg>
 #include <cstdio>
+#include <string>
 
 #include "onnx/common/common.h"
 
@@ -22,8 +23,17 @@ std::string barf(const char* fmt, ...) {
 
   va_start(args, fmt);
 
-  // use fixed length for buffer "msg" to avoid buffer overflow
+// use fixed length for buffer "msg" to avoid buffer overflow
+// Suppress -Wformat-nonliteral: fmt comes from the variadic parameter,
+// and call sites are checked via the format attribute on the declaration.
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+#endif
   vsnprintf(static_cast<char*>(msg.data()), msg.size() - 1, fmt, args);
+#if defined(__clang__) || defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
   // ensure null-terminated string to avoid out of bounds read
   msg.back() = '\0';

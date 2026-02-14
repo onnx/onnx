@@ -67,28 +67,28 @@ concurrency:
 jobs:
 
   call-linux:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all') || contains(github.event.pull_request.labels.*.name, 'run release CIs linux')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux.yml
     with:
       os: "linux"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-win:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs win x86')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_win.yml
     with:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-mac:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs mac')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-sdist:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs all')  || contains(github.event.pull_request.labels.*.name, 'run release CIs sdist')
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
@@ -112,7 +112,7 @@ jobs:
         env:
           BUILD_MODE: ${{ github.event.inputs.build_mode }}
 
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: true

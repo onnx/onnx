@@ -1,3 +1,7 @@
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #include "onnx/defs/doc_strings.h"
 
 namespace ONNX_NAMESPACE {
@@ -609,6 +613,9 @@ is applied to the tensor elementwise.
 
 const char kDoc_LpNormalization_ver1[] = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
+The output is computed as: `output = input / Lp_norm(input, axis)`.
+When the Lp norm is zero (i.e., all elements along the axis are zero),
+the output is defined to be zero to avoid division by zero.
 )DOC";
 
 const char kDoc_Erf_ver9[] = R"DOC(
@@ -1180,6 +1187,7 @@ Equations (Default: f=Tanh):
 const char kDoc_NonMaxSuppression_ver10[] = R"DOC(
 Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
 Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+Boxes are suppressed if their IOU with a previously selected box is strictly greater than iou_threshold (i.e., boxes with IOU exactly equal to the threshold are kept).
 Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
 orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
 result in the same boxes being selected by the algorithm.

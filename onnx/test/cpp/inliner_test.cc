@@ -1,8 +1,9 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+#include <string>
+#include <utility>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"

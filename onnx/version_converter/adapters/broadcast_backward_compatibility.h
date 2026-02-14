@@ -1,13 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for broadcasting ops in default domain from version 7 to 6
 
 #pragma once
 
+#include <cinttypes>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -38,11 +38,12 @@ class BroadcastBackwardCompatibility final : public Adapter {
     int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(A_sizes, B_sizes);
     ONNX_ASSERTM(
         req_broadcast != -1,
-        "%s being converted from %d to %d does "
+        "%s being converted from %" PRId64 " to %" PRId64
+        " does "
         "not have broadcastable inputs.",
         name().c_str(),
-        initial_version().version(),
-        target_version().version())
+        static_cast<int64_t>(initial_version().version()),
+        static_cast<int64_t>(target_version().version()))
     if (req_broadcast == 1) {
       // If conditional is not fulfilled, we have a default broadcast
       // Add broadcast attribute

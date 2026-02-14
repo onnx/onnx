@@ -9910,7 +9910,7 @@ Other versions of this operator: <a href="Changelog.md#DFT-17">17</a>
 <dt><tt>inverse</tt> : int (default is 0)</dt>
 <dd>Whether to perform the inverse discrete Fourier Transform. Default is 0, which corresponds to `false`.</dd>
 <dt><tt>onesided</tt> : int (default is 0)</dt>
-<dd>If `onesided` is `1` and input is real, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. If the input tensor is complex, onesided output is not possible. Value can be `0` or `1`. Default is `0`.</dd>
+<dd>If `onesided` is `1`, only values for `k` in `[0, 1, 2, ..., floor(n_fft/2) + 1]` are used or returned because the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., `X[m, k] = X[m, n_fft-k]*`, where `m` denotes "all other dimensions" DFT was not applied on. When `onesided=1` and `inverse=0` (forward DFT), only real input is supported and a one-sided complex spectrum is returned (RFFT). When `onesided=1` and `inverse=1` (inverse DFT), only complex input is supported and a full real signal is returned (IRFFT). Value can be `0` or `1`. Default is `0`.</dd>
 </dl>
 
 #### Inputs (1 - 3)
@@ -9919,7 +9919,7 @@ Other versions of this operator: <a href="Changelog.md#DFT-17">17</a>
 <dt><tt>input</tt> (non-differentiable) : T1</dt>
 <dd>For real input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]`. For complex input, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. The final dimension represents the real and imaginary parts of the value in that order.</dd>
 <dt><tt>dft_length</tt> (optional, non-differentiable) : T2</dt>
-<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. </dd>
+<dd>The length of the signal as a scalar. If greater than the axis dimension, the signal will be zero-padded up to `dft_length`. If less than the axis dimension, only the first `dft_length` values will be used as the signal. If not provided, the default `dft_length = signal_dim_axis`, except for the IRFFT case (`onesided=1`, `inverse=1`), in which case the default dft_length is `2 * (signal_dim_axis - 1)`.</dd>
 <dt><tt>axis</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \cup [0, r-2]$ where `r = rank(input)`. The last dimension is for representing complex numbers and thus is an invalid axis.</dd>
 </dl>
@@ -9928,7 +9928,7 @@ Other versions of this operator: <a href="Changelog.md#DFT-17">17</a>
 
 <dl>
 <dt><tt>output</tt> : T1</dt>
-<dd>The Fourier Transform of the input vector. If `onesided` is `0`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=0` and `onesided` is `1`, the following shape is expected: `[floor(signal_dim0/2)+1][signal_dim1][signal_dim2]...[signal_dimN][2]`. If `axis=1` and `onesided` is `1`, the following shape is expected: `[signal_dim0][floor(signal_dim1/2)+1][signal_dim2]...[signal_dimN][2]`. If `axis=N` and `onesided` is `1`, the following shape is expected: `[signal_dim0][signal_dim1][signal_dim2]...[floor(signal_dimN/2)+1][2]`. The `signal_dim` at the specified `axis` is equal to the `dft_length`.</dd>
+<dd>The Fourier Transform of the input vector. For standard DFT (`onesided=0`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]` (complex), with `signal_dim_axis = dft_length`. For RFFT (`onesided=1`, `inverse=0`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][2]` (one-sided complex), with `signal_dim_axis = floor(dft_length/2) + 1`. For IRFFT (`onesided=1`, `inverse=1`), the output shape is: `[signal_dim0][signal_dim1][signal_dim2]...[signal_dimN][1]` (real), where `signal_dim_axis = dft_length`.</dd>
 </dl>
 
 #### Type Constraints
@@ -9975,6 +9975,31 @@ y = np.fft.ifft(x, axis=0)
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 expect(node, inputs=[x, axis], outputs=[y], name="test_dft_inverse")
+
+# Test RFFT (Real FFT): real input -> one-sided complex output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], onesided=1
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.rfft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_rfft")
+
+# Test IRFFT (Inverse Real FFT): one-sided complex input -> real output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], onesided=1, inverse=1
+)
+# Create one-sided complex input (6 bins for signal length 10)
+x = np.fft.rfft(np.arange(0, 100).reshape(10, 10), axis=0).astype(np.complex64)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.irfft(x, n=10, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+y = y.reshape(1, 10, 10, 1).astype(np.float32)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_irfft")
 ```
 
 </details>
@@ -10028,6 +10053,41 @@ expect(
     inputs=[x],
     outputs=[y],
     name="test_dft_inverse_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
+
+# Test RFFT (Real FFT): real input -> one-sided complex output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x"], outputs=["y"], onesided=1, axis=1
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+y = np.fft.rfft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_rfft_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
+
+# Test IRFFT (Inverse Real FFT): one-sided complex input -> real output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x"], outputs=["y"], onesided=1, inverse=1, axis=1
+)
+# Create one-sided complex input (6 bins for signal length 10)
+x = np.fft.rfft(np.arange(0, 100).reshape(10, 10), axis=0).astype(np.complex64)
+y = np.fft.irfft(x, n=10, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+y = y.reshape(1, 10, 10, 1).astype(np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_irfft_opset19",
     opset_imports=[onnx.helper.make_opsetid("", 19)],
 )
 ```
@@ -18127,6 +18187,9 @@ expect(
 ### <a name="LpNormalization"></a><a name="lpnormalization">**LpNormalization**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
+  The output is computed as: `output = input / Lp_norm(input, axis)`.
+  When the Lp norm is zero (i.e., all elements along the axis are zero),
+  the output is defined to be zero to avoid division by zero.
 
 #### Version
 
@@ -18247,7 +18310,8 @@ x = np.array(
     dtype=np.float32,
 )
 l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
-y = x / l2_norm_axis_0
+# When norm is 0, output is 0 (0/0 = 0)
+y = np.where(l2_norm_axis_0 == 0, 0, x / l2_norm_axis_0)
 expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
 ```
 
@@ -21803,6 +21867,7 @@ expect(
 
   Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
   Bounding boxes with score less than score_threshold are removed. Bounding box format is indicated by attribute center_point_box.
+  Boxes are suppressed if their IOU with a previously selected box is strictly greater than iou_threshold (i.e., boxes with IOU exactly equal to the threshold are kept).
   Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally is invariant to
   orthogonal transformations and translations of the coordinate system; thus translating or reflections of the coordinate system
   result in the same boxes being selected by the algorithm.
@@ -21832,7 +21897,7 @@ Other versions of this operator: <a href="Changelog.md#NonMaxSuppression-10">10<
 <dt><tt>max_output_boxes_per_class</tt> (optional) : tensor(int64)</dt>
 <dd>Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.</dd>
 <dt><tt>iou_threshold</tt> (optional) : tensor(float)</dt>
-<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.</dd>
+<dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Boxes with IoU strictly greater than this threshold are suppressed. It is scalar. Value range [0, 1]. Default to 0.</dd>
 <dt><tt>score_threshold</tt> (optional) : tensor(float)</dt>
 <dd>Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.</dd>
 </dl>
@@ -22001,6 +22066,67 @@ expect(
     ],
     outputs=[selected_indices],
     name="test_nonmaxsuppression_identical_boxes",
+)
+```
+
+</details>
+
+
+<details>
+<summary>nonmaxsuppression_iou_threshold_boundary</summary>
+
+```python
+"""Test boundary condition where IoU exactly equals threshold.
+
+This test verifies that the comparison is strict (>), not inclusive (>=).
+When IoU exactly equals the threshold, boxes should be KEPT, not suppressed.
+This follows PyTorch's NMS implementation.
+"""
+node = onnx.helper.make_node(
+    "NonMaxSuppression",
+    inputs=[
+        "boxes",
+        "scores",
+        "max_output_boxes_per_class",
+        "iou_threshold",
+        "score_threshold",
+    ],
+    outputs=["selected_indices"],
+)
+# Two boxes with 50% overlap in each dimension
+# box1=[0,0,1,1], box2=[0.5,0.5,1.5,1.5]
+# Intersection area = 0.5 * 0.5 = 0.25
+# Union area = 1.0 + 1.0 - 0.25 = 1.75
+# IoU = 0.25 / 1.75 (exact value computed below as float32)
+boxes = np.array(
+    [
+        [
+            [0.0, 0.0, 1.0, 1.0],  # box 0
+            [0.5, 0.5, 1.5, 1.5],  # box 1 - overlaps box 0
+        ]
+    ]
+).astype(np.float32)
+scores = np.array([[[0.9, 0.8]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+# Compute the exact IoU value and use it as threshold
+# This ensures the threshold exactly equals the IoU
+exact_iou = np.float32(0.25 / 1.75)
+iou_threshold = np.array([exact_iou]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+# Both boxes should be selected because IoU == threshold (not > threshold)
+selected_indices = np.array([[0, 0, 0], [0, 0, 1]]).astype(np.int64)
+
+expect(
+    node,
+    inputs=[
+        boxes,
+        scores,
+        max_output_boxes_per_class,
+        iou_threshold,
+        score_threshold,
+    ],
+    outputs=[selected_indices],
+    name="test_nonmaxsuppression_iou_threshold_boundary",
 )
 ```
 
