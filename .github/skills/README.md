@@ -4,7 +4,7 @@ This directory contains GitHub Copilot skills - reusable guides and checklists t
 
 ## Available Skills
 
-### [Update ONNX Operator](update-onnx-operator.md)
+### [Update ONNX Operator](update-operator/SKILL.md)
 A comprehensive checklist for updating an existing ONNX operator to a new version. Use this when making breaking changes to an operator's signature, behavior, or supported types.
 
 **When to use:**
@@ -30,12 +30,13 @@ You can reference these skills when:
 ## Contributing
 
 To add a new skill:
-1. Create a new markdown file named `SKILL.md` in this directory (lowercase with hyphens)
-2. Add YAML frontmatter with required fields: `name`, `description`, and optionally `license`
-3. Follow the structure of existing skills
-4. Include clear checklists and examples
-5. Add links to relevant documentation
-6. Update this README with the new skill
+1. Create a new directory in `.github/skills/` with the skill name (lowercase with hyphens)
+2. Create a file named `SKILL.md` in that directory
+3. Add YAML frontmatter with required fields: `name`, `description`, and optionally `license`
+4. Follow the structure of existing skills
+5. Include clear checklists and examples
+6. Add links to relevant documentation
+7. Update this README with the new skill
 
 See [GitHub's skill documentation](https://docs.github.com/en/copilot/concepts/agents/about-agent-skills) for details on the skill file format.
 
