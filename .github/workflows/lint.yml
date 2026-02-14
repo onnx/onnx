@@ -10,8 +10,9 @@ on:
       - main
   pull_request:
   merge_group:
+  workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 concurrency:
@@ -23,7 +24,7 @@ jobs:
     name: Optional Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: misspell # Check spellings as well
@@ -34,6 +35,7 @@ jobs:
           reporter: github-pr-check
           level: info
           filter_mode: diff_context
+          ignore: foward,cancelled
           exclude: |
             ./docs/docsgen/source/_static/*
       - name: shellcheck # Static check shell scripts
@@ -50,7 +52,7 @@ jobs:
           reporter: github-pr-check
           level: warning
           flags: --linelength=120
-          filter: "-runtime/references"
+          filter: "-runtime/references,-readability/todo"
 
   enforce-style:
     name: Enforce style
@@ -58,12 +60,12 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
       - name: Setup Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
       - name: Install ONNX
@@ -103,12 +105,21 @@ jobs:
         # To toggle linter comments in the files page, press `i` on the keyboard
         if: always()
         continue-on-error: true
-        uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v3.29.5
+        uses: github/codeql-action/upload-sarif@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v3.29.5
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: lintrunner.sarif
           category: lintrunner
           checkout_path: ${{ github.workspace }}
+      - name: Upload lint results as artifacts
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: lint-results
+          path: |
+            lint.json
+            lintrunner.sarif
+          retention-days: 30
       - name: Check auto-gen files are up-to-date
         run: |
           echo -e "\n::group:: ===> check auto-gen files are up-to-date..."

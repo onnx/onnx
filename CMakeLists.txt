@@ -48,10 +48,12 @@ option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_ASAN "Build ONNX with ASAN" OFF)
+option(ONNX_HARDENING "Build with compiler hardening flags (OpenSSF guidelines)" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
+option(ONNX_INSTALL "Install ONNX targets, headers, and CMake config files" ON)
 if(WIN32)
   option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime" OFF)
 endif()
@@ -422,8 +424,25 @@ add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
   # find system nanobind
-  find_package(nanobind)
+  if(NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL "")
+    execute_process(
+      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake-dir
+      RESULT_VARIABLE NANOBIND_CMAKE_RESULT
+      OUTPUT_VARIABLE NANOBIND_CMAKE_DIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(NANOBIND_CMAKE_RESULT EQUAL 0 AND EXISTS "${NANOBIND_CMAKE_DIR}")
+      set(nanobind_DIR "${NANOBIND_CMAKE_DIR}")
+    endif()
+  endif()
+  find_package(nanobind CONFIG QUIET)
   if(NOT nanobind_FOUND)
+    if(FETCHCONTENT_FULLY_DISCONNECTED)
+      message(FATAL_ERROR
+        "nanobind not found while FETCHCONTENT_FULLY_DISCONNECTED is ON. "
+        "Provide nanobind locally (nanobind_DIR/CMAKE_PREFIX_PATH) or use a "
+        "FetchContent dependency provider for first-run offline builds.")
+    endif()
     include(FetchContent)
 
     FetchContent_Declare(
@@ -461,16 +480,18 @@ if(ONNX_USE_ASAN AND NOT MSVC)
   endif()
 endif()
 
-install(DIRECTORY ${ONNX_ROOT}/onnx
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        FILES_MATCHING
-        PATTERN "*.h"
-        PATTERN "backend/test/case" EXCLUDE
-        PATTERN "backend/test/data" EXCLUDE)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        FILES_MATCHING
-        PATTERN "*.h")
+if(ONNX_INSTALL)
+  install(DIRECTORY ${ONNX_ROOT}/onnx
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+          FILES_MATCHING
+          PATTERN "*.h"
+          PATTERN "backend/test/case" EXCLUDE
+          PATTERN "backend/test/data" EXCLUDE)
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+          FILES_MATCHING
+          PATTERN "*.h")
+endif()
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/ONNXConfigVersion.cmake.in
@@ -480,11 +501,13 @@ configure_file(
   ${PROJECT_SOURCE_DIR}/cmake/ONNXConfig.cmake.in
   ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
   @ONLY)
-install(FILES
-  ${PROJECT_BINARY_DIR}/ONNXConfigVersion.cmake
-  ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
-  COMPONENT dev)
+if(ONNX_INSTALL)
+  install(FILES
+    ${PROJECT_BINARY_DIR}/ONNXConfigVersion.cmake
+    ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ONNX
+    COMPONENT dev)
+endif()
 
 if(ONNX_USE_UNITY_BUILD)
   # If ONNX_USE_UNITY_BUILD is set to ON, set ONNX target to use Unity builds.
@@ -517,14 +540,16 @@ if(ONNX_BUILD_TESTS)
   endif()
 endif()
 
-install(TARGETS
-  onnx onnx_proto
-  EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(ONNX_INSTALL)
+  install(TARGETS
+    onnx onnx_proto
+    EXPORT ONNXTargets DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT ONNXTargets
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
-  NAMESPACE ONNX::
-)
+  install(EXPORT ONNXTargets
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
+    NAMESPACE ONNX::
+  )
+endif()
 
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)

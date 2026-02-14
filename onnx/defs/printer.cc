@@ -1,10 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/printer.h"
 
 #include <iomanip>
+#include <string>
 
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -169,10 +170,12 @@ void ProtoPrinter::print(const TensorShapeProto& shape) {
 void ProtoPrinter::print(const TypeProto_Tensor& tensortype) {
   output_ << PrimitiveTypeNameMap::ToString(tensortype.elem_type());
   if (tensortype.has_shape()) {
-    if (tensortype.shape().dim_size() > 0)
+    if (tensortype.shape().dim_size() > 0) {
       print(tensortype.shape());
-  } else
+    }
+  } else {
     output_ << "[]";
+  }
 }
 
 void ProtoPrinter::print(const TypeProto_Sequence& seqType) {
@@ -196,10 +199,12 @@ void ProtoPrinter::print(const TypeProto_Optional& optType) {
 void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output_ << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
   if (sparseType.has_shape()) {
-    if (sparseType.shape().dim_size() > 0)
+    if (sparseType.shape().dim_size() > 0) {
       print(sparseType.shape());
-  } else
+    }
+  } else {
     output_ << "[]";
+  }
 
   output_ << ")";
 }
@@ -229,7 +234,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   if (is_initializer) {
     output_ << " = ";
   }
-  // TODO: does not yet handle all types
+  // TODO(ONNX): does not yet handle all types
   if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
     print(tensor.external_data());
   } else if (tensor.has_raw_data()) {

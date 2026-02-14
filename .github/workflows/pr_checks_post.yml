@@ -1,0 +1,111 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: PR Checks Post
+
+on:
+  workflow_run:
+    workflows: ["PR Checks"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  suggest-changes:
+    name: Suggest fixes
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Debug workflow run info
+        env:
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WORKFLOW_EVENT: ${{ github.event.workflow_run.event }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          echo "=== Workflow Run Info ==="
+          echo "Workflow run ID: $WORKFLOW_RUN_ID"
+          echo "Workflow run conclusion: $WORKFLOW_CONCLUSION"
+          echo "Workflow run event: $WORKFLOW_EVENT"
+          echo "Head branch: $HEAD_BRANCH"
+          echo "Head SHA: $HEAD_SHA"
+      - name: Download artifacts
+        id: download
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        continue-on-error: true
+        with:
+          name: pr-artifacts
+          path: /tmp/pr_artifacts/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Debug download result
+        env:
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+        run: |
+          echo "=== Download Result ==="
+          echo "Download outcome: $DOWNLOAD_OUTCOME"
+          echo "Listing pr_artifacts directory:"
+          ls -la /tmp/pr_artifacts/ 2>/dev/null || echo "Directory does not exist"
+      - name: Get PR number
+        if: steps.download.outcome == 'success'
+        id: pr
+        run: |
+          echo "=== PR Number ==="
+          cat /tmp/pr_artifacts/pr_number
+          echo "number=$(cat /tmp/pr_artifacts/pr_number)" >> "$GITHUB_OUTPUT"
+      - name: Check if diff is empty
+        if: steps.download.outcome == 'success'
+        id: diff
+        run: |
+          echo "=== Diff Check ==="
+          echo "Diff file size: $(wc -c < /tmp/pr_artifacts/lintrunner.diff) bytes"
+          echo "Diff file lines: $(wc -l < /tmp/pr_artifacts/lintrunner.diff) lines"
+          if [ -s /tmp/pr_artifacts/lintrunner.diff ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Diff has changes, showing first 50 lines:"
+            head -50 /tmp/pr_artifacts/lintrunner.diff
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "Diff is empty, no changes to apply"
+          fi
+      - name: Debug before checkout
+        if: steps.download.outcome == 'success'
+        env:
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+          HAS_CHANGES: ${{ steps.diff.outputs.has_changes }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          echo "=== Pre-Checkout Debug ==="
+          echo "Download outcome: $DOWNLOAD_OUTCOME"
+          echo "Has changes: $HAS_CHANGES"
+          echo "PR number: $PR_NUMBER"
+          echo "Will checkout: ${{ steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true' }}"
+      - name: Checkout PR
+        if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: refs/pull/${{ steps.pr.outputs.number }}/head
+          persist-credentials: false
+      - name: Apply lintrunner fixes
+        if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
+        run: |
+          echo "=== Applying Diff ==="
+          echo "Current directory: $(pwd)"
+          echo "Git status before apply:"
+          git status --short
+          echo "Applying diff..."
+          git apply /tmp/pr_artifacts/lintrunner.diff
+          echo "Git status after apply:"
+          git status --short
+      - name: Suggest changes
+        if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
+        uses: parkerbxyz/suggest-changes@bd099ea0d10f0e9efeb9e46d604bbe6d7a80bc34
+        with:
+          comment: 'You can commit the suggested changes from lintrunner.'

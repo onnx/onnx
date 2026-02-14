@@ -1,8 +1,12 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/function.h"
+
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "onnx/defs/schema.h"
 #include "onnx/inliner/inliner.h"
@@ -70,9 +74,7 @@ void FunctionExpandHelper(
   const auto* const schema = schema_registry->GetSchema(node.op_type(), domain_version, node.domain());
   auto default_attrs = schema->attributes();
 
-  for (const auto& pair : default_attrs) {
-    const auto& attr_name = pair.first;
-    const auto& attr = pair.second;
+  for (const auto& [attr_name, attr] : default_attrs) {
     if (!attr_map.count(attr_name)) {
       attr_map[attr_name] = attr.default_value;
     }

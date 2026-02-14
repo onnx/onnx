@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/tensor/utils.h"
 
@@ -516,5 +516,5 @@ std::function<void(OpSchema&)> PadDocGenerator(
       }
     });
   };
-};
+}
 } // namespace ONNX_NAMESPACE

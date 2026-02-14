@@ -1,14 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Default converter for ONNX models between different opset versions
 // in the default domain ("" or "ai.onnx").
 
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -118,19 +117,16 @@ class DefaultVersionConverter : public BaseVersionConverter {
     }
 
     // Iterate through all_schemas to determine NoPreviousVersionAdapters
-    for (auto& op_pair : all_schemas) {
-      const auto default_versions = op_pair.second.find("");
-      if (default_versions != op_pair.second.end()) {
+    for (auto& [op_name, domain_map] : all_schemas) {
+      const auto default_versions = domain_map.find("");
+      if (default_versions != domain_map.end()) {
         int64_t min_version = version_range.second;
-        for (auto& version_pair : default_versions->second) {
-          if (version_pair.first < min_version) {
-            min_version = version_pair.first;
-          }
+        for (auto& [version, _] : default_versions->second) {
+          min_version = std::min(version, min_version);
         }
         if (min_version > 1) {
           registerAdapter(
-              std::make_unique<NoPreviousVersionAdapter>(
-                  op_pair.first, OpSetID(min_version), OpSetID(min_version - 1)));
+              std::make_unique<NoPreviousVersionAdapter>(op_name, OpSetID(min_version), OpSetID(min_version - 1)));
         }
       }
     }

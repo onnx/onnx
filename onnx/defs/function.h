@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -9,11 +9,11 @@
 #include <utility>
 #include <vector>
 
-#include "attr_proto_util.h"
 #include "onnx/common/status.h"
+#include "onnx/defs/attr_proto_util.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
-#include "tensor_proto_util.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 // Helper function to expand a function node given the function proto
@@ -166,7 +166,7 @@ class FunctionBuilder {
 
   // Adds variable number of attributes to a node
   template <typename... Args>
-  ONNX_API FunctionBuilder& Add(const char* node_txt, Args... args) {
+  ONNX_API FunctionBuilder& Add(const char* node_txt, const Args&... args) {
     Add(node_txt);
     if constexpr (sizeof...(args) % 2 == 0) {
       AddAttributes(args...);

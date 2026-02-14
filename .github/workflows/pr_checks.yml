@@ -9,7 +9,7 @@ on:
     branches:
       - main
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 concurrency:
@@ -22,24 +22,76 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
     steps:
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - name: Debug PR info
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "=== PR Info ==="
+          echo "PR number: $PR_NUMBER"
+          echo "PR head SHA: $PR_HEAD_SHA"
+          echo "PR base ref: $PR_BASE_REF"
+          echo "Repository: $REPOSITORY"
+          echo "Run ID: $RUN_ID"
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: Setup Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       - name: Install dependencies
         run: |
           python -m pip install -r requirements-dev.txt
           lintrunner init
       - name: Run lintrunner on all files
         run: |
+          echo "=== Running lintrunner ==="
           set +e
           lintrunner f --all-files -v
+          LINT_EXIT_CODE=$?
+          echo "Lintrunner exit code: $LINT_EXIT_CODE"
+          echo "=== Git status after lintrunner ==="
+          git status --short
           exit 0
-      - uses: parkerbxyz/suggest-changes@v3
+      - name: Save PR number and diff
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "=== Creating artifacts ==="
+          mkdir -p ./pr_artifacts
+          echo "$PR_NUMBER" > ./pr_artifacts/pr_number
+          echo "PR number saved: $(cat ./pr_artifacts/pr_number)"
+
+          echo "=== Generating diff ==="
+          git diff > ./pr_artifacts/lintrunner.diff
+
+          echo "=== Diff stats ==="
+          echo "Diff file size: $(wc -c < ./pr_artifacts/lintrunner.diff) bytes"
+          echo "Diff file lines: $(wc -l < ./pr_artifacts/lintrunner.diff) lines"
+
+          if [ -s ./pr_artifacts/lintrunner.diff ]; then
+            echo "Diff has content, showing first 30 lines:"
+            head -30 ./pr_artifacts/lintrunner.diff
+          else
+            echo "Diff is empty (no changes from lintrunner)"
+          fi
+
+          echo "=== Listing pr_artifacts directory ==="
+          ls -la ./pr_artifacts/
+      - name: Upload artifacts
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          comment: 'You can commit the suggested changes from lintrunner.'
+          name: pr-artifacts
+          path: pr_artifacts/
+      - name: Debug upload result
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          echo "=== Upload completed ==="
+          echo "Artifacts should now be available with name: pr-artifacts"
+          echo "Run ID for download: $RUN_ID"

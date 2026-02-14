@@ -21,12 +21,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  post-comments:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - uses: ZedThree/clang-tidy-review/post@8e835e573551b213a7da2ccb4e9560a4785e46f4 # v0.22.2
+      - uses: ZedThree/clang-tidy-review/post@a63ad24ca2c9f69340890c82dd235f295f7feac8 # v0.23.0
+        continue-on-error: true
         with:
           lgtm_comment_body: ""
           # Use annotations instead of comments
           annotations: true
           max_comments: 10
+          num_comments_as_exitcode: false

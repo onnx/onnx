@@ -7550,6 +7550,31 @@ y = np.fft.ifft(x, axis=0)
 x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 10, 10, 2)
 expect(node, inputs=[x, axis], outputs=[y], name="test_dft_inverse")
+
+# Test RFFT (Real FFT): real input -> one-sided complex output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], onesided=1
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.rfft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_rfft")
+
+# Test IRFFT (Inverse Real FFT): one-sided complex input -> real output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x", "", "axis"], outputs=["y"], onesided=1, inverse=1
+)
+# Create one-sided complex input (6 bins for signal length 10)
+x = np.fft.rfft(np.arange(0, 100).reshape(10, 10), axis=0).astype(np.complex64)
+axis = np.array(1, dtype=np.int64)
+y = np.fft.irfft(x, n=10, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+y = y.reshape(1, 10, 10, 1).astype(np.float32)
+expect(node, inputs=[x, axis], outputs=[y], name="test_dft_irfft")
 ```
 
 </details>
@@ -7601,6 +7626,41 @@ expect(
     inputs=[x],
     outputs=[y],
     name="test_dft_inverse_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
+
+# Test RFFT (Real FFT): real input -> one-sided complex output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x"], outputs=["y"], onesided=1, axis=1
+)
+x = np.arange(0, 100).reshape(10, 10).astype(np.float32)
+y = np.fft.rfft(x, axis=0)
+
+x = x.reshape(1, 10, 10, 1)
+y = np.stack((y.real, y.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_rfft_opset19",
+    opset_imports=[onnx.helper.make_opsetid("", 19)],
+)
+
+# Test IRFFT (Inverse Real FFT): one-sided complex input -> real output
+node = onnx.helper.make_node(
+    "DFT", inputs=["x"], outputs=["y"], onesided=1, inverse=1, axis=1
+)
+# Create one-sided complex input (6 bins for signal length 10)
+x = np.fft.rfft(np.arange(0, 100).reshape(10, 10), axis=0).astype(np.complex64)
+y = np.fft.irfft(x, n=10, axis=0)
+
+x = np.stack((x.real, x.imag), axis=2).astype(np.float32).reshape(1, 6, 10, 2)
+y = y.reshape(1, 10, 10, 1).astype(np.float32)
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_dft_irfft_opset19",
     opset_imports=[onnx.helper.make_opsetid("", 19)],
 )
 ```
@@ -8359,6 +8419,11 @@ x = np.random.randint(24, size=(3, 4, 5), dtype=np.int16)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.int16) + 1
 z = x // y
 expect(node, inputs=[x, y], outputs=[z], name="test_div_int16")
+
+x = np.array([-3, 3, -3, 3], dtype=np.int32)
+y = np.array([2, 2, -2, -2], dtype=np.int32)
+z = np.array([-1, 1, 1, -1], dtype=np.int32)
+expect(node, inputs=[x, y], outputs=[z], name="test_div_int32_trunc")
 
 x = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8)
 y = np.random.randint(24, size=(3, 4, 5), dtype=np.uint8) + 1
@@ -12939,7 +13004,8 @@ x = np.array(
     dtype=np.float32,
 )
 l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
-y = x / l2_norm_axis_0
+# When norm is 0, output is 0 (0/0 = 0)
+y = np.where(l2_norm_axis_0 == 0, 0, x / l2_norm_axis_0)
 expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
 ```
 
@@ -15612,7 +15678,7 @@ expect(
 
 
 ### NonMaxSuppression
-There are 9 test cases, listed as following:
+There are 10 test cases, listed as following:
 <details>
 <summary>nonmaxsuppression_center_point_box_format</summary>
 
@@ -15760,6 +15826,65 @@ expect(
     ],
     outputs=[selected_indices],
     name="test_nonmaxsuppression_identical_boxes",
+)
+```
+
+</details>
+<details>
+<summary>nonmaxsuppression_iou_threshold_boundary</summary>
+
+```python
+"""Test boundary condition where IoU exactly equals threshold.
+
+This test verifies that the comparison is strict (>), not inclusive (>=).
+When IoU exactly equals the threshold, boxes should be KEPT, not suppressed.
+This follows PyTorch's NMS implementation.
+"""
+node = onnx.helper.make_node(
+    "NonMaxSuppression",
+    inputs=[
+        "boxes",
+        "scores",
+        "max_output_boxes_per_class",
+        "iou_threshold",
+        "score_threshold",
+    ],
+    outputs=["selected_indices"],
+)
+# Two boxes with 50% overlap in each dimension
+# box1=[0,0,1,1], box2=[0.5,0.5,1.5,1.5]
+# Intersection area = 0.5 * 0.5 = 0.25
+# Union area = 1.0 + 1.0 - 0.25 = 1.75
+# IoU = 0.25 / 1.75 (exact value computed below as float32)
+boxes = np.array(
+    [
+        [
+            [0.0, 0.0, 1.0, 1.0],  # box 0
+            [0.5, 0.5, 1.5, 1.5],  # box 1 - overlaps box 0
+        ]
+    ]
+).astype(np.float32)
+scores = np.array([[[0.9, 0.8]]]).astype(np.float32)
+max_output_boxes_per_class = np.array([3]).astype(np.int64)
+# Compute the exact IoU value and use it as threshold
+# This ensures the threshold exactly equals the IoU
+exact_iou = np.float32(0.25 / 1.75)
+iou_threshold = np.array([exact_iou]).astype(np.float32)
+score_threshold = np.array([0.0]).astype(np.float32)
+# Both boxes should be selected because IoU == threshold (not > threshold)
+selected_indices = np.array([[0, 0, 0], [0, 0, 1]]).astype(np.int64)
+
+expect(
+    node,
+    inputs=[
+        boxes,
+        scores,
+        max_output_boxes_per_class,
+        iou_threshold,
+        score_threshold,
+    ],
+    outputs=[selected_indices],
+    name="test_nonmaxsuppression_iou_threshold_boundary",
 )
 ```
 
