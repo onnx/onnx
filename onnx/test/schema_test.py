@@ -61,7 +61,100 @@ class TestSchema(unittest.TestCase):
             defs.OpSchema.NodeDeterminism.NonDeterministic,
         )
         self.assertTrue(if_schema.non_deterministic)
+    
+    def test_range_supported_types(self) -> None:
+        """Test Range operator supports all expected numeric types."""
+        range_schema = defs.get_schema("Range")
+        
+        supported_types = set()
+        for constraint in range_schema.type_constraints:
+            if constraint.type_param_str == "T":
+                supported_types.update(constraint.allowed_type_strs)
+        
+        expected_types = {
+            "tensor(float16)",
+            "tensor(bfloat16)",
+            "tensor(float)",
+            "tensor(double)",
+            "tensor(int32)",
+            "tensor(int64)",
+        }
+        
+        for expected_type in expected_types:
+            with self.subTest(type=expected_type):
+                self.assertIn(expected_type, supported_types, 
+                            f"Range should support {expected_type}")
+        
+        # Verify no unexpected types are supported (regression check)
+        allowed_type_families = {
+            "float16", "bfloat16", "float", "double",
+            "int32", "int64"
+        }
+        
+        for supported_type in supported_types:
+            if supported_type.startswith("tensor(") and supported_type.endswith(")"):
+                base_type = supported_type[7:-1]
+                self.assertIn(base_type, allowed_type_families,
+                            f"Unexpected type {supported_type} supported by Range")
 
+    def test_range_type_consistency(self) -> None:
+        """Test Range operator type constraints are consistent."""
+        range_schema = defs.get_schema("Range")
+        
+        # All inputs should use the same type constraint "T"
+        expected_input_names = ["start", "limit", "delta"]
+        self.assertEqual(len(range_schema.inputs), len(expected_input_names))
+        
+        for i, expected_name in enumerate(expected_input_names):
+            input_param = range_schema.inputs[i]
+            self.assertEqual(input_param.name, expected_name)
+            self.assertEqual(input_param.type_str, "T", 
+                            f"Input '{expected_name}' should use type constraint 'T'")
+        
+        self.assertEqual(len(range_schema.outputs), 1)
+        output_param = range_schema.outputs[0]
+        self.assertEqual(output_param.name, "output")
+        self.assertEqual(output_param.type_str, "T",
+                        "Output should use type constraint 'T'")
+        
+        type_constraints = [c for c in range_schema.type_constraints if c.type_param_str == "T"]
+        self.assertEqual(len(type_constraints), 1, 
+                        "Range should have exactly one type constraint 'T'")
+
+    def test_range_numeric_types_only(self) -> None:
+        """Test Range operator only supports appropriate numeric types."""
+        range_schema = defs.get_schema("Range")
+        
+        supported_types = set()
+        for constraint in range_schema.type_constraints:
+            if constraint.type_param_str == "T":
+                supported_types.update(constraint.allowed_type_strs)
+        
+        # Range should not support non-numeric types
+        unsupported_types = {
+            "tensor(bool)",
+            "tensor(string)",
+            "tensor(uint8)",
+            "tensor(uint16)",
+            "tensor(uint32)", 
+            "tensor(uint64)",
+            "tensor(int8)",
+            "tensor(int16)",
+        }
+        
+        for unsupported_type in unsupported_types:
+            self.assertNotIn(unsupported_type, supported_types,
+                            f"Range should not support {unsupported_type}")
+        
+        # All supported types should be appropriate for arithmetic operations
+        for supported_type in supported_types:
+            self.assertTrue(supported_type.startswith("tensor("),
+                        f"All Range types should be tensors, got {supported_type}")
+            
+            base_type = supported_type[7:-1]
+            self.assertIn(base_type, 
+                        ["float16", "bfloat16", "float", "double", "int32", "int64"],
+                        f"Range type {base_type} should be a supported numeric type")
 
 class TestOpSchema(unittest.TestCase):
     def test_init(self):
@@ -459,6 +552,7 @@ class TestOpSchemaRegister(unittest.TestCase):
         self.assertEqual(str(schema_b), str(op_schema))
         self.assertEqual(str(schema_c[0]), str(op_schema))
         self.assertEqual(str(schema_d[0]), str(op_schema))
+
 
 
 if __name__ == "__main__":

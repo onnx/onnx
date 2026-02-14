@@ -413,7 +413,7 @@ compute_output_dim_for_range(const TensorProto* start, const TensorProto* limit,
 
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
-    11,
+    26,
     OpSchema()
         .SetDoc(Range_ver11_doc)
         .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
