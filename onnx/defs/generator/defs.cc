@@ -389,7 +389,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated range of values.", "T")
         .TypeConstraint(
             "T",
-            {types::Float, types::Double, types::Int16, types::Int32, types::Int64},
+            {types::Float, 
+             types::Double, 
+             types::Float16,
+             types::BFloat16,
+             types::Int16, 
+             types::Int32, 
+             types::Int64},
             "Constrain input types to common numeric type tensors.")
         .FunctionBody(R"ONNX(
           {

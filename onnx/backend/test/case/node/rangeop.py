@@ -34,6 +34,51 @@ class Range(Base):
         )
 
     @staticmethod
+    def export_range_float16_type_positive_delta() -> None:
+        node = onnx.helper.make_node(
+            "Range",
+            inputs=["start", "limit", "delta"],
+            outputs=["output"],
+        )
+
+        start = np.float16(1)
+        limit = np.float16(5)
+        delta = np.float16(2)
+
+        output = np.arange(
+            start, limit, delta, dtype=np.float16
+        )  # expected output [1.0, 3.0]
+        expect(
+            node,
+            inputs=[start, limit, delta],
+            outputs=[output],
+            name="test_range_float16_type_positive_delta",
+        )
+
+    @staticmethod
+    def export_range_bfloat16_type_positive_delta() -> None:
+        node = onnx.helper.make_node(
+            "Range",
+            inputs=["start", "limit", "delta"],
+            outputs=["output"],
+        )
+
+        start = np.array(1.0, dtype=ml_dtypes.bfloat16)
+        limit = np.array(5.0, dtype=ml_dtypes.bfloat16)
+        delta = np.array(2.0, dtype=ml_dtypes.bfloat16)
+
+        output = np.arange(1.0, 5.0, 2.0, dtype=np.float32).astype(
+            ml_dtypes.bfloat16
+        )  # expected output [1.0, 3.0] as bfloat16
+
+        expect(
+            node,
+            inputs=[start, limit, delta],
+            outputs=[output],
+            name="test_range_bfloat16_type_positive_delta",
+        )
+
+    @staticmethod
     def export_range_int32_type_negative_delta() -> None:
         node = onnx.helper.make_node(
             "Range",
