@@ -30,8 +30,8 @@ jobs:
       
       - name: Install dependencies
         run: |
-          pip install jupyter nbconvert
-          pip install onnx torch onnxruntime numpy
+          pip install jupyter nbconvert 
+          pip install onnx torch onnxruntime numpy onnxscript
       
       - name: Execute notebook
         run: |
