@@ -247,7 +247,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
-        }));
+        })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic));
 
 static const char* const Reshape_ver25_doc = kDoc_Reshape_ver24;
 
