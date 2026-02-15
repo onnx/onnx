@@ -49,22 +49,6 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
 
-        # DEBUG: Print inputs
-        print(f"DEBUG: Test inputs: {feeds}")
-        print(f"DEBUG: Input names: {self._session.input_names}")
-        for name, value in feeds.items():
-            print(
-                f"DEBUG: {name} = {value} (shape: {value.shape}, dtype: {value.dtype})"
-            )
-
-        result = self._session.run(None, feeds)
-
-        # DEBUG: Print outputs
-        print(f"DEBUG: Test output: {result}")
-        if result:
-            print(f"DEBUG: Output shape: {result[0].shape}")
-            print(f"DEBUG: Output values: {result[0]}")
-
         return result
 
 

@@ -440,14 +440,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             ceil_result_relu = Relu (ceil_result)
             num_elements = Cast <to = 7> (ceil_result_relu)
             
-            zero = Constant <value = int64[1] {0}> ()
-            one = Constant <value = int64[1] {1}> ()
+            zero = Constant <value_int = 0> ()
+            one = Constant <value_int = 1> ()
             indices = Range (zero, num_elements, one)
             
-            indices_casted = Cast <to = 1> (indices)
-            delta_expanded = Mul (indices_casted, delta_casted)
-            output_casted = Add (start, delta_expanded)
-            output = Cast (output_casted, start)
+            start_casted = Cast <to = 1> (start)
+            indices_float = Cast <to = 1> (indices)
+            scaled_indices = Mul (indices_float, delta_casted)
+            output_float = Add (scaled_indices, start_casted)
+            output = CastLike (output_float, start)
           }
         )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
