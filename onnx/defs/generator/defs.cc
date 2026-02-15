@@ -440,12 +440,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             ceil_result_relu = Relu (ceil_result)
             ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
             ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
-            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
-              <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
+            scan_output, final_state = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
+              <body = loop_body_attribute (int64 i, bool cond, current) => (cond_out, next, value) {
+                value = Identity (current)
+                next = Add (current, delta)
                 cond_out = Identity (cond)
-                current = Add (prev, delta)
-                range = Identity (prev)
               }>
+            output = Squeeze <axes = [1]> (scan_output)
           }
         )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
