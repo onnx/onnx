@@ -424,11 +424,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float)",
              "tensor(double)",
-             "tensor(float16)",
-             "tensor(bfloat16)",
              "tensor(int16)",
              "tensor(int32)",
-             "tensor(int64)"},
+             "tensor(int64)",
+             "tensor(bfloat16)",
+             "tensor(float16)"},
             "Constrain input types to common numeric type tensors.")
         .FunctionBody(R"ONNX(
           {
@@ -438,17 +438,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             div_result = Div (sub_result_casted, delta_casted)
             ceil_result = Ceil (div_result)
             ceil_result_relu = Relu (ceil_result)
-            num_elements = Cast <to = 7> (ceil_result_relu)
-            
-            zero = Constant <value_int = 0> ()
-            one = Constant <value_int = 1> ()
-            indices = Range (zero, num_elements, one)
-            
-            start_casted = Cast <to = 1> (start)
-            indices_float = Cast <to = 1> (indices)
-            scaled_indices = Mul (indices_float, delta_casted)
-            output_float = Add (scaled_indices, start_casted)
-            output = CastLike (output_float, start)
+            ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
+            ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
+            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
+              <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
+                cond_out = Identity (cond)
+                current = Add (prev, delta)
+                range = Identity (prev)
+              }>
           }
         )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
