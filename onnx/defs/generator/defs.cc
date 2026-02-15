@@ -432,9 +432,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to common numeric type tensors.")
         .FunctionBody(R"ONNX(
           {
-            sub_result = Sub (limit, start)
+            start_squeezed = Squeeze (start)
+            limit_squeezed = Squeeze (limit)
+            delta_squeezed = Squeeze (delta)
+            
+            sub_result = Sub (limit_squeezed, start_squeezed)
             sub_result_casted = Cast <to = 1> (sub_result)
-            delta_casted = Cast <to = 1> (delta)
+            delta_casted = Cast <to = 1> (delta_squeezed)
             div_result = Div (sub_result_casted, delta_casted)
             ceil_result = Ceil (div_result)
             ceil_result_relu = Relu (ceil_result)
@@ -445,11 +449,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             one = Constant <value_int = 1> ()
             indices = Range (zero, num_elements, one)
             
-            start_casted = Cast <to = 1> (start)
+            start_casted = Cast <to = 1> (start_squeezed)
             indices_float = Cast <to = 1> (indices)
             scaled_indices = Mul (indices_float, delta_casted)
             output_float = Add (scaled_indices, start_casted)
-            output = CastLike (output_float, start)
+            output = CastLike (output_float, start_squeezed)
           }
         )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
