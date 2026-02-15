@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 186/198 (93.94%, 5 generators excluded) common operators.
+Node tests have covered 187/199 (93.97%, 5 generators excluded) common operators.
 
 Node tests have covered 0/0 (N/A) experimental operators.
 
@@ -4203,6 +4203,185 @@ node = onnx.helper.make_node(
 x = np.random.uniform(0.0, 1.0, 10).astype(float)
 y = bernoulli_reference_implementation(x, float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
+```
+
+</details>
+
+
+### BitCast
+There are 10 test cases, listed as following:
+<details>
+<summary>bitcast_2d_float32_to_int32</summary>
+
+```python
+"""Test bitcasting 2D array from float32 to int32."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT32,
+)
+x = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32)
+y = x.view(np.int32)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_2d_float32_to_int32")
+```
+
+</details>
+<details>
+<summary>bitcast_bool_to_uint8</summary>
+
+```python
+"""Test bitcasting from bool to uint8 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.UINT8,
+)
+x = np.array([True, False, True, False], dtype=np.bool_)
+y = x.view(np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_bool_to_uint8")
+```
+
+</details>
+<details>
+<summary>bitcast_float32_to_int32</summary>
+
+```python
+"""Test bitcasting from float32 to int32 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT32,
+)
+x = np.array([1.0, -2.5, 3.75], dtype=np.float32)
+y = x.view(np.int32)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_float32_to_int32")
+```
+
+</details>
+<details>
+<summary>bitcast_float64_to_int64</summary>
+
+```python
+"""Test bitcasting from float64 to int64 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT64,
+)
+x = np.array([1.0, -2.5, 3.75], dtype=np.float64)
+y = x.view(np.int64)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_float64_to_int64")
+```
+
+</details>
+<details>
+<summary>bitcast_int32_to_float32</summary>
+
+```python
+"""Test bitcasting from int32 to float32 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.FLOAT,
+)
+x = np.array([1065353216, -1071644672, 1081081856], dtype=np.int32)
+y = x.view(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_int32_to_float32")
+```
+
+</details>
+<details>
+<summary>bitcast_int64_to_float64</summary>
+
+```python
+"""Test bitcasting from int64 to float64 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.DOUBLE,
+)
+x = np.array(
+    [4607182418800017408, -4611686018427387904, 4614256656552045184],
+    dtype=np.int64,
+)
+y = x.view(np.float64)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_int64_to_float64")
+```
+
+</details>
+<details>
+<summary>bitcast_int8_to_uint8</summary>
+
+```python
+"""Test bitcasting from int8 to uint8 (same size, different signedness)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.UINT8,
+)
+x = np.array([-1, -128, 127, 0], dtype=np.int8)
+y = x.view(np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_int8_to_uint8")
+```
+
+</details>
+<details>
+<summary>bitcast_scalar_float32_to_int32</summary>
+
+```python
+"""Test bitcasting scalar from float32 to int32."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT32,
+)
+x = np.array(1.0, dtype=np.float32)
+y = x.view(np.int32)
+expect(
+    node, inputs=[x], outputs=[y], name="test_bitcast_scalar_float32_to_int32"
+)
+```
+
+</details>
+<details>
+<summary>bitcast_uint16_to_int16</summary>
+
+```python
+"""Test bitcasting from uint16 to int16 (same size, different signedness)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT16,
+)
+x = np.array([1, 32768, 65535], dtype=np.uint16)
+y = x.view(np.int16)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint16_to_int16")
+```
+
+</details>
+<details>
+<summary>bitcast_uint32_to_int32</summary>
+
+```python
+"""Test bitcasting from uint32 to int32 (same size, different signedness)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT32,
+)
+x = np.array([4294967295, 2147483648, 2147483647], dtype=np.uint32)
+y = x.view(np.int32)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
 ```
 
 </details>

@@ -1442,12 +1442,14 @@ class OpSet_Onnx_ver25 {
 };
 
 // Forward declarations for ai.onnx version 26
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, BitCast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, CumProd);
 
 // Iterate over schema from ai.onnx version 26
 class OpSet_Onnx_ver26 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, BitCast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 26, CumProd)>());
   }
 };
