@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import os
-import platform
 import sys
 import unittest
 from typing import Any
@@ -100,23 +99,6 @@ backend_test = onnx.backend.test.BackendTest(
     },
 )
 
-if os.getenv("APPVEYOR"):
-    backend_test.exclude("(test_vgg19|test_zfnet)")
-if platform.architecture()[0] == "32bit":
-    backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")
-if platform.system() == "Windows":
-    backend_test.exclude("test_sequence_model")
-
-# The following tests are not supported.
-backend_test.exclude(
-    "(test_gradient"
-    "|test_if_opt"
-    "|test_loop16_seq_none"
-    "|test_range_float_type_positive_delta_expanded"
-    "|test_range_int32_type_negative_delta_expanded"
-    "|test_scan_sum)"
-)
-
 # The following tests are about deprecated operators.
 backend_test.exclude("(test_scatter_with_axis|test_scatter_without)")
 
@@ -139,18 +121,6 @@ backend_test.exclude("(test_bernoulli)")
 # The following tests fail due to discrepancies (small but still higher than 1e-7).
 backend_test.exclude("test_adam_multiple")  # 1e-2
 
-# Currently Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
-if sys.platform == "win32":
-    backend_test.exclude("test_regex_full_match_basic_cpu")
-    backend_test.exclude("test_regex_full_match_email_domain_cpu")
-    backend_test.exclude("test_regex_full_match_empty_cpu")
-    backend_test.exclude("test_image_decoder_decode_")
-
-
-if sys.platform == "darwin":
-    # FIXME: https://github.com/onnx/onnx/issues/5792
-    backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
-    backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
 
 if version_utils.pillow_older_than("10.0"):
     backend_test.exclude("test_image_decoder_decode_webp_rgb")
