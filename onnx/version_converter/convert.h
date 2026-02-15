@@ -392,6 +392,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Max", OpSetID(11), OpSetID(12)));
     registerAdapter(std::make_unique<CompatibleAdapter>("MaxPool", OpSetID(11), OpSetID(12)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Pow", OpSetID(11), OpSetID(12)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(11), OpSetID(12)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(11), OpSetID(12)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMin", OpSetID(11), OpSetID(12)));
     registerAdapter(std::make_unique<Dropout_11_12>());
@@ -405,6 +406,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Min", OpSetID(12), OpSetID(11), int_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Max", OpSetID(12), OpSetID(11), int_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("MaxPool", OpSetID(12), OpSetID(11), maxpool_unallowed_types));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(12), OpSetID(11)));
     registerAdapter(std::make_unique<TypeRestriction>("ReduceMax", OpSetID(12), OpSetID(11), maxpool_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("ReduceMin", OpSetID(12), OpSetID(11), maxpool_unallowed_types));
 
@@ -454,6 +456,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Pow", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(12), OpSetID(13)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Reciprocal", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceL1", OpSetID(12), OpSetID(13)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceL2", OpSetID(12), OpSetID(13)));
@@ -491,6 +494,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     /******** 13 -> 12 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(13), OpSetID(12)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSum", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Squeeze", OpSetID(13), OpSetID(12)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("Unsqueeze", OpSetID(13), OpSetID(12)));
@@ -504,6 +508,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Div", OpSetID(13), OpSetID(14)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Identity", OpSetID(13), OpSetID(14)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Mul", OpSetID(13), OpSetID(14)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(13), OpSetID(14)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Relu", OpSetID(13), OpSetID(14)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(13), OpSetID(14)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Sub", OpSetID(13), OpSetID(14)));
@@ -516,10 +521,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter("GRU", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("LSTM", 14, 13, RemoveAttribute(klayout, 0));
     registerAdapter("RNN", 14, 13, RemoveAttribute(klayout, 0));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(14), OpSetID(13)));
 
     /******** 14 -> 15 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("BatchNormalization", OpSetID(14), OpSetID(15)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Pow", OpSetID(14), OpSetID(15)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(14), OpSetID(15)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(14), OpSetID(15)));
 
     /******** 15 -> 16 ********/
@@ -535,6 +542,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("GreaterOrEqual", OpSetID(15), OpSetID(16)));
     registerAdapter(std::make_unique<CompatibleAdapter>("LeakyRelu", OpSetID(15), OpSetID(16)));
     registerAdapter(std::make_unique<CompatibleAdapter>("PRelu", OpSetID(15), OpSetID(16)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(15), OpSetID(16)));
 
     /******** 16 -> 15 ********/
     const std::vector<TensorProto_DataType> bfloat16_not_allowed = {TensorProto_DataType_BFLOAT16};
@@ -557,6 +565,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterND", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ScatterElements", OpSetID(17), OpSetID(18)));
     registerAdapter("LpPool", 17, 18, SetAttribute(kceil_mode, 0));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceL1", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceL2", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceLogSum", OpSetID(17), OpSetID(18)));
@@ -568,6 +577,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesAttributeToInput>("ReduceSumSquare", OpSetID(17), OpSetID(18)));
 
     /******** 18 -> 17 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceL1", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceL2", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceLogSum", OpSetID(18), OpSetID(17)));
@@ -592,6 +602,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(18), OpSetID(19)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(18), OpSetID(19)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(18), OpSetID(19)));
@@ -620,6 +631,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("If", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(19), OpSetID(18)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(19), OpSetID(18)));
     registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(19), OpSetID(18), float8_unallowed_types));
     registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(19), OpSetID(18)));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(19), OpSetID(18), float8_unallowed_types));
@@ -631,6 +643,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("ConstantOfShape", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("IsInf", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("IsNaN", OpSetID(19), OpSetID(20)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMax", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<CompatibleAdapter>("ReduceMin", OpSetID(19), OpSetID(20)));
     registerAdapter(std::make_unique<GridSample_19_20>());
@@ -651,6 +664,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_FLOAT8E5M2FNUZ};
     registerAdapter(std::make_unique<TypeRestriction>("IsInf", OpSetID(20), OpSetID(19), is_inf_10_unallowed_types));
     registerAdapter(std::make_unique<AxisInputToAttribute>("DFT", OpSetID(20), OpSetID(19), 2, -2));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(20), OpSetID(19)));
     const std::vector<TensorProto_DataType> reduce_min_max_18_unallowed_types = {TensorProto_DataType_BOOL};
     registerAdapter(
         std::make_unique<TypeRestriction>("ReduceMax", OpSetID(20), OpSetID(19), reduce_min_max_18_unallowed_types));
@@ -671,6 +685,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QLinearMatMul", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(20), OpSetID(21)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(20), OpSetID(21)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(20), OpSetID(21)));
@@ -711,6 +726,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         std::make_unique<TypeRestriction>("QLinearMatMul", OpSetID(21), OpSetID(20), q_dqmm_20_unallowed_types));
     registerAdapter(std::make_unique<QuantizeLinear_21_20>());
     registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(21), OpSetID(20)));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
     registerAdapter(std::make_unique<TypeRestriction>("Size", OpSetID(21), OpSetID(20), ir10_types_not_in_ir9));
@@ -767,6 +783,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("GRU", OpSetID(21), OpSetID(22)));
     registerAdapter(std::make_unique<CompatibleAdapter>("LSTM", OpSetID(21), OpSetID(22)));
     registerAdapter(std::make_unique<CompatibleAdapter>("GridSample", OpSetID(21), OpSetID(22)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(21), OpSetID(22)));
 
     /******** 22 -> 21 ********/
     registerAdapter(std::make_unique<TypeRestriction>("EyeLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
@@ -823,6 +840,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("GRU", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("LSTM", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("GridSample", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(22), OpSetID(21)));
 
     /******** 22 -> 23 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(22), OpSetID(23)));
@@ -860,6 +878,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(23), OpSetID(22)));
     registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
     registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(23), OpSetID(22), ir11_types_not_in_ir10));
@@ -881,6 +900,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(23), OpSetID(24)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(23), OpSetID(24)));
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(23), OpSetID(24)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(23), OpSetID(24)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Reshape", OpSetID(23), OpSetID(24)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(23), OpSetID(24)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Shape", OpSetID(23), OpSetID(24)));
@@ -910,6 +930,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(24), OpSetID(23)));
     registerAdapter(std::make_unique<TypeRestriction>("Reshape", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
     registerAdapter(std::make_unique<TypeRestriction>("Shape", OpSetID(24), OpSetID(23), ir12_types_not_in_ir11));
@@ -937,6 +958,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Loop", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Scan", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(24), OpSetID(25)));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Squeeze", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Transpose", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Unsqueeze", OpSetID(24), OpSetID(25)));
@@ -961,14 +983,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Loop", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
     registerAdapter(std::make_unique<TypeRestriction>("Pad", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(25), OpSetID(24)));
     registerAdapter(std::make_unique<TypeRestriction>("Squeeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
     registerAdapter(std::make_unique<TypeRestriction>("Transpose", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
 
-    /******** 11 -> 26 ********/
-    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(11), OpSetID(26)));
+    /******** 25 -> 26 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(25), OpSetID(26)));
+
+    /******** 26 -> 25 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(25)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

@@ -76,6 +76,7 @@ class TestSchema(unittest.TestCase):
             "tensor(bfloat16)",
             "tensor(float)",
             "tensor(double)",
+            "tensor(int16)",
             "tensor(int32)",
             "tensor(int64)",
         }
@@ -94,6 +95,7 @@ class TestSchema(unittest.TestCase):
             "bfloat16",
             "float",
             "double",
+            "int16",
             "int32",
             "int64",
         }
@@ -149,7 +151,6 @@ class TestSchema(unittest.TestCase):
             if constraint.type_param_str == "T":
                 supported_types.update(constraint.allowed_type_strs)
 
-        # Range should not support non-numeric types
         unsupported_types = {
             "tensor(bool)",
             "tensor(string)",
@@ -158,7 +159,6 @@ class TestSchema(unittest.TestCase):
             "tensor(uint32)",
             "tensor(uint64)",
             "tensor(int8)",
-            "tensor(int16)",
         }
 
         for unsupported_type in unsupported_types:
@@ -178,7 +178,7 @@ class TestSchema(unittest.TestCase):
             base_type = supported_type[7:-1]
             self.assertIn(
                 base_type,
-                ["float16", "bfloat16", "float", "double", "int32", "int64"],
+                ["float16", "bfloat16", "float", "double", "int16", "int32", "int64"],
                 f"Range type {base_type} should be a supported numeric type",
             )
 
