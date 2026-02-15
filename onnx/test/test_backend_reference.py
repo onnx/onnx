@@ -48,6 +48,21 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             feeds = inputs
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
+        
+        # DEBUG: Print inputs for range tests
+        if any("range" in name.lower() for name in self._session.input_names):
+            print(f"DEBUG: Range test inputs: {feeds}")
+            print(f"DEBUG: Input names: {self._session.input_names}")
+            for name, value in feeds.items():
+                print(f"DEBUG: {name} = {value} (shape: {value.shape}, dtype: {value.dtype})")
+        
+        result = self._session.run(None, feeds)
+        
+        # DEBUG: Print outputs for range tests  
+        if any("range" in name.lower() for name in self._session.input_names):
+            print(f"DEBUG: Range test output: {result}")
+            if result:
+                print(f"DEBUG: Output shape: {result[0].shape}")
         return self._session.run(None, feeds)
 
 
