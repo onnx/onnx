@@ -6277,6 +6277,80 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("output", TensorProto.INT32, (None,))]
         )
 
+    def test_range_float16(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT16, ()),
+                ("limit", TensorProto.FLOAT16, ()),
+                ("delta", TensorProto.FLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT16, (), (5,)),
+                make_tensor("delta", TensorProto.FLOAT16, (), (2,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT16, (None,))]
+        )
+
+    def test_range_bfloat16(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.BFLOAT16, ()),
+                ("limit", TensorProto.BFLOAT16, ()),
+                ("delta", TensorProto.BFLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.BFLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.BFLOAT16, (), (5,)),
+                make_tensor("delta", TensorProto.BFLOAT16, (), (2,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.BFLOAT16, (None,))]
+        )
+
+    def test_range_float16_rank_inference(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT16, ()),
+                ("limit", TensorProto.FLOAT16, ()),
+                ("delta", TensorProto.FLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT16, (), (5,)),
+            ],
+        )  # Missing 'delta' initializer
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT16, (None,))]
+        )
+
+    def test_range_bfloat16_rank_inference(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.BFLOAT16, ()),
+                ("limit", TensorProto.BFLOAT16, ()),
+                ("delta", TensorProto.BFLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.BFLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.BFLOAT16, (), (5,)),
+            ],
+        )  # Missing 'delta' initializer
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.BFLOAT16, (None,))]
+        )
+
     def test_gathernd(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (4, 5, 6)), ("indices", TensorProto.INT64, (2,))],
