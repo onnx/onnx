@@ -424,53 +424,55 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float)",
              "tensor(double)",
-             "tensor(float16)",
-             "tensor(bfloat16)",
              "tensor(int16)",
              "tensor(int32)",
-             "tensor(int64)"},
+             "tensor(int64)",
+             "tensor(bfloat16)",
+             "tensor(float16)"},
             "Constrain input types to common numeric type tensors.")
-        .FunctionBody(R"ONNX(
-          {
-            sub_result = Sub (limit, start)
-            sub_result_casted = Cast <to = 1> (sub_result)
-            delta_casted = Cast <to = 1> (delta)
-            div_result = Div (sub_result_casted, delta_casted)
-            ceil_result = Ceil (div_result)
-            ceil_result_relu = Relu (ceil_result)
-            ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
-            ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
-            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
-              <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
-                cond_out = Identity (cond)
-                current = Add (prev, delta)
-                range = Identity (prev)
-              }>
-          }
-        )ONNX")
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              if (ctx.getInputType(0) == nullptr) {
+                return false;
+              }
+
+              FunctionBuilder builder(functionProto);
+              builder.Add("sub_result = Sub (limit, start)")
+                  .Add("sub_result_casted = Cast (sub_result)", "to", static_cast<int64_t>(TensorProto::FLOAT))
+                  .Add("delta_casted = Cast (delta)", "to", static_cast<int64_t>(TensorProto::FLOAT))
+                  .Add("div_result = Div (sub_result_casted, delta_casted)")
+                  .Add("ceil_result = Ceil (div_result)")
+                  .Add("ceil_result_relu = Relu (ceil_result)")
+                  .Add("ceil_result_relu_int = Cast (ceil_result_relu)", "to", static_cast<int64_t>(TensorProto::INT64))
+                  .Add("ceil_result_relu_bool = Cast (ceil_result_relu)", "to", static_cast<int64_t>(TensorProto::BOOL))
+                  .Add(R"(
+                  final_cond, variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
+                    <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
+                      cond_out = Identity (cond)
+                      current = Add (prev, delta)
+                      range = Identity (prev)
+                    }>
+                )")
+                  .Add("output = Squeeze (output)", "axes", std::vector<int64_t>{1});
+
+              schema.BuildFunction(functionProto);
+              return true;
+            })
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-          // Shape inference
           const auto start_initializer = ctx.getInputData(0);
           const auto limit_initializer = ctx.getInputData(1);
           const auto delta_initializer = ctx.getInputData(2);
 
-          // Output is always 1-D
           auto output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
 
-          // If any of Range's inputs are not initializers, the output dimension
-          // value would remain unknown.
           if (start_initializer != nullptr && limit_initializer != nullptr && delta_initializer != nullptr) {
-            // Make sure the input types are homogeneous
             if ((start_initializer->data_type() != limit_initializer->data_type()) ||
                 (start_initializer->data_type() != delta_initializer->data_type())) {
               fail_shape_inference("All inputs to 'Range' op must be of the same type");
             }
 
-            // Explicitly compute the output dimension if Range's inputs are
-            // stored in initializer list.
             if (start_initializer->data_type() == TensorProto::FLOAT) {
               output_dim->set_dim_value(
                   compute_output_dim_for_range<float>(start_initializer, limit_initializer, delta_initializer));
@@ -483,12 +485,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
               output_dim->set_dim_value(
                   compute_output_dim_for_range<double>(start_initializer, limit_initializer, delta_initializer));
-            } else {
-              // 'float16' has no native CPU type -
-              // stop with rank inference, no action here
             }
-
-            return;
+            // Note: float16 and bfloat16 cannot be computed at compile time
           }
         }));
 
