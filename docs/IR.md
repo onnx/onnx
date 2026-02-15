@@ -89,7 +89,7 @@ Each model has the following components:
 |functions|FunctionProto[]|An optional list of functions local to the model.|
 |configuration|DeviceConfigurationProto[]|(IR version >= 11) An optional list of multi-device configurations for distributed execution.|
 
- Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
+ Models SHOULD specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
 __Note: Exploring an ONNX file__
 
