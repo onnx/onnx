@@ -446,7 +446,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 next = Add (current, delta)
                 cond_out = Identity (cond)
               }>
-            output = Squeeze <axes = [1]> (scan_output)
+            output = Squeeze (scan_output)
           }
         )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
