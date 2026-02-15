@@ -49,7 +49,8 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
 
-        return result
+        outs = self._session.run(None, feeds)
+        return outs
 
 
 class ReferenceEvaluatorBackend(onnx.backend.base.Backend):

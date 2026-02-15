@@ -439,11 +439,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             ceil_result = Ceil (div_result)
             ceil_result_relu = Relu (ceil_result)
             num_elements = Cast <to = 7> (ceil_result_relu)
-            
+            num_elements_scalar = Squeeze (num_elements)
             zero = Constant <value_int = 0> ()
             one = Constant <value_int = 1> ()
-            indices = Range (zero, num_elements, one)
-            
+            indices = Range (zero, num_elements_scalar, one)
             start_casted = Cast <to = 1> (start)
             indices_float = Cast <to = 1> (indices)
             scaled_indices = Mul (indices_float, delta_casted)
