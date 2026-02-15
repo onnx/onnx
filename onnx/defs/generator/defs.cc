@@ -440,10 +440,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             ceil_result_relu = Relu (ceil_result)
             ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
             ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
-            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
-              <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
+            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start, delta)
+              <body = loop_body_attribute (int64 i, bool cond, prev, delta_carried) => (cond_out, current, delta_out, range) {
                 cond_out = Identity (cond)
-                current = Add (prev, delta)
+                current = Add (prev, delta_carried)
+                delta_out = Identity (delta_carried)
                 range = Identity (prev)
               }>
           }
