@@ -438,14 +438,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             div_result = Div (sub_result_casted, delta_casted)
             ceil_result = Ceil (div_result)
             ceil_result_relu = Relu (ceil_result)
-            ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
-            ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
-            scan_output, final_state = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
-              <body = loop_body_attribute (int64 i, bool cond, current) => (cond_out, next, current) {
-                next = Add (current, delta)
-                cond_out = Identity (cond)
-              }>
-            output = Squeeze (scan_output)
+            num_elements = Cast <to = 7> (ceil_result_relu)
+            zero = Constant <value = int64[1] {0}> ()
+            one = Constant <value = int64[1] {1}> ()
+            indices = Range (zero, num_elements, one)
+            indices_casted = Cast <to = 1> (indices)
+            delta_expanded = Mul (indices_casted, delta_casted)
+            output_casted = Add (start, delta_expanded)
+            output = Cast (output_casted, start)
           }
         )ONNX")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
