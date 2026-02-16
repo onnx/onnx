@@ -61,13 +61,13 @@ namespace ONNX_NAMESPACE {
       for (int i = 0; i < tensor_proto->dims_size(); ++i) {                                                        \
         expected_size *= tensor_proto->dims(i);                                                                    \
       }                                                                                                            \
-      if (tensor_proto->dims_size() != 0 && data.size() != expected_size) {                                        \
+      if (data.size() != expected_size) {                                        \
         fail_shape_inference(                                                                                      \
             "Data size mismatch. Tensor: ",                                                                        \
             tensor_proto->name(),                                                                                  \
             " expected size ",                                                                                     \
             expected_size,                                                                                         \
-            " does not match the actual size",                                                                     \
+            " does not match the actual size ",                                                                     \
             data.size());                                                                                          \
       }                                                                                                            \
       res.insert(res.end(), data.begin(), data.end());                                                             \
