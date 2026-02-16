@@ -32804,93 +32804,66 @@ This version of the operator has been available since version 26 of the default 
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
-# ai.onnx.preview
-## Version 1 of the 'ai.onnx.preview' operator set
-### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
+### <a name="Range-26"></a>**Range-26**</a>
 
-  Computes scaled dot-product attention over rank-4 (batched, multi-head) inputs,
-  with optional user-provided customization subgraphs at two stages:
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
+  up to `limit` (exclusive).
 
-  1. score_mod: Modify the attention score tensor after Q·K^T
-  2. prob_mod: Modify the probability tensor after Softmax
+  The number of elements in the output of range is computed as below:
 
-  This operator mirrors the capabilities of PyTorch's flex_attention:
-  https://docs.pytorch.org/docs/stable/nn.attention.flex_attention.html
-
-  Input Shapes (MUST be rank-4 tensors):
-  - Q: `(batch_size, q_num_heads, q_sequence_length, head_size)`
-  - K: `(batch_size, kv_num_heads, kv_sequence_length, head_size)`
-  - V: `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)`
-
-  Output Shape:
-  - Y: `(batch_size, q_num_heads, q_sequence_length, v_head_size)`
-
-  FlexAttention Computation:
   ```
-  Scores = (Q @ K^T) * scale
-  Scores = score_mod(Scores)             # if 'score_mod' is provided
-  Probs = Softmax(Scores, axis=-1)
-  Probs = prob_mod(Probs)                # if 'prob_mod' is provided
-  Y = Probs @ V
+  number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
   ```
 
-  Grouped Query Attention (GQA):
-  When `q_num_heads != kv_num_heads`, each K/V head is shared by a contiguous
-  group of query heads in head-index order. Let
-  `group_size = q_num_heads / kv_num_heads`; then query head `h` uses K/V head
-  `floor(h / group_size)`. `q_num_heads` must be a multiple of
-  `kv_num_heads`.
+  The pseudocode determining the contents of the output is shown below:
 
-  Modifier Subgraphs (score_mod, prob_mod):
-  Each modifier subgraph takes exactly one rank-4 tensor input and must produce
-  exactly one rank-4 tensor output of the same shape and element type.
-  - score_mod input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
-  - prob_mod  input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
-  The element type is determined by softmax_precision (defaults to float32 for
-  non-double inputs, otherwise double).
+  ```
+  for(int i=0; i<number_of_elements; ++i) {
+    output[i] =  start + (i * delta);
+  }
+  ```
 
-  Masking can be expressed in score_mod by writing masked positions as -inf (or a
-  large negative value appropriate for the target precision).
+  Example 1
+
+  ```
+  Inputs: start = 3, limit = 9, delta = 3
+  Output: [3, 6]
+  ```
+
+  Example 2
+
+  ```
+  Inputs: start = 10, limit = 4, delta = -2
+  Output: [10, 8, 6]
+  ```
 
 #### Version
 
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>prob_mod</tt> : graph</dt>
-<dd>Optional probability modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (probs) -> probs_out. probs has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
-<dt><tt>scale</tt> : float</dt>
-<dd>Scaling factor for Q*K^T. Defaults to 1/sqrt(head_size).</dd>
-<dt><tt>score_mod</tt> : graph</dt>
-<dd>Optional score modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (scores) -> scores_out. scores has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
-<dt><tt>softmax_precision</tt> : int</dt>
-<dd>Floating-point precision for softmax computation. Defaults to float32 for non-double inputs, otherwise uses double. Must be explicitly specified for non-float types.</dd>
-</dl>
+This version of the operator has been available since version 26 of the default ONNX operator set.
 
 #### Inputs
 
 <dl>
-<dt><tt>Q</tt> : T1</dt>
-<dd>Query tensor with shape `(batch_size, q_num_heads, q_seq_len, head_size)`.</dd>
-<dt><tt>K</tt> : T1</dt>
-<dd>Key tensor with shape `(batch_size, kv_num_heads, kv_seq_len, head_size)`.</dd>
-<dt><tt>V</tt> : T1</dt>
-<dd>Value tensor with shape `(batch_size, kv_num_heads, kv_seq_len, v_head_size)`.</dd>
+<dt><tt>start</tt> : T</dt>
+<dd>Scalar. First entry for the range of output values.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Scalar. Exclusive upper limit for the range of output values.</dd>
+<dt><tt>delta</tt> : T</dt>
+<dd>Scalar. Value to step by.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T1</dt>
-<dd>Output tensor with shape `(batch_size, q_num_heads, q_seq_len, v_head_size)`.</dd>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated range of values.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain Q, K, V to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
 
 # ai.onnx.preview.training
