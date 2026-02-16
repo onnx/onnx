@@ -7,6 +7,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 

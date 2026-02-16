@@ -6259,6 +6259,58 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("output", TensorProto.FLOAT, (2,))]
         )
 
+    def test_range_initializer_invalid(self) -> None:
+        # Create a TensorProto with incorrect data type for `delta`.
+        # This should lead to an error when ParseData is called during shape inferencing
+        # as the expected float data is missing.
+        bad_tensor = TensorProto()
+        bad_tensor.name = "delta"
+        bad_tensor.data_type = TensorProto.FLOAT
+        bad_tensor.int64_data.extend([2])  # incorrect data type
+
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT, ()),
+                ("limit", TensorProto.FLOAT, ()),
+                ("delta", TensorProto.FLOAT, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT, (), (5,)),
+                bad_tensor,
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_range_initializer_invalid_rawdata(self) -> None:
+        # Create a TensorProto with empty raw data for `delta`.
+        # This should lead to an error when ParseData is called during shape inferencing
+        # as the expected raw data is missing.
+        bad_tensor = make_tensor("delta",
+                                 TensorProto.FLOAT,
+                                 (),
+                                 vals=np.array([1.0], dtype="<f4").tobytes(),
+                                 raw=True)
+        bad_tensor.raw_data = b''  # Clear raw data to simulate missing data
+
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT, ()),
+                ("limit", TensorProto.FLOAT, ()),
+                ("delta", TensorProto.FLOAT, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT, (), (5,)),
+                bad_tensor,
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def test_range_rank_inference(self) -> None:
         graph = self._make_graph(
             [
