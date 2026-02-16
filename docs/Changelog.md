@@ -32757,6 +32757,68 @@ This version of the operator has been available since version 26 of the default 
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
+### <a name="Range-26"></a>**Range-26**</a>
+
+  Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
+  up to `limit` (exclusive).
+
+  The number of elements in the output of range is computed as below:
+
+  ```
+  number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
+  ```
+
+  The pseudocode determining the contents of the output is shown below:
+
+  ```
+  for(int i=0; i<number_of_elements; ++i) {
+    output[i] =  start + (i * delta);
+  }
+  ```
+
+  Example 1
+
+  ```
+  Inputs: start = 3, limit = 9, delta = 3
+  Output: [3, 6]
+  ```
+
+  Example 2
+
+  ```
+  Inputs: start = 10, limit = 4, delta = -2
+  Output: [10, 8, 6]
+  ```
+
+#### Version
+
+This version of the operator has been available since version 26 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>start</tt> : T</dt>
+<dd>Scalar. First entry for the range of output values.</dd>
+<dt><tt>limit</tt> : T</dt>
+<dd>Scalar. Exclusive upper limit for the range of output values.</dd>
+<dt><tt>delta</tt> : T</dt>
+<dd>Scalar. Value to step by.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 1-D tensor with same type as the inputs containing generated range of values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16)</dt>
+<dd>Constrain input types to common numeric type tensors.</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
