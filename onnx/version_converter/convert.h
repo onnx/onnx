@@ -539,8 +539,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     /******** 16 -> 15 ********/
     const std::vector<TensorProto_DataType> bfloat16_not_allowed = {TensorProto_DataType_BFLOAT16};
     registerAdapter(std::make_unique<TypeRestriction>("Where", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
-    registerAdapter(std::make_unique<ScatterElements_16_15>(OpSetID(16), OpSetID(15), bfloat16_not_allowed));
-    registerAdapter(std::make_unique<ScatterND_16_15>(OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<Scatter_16_15>("ScatterElements", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<Scatter_16_15>("ScatterND", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
     registerAdapter(
         std::make_unique<TypeRestriction>("GreaterOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
@@ -576,8 +576,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceMin", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceProd", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSumSquare", OpSetID(18), OpSetID(17)));
-    registerAdapter(std::make_unique<ScatterElements_18_17>());
-    registerAdapter(std::make_unique<ScatterND_18_17>());
+    registerAdapter(std::make_unique<Scatter_18_17>("ScatterElements"));
+    registerAdapter(std::make_unique<Scatter_18_17>("ScatterND"));
 
     /******** 18 -> 19 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Equal", OpSetID(18), OpSetID(19)));
