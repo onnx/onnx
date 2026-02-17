@@ -2384,294 +2384,105 @@ class TestVersionConverter(unittest.TestCase):
 
         self.assertRaises(RuntimeError, test)
 
-    # ScatterElements 16 -> 15: TypeRestriction (bfloat16) + RemoveAttribute (reduction)
-    def test_scatter_elements_16_15_success(self) -> None:
+    def _make_scatter_graph(
+        self,
+        op_name: str,
+        dtype: int = TensorProto.FLOAT,
+        reduction: str | None = None,
+    ) -> GraphProto:
+        """Build a graph for ScatterElements or ScatterND with standard test shapes."""
+        scatter_graph_config = {
+            "ScatterElements": ((2, 3), (2, 3), (2, 3), {"axis": 0}),
+            "ScatterND": ((4, 5), (2, 1), (2, 5), {}),
+        }
+        data_s, indices_s, updates_s, attrs = scatter_graph_config[op_name]
+        attrs = dict(attrs)
+        if reduction is not None:
+            attrs["reduction"] = reduction
         nodes = [
-            helper.make_node(
-                "ScatterElements",
-                ["data", "indices", "updates"],
-                ["out"],
-                axis=0,
-                reduction="none",
-            )
+            helper.make_node(op_name, ["data", "indices", "updates"], ["out"], **attrs)
         ]
-        graph = helper.make_graph(
+        return helper.make_graph(
             nodes,
-            "scatter_elements",
+            op_name.lower(),
             [
-                helper.make_tensor_value_info("data", TensorProto.FLOAT, (2, 3)),
-                helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 3)),
-                helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 3)),
+                helper.make_tensor_value_info("data", dtype, data_s),
+                helper.make_tensor_value_info("indices", TensorProto.INT64, indices_s),
+                helper.make_tensor_value_info("updates", dtype, updates_s),
             ],
-            [helper.make_tensor_value_info("out", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor_value_info("out", dtype, data_s)],
         )
+
+    # Scatter 16 -> 15: TypeRestriction (bfloat16) + RemoveAttribute (reduction)
+    @parameterized.parameterized.expand([("ScatterElements",), ("ScatterND",)])
+    def test_scatter_16_15_success(self, op_name: str) -> None:
+        graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, "none")
         converted = self._converted(graph, helper.make_operatorsetid("", 16), 15)
         assert converted.opset_import[0].version == 15
 
-    def test_scatter_elements_bfloat16_16_15_fails(self) -> None:
+    @parameterized.parameterized.expand([("ScatterElements",), ("ScatterND",)])
+    def test_scatter_16_15_bfloat16_fails(self, op_name: str) -> None:
         def test() -> None:
-            nodes = [
-                helper.make_node(
-                    "ScatterElements", ["data", "indices", "updates"], ["out"], axis=0
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_bf16",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.BFLOAT16, (2, 3)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 3)),
-                    helper.make_tensor_value_info(
-                        "updates", TensorProto.BFLOAT16, (2, 3)
-                    ),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.BFLOAT16, (2, 3))],
-            )
+            graph = self._make_scatter_graph(op_name, TensorProto.BFLOAT16)
             self._converted(graph, helper.make_operatorsetid("", 16), 15)
 
         self.assertRaises(RuntimeError, test)
 
-    def test_scatter_elements_reduction_add_16_15_fails(self) -> None:
-        def test() -> None:
-            nodes = [
-                helper.make_node(
-                    "ScatterElements",
-                    ["data", "indices", "updates"],
-                    ["out"],
-                    axis=0,
-                    reduction="add",
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_reduction",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.FLOAT, (2, 3)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 3)),
-                    helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 3)),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.FLOAT, (2, 3))],
-            )
-            self._converted(graph, helper.make_operatorsetid("", 16), 15)
-
-        self.assertRaises(RuntimeError, test)
-
-    # ScatterND 16 -> 15: TypeRestriction (bfloat16) + RemoveAttribute (reduction)
-    def test_scatter_nd_16_15_success(self) -> None:
-        nodes = [
-            helper.make_node(
-                "ScatterND", ["data", "indices", "updates"], ["out"], reduction="none"
-            )
+    # Opset 16 added reduction 'add' and 'mul'; 16 -> 15 only allows 'none'
+    @parameterized.parameterized.expand(
+        [
+            ("ScatterElements", "add"),
+            ("ScatterElements", "mul"),
+            ("ScatterND", "add"),
+            ("ScatterND", "mul"),
         ]
-        graph = helper.make_graph(
-            nodes,
-            "scatter_nd",
-            [
-                helper.make_tensor_value_info("data", TensorProto.FLOAT, (4, 5)),
-                helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 1)),
-                helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 5)),
-            ],
-            [helper.make_tensor_value_info("out", TensorProto.FLOAT, (4, 5))],
-        )
-        converted = self._converted(graph, helper.make_operatorsetid("", 16), 15)
-        assert converted.opset_import[0].version == 15
-
-    def test_scatter_nd_bfloat16_16_15_fails(self) -> None:
+    )
+    def test_scatter_16_15_reduction_add_mul_fails(
+        self, op_name: str, reduction: str
+    ) -> None:
         def test() -> None:
-            nodes = [
-                helper.make_node("ScatterND", ["data", "indices", "updates"], ["out"])
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_nd_bf16",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.BFLOAT16, (4, 5)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 1)),
-                    helper.make_tensor_value_info(
-                        "updates", TensorProto.BFLOAT16, (2, 5)
-                    ),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.BFLOAT16, (4, 5))],
-            )
+            graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
             self._converted(graph, helper.make_operatorsetid("", 16), 15)
 
         self.assertRaises(RuntimeError, test)
 
-    def test_scatter_nd_reduction_add_16_15_fails(self) -> None:
+    # Scatter 18 -> 17: reject reduction "max" / "min"
+    @parameterized.parameterized.expand(
+        [
+            ("ScatterElements", "max"),
+            ("ScatterElements", "min"),
+            ("ScatterND", "max"),
+            ("ScatterND", "min"),
+        ]
+    )
+    def test_scatter_18_17_reduction_max_min_fails(
+        self, op_name: str, reduction: str
+    ) -> None:
         def test() -> None:
-            nodes = [
-                helper.make_node(
-                    "ScatterND",
-                    ["data", "indices", "updates"],
-                    ["out"],
-                    reduction="add",
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_nd_reduction",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.FLOAT, (4, 5)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 1)),
-                    helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 5)),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.FLOAT, (4, 5))],
-            )
-            self._converted(graph, helper.make_operatorsetid("", 16), 15)
-
-        self.assertRaises(RuntimeError, test)
-
-    # Scatter 18 -> 17: RestrictScatterReduction (reject "max" / "min")
-    def test_scatter_elements_reduction_max_18_17_fails(self) -> None:
-        def test() -> None:
-            nodes = [
-                helper.make_node(
-                    "ScatterElements",
-                    ["data", "indices", "updates"],
-                    ["out"],
-                    axis=0,
-                    reduction="max",
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_max",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.FLOAT, (2, 3)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 3)),
-                    helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 3)),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.FLOAT, (2, 3))],
-            )
+            graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
             self._converted(graph, helper.make_operatorsetid("", 18), 17)
 
         self.assertRaises(RuntimeError, test)
 
-    def test_scatter_nd_reduction_max_18_17_fails(self) -> None:
-        def test() -> None:
-            nodes = [
-                helper.make_node(
-                    "ScatterND",
-                    ["data", "indices", "updates"],
-                    ["out"],
-                    reduction="max",
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_nd_max",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.FLOAT, (4, 5)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 1)),
-                    helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 5)),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.FLOAT, (4, 5))],
-            )
-            self._converted(graph, helper.make_operatorsetid("", 18), 17)
+    @parameterized.parameterized.expand(
+        [
+            ("ScatterElements", None),
+            ("ScatterElements", "none"),
+            ("ScatterElements", "add"),
+            ("ScatterElements", "mul"),
+            ("ScatterND", None),
+            ("ScatterND", "none"),
+            ("ScatterND", "add"),
+            ("ScatterND", "mul"),
+        ]
+    )
+    def test_scatter_18_17_allowed_reductions_success(
+        self, op_name: str, reduction: str | None
+    ) -> None:
+        graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
+        converted = self._converted(graph, helper.make_operatorsetid("", 18), 17)
+        checker.check_model(converted)
 
-        self.assertRaises(RuntimeError, test)
 
-    def test_scatter_elements_reduction_min_18_17_fails(self) -> None:
-        def test() -> None:
-            nodes = [
-                helper.make_node(
-                    "ScatterElements",
-                    ["data", "indices", "updates"],
-                    ["out"],
-                    axis=0,
-                    reduction="min",
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_min",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.FLOAT, (2, 3)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 3)),
-                    helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 3)),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.FLOAT, (2, 3))],
-            )
-            self._converted(graph, helper.make_operatorsetid("", 18), 17)
-
-        self.assertRaises(RuntimeError, test)
-
-    def test_scatter_nd_reduction_min_18_17_fails(self) -> None:
-        def test() -> None:
-            nodes = [
-                helper.make_node(
-                    "ScatterND",
-                    ["data", "indices", "updates"],
-                    ["out"],
-                    reduction="min",
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_nd_min",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.FLOAT, (4, 5)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 1)),
-                    helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 5)),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.FLOAT, (4, 5))],
-            )
-            self._converted(graph, helper.make_operatorsetid("", 18), 17)
-
-        self.assertRaises(RuntimeError, test)
-
-    def test_scatter_elements_reduction_18_17_success(self) -> None:
-        # Allowed reductions (including default / no attribute) should convert successfully.
-        for reduction in (None, "none", "add", "mul"):
-            attrs = {"axis": 0}
-            if reduction is not None:
-                attrs["reduction"] = reduction
-            nodes = [
-                helper.make_node(
-                    "ScatterElements",
-                    ["data", "indices", "updates"],
-                    ["out"],
-                    **attrs,
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_elements_reduction_allowed",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.FLOAT, (2, 3)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 3)),
-                    helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 3)),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.FLOAT, (2, 3))],
-            )
-            converted = self._converted(graph, helper.make_operatorsetid("", 18), 17)
-            checker.check_model(converted)
-
-    def test_scatter_nd_reduction_18_17_success(self) -> None:
-        # Allowed reductions (including default / no attribute) should convert successfully.
-        for reduction in (None, "none", "add", "mul"):
-            attrs = {}
-            if reduction is not None:
-                attrs["reduction"] = reduction
-            nodes = [
-                helper.make_node(
-                    "ScatterND",
-                    ["data", "indices", "updates"],
-                    ["out"],
-                    **attrs,
-                )
-            ]
-            graph = helper.make_graph(
-                nodes,
-                "scatter_nd_reduction_allowed",
-                [
-                    helper.make_tensor_value_info("data", TensorProto.FLOAT, (4, 5)),
-                    helper.make_tensor_value_info("indices", TensorProto.INT64, (2, 1)),
-                    helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2, 5)),
-                ],
-                [helper.make_tensor_value_info("out", TensorProto.FLOAT, (4, 5))],
-            )
-            converted = self._converted(graph, helper.make_operatorsetid("", 18), 17)
-            checker.check_model(converted)
 if __name__ == "__main__":
     unittest.main()
