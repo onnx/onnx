@@ -542,6 +542,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<Scatter_16_15>("ScatterElements", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
     registerAdapter(std::make_unique<Scatter_16_15>("ScatterND", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LessOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
     registerAdapter(
         std::make_unique<TypeRestriction>("GreaterOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("LeakyRelu", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
