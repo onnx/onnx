@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cinttypes>
+#include <memory>
 #include <string>
 #include <vector>
 
