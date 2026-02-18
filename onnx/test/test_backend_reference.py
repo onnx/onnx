@@ -48,6 +48,7 @@ class ReferenceEvaluatorBackendRep(onnx.backend.base.BackendRep):
             feeds = inputs
         else:
             raise TypeError(f"Unexpected input type {type(inputs)!r}.")
+
         return self._session.run(None, feeds)
 
 
@@ -114,6 +115,8 @@ backend_test.exclude(
     "|test_loop16_seq_none"
     "|test_range_float_type_positive_delta_expanded"
     "|test_range_int32_type_negative_delta_expanded"
+    "|test_range_float16_type_positive_delta_expanded"
+    "|test_range_bfloat16_type_positive_delta_expanded"
     "|test_scan_sum)"
 )
 
@@ -161,6 +164,7 @@ if version_utils.numpy_older_than("2.0"):
     backend_test.exclude(r"test_cast.*(FLOAT8|BFLOAT16|FLOAT4|INT4)")
     backend_test.exclude(r"test_quantizelinear_e4m3fn")
     backend_test.exclude(r"test_quantizelinear_float4e2m1")
+    backend_test.exclude(r"test_range_(float16|bfloat16)_type_positive_delta")
 
 # The documentation does not explicitly say that is_causal=1 and attn_mask is not None
 # is not allowed. The expansion (based on the function definition in ONNX)

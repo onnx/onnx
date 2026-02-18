@@ -413,7 +413,7 @@ compute_output_dim_for_range(const TensorProto* start, const TensorProto* limit,
 
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
-    11,
+    26,
     OpSchema()
         .SetDoc(Range_ver11_doc)
         .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
@@ -422,7 +422,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated range of values.", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)"},
+            {"tensor(float)",
+             "tensor(double)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(bfloat16)",
+             "tensor(float16)"},
             "Constrain input types to common numeric type tensors.")
         .FunctionBody(R"ONNX(
           {
@@ -478,7 +484,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               output_dim->set_dim_value(
                   compute_output_dim_for_range<double>(start_initializer, limit_initializer, delta_initializer));
             } else {
-              // 'float16' has no native CPU type -
+              // float16 and bfloat16 have no native CPU type -
               // stop with rank inference, no action here
             }
 

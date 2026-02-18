@@ -12,6 +12,7 @@ extern const char kDoc_Size_ver24[];
 extern const char kDoc_RandomUniform_ver1[];
 extern const char kDoc_DequantizeLinear_ver24[];
 extern const char kDoc_RandomNormal_ver1[];
+extern const char kDoc_Range_ver11[];
 extern const char kDoc_Round_ver11[];
 extern const char kDoc_SpaceToDepth_ver1[];
 extern const char kDoc_InstanceNormalization_ver6[];
