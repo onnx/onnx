@@ -1243,6 +1243,17 @@ Neg takes one input data (Tensor<T>) and produces one output data
 the tensor elementwise.
 )DOC";
 
+const char kDoc_BitCast_ver26[] = R"DOC(
+Reinterprets the binary representation of a tensor as a different data type,
+specified by the 'to' attribute. Unlike Cast, BitCast preserves the exact bit
+pattern without any value conversion.
+
+The target data type must have the same bit-width as the input data type.
+The output tensor has the same shape as the input tensor.
+All types except string are supported. Implementations must treat the
+underlying bytes as little endian.
+)DOC";
+
 #else
 const char kDoc_GRU_ver14[] = "";
 const char kDoc_Squeeze_ver24[] = "";
@@ -1319,5 +1330,6 @@ const char kDoc_Reshape_ver24[] = "";
 const char kDoc_Compress_ver9[] = "";
 const char kDoc_PRelu_ver7[] = "";
 const char kDoc_Neg_ver6[] = "";
+const char kDoc_BitCast_ver26[] = "";
 #endif
 } // namespace ONNX_NAMESPACE
