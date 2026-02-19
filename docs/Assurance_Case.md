@@ -19,6 +19,8 @@ This document provides the security assurance case for ONNX Core, supporting the
 
 ## 1. Threat Model
 
+> **Note**: No specific threat modeling template (e.g. STRIDE, PASTA) was used. The threats below are identified based on the system's attack surface and known risks for serialization/parsing libraries.
+
 ONNX Core is the reference implementation of the ONNX standard, consisting of the IR specification, model validator ([checker.cc](https://github.com/onnx/onnx/blob/main/onnx/checker.cc)), shape inference, protobuf serialization, and Python bindings.
 
 ### 1.1 Key Threats
