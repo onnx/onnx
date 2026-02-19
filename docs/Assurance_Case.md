@@ -75,7 +75,7 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 
 | CWE | Mitigation |
 |-----|-----------|
-| CWE-787/125 Out-of-bounds R/W | Modern C++ (std::vector, RAII); ASan/MSan in CI|
+| CWE-787/125 Out-of-bounds R/W | Modern C++ (std::vector, RAII); ASan in CI |
 | CWE-20 Input Validation | Comprehensive model validation on load; protobuf schema enforcement; operator shape/type checking |
 | CWE-416 Use After Free | RAII/smart pointers (unique_ptr, shared_ptr); ASan in CI; code review |
 | CWE-190 Integer Overflow | Checked size arithmetic in tensor allocation; UBSan in CI |
@@ -99,7 +99,7 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 
 ## 5. Security Processes
 
-**Vulnerability disclosure**: Reports via GitHub Security Advisories or security@onnx.ai; 90-day response SLA; CVE assignment through Linux Foundation CNA. See [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md).
+**Vulnerability disclosure**: Reports via GitHub Security Advisories (preferred) or onnx-security@lists.lfaidata.foundation as a fallback; CVE assignment through Linux Foundation CNA. See [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md).
 
 **Code review**: All changes require maintainer review; security-sensitive changes require Architecture SIG review; one approval for dependency updates; automated checks must pass before merge ([CODEOWNERS](https://github.com/onnx/onnx/blob/main/.github/CODEOWNERS)).
 
