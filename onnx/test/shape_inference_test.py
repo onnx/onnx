@@ -6288,12 +6288,14 @@ class TestShapeInference(TestShapeInferenceHelper):
         # Create a TensorProto with empty raw data for `delta`.
         # This should lead to an error when ParseData is called during shape inferencing
         # as the expected raw data is missing.
-        bad_tensor = make_tensor("delta",
-                                 TensorProto.FLOAT,
-                                 (),
-                                 vals=np.array([1.0], dtype="<f4").tobytes(),
-                                 raw=True)
-        bad_tensor.raw_data = b''  # Clear raw data to simulate missing data
+        bad_tensor = make_tensor(
+            "delta",
+            TensorProto.FLOAT,
+            (),
+            vals=np.array([1.0], dtype="<f4").tobytes(),
+            raw=True,
+        )
+        bad_tensor.raw_data = b""  # Clear raw data to simulate missing data
 
         graph = self._make_graph(
             [
