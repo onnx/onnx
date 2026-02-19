@@ -75,13 +75,13 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 
 | CWE | Mitigation |
 |-----|-----------|
-| CWE-787/125 Out-of-bounds R/W | Modern C++ (std::vector, RAII); ASan/MSan in CI; continuous fuzzing on OSS-Fuzz |
+| CWE-787/125 Out-of-bounds R/W | Modern C++ (std::vector, RAII); ASan/MSan in CI|
 | CWE-20 Input Validation | Comprehensive model validation on load; protobuf schema enforcement; operator shape/type checking |
 | CWE-416 Use After Free | RAII/smart pointers (unique_ptr, shared_ptr); ASan in CI; code review |
 | CWE-190 Integer Overflow | Checked size arithmetic in tensor allocation; UBSan in CI |
 | CWE-22 Path Traversal | External data paths validated and normalized; no auto-resolution outside model directory |
 | CWE-78 Command Injection | No shell execution in ONNX Core; no system()/exec() usage; enforced by code review and static analysis |
-| OWASP A06 Supply Chain | Renovate/Dependabot; SLSA Level 3; Sigstore signing; minimal dependency footprint; SBOM generation |
+| OWASP A06 Supply Chain | Dependabot; Sigstore signing; minimal dependency footprint; SBOM generation |
 | CWE-79/89/352/434 | Not applicable — ONNX Core is not a web application or database |
 
 ---
@@ -90,10 +90,10 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 
 | Method | Details |
 |--------|---------|
-| Static analysis | CodeQL (GitHub Advanced Security), Clang Static Analyzer, Semgrep |
+| Static analysis | CodeQL (GitHub Advanced Security), Clang Static Analyzer, sonarcloud |
 | Dynamic analysis | ASan, MSan, UBSan, TSan in CI build matrix |
-| Fuzzing | Continuous fuzzing of the model parser via [OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/onnx) |
-| Dependency scanning | Renovate, Dependabot, OpenSSF Scorecard |
+| Fuzzing | not yet |
+| Dependency scanning | Dependabot, OpenSSF Scorecard |
 
 ---
 
@@ -101,9 +101,9 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 
 **Vulnerability disclosure**: Reports via GitHub Security Advisories or security@onnx.ai; 90-day response SLA; CVE assignment through Linux Foundation CNA. See [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md).
 
-**Code review**: All changes require maintainer review; security-sensitive changes require Architecture SIG review; two approvals for dependency updates; automated checks must pass before merge ([CODEOWNERS](https://github.com/onnx/onnx/blob/main/.github/CODEOWNERS)).
+**Code review**: All changes require maintainer review; security-sensitive changes require Architecture SIG review; one approval for dependency updates; automated checks must pass before merge ([CODEOWNERS](https://github.com/onnx/onnx/blob/main/.github/CODEOWNERS)).
 
-**Build & distribution**: SLSA Level 3 provenance for releases; artifacts signed with Sigstore; PyPI Trusted Publishing with 2FA required for maintainers; SHA256 checksums published; actions pinned to SHA in CI.
+**Build & distribution**: artifacts signed with Sigstore; PyPI Trusted Publishing with 2FA required for maintainers; SHA256 checksums published; actions pinned to SHA in CI.
 
 ---
 
