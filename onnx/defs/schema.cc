@@ -1326,6 +1326,35 @@ const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir13() {
   return all_non_complex_tensor_types_ir13;
 }
 
+const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir13() {
+  static const std::vector<std::string> all_non_string_tensor_types_ir13 = {"tensor(uint8)",
+                                                                            "tensor(uint16)",
+                                                                            "tensor(uint32)",
+                                                                            "tensor(uint64)",
+                                                                            "tensor(int8)",
+                                                                            "tensor(int16)",
+                                                                            "tensor(int32)",
+                                                                            "tensor(int64)",
+                                                                            "tensor(bfloat16)",
+                                                                            "tensor(float16)",
+                                                                            "tensor(float)",
+                                                                            "tensor(double)",
+                                                                            "tensor(bool)",
+                                                                            "tensor(complex64)",
+                                                                            "tensor(complex128)",
+                                                                            "tensor(float8e4m3fn)",
+                                                                            "tensor(float8e4m3fnuz)",
+                                                                            "tensor(float8e5m2)",
+                                                                            "tensor(float8e5m2fnuz)",
+                                                                            "tensor(uint4)",
+                                                                            "tensor(int4)",
+                                                                            "tensor(float4e2m1)",
+                                                                            "tensor(float8e8m0)",
+                                                                            "tensor(uint2)",
+                                                                            "tensor(int2)"};
+  return all_non_string_tensor_types_ir13;
+}
+
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
   static const std::vector<std::string> all_tensor_sequence_types = {
       "seq(tensor(uint8))",
