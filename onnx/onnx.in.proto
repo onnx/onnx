@@ -120,7 +120,7 @@ enum Version {
   IR_VERSION_2025_08_26 = 0x000000000000000C;
 
   // IR VERSION 13 published on November 6, 2025
-  //Added UINT2, INT2.
+  // Added UINT2, INT2.
   IR_VERSION = 0x000000000000000D;
 }
 
