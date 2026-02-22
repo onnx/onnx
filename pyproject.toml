@@ -78,9 +78,7 @@ show_error_codes = true
 show_column_numbers = true
 ignore_missing_imports = true
 # NOTE: Do not grow the exclude list. Edit .lintrunner.toml instead
-exclude = [
-    '^third_party',
-]
+exclude = []
 
 # NOTE: Avoid adding overrides unless for exceptional cases. Prefer inline ignores.
 # If you must ignore error for the whole file, consider adapting the example

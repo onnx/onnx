@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Gemm in default domain from version 7 to 6
 
@@ -30,7 +28,7 @@ class Gemm_7_6 final : public Adapter {
     // Determine if C is broadcastable
     const auto& C_shape = inputs[2]->sizes();
     // Create (M, N) to input to numpy_unibroadcastable
-    // TODO: Reconcile fact that shapes aren't determined for 1st 2 inputs
+    // TODO(ONNX): Reconcile fact that shapes aren't determined for 1st 2 inputs
     std::vector<Dimension> MN;
     if (node->hasAttribute(ktransA) && node->i(ktransA) == 1) {
       MN.emplace_back(A_shape[1]);

@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         persist-credentials: false
 
@@ -32,7 +32,7 @@ jobs:
         print_all: false
         timeout: 2
         retry_count : 2
-        exclude_urls: https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/,https://media.githubusercontent.com/media/,https://download.onnxruntime.ai/onnx/models
+        exclude_urls: https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/
         # exclude_patterns: https://...
         force_pass: false
 
