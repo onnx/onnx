@@ -638,6 +638,8 @@ class OpSchema final {
 
   ONNX_API static const std::vector<std::string>& all_non_complex_tensor_types_ir13();
 
+  ONNX_API static const std::vector<std::string>& all_non_string_tensor_types_ir13();
+
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types();
 
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types_ir4();
@@ -920,7 +922,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 25;
+      last_release_version_map_[ONNX_DOMAIN] = 26;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
