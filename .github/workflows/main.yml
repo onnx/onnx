@@ -18,7 +18,7 @@ on:
   merge_group:
   workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions:  # set top-level default permissions as security good practice
   contents: read
 
 concurrency:
@@ -33,8 +33,13 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
-        python_version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python_version: ['3.14t', '3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         include:
+          - python_version: '3.14t'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 0
+            protobuf_type: 'Internal'
           - python_version: '3.14'
             onnx_ml: 1
             debug_build: 1
@@ -85,12 +90,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           submodules: recursive
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python_version }}
 
@@ -138,6 +144,7 @@ jobs:
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
           if [ "${{ matrix.python_version }}" == "3.14" ]; then
+            sudo apt-get update
             sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           fi
 
@@ -149,7 +156,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_ASAN=${{ matrix.debug_build }} -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_ASAN=${{ matrix.debug_build }} -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: Build and install ONNX - MacOS
         if: matrix.os == 'macos-latest'
@@ -159,7 +166,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: Build and install ONNX - Windows
         if: startsWith(matrix.os,'windows')
@@ -169,7 +176,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: pip freeze
         run: |
@@ -185,8 +192,14 @@ jobs:
           python -m pip install -r requirements-release_test.txt
 
       - name: Run Python tests
+        #  if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
+
+      # - name: Run Python tests (windows)
+      #   if: (matrix.os == 'windows-latest')
+      #   run: |
+      #     pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml --dist loadscope
 
       - name: Run C++ tests
         if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
@@ -264,6 +277,7 @@ jobs:
         if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && startsWith(matrix.os,'ubuntu')
         run: |
           # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
+          sudo apt-get update
           sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
           pip install --prefer-binary "numpy<2.0" pillow
           pytest -s

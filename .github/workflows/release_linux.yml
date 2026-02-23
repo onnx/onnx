@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.13t', '3.12', '3.11', '3.10']
+        python-version: ['3.14t', '3.13t', '3.12', '3.11', '3.10']
         architecture: ['x64', 'arm64']
       fail-fast: false
 
@@ -34,7 +34,7 @@ jobs:
     runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
 
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         persist-credentials: true
         submodules: true
@@ -76,13 +76,13 @@ jobs:
         INPUT_OS: ${{ inputs.os }}
 
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version == '3.12')
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (inputs.build_mode == 'preview' || !contains(matrix.python-version, 'dev')) && (matrix.python-version != '3.12')
+      if: (steps.build_wheel_arm64.outcome == 'success' || steps.build_wheel_x86.outcome == 'success') && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |
@@ -96,11 +96,11 @@ jobs:
       MANYLINUX_WHEEL_ARM64: "manylinux_2_28_aarch64"
     strategy:
       matrix:
-        python-version: ['3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ['3.14t', '3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
         architecture: ['x64', 'arm64']
       fail-fast: false
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: true
           submodules: true
@@ -114,13 +114,13 @@ jobs:
         with:
           name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
           path: ./dist
-      - uses: actions/setup-python@v6.1.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}

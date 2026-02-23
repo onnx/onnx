@@ -6,6 +6,9 @@
 #include <cmath>
 #include <numeric>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"
@@ -139,12 +142,113 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
-                      .c_str());
+              builder.Add(MakeString(
+                              "output = Cast <to= ",
+                              static_cast<int64_t>(target_elt_type),
+                              ", saturate: int = @saturate> (input)")
+                              .c_str());
               schema.BuildFunction(functionProto);
               return true;
             }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    BitCast,
+    26,
+    OpSchema()
+        .SetDoc(kDoc_BitCast_ver26)
+        .Attr(
+            "to",
+            "The data type to which the input tensor is bitwise reinterpreted. "
+            "Must be one of the non-string types from DataType enum in TensorProto. "
+            "The target type must have the same bit-width as the input type.",
+            AttributeProto::INT)
+        .Input(0, "input", "Input tensor to be bitcast.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor with the same shape as the input.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_non_string_tensor_types_ir13(),
+            "Constrain input types. Bitcasting from string is not supported.")
+        .TypeConstraint(
+            "T2",
+            OpSchema::all_non_string_tensor_types_ir13(),
+            "Constrain output types. Bitcasting to string is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto get_bit_size = [](int element_type) -> int {
+            switch (element_type) {
+              case TensorProto::FLOAT:
+              case TensorProto::INT32:
+              case TensorProto::UINT32:
+                return 32;
+              case TensorProto::DOUBLE:
+              case TensorProto::INT64:
+              case TensorProto::UINT64:
+              case TensorProto::COMPLEX64:
+                return 64;
+              case TensorProto::COMPLEX128:
+                return 128;
+              case TensorProto::FLOAT16:
+              case TensorProto::BFLOAT16:
+              case TensorProto::INT16:
+              case TensorProto::UINT16:
+                return 16;
+              case TensorProto::INT8:
+              case TensorProto::UINT8:
+              case TensorProto::BOOL:
+              case TensorProto::FLOAT8E4M3FN:
+              case TensorProto::FLOAT8E4M3FNUZ:
+              case TensorProto::FLOAT8E5M2:
+              case TensorProto::FLOAT8E5M2FNUZ:
+              case TensorProto::FLOAT8E8M0:
+                return 8;
+              case TensorProto::INT4:
+              case TensorProto::UINT4:
+              case TensorProto::FLOAT4E2M1:
+                return 4;
+              case TensorProto::INT2:
+              case TensorProto::UINT2:
+                return 2;
+              default:
+                return 0;
+            }
+          };
+
+          // Validate that input and output types have the same bit-width
+          auto input_type = ctx.getInputType(0);
+          if (input_type && input_type->has_tensor_type()) {
+            auto input_element_type = input_type->tensor_type().elem_type();
+            auto* to_attr = ctx.getAttribute("to");
+            if (to_attr) {
+              auto output_element_type = static_cast<int32_t>(to_attr->i());
+              int input_element_bit_size = get_bit_size(input_element_type);
+              int output_element_bit_size = get_bit_size(output_element_type);
+              if (input_element_bit_size != 0 && output_element_bit_size != 0 &&
+                  input_element_bit_size != output_element_bit_size) {
+                fail_shape_inference(
+                    "BitCast requires input and output types to have the same bit-width, but input type has ",
+                    input_element_bit_size,
+                    " bits and output type has ",
+                    output_element_bit_size,
+                    " bits.");
+              }
+            }
+          }
+
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+
+          // Same bit-width: output shape equals input shape
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic));
 
 static const char* const Reshape_ver25_doc = kDoc_Reshape_ver24;
 
@@ -686,9 +790,6 @@ result = [
 )DOC";
 
 static void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t step) {
-  auto clamp = [](int64_t val, int64_t min, int64_t max) -> int64_t {
-    return (val < min) ? min : (val > max) ? max : val;
-  };
   // process step
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
@@ -697,16 +798,16 @@ static void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t
   if (start < 0)
     start += input_rank;
   if (step < 0)
-    start = clamp(start, 0, input_rank - 1);
+    start = std::clamp(start, static_cast<int64_t>(0), input_rank - 1);
   else
-    start = clamp(start, 0, input_rank);
+    start = std::clamp(start, static_cast<int64_t>(0), input_rank);
   // process end
   if (end < 0)
     end += input_rank;
   if (step < 0)
-    end = clamp(end, -1, input_rank - 1);
+    end = std::clamp(end, static_cast<int64_t>(-1), input_rank - 1);
   else
-    end = clamp(end, 0, input_rank);
+    end = std::clamp(end, static_cast<int64_t>(0), input_rank);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1814,8 +1915,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if H or W is not a
-              // multiple of blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -1895,8 +1994,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if C is not a multiple of
-              // blocksize*blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -2740,7 +2837,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("OneHot node must have three inputs.");
           }
           // Input 'depth' must be a scalar or a single-element vector.
-          // TODO: Ideally to match spec for this input only Scalar should
+          // TODO(ONNX): Ideally to match spec for this input only Scalar should
           // be allowed. Making this change now can affect backward
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar

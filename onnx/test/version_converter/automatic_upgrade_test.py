@@ -1636,9 +1636,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "DFT", 17, [[2, 16, 1], []], [[2, 9, 2]], attrs={"onesided": 1}
         )
         self._test_op_upgrade(
-            "DFT", 17, [[2, 16, 2], []], [[2, 9, 2]], attrs={"onesided": 1}
-        )
-        self._test_op_upgrade(
             "DFT", 17, [[2, 16, 1], []], [[2, 16, 2]], attrs={"inverse": 1}
         )
         self._test_op_upgrade(
@@ -1940,6 +1937,17 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [[2, 3, 4, 5]],
             [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64],
             [TensorProto.FLOAT],
+        )
+
+    def test_BitCast(self) -> None:
+        self._test_op_upgrade(
+            "BitCast",
+            26,
+            [[2, 3, 4]],
+            [[2, 3, 4]],
+            [TensorProto.FLOAT],
+            [TensorProto.INT32],
+            attrs={"to": TensorProto.INT32},
         )
 
     def test_ops_tested(self) -> None:

@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Scan in default domain from version 9 to 8
 
@@ -20,7 +18,7 @@ namespace version_conversion {
 struct Scan_9_8 final : public Adapter {
   explicit Scan_9_8() : Adapter("Scan", OpSetID(9), OpSetID(8)) {}
 
-  void adapt_scan_9_8(const std::shared_ptr<Graph>&, Node* node) const {
+  void adapt_scan_9_8(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     const std::vector<Value*> inputs(node->inputs().vec());
     const std::vector<Value*> outputs(node->outputs().vec());
 

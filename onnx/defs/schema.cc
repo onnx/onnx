@@ -4,12 +4,15 @@
 
 #include "onnx/defs/schema.h"
 
+#include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
@@ -133,10 +136,10 @@ void OpSchema::CheckInputOutputType(struct InferenceContext& ctx) const {
     }
     if (param.GetIsHomogeneous()) {
       const auto& type_proto = Utils::DataTypeUtils::ToType(*param_type);
-      auto p = type_constraints.emplace(type_str, *type_proto);
-      if (!p.second) {
+      auto [it, inserted] = type_constraints.emplace(type_str, *type_proto);
+      if (!inserted) {
         // failed to insert a new element due to a duplication, now check consistency
-        if (p.first->second != *type_proto) {
+        if (it->second != *type_proto) {
           fail_check(param.GetName(), " has inconsistent type ", *Utils::DataTypeUtils::ToType(*param_type));
         }
       }
@@ -247,7 +250,7 @@ void OpSchema::Verify(const NodeProto& node) const {
       fail_check("Attribute '", name, "' appeared multiple times.");
     }
 
-    const auto& search = attributes_.find(name);
+    const auto search = attributes_.find(name);
     AttributeProto::AttributeType expected_type{};
     if (search != attributes_.end()) {
       expected_type = search->second.type;
@@ -318,8 +321,7 @@ void OpSchema::Verify(const NodeProto& node) const {
         fail_check("Attribute '", name, " has unknown expected type");
     }
   }
-  for (const auto& pair : attributes_) {
-    const auto& attr = pair.second;
+  for (const auto& [_, attr] : attributes_) {
     if (!attr.required) {
       continue;
     }
@@ -486,6 +488,14 @@ OpSchema& OpSchema::Attr(std::string name, std::string description, AttributePro
 
 OpSchema& OpSchema::Attr(const char* name, const char* description, AttributeProto::AttributeType type, bool required) {
   return Attr(std::string(name), std::string(description), type, required);
+}
+
+OpSchema& OpSchema::Attr(
+    const char* name,
+    const char* description,
+    AttributeProto::AttributeType type,
+    const char* defaultValue) {
+  return Attr(std::string(name), std::string(description), type, std::string(defaultValue));
 }
 
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                                                           \
@@ -723,9 +733,9 @@ void OpSchema::ParseAndSetTypes(
   for (auto& formal_parameter : *formal_parameters) {
     const auto& type = formal_parameter.GetTypeStr();
     DataTypeSet allowed_types;
-    auto it = type_constraints_.find(type);
-    if (it != type_constraints_.end()) {
-      allowed_types = it->second.first;
+    if (auto it = type_constraints_.find(type); it != type_constraints_.end()) {
+      auto& [types, description] = it->second;
+      allowed_types = types;
     } else {
       allowed_types.emplace(Utils::DataTypeUtils::ToType(type));
     }
@@ -776,7 +786,7 @@ bool OpSchema::BuildContextDependentFunction(
 // in opset_version_to_function_builder_) has predefined opset_imports. Before returning the function, we shall
 // update the predefined opset_imports so that it is consistent with the requested version.
 // Note that this call only update opset_import of the default domain.
-// TODO: extend this call to work for no-default domains.
+// TODO(ONNX): extend this call to work for no-default domains.
 void OpSchema::UpdateFunctionProtoOpsetImportVersion(FunctionProto& function_proto, int requested_opset_version) const {
   bool opset_import_exist = false;
   for (int i = 0; i < function_proto.opset_import_size(); i++) {
@@ -867,8 +877,8 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
   auto it = opset_version_to_function_body_.upper_bound(requested_opset_version);
   if (it != opset_version_to_function_body_.begin()) {
     --it;
-    int function_since_version = it->first;
-    const FunctionProto* function = it->second.get();
+    auto& [function_since_version, func_ptr] = *it;
+    const FunctionProto* function = func_ptr.get();
     if (!validate || ValidateReferencedOpsInFunction(function, requested_opset_version, function_since_version)) {
       return function;
     }
@@ -881,7 +891,7 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
 // When they are not the same, it is necessary to verify that ops used to define the function
 // are not updated between function_since_version and requested_opset_version (include requested_opset_version).
 // this call only validate ops in the default domain.
-// TODO: validate ops in other domains.
+// TODO(ONNX): validate ops in other domains.
 bool OpSchema::ValidateReferencedOpsInFunction(
     const FunctionProto* function,
     int requested_opset_version,
@@ -1316,6 +1326,35 @@ const std::vector<std::string>& OpSchema::all_non_complex_tensor_types_ir13() {
   return all_non_complex_tensor_types_ir13;
 }
 
+const std::vector<std::string>& OpSchema::all_non_string_tensor_types_ir13() {
+  static const std::vector<std::string> all_non_string_tensor_types_ir13 = {"tensor(uint8)",
+                                                                            "tensor(uint16)",
+                                                                            "tensor(uint32)",
+                                                                            "tensor(uint64)",
+                                                                            "tensor(int8)",
+                                                                            "tensor(int16)",
+                                                                            "tensor(int32)",
+                                                                            "tensor(int64)",
+                                                                            "tensor(bfloat16)",
+                                                                            "tensor(float16)",
+                                                                            "tensor(float)",
+                                                                            "tensor(double)",
+                                                                            "tensor(bool)",
+                                                                            "tensor(complex64)",
+                                                                            "tensor(complex128)",
+                                                                            "tensor(float8e4m3fn)",
+                                                                            "tensor(float8e4m3fnuz)",
+                                                                            "tensor(float8e5m2)",
+                                                                            "tensor(float8e5m2fnuz)",
+                                                                            "tensor(uint4)",
+                                                                            "tensor(int4)",
+                                                                            "tensor(float4e2m1)",
+                                                                            "tensor(float8e8m0)",
+                                                                            "tensor(uint2)",
+                                                                            "tensor(int2)"};
+  return all_non_string_tensor_types_ir13;
+}
+
 const std::vector<std::string>& OpSchema::all_tensor_sequence_types() {
   static const std::vector<std::string> all_tensor_sequence_types = {
       "seq(tensor(uint8))",
@@ -1616,15 +1655,15 @@ void OpSchema::Finalize() {
   ParseAndSetTypes(&inputs_);
   ParseAndSetTypes(&outputs_);
 
-  for (auto& func : opset_version_to_function_body_) {
-    BuildFunction(*func.second);
+  for (auto& [_, func_body] : opset_version_to_function_body_) {
+    BuildFunction(*func_body);
   }
 }
 
 OpSchema::NodeDeterminism OpSchema::GetNodeDeterminism() const {
   if (node_determinism_ == NodeDeterminism::Unknown) {
-    for (const auto& attr : attributes()) {
-      switch (attr.second.type) {
+    for (const auto& [_, attr] : attributes()) {
+      switch (attr.type) {
         case AttributeProto::GRAPH:
         case AttributeProto::GRAPHS:
           return NodeDeterminism::NonDeterministic;
@@ -1670,8 +1709,8 @@ OpSchema& OpSchema::SetNodeDeterminism(NodeDeterminism node_determinism) {
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
     out << "Attributes:" << '\n';
-    for (const auto& pair : schema.attributes_) {
-      out << "  " << pair.second.name << " : " << pair.second.description << '\n';
+    for (const auto& [_, attr] : schema.attributes_) {
+      out << "  " << attr.name << " : " << attr.description << '\n';
     }
   }
   if (schema.max_input_ > 0) {
@@ -1722,7 +1761,7 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
 OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
   static DomainToVersionRange domain_to_version_range;
   return domain_to_version_range;
-};
+}
 
 // Private method used by OpSchemaRegisterOnce and OpSchemaRegistry::map()
 OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {
@@ -1762,8 +1801,8 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-            "%u schema were exposed from operator sets and automatically placed into the static registry.  "
-            "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",
+            "%zu schema were exposed from operator sets and automatically placed into the static registry.  "
+            "%zu were expected based on calls to registration macros. Operator set functions may need to be updated.",
             dbg_registered_schema_count,
             ONNX_DBG_GET_COUNT_IN_OPSETS());
       }

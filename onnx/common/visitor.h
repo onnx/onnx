@@ -1,11 +1,8 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
-#include "onnx/common/common.h"
 #include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
@@ -19,19 +16,19 @@ namespace internal {
 struct Visitor {
   virtual void VisitGraph(const GraphProto& graph) {
     if (ProcessGraph(graph))
-      for (auto& node : graph.node())
+      for (const auto& node : graph.node())
         VisitNode(node);
   }
 
   virtual void VisitFunction(const FunctionProto& function) {
     if (ProcessFunction(function))
-      for (auto& node : function.node())
+      for (const auto& node : function.node())
         VisitNode(node);
   }
 
   virtual void VisitNode(const NodeProto& node) {
     if (ProcessNode(node)) {
-      for (auto& attr : node.attribute()) {
+      for (const auto& attr : node.attribute()) {
         VisitAttribute(attr);
       }
     }
@@ -42,28 +39,24 @@ struct Visitor {
       if (attr.has_g()) {
         VisitGraph(attr.g());
       }
-      for (auto& graph : attr.graphs())
+      for (const auto& graph : attr.graphs())
         VisitGraph(graph);
     }
   }
 
-  virtual bool ProcessGraph(const GraphProto& graph) {
-    ONNX_UNUSED_PARAMETER(graph);
+  virtual bool ProcessGraph(const GraphProto& graph [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessFunction(const FunctionProto& function) {
-    ONNX_UNUSED_PARAMETER(function);
+  virtual bool ProcessFunction(const FunctionProto& function [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessNode(const NodeProto& node) {
-    ONNX_UNUSED_PARAMETER(node);
+  virtual bool ProcessNode(const NodeProto& node [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessAttribute(const AttributeProto& attr) {
-    ONNX_UNUSED_PARAMETER(attr);
+  virtual bool ProcessAttribute(const AttributeProto& attr [[maybe_unused]]) {
     return true;
   }
 
@@ -102,23 +95,19 @@ struct MutableVisitor {
     }
   }
 
-  virtual bool ProcessGraph(GraphProto* graph) {
-    ONNX_UNUSED_PARAMETER(graph);
+  virtual bool ProcessGraph(GraphProto* graph [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessFunction(FunctionProto* function) {
-    ONNX_UNUSED_PARAMETER(function);
+  virtual bool ProcessFunction(FunctionProto* function [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessNode(NodeProto* node) {
-    ONNX_UNUSED_PARAMETER(node);
+  virtual bool ProcessNode(NodeProto* node [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessAttribute(AttributeProto* attr) {
-    ONNX_UNUSED_PARAMETER(attr);
+  virtual bool ProcessAttribute(AttributeProto* attr [[maybe_unused]]) {
     return true;
   }
 

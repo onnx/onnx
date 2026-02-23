@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -293,6 +291,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (tensor_type.has_shape()) {
       v->setSizes(tensorShapeProtoToDimensions(tensor_type.shape()));
     }
+    if (!vip.type().has_tensor_type()) {
+      v->type() = std::make_unique<TypeProto>(vip.type());
+    }
     v->setUniqueName(vip.name());
     value_by_name_of[vip.name()] = v;
   }
@@ -382,20 +383,28 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (output_tensor_type.has_shape()) {
       value_by_name_of[gp.output(i).name()]->setSizes(tensorShapeProtoToDimensions(output_tensor_type.shape()));
     }
+    if (!gp.output(i).type().has_tensor_type()) {
+      value_by_name_of[gp.output(i).name()]->type() = std::make_unique<TypeProto>(gp.output(i).type());
+    }
     g->registerOutput(value_by_name_of[gp.output(i).name()]);
   }
 
   for (int i = 0; i < gp.value_info_size(); i++) {
     const auto& tensor_type = gp.value_info(i).type().tensor_type();
-    if (!value_by_name_of.count(gp.value_info(i).name())) {
+    auto it = value_by_name_of.find(gp.value_info(i).name());
+    if (it == value_by_name_of.end()) {
       // Ideally the model should not have a value_info whose name does not exist in the graph (unused); simply skip it
       continue;
     }
+    Value* v = it->second;
     if (tensor_type.has_elem_type()) {
-      value_by_name_of[gp.value_info(i).name()]->setElemType(tensor_type.elem_type());
+      v->setElemType(tensor_type.elem_type());
     }
     if (tensor_type.has_shape()) {
-      value_by_name_of[gp.value_info(i).name()]->setSizes(tensorShapeProtoToDimensions(tensor_type.shape()));
+      v->setSizes(tensorShapeProtoToDimensions(tensor_type.shape()));
+    }
+    if (!gp.value_info(i).type().has_tensor_type()) {
+      v->type() = std::make_unique<TypeProto>(gp.value_info(i).type());
     }
   }
 
@@ -506,10 +515,10 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
     p->set_raw_data(tensor.raw());
   }
   if (!tensor.external_data().empty()) {
-    for (const auto& entry : tensor.external_data()) {
+    for (const auto& [key, value] : tensor.external_data()) {
       auto* external_data = p->add_external_data();
-      external_data->set_key(entry.first);
-      external_data->set_value(entry.second);
+      external_data->set_key(key);
+      external_data->set_value(value);
     }
   }
   if (tensor.has_data_location()) {
@@ -612,6 +621,8 @@ static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
     ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
     ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
     encodeTypeProtoTensorType(tensor_type, n);
+  } else if (n->type()) {
+    v->mutable_type()->CopyFrom(*n->type());
   }
 }
 

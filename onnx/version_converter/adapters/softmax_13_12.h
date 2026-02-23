@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Softmax and LogSoftmax in default domain from version 13 to 12
 
@@ -40,7 +38,7 @@ class Softmax_13_12 final : public Adapter {
     // Check for Flatten node before Softmax and Reshape node after Softmax
     if (node->inputs()[0]->node()->kind() == kFlatten) {
       Node* flatten = node->inputs()[0]->node();
-      const auto flatten_input = flatten->inputs()[0];
+      auto* const flatten_input = flatten->inputs()[0];
       node->replaceInput(0, flatten_input);
       flatten->destroy();
     }
@@ -48,7 +46,7 @@ class Softmax_13_12 final : public Adapter {
     for (Use u : node->output()->uses()) {
       if (u.user->kind() == kReshape) {
         Node* reshape = u.user;
-        const auto reshape_output = reshape->outputs()[0];
+        auto* const reshape_output = reshape->outputs()[0];
         node->output()->replaceAllUsesWith(reshape_output);
         reshape->destroy();
         break;
