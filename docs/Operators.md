@@ -40484,11 +40484,10 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 ### <sub>experimental</sub> <a name="ai.onnx.preview.FlexAttention"></a><a name="ai.onnx.preview.flexattention">**ai.onnx.preview.FlexAttention**</a>
 
   Computes scaled dot-product attention over rank-4 (batched, multi-head) inputs,
-  with optional user-provided customization subgraphs at up to three stages:
+  with optional user-provided customization subgraphs at two stages:
 
-  1. score_mod: Modify each scalar attention score after Q·K^T
-  2. mask_mod: Determine which (q_idx, k_idx) connections are allowed
-  3. prob_mod: Modify each scalar probability after Softmax
+  1. score_mod: Modify the attention score tensor after Q·K^T
+  2. prob_mod: Modify the probability tensor after Softmax
 
   This operator mirrors the capabilities of PyTorch's flex_attention:
   https://docs.pytorch.org/docs/stable/nn.attention.flex_attention.html
@@ -40504,20 +40503,26 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
   FlexAttention Computation:
   ```
   Scores = (Q @ K^T) * scale
-  Scores = score_mod(Scores)             # if provided
-  Scores = apply_mask(Scores, mask_mod)  # if provided, masked positions get -inf
+  Scores = score_mod(Scores)             # if 'score_mod' is provided
   Probs = Softmax(Scores, axis=-1)
-  Probs = prob_mod(Probs)                # if provided
+  Probs = prob_mod(Probs)                # if 'prob_mod' is provided
   Y = Probs @ V
   ```
 
   Grouped Query Attention (GQA):
-  When `enable_gqa=1`, supports GQA where `q_num_heads` is a multiple of `kv_num_heads`.
-  K/V heads are broadcast to match query heads count.
+  When `q_num_heads != kv_num_heads`, K/V heads are broadcast to match query heads
+  count, and `q_num_heads` must be a multiple of `kv_num_heads`.
 
-  Note: The default function body uses a Loop for element-wise modifier
-  application, which is intended as a fallback. Optimized backends should
-  recognize this pattern and apply fused kernel implementations.
+  Modifier Subgraphs (score_mod, prob_mod):
+  Each modifier subgraph takes exactly one rank-4 tensor input and must produce
+  exactly one rank-4 tensor output of the same shape and element type.
+  - score_mod input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  - prob_mod  input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  The element type is determined by softmax_precision (defaults to float32 for
+  float16/bfloat16 inputs, otherwise the input element type).
+
+  Masking can be expressed in score_mod by writing masked positions as -inf (or a
+  large negative value appropriate for the target precision).
 
 #### Version
 
@@ -40525,18 +40530,12 @@ No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
-<dt><tt>enable_gqa</tt> : int (default is 0)</dt>
-<dd>Enable Grouped Query Attention. 0 (default): requires Hq == Hkv. 1: K/V heads are broadcast to query heads (Hq must be divisible by Hkv).</dd>
-<dt><tt>mask_mod</tt> : graph</dt>
-<dd>Optional mask modifier subgraph with 4 scalar inputs: (batch, head, q_idx, k_idx) -> mask_out (BOOL). All inputs are INT64 scalars.</dd>
-<dt><tt>mask_value</tt> : float (default is -inf)</dt>
-<dd>Value for masked scores before softmax. Defaults to -infinity.</dd>
 <dt><tt>prob_mod</tt> : graph</dt>
-<dd>Optional probability modifier subgraph with 5 scalar inputs: (prob, batch, head, q_idx, k_idx) -> prob_out. prob uses softmax_precision type; indices are INT64.</dd>
+<dd>Optional probability modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (probs) -> probs_out. probs has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor for Q*K^T. Defaults to 1/sqrt(head_size).</dd>
 <dt><tt>score_mod</tt> : graph</dt>
-<dd>Optional score modifier subgraph with 5 scalar inputs: (score, batch, head, q_idx, k_idx) -> score_out. score uses softmax_precision type; indices are INT64.</dd>
+<dd>Optional score modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (scores) -> scores_out. scores has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>
 <dd>Floating-point precision for softmax computation. Defaults to float32 for float16/bfloat16 inputs, otherwise uses input type. Must be explicitly specified for non-float types.</dd>
 </dl>
@@ -40596,6 +40595,7 @@ expect(
     outputs=[Y],
     name="test_flexattention",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -40631,6 +40631,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_diff_head_sizes",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -40666,6 +40667,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_double",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -40701,6 +40703,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_fp16",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -40713,12 +40716,11 @@ expect(
 <summary>flexattention_gqa</summary>
 
 ```python
-"""FlexAttention with Grouped Query Attention (GQA) enabled."""
+"""FlexAttention with Grouped Query Attention (GQA)."""
 node = helper.make_node(
     "FlexAttention",
     inputs=["Q", "K", "V"],
     outputs=["Y"],
-    enable_gqa=1,
     domain=AI_ONNX_PREVIEW_DOMAIN,
 )
 
@@ -40728,7 +40730,7 @@ Q = np.random.rand(B, Hq, L, E).astype(np.float32)
 K = np.random.rand(B, Hkv, S, E).astype(np.float32)
 V = np.random.rand(B, Hkv, S, Ev).astype(np.float32)
 
-(Y,) = _compute_flex_attention(Q, K, V, enable_gqa=1)
+(Y,) = _compute_flex_attention(Q, K, V)
 
 expect(
     node,
@@ -40736,6 +40738,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_gqa",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -40745,11 +40748,12 @@ expect(
 
 
 <details>
-<summary>flexattention_mask_mod_causal</summary>
+<summary>flexattention_prob_mod</summary>
 
 ```python
-"""FlexAttention with causal mask_mod subgraph."""
-mask_mod_graph = _make_causal_mask_mod_graph()
+"""FlexAttention with prob_mod subgraph (scales probabilities)."""
+scale_value = 0.5
+prob_mod_graph = _make_prob_mod_scale_graph(scale_value, TensorProto.FLOAT)
 
 node = helper.make_node(
     "FlexAttention",
@@ -40757,35 +40761,30 @@ node = helper.make_node(
     outputs=["Y"],
     domain=AI_ONNX_PREVIEW_DOMAIN,
 )
-mask_mod_attr = helper.make_attribute("mask_mod", mask_mod_graph)
-node.attribute.append(mask_mod_attr)
+prob_mod_attr = helper.make_attribute("prob_mod", prob_mod_graph)
+node.attribute.append(prob_mod_attr)
 
-B, Hq, L, E = 1, 2, 4, 4
-S, Ev = 4, 4
+B, Hq, L, E = 1, 2, 3, 4
+S, Ev = 3, 4
 
 Q = np.random.rand(B, Hq, L, E).astype(np.float32)
 K = np.random.rand(B, Hq, S, E).astype(np.float32)
 V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
 
-# Compute expected output with causal mask
 scale = 1.0 / np.sqrt(E)
 scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
-
-# Apply causal mask: mask[q, k] = (q >= k)
-causal_mask = np.tril(np.ones((L, S), dtype=bool))
-scores = np.where(causal_mask, scores, -np.inf)
-
-probs = np.exp(scores - np.max(scores, axis=-1, keepdims=True))
-probs = np.nan_to_num(probs)  # Handle -inf -> 0
-probs = probs / (probs.sum(axis=-1, keepdims=True) + 1e-10)
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+probs = probs * scale_value
 Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
 
 expect(
     node,
     inputs=[Q, K, V],
     outputs=[Y],
-    name="test_flexattention_mask_mod_causal",
+    name="test_flexattention_prob_mod",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -40823,6 +40822,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_scaled",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -40837,7 +40837,7 @@ expect(
 ```python
 """FlexAttention with score_mod subgraph (adds bias to scores)."""
 bias_value = 0.5
-score_mod_graph = _make_score_mod_bias_graph(bias_value)
+score_mod_graph = _make_score_mod_bias_graph(bias_value, TensorProto.FLOAT)
 
 node = helper.make_node(
     "FlexAttention",
@@ -40856,8 +40856,6 @@ Q = np.random.rand(B, Hq, L, E).astype(np.float32)
 K = np.random.rand(B, Hq, S, E).astype(np.float32)
 V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
 
-# Reference implementation applies score_mod element-wise
-# For simplicity, compute expected output manually
 scale = 1.0 / np.sqrt(E)
 scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
 scores = scores + bias_value  # score_mod: add bias
@@ -40871,6 +40869,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_score_mod",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )

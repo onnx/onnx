@@ -2439,7 +2439,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_flex_attention_gqa_enabled(self) -> None:
-        """Test FlexAttention with Grouped Query Attention enabled."""
+        """Test FlexAttention with Grouped Query Attention."""
         graph = self._make_graph(
             [
                 ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
@@ -2451,7 +2451,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "FlexAttention",
                     ["Q", "K", "V"],
                     ["Y"],
-                    enable_gqa=1,
                     domain=AI_ONNX_PREVIEW_DOMAIN,
                 )
             ],
@@ -2577,18 +2576,20 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_flex_attention_with_score_mod(self) -> None:
         """Test FlexAttention with score_mod subgraph."""
-        # Create score_mod subgraph: (score, batch, head, q_idx, k_idx) -> score_out
+        # Create score_mod subgraph: (scores) -> scores_out
         score_mod_graph = helper.make_graph(
-            [make_node("Identity", ["score"], ["score_out"])],
+            [make_node("Identity", ["scores"], ["scores_out"])],
             "score_mod",
             [
-                make_tensor_value_info("score", TensorProto.FLOAT, ()),
-                make_tensor_value_info("batch", TensorProto.INT64, ()),
-                make_tensor_value_info("head", TensorProto.INT64, ()),
-                make_tensor_value_info("q_idx", TensorProto.INT64, ()),
-                make_tensor_value_info("k_idx", TensorProto.INT64, ()),
+                make_tensor_value_info(
+                    "scores", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                ),
             ],
-            [make_tensor_value_info("score_out", TensorProto.FLOAT, ())],
+            [
+                make_tensor_value_info(
+                    "scores_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                )
+            ],
         )
 
         graph = self._make_graph(
@@ -2617,63 +2618,22 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    def test_flex_attention_with_mask_mod(self) -> None:
-        """Test FlexAttention with mask_mod subgraph."""
-        # Create mask_mod subgraph: (batch, head, q_idx, k_idx) -> mask_out (BOOL)
-        mask_mod_graph = helper.make_graph(
-            [
-                make_node("Less", ["q_idx", "k_idx"], ["mask_out"]),
-            ],
-            "mask_mod",
-            [
-                make_tensor_value_info("batch", TensorProto.INT64, ()),
-                make_tensor_value_info("head", TensorProto.INT64, ()),
-                make_tensor_value_info("q_idx", TensorProto.INT64, ()),
-                make_tensor_value_info("k_idx", TensorProto.INT64, ()),
-            ],
-            [make_tensor_value_info("mask_out", TensorProto.BOOL, ())],
-        )
-
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
-                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
-                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
-            ],
-            [
-                make_node(
-                    "FlexAttention",
-                    ["Q", "K", "V"],
-                    ["Y"],
-                    mask_mod=mask_mod_graph,
-                    domain=AI_ONNX_PREVIEW_DOMAIN,
-                )
-            ],
-            [],
-        )
-        self._assert_inferred(
-            graph,
-            [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
-            opset_imports=[
-                make_opsetid(ONNX_DOMAIN, 21),
-                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
-            ],
-        )
-
     def test_flex_attention_with_prob_mod(self) -> None:
         """Test FlexAttention with prob_mod subgraph."""
-        # Create prob_mod subgraph: (prob, batch, head, q_idx, k_idx) -> prob_out
+        # Create prob_mod subgraph: (probs) -> probs_out
         prob_mod_graph = helper.make_graph(
-            [make_node("Identity", ["prob"], ["prob_out"])],
+            [make_node("Identity", ["probs"], ["probs_out"])],
             "prob_mod",
             [
-                make_tensor_value_info("prob", TensorProto.FLOAT, ()),
-                make_tensor_value_info("batch", TensorProto.INT64, ()),
-                make_tensor_value_info("head", TensorProto.INT64, ()),
-                make_tensor_value_info("q_idx", TensorProto.INT64, ()),
-                make_tensor_value_info("k_idx", TensorProto.INT64, ()),
+                make_tensor_value_info(
+                    "probs", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                ),
             ],
-            [make_tensor_value_info("prob_out", TensorProto.FLOAT, ())],
+            [
+                make_tensor_value_info(
+                    "probs_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                )
+            ],
         )
 
         graph = self._make_graph(
@@ -2706,43 +2666,34 @@ class TestShapeInference(TestShapeInferenceHelper):
         """Test FlexAttention with all modifier subgraphs."""
         # Create score_mod subgraph
         score_mod_graph = helper.make_graph(
-            [make_node("Identity", ["score"], ["score_out"])],
+            [make_node("Identity", ["scores"], ["scores_out"])],
             "score_mod",
             [
-                make_tensor_value_info("score", TensorProto.FLOAT, ()),
-                make_tensor_value_info("batch", TensorProto.INT64, ()),
-                make_tensor_value_info("head", TensorProto.INT64, ()),
-                make_tensor_value_info("q_idx", TensorProto.INT64, ()),
-                make_tensor_value_info("k_idx", TensorProto.INT64, ()),
+                make_tensor_value_info(
+                    "scores", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                ),
             ],
-            [make_tensor_value_info("score_out", TensorProto.FLOAT, ())],
-        )
-
-        # Create mask_mod subgraph
-        mask_mod_graph = helper.make_graph(
-            [make_node("Less", ["q_idx", "k_idx"], ["mask_out"])],
-            "mask_mod",
             [
-                make_tensor_value_info("batch", TensorProto.INT64, ()),
-                make_tensor_value_info("head", TensorProto.INT64, ()),
-                make_tensor_value_info("q_idx", TensorProto.INT64, ()),
-                make_tensor_value_info("k_idx", TensorProto.INT64, ()),
+                make_tensor_value_info(
+                    "scores_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                )
             ],
-            [make_tensor_value_info("mask_out", TensorProto.BOOL, ())],
         )
 
         # Create prob_mod subgraph
         prob_mod_graph = helper.make_graph(
-            [make_node("Identity", ["prob"], ["prob_out"])],
+            [make_node("Identity", ["probs"], ["probs_out"])],
             "prob_mod",
             [
-                make_tensor_value_info("prob", TensorProto.FLOAT, ()),
-                make_tensor_value_info("batch", TensorProto.INT64, ()),
-                make_tensor_value_info("head", TensorProto.INT64, ()),
-                make_tensor_value_info("q_idx", TensorProto.INT64, ()),
-                make_tensor_value_info("k_idx", TensorProto.INT64, ()),
+                make_tensor_value_info(
+                    "probs", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                ),
             ],
-            [make_tensor_value_info("prob_out", TensorProto.FLOAT, ())],
+            [
+                make_tensor_value_info(
+                    "probs_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                )
+            ],
         )
 
         graph = self._make_graph(
@@ -2757,7 +2708,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                     ["Q", "K", "V"],
                     ["Y"],
                     score_mod=score_mod_graph,
-                    mask_mod=mask_mod_graph,
                     prob_mod=prob_mod_graph,
                     domain=AI_ONNX_PREVIEW_DOMAIN,
                 )
@@ -2829,37 +2779,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    def test_flex_attention_mismatched_head_dim_fails(self) -> None:
-        """Test FlexAttention fails when Hq != Hkv without enable_gqa."""
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
-                ("K", TensorProto.FLOAT, (2, 4, 256, 64)),  # Hkv=4 != Hq=8
-                ("V", TensorProto.FLOAT, (2, 4, 256, 64)),
-            ],
-            [
-                make_node(
-                    "FlexAttention",
-                    ["Q", "K", "V"],
-                    ["Y"],
-                    enable_gqa=0,
-                    domain=AI_ONNX_PREVIEW_DOMAIN,
-                )
-            ],
-            [],
-        )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_DOMAIN, 21),
-                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
-            ],
-        )
-
     def test_flex_attention_gqa_not_divisible_fails(self) -> None:
-        """Test FlexAttention fails when Hq is not divisible by Hkv with enable_gqa."""
+        """Test FlexAttention fails when Hq is not divisible by Hkv."""
         graph = self._make_graph(
             [
                 ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
@@ -2871,7 +2792,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                     "FlexAttention",
                     ["Q", "K", "V"],
                     ["Y"],
-                    enable_gqa=1,
                     domain=AI_ONNX_PREVIEW_DOMAIN,
                 )
             ],
