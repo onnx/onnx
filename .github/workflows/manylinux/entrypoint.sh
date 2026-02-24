@@ -48,6 +48,8 @@ source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$(pwd)"/prot
 export ONNX_ML=1
 export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DONNX_HARDENING=ON"
 
+export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
 if [[ "$BUILD_MODE" != "release" ]]; then

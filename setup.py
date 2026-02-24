@@ -123,6 +123,70 @@ def get_python_execute():
     return sys.executable
 
 
+# Support for Reproducible Builds
+# https://reproducible-builds.org/docs/source-date-epoch/
+# https://github.com/pypa/setuptools/issues/2133#issuecomment-1691158410
+
+timestamp = os.environ.get("SOURCE_DATE_EPOCH")
+if timestamp is not None:
+    import stat
+    import tarfile
+    import time
+    from distutils import archive_util
+
+    timestamp = float(max(int(timestamp), 0))
+
+    class Time:
+        @staticmethod
+        def time():
+            return timestamp
+
+        @staticmethod
+        def localtime(_=None):
+            return time.localtime(timestamp)
+
+    class TarInfoMode:
+        def __get__(self, obj, objtype=None):
+            return obj._mode
+
+        def __set__(self, obj, stmd):
+            ifmt = stat.S_IFMT(stmd)
+            mode = stat.S_IMODE(stmd) & 0o7755
+            obj._mode = ifmt | mode
+
+    class TarInfoAttr:
+        def __init__(self, value):
+            self.value = value
+
+        def __get__(self, obj, objtype=None):
+            return self.value
+
+        def __set__(self, obj, value):
+            pass
+
+    class TarInfo(tarfile.TarInfo):
+        mode = TarInfoMode()
+        mtime = TarInfoAttr(timestamp)
+        uid = TarInfoAttr(0)
+        gid = TarInfoAttr(0)
+        uname = TarInfoAttr("")
+        gname = TarInfoAttr("")
+
+    def make_tarball(*args, **kwargs):
+        tarinfo_orig = tarfile.TarFile.tarinfo
+        try:
+            tarfile.time = Time()
+            tarfile.TarFile.tarinfo = TarInfo
+            return archive_util.make_tarball(*args, **kwargs)
+        finally:
+            tarfile.time = time
+            tarfile.TarFile.tarinfo = tarinfo_orig
+
+    archive_util.ARCHIVE_FORMATS["gztar"] = (
+        make_tarball,
+        *archive_util.ARCHIVE_FORMATS["gztar"][1:],
+    )
+
 ################################################################################
 # Customized commands
 ################################################################################
