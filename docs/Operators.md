@@ -24,6 +24,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Atanh">Atanh</a>|<a href="Changelog.md#Atanh-22">22</a>, <a href="Changelog.md#Atanh-9">9</a>|
 |<a href="#AveragePool">AveragePool</a>|<a href="Changelog.md#AveragePool-22">22</a>, <a href="Changelog.md#AveragePool-19">19</a>, <a href="Changelog.md#AveragePool-11">11</a>, <a href="Changelog.md#AveragePool-10">10</a>, <a href="Changelog.md#AveragePool-7">7</a>, <a href="Changelog.md#AveragePool-1">1</a>|
 |<a href="#BatchNormalization">BatchNormalization</a>|<a href="Changelog.md#BatchNormalization-15">15</a>, <a href="Changelog.md#BatchNormalization-14">14</a>, <a href="Changelog.md#BatchNormalization-9">9</a>, <a href="Changelog.md#BatchNormalization-7">7</a>, <a href="Changelog.md#BatchNormalization-6">6</a>, <a href="Changelog.md#BatchNormalization-1">1</a>|
+|<a href="#BitCast">BitCast</a>|<a href="Changelog.md#BitCast-26">26</a>|
 |<a href="#BitShift">BitShift</a>|<a href="Changelog.md#BitShift-11">11</a>|
 |<a href="#BitwiseAnd">BitwiseAnd</a>|<a href="Changelog.md#BitwiseAnd-18">18</a>|
 |<a href="#BitwiseNot">BitwiseNot</a>|<a href="Changelog.md#BitwiseNot-18">18</a>|
@@ -5238,6 +5239,249 @@ node = onnx.helper.make_node(
 x = np.random.uniform(0.0, 1.0, 10).astype(float)
 y = bernoulli_reference_implementation(x, float)
 expect(node, inputs=[x], outputs=[y], name="test_bernoulli")
+```
+
+</details>
+
+
+### <a name="BitCast"></a><a name="bitcast">**BitCast**</a>
+
+  Reinterprets the binary representation of a tensor as a different data type,
+  specified by the 'to' attribute. Unlike Cast, BitCast preserves the exact bit
+  pattern without any value conversion.
+
+  The target data type must have the same bit-width as the input data type.
+  The output tensor has the same shape as the input tensor.
+  All types except string are supported. Implementations must treat the
+  underlying bytes as little endian.
+
+#### Version
+
+This version of the operator has been available since version 26 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>to</tt> : int (required)</dt>
+<dd>The data type to which the input tensor is bitwise reinterpreted. Must be one of the non-string types from DataType enum in TensorProto. The target type must have the same bit-width as the input type.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> (non-differentiable) : T1</dt>
+<dd>Input tensor to be bitcast.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (non-differentiable) : T2</dt>
+<dd>Output tensor with the same shape as the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain input types. Bitcasting from string is not supported.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
+<dd>Constrain output types. Bitcasting to string is not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>bitcast_2d_float32_to_int32</summary>
+
+```python
+"""Test bitcasting 2D array from float32 to int32."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT32,
+)
+x = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=np.float32)
+y = x.view(np.int32)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_2d_float32_to_int32")
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_bool_to_uint8</summary>
+
+```python
+"""Test bitcasting from bool to uint8 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.UINT8,
+)
+x = np.array([True, False, True, False], dtype=np.bool_)
+y = x.view(np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_bool_to_uint8")
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_float32_to_int32</summary>
+
+```python
+"""Test bitcasting from float32 to int32 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT32,
+)
+x = np.array([1.0, -2.5, 3.75], dtype=np.float32)
+y = x.view(np.int32)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_float32_to_int32")
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_float64_to_int64</summary>
+
+```python
+"""Test bitcasting from float64 to int64 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT64,
+)
+x = np.array([1.0, -2.5, 3.75], dtype=np.float64)
+y = x.view(np.int64)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_float64_to_int64")
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_int32_to_float32</summary>
+
+```python
+"""Test bitcasting from int32 to float32 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.FLOAT,
+)
+x = np.array([1065353216, -1071644672, 1081081856], dtype=np.int32)
+y = x.view(np.float32)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_int32_to_float32")
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_int64_to_float64</summary>
+
+```python
+"""Test bitcasting from int64 to float64 (same size)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.DOUBLE,
+)
+x = np.array(
+    [4607182418800017408, -4611686018427387904, 4614256656552045184],
+    dtype=np.int64,
+)
+y = x.view(np.float64)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_int64_to_float64")
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_int8_to_uint8</summary>
+
+```python
+"""Test bitcasting from int8 to uint8 (same size, different signedness)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.UINT8,
+)
+x = np.array([-1, -128, 127, 0], dtype=np.int8)
+y = x.view(np.uint8)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_int8_to_uint8")
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_scalar_float32_to_int32</summary>
+
+```python
+"""Test bitcasting scalar from float32 to int32."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT32,
+)
+x = np.array(1.0, dtype=np.float32)
+y = x.view(np.int32)
+expect(
+    node, inputs=[x], outputs=[y], name="test_bitcast_scalar_float32_to_int32"
+)
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_uint16_to_int16</summary>
+
+```python
+"""Test bitcasting from uint16 to int16 (same size, different signedness)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT16,
+)
+x = np.array([1, 32768, 65535], dtype=np.uint16)
+y = x.view(np.int16)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint16_to_int16")
+```
+
+</details>
+
+
+<details>
+<summary>bitcast_uint32_to_int32</summary>
+
+```python
+"""Test bitcasting from uint32 to int32 (same size, different signedness)."""
+node = onnx.helper.make_node(
+    "BitCast",
+    inputs=["x"],
+    outputs=["y"],
+    to=onnx.TensorProto.INT32,
+)
+x = np.array([4294967295, 2147483648, 2147483647], dtype=np.uint32)
+y = x.view(np.int32)
+expect(node, inputs=[x], outputs=[y], name="test_bitcast_uint32_to_int32")
 ```
 
 </details>

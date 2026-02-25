@@ -1184,9 +1184,11 @@ struct Graph final {
   // Erases from graph initializer list, initializer names list, and as a graph input
   // Must have no uses
   void eraseInitializerAndInput(Value* v) {
+    Node* node = v->node();
+    const size_t offset = v->offset();
     eraseInitializer(v->uniqueName());
-    if (v->node() == input_) {
-      eraseInput(v->offset());
+    if (node == input_) {
+      eraseInput(offset);
     }
   }
 
@@ -1276,9 +1278,9 @@ struct Graph final {
   }
 };
 
-inline Value::Value(Node* node_, size_t offset_)
-    : node_(node_), offset_(offset_), unique_(node_->graph_->getNextUnique()), stage_(node_->graph_->new_node_stage_) {
-  node_->graph_->all_values.emplace(this);
+inline Value::Value(Node* node, size_t offset)
+    : node_(node), offset_(offset), unique_(node->graph_->getNextUnique()), stage_(node->graph_->new_node_stage_) {
+  node->graph_->all_values.emplace(this);
 }
 
 inline Graph* Value::owningGraph() {

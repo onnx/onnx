@@ -427,6 +427,90 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_same_size(self, _, version) -> None:
+        # Test bitcast between types of same size (float32 -> int32)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.INT32)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, (2, 4, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_scalar(self, _, version) -> None:
+        # Test bitcast with scalar input (same size)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ())],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.INT32)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, ())],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_1d(self, _, version) -> None:
+        # Test bitcast with 1D tensor (float32 -> uint32, same size)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (8,))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.UINT32)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT32, (8,))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_double_to_int64(self, _, version) -> None:
+        # Test bitcast between 64-bit types (double -> int64)
+        graph = self._make_graph(
+            [("x", TensorProto.DOUBLE, (3, 5))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.INT64)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT64, (3, 5))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_int8_to_uint8(self, _, version) -> None:
+        # Test bitcast between 8-bit types (int8 -> uint8)
+        graph = self._make_graph(
+            [("x", TensorProto.INT8, (4, 6))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.UINT8)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (4, 6))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("BitCast"))
+    def test_bitcast_float16_to_int16(self, _, version) -> None:
+        # Test bitcast between 16-bit types (float16 -> int16)
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT16, (2, 3))],
+            [make_node("BitCast", ["x"], ["y"], to=TensorProto.INT16)],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT16, (2, 3))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     @parameterized.expand(all_versions_for("Col2Im"))
     def test_col2im(self, _, version) -> None:
         graph = self._make_graph(
@@ -6326,6 +6410,60 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph, [make_tensor_value_info("output", TensorProto.FLOAT, (2,))]
         )
+
+    def test_range_initializer_invalid(self) -> None:
+        # Create a TensorProto with incorrect data type for `delta`.
+        # This should lead to an error when ParseData is called during shape inferencing
+        # as the expected float data is missing.
+        bad_tensor = TensorProto()
+        bad_tensor.name = "delta"
+        bad_tensor.data_type = TensorProto.FLOAT
+        bad_tensor.int64_data.extend([2])  # incorrect data type
+
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT, ()),
+                ("limit", TensorProto.FLOAT, ()),
+                ("delta", TensorProto.FLOAT, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT, (), (5,)),
+                bad_tensor,
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_range_initializer_invalid_rawdata(self) -> None:
+        # Create a TensorProto with empty raw data for `delta`.
+        # This should lead to an error when ParseData is called during shape inferencing
+        # as the expected raw data is missing.
+        bad_tensor = make_tensor(
+            "delta",
+            TensorProto.FLOAT,
+            (),
+            vals=np.array([1.0], dtype="<f4").tobytes(),
+            raw=True,
+        )
+        bad_tensor.raw_data = b""  # Clear raw data to simulate missing data
+
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT, ()),
+                ("limit", TensorProto.FLOAT, ()),
+                ("delta", TensorProto.FLOAT, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT, (), (5,)),
+                bad_tensor,
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def test_range_rank_inference(self) -> None:
         graph = self._make_graph(
