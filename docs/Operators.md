@@ -40510,8 +40510,11 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
   ```
 
   Grouped Query Attention (GQA):
-  When `q_num_heads != kv_num_heads`, K/V heads are broadcast to match query heads
-  count, and `q_num_heads` must be a multiple of `kv_num_heads`.
+  When `q_num_heads != kv_num_heads`, each K/V head is shared by a contiguous
+  group of query heads in head-index order. Let
+  `group_size = q_num_heads / kv_num_heads`; then query head `h` uses K/V head
+  `floor(h / group_size)`. `q_num_heads` must be a multiple of
+  `kv_num_heads`.
 
   Modifier Subgraphs (score_mod, prob_mod):
   Each modifier subgraph takes exactly one rank-4 tensor input and must produce
@@ -40519,7 +40522,7 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
   - score_mod input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
   - prob_mod  input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
   The element type is determined by softmax_precision (defaults to float32 for
-  float16/bfloat16 inputs, otherwise the input element type).
+  non-double inputs, otherwise double).
 
   Masking can be expressed in score_mod by writing masked positions as -inf (or a
   large negative value appropriate for the target precision).
@@ -40537,7 +40540,7 @@ No versioning maintained for experimental ops.
 <dt><tt>score_mod</tt> : graph</dt>
 <dd>Optional score modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (scores) -> scores_out. scores has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
 <dt><tt>softmax_precision</tt> : int</dt>
-<dd>Floating-point precision for softmax computation. Defaults to float32 for float16/bfloat16 inputs, otherwise uses input type. Must be explicitly specified for non-float types.</dd>
+<dd>Floating-point precision for softmax computation. Defaults to float32 for non-double inputs, otherwise uses double. Must be explicitly specified for non-float types.</dd>
 </dl>
 
 #### Inputs
