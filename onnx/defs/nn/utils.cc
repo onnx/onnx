@@ -9,6 +9,20 @@ namespace nn {
 namespace utils {
 
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
+  const bool has_past = ctx.hasInput(4) && ctx.hasInput(5);
+  const bool has_present = ctx.hasOutput(1) && ctx.hasOutput(2);
+
+  if (ctx.hasInput(4) != ctx.hasInput(5)) {
+    fail_shape_inference("Attention requires both past_key and past_value to be provided together.");
+  }
+  if (ctx.hasOutput(1) != ctx.hasOutput(2)) {
+    fail_shape_inference("Attention requires both present_key and present_value outputs to be used together.");
+  }
+  if (has_past != has_present) {
+    fail_shape_inference(
+        "Attention requires past_key/past_value inputs and present_key/present_value outputs to be used together.");
+  }
+
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   int64_t kv_sequence_length = -1;
@@ -106,8 +120,8 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
     updateOutputShape(ctx, 3, qk_matmul_shape);
   }
 
-  if (ctx.hasOutput(1) && ctx.hasOutput(2)) { // has present outputs
-    if (ctx.hasInput(4) && ctx.hasInput(5)) { // has past_key
+  if (has_present) { // has present outputs
+    if (has_past) { // has past inputs
       // copy the type from query to present key and value
       propagateElemTypeFromInputToOutput(ctx, 4, 1);
       propagateElemTypeFromInputToOutput(ctx, 5, 2);
