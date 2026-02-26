@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include "data_type_utils.h"
+#include "onnx/defs/data_type_utils.h"
 
 #include <cctype>
 #include <string>
@@ -199,9 +199,9 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
     type_proto.mutable_map_type()->set_key_type(key_type);
     FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
     return;
-  } else
+  }
 #ifdef ONNX_ML
-      if (s.LStrip("opaque")) {
+  if (s.LStrip("opaque")) {
     auto* opaque_type = type_proto.mutable_opaque_type();
     s.ParensWhitespaceStrip();
     if (!s.Empty()) {
@@ -216,9 +216,10 @@ void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_prot
         opaque_type->mutable_name()->assign(s.Data(), s.Size());
       }
     }
-  } else
+    return;
+  }
 #endif
-      if (s.LStrip("sparse_tensor")) {
+  if (s.LStrip("sparse_tensor")) {
     s.ParensWhitespaceStrip();
     auto e = FromDataTypeString(std::string(s.Data(), s.Size()));
     type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
@@ -451,9 +452,9 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["int2"] = TensorProto_DataType_INT2;
   type_str_to_tensor_data_type_["float4e2m1"] = TensorProto_DataType_FLOAT4E2M1;
 
-  for (auto& str_type_pair : type_str_to_tensor_data_type_) {
-    tensor_data_type_to_type_str_[str_type_pair.second] = str_type_pair.first;
-    allowed_data_types_.insert(str_type_pair.first);
+  for (auto& [type_str, data_type] : type_str_to_tensor_data_type_) {
+    tensor_data_type_to_type_str_[data_type] = type_str;
+    allowed_data_types_.insert(type_str);
   }
 }
 } // namespace Utils

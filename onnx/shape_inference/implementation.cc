@@ -372,8 +372,12 @@ class ShapeInferenceImplBase {
   }
 
   template <typename T>
-  void AddTemporaryConstant(const std::string& name, const T& vector) {
-    input_data_by_name_holder[name] = ToTensor(vector);
+  void AddTemporaryConstant(const std::string& name, const T& vector, bool scalar = false) {
+    auto tensor = ToTensor(vector);
+    if (!scalar) {
+      tensor.add_dims(vector.size());
+    }
+    input_data_by_name_holder[name] = tensor;
     input_data_by_name[name] = &input_data_by_name_holder[name];
   }
 
@@ -403,7 +407,7 @@ class ShapeInferenceImplBase {
             }
             case AttributeProto::INT: {
               std::vector<int64_t> ints({attr.i()});
-              AddTemporaryConstant(output_name, ints);
+              AddTemporaryConstant(output_name, ints, true);
               break;
             }
             case AttributeProto::FLOATS: {
@@ -413,7 +417,7 @@ class ShapeInferenceImplBase {
             }
             case AttributeProto::FLOAT: {
               std::vector<float> floats({attr.f()});
-              AddTemporaryConstant(output_name, floats);
+              AddTemporaryConstant(output_name, floats, true);
               break;
             }
             default:
@@ -523,7 +527,7 @@ class ShapeInferenceImplBase {
       });
     }
     ONNX_CATCH(const std::runtime_error& err) {
-      // TODO: Fix this. Unclear if this should be remapped to a shape inference error.
+      // TODO(ONNX): Fix this. Unclear if this should be remapped to a shape inference error.
       // Need to rationalize the different types of exceptions that can be thrown.
       // See: https://github.com/onnx/onnx/pull/5519
       ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
@@ -614,7 +618,7 @@ class ShapeInferenceImplBase {
       // nullptr is valid, and indicates a missing optional input
       if (type_ptr != nullptr) {
         // Use a temporary copy of original type.
-        // TODO: investigate whether we can eliminate use of temporary copy
+        // TODO(ONNX): investigate whether we can eliminate use of temporary copy
         types_cache[i] = *type_ptr;
         value_types_by_name[parameter_name] = &types_cache[i];
       } else {
@@ -707,7 +711,7 @@ class ShapeInferenceImplBase {
     // Throw shape inference error if any. Error mode right now only supports 0 and 1.
     // When set to 0, any node level shape inference errors are not thrown. This is to support backward compatibility
     // with 1.7 and earlier releases. When set to 1 it will throw all exceptions.
-    // TODO: Add a more granular way for exception handling.
+    // TODO(ONNX): Add a more granular way for exception handling.
     if (!errors.empty() && options.error_mode > 0) {
       std::string full_errors = "Inference error(s): ";
       for (const std::string& error : inference_errors) {
@@ -941,23 +945,23 @@ struct FunctionInferenceContext : public InferenceContext {
     return (index < output_types_.size()) ? &output_types_[index] : nullptr;
   }
 
-  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) override {
-    ONNX_UNUSED_PARAMETER(attribute_name); // This method is unused for function-type-inference.
+  // This method is unused for function-type-inference.
+  GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name [[maybe_unused]]) override {
     return nullptr;
   }
 
-  const TensorProto* getInputData(size_t index) const override {
-    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of statically known input values.
+  // This inference doesn't take advantage of statically known input values.
+  const TensorProto* getInputData(size_t index [[maybe_unused]]) const override {
     return nullptr;
   }
 
-  const SparseTensorProto* getInputSparseData(size_t index) const override {
-    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of statically known input values.
+  // This inference doesn't take advantage of statically known input values.
+  const SparseTensorProto* getInputSparseData(size_t index [[maybe_unused]]) const override {
     return nullptr;
   }
 
-  const TensorShapeProto* getSymbolicInput(size_t index) const override {
-    ONNX_UNUSED_PARAMETER(index); // This inference doesn't take advantage of data-propagation.
+  // This inference doesn't take advantage of data-propagation.
+  const TensorShapeProto* getSymbolicInput(size_t index [[maybe_unused]]) const override {
     return nullptr;
   }
 
@@ -990,7 +994,7 @@ std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
     const std::vector<TypeProto>& input_types,
     const std::vector<AttributeProto>& attributes) {
-  // TODO: if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
+  // TODO(ONNX): if it is desirable for infer_function_output_types to provide check_type, strict_mode, data_prop,
   // we can add them to the Python API. For now we just assume the default options.
   ShapeInferenceOptions options{true, 1, false};
   FunctionInferenceContext ctx(function_proto, input_types, attributes, options);

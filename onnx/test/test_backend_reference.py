@@ -69,8 +69,6 @@ class ReferenceEvaluatorBackend(onnx.backend.base.Backend):
     def prepare(
         cls, model: Any, device: str = "CPU", **kwargs: Any
     ) -> ReferenceEvaluatorBackendRep:
-        # if isinstance(model, ReferenceEvaluatorBackendRep):
-        #    return model
         if isinstance(model, ReferenceEvaluator):
             return ReferenceEvaluatorBackendRep(model)
         if isinstance(model, (str, bytes, ModelProto)):
@@ -102,8 +100,6 @@ backend_test = onnx.backend.test.BackendTest(
     },
 )
 
-if os.getenv("APPVEYOR"):
-    backend_test.exclude("(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
     backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")
 if platform.system() == "Windows":
@@ -143,16 +139,13 @@ backend_test.exclude("test_adam_multiple")  # 1e-2
 
 # Currently Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
 if sys.platform == "win32":
-    backend_test.exclude("test_regex_full_match_basic_cpu")
-    backend_test.exclude("test_regex_full_match_email_domain_cpu")
-    backend_test.exclude("test_regex_full_match_empty_cpu")
-    backend_test.exclude("test_image_decoder_decode_")
+    backend_test.exclude(
+        "(test_regex_full_match_basic_cpu"
+        "|test_regex_full_match_email_domain_cpu"
+        "|test_regex_full_match_empty_cpu"
+        "|test_image_decoder_decode_)"
+    )
 
-
-if sys.platform == "darwin":
-    # FIXME: https://github.com/onnx/onnx/issues/5792
-    backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
-    backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
 
 if version_utils.pillow_older_than("10.0"):
     backend_test.exclude("test_image_decoder_decode_webp_rgb")
