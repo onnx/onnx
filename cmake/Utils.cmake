@@ -139,6 +139,7 @@ function(add_onnx_compile_options target)
   foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
     if(TARGET ${ABSL_USED_TARGET})
       target_link_libraries(${target} PUBLIC ${ABSL_USED_TARGET})
+      add_dependencies(${LINKED_PROTOBUF_TARGET} ${ABSL_USED_TARGET})
     endif()
   endforeach()
   # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
