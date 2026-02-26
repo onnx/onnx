@@ -4073,7 +4073,23 @@ expect(
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. When ceil_mode is enabled, any sliding window whose start would fall entirely in the right or bottom padded region must be dropped. Equivalently, if
+
+   ```
+   (output_spatial_shape[i] - 1) × strides_spatial_shape[i] ≥ input_spatial_shape[i] + pads_end[i]
+   ```
+
+   then reduce `output_spatial_shape[i]` by 1 on axis i. Here `pads_end[i]` is the end padding for axis i, taken from the pads attribute (`pads = [p0_begin, p1_begin, …, p0_end, p1_end, …]`).
+
+   For a 2-D example (image case): if ceil_mode=True and
+   ```
+   (H_out - 1) * stride[0] >= H_in + pad_bottom
+   ```
+   the last row of pooling windows is dropped; similarly, if
+   ```
+   (W_out - 1) * stride[1] >= W_in + pad_right
+   ```
+   the last column of windows is dropped.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
@@ -18592,7 +18608,23 @@ expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_1")
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - {kernelSpatialShape}) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled `pad_shape[i]` is the sum of pads along axis `i`.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. When ceil_mode is enabled, any sliding window whose start would fall entirely in the right or bottom padded region must be dropped. Equivalently, if
+
+   ```
+   (output_spatial_shape[i] - 1) × strides_spatial_shape[i] ≥ input_spatial_shape[i] + pads_end[i]
+   ```
+
+   then reduce `output_spatial_shape[i]` by 1 on axis i. Here `pads_end[i]` is the end padding for axis i, taken from the pads attribute (`pads = [p0_begin, p1_begin, …, p0_end, p1_end, …]`).
+
+   For a 2-D example (image case): if ceil_mode=True and
+   ```
+   (H_out - 1) * stride[0] >= H_in + pad_bottom
+   ```
+   the last row of pooling windows is dropped; similarly, if
+   ```
+   (W_out - 1) * stride[1] >= W_in + pad_right
+   ```
+   the last column of windows is dropped.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
@@ -18681,6 +18713,73 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, "LPPOOL", p=p)
 
 expect(node, inputs=[x], outputs=[y], name="test_lppool_1d_default")
+```
+
+</details>
+
+
+<details>
+<summary>lppool_2d_ceil_last_window_starts_on_pad</summary>
+
+```python
+"""input_shape: [1, 1, 1, 3]
+output_shape: [1, 1, 1, 2]
+"""
+p = 2
+node = onnx.helper.make_node(
+    "LpPool",
+    inputs=["x"],
+    outputs=["y"],
+    kernel_shape=[1, 2],
+    pads=[0, 1, 0, 1],
+    strides=[1, 2],
+    ceil_mode=1,
+    p=p,
+)
+x = np.arange(1, 4, dtype=np.float32).reshape(1, 1, 1, 3)
+x_shape = np.shape(x)
+kernel_shape = (1, 2)
+strides = (1, 2)
+pads = [0, 1, 0, 1]
+out_shape, pads_required = get_output_shape_explicit_padding(
+    pads,
+    x_shape[2:],
+    kernel_shape,
+    strides,
+    ceil_mode=True,
+)
+padded = np.pad(
+    x,
+   (
+        (0, 0),
+        (0, 0),
+        (pads_required[0], pads_required[2]),
+        (pads_required[1], pads_required[3]),
+    ),
+    mode="constant",
+    constant_values=0,
+)
+y = pool(
+    padded,
+    x_shape,
+    kernel_shape,
+    strides,
+    out_shape,
+    "LPPOOL",
+    pads_required=pads_required,
+    pads=pads,
+    p=p,
+)
+
+# Expected width positions: (0,1) collects [0, 1] due to left pad, (2,3) collects [2, 3];
+# the stride position starting on the right pad is ignored when ceil_mode trims the count.
+
+expect(
+    node,
+    inputs=[x],
+    outputs=[y],
+    name="test_lppool_2d_ceil_last_window_starts_on_pad",
+)
 ```
 
 </details>
@@ -19287,7 +19386,23 @@ for op_dtype in all_numeric_dtypes:
    ```
    output_spatial_shape[i] = ceil((input_spatial_shape[i] + pad_shape[i] - dilation[i] * (kernel_shape[i] - 1) - 1) / strides_spatial_shape[i] + 1)
    ```
-   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. Sliding windows that would start in the right padded region are ignored.
+   if ceil_mode is enabled. `pad_shape[i]` is the sum of pads along axis `i`. When ceil_mode is enabled, any sliding window whose start would fall entirely in the right or bottom padded region must be dropped. Equivalently, if
+
+   ```
+   (output_spatial_shape[i] - 1) × strides_spatial_shape[i] ≥ input_spatial_shape[i] + pads_end[i]
+   ```
+
+   then reduce `output_spatial_shape[i]` by 1 on axis i. Here `pads_end[i]` is the end padding for axis i, taken from the pads attribute (`pads = [p0_begin, p1_begin, …, p0_end, p1_end, …]`).
+
+   For a 2-D example (image case): if ceil_mode=True and
+   ```
+   (H_out - 1) * stride[0] >= H_in + pad_bottom
+   ```
+   the last row of pooling windows is dropped; similarly, if
+   ```
+   (W_out - 1) * stride[1] >= W_in + pad_right
+   ```
+   the last column of windows is dropped.
 
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following when ceil_mode is enabled:
    ```
