@@ -29,6 +29,7 @@ from onnx.external_data_helper import (
     convert_model_to_external_data,
     load_external_data_for_model,
     load_external_data_for_tensor,
+    save_external_data,
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
@@ -882,6 +883,80 @@ class TestFunctionsAndSubGraphs(unittest.TestCase):
         if_node = model.graph.node[0]
         constant_nodes = [attr.g.node[0] for attr in if_node.attribute]
         self._check(model, constant_nodes)
+
+
+@unittest.skipIf(
+    os.name == "nt", reason="Symlinks require elevated privileges on Windows"
+)
+class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
+    """Test that save_external_data rejects symlinks to prevent arbitrary file overwrites."""
+
+    def test_save_rejects_symlink_target(self) -> None:
+        """Saving external data must refuse to follow symlinks."""
+        sensitive_file = os.path.join(self.temp_dir, "sensitive.txt")
+        with open(sensitive_file, "w") as f:
+            f.write("SENSITIVE DATA")
+
+        # Create a model with external data
+        array = np.ones((100, 100), dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        model = helper.make_model(
+            helper.make_graph(
+                [helper.make_node("Identity", ["input"], ["output"])],
+                "test",
+                [helper.make_tensor_value_info("input", TensorProto.FLOAT, [100, 100])],
+                [
+                    helper.make_tensor_value_info(
+                        "output", TensorProto.FLOAT, [100, 100]
+                    )
+                ],
+                [tensor],
+            )
+        )
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Replace external data file with a symlink to the sensitive file
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        os.remove(ext_data_path)
+        os.symlink(sensitive_file, ext_data_path)
+
+        loaded_model = onnx.load(model_path, load_external_data=False)
+        loaded_model.graph.initializer[0].raw_data = array.tobytes()
+
+        with self.assertRaises(checker.ValidationError):
+            onnx.save_model(
+                loaded_model,
+                model_path,
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=ext_data,
+                size_threshold=1024,
+            )
+
+        # Sensitive file must not be modified
+        with open(sensitive_file) as f:
+            self.assertEqual(f.read(), "SENSITIVE DATA")
+
+
+class TestSaveExternalDataAbsolutePathValidation(TestLoadExternalDataBase):
+    """Test that save_external_data rejects absolute paths."""
+
+    def test_save_rejects_absolute_path(self) -> None:
+        """Absolute paths must be rejected as external data locations."""
+        array = np.ones((100,), dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        set_external_data(tensor, location="/etc/passwd")
+        with self.assertRaises(checker.ValidationError):
+            save_external_data(tensor, self.temp_dir)
 
 
 if __name__ == "__main__":
