@@ -243,7 +243,8 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     open_flags = os.O_CREAT | os.O_RDWR
     if hasattr(os, "O_NOFOLLOW"):
         open_flags |= os.O_NOFOLLOW
-    fd = os.open(external_data_file_path, open_flags, 0o666)
+    # Use restrictive permissions: owner read/write only (0o600)
+    fd = os.open(external_data_file_path, open_flags, 0o600)
 
     # Open file for reading and writing at random locations ('r+b')
     with os.fdopen(fd, "r+b") as data_file:
