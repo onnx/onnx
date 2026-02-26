@@ -1029,6 +1029,15 @@ std::string resolve_external_data_location(
         data_path_str,
         ", but it is not regular file.");
   }
+  // Do not allow hardlinks, as they can be used to read arbitrary files.
+  if (data_path_str[0] != '#' && std::filesystem::hard_link_count(data_path) > 1) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        data_path_str,
+        ", but it has multiple hard links, indicating a potential hardlink attack.");
+  }
   // Check whether the file exists
   if (data_path_str[0] != '#' && !std::filesystem::exists(data_path)) {
     fail_check(
