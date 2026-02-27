@@ -200,7 +200,7 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 
     # Let's check the tensor location is valid.
     location_path = pathlib.Path(info.location)
-    if location_path.is_absolute() and len(location_path.parts) > 1:
+    if location_path.is_absolute():
         raise onnx_checker.ValidationError(
             f"Tensor {tensor.name!r} is external and must not be defined "
             f"with an absolute path such as {info.location!r}, "
@@ -219,17 +219,35 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 
     external_data_file_path = os.path.join(base_path, info.location)
 
+    # Verify the resolved path stays within base_path (prevent symlink-based path traversal)
+    real_base = os.path.realpath(base_path)
+    real_path = os.path.realpath(external_data_file_path)
+    if not real_path.startswith(real_base + os.sep) and real_path != real_base:
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor.name!r} external data path resolves to "
+            f"{real_path!r} which is outside the model directory {real_base!r}."
+        )
+
+    # Reject symlinks to prevent arbitrary file overwrites
+    if os.path.islink(external_data_file_path):
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor.name!r} external data path {external_data_file_path!r} "
+            f"is a symbolic link, which is not allowed for security reasons."
+        )
+
     # Retrieve the tensor's data from raw_data or load external file
     if not tensor.HasField("raw_data"):
         raise onnx_checker.ValidationError("raw_data field doesn't exist.")
 
-    # Create file if it doesn't exist
-    if not os.path.isfile(external_data_file_path):
-        with open(external_data_file_path, "ab"):
-            pass
+    # Atomic file creation with symlink protection (O_NOFOLLOW where available)
+    open_flags = os.O_CREAT | os.O_RDWR
+    if hasattr(os, "O_NOFOLLOW"):
+        open_flags |= os.O_NOFOLLOW
+    # Use restrictive permissions: owner read/write only (0o600)
+    fd = os.open(external_data_file_path, open_flags, 0o600)
 
     # Open file for reading and writing at random locations ('r+b')
-    with open(external_data_file_path, "r+b") as data_file:
+    with os.fdopen(fd, "r+b") as data_file:
         data_file.seek(0, 2)
         if info.offset is not None:
             # Pad file to required offset if needed
