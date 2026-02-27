@@ -293,6 +293,14 @@ A proper CAS (computer algebra system) would support simplification, factoring, 
 
 An earlier design considered adding a `dim_expr` field to the protobuf. This would be unambiguous and parser-friendly, but requires coordinated changes to the ONNX IR spec, all language bindings, and all downstream tools. The string encoding chosen here defers that specification work to a future version.
 
+### Why not introduce a pluggable dimension-algebra abstraction?
+
+A natural extension would be to define a `DimensionAlgebra` class or interface with virtual methods covering arithmetic (`+`, `-`, `*`, `/`), unary functions (`ceil`, `floor`, `broadcast`, …), and unification/equality checking. The current string-based implementation would be the default; users who need stricter equality checking (e.g., raising an error when `"N"` is unified with `"N+1"`) or a richer simplification strategy (e.g., a CAS backend) could plug in their own implementation.
+
+Such an abstraction is feasible. The primary cost is **API surface**: every shape-inference helper that currently calls `dimToString` or uses the `Dim` arithmetic operators would need to be threaded with a reference to the active algebra object, and the `InferenceContext` interface would need a new virtual accessor. This is a moderate but non-trivial refactor, and it couples the algebra strategy to the shape-inference pass's call graph.
+
+The decision here is to defer this to a follow-on extension (see Future possibilities) to keep the scope of this RFC manageable and the initial implementation reviewable in a single PR. The string-based default remains fully backward compatible and can be adopted by all existing callers without change. A pluggable interface can be layered on top once the design has stabilised.
+
 ### What is the impact of not doing this?
 
 Exporters fall back to generating fully unknown shapes for almost every operator applied to a dynamic input, causing downstream compilers to either fail or produce suboptimal code.
@@ -321,7 +329,9 @@ Exporters fall back to generating fully unknown shapes for almost every operator
 
 - **Formal expression grammar**: Define a grammar for `dim_param` expression strings in the ONNX IR specification so that all conformant tools can parse them consistently.
 - **Protobuf extension**: Add a dedicated `dim_expr` field to `TensorShapeProto.Dimension` with a structured expression representation (AST), replacing the string encoding.
+- **Pluggable dimension-algebra interface**: Introduce a `DimensionAlgebra` abstract class whose virtual methods cover all arithmetic operators, unary symbolic functions (`ceil`, `floor`, `broadcast`, …), and unification/equality checking. `InferenceContext` would expose an accessor for the active algebra, and the existing string-based implementation would remain the default. Third-party users who require stricter unification semantics (e.g., throwing an error when two symbolically-inequivalent expressions are unified) or a richer simplification backend (e.g., a CAS library) could supply their own subclass without modifying ONNX core.
 - **Constraint propagation**: Allow users to assert that two symbolic dimensions are equal or that one is a multiple of another, enabling downstream inference to resolve more shapes statically.
 - **Extended operator coverage**: Add `PartialDataPropagationFunction` to more operators (e.g., `Transpose`, `Gather`, `ScatterElements`) to propagate symbolic shape information further through shape-computation subgraphs.
 - **Simplification pass**: Provide an optional pass that simplifies expression strings (e.g., folds `N - 0` to `N`, `N * 1` to `N`) to keep shapes readable.
 - **Integration with onnx-simplifier and onnxruntime**: Update downstream tools to parse and evaluate `dim_param` expression strings for richer static analysis.
+- **`broadcast(e1, e2)` support in `multidirectionalBroadcastShapeInference`**: Emit `broadcast(e1, e2)` string expressions when two distinct symbolic `dim_param` strings are broadcast together, rather than falling back to a fully-unknown dimension. This follows directly from the expression-function pattern used for `ceil` and `floor`.
