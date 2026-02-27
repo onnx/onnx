@@ -179,6 +179,30 @@ The following operators now have `PartialDataPropagationFunction` implementation
 
 `LoopInferenceFunction` (and the opset-8, -11, -13 variants) now sets the first dimension of every scan output to the trip-count value when the trip-count input `M` is a known non-negative integer. Previously this dimension was always left unknown.
 
+### Unification of symbolic expressions
+
+Shape inference frequently needs to *unify* two dimensions—asserting that they must be equal. The two relevant functions are `unifyDim` (`onnx/defs/shape_inference.h`) and `mergeInDimensionInfo` (`onnx/defs/shape_inference.h`). Both follow the same priority rules:
+
+| Source dim | Target dim | Result |
+|---|---|---|
+| concrete value | concrete value | check equality; `fail_shape_inference` if they differ |
+| concrete value | symbolic `dim_param` | overwrite target with the concrete value |
+| concrete value | unknown (no value/param) | set target to the concrete value |
+| symbolic `dim_param` | concrete value | preserve target (concrete beats symbolic) |
+| symbolic `dim_param` | symbolic `dim_param` | **preserve target; source is silently discarded** |
+| symbolic `dim_param` | unknown | set target to source's `dim_param` string |
+| unknown | any | preserve target |
+
+The critical row is **symbolic ↔ symbolic**: the implementation does **not** check whether the two expression strings are algebraically equivalent. It simply keeps whichever string is already on the target side and discards the source. This means:
+
+- If source is `"N + 2"` and target is `"N + 2"` (identical strings), the result is `"N + 2"` — correct, but only by luck of string equality.
+- If source is `"N + 2"` and target is `"M + 2"` (different symbols for the same value), the result is `"M + 2"` — no error is raised, but the relationship between the two expressions is lost.
+- If source is `"N + 2 - 2"` and target is `"N"` (algebraically equal), the result is `"N"` — again, no error, and the unsimplified form is silently dropped.
+
+This behavior is intentional: performing algebraic equality checking would require a full symbolic solver (out of scope for ONNX shape inference) and would introduce new inference failures in valid models. The trade-off is that inferred shapes may be weaker than theoretically possible in cases where two independently-derived expressions describe the same dimension.
+
+**Implication for new operator implementations.** When writing or updating a shape-inference function that asserts two dimensions must be equal (e.g., batch size must match across two inputs), prefer using `unifyDim(input_dim, output_dim)` where the *target* (`output_dim`) already holds the expression you want to preserve. If neither side has a preferred form, pick the more informative one as the target.
+
 ### Interaction with existing shape inference
 
 - All changes are backward compatible: if no symbolic dim is involved, the existing concrete inference path is taken and results are identical to before.
