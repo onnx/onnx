@@ -217,27 +217,43 @@ Many operators (e.g., `Add`, `Mul`, `Max`) apply NumPy-style multidirectional br
 | Exactly one symbolic `dim_param`, rest are concrete 1s | That symbolic expression is propagated |
 | Two or more *distinct* symbolic `dim_param` strings | **Fully unknown** (no value, no param) |
 
-The third row is the critical case. Broadcasting `"N"` against `"M"` produces a dimension with neither a `dim_value` nor a `dim_param`. The runtime semantics are correct (either `N == M`, or one of them is 1, or the model is invalid), but shape inference cannot express the result as a symbolic formula like `broadcast(N, M)`.
+The third row is the current limitation: broadcasting `"N"` against `"M"` (two distinct symbolic expressions) produces a dimension with neither a `dim_value` nor a `dim_param`. The runtime semantics are correct (either `N == M`, or one of them is 1, or the model is invalid), but shape inference loses symbolic identity for that dimension.
 
-**Why no symbolic broadcast expression?** Expressing the broadcast result would require a new expression node `broadcast(e1, e2)` whose evaluation depends on the *runtime values* of `e1` and `e2` (not just their structure). The current arithmetic helpers (`+`, `-`, `*`, `/`) produce expressions whose *shape* is fully determined at compile time given the symbol bindings. A `broadcast` expression would have conditional semantics (`max(e1, e2)` when both are non-1, `e1` when `e2 = 1`, etc.) and cannot be reduced without a constraint solver. Introducing it would require either a richer expression language or a conservative approximation, both of which are out of scope for this RFC.
+**Supporting `broadcast` as a symbolic function.** Just as this RFC adds unary functions `ceil(e)` and `floor(e)` to the expression language, a binary `broadcast(e1, e2)` function can be added with analogous treatment. The `dim_param` string encoding is simply:
 
-**Practical consequence.** If a model broadcasts a symbolic-dimension tensor against another symbolic-dimension tensor, the broadcast output dimensions where the shapes differ symbolically will lose their symbolic identity and be reported as unknown. For example:
+```
+broadcast(N, M)
+```
+
+An evaluator that understands the expression grammar would interpret this as:
+
+```
+broadcast(e1, e2) = e2  if e1 == 1
+                  = e1  if e2 == 1
+                  = e1  if e1 == e2   (same value)
+                  = undefined         otherwise (model error at runtime)
+```
+
+Emitting `broadcast(e1, e2)` rather than dropping to unknown is strictly more informative: a downstream tool that can partially evaluate or simplify the expression (e.g., by substituting a known binding for one symbol) can recover the concrete value. It also preserves the symbolic identity for consumers that track shapes symbolically.
+
+**Current status.** The `multidirectionalBroadcastShapeInference` helper does **not** yet emit `broadcast(e1, e2)` strings; it falls back to a fully unknown dimension in the two-or-more-distinct-symbolic case. Adding support is a natural extension and is left as a future improvement (see Unresolved questions).
+
+**Practical consequence (current behavior).** If a model broadcasts a symbolic-dimension tensor against another symbolic-dimension tensor, the broadcast output dimensions where the shapes differ symbolically will lose their symbolic identity and be reported as unknown. For example:
 
 ```
 input A: shape [N, 1]
 input B: shape [1, M]
-output C = A + B: shape [?, ?]   # both dims go unknown
+output C = A + B: shape [?, ?]   # both dims go unknown (current behavior)
+                                 # future: shape [broadcast(N, 1), broadcast(1, M)] = [N, M]
 ```
 
-When one input dimension is a concrete 1, the symbolic expression from the other input *is* preserved:
+When one input dimension is a concrete 1, the symbolic expression from the other input *is* already preserved correctly today:
 
 ```
 input A: shape [N, 4]
 input B: shape [1, 4]            # concrete 1 in first dim
 output C = A + B: shape [N, 4]   # N propagated correctly
 ```
-
-**Future possibility.** A later RFC could introduce a `broadcast(e1, e2)` expression node (semantically equivalent to `e1 == 1 ? e2 : e1`) in the symbolic expression language, enabling full symbolic tracking through broadcast. This would require extensions to the expression grammar and evaluation rules described in the Unresolved questions section.
 
 ### Interaction with existing shape inference
 
