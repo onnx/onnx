@@ -297,6 +297,10 @@ inline TensorShapeProto::Dimension operator+(
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value() && dim2.has_dim_value()) {
     result.set_dim_value(dim1.dim_value() + dim2.dim_value());
+  } else if (dim1.has_dim_value() && dim1.dim_value() == 0) {
+    return dim2;
+  } else if (dim2.has_dim_value() && dim2.dim_value() == 0) {
+    return dim1;
   } else {
     auto s1 = dimToString(dim1);
     auto s2 = dimToString(dim2);

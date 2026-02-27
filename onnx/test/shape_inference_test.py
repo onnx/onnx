@@ -637,8 +637,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph,
-            # axis dim: 0 + A + B = "0 + A + B"
-            [make_tensor_value_info("z", TensorProto.FLOAT, ("N", "0 + A + B", 3))],
+            [make_tensor_value_info("z", TensorProto.FLOAT, ("N", "A + B", 3))],
         )
 
     @parameterized.expand(all_versions_for("Reshape"))
