@@ -20,6 +20,39 @@ data types. Currently we focus on the capabilities needed for inferencing (scori
 
 ONNX is [widely supported](http://onnx.ai/supported-tools) and can be found in many frameworks, tools, and hardware. Enabling interoperability between different frameworks and streamlining the path from research to production helps increase the speed of innovation in the AI community. We invite the community to join us and further evolve ONNX.
 
+# 🚀 Quick Start
+
+Get started with ONNX in 5 minutes!
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/onnx/onnx/blob/main/examples/quickstart.ipynb)
+
+### Simple Example
+
+```python
+import torch
+import onnx
+
+# 1. Create a PyTorch model
+model = torch.nn.Linear(10, 5)
+model.eval()
+
+# 2. Export to ONNX
+dummy_input = torch.randn(1, 10)
+torch.onnx.export(model, dummy_input, "model.onnx")
+
+# 3. Load and validate
+onnx_model = onnx.load("model.onnx")
+onnx.checker.check_model(onnx_model)
+print("✅ Model is valid!")
+
+# 4. Run inference with ONNX Runtime
+import onnxruntime as ort
+session = ort.InferenceSession("model.onnx")
+outputs = session.run(None, {"input": dummy_input.numpy()})
+```
+
+**For a complete tutorial**, see our [interactive notebook](./examples/quickstart.ipynb) or try it directly in [Google Colab](https://colab.research.google.com/github/onnx/onnx/blob/main/examples/quickstart.ipynb).
+
 
 # Use ONNX
 
