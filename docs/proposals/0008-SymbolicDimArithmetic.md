@@ -205,6 +205,40 @@ Performing algebraic equality or consistency checking would require a full symbo
 
 **Implication for new operator implementations.** When writing or updating a shape-inference function that asserts two dimensions must be equal (e.g., batch size must match across two inputs), prefer using `unifyDim(input_dim, output_dim)` where the *target* (`output_dim`) already holds the expression you want to preserve. If neither side has a preferred form, pick the more informative one as the target.
 
+### Broadcast with symbolic expressions
+
+Many operators (e.g., `Add`, `Mul`, `Max`) apply NumPy-style multidirectional broadcasting. The helper that computes broadcast output shapes is `multidirectionalBroadcastShapeInference` (`onnx/defs/shape_inference.h`).
+
+**Current behavior.** For each output dimension the function considers the corresponding input dimensions after left-padding shapes with 1s to a common rank:
+
+| Input dims for position *i* | Output dim |
+|---|---|
+| All concrete, compatible (one is 1 or both equal) | Concrete value (the non-1 value, or 1) |
+| Exactly one symbolic `dim_param`, rest are concrete 1s | That symbolic expression is propagated |
+| Two or more *distinct* symbolic `dim_param` strings | **Fully unknown** (no value, no param) |
+
+The third row is the critical case. Broadcasting `"N"` against `"M"` produces a dimension with neither a `dim_value` nor a `dim_param`. The runtime semantics are correct (either `N == M`, or one of them is 1, or the model is invalid), but shape inference cannot express the result as a symbolic formula like `broadcast(N, M)`.
+
+**Why no symbolic broadcast expression?** Expressing the broadcast result would require a new expression node `broadcast(e1, e2)` whose evaluation depends on the *runtime values* of `e1` and `e2` (not just their structure). The current arithmetic helpers (`+`, `-`, `*`, `/`) produce expressions whose *shape* is fully determined at compile time given the symbol bindings. A `broadcast` expression would have conditional semantics (`max(e1, e2)` when both are non-1, `e1` when `e2 = 1`, etc.) and cannot be reduced without a constraint solver. Introducing it would require either a richer expression language or a conservative approximation, both of which are out of scope for this RFC.
+
+**Practical consequence.** If a model broadcasts a symbolic-dimension tensor against another symbolic-dimension tensor, the broadcast output dimensions where the shapes differ symbolically will lose their symbolic identity and be reported as unknown. For example:
+
+```
+input A: shape [N, 1]
+input B: shape [1, M]
+output C = A + B: shape [?, ?]   # both dims go unknown
+```
+
+When one input dimension is a concrete 1, the symbolic expression from the other input *is* preserved:
+
+```
+input A: shape [N, 4]
+input B: shape [1, 4]            # concrete 1 in first dim
+output C = A + B: shape [N, 4]   # N propagated correctly
+```
+
+**Future possibility.** A later RFC could introduce a `broadcast(e1, e2)` expression node (semantically equivalent to `e1 == 1 ? e2 : e1`) in the symbolic expression language, enabling full symbolic tracking through broadcast. This would require extensions to the expression grammar and evaluation rules described in the Unresolved questions section.
+
 ### Interaction with existing shape inference
 
 - All changes are backward compatible: if no symbolic dim is involved, the existing concrete inference path is taken and results are identical to before.
