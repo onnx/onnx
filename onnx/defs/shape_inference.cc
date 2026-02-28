@@ -4,6 +4,7 @@
 
 #include "onnx/defs/shape_inference.h"
 
+#include <cctype>
 #include <string>
 #include <utility>
 #include <vector>
@@ -13,7 +14,163 @@
 
 namespace ONNX_NAMESPACE {
 
-// Note: for all methods below for propagating type or shape, callers are
+// --- Symbolic Dimension Arithmetic Helpers ---
+
+std::string dimToString(const TensorShapeProto::Dimension& dim) {
+  if (dim.has_dim_value()) {
+    return ONNX_NAMESPACE::to_string(dim.dim_value());
+  }
+  if (dim.has_dim_param()) {
+    return dim.dim_param();
+  }
+  return "";
+}
+
+// Return true if a dim_param string is a "simple" token (identifier or number)
+// that does not need parentheses when used as an operand in a compound expression.
+static bool dimParamIsSimple(const std::string& s) {
+  if (s.empty())
+    return true;
+  for (char c : s) {
+    if (c != '_' && !std::isalnum(static_cast<unsigned char>(c)))
+      return false;
+  }
+  return true;
+}
+
+std::string wrapIfCompound(const std::string& s) {
+  return dimParamIsSimple(s) ? s : "(" + s + ")";
+}
+
+TensorShapeProto::Dimension operator*(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() * dim2.dim_value());
+  } else if (dim1.has_dim_value() && (dim1.dim_value() == 1)) {
+    return dim2;
+  } else if (dim2.has_dim_value() && (dim2.dim_value() == 1)) {
+    return dim1;
+  } else if (dim1.has_dim_value() && (dim1.dim_value() == 0)) {
+    result.set_dim_value(0);
+  } else if (dim2.has_dim_value() && (dim2.dim_value() == 0)) {
+    result.set_dim_value(0);
+  } else {
+    // At least one operand is symbolic — produce an expression
+    auto s1 = dimToString(dim1);
+    auto s2 = dimToString(dim2);
+    if (!s1.empty() && !s2.empty()) {
+      result.set_dim_param(wrapIfCompound(s1) + "*" + wrapIfCompound(s2));
+    }
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() * dim2);
+  } else if (dim2 == 1) {
+    return dim1;
+  } else if (dim2 == 0) {
+    result.set_dim_value(0);
+  } else {
+    auto s = dimToString(dim1);
+    if (!s.empty()) {
+      result.set_dim_param(wrapIfCompound(s) + "*" + ONNX_NAMESPACE::to_string(dim2));
+    }
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() / dim2);
+  } else if (dim2 == 1) {
+    return dim1;
+  } else {
+    auto s = dimToString(dim1);
+    if (!s.empty()) {
+      result.set_dim_param(wrapIfCompound(s) + "/" + ONNX_NAMESPACE::to_string(dim2));
+    }
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator+(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() + dim2.dim_value());
+  } else {
+    auto s1 = dimToString(dim1);
+    auto s2 = dimToString(dim2);
+    if (!s1.empty() && !s2.empty()) {
+      result.set_dim_param(s1 + " + " + s2);
+    }
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() + dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  } else {
+    auto s = dimToString(dim1);
+    if (!s.empty()) {
+      result.set_dim_param(s + " + " + ONNX_NAMESPACE::to_string(dim2));
+    }
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator-(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() - dim2.dim_value());
+  } else {
+    auto s1 = dimToString(dim1);
+    auto s2 = dimToString(dim2);
+    if (!s1.empty() && !s2.empty()) {
+      result.set_dim_param(s1 + " - " + wrapIfCompound(s2));
+    }
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() - dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  } else {
+    auto s = dimToString(dim1);
+    if (!s.empty()) {
+      result.set_dim_param(s + " - " + ONNX_NAMESPACE::to_string(dim2));
+    }
+  }
+  return result;
+}
+
+TensorShapeProto::Dimension multiplyDims(const TensorShapeProto& shape, int from, int upto_exclusive) {
+  TensorShapeProto::Dimension dim;
+  dim.set_dim_value(1);
+  for (int i = from; i < upto_exclusive; ++i) {
+    dim = dim * shape.dim(i);
+  }
+  return dim;
+}
+
+
 // responsible to handle optional inputs/outputs and ensure that the specified
 // index value is less than NumInputs/NumOutputs.
 // Supports mixed tensor and sparse tensor
