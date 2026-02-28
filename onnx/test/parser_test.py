@@ -242,6 +242,14 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertEqual(list(node.input), ["", "y"])
         self.assertEqual(list(node.output), ["", "x"])
 
+    def test_quoted_string_symbolic_dim(self):
+        # Test parsing a quoted string as a symbolic dimension (non-identifier dim_param)
+        graph = onnx.parser.parse_graph(
+            'agraph (float["M + N"] x) => (float["M + N"] y) { y = Identity(x) }'
+        )
+        self.assertEqual(graph.input[0].type.tensor_type.shape.dim[0].dim_param, "M + N")
+        self.assertEqual(graph.output[0].type.tensor_type.shape.dim[0].dim_param, "M + N")
+
     @parameterized.expand(
         [
             ("not_a_good_float", True),
