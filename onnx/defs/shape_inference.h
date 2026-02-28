@@ -188,6 +188,15 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
     return defaultValue;
 }
 
+template <typename Container>
+std::string stringify(const Container& elements);
+
+std::pair<int, int> getAttributeProtoElemTypeAndLength(const AttributeProto* attr_proto);
+
+std::pair<int, int> getAttributeElementTypeAndLength(
+    const InferenceContext& ctx,
+    const std::initializer_list<std::string>& attribute_names);
+
 // --- Symbolic Dimension Arithmetic Helpers ---
 // These helpers enable arithmetic on symbolic dimensions, encoding expressions
 // as dim_param strings (e.g., "N + 2", "3*H", "H/4"). When both operands are
@@ -226,15 +235,6 @@ TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, i
 // Caller must make sure upto_exclusive is less than or equal to shape.size()
 // Caller must make sure from>=0
 TensorShapeProto::Dimension multiplyDims(const TensorShapeProto& shape, int from, int upto_exclusive);
-
-template <typename Container>
-std::string stringify(const Container& elements);
-
-std::pair<int, int> getAttributeProtoElemTypeAndLength(const AttributeProto* attr_proto);
-
-std::pair<int, int> getAttributeElementTypeAndLength(
-    const InferenceContext& ctx,
-    const std::initializer_list<std::string>& attribute_names);
 
 inline int32_t getTensorElementType(const TypeProto& type) {
   int32_t result = TensorProto::UNDEFINED;
