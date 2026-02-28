@@ -1466,7 +1466,13 @@ static void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
       if (is_loop_state_var) {
-        // Propagate shape from the subgraph output.
+        // Propagate shape from the subgraph output. This merge is safe because
+        // ONNX does not support scoped symbolic dimensions. If symbolic
+        // dimensions could be local to a subgraph (i.e., taking different
+        // values in different loop iterations), we would need to abstract away
+        // or drop such local symbols before propagating them to the outer scope.
+        // Since all ONNX symbolic dimensions have global scope, shape
+        // information from the subgraph output is valid for the loop output.
         if (subgraph_output_type->has_tensor_type() && subgraph_output_type->tensor_type().has_shape()) {
           mergeInShapeInfo(subgraph_output_type->tensor_type(), *loop_output_type->mutable_tensor_type());
         }
@@ -1746,7 +1752,13 @@ static void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
       if (is_loop_state_var) {
-        // Propagate shape from the subgraph output.
+        // Propagate shape from the subgraph output. This merge is safe because
+        // ONNX does not support scoped symbolic dimensions. If symbolic
+        // dimensions could be local to a subgraph (i.e., taking different
+        // values in different loop iterations), we would need to abstract away
+        // or drop such local symbols before propagating them to the outer scope.
+        // Since all ONNX symbolic dimensions have global scope, shape
+        // information from the subgraph output is valid for the loop output.
         if (subgraph_output_type->has_tensor_type() && subgraph_output_type->tensor_type().has_shape()) {
           mergeInShapeInfo(subgraph_output_type->tensor_type(), *loop_output_type->mutable_tensor_type());
         }
@@ -2435,7 +2447,13 @@ static void LoopInferenceFunction_13(InferenceContext& ctx) {
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
       if (is_loop_state_var) {
-        // Propagate shape from the subgraph output.
+        // Propagate shape from the subgraph output. This merge is safe because
+        // ONNX does not support scoped symbolic dimensions. If symbolic
+        // dimensions could be local to a subgraph (i.e., taking different
+        // values in different loop iterations), we would need to abstract away
+        // or drop such local symbols before propagating them to the outer scope.
+        // Since all ONNX symbolic dimensions have global scope, shape
+        // information from the subgraph output is valid for the loop output.
         if (subgraph_output_type->has_tensor_type() && subgraph_output_type->tensor_type().has_shape()) {
           mergeInShapeInfo(subgraph_output_type->tensor_type(), *loop_output_type->mutable_tensor_type());
         }
