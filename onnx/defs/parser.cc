@@ -216,6 +216,11 @@ Common::Status OnnxParser::Parse(TensorShapeProto& shape) {
   do {
     if (Matches('?')) {
       shape.add_dim();
+    } else if (NextChar() == '"') {
+      // Check for a quoted string as symbolic dim ...
+      std::string id;
+      CHECK_PARSER_STATUS(ParserBase::Parse(id));
+      shape.add_dim()->set_dim_param(id);
     } else {
       // Check for a symbolic identifier ...
       auto id = ParseOptionalIdentifier();
