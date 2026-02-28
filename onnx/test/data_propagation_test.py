@@ -251,7 +251,7 @@ class TestDataPropagation(TestShapeInferenceHelper):
         model = onnx.parser.parse_model(
             """
             <ir_version: 7, opset_import: [ "" : 18]>
-            agraph (float[N, 3, H, W] x, float[1] y) => (float[N, 5, H, W] z) {
+            agraph (float[N, 3, H, W] x, float[M] y) => (float[N, 5, H, W] z) {
                 shape = Shape (x)
                 delta = Constant <value = int64[4] {0, 2, 0, 0}> ()
                 new_shape = Add (shape, delta)
