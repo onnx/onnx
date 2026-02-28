@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import os
+import pathlib
 import re
 import sys
 import uuid
 from itertools import chain
 from typing import TYPE_CHECKING
 
+import onnx.checker as onnx_checker
 import onnx.onnx_cpp2py_export.checker as c_checker
 from onnx.onnx_pb import (
     AttributeProto,
@@ -185,25 +187,67 @@ def convert_model_from_external_data(model: ModelProto) -> None:
 
 def save_external_data(tensor: TensorProto, base_path: str) -> None:
     """Writes tensor data to an external file according to information in the `external_data` field.
+    The function checks the external is a valid name and located in folder `base_path`.
 
     Arguments:
         tensor (TensorProto): Tensor object to be serialized
         base_path: System path of a folder where tensor data is to be stored
+
+    Raises:
+        ValueError: If the external file is invalid.
     """
     info = ExternalDataInfo(tensor)
+
+    # Let's check the tensor location is valid.
+    location_path = pathlib.Path(info.location)
+    if location_path.is_absolute():
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor.name!r} is external and must not be defined "
+            f"with an absolute path such as {info.location!r}, "
+            f"base_path={base_path!r}"
+        )
+    if ".." in location_path.parts:
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor.name!r} is external and must be placed in folder "
+            f"{base_path!r}, '..' is not needed in {info.location!r}."
+        )
+    if location_path.name in (".", ".."):
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor.name!r} is external and its name "
+            f"{info.location!r} is invalid."
+        )
+
     external_data_file_path = os.path.join(base_path, info.location)
+
+    # Verify the resolved path stays within base_path (prevent symlink-based path traversal)
+    real_base = os.path.realpath(base_path)
+    real_path = os.path.realpath(external_data_file_path)
+    if not real_path.startswith(real_base + os.sep) and real_path != real_base:
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor.name!r} external data path resolves to "
+            f"{real_path!r} which is outside the model directory {real_base!r}."
+        )
+
+    # Reject symlinks to prevent arbitrary file overwrites
+    if os.path.islink(external_data_file_path):
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor.name!r} external data path {external_data_file_path!r} "
+            f"is a symbolic link, which is not allowed for security reasons."
+        )
 
     # Retrieve the tensor's data from raw_data or load external file
     if not tensor.HasField("raw_data"):
-        raise ValueError("raw_data field doesn't exist.")
+        raise onnx_checker.ValidationError("raw_data field doesn't exist.")
 
-    # Create file if it doesn't exist
-    if not os.path.isfile(external_data_file_path):
-        with open(external_data_file_path, "ab"):
-            pass
+    # Atomic file creation with symlink protection (O_NOFOLLOW where available)
+    open_flags = os.O_CREAT | os.O_RDWR
+    if hasattr(os, "O_NOFOLLOW"):
+        open_flags |= os.O_NOFOLLOW
+    # Use restrictive permissions: owner read/write only (0o600)
+    fd = os.open(external_data_file_path, open_flags, 0o600)
 
     # Open file for reading and writing at random locations ('r+b')
-    with open(external_data_file_path, "r+b") as data_file:
+    with os.fdopen(fd, "r+b") as data_file:
         data_file.seek(0, 2)
         if info.offset is not None:
             # Pad file to required offset if needed

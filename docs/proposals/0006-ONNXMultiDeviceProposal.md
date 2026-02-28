@@ -3,6 +3,12 @@ Copyright (c) ONNX Project Contributors
 
 SPDX-License-Identifier: Apache-2.0
 -->
+- Feature Name: Multi-Device Proposal
+- Start Date: 2025-03-04
+- RFC PR: [onnx/onnx#6641](https://github.com/onnx/onnx/pull/6641)
+- Status: unclear (historical)
+- Authors:
+  - kevinch-nv
 
 # ONNX Multi-Device Proposal
 

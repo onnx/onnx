@@ -3,6 +3,12 @@ Copyright (c) ONNX Project Contributors
 -->
 
 <!--- SPDX-License-Identifier: Apache-2.0 -->
+- Feature Name: ONNX File Format Proposal
+- Start Date: 2019-04-29
+- RFC PR: [onnx/onnx#1973](https://github.com/onnx/onnx/pull/1973)
+- Status: unclear (historical)
+- Authors:
+  - jspisak
 
 # ONNX File Format Proposal
 

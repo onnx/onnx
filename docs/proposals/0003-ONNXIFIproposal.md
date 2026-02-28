@@ -3,6 +3,12 @@ Copyright (c) ONNX Project Contributors
 -->
 
 <!--- SPDX-License-Identifier: Apache-2.0 -->
+- Feature Name: ONNX Interface for Framework Integration: API Proposal
+- Start Date: 2019-05-29
+- RFC PR: [onnx/onnx#1976](https://github.com/onnx/onnx/pull/1976)
+- Status: unclear (historical)
+- Authors:
+  - jspisak
 
 # ONNX Interface for Framework Integration: API Proposal
 

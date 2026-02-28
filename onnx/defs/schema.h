@@ -190,7 +190,7 @@ class OpSchema final {
         std::string name,
         DataTypeSet allowed_type_set,
         std::string type_str,
-        std::string description,
+        std::string description [[maybe_unused]],
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
         int min_arity = 1,
@@ -205,14 +205,11 @@ class OpSchema final {
           is_homogeneous_(is_homogeneous),
           min_arity_(min_arity),
           differentiation_category_(differentiation_category) {
-#ifdef __ONNX_NO_DOC_STRINGS
-      ONNX_UNUSED_PARAMETER(description);
-#endif
     }
 
     explicit FormalParameter(
         std::string name,
-        std::string description,
+        std::string description [[maybe_unused]],
         std::string type_str,
         FormalParameterOption param_option = Single,
         bool is_homogeneous = true,
@@ -227,9 +224,6 @@ class OpSchema final {
           is_homogeneous_(is_homogeneous),
           min_arity_(min_arity),
           differentiation_category_(differentiation_category) {
-#ifdef __ONNX_NO_DOC_STRINGS
-      ONNX_UNUSED_PARAMETER(description);
-#endif
     }
 
     // Get formal parameter name.
@@ -397,21 +391,16 @@ class OpSchema final {
 
   // Functions to do documentation for the operator schema.
   // This may be disabled to save memory.
-  ONNX_API OpSchema& SetDoc(const char* doc) {
+  ONNX_API OpSchema& SetDoc(const char* doc [[maybe_unused]]) {
 #ifndef __ONNX_NO_DOC_STRINGS
     SetDoc(std::string(doc));
-#else
-    ONNX_UNUSED_PARAMETER(doc);
 #endif
-
     return *this;
   }
 
-  ONNX_API OpSchema& SetDoc(const std::string& doc) {
+  ONNX_API OpSchema& SetDoc(const std::string& doc [[maybe_unused]]) {
 #ifndef __ONNX_NO_DOC_STRINGS
     doc_ = doc;
-#else
-    ONNX_UNUSED_PARAMETER(doc);
 #endif
     return *this;
   }
@@ -465,6 +454,9 @@ class OpSchema final {
   ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
   ATTR_SETTER_WITH_DEFAULT_VALUE(float)
   ATTR_SETTER_WITH_DEFAULT_VALUE(std::string)
+  // Overload for const char* default value to prevent implicit conversion to bool
+  OpSchema&
+  Attr(const char* name, const char* description, AttributeProto::AttributeType type, const char* defaultValue);
   ATTR_SETTER_WITH_DEFAULT_VALUE(TensorProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
   ATTR_SETTER_WITH_DEFAULT_VALUE(TypeProto)
@@ -645,6 +637,8 @@ class OpSchema final {
   ONNX_API static const std::vector<std::string>& all_tensor_types_ir13();
 
   ONNX_API static const std::vector<std::string>& all_non_complex_tensor_types_ir13();
+
+  ONNX_API static const std::vector<std::string>& all_non_string_tensor_types_ir13();
 
   ONNX_API static const std::vector<std::string>& all_tensor_sequence_types();
 
@@ -928,7 +922,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Version corresponding last release of ONNX. Update this to match with
       // the max version above in a *release* version of ONNX. But in other
       // versions, the max version may be ahead of the last-release-version.
-      last_release_version_map_[ONNX_DOMAIN] = 25;
+      last_release_version_map_[ONNX_DOMAIN] = 26;
       last_release_version_map_[AI_ONNX_ML_DOMAIN] = 5;
       last_release_version_map_[AI_ONNX_TRAINING_DOMAIN] = 1;
       last_release_version_map_[AI_ONNX_PREVIEW_TRAINING_DOMAIN] = 1;
@@ -1141,8 +1135,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     auto& schema_map = GetMapWithoutEnsuringRegistration();
     // schema_map stores operator schemas in the format of
     // <OpName, <Domain, <OperatorSetVersion, OpSchema>>>
-    for (auto&& schema_map_pair : schema_map) {
-      auto& domain_map = schema_map_pair.second;
+    for (auto&& [_, domain_map] : schema_map) {
       if (domain_map.count(domain)) {
         auto& opset_version_schema_map = domain_map[domain];
         // Invalidates ver-schema pairs and frees memory, leaving m[op_name][op_domain] empty
@@ -1250,9 +1243,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
     std::vector<OpSchema> r;
     for (auto& x : map()) {
       for (auto& y : x.second) {
-        auto& version2schema = y.second;
-        if (!version2schema.empty()) {
-          r.emplace_back(version2schema.rbegin()->second);
+        if (!y.second.empty()) {
+          r.emplace_back(y.second.rbegin()->second);
         }
       }
     }
@@ -1353,18 +1345,12 @@ class DbgOperatorSetTracker {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
-#ifdef __GNUC__
-#define ONNX_UNUSED __attribute__((__unused__))
-#else
-#define ONNX_UNUSED
-#endif
-
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                                     \
-  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce op_schema_register_once##name##Counter ONNX_UNUSED = \
-      ONNX_NAMESPACE::OpSchema(#name, __FILE__, __LINE__)
+#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                                                       \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce op_schema_register_once##name##Counter \
+      [[maybe_unused]] = ONNX_NAMESPACE::OpSchema(#name, __FILE__, __LINE__)
 
 ONNX_API inline std::string GenerateOptionalArgumentsDoc() {
   return "This operator has **optional** inputs/outputs. "

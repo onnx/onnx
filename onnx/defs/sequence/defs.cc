@@ -564,7 +564,7 @@ BuildSequenceMapBodyFunc(const FunctionBodyBuildContext& ctx, const OpSchema& sc
 
   std::vector<FunctionBodyHelper::NodeDef> nodes;
 
-  // TODO: figure out a way to prevent name collisions?
+  // TODO(ONNX): figure out a way to prevent name collisions?
   auto first_input_name = functionProto.input(0);
   std::string prefix = MakeString("SequenceMap_", first_input_name);
   std::string seqlen = prefix + "_seqlen";

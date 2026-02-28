@@ -3,6 +3,12 @@ Copyright (c) ONNX Project Contributors
 -->
 
 <!--- SPDX-License-Identifier: Apache-2.0 -->
+- Feature Name: Adding Function into ONNX
+- Start Date: 2019-04-29
+- RFC PR: [onnx/onnx#1978](https://github.com/onnx/onnx/pull/1978)
+- Status: unclear (historical)
+- Authors:
+  - jspisak
 
 ## Proposal Adding Function into ONNX
 

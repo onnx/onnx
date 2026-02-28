@@ -234,7 +234,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   if (is_initializer) {
     output_ << " = ";
   }
-  // TODO: does not yet handle all types
+  // TODO(ONNX): does not yet handle all types
   if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
     print(tensor.external_data());
   } else if (tensor.has_raw_data()) {

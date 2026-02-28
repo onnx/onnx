@@ -515,10 +515,10 @@ static void encodeTensor(ONNX_NAMESPACE::TensorProto* p, const Tensor& tensor) {
     p->set_raw_data(tensor.raw());
   }
   if (!tensor.external_data().empty()) {
-    for (const auto& entry : tensor.external_data()) {
+    for (const auto& [key, value] : tensor.external_data()) {
       auto* external_data = p->add_external_data();
-      external_data->set_key(entry.first);
-      external_data->set_value(entry.second);
+      external_data->set_key(key);
+      external_data->set_value(value);
     }
   }
   if (tensor.has_data_location()) {

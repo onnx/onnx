@@ -3372,8 +3372,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (k <= 0) {
             fail_shape_inference("Invalid value for attribute k");
           }
-          // TODO: unclear what results should be if axis has less than k
-          // elements.
           TensorShapeProto result_shape = input_shape;
           result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
           updateOutputShape(ctx, 0, result_shape);

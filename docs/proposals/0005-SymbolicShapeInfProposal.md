@@ -3,6 +3,12 @@ Copyright (c) ONNX Project Contributors
 
 SPDX-License-Identifier: Apache-2.0
 -->
+- Feature Name: Symbolic Shape Inference And Partial Data Propagation
+- Start Date: 2021-09-16
+- RFC PR: [onnx/onnx#3721](https://github.com/onnx/onnx/pull/3721)
+- Status: accepted
+- Authors:
+  - askhade
 
 # Proposal - Symbolic Shape Inference And Partial Data Propagation
 
