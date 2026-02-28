@@ -1491,7 +1491,7 @@ static void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
           const TensorProto* trip_count_data = ctx.getInputData(0);
           if (trip_count_data != nullptr && trip_count_data->data_type() == TensorProto::INT64) {
             const auto trip_values = ParseData<int64_t>(trip_count_data);
-            if (trip_values.size() == 1 && trip_values[0] > 0) {
+            if (trip_values.size() == 1 && trip_values[0] >= 0) {
               trip_dim->set_dim_value(trip_values[0]);
             }
           }
