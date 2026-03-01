@@ -1037,6 +1037,36 @@ class TestChecker(unittest.TestCase):
             shape_inference.InferenceError, checker.check_model, model, True
         )
 
+    def test_check_nested_graph_shadowed_initializer(self) -> None:
+        n1 = helper.make_node("Scale", ["X"], ["Y"], scale=2.0, name="n1")
+        n2 = helper.make_node("Scale", ["Y"], ["Z"], scale=3.0, name="n2")
+
+        graph = helper.make_graph(
+            [n1, n2],
+            "nested",
+            inputs=[],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+            # Already used in the outer scope
+            initializer=[helper.make_tensor("cond", TensorProto.BOOL, [1], [1])],
+        )
+
+        i1 = helper.make_node(
+            "If", ["cond"], ["Z"], then_branch=graph, else_branch=graph
+        )
+
+        graph = helper.make_graph(
+            [i1],
+            "test",
+            inputs=[
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1]),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2]),
+            ],
+            outputs=[helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+        )
+
+        model = helper.make_model(ir_version=6, graph=graph)
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
+
     def test_empty_list_attribute(self):
         model = onnx.parser.parse_model(
             """
