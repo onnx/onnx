@@ -18,6 +18,14 @@
 
 namespace ONNX_NAMESPACE {
 
+static void IdentityDataPropagator(DataPropagationContext& ctx) {
+  const auto* input_data = ctx.getInputData(0);
+  if (input_data != nullptr) {
+    TensorShapeProto tsp(*input_data);
+    ctx.addOutputData(0, std::move(tsp));
+  }
+}
+
 static const char* const GridSample_ver20_doc = kDoc_GridSample_ver20;
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -4654,9 +4662,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             for (int i = 0; i < input_rank; ++i) {
               const auto& input_dim = input_shape.dim(i);
-              auto output_dim = output_shape->add_dim();
+              auto* output_dim = output_shape->add_dim();
               if (input_dim.has_dim_value()) {
                 output_dim->set_dim_value(input_dim.dim_value() * repeats_data[i]);
+              } else if (input_dim.has_dim_param()) {
+                if (repeats_data[i] == 1) {
+                  *output_dim = input_dim;
+                } else {
+                  *output_dim = input_dim * repeats_data[i];
+                }
               }
             }
           } else {
@@ -5046,7 +5060,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5066,7 +5081,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5086,7 +5102,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5106,7 +5123,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5116,7 +5134,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "Tensor to copy input into.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
@@ -5126,7 +5145,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input tensor", "T")
         .Output(0, "output", "Tensor to copy input into.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
@@ -7117,7 +7137,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor and sequence types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 static const char* const Where_ver9_doc = kDoc_Where_ver9;
 
@@ -7434,7 +7455,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               return t;
             }(),
             "Constrain input and output types to all tensor, sequence, and optional types.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput)
+        .PartialDataPropagationFunction(IdentityDataPropagator));
 
 static const char* const Reshape_ver14_doc = Reshape_ver24_doc;
 

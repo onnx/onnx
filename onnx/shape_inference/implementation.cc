@@ -381,6 +381,26 @@ class ShapeInferenceImplBase {
     input_data_by_name[name] = &input_data_by_name_holder[name];
   }
 
+  // Like AddTemporaryConstant, but also sets dims on the TensorProto based on the
+  // tensor's known shape from value_types_by_name. This is needed for ops like Pad
+  // that check dims_size() on the TensorProto.
+  template <typename T>
+  void AddTemporaryConstantWithDims(const std::string& name, const T& vector) {
+    input_data_by_name_holder[name] = ToTensor(vector);
+    auto& tp = input_data_by_name_holder[name];
+    // Set dims from the type info if available
+    auto type_iter = value_types_by_name.find(name);
+    if (type_iter != value_types_by_name.end() && type_iter->second != nullptr &&
+        type_iter->second->has_tensor_type() && type_iter->second->tensor_type().has_shape()) {
+      const auto& shape = type_iter->second->tensor_type().shape();
+      tp.clear_dims();
+      for (const auto& dim : shape.dim()) {
+        tp.add_dims(dim.has_dim_value() ? dim.dim_value() : -1);
+      }
+    }
+    input_data_by_name[name] = &tp;
+  }
+
   void ProcessConstant(const NodeProto& n) {
     if (IsOnnxDomainOp(n, "Constant") && n.output().size() == 1) {
       const std::string& output_name = n.output(0);
@@ -424,6 +444,17 @@ class ShapeInferenceImplBase {
               break;
           }
         }
+      }
+    }
+
+    // Identity forwards constant data from input to output, enabling
+    // downstream ops (e.g. Range) to see through Identity wrappers.
+    if (IsOnnxDomainOp(n, "Identity") && n.input().size() == 1 && n.output().size() == 1) {
+      const std::string& input_name = n.input(0);
+      const std::string& output_name = n.output(0);
+      auto it = input_data_by_name.find(input_name);
+      if (it != input_data_by_name.end()) {
+        input_data_by_name[output_name] = it->second;
       }
     }
   }
@@ -509,6 +540,51 @@ class ShapeInferenceImplBase {
         DataPropagationContextImpl data_propagation_ctx(
             n, value_types_by_name, input_data_by_name, *generated_shape_data_by_name);
         schema->GetDataPropagationFunction()(data_propagation_ctx);
+        // Bridge propagated shape data to input_data_by_name so that downstream
+        // shape inference functions (which use getInputData returning TensorProto*)
+        // can see values produced by data propagation (stored as TensorShapeProto).
+        // Only bridges integer types since TensorShapeProto dim_value is int64.
+        for (int i = 0; i < n.output_size(); ++i) {
+          const auto& output_name = n.output(i);
+          if (output_name.empty()) {
+            continue;
+          }
+          // Skip if already available as TensorProto
+          if (input_data_by_name.count(output_name)) {
+            continue;
+          }
+          // Only bridge integer types — TensorShapeProto stores int64 dim_values
+          auto type_iter = value_types_by_name.find(output_name);
+          if (type_iter == value_types_by_name.end() || type_iter->second == nullptr ||
+              !type_iter->second->has_tensor_type()) {
+            continue;
+          }
+          int elem_type = type_iter->second->tensor_type().elem_type();
+          if (elem_type != TensorProto::INT64 && elem_type != TensorProto::INT32) {
+            continue;
+          }
+          auto it = generated_shape_data_by_name->find(output_name);
+          if (it == generated_shape_data_by_name->end()) {
+            continue;
+          }
+          const auto& tsp = it->second;
+          // Only convert if all dims have concrete values
+          bool all_concrete = tsp.dim_size() > 0;
+          for (const auto& dim : tsp.dim()) {
+            if (!dim.has_dim_value()) {
+              all_concrete = false;
+              break;
+            }
+          }
+          if (all_concrete) {
+            std::vector<int64_t> values;
+            values.reserve(tsp.dim_size());
+            for (const auto& dim : tsp.dim()) {
+              values.push_back(dim.dim_value());
+            }
+            AddTemporaryConstantWithDims(output_name, values);
+          }
+        }
       }
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {

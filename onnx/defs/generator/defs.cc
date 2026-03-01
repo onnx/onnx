@@ -484,6 +484,41 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             return;
           }
+        })
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
+          // Propagate computed Range values so downstream ops (e.g. ReduceMean)
+          // can use them for shape inference.
+          const auto* start_data = ctx.getInputData(0);
+          const auto* limit_data = ctx.getInputData(1);
+          const auto* delta_data = ctx.getInputData(2);
+          if (start_data == nullptr || limit_data == nullptr || delta_data == nullptr) {
+            return;
+          }
+          // Each input should be a scalar (TensorShapeProto with exactly one dim)
+          if (start_data->dim_size() != 1 || limit_data->dim_size() != 1 || delta_data->dim_size() != 1) {
+            return;
+          }
+          if (!start_data->dim(0).has_dim_value() || !limit_data->dim(0).has_dim_value() ||
+              !delta_data->dim(0).has_dim_value()) {
+            return;
+          }
+          int64_t start_val = start_data->dim(0).dim_value();
+          int64_t limit_val = limit_data->dim(0).dim_value();
+          int64_t delta_val = delta_data->dim(0).dim_value();
+          if (delta_val == 0) {
+            return;
+          }
+          int64_t n =
+              std::max<int64_t>(static_cast<int64_t>(ceil(static_cast<double>(limit_val - start_val) / delta_val)), 0);
+          // Cap output size to avoid excessive memory usage
+          if (n > 1000) {
+            return;
+          }
+          TensorShapeProto tsp;
+          for (int64_t i = 0; i < n; ++i) {
+            tsp.mutable_dim()->Add()->set_dim_value(start_val + i * delta_val);
+          }
+          ctx.addOutputData(0, std::move(tsp));
         }));
 
 static const char* const Bernoulli_ver22_doc = kDoc_Bernoulli_ver15;
