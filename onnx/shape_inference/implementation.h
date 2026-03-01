@@ -287,6 +287,12 @@ struct InferenceContextImpl : public InferenceContext {
     return MakeString("node ", node_->op_type(), "[", node_->domain(), "]", " (", node_->name(), ")");
   }
 
+  std::string getOutputName(size_t index) const override {
+    if (node_ == nullptr || index >= static_cast<size_t>(node_->output_size()))
+      return "";
+    return node_->output(static_cast<int>(index));
+  }
+
   std::vector<const TensorProto*> allInputData_;
   std::vector<const SparseTensorProto*> allInputSparseData_;
   std::vector<const TensorShapeProto*> allShapeInputData_;

@@ -103,6 +103,11 @@ struct InferenceContext {
   virtual bool hasOutput(size_t index) {
     return (index < getNumOutputs() && (getOutputType(index) != nullptr));
   }
+  // Returns the output name at index; empty string means the optional output is not used.
+  virtual std::string getOutputName(size_t index) const {
+    (void)index;
+    return "";
+  }
   virtual GraphInferencer* getGraphAttributeInferencer(const std::string& attribute_name) = 0;
   virtual ~InferenceContext() = default;
   virtual const SparseTensorProto* getInputSparseData(size_t index) const = 0;

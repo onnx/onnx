@@ -9,6 +9,23 @@ namespace nn {
 namespace utils {
 
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
+  // Optional outputs present_key (1) and present_value (2) are "used" only when named (non-empty).
+  const bool has_present_key_used = ctx.hasOutput(1) && !ctx.getOutputName(1).empty();
+  const bool has_present_value_used = ctx.hasOutput(2) && !ctx.getOutputName(2).empty();
+  const bool has_past = ctx.hasInput(4) && ctx.hasInput(5);
+  const bool has_present = has_present_key_used && has_present_value_used;
+
+  if (ctx.hasInput(4) != ctx.hasInput(5)) {
+    fail_shape_inference("Attention requires both past_key and past_value to be provided together.");
+  }
+  if (has_present_key_used != has_present_value_used) {
+    fail_shape_inference("Attention requires both present_key and present_value outputs to be used together.");
+  }
+  if (has_past != has_present) {
+    fail_shape_inference(
+        "Attention requires past_key/past_value inputs and present_key/present_value outputs to be used together.");
+  }
+
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   int64_t kv_sequence_length = -1;
@@ -106,8 +123,8 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
     updateOutputShape(ctx, 3, qk_matmul_shape);
   }
 
-  if (ctx.hasOutput(1) && ctx.hasOutput(2)) { // has present outputs
-    if (ctx.hasInput(4) && ctx.hasInput(5)) { // has past_key
+  if (has_present) { // has present outputs
+    if (has_past) { // has past inputs
       // copy the type from query to present key and value
       propagateElemTypeFromInputToOutput(ctx, 4, 1);
       propagateElemTypeFromInputToOutput(ctx, 5, 2);
