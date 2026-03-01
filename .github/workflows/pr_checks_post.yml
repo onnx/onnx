@@ -106,6 +106,6 @@ jobs:
           git status --short
       - name: Suggest changes
         if: steps.download.outcome == 'success' && steps.diff.outputs.has_changes == 'true'
-        uses: parkerbxyz/suggest-changes@bd099ea0d10f0e9efeb9e46d604bbe6d7a80bc34
+        uses: parkerbxyz/suggest-changes@1dca834e5b0f48239dd6d0ddc2df247dae4052cf
         with:
           comment: 'You can commit the suggested changes from lintrunner.'
