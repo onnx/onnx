@@ -46,6 +46,7 @@ ONNX_BUILD_TESTS = os.getenv("ONNX_BUILD_TESTS") == "1"
 ONNX_DISABLE_EXCEPTIONS = os.getenv("ONNX_DISABLE_EXCEPTIONS") == "1"
 ONNX_DISABLE_STATIC_REGISTRATION = os.getenv("ONNX_DISABLE_STATIC_REGISTRATION") == "1"
 ONNX_PREVIEW_BUILD = os.getenv("ONNX_PREVIEW_BUILD") == "1"
+ONNX_SCIENTIFIC_PYTHON_BUILD = os.getenv("ONNX_SCIENTIFIC_PYTHON_BUILD") == "1"
 
 USE_MSVC_STATIC_RUNTIME = os.getenv("USE_MSVC_STATIC_RUNTIME", "0") == "1"
 USE_NINJA = os.getenv("USE_NINJA", "1") != "0"
@@ -61,7 +62,8 @@ ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
 ################################################################################
 
 try:
-    _git_version = (
+    # Use GIT_HASH from environment if set (passed from CI), otherwise get from git
+    _git_version = os.getenv("GIT_HASH") or (
         subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=TOP_DIR)
         .decode("ascii")
         .strip()
@@ -71,12 +73,17 @@ except (OSError, subprocess.CalledProcessError):
 
 with open(os.path.join(TOP_DIR, "VERSION_NUMBER"), encoding="utf-8") as version_file:
     _version = version_file.read().strip()
-    if ONNX_PREVIEW_BUILD:
+    if ONNX_SCIENTIFIC_PYTHON_BUILD:
+        # Create the scientific-python build
+        todays_date = datetime.date.today().strftime("%Y%m%d")
+        _version += ".dev" + todays_date
+        if _git_version:
+            _version += "+g" + _git_version
+    elif ONNX_PREVIEW_BUILD:
         # Create the preview build for weekly releases
         todays_date = datetime.date.today().strftime("%Y%m%d")
         _version += ".dev" + todays_date
     VERSION_INFO = {"version": _version, "git_version": _git_version}
-
 ################################################################################
 # Utilities
 ################################################################################

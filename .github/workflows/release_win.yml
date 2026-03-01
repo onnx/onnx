@@ -13,17 +13,45 @@ on:
       build_mode:
         required: true
         type: string
+      python_versions:
+        required: false
+        type: string
+        default: '3.12'
+      test_python_versions:
+        required: false
+        type: string
+        default: ''  # Currently unused - Windows tests in same job as build
 
 permissions:
   contents: read
 
 jobs:
+  parse-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      python-matrix: ${{ steps.parse.outputs.matrix }}
+    steps:
+      - name: Parse Python versions
+        id: parse
+        run: |
+          versions="${PYTHON_VERSIONS}"
+          # Convert comma-separated to JSON array
+          matrix=$(echo "$versions" | jq -R -c 'split(",") | map(select(length > 0))')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+        env:
+          PYTHON_VERSIONS: ${{ inputs.python_versions }}
+
+      - name: Dump GITHUB_OUTPUT
+        if: always()
+        run: cat "$GITHUB_OUTPUT" || true
+
   build-windows:
     if: github.event_name != 'pull_request' || startsWith(github.base_ref, 'rel-') || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    needs: parse-python-versions
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.14t', '3.13t','3.12','3.11','3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
         architecture: ['x64','x86','arm64']
         exclude:
           # x86 exclusions
@@ -31,7 +59,7 @@ jobs:
             architecture: 'x86'
           - python-version: '3.13t'
             architecture: 'x86'
-          - python-version: '3.14-dev'
+          - python-version: '3.14'
             architecture: 'x86'
           # arm64 exclusions
           - python-version: '3.10'
@@ -52,6 +80,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
+    - name: Set git hash and source date epoch
+      run: |
+        echo "GIT_HASH=$(git rev-parse HEAD)" >> $env:GITHUB_ENV
+        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $env:GITHUB_ENV
+      shell: powershell
+
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
       with:
@@ -70,6 +104,21 @@ jobs:
         if ('${{ matrix.architecture }}' -eq 'x64') {
           python -m pip install cmake
         }
+
+    - name: Validate build mode
+      run: |
+        case "${BUILD_MODE}" in
+          "preview"|"scientific"|"release")
+            echo "Build mode validated: ${BUILD_MODE}"
+            ;;
+          *)
+            echo "Error: Invalid build mode '${BUILD_MODE}'. Must be one of: preview, scientific, release"
+            exit 1
+            ;;
+        esac
+      shell: bash
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
 
     - name: Build ONNX wheel
       id: build_wheel
@@ -92,13 +141,21 @@ jobs:
         $Env:CMAKE_ARGS = "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_HARDENING=ON"
 
         # Preview build logic (same for all arches)
-        if ($env:BUILD_MODE -ne 'release') {
+        if ($env:BUILD_MODE -eq 'preview') {
           echo "Build preview build whl package"
           (Get-Content -Path 'pyproject.toml') |
             ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } |
             Set-Content -Path 'pyproject.toml'
 
           $Env:ONNX_PREVIEW_BUILD = 1
+        }
+        elseif ($env:BUILD_MODE -eq 'scientific') {
+          echo "Build scientific python build whl package"
+          $Env:ONNX_SCIENTIFIC_PYTHON_BUILD = 1
+        }
+        elseif ($env:BUILD_MODE -eq 'release') {
+          echo "Build release whl package"
+          # No special environment variables needed for release
         }
 
         python -m build --wheel
@@ -112,7 +169,7 @@ jobs:
         }
 
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-      if: steps.build_wheel.outcome == 'success' && (inputs.build_mode == 'preview')
+      if: steps.build_wheel.outcome == 'success'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}
         path: ./dist

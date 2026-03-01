@@ -10,24 +10,31 @@ set -e -x
 # Sanity checks
 # ---------------------------------------------------------------------------
 if [[ $# -lt 3 ]]; then
-    echo "Usage: $0 <python-version> <platform> <build-mode> [source-date-epoch]" >&2
+    echo "Usage: $0 <python-version> <platform> <build-mode> [source-date-epoch] [git-hash]" >&2
     exit 1
 fi
 
 PY_VERSION=$1
 PLAT=$2
-BUILD_MODE=$3  # build mode (release or preview)
+BUILD_MODE=$3  # build mode (release, preview, or scientific)
 SOURCE_DATE_EPOCH_ARG=$4 # https://reproducible-builds.org/docs/source-date-epoch/
+GIT_HASH_ARG=$5 # git hash for version generation
 
 # Set SOURCE_DATE_EPOCH for reproducible builds
 if [[ -n "$SOURCE_DATE_EPOCH_ARG" ]]; then
     export SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH_ARG
 fi
 
+# Set git hash for version generation
+if [[ -n "$GIT_HASH_ARG" ]]; then
+    export GIT_HASH=$GIT_HASH_ARG
+fi
+
 echo "SOURCE_DATE_EPOCH: $SOURCE_DATE_EPOCH"
 echo "Python version: $PY_VERSION"
 echo "Platform: $PLAT"
 echo "Build mode: $BUILD_MODE"
+echo "Git hash: ${GIT_HASH:-'not set'}"
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
@@ -50,12 +57,18 @@ export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DONNX_HARDENING=ON"
 
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
-if [[ "$BUILD_MODE" != "release" ]]; then
+if [[ "$BUILD_MODE" == "release" ]]; then
+    echo "Building release wheels..."
+elif [[ "$BUILD_MODE" == "preview" ]]; then
     echo "Building preview wheels..."
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
     export ONNX_PREVIEW_BUILD=1
+elif [[ "$BUILD_MODE" == "scientific" ]]; then
+    echo "Building scientific wheels..."
+    export ONNX_SCIENTIFIC_PYTHON_BUILD=1
 else
-    echo "Building release wheels..."
+    echo "Unknown build mode: $BUILD_MODE"
+    exit 1
 fi
 
 # Build the wheels

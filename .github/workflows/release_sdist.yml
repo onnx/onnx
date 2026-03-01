@@ -13,6 +13,10 @@ on:
       build_mode:
         required: true
         type: string
+      python_versions:
+        required: false
+        type: string
+        default: '3.12'
 
 permissions:
   contents: read
@@ -21,12 +25,32 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-sdist
 
 jobs:
+  parse-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      python-matrix: ${{ steps.parse.outputs.matrix }}
+    steps:
+      - name: Parse Python versions
+        id: parse
+        run: |
+          versions="${PYTHON_VERSIONS}"
+          # Convert comma-separated to JSON array
+          matrix=$(echo "$versions" | jq -R -c 'split(",") | map(select(length > 0))')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+        env:
+          PYTHON_VERSIONS: ${{ inputs.python_versions }}
+
+      - name: Dump GITHUB_OUTPUT
+        if: always()
+        run: cat "$GITHUB_OUTPUT" || true
+
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    needs: parse-python-versions
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.python-matrix) }}
         target-architecture: ['arm64']
 
     steps:
@@ -45,18 +69,31 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release_build.txt
 
+    - name: Set git hash and source date epoch
+      run: |
+        echo "GIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
     - name: Build source distribution (preview build / weekly)
-      if: ${{ inputs.build_mode != 'release' }}
+      if: ${{ inputs.build_mode == 'preview' }}
       run: |
         git clean -xdf
         sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
         ONNX_PREVIEW_BUILD=1 python -m build --sdist
 
+    - name: Build source distribution (scientific build)
+      if: ${{ inputs.build_mode == 'scientific' }}
+      run: |
+        git clean -xdf
+        ONNX_SCIENTIFIC_PYTHON_BUILD=1 python -m build --sdist
+
     - name: Build source distribution (for release)
-      if: ${{ inputs.build_mode == 'release' }}
+      if: ${{ env.BUILD_MODE == 'release' }}
       run: |
         git clean -xdf
         python -m build --sdist
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
 
     - name: Upload sdist
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f

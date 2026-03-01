@@ -72,6 +72,8 @@ jobs:
     with:
       os: "linux"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      python_versions: '3.14t,3.13t,3.12,3.11,3.10'
+      test_python_versions: '3.14t,3.13t,3.13,3.12,3.11,3.10'
 
   call-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -79,6 +81,7 @@ jobs:
     with:
       os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      python_versions: '3.13t,3.12,3.11,3.10'
 
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -86,6 +89,7 @@ jobs:
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      python_versions: '3.13t,3.12,3.11,3.10'
 
   call-sdist:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
@@ -93,6 +97,7 @@ jobs:
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      python_versions: '3.13t,3.12,3.11,3.10'
 
   check_for_publish_release_build_to_pypi:
     name: Check for Publish release build to pypi
