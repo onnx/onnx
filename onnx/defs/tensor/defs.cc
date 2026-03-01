@@ -1063,8 +1063,8 @@ Returns a transpose of the input tensor. (Similar to `numpy.transpose`).
 The optional attribute `perm` must be a permutation of the dimensions of
 the input tensor. Axis `i` of the output tensor corresponds to the axis
 `perm[i]` of the input tensor.
-For example, when perm=(1, 0, 2), given an input tensor of shape (1, 2, 3),
-the output shape will be (2, 1, 3).
+For example, when perm=(2, 0, 1), given an input tensor of shape (1, 2, 3),
+the output shape will be (3, 1, 2).
 When perm=(1, 2, 0), given an input tensor of shape (1, 2, 3),
 the output shape will be (2, 3, 1).
 If the attribute `perm` is omitted, its default value is `(n-1, ..., 0)`,
