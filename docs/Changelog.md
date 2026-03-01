@@ -31100,7 +31100,7 @@ This version of the operator has been available since version 24 of the default 
   Lengths of the parts can be specified using the optional argument 'split'.
   If the argument `split' is not specified, a default scalar value of 1
   is used as the value of `split'.
-  'split' must contain only positive numbers.
+  'split' must contain only non-negative numbers.
   'split' is either a scalar (tensor of empty shape), or a 1-D tensor.
   If 'split' is a scalar, then 'input' will be split into chunks all of size 'split'
   if possible. The last chunk alone may be smaller than 'split' if the 'input' size
