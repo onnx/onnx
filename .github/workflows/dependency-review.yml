@@ -19,4 +19,4 @@ jobs:
           persist-credentials: false
 
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@98884d411b0f1c583e5ee579e7e897d4623019c2
+        uses: actions/dependency-review-action@57a3d46a7be2c2e259fa3284ffc501296337f2ac
