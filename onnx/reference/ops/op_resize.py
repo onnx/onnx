@@ -214,7 +214,7 @@ def _interpolate_1d_with_x(
             return np.array(extrapolation_value)
     elif coordinate_transformation_mode == "pytorch_half_pixel":
         if output_width == 1:
-            x_ori = -0.5
+            x_ori = 0.0
         else:
             x_ori = (x + 0.5) / scale_factor - 0.5
     elif coordinate_transformation_mode == "half_pixel":
