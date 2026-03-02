@@ -162,8 +162,7 @@ void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
       output_ << dim.dim_param();
     else
       printQuoted(dim.dim_param());
-  }
-  else
+  } else
     output_ << "?";
 }
 

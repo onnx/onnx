@@ -247,8 +247,12 @@ class TestBasicFunctions(unittest.TestCase):
         graph = onnx.parser.parse_graph(
             'agraph (float["M + N"] x) => (float["M + N"] y) { y = Identity(x) }'
         )
-        self.assertEqual(graph.input[0].type.tensor_type.shape.dim[0].dim_param, "M + N")
-        self.assertEqual(graph.output[0].type.tensor_type.shape.dim[0].dim_param, "M + N")
+        self.assertEqual(
+            graph.input[0].type.tensor_type.shape.dim[0].dim_param, "M + N"
+        )
+        self.assertEqual(
+            graph.output[0].type.tensor_type.shape.dim[0].dim_param, "M + N"
+        )
 
     @parameterized.expand(
         [
