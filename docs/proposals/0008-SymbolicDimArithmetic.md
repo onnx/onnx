@@ -53,7 +53,8 @@ When a model uses dynamic (symbolic) dimensions—common in models exported from
 
 ### Symbolic expressions as `dim_param` strings
 
-A dimension in an ONNX `TensorShapeProto` can carry either a concrete integer (`dim_value`) or a named symbol (`dim_param`). This proposal reuses `dim_param` to carry **expression strings** when a dimension cannot be reduced to a concrete value:
+Dimension information of `TensorShapeProto` is stored either in the `dim_value` or `dim_param` field.
+The former is used if the dimension's length is a statically known integer value, while the latter is used to store a symbol name or expression.
 
 ```
 dim_param = "N + 2"
