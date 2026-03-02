@@ -758,5 +758,80 @@ TEST(ParserTest, QuotedIdentifierTest2) {
   Parse(fp, code);
 }
 
+TEST(ParserTest, LowPrecisionDataTypesTest) {
+  // Test that low precision data types can be parsed and printed correctly
+  // This tests the fix for issue #7053 where these types showed "..." instead of values
+  
+  const char* code = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 19]
+>
+agraph (float[4] X) => (float16[4] C1, bfloat16[2] C2, float8e4m3fn[2] C3, uint4[2] C4, int4[2] C5)
+<
+  float16[4] weight_f16 = {15360, 16384, 16448, 16512},
+  bfloat16[2] weight_bf16 = {16256, 16320},
+  float8e4m3fn[2] weight_f8e4m3fn = {64, 128},
+  uint4[2] weight_u4 = {0, 15},
+  int4[2] weight_i4 = {0, 8}
+>
+{
+   C1 = Cast<to=10>(X)
+   C2 = Cast<to=16>(X)  
+   C3 = Cast<to=17>(X)
+   C4 = Cast<to=21>(X)
+   C5 = Cast<to=22>(X)
+}
+)ONNX";
+
+  ModelProto model;
+  Parse(model, code);
+  
+  // Check that the model was parsed successfully
+  EXPECT_EQ(model.graph().initializer_size(), 5);
+  
+  // Check that all initializers have the correct data types
+  for (const auto& initializer : model.graph().initializer()) {
+    const std::string& name = initializer.name();
+    if (name == "weight_f16") {
+      EXPECT_EQ(initializer.data_type(), TensorProto::FLOAT16);
+      EXPECT_EQ(initializer.int32_data_size(), 4);
+    } else if (name == "weight_bf16") {
+      EXPECT_EQ(initializer.data_type(), TensorProto::BFLOAT16);
+      EXPECT_EQ(initializer.int32_data_size(), 2);
+    } else if (name == "weight_f8e4m3fn") {
+      EXPECT_EQ(initializer.data_type(), TensorProto::FLOAT8E4M3FN);
+      EXPECT_EQ(initializer.int32_data_size(), 2);
+    } else if (name == "weight_u4") {
+      EXPECT_EQ(initializer.data_type(), TensorProto::UINT4);
+      EXPECT_EQ(initializer.int32_data_size(), 2);
+    } else if (name == "weight_i4") {
+      EXPECT_EQ(initializer.data_type(), TensorProto::INT4);
+      EXPECT_EQ(initializer.int32_data_size(), 2);
+    }
+  }
+  
+  // Test that the printer doesn't show "..." for these types
+  std::string printed_text = ProtoToString(model);
+  
+  // The printed text should not contain "..." for any of the initializers
+  // Count the number of "..." occurrences - should be 0 for properly handled types
+  size_t dots_count = 0;
+  size_t pos = 0;
+  while ((pos = printed_text.find("...", pos)) != std::string::npos) {
+    dots_count++;
+    pos += 3;
+  }
+  EXPECT_EQ(dots_count, 0) << "Printer should not show '...' for low precision data types. Printed text:\n" << printed_text;
+  
+  // Test round-trip: parse the printed text again
+  ModelProto model2;
+  auto status = OnnxParser::Parse(model2, printed_text.c_str());
+  EXPECT_TRUE(status.IsOK()) << "Round-trip parsing failed: " << status.ErrorMessage();
+  
+  std::string printed_text2 = ProtoToString(model2);
+  EXPECT_EQ(printed_text, printed_text2) << "Round-trip should produce identical output";
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE
