@@ -6,7 +6,7 @@ name: Check URLs
 
 on:
   push:
-    branches: [ 'rel-*' ]
+    branches:  [ "main", rel-* ]
   schedule:
     # Run every month
     - cron:  '0 0 1 * *'
