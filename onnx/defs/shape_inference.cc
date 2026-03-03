@@ -15,6 +15,7 @@
 namespace ONNX_NAMESPACE {
 
 // --- Symbolic Dimension Arithmetic Helpers ---
+// Implementations for the arithmetic operators declared in shape_inference.h.
 
 std::string dimToString(const TensorShapeProto::Dimension& dim) {
   if (dim.has_dim_value()) {
