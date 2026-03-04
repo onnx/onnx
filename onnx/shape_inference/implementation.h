@@ -241,6 +241,13 @@ struct InferenceContextImpl : public InferenceContext {
     return allOutputTypes_.size();
   }
 
+  bool hasOutput(size_t index) override {
+    if (index >= allOutputTypes_.size() || node_ == nullptr) {
+      return false;
+    }
+    return !node_->output(static_cast<int>(index)).empty();
+  }
+
   TypeProto* getOutputType(size_t index) override {
     if (index >= allOutputTypes_.size()) {
       ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
@@ -285,12 +292,6 @@ struct InferenceContextImpl : public InferenceContext {
     if (node_->name().empty())
       return MakeString("node ", node_->op_type(), "[", node_->domain(), "]");
     return MakeString("node ", node_->op_type(), "[", node_->domain(), "]", " (", node_->name(), ")");
-  }
-
-  std::string getOutputName(size_t index) const override {
-    if (node_ == nullptr || index >= static_cast<size_t>(node_->output_size()))
-      return "";
-    return node_->output(static_cast<int>(index));
   }
 
   std::vector<const TensorProto*> allInputData_;

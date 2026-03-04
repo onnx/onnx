@@ -9,9 +9,8 @@ namespace nn {
 namespace utils {
 
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
-  // Optional outputs present_key (1) and present_value (2) are "used" only when named (non-empty).
-  const bool has_present_key_used = ctx.hasOutput(1) && !ctx.getOutputName(1).empty();
-  const bool has_present_value_used = ctx.hasOutput(2) && !ctx.getOutputName(2).empty();
+  const bool has_present_key_used = ctx.hasOutput(1);
+  const bool has_present_value_used = ctx.hasOutput(2);
   const bool has_past = ctx.hasInput(4) && ctx.hasInput(5);
   const bool has_present = has_present_key_used && has_present_value_used;
 
