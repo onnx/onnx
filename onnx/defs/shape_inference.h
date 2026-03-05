@@ -209,9 +209,7 @@ std::string dimToString(const TensorShapeProto::Dimension& dim);
 // Wrap an expression string in parentheses if it is compound.
 std::string wrapIfCompound(const std::string& s);
 
-TensorShapeProto::Dimension operator*(
-    const TensorShapeProto::Dimension& dim1,
-    const TensorShapeProto::Dimension& dim2);
+TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& dim1, const TensorShapeProto::Dimension& dim2);
 
 TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& dim1, int64_t dim2);
 
@@ -219,15 +217,11 @@ TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& dim1, i
 
 // --- Addition and Subtraction operators for Dim ---
 
-TensorShapeProto::Dimension operator+(
-    const TensorShapeProto::Dimension& dim1,
-    const TensorShapeProto::Dimension& dim2);
+TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, const TensorShapeProto::Dimension& dim2);
 
 TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2);
 
-TensorShapeProto::Dimension operator-(
-    const TensorShapeProto::Dimension& dim1,
-    const TensorShapeProto::Dimension& dim2);
+TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, const TensorShapeProto::Dimension& dim2);
 
 TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2);
 
