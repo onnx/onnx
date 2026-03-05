@@ -1021,6 +1021,45 @@ std::string resolve_external_data_location(
         data_path_str,
         ", but it is a symbolic link.");
   }
+  // Verify the resolved path stays within the base directory to prevent
+  // path traversal via symlinks in parent directory components.
+  // is_symlink() only checks the final component; a path like
+  // "symlink_subdir/real_file.data" would bypass it.
+  if (data_path_str[0] != '#') {
+    std::error_code ec;
+    auto canonical_base = std::filesystem::weakly_canonical(base_dir_path, ec);
+    if (ec) {
+      fail_check(
+          "Data of TensorProto ( tensor name: ",
+          tensor_name,
+          ") references external data at ",
+          data_path_str,
+          ", but the model directory path could not be resolved.");
+    }
+    auto canonical_data = std::filesystem::weakly_canonical(data_path, ec);
+    if (ec) {
+      fail_check(
+          "Data of TensorProto ( tensor name: ",
+          tensor_name,
+          ") references external data at ",
+          data_path_str,
+          ", but the data path could not be resolved.");
+    }
+    auto canonical_base_native = canonical_base.native();
+    auto canonical_data_native = canonical_data.native();
+    if (!canonical_base_native.empty() && canonical_base_native.back() != std::filesystem::path::preferred_separator) {
+      canonical_base_native += std::filesystem::path::preferred_separator;
+    }
+    if (canonical_data_native.find(canonical_base_native) != 0) {
+      fail_check(
+          "Data of TensorProto ( tensor name: ",
+          tensor_name,
+          ") at ",
+          data_path_str,
+          " resolves to a location outside the model directory, "
+          "indicating a potential path traversal attack via symbolic links in directory components.");
+    }
+  }
   if (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
