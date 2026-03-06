@@ -47,7 +47,8 @@ std::string GetValueCaseString(const TypeProto& type) {
 
 bool IsShapeInferenceError(const InferenceError& err) {
   const std::string message = err.what();
-  return message.find("[ShapeInferenceError]") != std::string::npos;
+  static const std::string kShapeInferenceTag = "[ShapeInferenceError]";
+  return message.compare(0, kShapeInferenceTag.size(), kShapeInferenceTag) == 0;
 }
 
 std::string GetElemTypeString(const TypeProto_Tensor& type) {
