@@ -75,16 +75,23 @@ def infer_types(
     check_type: bool = False,
     strict_mode: bool = False,
 ) -> ModelProto:
-    """Apply type inference to the provided ModelProto.
+    """Apply type inference (type-only mode) to the provided ModelProto.
 
     Inferred types are added to the value_info field of the graph.
     This does not perform shape inference or update shapes.
+    In type-only mode, shape-only inference errors are intentionally ignored,
+    even when ``strict_mode`` is True. Type-related errors (for example,
+    type mismatches between node inputs and outputs) may still be raised
+    when ``strict_mode`` is enabled.
 
     Arguments:
         model: ModelProto.
         check_type: Checks the type-equality for input and output.
-        strict_mode: Stricter inference, it will throw errors if any;
-            Otherwise, simply stop if any error.
+        strict_mode: When True, raises on type-related inference errors
+            (e.g., type mismatches); when False, type-only inference will
+            simply stop if such an error is encountered. Shape-only inference
+            errors are always suppressed by this function, regardless of the
+            value of ``strict_mode``.
 
     Returns:
         (ModelProto) model with inferred type information
