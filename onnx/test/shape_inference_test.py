@@ -252,8 +252,8 @@ class TestShapeInference(TestShapeInferenceHelper):
 
         inferred = onnx.shape_inference.infer_types(model, strict_mode=True)
         y_info = next(vi for vi in inferred.graph.value_info if vi.name == "y")
-        assert y_info.type.tensor_type.elem_type == TensorProto.FLOAT
-        assert not y_info.type.tensor_type.HasField("shape")
+        self.assertEqual(y_info.type.tensor_type.elem_type, TensorProto.FLOAT)
+        self.assertFalse(y_info.type.tensor_type.HasField("shape"))
 
     def _identity_prop(self, op: str, **kwargs: Any) -> None:
         graph = self._make_graph(
