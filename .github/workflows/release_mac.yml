@@ -13,6 +13,14 @@ on:
       build_mode:
         required: true
         type: string
+      python_versions:
+        required: false
+        type: string
+        default: '3.12'
+      test_python_versions:
+        required: false
+        type: string
+        default: ''  # Currently unused - Mac tests in same job as build
 
 env:
   MACOSX_DEPLOYMENT_TARGET: "12.0"
@@ -21,12 +29,38 @@ permissions:
   contents: read
 
 jobs:
+  parse-python-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      build-matrix: ${{ steps.parse.outputs.build_matrix }}
+      test-matrix: ${{ steps.parse.outputs.test_matrix }}
+    steps:
+    - name: Parse Python versions
+      id: parse
+      run: |
+        # Parse build versions
+        build_versions="${PYTHON_VERSIONS}"
+        build_matrix=$(echo "$build_versions" | jq -R -c 'split(",") | map(select(length > 0))')
+        echo "build_matrix=$build_matrix" >> "$GITHUB_OUTPUT"
+
+        # Parse test versions (use build versions if not specified)
+        test_versions="${TEST_PYTHON_VERSIONS}"
+        if [ -z "$test_versions" ]; then
+          test_versions="$build_versions"
+        fi
+        test_matrix=$(echo "$test_versions" | jq -R -c 'split(",") | map(select(length > 0))')
+        echo "test_matrix=$test_matrix" >> "$GITHUB_OUTPUT"
+      env:
+        PYTHON_VERSIONS: ${{ inputs.python_versions }}
+        TEST_PYTHON_VERSIONS: ${{ inputs.test_python_versions }}
+
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
+    needs: parse-python-versions
     runs-on: macos-14
     strategy:
       matrix:
-        python-version: ['3.14t', '3.14', '3.13t', '3.12', '3.11', '3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.build-matrix) }}
       fail-fast: true
 
     steps:
@@ -45,6 +79,11 @@ jobs:
         python -m pip install -q --upgrade pip
         python -m pip install -q -r requirements-release_build.txt
 
+    - name: Set git hash and source date epoch
+      run: |
+        echo "GIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
     - name: Build wheel
       id: build_wheel
       env:
@@ -58,9 +97,12 @@ jobs:
         # Install Protobuf from source
         export NUM_CORES=`sysctl -n hw.logicalcpu`
         source workflow_scripts/protobuf/build_protobuf_unix.sh $NUM_CORES $(pwd)/protobuf/protobuf_install
-        if [ "$BUILD_MODE" != 'release' ]; then
+        if [ '${BUILD_MODE}' = 'preview' ]; then
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
           export ONNX_PREVIEW_BUILD=1
+        elif [ '${BUILD_MODE}' = 'scientific' ]; then
+          echo "Building scientific python build"
+          export ONNX_SCIENTIFIC_PYTHON_BUILD=1
         fi
         python -m build --wheel
 
@@ -93,7 +135,7 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        python-version: ['3.14t', '3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        python-version: ${{ fromJson(needs.parse-python-versions.outputs.test-matrix) }}
         target-architecture: ['x86_64', 'arm64']
       fail-fast: false
 
