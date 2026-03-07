@@ -3316,7 +3316,8 @@ provided to indicate the number of non-padding tokens in each sample of the batc
 Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
 as the maximum value of `nonpad_kv_seqlen`.
 
-Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+Both past and present state key/values are optional. If cache update is used inside Attention, all four cache tensors
+(`past_key`, `past_value`, `present_key`, `present_value`) shall be used together; using only a subset is invalid.
 The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
 
 ```

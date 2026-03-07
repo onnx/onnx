@@ -2356,6 +2356,74 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_attention_fails_without_paired_past_inputs(self) -> None:
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 4, 3, 8)),
+                ("K", TensorProto.FLOAT, (2, 4, 5, 8)),
+                ("V", TensorProto.FLOAT, (2, 4, 5, 16)),
+                ("past_key", TensorProto.FLOAT, (2, 4, 7, 8)),
+            ],
+            [
+                make_node(
+                    "Attention",
+                    ["Q", "K", "V", "", "past_key"],
+                    ["Y", "present_key", "present_value"],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_attention_fails_without_paired_present_outputs(self) -> None:
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 4, 3, 8)),
+                ("K", TensorProto.FLOAT, (2, 4, 5, 8)),
+                ("V", TensorProto.FLOAT, (2, 4, 5, 16)),
+                ("past_key", TensorProto.FLOAT, (2, 4, 7, 8)),
+                ("past_value", TensorProto.FLOAT, (2, 4, 7, 16)),
+            ],
+            [
+                make_node(
+                    "Attention",
+                    ["Q", "K", "V", "", "past_key", "past_value"],
+                    ["Y", "present_key"],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_attention_with_paired_past_and_present(self) -> None:
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 4, 3, 8)),
+                ("K", TensorProto.FLOAT, (2, 4, 5, 8)),
+                ("V", TensorProto.FLOAT, (2, 4, 5, 16)),
+                ("past_key", TensorProto.FLOAT, (2, 4, 7, 8)),
+                ("past_value", TensorProto.FLOAT, (2, 4, 7, 16)),
+            ],
+            [
+                make_node(
+                    "Attention",
+                    ["Q", "K", "V", "", "past_key", "past_value"],
+                    ["Y", "present_key", "present_value"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("Y", TensorProto.FLOAT, (2, 4, 3, 16)),
+                make_tensor_value_info("present_key", TensorProto.FLOAT, (2, 4, 12, 8)),
+                make_tensor_value_info(
+                    "present_value", TensorProto.FLOAT, (2, 4, 12, 16)
+                ),
+            ],
+        )
+
     def test_average_pool_auto_pads(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 7, 6, 4))],

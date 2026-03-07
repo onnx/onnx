@@ -241,6 +241,13 @@ struct InferenceContextImpl : public InferenceContext {
     return allOutputTypes_.size();
   }
 
+  bool hasOutput(size_t index) override {
+    if (index >= allOutputTypes_.size() || node_ == nullptr) {
+      return false;
+    }
+    return !node_->output(static_cast<int>(index)).empty();
+  }
+
   TypeProto* getOutputType(size_t index) override {
     if (index >= allOutputTypes_.size()) {
       ONNX_THROW("Output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
