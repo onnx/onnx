@@ -392,7 +392,7 @@ if the destination type is not a float 8 type.
 
 * Casting from floating point to:
   * floating point: +/- infinity if OOR (out of range).
-  * fixed point: undefined if OOR.
+  * fixed point: in-range values truncate toward zero (fractional part is discarded); undefined if OOR.
   * bool: +/- 0.0 to False; all else to True.
 * Casting from fixed point to:
   * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
