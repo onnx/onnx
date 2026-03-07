@@ -8,6 +8,7 @@
 #include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -1465,20 +1466,35 @@ static void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
       if (is_loop_state_var) {
-        // shape may change across iterations so ignore.
+        // Propagate shape from the subgraph output. This merge is safe because
+        // ONNX does not support scoped symbolic dimensions. If symbolic
+        // dimensions could be local to a subgraph (i.e., taking different
+        // values in different loop iterations), we would need to abstract away
+        // or drop such local symbols before propagating them to the outer scope.
+        // Since all ONNX symbolic dimensions have global scope, shape
+        // information from the subgraph output is valid for the loop output.
+        if (subgraph_output_type->has_tensor_type() && subgraph_output_type->tensor_type().has_shape()) {
+          mergeInShapeInfo(subgraph_output_type->tensor_type(), *loop_output_type->mutable_tensor_type());
+        }
       } else {
         // propagate shape
         if (subgraph_output_type->tensor_type().has_shape()) {
           // per iteration output. first dimension will be number of iterations
-          // but we don't know that value yet
           TypeProto inferred_type(*subgraph_output_type);
           auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
           auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
 
           mutable_inferred_shape->clear_dim();
 
-          // add empty dimension for number of iterations
-          mutable_inferred_shape->add_dim();
+          // add dimension for number of iterations - use trip_count if available
+          auto* trip_dim = mutable_inferred_shape->add_dim();
+          const TensorProto* trip_count_data = ctx.getInputData(0);
+          if (trip_count_data != nullptr && trip_count_data->data_type() == TensorProto::INT64) {
+            const auto trip_values = ParseData<int64_t>(trip_count_data);
+            if (trip_values.size() == 1 && trip_values[0] >= 0) {
+              trip_dim->set_dim_value(trip_values[0]);
+            }
+          }
 
           // add dimensions from subgraph output shape
           for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
@@ -1736,20 +1752,35 @@ static void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
       if (is_loop_state_var) {
-        // shape may change across iterations so ignore.
+        // Propagate shape from the subgraph output. This merge is safe because
+        // ONNX does not support scoped symbolic dimensions. If symbolic
+        // dimensions could be local to a subgraph (i.e., taking different
+        // values in different loop iterations), we would need to abstract away
+        // or drop such local symbols before propagating them to the outer scope.
+        // Since all ONNX symbolic dimensions have global scope, shape
+        // information from the subgraph output is valid for the loop output.
+        if (subgraph_output_type->has_tensor_type() && subgraph_output_type->tensor_type().has_shape()) {
+          mergeInShapeInfo(subgraph_output_type->tensor_type(), *loop_output_type->mutable_tensor_type());
+        }
       } else {
         // propagate shape
         if (subgraph_output_type->tensor_type().has_shape()) {
           // per iteration output. first dimension will be number of iterations
-          // but we don't know that value yet
           TypeProto inferred_type(*subgraph_output_type);
           auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
           auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
 
           mutable_inferred_shape->clear_dim();
 
-          // add empty dimension for number of iterations
-          mutable_inferred_shape->add_dim();
+          // add dimension for number of iterations - use trip_count if available
+          auto* trip_dim = mutable_inferred_shape->add_dim();
+          const TensorProto* trip_count_data = ctx.getInputData(0);
+          if (trip_count_data != nullptr && trip_count_data->data_type() == TensorProto::INT64) {
+            const auto trip_values = ParseData<int64_t>(trip_count_data);
+            if (trip_values.size() == 1 && trip_values[0] >= 0) {
+              trip_dim->set_dim_value(trip_values[0]);
+            }
+          }
 
           // add dimensions from subgraph output shape
           for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
@@ -2416,20 +2447,35 @@ static void LoopInferenceFunction_13(InferenceContext& ctx) {
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
       if (is_loop_state_var) {
-        // shape may change across iterations so ignore.
+        // Propagate shape from the subgraph output. This merge is safe because
+        // ONNX does not support scoped symbolic dimensions. If symbolic
+        // dimensions could be local to a subgraph (i.e., taking different
+        // values in different loop iterations), we would need to abstract away
+        // or drop such local symbols before propagating them to the outer scope.
+        // Since all ONNX symbolic dimensions have global scope, shape
+        // information from the subgraph output is valid for the loop output.
+        if (subgraph_output_type->has_tensor_type() && subgraph_output_type->tensor_type().has_shape()) {
+          mergeInShapeInfo(subgraph_output_type->tensor_type(), *loop_output_type->mutable_tensor_type());
+        }
       } else {
         // propagate shape
         if (subgraph_output_type->tensor_type().has_shape()) {
           // per iteration output. first dimension will be number of iterations
-          // but we don't know that value yet
           TypeProto inferred_type(*subgraph_output_type);
           auto* mutable_inferred_tensor_type = inferred_type.mutable_tensor_type();
           auto* mutable_inferred_shape = mutable_inferred_tensor_type->mutable_shape();
 
           mutable_inferred_shape->clear_dim();
 
-          // add empty dimension for number of iterations
-          mutable_inferred_shape->add_dim();
+          // add dimension for number of iterations - use trip_count if available
+          auto* trip_dim = mutable_inferred_shape->add_dim();
+          const TensorProto* trip_count_data = ctx.getInputData(0);
+          if (trip_count_data != nullptr && trip_count_data->data_type() == TensorProto::INT64) {
+            const auto trip_values = ParseData<int64_t>(trip_count_data);
+            if (trip_values.size() == 1 && trip_values[0] >= 0) {
+              trip_dim->set_dim_value(trip_values[0]);
+            }
+          }
 
           // add dimensions from subgraph output shape
           for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {

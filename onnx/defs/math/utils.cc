@@ -155,6 +155,12 @@ int MathOpTwoIntegers(const std::string& op_type, int a, int b) {
     return a - b;
   } else if (op_type == "Mul") {
     return a * b;
+  } else if (op_type == "Div") {
+    if (b == 0) {
+      fail_shape_inference("Division by zero in data propagation");
+    }
+    // Truncating division (toward zero), consistent with ONNX Div for integers
+    return a / b;
   }
   fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
 }

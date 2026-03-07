@@ -5,6 +5,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <functional>
 #include <string>
 #include <utility>
@@ -39,7 +40,7 @@ class SymbolTable {
   virtual void addFromGraph(const GraphProto& g) = 0;
   // Creates a new symbol which is not duplicate as any existing one
   std::string createNew() {
-    return createNew("unk__");
+    return createNew("_d");
   }
   virtual std::string createNew(const std::string& symbol_prefix) = 0;
   virtual ~SymbolTable() = default;
@@ -188,6 +189,40 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
     return defaultValue;
 }
 
+// --- Symbolic Dimension Arithmetic Helpers ---
+// These helpers enable arithmetic on symbolic dimensions, encoding expressions
+// as dim_param strings (e.g., "N + 2", "3*H", "H/4"). When both operands are
+// concrete (dim_value), the result is a concrete dim_value. When either operand
+// is symbolic, the result is a dim_param expression string.
+
+// Convert a Dim to its string representation for use in expressions.
+inline std::string dimToString(const TensorShapeProto::Dimension& dim) {
+  if (dim.has_dim_value()) {
+    return ONNX_NAMESPACE::to_string(dim.dim_value());
+  }
+  if (dim.has_dim_param()) {
+    return dim.dim_param();
+  }
+  return "";
+}
+
+// Return true if a dim_param string is a "simple" token (identifier or number)
+// that does not need parentheses when used as an operand in a compound expression.
+inline bool dimParamIsSimple(const std::string& s) {
+  if (s.empty())
+    return true;
+  for (char c : s) {
+    if (c != '_' && !std::isalnum(static_cast<unsigned char>(c)))
+      return false;
+  }
+  return true;
+}
+
+// Wrap an expression string in parentheses if it is compound.
+inline std::string wrapIfCompound(const std::string& s) {
+  return dimParamIsSimple(s) ? s : "(" + s + ")";
+}
+
 inline TensorShapeProto::Dimension operator*(
     const TensorShapeProto::Dimension& dim1,
     const TensorShapeProto::Dimension& dim2) {
@@ -198,6 +233,17 @@ inline TensorShapeProto::Dimension operator*(
     return dim2;
   } else if (dim2.has_dim_value() && (dim2.dim_value() == 1)) {
     return dim1;
+  } else if (dim1.has_dim_value() && (dim1.dim_value() == 0)) {
+    result.set_dim_value(0);
+  } else if (dim2.has_dim_value() && (dim2.dim_value() == 0)) {
+    result.set_dim_value(0);
+  } else {
+    // At least one operand is symbolic — produce an expression
+    auto s1 = dimToString(dim1);
+    auto s2 = dimToString(dim2);
+    if (!s1.empty() && !s2.empty()) {
+      result.set_dim_param(wrapIfCompound(s1) + "*" + wrapIfCompound(s2));
+    }
   }
   return result;
 }
@@ -217,6 +263,13 @@ inline TensorShapeProto::Dimension operator*(const TensorShapeProto::Dimension& 
     result.set_dim_value(dim1.dim_value() * dim2);
   } else if (dim2 == 1) {
     return dim1;
+  } else if (dim2 == 0) {
+    result.set_dim_value(0);
+  } else {
+    auto s = dimToString(dim1);
+    if (!s.empty()) {
+      result.set_dim_param(wrapIfCompound(s) + "*" + ONNX_NAMESPACE::to_string(dim2));
+    }
   }
   return result;
 }
@@ -227,6 +280,79 @@ inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& 
     result.set_dim_value(dim1.dim_value() / dim2);
   } else if (dim2 == 1) {
     return dim1;
+  } else {
+    auto s = dimToString(dim1);
+    if (!s.empty()) {
+      result.set_dim_param(wrapIfCompound(s) + "/" + ONNX_NAMESPACE::to_string(dim2));
+    }
+  }
+  return result;
+}
+
+// --- Addition and Subtraction operators for Dim ---
+
+inline TensorShapeProto::Dimension operator+(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() + dim2.dim_value());
+  } else if (dim1.has_dim_value() && dim1.dim_value() == 0) {
+    return dim2;
+  } else if (dim2.has_dim_value() && dim2.dim_value() == 0) {
+    return dim1;
+  } else {
+    auto s1 = dimToString(dim1);
+    auto s2 = dimToString(dim2);
+    if (!s1.empty() && !s2.empty()) {
+      result.set_dim_param(s1 + " + " + s2);
+    }
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() + dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  } else {
+    auto s = dimToString(dim1);
+    if (!s.empty()) {
+      result.set_dim_param(s + " + " + ONNX_NAMESPACE::to_string(dim2));
+    }
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator-(
+    const TensorShapeProto::Dimension& dim1,
+    const TensorShapeProto::Dimension& dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() - dim2.dim_value());
+  } else {
+    auto s1 = dimToString(dim1);
+    auto s2 = dimToString(dim2);
+    if (!s1.empty() && !s2.empty()) {
+      result.set_dim_param(s1 + " - " + wrapIfCompound(s2));
+    }
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() - dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  } else {
+    auto s = dimToString(dim1);
+    if (!s.empty()) {
+      result.set_dim_param(s + " - " + ONNX_NAMESPACE::to_string(dim2));
+    }
   }
   return result;
 }
