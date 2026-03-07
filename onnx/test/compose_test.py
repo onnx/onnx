@@ -541,12 +541,12 @@ class TestComposeFunctions(unittest.TestCase):
                         name_mapping[e] = _prefixed(prefix, e)
                     for e in n.output:
                         name_mapping[e] = _prefixed(prefix, e)
-            if rename_inputs:
+            if not rename_inputs:
                 for elem in g_in.input:
-                    name_mapping[elem.name] = _prefixed(prefix, elem.name)
-            if rename_outputs:
+                    name_mapping[elem.name] = elem.name
+            if not rename_outputs:
                 for elem in g_in.output:
-                    name_mapping[elem.name] = _prefixed(prefix, elem.name)
+                    name_mapping[elem.name] = elem.name
 
             if rename_initializers:
                 for init in g_in.initializer:

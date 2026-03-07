@@ -499,12 +499,12 @@ def add_prefix_graph(
                 if e not in graph_output_names:
                     name_map[e] = _prefixed(prefix, e)
 
-    if rename_inputs:
+    if not rename_inputs:
         for entry in g.input:
-            name_map[entry.name] = _prefixed(prefix, entry.name)
-    if rename_outputs:
+            name_map[entry.name] = entry.name
+    if not rename_outputs:
         for entry in g.output:
-            name_map[entry.name] = _prefixed(prefix, entry.name)
+            name_map[entry.name] = entry.name
 
     if rename_nodes:
         for n in g.node:
