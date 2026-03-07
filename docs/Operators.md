@@ -12433,7 +12433,7 @@ shape = [3, 1]
 data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
 # print(data)
 # [[1.], [2.], [3.]]
-new_shape = [2, 1, 6]
+new_shape = [2, 3, 6]
 expanded = data * np.ones(new_shape, dtype=np.float32)
 # print(expanded)
 # [[[1., 1., 1., 1., 1., 1.],
