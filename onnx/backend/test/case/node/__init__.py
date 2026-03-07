@@ -139,13 +139,23 @@ def function_testcase_helper(
         # No opset in the model. We take the most recent definition.
         schema = onnx.defs.get_schema(test_op, domain=node.domain)
     else:
-        # We take the function coming defined in the specific version mentioned
-        # in the model.
-        if len(opset_imports) != 1:
+        # We take the function defined in the specific version mentioned
+        # in the model. Find the opset_import matching the node's domain.
+        node_domain = node.domain if node.domain else ""
+        matching_opset = None
+        for opset in opset_imports:
+            opset_domain = opset.domain if opset.domain else ""
+            if opset_domain == node_domain or (
+                node_domain in {"", "ai.onnx"} and opset_domain in {"", "ai.onnx"}
+            ):
+                matching_opset = opset
+                break
+        if matching_opset is None:
             raise ValueError(
-                f"Only one domain is allowed but {len(opset_imports)} found."
+                f"No matching opset_import found for domain {node_domain!r} "
+                f"in {[o.domain for o in opset_imports]}."
             )
-        version = opset_imports[0].version
+        version = matching_opset.version
         schema = onnx.defs.get_schema(test_op, version, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
