@@ -6,10 +6,22 @@
 .. autofunction:: onnx.shape_inference.infer_shapes
 ```
 
+## infer_types
+
+```{eval-rst}
+.. autofunction:: onnx.shape_inference.infer_types
+```
+
 ## infer_shapes_path
 
 ```{eval-rst}
 .. autofunction:: onnx.shape_inference.infer_shapes_path
+```
+
+## infer_types_path
+
+```{eval-rst}
+.. autofunction:: onnx.shape_inference.infer_types_path
 ```
 
 ## infer_node_outputs
