@@ -6,7 +6,7 @@ name: Check URLs
 
 on:
   push:
-    branches: [ 'rel-*' ]
+    branches:  [ "main", rel-* ]
   schedule:
     # Run every month
     - cron:  '0 0 1 * *'
@@ -32,7 +32,7 @@ jobs:
         print_all: false
         timeout: 2
         retry_count : 2
-        exclude_urls: https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/,https://media.githubusercontent.com/media/,https://download.onnxruntime.ai/onnx/models
+        exclude_urls: https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/
         # exclude_patterns: https://...
         force_pass: false
 

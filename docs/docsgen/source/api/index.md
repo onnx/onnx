@@ -57,7 +57,6 @@ compose
 defs
 external_data_helper
 helper
-hub
 inliner
 mapping
 model_container

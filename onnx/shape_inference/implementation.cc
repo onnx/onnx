@@ -372,8 +372,12 @@ class ShapeInferenceImplBase {
   }
 
   template <typename T>
-  void AddTemporaryConstant(const std::string& name, const T& vector) {
-    input_data_by_name_holder[name] = ToTensor(vector);
+  void AddTemporaryConstant(const std::string& name, const T& vector, bool scalar = false) {
+    auto tensor = ToTensor(vector);
+    if (!scalar) {
+      tensor.add_dims(vector.size());
+    }
+    input_data_by_name_holder[name] = tensor;
     input_data_by_name[name] = &input_data_by_name_holder[name];
   }
 
@@ -403,7 +407,7 @@ class ShapeInferenceImplBase {
             }
             case AttributeProto::INT: {
               std::vector<int64_t> ints({attr.i()});
-              AddTemporaryConstant(output_name, ints);
+              AddTemporaryConstant(output_name, ints, true);
               break;
             }
             case AttributeProto::FLOATS: {
@@ -413,7 +417,7 @@ class ShapeInferenceImplBase {
             }
             case AttributeProto::FLOAT: {
               std::vector<float> floats({attr.f()});
-              AddTemporaryConstant(output_name, floats);
+              AddTemporaryConstant(output_name, floats, true);
               break;
             }
             default:

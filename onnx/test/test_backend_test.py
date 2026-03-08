@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import itertools
-import os
 import platform
 import unittest
 from typing import TYPE_CHECKING, Any
@@ -115,8 +114,6 @@ test_kwargs = {
 backend_test = onnx.backend.test.BackendTest(
     DummyBackend, __name__, test_kwargs=test_kwargs
 )
-if os.getenv("APPVEYOR"):
-    backend_test.exclude(r"(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
     backend_test.exclude(r"(test_vgg19|test_zfnet|test_bvlc_alexnet)")
 

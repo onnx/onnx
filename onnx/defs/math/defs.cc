@@ -2938,7 +2938,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     17,
     OpSchema()
         .FillUsing(CosineSumWindowOpDocGenerator("Hann"))
-        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
+        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int32_t or int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
         .FunctionBody(R"ONNX(
         {
@@ -2976,7 +2976,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     17,
     OpSchema()
         .FillUsing(CosineSumWindowOpDocGenerator("Hamming"))
-        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
+        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int32_t or int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
         .FunctionBody(R"ONNX(
         {
@@ -3014,7 +3014,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     17,
     OpSchema()
         .FillUsing(CosineSumWindowOpDocGenerator("Blackman"))
-        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
+        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int32_t or int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
         .FunctionBody(R"ONNX(
         {
