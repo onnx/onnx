@@ -15,6 +15,9 @@ on:
   schedule:
     - cron: '0 0 * * 0'  # Weekly
 
+permissions:
+  contents: read
+
 jobs:
   test-notebook:
     runs-on: ubuntu-latest
