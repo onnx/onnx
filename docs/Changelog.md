@@ -15102,7 +15102,7 @@ This version of the operator has been available since version 13 of the default 
 
   * Casting from floating point to:
     * floating point: +/- infinity if OOR (out of range).
-    * fixed point: in-range values truncate toward zero (fractional part is discarded); undefined if OOR.
+    * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:
     * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
@@ -22737,7 +22737,7 @@ This version of the operator has been available since version 19 of the default 
 
   * Casting from floating point to:
     * floating point: +/- infinity if OOR (out of range).
-    * fixed point: in-range values truncate toward zero (fractional part is discarded); undefined if OOR.
+    * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:
     * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
@@ -24584,7 +24584,7 @@ This version of the operator has been available since version 20 of the default 
 
   * Casting from floating point to:
     * floating point: +/- infinity if OOR (out of range).
-    * fixed point: in-range values truncate toward zero (fractional part is discarded); undefined if OOR.
+    * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:
     * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
@@ -28396,7 +28396,7 @@ This version of the operator has been available since version 23 of the default 
 
   * Casting from floating point to:
     * floating point: +/- infinity if OOR (out of range).
-    * fixed point: in-range values truncate toward zero (fractional part is discarded); undefined if OOR.
+    * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:
     * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
@@ -29980,7 +29980,7 @@ This version of the operator has been available since version 24 of the default 
 
   * Casting from floating point to:
     * floating point: +/- infinity if OOR (out of range).
-    * fixed point: in-range values truncate toward zero (fractional part is discarded); undefined if OOR.
+    * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:
     * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
@@ -31460,7 +31460,7 @@ This version of the operator has been available since version 24 of the default 
 
   * Casting from floating point to:
     * floating point: +/- infinity if OOR (out of range).
-    * fixed point: in-range values truncate toward zero (fractional part is discarded); undefined if OOR.
+    * fixed point: undefined if OOR.
     * bool: +/- 0.0 to False; all else to True.
   * Casting from fixed point to:
     * floating point: +/- infinity if OOR. (+ infinity in the case of uint)
