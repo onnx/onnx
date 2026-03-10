@@ -108,6 +108,7 @@ jobs:
       - name: Install external protobuf - Linux
         if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'ubuntu')
         run: |
+          sudo apt-get update
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
       - name: Install external protobuf - MacOS

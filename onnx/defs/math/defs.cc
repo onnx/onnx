@@ -505,7 +505,7 @@ to the tensor elementwise.
 
 )DOC";
 
-static std::string gelu_default_approx = "none";
+static constexpr const char* gelu_default_approx = "none";
 
 static bool BuildContextDependentFunctionBodyGelu(
     const FunctionBodyBuildContext& ctx,
@@ -2377,9 +2377,9 @@ static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::str
     // If no explicit output was given, generate an implicit output by ordering all the
     // labels in alphabetic order (by ASCII value consistent with numpy, so Z < a).
     // Exclude any labels that occurred more than once, as these cancel out.
-    for (const auto& p : label_maps) {
-      if (repeated_labels.count(p.first) == 0) {
-        *output_shape.add_dim() = dims_value.dim(p.second);
+    for (const auto& [label, dim_idx] : label_maps) {
+      if (repeated_labels.count(label) == 0) {
+        *output_shape.add_dim() = dims_value.dim(dim_idx);
       }
     }
   }
@@ -2938,7 +2938,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     17,
     OpSchema()
         .FillUsing(CosineSumWindowOpDocGenerator("Hann"))
-        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
+        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int32_t or int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
         .FunctionBody(R"ONNX(
         {
@@ -2976,7 +2976,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     17,
     OpSchema()
         .FillUsing(CosineSumWindowOpDocGenerator("Hamming"))
-        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
+        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int32_t or int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
         .FunctionBody(R"ONNX(
         {
@@ -3014,7 +3014,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     17,
     OpSchema()
         .FillUsing(CosineSumWindowOpDocGenerator("Blackman"))
-        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int64_t.")
+        .TypeConstraint("T1", {"tensor(int32)", "tensor(int64)"}, "Constrain the input size to int32_t or int64_t.")
         .TypeConstraint("T2", OpSchema::all_numeric_types_ir4(), "Constrain output types to numeric tensors.")
         .FunctionBody(R"ONNX(
         {

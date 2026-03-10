@@ -157,9 +157,12 @@ class ProtoPrinter {
 void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
   if (dim.has_dim_value())
     output_ << dim.dim_value();
-  else if (dim.has_dim_param())
-    output_ << dim.dim_param();
-  else
+  else if (dim.has_dim_param()) {
+    if (IsValidIdentifier(dim.dim_param()))
+      output_ << dim.dim_param();
+    else
+      printQuoted(dim.dim_param());
+  } else
     output_ << "?";
 }
 
@@ -234,7 +237,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   if (is_initializer) {
     output_ << " = ";
   }
-  // TODO: does not yet handle all types
+  // TODO(ONNX): does not yet handle all types
   if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
     print(tensor.external_data());
   } else if (tensor.has_raw_data()) {

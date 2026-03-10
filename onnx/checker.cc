@@ -4,7 +4,7 @@
 
 #include "onnx/checker.h"
 
-#include <filesystem>
+#include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -594,7 +594,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
   LexicalScopeContext lex_ctx{parent_lex};
 
   for (const auto& value_info : graph.input()) {
-    // TODO: If shadowing isn't allowed, this should maybe use
+    // TODO(ONNX): If shadowing isn't allowed, this should maybe use
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(value_info.name())) {
       fail_check(
@@ -814,7 +814,7 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
   LexicalScopeContext lex_ctx{parent_lex};
 
   for (const auto& input : function.input()) {
-    // TODO: If shadowing isn't allowed, this should maybe use
+    // TODO(ONNX): If shadowing isn't allowed, this should maybe use
     // this_or_ancestor_graph_has
     if (lex_ctx.this_graph_has(input)) {
       fail_check(
@@ -825,16 +825,14 @@ void check_function(const FunctionProto& function, const CheckerContext& ctx, co
 
   std::unordered_set<std::string> outputs;
   for (const auto& output : function.output()) {
-    auto result = outputs.insert(output);
-    if (!result.second) {
+    if (!outputs.insert(output).second) {
       fail_check("function (", function.name(), ") should not have duplicate outputs specified.");
     }
   }
 
   std::unordered_set<std::string> attrs;
   for (const auto& attr : function.attribute()) {
-    auto result = attrs.insert(attr);
-    if (!result.second) {
+    if (!attrs.insert(attr).second) {
       fail_check("function (", function.name(), ") should not have duplicate attributes specified.");
     }
   }
@@ -924,7 +922,7 @@ static void check_model(const ModelProto& model, CheckerContext& ctx) {
 
   if (ctx.get_ir_version() >= 0x00000008) {
     check_model_local_functions(model, ctx, lex_ctx);
-    // TODO: check consistency between local functions and ops referencing it.
+    // TODO(ONNX): check consistency between local functions and ops referencing it.
   }
 }
 
@@ -1023,6 +1021,45 @@ std::string resolve_external_data_location(
         data_path_str,
         ", but it is a symbolic link.");
   }
+  // Verify the resolved path stays within the base directory to prevent
+  // path traversal via symlinks in parent directory components.
+  // is_symlink() only checks the final component; a path like
+  // "symlink_subdir/real_file.data" would bypass it.
+  if (data_path_str[0] != '#') {
+    std::error_code ec;
+    auto canonical_base = std::filesystem::weakly_canonical(base_dir_path, ec);
+    if (ec) {
+      fail_check(
+          "Data of TensorProto ( tensor name: ",
+          tensor_name,
+          ") references external data at ",
+          data_path_str,
+          ", but the model directory path could not be resolved.");
+    }
+    auto canonical_data = std::filesystem::weakly_canonical(data_path, ec);
+    if (ec) {
+      fail_check(
+          "Data of TensorProto ( tensor name: ",
+          tensor_name,
+          ") references external data at ",
+          data_path_str,
+          ", but the data path could not be resolved.");
+    }
+    auto canonical_base_native = canonical_base.native();
+    auto canonical_data_native = canonical_data.native();
+    if (!canonical_base_native.empty() && canonical_base_native.back() != std::filesystem::path::preferred_separator) {
+      canonical_base_native += std::filesystem::path::preferred_separator;
+    }
+    if (canonical_data_native.find(canonical_base_native) != 0) {
+      fail_check(
+          "Data of TensorProto ( tensor name: ",
+          tensor_name,
+          ") at ",
+          data_path_str,
+          " resolves to a location outside the model directory, "
+          "indicating a potential path traversal attack via symbolic links in directory components.");
+    }
+  }
   if (data_path_str[0] != '#' && !std::filesystem::is_regular_file(data_path)) {
     fail_check(
         "Data of TensorProto ( tensor name: ",
@@ -1030,6 +1067,15 @@ std::string resolve_external_data_location(
         ") should be stored in ",
         data_path_str,
         ", but it is not regular file.");
+  }
+  // Do not allow hardlinks, as they can be used to read arbitrary files.
+  if (data_path_str[0] != '#' && std::filesystem::hard_link_count(data_path) > 1) {
+    fail_check(
+        "Data of TensorProto ( tensor name: ",
+        tensor_name,
+        ") should be stored in ",
+        data_path_str,
+        ", but it has multiple hard links, indicating a potential hardlink attack.");
   }
   // Check whether the file exists
   if (data_path_str[0] != '#' && !std::filesystem::exists(data_path)) {

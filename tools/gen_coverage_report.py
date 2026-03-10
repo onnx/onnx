@@ -42,17 +42,6 @@ def gen_trace_file(root_dir: str, out_path: str) -> None:
             "lcov",
             "-r",
             out_path,
-            os.path.join(root_dir, "third_party", "*"),
-            "-o",
-            out_path,
-        ]
-    )
-
-    subprocess.check_output(
-        [
-            "lcov",
-            "-r",
-            out_path,
             os.path.join(root_dir, ".setuptools-cmake-build", "*"),
             "-o",
             out_path,

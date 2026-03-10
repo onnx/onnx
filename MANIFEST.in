@@ -1,4 +1,3 @@
-recursive-include third_party *
 include LICENSE
 recursive-include cmake *
 recursive-include tools *

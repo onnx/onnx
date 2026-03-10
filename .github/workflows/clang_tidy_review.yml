@@ -20,17 +20,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  review:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      # Please note that it won't cause any failure here; it will only post comments in PRs
-      - name: clang-tidy review
+        with:
+          persist-credentials: false
+      - name: Run clang-tidy
         uses: ZedThree/clang-tidy-review@a63ad24ca2c9f69340890c82dd235f295f7feac8 # v0.23.0
         with:
           apt_packages: "libprotobuf-dev,protobuf-compiler"
           cmake_command: "cmake -S . -B .setuptools-cmake-build -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           build_dir: ".setuptools-cmake-build"
-          exclude: "/third_party/*"
           split_workflow: true
-      - uses: ZedThree/clang-tidy-review/upload@a63ad24ca2c9f69340890c82dd235f295f7feac8 # v0.23.0
+      - name: Upload clang-tidy review artifacts
+        uses: ZedThree/clang-tidy-review/upload@a63ad24ca2c9f69340890c82dd235f295f7feac8 # v0.23.0

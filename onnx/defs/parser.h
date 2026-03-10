@@ -56,9 +56,9 @@ class StringIntMap {
 
   static const std::string& ToString(int32_t dtype) {
     static std::string undefined("undefined");
-    for (const auto& pair : Instance()) {
-      if (pair.second == dtype)
-        return pair.first;
+    for (const auto& [name, value] : Instance()) {
+      if (value == dtype)
+        return name;
     }
     return undefined;
   }
