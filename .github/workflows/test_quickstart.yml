@@ -33,9 +33,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install jupyter nbconvert
+          pip install jupyter nbconvert ipykernel
           pip install onnx torch onnxruntime numpy onnxscript
+          python -m ipykernel install --user
 
       - name: Execute notebook
         run: |
-          jupyter nbconvert --to notebook --execute examples/quickstart.ipynb
+          jupyter nbconvert --to notebook --execute --inplace examples/quickstart.ipynb
