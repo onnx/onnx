@@ -3260,11 +3260,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
           }
           auto signal_dim = input_shape.dim(1);
-          if (!signal_dim.has_dim_value()) {
-            return;
-          }
-          auto signal_size = signal_dim.dim_value();
-
+          bool signal_size_known = signal_dim.has_dim_value();
+          int64_t signal_size = signal_size_known ? signal_dim.dim_value() : -1;
           // The frame step is a required input.
           // Its value is needed to compute the number output nDFTs, so return early is missing.
           const auto frame_step = ctx.getInputData(1);
@@ -3338,8 +3335,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
           int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
 
-          auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
-
           // The output has the following shape: [batch_size][frames][dft_unique_bins][2]
           ONNX_NAMESPACE::TensorShapeProto result_shape_proto;
           auto batch_dim = result_shape_proto.add_dim();
@@ -3348,7 +3343,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             batch_dim->set_dim_value(input_shape.dim(0).dim_value()); // batch size
           }
 
-          result_shape_proto.add_dim()->set_dim_value(n_dfts);
+          if (signal_size_known) {
+            auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
+            result_shape_proto.add_dim()->set_dim_value(n_dfts);
+          } else {
+            result_shape_proto.add_dim();
+          }
+
           result_shape_proto.add_dim()->set_dim_value(dft_unique_bins);
           result_shape_proto.add_dim()->set_dim_value(2);
           updateOutputShape(ctx, 0, result_shape_proto);
