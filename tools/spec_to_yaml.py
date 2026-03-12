@@ -20,6 +20,71 @@ from ruamel.yaml import YAML
 
 import onnx
 
+# Explicit attribute lists per type, matching the nanobind/pybind11 bindings
+# in onnx/cpp2py_export.cc and Python-added properties in onnx/defs/__init__.py.
+
+_OP_SCHEMA_ATTRS = [
+    "name",
+    "domain",
+    "since_version",
+    "doc",
+    "deprecated",
+    "support_level",
+    "node_determinism",
+    "inputs",
+    "outputs",
+    "attributes",
+    "type_constraints",
+    "min_input",
+    "max_input",
+    "min_output",
+    "max_output",
+    "has_function",
+    "has_context_dependent_function",
+    "has_type_and_shape_inference_function",
+    "has_data_propagation_function",
+    "function_opset_versions",
+    "context_dependent_function_opset_versions",
+]
+
+_ATTRIBUTE_ATTRS = [
+    "name",
+    "description",
+    "type",
+    "default_value",
+    "required",
+]
+
+_FORMAL_PARAMETER_ATTRS = [
+    "name",
+    "type_str",
+    "types",
+    "description",
+    "option",
+    "is_homogeneous",
+    "min_arity",
+    "differentiation_category",
+]
+
+_TYPE_CONSTRAINT_PARAM_ATTRS = [
+    "type_param_str",
+    "allowed_type_strs",
+    "description",
+]
+
+_ATTRS_BY_TYPE: dict[type, list[str]] = {}
+
+
+def _get_attrs_for(onnx_obj: Any) -> list[str]:
+    """Return the explicit attribute list for the given ONNX object type."""
+    # Lazily populate the mapping (types aren't available at import time)
+    if not _ATTRS_BY_TYPE:
+        _ATTRS_BY_TYPE[onnx.defs.OpSchema] = _OP_SCHEMA_ATTRS
+        _ATTRS_BY_TYPE[onnx.defs.OpSchema.Attribute] = _ATTRIBUTE_ATTRS
+        _ATTRS_BY_TYPE[onnx.defs.OpSchema.FormalParameter] = _FORMAL_PARAMETER_ATTRS
+        _ATTRS_BY_TYPE[onnx.defs.OpSchema.TypeConstraintParam] = _TYPE_CONSTRAINT_PARAM_ATTRS
+    return _ATTRS_BY_TYPE[type(onnx_obj)]
+
 
 def dump_onnx_object(
     onnx_obj: onnx.defs.OpSchema
@@ -28,30 +93,23 @@ def dump_onnx_object(
     | onnx.defs.OpSchema.TypeConstraintParam,
 ) -> dict[str, Any]:
     res = {}
-    for attr in dir(onnx_obj):
-        if attr.startswith("_"):
-            continue
+    for attr in _get_attrs_for(onnx_obj):
         value = getattr(onnx_obj, attr)
-        if isinstance(value, enum.EnumType) or "nanobind" in str(type(value)):
-            continue
         if attr == "default_value" and isinstance(
             onnx_obj, onnx.defs.OpSchema.Attribute
         ):
             value = onnx.helper.get_attribute_value(value)
         value = dump_value(value)
-        if not value:
+        if value is None:
             continue
         res[attr] = value
     return res
 
 
 def dump_enum(value: enum.Enum) -> str | None:
-    for member in type(value):
-        if member == value:
-            if member.name == "Unknown":
-                return None
-            return member.name
-    raise RuntimeError(f"Unhandled type {type(value)}")
+    if value.name == "Unknown":
+        return None
+    return value.name
 
 
 def dump_value(value: Any):  # noqa: PLR0911
@@ -71,6 +129,8 @@ def dump_value(value: Any):  # noqa: PLR0911
             return dump_enum(value)
         case dict():
             return {k: dump_value(v) for k, v in value.items()}
+        case bool():
+            return value
         case float() | int() | str():
             return value
         case Iterable():
@@ -84,23 +144,27 @@ def main():
     parser.add_argument("--output", help="Output directory", required=True)
     args = parser.parse_args()
 
-    schemas = onnx.defs.get_all_schemas_with_history()
+    schemas = sorted(
+        onnx.defs.get_all_schemas_with_history(),
+        key=lambda s: (s.domain, s.name, s.since_version),
+    )
     yaml = YAML()
     yaml.indent(mapping=2, sequence=4, offset=2)
 
-    latest_versions: dict = {}
+    latest_versions: dict[tuple[str, str], int] = {}
     for schema in schemas:
-        if schema.name in latest_versions:
-            latest_versions[schema.name] = max(
-                latest_versions[schema.name], schema.since_version
-            )
+        key = (schema.domain, schema.name)
+        if key in latest_versions:
+            latest_versions[key] = max(latest_versions[key], schema.since_version)
         else:
-            latest_versions[schema.name] = schema.since_version
+            latest_versions[key] = schema.since_version
+
     for schema in schemas:
         schema_dict = dump_value(schema)
         domain = schema.domain or "ai.onnx"
         outdir = pathlib.Path(args.output) / domain
-        if latest_versions[schema.name] != schema.since_version:
+        key = (schema.domain, schema.name)
+        if latest_versions[key] != schema.since_version:
             outdir = outdir / "old"
         else:
             outdir = outdir / "latest"
