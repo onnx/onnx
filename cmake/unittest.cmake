@@ -4,7 +4,21 @@ include(CTest)
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(UT_NAME ${PROJECT_NAME}_gtests)
-file(GLOB_RECURSE test_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
+set(test_src
+    ${ONNX_ROOT}/onnx/test/cpp/checker_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/data_propagation_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/function_context_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/function_get_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/function_verify_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/inliner_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/ir_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/op_reg_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/parser_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/schema_registration_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/shape_inference_test.cc
+    ${ONNX_ROOT}/onnx/test/cpp/test_main.cc
+    ${ONNX_ROOT}/onnx/test/cpp/utf8_conversion_test.cc
+)
 add_executable(${UT_NAME} ${test_src})
 find_package(Threads REQUIRED)
 target_link_libraries(${UT_NAME} PRIVATE onnx Threads::Threads)
