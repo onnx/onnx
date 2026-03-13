@@ -789,32 +789,32 @@ result = [
 ```
 )DOC";
 
-static void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t step) {
+static void processSliceInputs(const int64_t input_dim_value, int64_t& start, int64_t& end, int64_t step) {
   // process step
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
   }
   // Empty dimension: clamp bounds are invalid when dimension size is 0,
   // so short-circuit to produce a zero-length output.
-  if (input_rank == 0) {
+  if (input_dim_value == 0) {
     start = 0;
     end = 0;
     return;
   }
   // process start
   if (start < 0)
-    start += input_rank;
+    start += input_dim_value;
   if (step < 0)
-    start = std::clamp(start, static_cast<int64_t>(0), input_rank - 1);
+    start = std::clamp(start, static_cast<int64_t>(0), input_dim_value - 1);
   else
-    start = std::clamp(start, static_cast<int64_t>(0), input_rank);
+    start = std::clamp(start, static_cast<int64_t>(0), input_dim_value);
   // process end
   if (end < 0)
-    end += input_rank;
+    end += input_dim_value;
   if (step < 0)
-    end = std::clamp(end, static_cast<int64_t>(-1), input_rank - 1);
+    end = std::clamp(end, static_cast<int64_t>(-1), input_dim_value - 1);
   else
-    end = std::clamp(end, static_cast<int64_t>(0), input_rank);
+    end = std::clamp(end, static_cast<int64_t>(0), input_dim_value);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
