@@ -147,7 +147,7 @@ def set_external_data(
         raise ValueError(
             "Tensor "
             + tensor.name
-            + "does not have raw_data field. Cannot set external data for this tensor."
+            + " does not have raw_data field. Cannot set external data for this tensor."
         )
 
     del tensor.external_data[:]
@@ -341,7 +341,7 @@ def _get_initializer_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorPro
     """Create an iterator of initializer tensors from ONNX model."""
     yield from _get_initializer_tensors_from_graph(onnx_model_proto.graph)
     for function in onnx_model_proto.functions:
-        yield from _get_attribute_tensors_from_graph(function)
+        yield from _get_initializer_tensors_from_graph(function)
 
 
 def _get_attribute_tensors_from_graph(
