@@ -789,11 +789,7 @@ result = [
 ```
 )DOC";
 
-static void processSliceInputs(
-    const int64_t input_dim_size_or_value,
-    int64_t& start,
-    int64_t& end,
-    int64_t step) {
+static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& start, int64_t& end, int64_t step) {
   // process step
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
