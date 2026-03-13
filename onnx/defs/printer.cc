@@ -469,11 +469,12 @@ void ProtoPrinter::print(const FunctionProto& fn) {
           << "domain: ";
   printQuoted(fn.domain());
   output_ << ",\n";
-  if (!fn.overload().empty())
+  if (!fn.overload().empty()) {
     output_ << "  "
             << "overload: ";
-  printQuoted(fn.overload());
-  output_ << ",\n";
+    printQuoted(fn.overload());
+    output_ << ",\n";
+  }
 
   output_ << "  "
           << "opset_import: ";
