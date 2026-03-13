@@ -12,6 +12,7 @@ import unittest
 from ruamel.yaml import YAML
 
 from onnx import defs
+from onnx.onnx_cpp2py_export.defs import schema_version_map
 
 # Import the functions under test from tools/spec_to_yaml.py
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "tools"))
@@ -38,7 +39,8 @@ class TestSpecToYaml(unittest.TestCase):
     def test_directory_structure(self) -> None:
         self.assertTrue((self.outdir / "ai.onnx" / "latest").is_dir())
         self.assertTrue((self.outdir / "ai.onnx" / "old").is_dir())
-        self.assertTrue((self.outdir / "ai.onnx.ml" / "latest").is_dir())
+        if defs.ONNX_ML_DOMAIN in schema_version_map():
+            self.assertTrue((self.outdir / "ai.onnx.ml" / "latest").is_dir())
 
     def test_every_schema_has_file(self) -> None:
         schemas = defs.get_all_schemas_with_history()
