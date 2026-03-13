@@ -82,7 +82,9 @@ def _get_attrs_for(onnx_obj: Any) -> list[str]:
         _ATTRS_BY_TYPE[onnx.defs.OpSchema] = _OP_SCHEMA_ATTRS
         _ATTRS_BY_TYPE[onnx.defs.OpSchema.Attribute] = _ATTRIBUTE_ATTRS
         _ATTRS_BY_TYPE[onnx.defs.OpSchema.FormalParameter] = _FORMAL_PARAMETER_ATTRS
-        _ATTRS_BY_TYPE[onnx.defs.OpSchema.TypeConstraintParam] = _TYPE_CONSTRAINT_PARAM_ATTRS
+        _ATTRS_BY_TYPE[onnx.defs.OpSchema.TypeConstraintParam] = (
+            _TYPE_CONSTRAINT_PARAM_ATTRS
+        )
     return _ATTRS_BY_TYPE[type(onnx_obj)]
 
 

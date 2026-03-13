@@ -63,8 +63,7 @@ class TestSpecToYaml(unittest.TestCase):
         """deprecated=False and min_input=0 must not be silently dropped."""
         add_schema = defs.get_schema("Add")
         add_path = (
-            self.outdir / "ai.onnx" / "latest"
-            / f"Add-{add_schema.since_version}.yaml"
+            self.outdir / "ai.onnx" / "latest" / f"Add-{add_schema.since_version}.yaml"
         )
         with open(add_path) as f:
             data = self.yaml.load(f)
@@ -75,8 +74,7 @@ class TestSpecToYaml(unittest.TestCase):
     def test_fields_match_schema(self) -> None:
         add_schema = defs.get_schema("Add")
         add_path = (
-            self.outdir / "ai.onnx" / "latest"
-            / f"Add-{add_schema.since_version}.yaml"
+            self.outdir / "ai.onnx" / "latest" / f"Add-{add_schema.since_version}.yaml"
         )
         with open(add_path) as f:
             data = self.yaml.load(f)
@@ -84,17 +82,27 @@ class TestSpecToYaml(unittest.TestCase):
         self.assertEqual(data["since_version"], add_schema.since_version)
         self.assertEqual(len(data["inputs"]), len(add_schema.inputs))
         self.assertEqual(len(data["outputs"]), len(add_schema.outputs))
-        self.assertEqual(len(data["type_constraints"]), len(add_schema.type_constraints))
+        self.assertEqual(
+            len(data["type_constraints"]), len(add_schema.type_constraints)
+        )
 
     def test_no_methods_or_internal_attrs_exported(self) -> None:
         add_path = (
-            self.outdir / "ai.onnx" / "latest"
+            self.outdir
+            / "ai.onnx"
+            / "latest"
             / f"Add-{defs.get_schema('Add').since_version}.yaml"
         )
         with open(add_path) as f:
             data = self.yaml.load(f)
-        for key in ("consumed", "is_infinite", "function_body",
-                     "non_deterministic", "file", "line"):
+        for key in (
+            "consumed",
+            "is_infinite",
+            "function_body",
+            "non_deterministic",
+            "file",
+            "line",
+        ):
             self.assertNotIn(key, data)
 
     def test_deterministic_output(self) -> None:
@@ -108,7 +116,9 @@ class TestSpecToYaml(unittest.TestCase):
             sys.argv = saved_argv
 
             dir2 = pathlib.Path(tmpdir2)
-            files1 = sorted(p.relative_to(self.outdir) for p in self.outdir.rglob("*.yaml"))
+            files1 = sorted(
+                p.relative_to(self.outdir) for p in self.outdir.rglob("*.yaml")
+            )
             files2 = sorted(p.relative_to(dir2) for p in dir2.rglob("*.yaml"))
             self.assertEqual(files1, files2)
             for rel_path in files1:
