@@ -130,11 +130,13 @@ def dump_value(value: Any):  # noqa: PLR0911
         case enum.Enum():
             return dump_enum(value)
         case dict():
-            return {k: dump_value(v) for k, v in value.items()}
+            return {k: dump_value(v) for k, v in sorted(value.items())}
         case bool():
             return value
         case float() | int() | str():
             return value
+        case set() | frozenset():
+            return sorted(dump_value(v) for v in value)  # type: ignore[type-var]
         case Iterable():
             return type(value)(dump_value(v) for v in value)  # type: ignore
 
