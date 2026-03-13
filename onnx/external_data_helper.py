@@ -43,6 +43,53 @@ class ExternalDataInfo:
             self.length = int(self.length)
 
 
+def _validate_external_data_path(
+    base_dir: str,
+    data_path: str,
+    tensor_name: str,
+    *,
+    check_exists: bool = True,
+) -> str:
+    """Validate that an external data path is safe to open.
+
+    Performs three security checks:
+    1. Canonical path containment — resolved path must stay within base_dir.
+    2. Symlink rejection — final-component symlinks are not allowed.
+    3. Hardlink count — files with multiple hard links are rejected.
+
+    Args:
+        base_dir: The model base directory that data_path must be contained in.
+        data_path: The external data file path to validate.
+        tensor_name: Tensor name for error messages.
+        check_exists: If True (default), check hardlink count. Set to False
+            for save-side paths where the file may not exist yet.
+
+    Returns:
+        The validated data_path (unchanged).
+
+    Raises:
+        onnx.checker.ValidationError: If any security check fails.
+    """
+    real_base = os.path.realpath(base_dir)
+    real_path = os.path.realpath(data_path)
+    if not real_path.startswith(real_base + os.sep) and real_path != real_base:
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor_name!r} external data path resolves to "
+            f"{real_path!r} which is outside the model directory {real_base!r}."
+        )
+    if os.path.islink(data_path):
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor_name!r} external data path {data_path!r} "
+            f"is a symbolic link, which is not allowed for security reasons."
+        )
+    if check_exists and os.path.exists(data_path) and os.stat(data_path).st_nlink > 1:
+        raise onnx_checker.ValidationError(
+            f"Tensor {tensor_name!r} external data path {data_path!r} "
+            f"has multiple hard links, which is not allowed for security reasons."
+        )
+    return data_path
+
+
 def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
     """Loads data from an external file for tensor.
     Ideally TensorProto should not hold any raw data but if it does it will be ignored.
@@ -55,7 +102,14 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
     external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
         base_dir, info.location, tensor.name
     )
-    with open(external_data_file_path, "rb") as data_file:
+    # Security checks (symlink, containment, hardlink) already performed
+    # by C++ _resolve_external_data_location() above.
+    # Use O_NOFOLLOW where available as defense-in-depth for symlink protection
+    open_flags = os.O_RDONLY
+    if hasattr(os, "O_NOFOLLOW"):
+        open_flags |= os.O_NOFOLLOW
+    fd = os.open(external_data_file_path, open_flags)
+    with os.fdopen(fd, "rb") as data_file:
         if info.offset:
             data_file.seek(info.offset)
 
@@ -200,7 +254,7 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 
     # Let's check the tensor location is valid.
     location_path = pathlib.Path(info.location)
-    if location_path.is_absolute() and len(location_path.parts) > 1:
+    if location_path.is_absolute():
         raise onnx_checker.ValidationError(
             f"Tensor {tensor.name!r} is external and must not be defined "
             f"with an absolute path such as {info.location!r}, "
@@ -219,17 +273,25 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
 
     external_data_file_path = os.path.join(base_path, info.location)
 
+    # C++ _resolve_external_data_location() cannot be used on save path
+    # (file may not exist yet), so Python performs its own security validation.
+    _validate_external_data_path(
+        base_path, external_data_file_path, tensor.name, check_exists=True
+    )
+
     # Retrieve the tensor's data from raw_data or load external file
     if not tensor.HasField("raw_data"):
         raise onnx_checker.ValidationError("raw_data field doesn't exist.")
 
-    # Create file if it doesn't exist
-    if not os.path.isfile(external_data_file_path):
-        with open(external_data_file_path, "ab"):
-            pass
+    # Atomic file creation with symlink protection (O_NOFOLLOW where available)
+    open_flags = os.O_CREAT | os.O_RDWR
+    if hasattr(os, "O_NOFOLLOW"):
+        open_flags |= os.O_NOFOLLOW
+    # Use restrictive permissions: owner read/write only (0o600)
+    fd = os.open(external_data_file_path, open_flags, 0o600)
 
     # Open file for reading and writing at random locations ('r+b')
-    with open(external_data_file_path, "r+b") as data_file:
+    with os.fdopen(fd, "r+b") as data_file:
         data_file.seek(0, 2)
         if info.offset is not None:
             # Pad file to required offset if needed

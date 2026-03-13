@@ -6,6 +6,7 @@ from __future__ import annotations
 import itertools
 import os
 import pathlib
+import shutil
 import tempfile
 import unittest
 import uuid
@@ -29,6 +30,7 @@ from onnx.external_data_helper import (
     convert_model_to_external_data,
     load_external_data_for_model,
     load_external_data_for_tensor,
+    save_external_data,
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
@@ -882,6 +884,207 @@ class TestFunctionsAndSubGraphs(unittest.TestCase):
         if_node = model.graph.node[0]
         constant_nodes = [attr.g.node[0] for attr in if_node.attribute]
         self._check(model, constant_nodes)
+
+
+def _make_external_data_test_model() -> tuple[ModelProto, np.ndarray]:
+    """Create a simple model with a large initializer suitable for external data tests."""
+    model = parser.parse_model(
+        """
+        <ir_version: 7, opset_import: ["": 17]>
+        agraph (float[100, 100] input) => (float[100, 100] output) {
+            output = Identity(input)
+        }
+        """
+    )
+    array = np.ones((100, 100), dtype=np.float32)
+    model.graph.initializer.append(from_array(array, name="weight"))
+    return model, array
+
+
+@unittest.skipIf(
+    os.name == "nt", reason="Symlinks require elevated privileges on Windows"
+)
+class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
+    """Test that save_external_data rejects symlinks to prevent arbitrary file overwrites."""
+
+    def test_save_rejects_symlink_target(self) -> None:
+        """Saving external data must refuse to follow symlinks."""
+        sensitive_file = os.path.join(self.temp_dir, "sensitive.txt")
+        with open(sensitive_file, "w") as f:
+            f.write("SENSITIVE DATA")
+
+        model, array = _make_external_data_test_model()
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Replace external data file with a symlink to the sensitive file
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        os.remove(ext_data_path)
+        os.symlink(sensitive_file, ext_data_path)
+
+        loaded_model = onnx.load(model_path, load_external_data=False)
+        loaded_model.graph.initializer[0].raw_data = array.tobytes()
+
+        with self.assertRaises(checker.ValidationError):
+            onnx.save_model(
+                loaded_model,
+                model_path,
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=ext_data,
+                size_threshold=1024,
+            )
+
+        # Sensitive file must not be modified
+        with open(sensitive_file) as f:
+            self.assertEqual(f.read(), "SENSITIVE DATA")
+
+
+@unittest.skipIf(
+    os.name == "nt", reason="Symlinks require elevated privileges on Windows"
+)
+class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
+    """Test that loading external data rejects symlinks to prevent arbitrary file reads."""
+
+    def test_load_rejects_symlink_external_data(self) -> None:
+        """Loading a model whose external data is a symlink must raise ValidationError."""
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Create a target file and replace external data with a symlink to it
+        target_file = os.path.join(self.temp_dir, "target.txt")
+        with open(target_file, "w") as f:
+            f.write("SENSITIVE DATA")
+
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        os.remove(ext_data_path)
+        os.symlink(target_file, ext_data_path)
+
+        # Loading with onnx.load (which loads external data) must fail
+        with self.assertRaises(checker.ValidationError):
+            onnx.load(model_path)
+
+    def test_load_external_data_for_model_rejects_symlink(self) -> None:
+        """load_external_data_for_model must reject symlinked external data."""
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Replace external data with a symlink
+        target_file = os.path.join(self.temp_dir, "target.txt")
+        with open(target_file, "w") as f:
+            f.write("SENSITIVE DATA")
+
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        os.remove(ext_data_path)
+        os.symlink(target_file, ext_data_path)
+
+        # Load model without external data, then try to load external data explicitly
+        loaded_model = onnx.load(model_path, load_external_data=False)
+        with self.assertRaises(checker.ValidationError):
+            load_external_data_for_model(loaded_model, self.temp_dir)
+
+    def test_load_rejects_parent_directory_symlink(self) -> None:
+        """A symlink in the parent directory must be caught by realpath containment."""
+        # Create a "sensitive" directory outside the model directory with a data file
+        sensitive_dir = os.path.join(self.temp_dir, "sensitive")
+        os.makedirs(sensitive_dir)
+        secret_file = os.path.join(sensitive_dir, "secret.bin")
+        with open(secret_file, "wb") as f:
+            f.write(b"SENSITIVE DATA" * 100)
+
+        # Create a model directory with a real subdir for saving
+        model_dir = os.path.join(self.temp_dir, "model_dir")
+        os.makedirs(model_dir)
+        subdir_path = os.path.join(model_dir, "subdir")
+        os.makedirs(subdir_path)
+
+        # Create model with external data location "subdir/secret.bin"
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(model_dir, "model.onnx")
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location="subdir/secret.bin",
+            size_threshold=1024,
+        )
+
+        # Replace the real subdir with a symlink to the sensitive directory
+        shutil.rmtree(subdir_path)
+        os.symlink(sensitive_dir, subdir_path)
+
+        # Loading must fail because realpath resolves outside model_dir
+        loaded_model = onnx.load(model_path, load_external_data=False)
+        with self.assertRaises(checker.ValidationError):
+            load_external_data_for_model(loaded_model, model_dir)
+
+
+@unittest.skipIf(os.name == "nt", reason="Hardlinks behave differently on Windows")
+class TestLoadExternalDataHardlinkProtection(TestLoadExternalDataBase):
+    """Test that loading external data rejects files with multiple hardlinks."""
+
+    def test_load_rejects_hardlinked_external_data(self) -> None:
+        """Loading a model whose external data has multiple hardlinks must raise ValidationError."""
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Create a hardlink to the external data file
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        hardlink_path = os.path.join(self.temp_dir, "hardlink_data.bin")
+        os.link(ext_data_path, hardlink_path)
+
+        # Loading must fail because the external data file has multiple hardlinks.
+        # Either the C++ checker or Python code catches this as ValidationError.
+        with self.assertRaises(checker.ValidationError):
+            onnx.load(model_path)
+
+
+class TestSaveExternalDataAbsolutePathValidation(TestLoadExternalDataBase):
+    """Test that save_external_data rejects absolute paths."""
+
+    def test_save_rejects_absolute_path(self) -> None:
+        """Absolute paths must be rejected as external data locations."""
+        array = np.ones((100,), dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        set_external_data(tensor, location="/etc/passwd")
+        with self.assertRaises(checker.ValidationError):
+            save_external_data(tensor, self.temp_dir)
 
 
 if __name__ == "__main__":
