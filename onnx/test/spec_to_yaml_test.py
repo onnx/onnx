@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import filecmp
 import pathlib
 import sys
 import tempfile
@@ -107,8 +108,6 @@ class TestSpecToYaml(unittest.TestCase):
 
     def test_deterministic_output(self) -> None:
         """Running twice produces identical files."""
-        import filecmp
-
         with tempfile.TemporaryDirectory() as tmpdir2:
             saved_argv = sys.argv
             sys.argv = ["spec_to_yaml", "--output", tmpdir2]
