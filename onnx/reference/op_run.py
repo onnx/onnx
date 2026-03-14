@@ -248,10 +248,8 @@ class OpRun(abc.ABC):
                 setattr(
                     self,
                     f"_run_{att.name}",
-                    lambda context,
-                    value=value,
-                    attributes=None: OpRun._evaluate_subgraph(
-                        context, value, attributes
+                    lambda context, value=value, attributes=None: (
+                        OpRun._evaluate_subgraph(context, value, attributes)
                     ),
                 )
 

@@ -2142,6 +2142,82 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.DOUBLE, (2, 2))]
         )
 
+    def test_slice_empty_dim_positive_step(self) -> None:
+        """Slice on empty dimension with positive step should produce dim_value=0."""
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (0, 6)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
+        )
+
+    def test_slice_empty_dim_negative_step(self) -> None:
+        """Regression test for issue #7735: std::clamp UB on empty dim with step=-1."""
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (0, 6)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (1,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (-1,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
+        )
+
+    def test_slice_scalar_shape_output(self) -> None:
+        """Shape(scalar) produces 0-length output; Slice on it should not crash."""
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, ()),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [
+                make_node("Shape", ["x"], ["shape"]),
+                make_node("Slice", ["shape", "starts", "ends", "axes", "steps"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("shape", TensorProto.INT64, (0,)),
+                make_tensor_value_info("y", TensorProto.INT64, (0,)),
+            ],
+        )
+
     def test_conv(self) -> None:
         graph = self._make_graph(
             [
