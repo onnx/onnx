@@ -376,11 +376,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
         modified = False
         atts = []
         for att in node.attribute:
-            if (
-                att.type == AttributeProto.GRAPH
-                and hasattr(att, "g")
-                and att.g is not None
-            ):
+            if att.type == AttributeProto.GRAPH and att.HasField("g"):
                 g = replace_initializer_by_constant_of_shape(
                     att.g,
                     threshold=threshold,
@@ -391,6 +387,21 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
                 if id(g) != id(att.g):
                     modified = True
                     att = make_attribute(att.name, g)  # noqa: PLW2901
+            elif att.type == AttributeProto.GRAPHS:
+                new_graphs = []
+                for sub_g in att.graphs:
+                    new_g = replace_initializer_by_constant_of_shape(
+                        sub_g,
+                        threshold=threshold,
+                        ir_version=ir_version,
+                        use_range=use_range,
+                        value_constant_of_shape=value_constant_of_shape,
+                    )
+                    if id(new_g) != id(sub_g):
+                        modified = True
+                    new_graphs.append(new_g)
+                if modified:
+                    att = make_attribute(att.name, new_graphs)  # noqa: PLW2901
             atts.append(att)
         if modified:
             new_node = make_node(node.op_type, node.input, node.output)

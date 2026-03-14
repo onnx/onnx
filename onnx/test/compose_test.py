@@ -662,6 +662,48 @@ class TestComposeFunctions(unittest.TestCase):
                         ):
                             self.assertEqual(_prefixed(prefix, output_n0), output_n1)
 
+    def test_add_prefix_attribute_multiple_subgraphs(self) -> None:
+        """Tests prefixing attribute's repeated graphs field."""
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])
+        Out = helper.make_tensor_value_info("Out", TensorProto.FLOAT, [1])
+
+        g1 = helper.make_graph(
+            [helper.make_node("Identity", ["X"], ["Out"], name="id1")],
+            "g1",
+            [X],
+            [Out],
+        )
+        g2 = helper.make_graph(
+            [helper.make_node("Identity", ["X"], ["Out"], name="id2")],
+            "g2",
+            [X],
+            [Out],
+        )
+        node = helper.make_node(
+            "CustomOp",
+            ["X"],
+            ["Out"],
+            name="custom",
+            bodies=[g1, g2],
+        )
+        graph = helper.make_graph([node], "graph", [X], [Out])
+
+        prefix = "pfx."
+        prefixed = compose.add_prefix_graph(graph, prefix)
+        self.assertEqual(prefixed.node[0].name, _prefixed(prefix, "custom"))
+
+        # Verify both subgraphs in the repeated graphs field are prefixed
+        pfx_graphs = prefixed.node[0].attribute[0].graphs
+        self.assertEqual(len(pfx_graphs), 2)
+        for name in ("id1", "id2"):
+            self.assertTrue(
+                any(
+                    n.name == _prefixed(prefix, name)
+                    for g in pfx_graphs
+                    for n in g.node
+                )
+            )
+
     def test_add_prefix_all(self) -> None:
         """Tests prefixing all names in the graph"""
         self._test_add_prefix(True, True, True, True, True, True)
