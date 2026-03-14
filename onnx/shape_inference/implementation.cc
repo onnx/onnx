@@ -45,10 +45,9 @@ std::string GetValueCaseString(const TypeProto& type) {
   return ONNX_NAMESPACE::to_string(type.value_case());
 }
 
-bool IsShapeInferenceError(const InferenceError& err) {
+bool IsTypeInferenceError(const InferenceError& err) {
   const std::string message = err.what();
-  static const std::string kShapeInferenceTag = "[ShapeInferenceError]";
-  return message.compare(0, kShapeInferenceTag.size(), kShapeInferenceTag) == 0;
+  return message.find("[TypeInferenceError]") != std::string::npos;
 }
 
 std::string GetElemTypeString(const TypeProto_Tensor& type) {
@@ -282,6 +281,7 @@ static void mergeTypesOnly(const TypeProto& inferred_type, TypeProto* existing_t
   const auto existing_val_case = existing_type->value_case();
   if (existing_val_case == TypeProto::ValueCase::VALUE_NOT_SET) {
     existing_type->CopyFrom(inferred_type);
+    ClearShape(existing_type);
     return;
   }
 
@@ -300,6 +300,7 @@ static void mergeTypesOnly(const TypeProto& inferred_type, TypeProto* existing_t
   } else if (inferred_val_case == TypeProto::kSequenceType) {
     if (!existing_type->sequence_type().has_elem_type()) {
       existing_type->mutable_sequence_type()->mutable_elem_type()->CopyFrom(inferred_type.sequence_type().elem_type());
+      ClearShape(existing_type->mutable_sequence_type()->mutable_elem_type());
       return;
     }
     mergeTypesOnly(
@@ -307,6 +308,7 @@ static void mergeTypesOnly(const TypeProto& inferred_type, TypeProto* existing_t
   } else if (inferred_val_case == TypeProto::kOptionalType) {
     if (!existing_type->optional_type().has_elem_type()) {
       existing_type->mutable_optional_type()->mutable_elem_type()->CopyFrom(inferred_type.optional_type().elem_type());
+      ClearShape(existing_type->mutable_optional_type()->mutable_elem_type());
       return;
     }
     mergeTypesOnly(
@@ -326,6 +328,7 @@ static void mergeTypesOnly(const TypeProto& inferred_type, TypeProto* existing_t
     }
     if (!existing_type->map_type().has_value_type()) {
       existing_type->mutable_map_type()->mutable_value_type()->CopyFrom(inferred_type.map_type().value_type());
+      ClearShape(existing_type->mutable_map_type()->mutable_value_type());
       return;
     }
     mergeTypesOnly(inferred_type.map_type().value_type(), existing_type->mutable_map_type()->mutable_value_type());
@@ -597,8 +600,7 @@ class ShapeInferenceImplBase {
         generated_shape_data_by_name,
         &graph_inference_context);
 
-    bool allow_type_update = false;
-    bool ignore_shape_error = false;
+    bool skip_updates = true;
     ONNX_TRY {
       if (schema) {
         if (schema->has_type_and_shape_inference_function()) {
@@ -622,7 +624,7 @@ class ShapeInferenceImplBase {
         has_unsupported_op = true;
         return;
       }
-      allow_type_update = true;
+      skip_updates = false;
     }
     ONNX_CATCH(const ONNX_NAMESPACE::InferenceError& ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
@@ -635,8 +637,8 @@ class ShapeInferenceImplBase {
         // returned-values of the custom-op are unknown, and subsequent node-level inference
         // may fail because of this.
         if (!has_unsupported_op) {
-          if (!options.infer_shapes && IsShapeInferenceError(ex)) {
-            ignore_shape_error = true;
+          if (!options.infer_shapes && !IsTypeInferenceError(ex)) {
+            skip_updates = false;
           } else {
             inference_errors.push_back(GetErrorWithNodeInfo(n, ex));
           }
@@ -650,7 +652,7 @@ class ShapeInferenceImplBase {
       ONNX_HANDLE_EXCEPTION([&]() { fail_shape_inference(GetErrorWithNodeInfo(n, err)); });
     }
 
-    if (allow_type_update || ignore_shape_error) {
+    if (!skip_updates) {
       for (int i = 0; i < n.output_size(); ++i) {
         // skip type and shape propagation for missing optional outputs.
         if (!n.output(i).empty())
