@@ -858,9 +858,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         proto.SerializeToString(&out);
         return nb::bytes(out.c_str(), out.size());
       },
-      "bytes"_a,
-      "check_type"_a = false,
-      "strict_mode"_a = false);
+      nb::arg("bytes"),
+      nb::arg("check_type") = false,
+      nb::arg("strict_mode") = false);
 
   shape_inference.def(
       "infer_shapes_path",
@@ -882,10 +882,10 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, false, false};
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
       },
-      "model_path"_a,
-      "output_path"_a = "",
-      "check_type"_a = false,
-      "strict_mode"_a = false);
+      nb::arg("model_path"),
+      nb::arg("output_path") = "",
+      nb::arg("check_type") = false,
+      nb::arg("strict_mode") = false);
 
   shape_inference.def(
       "infer_function_output_types",
