@@ -875,10 +875,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   shape_inference.def(
       "infer_types_path",
-      [](const std::string& model_path,
-         const std::string& output_path,
-         bool check_type,
-         bool strict_mode) -> void {
+      [](const std::string& model_path, const std::string& output_path, bool check_type, bool strict_mode) -> void {
         ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, false, false};
         shape_inference::InferShapes(model_path, output_path, OpSchemaRegistry::Instance(), options);
       },
