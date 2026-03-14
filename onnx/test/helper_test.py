@@ -20,6 +20,7 @@ from onnx import (
     ModelProto,
     OptionalProto,
     SequenceProto,
+    SparseTensorProto,
     TensorProto,
     TypeProto,
     checker,
@@ -134,63 +135,50 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.tensors), tensors)
         checker.check_attribute(attr)
 
-    def test_attr_sparse_tensor_proto(self) -> None:
-        dense_shape = [3, 3]
-        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
+    @staticmethod
+    def _make_sparse_tensor() -> SparseTensorProto:
         values_tensor = helper.make_tensor(
             name="sparse_values",
             data_type=TensorProto.FLOAT,
-            dims=[len(sparse_values)],
-            vals=np.array(sparse_values).astype(np.float32),
+            dims=[3],
+            vals=np.array(
+                [1.764052391052246, 0.40015721321105957, 0.978738009929657],
+                dtype=np.float32,
+            ),
             raw=False,
         )
-
-        linear_indices = [2, 3, 5]
         indices_tensor = helper.make_tensor(
             name="indices",
             data_type=TensorProto.INT64,
-            dims=[len(linear_indices)],
-            vals=np.array(linear_indices).astype(np.int64),
+            dims=[3],
+            vals=np.array([2, 3, 5], dtype=np.int64),
             raw=False,
         )
-        sparse_tensor = helper.make_sparse_tensor(
-            values_tensor, indices_tensor, dense_shape
-        )
+        return helper.make_sparse_tensor(values_tensor, indices_tensor, [3, 3])
 
+    def test_attr_sparse_tensor_proto(self) -> None:
+        sparse_tensor = self._make_sparse_tensor()
         attr = helper.make_attribute("sparse_attr", sparse_tensor)
         self.assertEqual(attr.name, "sparse_attr")
         checker.check_sparse_tensor(helper.get_attribute_value(attr))
         checker.check_attribute(attr)
 
     def test_attr_sparse_tensor_repeated_protos(self) -> None:
-        dense_shape = [3, 3]
-        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
-        values_tensor = helper.make_tensor(
-            name="sparse_values",
-            data_type=TensorProto.FLOAT,
-            dims=[len(sparse_values)],
-            vals=np.array(sparse_values).astype(np.float32),
-            raw=False,
-        )
-
-        linear_indices = [2, 3, 5]
-        indices_tensor = helper.make_tensor(
-            name="indices",
-            data_type=TensorProto.INT64,
-            dims=[len(linear_indices)],
-            vals=np.array(linear_indices).astype(np.int64),
-            raw=False,
-        )
-        sparse_tensor = helper.make_sparse_tensor(
-            values_tensor, indices_tensor, dense_shape
-        )
-
-        repeated_sparse = [sparse_tensor, sparse_tensor]
-        attr = helper.make_attribute("sparse_attrs", repeated_sparse)
+        sparse_tensor = self._make_sparse_tensor()
+        attr = helper.make_attribute("sparse_attrs", [sparse_tensor, sparse_tensor])
         self.assertEqual(attr.name, "sparse_attrs")
         checker.check_attribute(attr)
         for s in helper.get_attribute_value(attr):
             checker.check_sparse_tensor(s)
+
+    def test_printable_attribute_sparse_tensor(self) -> None:
+        sparse_tensor = self._make_sparse_tensor()
+
+        attr = helper.make_attribute("st", sparse_tensor)
+        self.assertIn("<Sparse Tensor>", helper.printable_attribute(attr))
+
+        attr = helper.make_attribute("sts", [sparse_tensor, sparse_tensor])
+        self.assertIn("[<Sparse Tensor>, ...]", helper.printable_attribute(attr))
 
     def test_attr_repeated_graph_proto(self) -> None:
         graphs = [GraphProto(), GraphProto()]
