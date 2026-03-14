@@ -113,7 +113,7 @@ def gen_proto3_code(
     print(f"Generate pb3 code using {protoc_path}")
     build_args = [protoc_path, proto3_path, "-I", include_path]
     build_args.extend(["--cpp_out", cpp_out, "--python_out", python_out])
-    subprocess.check_call(build_args)
+    subprocess.run(build_args, check=True)  # noqa: S603
 
 
 def translate(source: str, proto: int, onnx_ml: bool, package_name: str) -> str:

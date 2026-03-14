@@ -709,7 +709,7 @@ def make_attribute(
             attr.type_protos.extend(value)
             attr.type = AttributeProto.TYPE_PROTOS
         else:
-            raise AssertionError()  # Should not reach since `ValueError` must be raised in attr_type checking
+            raise AssertionError  # Should not reach since `ValueError` must be raised in attr_type checking
     else:
         raise TypeError(f"'{value}' is not an accepted attribute value.")
 

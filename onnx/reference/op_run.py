@@ -253,7 +253,7 @@ class OpRun(abc.ABC):
                     ),
                 )
 
-        if self._schema and self.onnx_node.op_type not in {"Constant"}:
+        if self._schema and self.onnx_node.op_type != "Constant":
             for k, v in self._schema.attributes.items():
                 if not hasattr(self, k):
                     if getattr(v, "required", True):
@@ -552,7 +552,7 @@ class OpRun(abc.ABC):
 
         def log_function(pattern: str, *args: Any) -> None:
             if verbose > 1:
-                print(pattern % tuple(args))
+                print(pattern % tuple(args))  # noqa: T201
 
         node = cls.make_node(n_inputs, n_outputs, **kwargs)
         run_params = {

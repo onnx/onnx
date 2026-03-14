@@ -119,10 +119,14 @@ lint.select = [
     "B", # flake8-bugbear
     "BLE", # flake8-blind-except
     "C4", # flake8-comprehensions
+    "C90", # mccabe complexity
     "D", # pydocstyle
+    "DTZ", # flake8-datetimez
     "E", # pycodestyle
     "F", # Pyflakes
     "FA", # flake8-future-annotations
+    "FLY", # flynt
+    "FURB", # refurb
     "G", # flake8-logging-format
     "I", # isort
     "ISC", # flake8-implicit-str-concat
@@ -130,13 +134,17 @@ lint.select = [
     "N", # pep8-naming
     "NPY", # modern numpy
     "PERF", # Perflint
+    "PGH", # pygrep-hooks
     "PIE", # flake8-pie
     "PL", # pylint
     "PYI", # flake8-pyi
+    "RSE", # flake8-raise
     "RUF", # Ruff-specific rules
+    "S", # flake8-bandit
     "SIM", # flake8-simplify
     "SLOT", # flake8-slot
     "T10", # flake8-debugger
+    "T20", # flake8-print
     "TC", # flake8-type-checking
     "TID", # Disallow relative imports
     "TRY", # flake8-try-except-raise
@@ -169,6 +177,8 @@ lint.ignore = [
     "SIM108", # We don't always encourage ternary operators
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
+    "S101", # assert is used extensively in tests and validation
+    "C901", # Complex functions are acceptable alongside PLR0912/PLR0915
     "TRY003", # Messages can be constructed in the exception
 ]
 
@@ -190,12 +200,15 @@ required-imports = ["from __future__ import annotations"]
 # Prefer inline ignores with `noqa: xxx`.
 # Eventually this list should become empty.
 "**/*_test*" = ["N802"] # Function casing
-"onnx/backend/test/**" = ["PLR2004"] # Magic numbers allowed in tests
+"onnx/backend/test/**" = ["PLR2004", "S", "T20"] # Magic numbers, security, print allowed in tests
 "onnx/backend/test/case/**" = ["N802"] # Function casing
 "onnx/reference/ops/**" = [
     "N801", # Class casing
     "PLR2004", # Magic numbers
 ]
-"onnx/test/reference_evaluator_test.py"= ["C408"]  # dict(...) -> { ... }
-"onnx/test/**" = ["PLR2004"] # Magic numbers allowed in tests
+"onnx/test/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
+"onnx/test/**" = ["PLR2004", "S311", "T20"] # Magic numbers, non-crypto random, print allowed in tests
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]
+"onnx/gen_proto.py" = ["T20"] # Build script uses print for progress
+"onnx/defs/gen_*.py" = ["T20"] # Code generators use print for output
+"tools/**" = ["T20"] # Build tools use print for progress

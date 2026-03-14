@@ -44,7 +44,7 @@ def namedtupledict(
     field_names_map = {n: i for i, n in enumerate(field_names)}
     # Some output names are invalid python identifier, e.g. "0"
     kwargs.setdefault("rename", True)
-    data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore  # noqa: PYI024
+    data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore[misc]  # noqa: PYI024
 
     def getitem(self: Any, key: Any) -> Any:
         if isinstance(key, str):
@@ -133,7 +133,7 @@ class Backend:
         if "opset_version" in kwargs:
             special_context = c_checker.CheckerContext()
             special_context.ir_version = IR_VERSION
-            special_context.opset_imports = {"": kwargs["opset_version"]}  # type: ignore
+            special_context.opset_imports = {"": kwargs["opset_version"]}  # type: ignore[dict-item]
             onnx.checker.check_node(node, special_context)
         else:
             onnx.checker.check_node(node)
