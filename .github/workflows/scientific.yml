@@ -1,0 +1,94 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Scientific Python Nightly
+on:
+  schedule:
+    # Run weekly on Monday 00:00 UTC
+    - cron:  '00 00 * * MON'
+
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      publish_scientific_nightly: # Publish to scientific-python nightly channel
+        description: 'Publish to scientific-python nightly channel'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+
+  call-linux:
+    uses: andife/onnx/.github/workflows/release_linux.yml@scientific
+    with:
+      os: "linux"
+      build_mode: 'scientific'
+      python_versions: '3.12'
+      test_python_versions: '3.14,3.13,3.12'
+
+  call-win:
+    uses: andife/onnx/.github/workflows/release_win.yml@scientific
+    with:
+      os: "win"
+      build_mode: 'scientific'
+      python_versions: '3.12'
+      test_python_versions: '3.14,3.13,3.12'
+
+  call-mac:
+    uses: andife/onnx/.github/workflows/release_mac.yml@scientific
+    with:
+      os: "macos"
+      build_mode: 'scientific'
+      python_versions: '3.12'
+      test_python_versions: '3.14,3.13,3.12'
+
+  call-sdist:
+    uses: andife/onnx/.github/workflows/release_sdist.yml@scientific
+    with:
+      os: "macos"
+      build_mode: 'scientific'
+      python_versions: '3.12'
+
+  publish_scientific_nightly:
+    name: Publish to scientific-python nightly channel
+    runs-on: ubuntu-latest
+    needs: [call-linux, call-mac, call-win, call-sdist]
+    if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_scientific_nightly == 'yes') && (github.repository_owner == 'onnx') && (github.ref == 'refs/heads/main')
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          pattern: wheels*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+        with:
+          pattern: sdist
+          path: dist
+          merge-multiple: true
+
+      # - name: Upload to scientific-python nightly channel
+      #   uses: scientific-python/upload-nightly-action@5748273c71e2d8d3a61f3a11a16421c8954f9ecf # 0.6.3
+      #   with:
+      #     artifacts_path: dist
+      #     anaconda_nightly_upload_token: ${{secrets.UPLOAD_TOKEN}}
+
