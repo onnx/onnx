@@ -371,7 +371,7 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
         array_flat.resize([size + 1], refcheck=False)
     array_flat &= 0x0F
     array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
+    return array_flat[0::2] | array_flat[1::2]
 
 
 def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
@@ -386,7 +386,7 @@ def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
     array_flat[1::4] <<= 2
     array_flat[2::4] <<= 4
     array_flat[3::4] <<= 6
-    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
+    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
 
 
 def make_tensor(
@@ -494,10 +494,10 @@ def make_tensor(
         vals = vals.view(np.uint8)  # type: ignore[union-attr]
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
-        vals = _pack_4bitx2(vals)  # type: ignore[union-attr,arg-type]
+        vals = _pack_4bitx2(vals)  # type: ignore[arg-type]
     elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
         # Convert to packed 2-bit representation
-        vals = _pack_2bitx4(vals)  # type: ignore[union-attr,arg-type]
+        vals = _pack_2bitx4(vals)  # type: ignore[arg-type]
     elif data_type == TensorProto.BOOL:
         vals = vals.astype(np.uint8)  # type: ignore[union-attr]
 
@@ -534,7 +534,7 @@ def make_sequence(
     """Make a Sequence with specified value arguments."""
     sequence = SequenceProto()
     sequence.name = name
-    sequence.elem_type = elem_type
+    sequence.elem_type = elem_type  # type: ignore[assignment]
 
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
@@ -596,7 +596,7 @@ def make_optional(
     """Make an Optional with specified value arguments."""
     optional = OptionalProto()
     optional.name = name
-    optional.elem_type = elem_type
+    optional.elem_type = elem_type  # type: ignore[assignment]
 
     if elem_type == OptionalProto.UNDEFINED:
         return optional
@@ -679,7 +679,7 @@ def make_attribute(
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):
-                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
+                if all(issubclass(t, exp_t) for t in types):
                     attr_type = exp_enum
                     break
             if attr_type is None:
@@ -726,7 +726,7 @@ def make_attribute_ref(
     """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
     attr = AttributeProto()
     attr.name = name
-    attr.type = attr_type
+    attr.type = attr_type  # type: ignore[assignment]
     if doc_string:
         attr.doc_string = doc_string
     return attr
@@ -1074,7 +1074,7 @@ def printable_dim(dim: TensorShapeProto.Dimension) -> str:
 
 def printable_type(t: TypeProto) -> str:
     if t.WhichOneof("value") == "tensor_type":
-        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)  # type: ignore[attr-defined]
+        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)  # type: ignore[arg-type]
         if t.tensor_type.HasField("shape"):
             if len(t.tensor_type.shape.dim):
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
@@ -1095,7 +1095,7 @@ def printable_value_info(v: ValueInfoProto) -> str:
 
 def printable_tensor_proto(t: TensorProto) -> str:
     s = f"%{t.name}["
-    s += TensorProto.DataType.Name(t.data_type)  # type: ignore[attr-defined]
+    s += TensorProto.DataType.Name(t.data_type)  # type: ignore[arg-type]
     if t.dims is not None:
         if len(t.dims):
             s += str(", " + "x".join(map(str, t.dims)))
@@ -1341,7 +1341,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     if np_dtype in _np_dtype_to_tensor_dtype:
         return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
     if np.issubdtype(np_dtype, np.str_):
-        return TensorProto.STRING  # type: ignore[no-any-return]
+        return TensorProto.STRING  # type: ignore[return-value]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
@@ -1358,8 +1358,7 @@ def get_all_tensor_dtypes() -> KeysView[int]:
 
 
 _ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
-    k: v
-    for v, k in AttributeProto.AttributeType.items()  # type: ignore[attr-defined]
+    k: v for v, k in AttributeProto.AttributeType.items()
 }
 
 
@@ -1372,6 +1371,6 @@ def _attr_type_to_str(attr_type: int) -> str:
     Returns:
         String representing the supplied attr_type.
     """
-    if attr_type in AttributeProto.AttributeType.values():  # type: ignore[attr-defined]
+    if attr_type in AttributeProto.AttributeType.values():
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]  # type: ignore
+    return AttributeProto.AttributeType.keys()[0]

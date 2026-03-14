@@ -131,7 +131,7 @@ def _attribute_conversion_function(attr_type: onnx.AttributeProto.AttributeType)
         onnx.AttributeProto.TYPE_PROTOS: lambda att: [
             OnnxType(t) for t in att.type_protos
         ],
-    }[attr_type]
+    }[attr_type]  # type: ignore[index]
 
 
 class Graph:
@@ -208,7 +208,7 @@ class OpRun(abc.ABC):
                 functions=functions,
             )
 
-        conversion_function = _attribute_conversion_function(att.type)
+        conversion_function = _attribute_conversion_function(att.type)  # type: ignore[arg-type]
         if conversion_function is not None:
             return conversion_function(att)
 
@@ -301,12 +301,12 @@ class OpRun(abc.ABC):
     @property
     def input(self) -> Sequence[str]:
         """Returns node attribute `input`."""
-        return self.onnx_node.input  # type: ignore[no-any-return]
+        return self.onnx_node.input
 
     @property
     def output(self) -> Sequence[str]:
         """Returns node attribute `output`."""
-        return self.onnx_node.output  # type: ignore[no-any-return]
+        return self.onnx_node.output
 
     @property
     def op_type(self) -> str:
@@ -371,9 +371,7 @@ class OpRun(abc.ABC):
                 f"is a tuple, this is no ONNX corresponding type (Map, List, Tensor, SparseTensor). "
                 f"All returned types: {dtypes!r}."
             )
-        res = tuple(  # type: ignore[assignment]
-            (np.array(x) if np.isscalar(x) else x) for x in res
-        )
+        res = tuple((np.array(x) if np.isscalar(x) else x) for x in res)
         if any(
             not (isinstance(t, (np.ndarray, list, dict)) or hasattr(t, "todense"))
             for t in res
@@ -678,7 +676,7 @@ class OpFunctionContextDependant(OpFunction):
         types = []
         for t in inputs:
             dtype = onnx.helper.np_dtype_to_tensor_dtype(t.dtype)
-            types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))
+            types.append(onnx.helper.make_tensor_type_proto(dtype, t.shape))  # type: ignore[arg-type]
         cl = self.parent._load_impl(self.onnx_node, types)
         inst = cl(self.onnx_node, self.run_params)
         return self._run_impl(inst.impl_, *inputs, **kwargs)

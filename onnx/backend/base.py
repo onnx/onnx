@@ -49,9 +49,9 @@ def namedtupledict(
     def getitem(self: Any, key: Any) -> Any:
         if isinstance(key, str):
             key = field_names_map[key]
-        return super(type(self), self).__getitem__(key)  # type: ignore
+        return super(type(self), self).__getitem__(key)
 
-    data.__getitem__ = getitem  # type: ignore[assignment]
+    data.__getitem__ = getitem  # type: ignore[method-assign]
     return data
 
 
