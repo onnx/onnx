@@ -14,6 +14,7 @@ on:
     branches: [main, rel-*]
     types:
       - labeled
+      - synchronize
   workflow_dispatch:
     inputs:
       publish_pypi_weekly: # only from main branch it is possible to publish to pypi-weekly (official weekly preview build)
