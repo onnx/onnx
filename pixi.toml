@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-[project]
+[workspace]
 authors = ["ONNX Contributors <onnx-technical-discuss@lists.lfaidata.foundation>"]
 channels = ["conda-forge"]
 description = "Open Neural Network Exchange"
@@ -29,23 +29,21 @@ cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
 [tasks.pytest]
 cmd = "pytest"
 
-[build-dependencies]
+[dependencies]
+libdate = ">=3.0.1,<4"
+libprotobuf = "*"
+make = "*"
+ml_dtypes = ">=0.5.1"
+nanobind = ">=2.8.0"
+ninja = "*"
+packaging = ">=24.1"
+pip = ">=25.0"
+python = ">=3.10"
+
+[feature.dev.dependencies]
 c-compiler = ">=1.8.0"
 cmake = ">=3.31.5"
 cxx-compiler = ">=1.8.0"
-make = "*"
-ninja = "*"
-[host-dependencies]
-libdate = ">=3.0.1,<4"
-libprotobuf = "*"
-pip = ">=25.0"
-nanobind = ">=2.8.0"
-[dependencies]
-packaging = ">=24.1"
-python = ">=3.9"
-ml_dtypes = ">=0.5.1"
-
-[feature.dev.dependencies]
 # follows requirements-dev.txt
 ml_dtypes = ">=0.5.1"
 numpy = ">=1.22.0"
@@ -56,6 +54,8 @@ pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
 setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
+"ruamel.yaml" = ">=0.19.1"
+
 
 [feature.reference.dependencies]
 # follows requirements-reference.txt
