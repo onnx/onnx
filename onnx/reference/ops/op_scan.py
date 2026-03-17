@@ -96,7 +96,7 @@ class Scan(OpRun):
             states,
         )
 
-    def _run(  # type:ignore
+    def _run(  # type: ignore[override]
         self,
         *args,
         body=None,  # noqa: ARG002
