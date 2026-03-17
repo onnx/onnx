@@ -1228,7 +1228,9 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         self.assertEqual(info.location, "weights.bin")
         warning_messages = [str(w.message) for w in caught]
         self.assertEqual(
-            len(warning_messages), 1, "Expected 1 aggregated warning for all unknown keys"
+            len(warning_messages),
+            1,
+            "Expected 1 aggregated warning for all unknown keys",
         )
         # All unknown keys should be mentioned in the single warning
         self.assertIn("evil_one", warning_messages[0])
