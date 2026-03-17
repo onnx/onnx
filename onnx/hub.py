@@ -335,7 +335,7 @@ def download_model_with_test_data(
     )
 
     if force_reload or not os.path.exists(local_model_with_data_path):
-        if not _verify_repo_ref(repo) and not silent:
+        if not _verify_repo_ref(repo):
             msg = f"The model repo specification {repo} is not trusted and may contain security vulnerabilities. Only continue if you trust this repo."
 
             print(msg, file=sys.stderr)
