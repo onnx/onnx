@@ -10,7 +10,9 @@ from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
 
-def scatter_nd_impl(data, indices, updates, reduction="none"):  # type: ignore
+def scatter_nd_impl(
+    data: np.ndarray, indices: np.ndarray, updates: np.ndarray, reduction: str = "none"
+) -> np.ndarray:
     # Check tensor shapes
     assert indices.shape[-1] <= len(data.shape)
     assert updates.shape == indices.shape[:-1] + data.shape[indices.shape[-1] :]

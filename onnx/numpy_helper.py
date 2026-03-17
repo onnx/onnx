@@ -127,7 +127,7 @@ def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
         array_flat.resize([size + 1], refcheck=False)
     array_flat &= 0x0F
     array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
+    return array_flat[0::2] | array_flat[1::2]
 
 
 def _unpack_2bit(
@@ -166,7 +166,7 @@ def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
     array_flat[1::4] <<= 2
     array_flat[2::4] <<= 4
     array_flat[3::4] <<= 6
-    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
+    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
 
 
 def to_array(tensor: onnx.TensorProto, base_dir: str = "") -> np.ndarray:  # noqa: PLR0911
@@ -358,7 +358,7 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
         array = _pack_2bitx4(array)
 
     tensor.raw_data = tobytes_little_endian(array)
-    tensor.data_type = dtype
+    tensor.data_type = dtype  # type: ignore[assignment]
     return tensor
 
 
@@ -509,7 +509,7 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
 
     value_seq = from_list(values)
 
-    map_proto.key_type = key_type
+    map_proto.key_type = key_type  # type: ignore[assignment]
     if key_type == onnx.TensorProto.STRING:
         map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
