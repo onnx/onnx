@@ -152,9 +152,9 @@ In `load_external_data_for_tensor()` and `ModelContainer._load_large_initializer
 | Entry Point | File | Layers |
 |---|---|---|
 | `ExternalDataInfo.__init__` | `onnx/external_data_helper.py` | 1, 2 |
-| `load_external_data_for_tensor` | `onnx/external_data_helper.py` | 3 |
-| `set_external_data` | `onnx/external_data_helper.py` | 1, 2 (via `__init__`) |
-| `ModelContainer._load_large_initializers` | `onnx/model_container.py` | 3 |
+| `load_external_data_for_tensor` | `onnx/external_data_helper.py` | 1, 2, 3 |
+| `set_external_data` | `onnx/external_data_helper.py` | 1 (whitelist by overwrite) |
+| `ModelContainer._load_large_initializers` | `onnx/model_container.py` | 1, 2, 3 |
 
 ## Testing
 
