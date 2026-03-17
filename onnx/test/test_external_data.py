@@ -1206,7 +1206,6 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         # Should not raise — zero is a valid non-negative value
         info = ExternalDataInfo(tensor)
         self.assertEqual(info.location, "weights.bin")
-        # "0" is truthy as a string → `if self.offset is not None:` passes → int("0") = 0
         self.assertEqual(info.offset, 0)
         self.assertEqual(info.length, 0)
 
@@ -1226,16 +1225,18 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         self.assertFalse(hasattr(info, "evil_one"))
         self.assertFalse(hasattr(info, "evil_two"))
         self.assertEqual(info.location, "weights.bin")
-        warning_messages = [str(w.message) for w in caught]
+        unknown_key_warnings = [
+            str(w.message) for w in caught if "unknown external data key" in str(w.message).lower()
+        ]
         self.assertEqual(
-            len(warning_messages),
+            len(unknown_key_warnings),
             1,
-            "Expected 1 aggregated warning for all unknown keys",
+            "Expected 1 aggregated warning for unknown keys",
         )
         # All unknown keys should be mentioned in the single warning
-        self.assertIn("evil_one", warning_messages[0])
-        self.assertIn("evil_two", warning_messages[0])
-        self.assertIn("__dict__", warning_messages[0])
+        self.assertIn("evil_one", unknown_key_warnings[0])
+        self.assertIn("evil_two", unknown_key_warnings[0])
+        self.assertIn("__dict__", unknown_key_warnings[0])
 
     def test_allowed_keys_constant_is_frozen(self) -> None:
         """The whitelist must be a frozenset to prevent runtime mutation."""

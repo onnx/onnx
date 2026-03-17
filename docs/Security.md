@@ -102,7 +102,7 @@ This section describes the security model for validating external data attribute
 
 **Advisory:** [GHSA-538c-55jv-c5g9](https://github.com/onnx/onnx/security/advisories/GHSA-538c-55jv-c5g9)
 
-## Threat Model
+### Threat Model
 
 An attacker provides a malicious ONNX model with crafted `external_data` entries in `TensorProto`. The `external_data` field is a repeated `StringStringEntryProto` — a key-value store that accepts arbitrary strings for both key and value.
 
@@ -112,7 +112,7 @@ Attack vectors:
 
 - **Arbitrary attribute injection**: Setting unknown keys (e.g. `evil_attr`) causes `setattr()` to create arbitrary attributes on the `ExternalDataInfo` object. While no current consumer iterates over attributes, injected attributes create latent risk for future code.
 - **Dunder attribute injection**: Setting keys like `__class__` or `__dict__` corrupts the Python object's internal state, enabling type confusion attacks.
-- **Negative offset/length**: Negative values for `offset` cause `file.seek(-1)` which has undefined behavior. Negative `length` values bypass file access controls.
+- **Negative offset/length**: Negative values for `offset` cause `file.seek()` to raise `OSError`. Negative `length` causes `file.read(-1)` to read the entire file to EOF, bypassing intended size limits.
 - **Resource exhaustion (DoS)**: Setting `length` to a multi-petabyte value causes unbounded memory allocation when reading external data, even if the actual data file is small.
 
 Three Python consumers of `ExternalDataInfo` exist: `load_external_data_for_tensor`, `set_external_data` / `write_external_data_tensors`, and `ModelContainer._load_large_initializers`. (The C++ checker validates paths but does not use the Python `ExternalDataInfo` class.)

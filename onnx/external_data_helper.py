@@ -10,7 +10,7 @@ import sys
 import uuid
 import warnings
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import IO, TYPE_CHECKING
 
 import onnx.checker as onnx_checker
 import onnx.onnx_cpp2py_export.checker as c_checker
@@ -43,6 +43,7 @@ _ALLOWED_EXTERNAL_DATA_KEYS = frozenset(
     {"location", "offset", "length", "checksum", "basepath"}
 )
 _SORTED_ALLOWED_KEYS = sorted(_ALLOWED_EXTERNAL_DATA_KEYS)
+_MAX_UNKNOWN_KEYS_IN_WARNING = 10
 
 
 class ExternalDataInfo:
@@ -62,8 +63,14 @@ class ExternalDataInfo:
                 unknown_keys.append(entry.key)
 
         if unknown_keys:
+            unique_keys = list(dict.fromkeys(unknown_keys))
+            shown = unique_keys[:_MAX_UNKNOWN_KEYS_IN_WARNING]
+            extra = len(unique_keys) - len(shown)
+            key_list = repr(shown)
+            if extra > 0:
+                key_list += f" and {extra} more"
             warnings.warn(
-                f"Ignoring unknown external data key(s) {unknown_keys!r} "
+                f"Ignoring unknown external data key(s) {key_list} "
                 f"for tensor {tensor.name!r}. "
                 f"Allowed keys: {_SORTED_ALLOWED_KEYS}",
                 stacklevel=2,
@@ -84,6 +91,41 @@ class ExternalDataInfo:
                     f"External data length must be non-negative, got {self.length} "
                     f"for tensor {tensor.name!r}"
                 )
+
+
+def _validate_external_data_file_bounds(
+    data_file: IO[bytes],
+    info: ExternalDataInfo,
+    tensor_name: str,
+) -> bytes:
+    """Validate offset/length against actual file size and read data.
+
+    Layer 3 defense-in-depth (CWE-400): prevents memory exhaustion even if the
+    model was crafted via direct protobuf APIs that bypass Python parsing.
+
+    Returns the raw bytes read from the file.
+    """
+    file_size = os.fstat(data_file.fileno()).st_size
+
+    if info.offset is not None:
+        if info.offset > file_size:
+            raise ValueError(
+                f"External data offset ({info.offset}) exceeds file size "
+                f"({file_size}) for tensor {tensor_name!r}"
+            )
+        data_file.seek(info.offset)
+
+    if info.length is not None:
+        read_start = info.offset if info.offset is not None else 0
+        available = file_size - read_start
+        if info.length > available:
+            raise ValueError(
+                f"External data length ({info.length}) exceeds available data "
+                f"({available} bytes from offset {read_start}) "
+                f"for tensor {tensor_name!r}"
+            )
+        return data_file.read(info.length)
+    return data_file.read()
 
 
 def _validate_external_data_path(
@@ -153,30 +195,9 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         open_flags |= os.O_NOFOLLOW
     fd = os.open(external_data_file_path, open_flags)
     with os.fdopen(fd, "rb") as data_file:
-        # Layer 3: validate against actual file size — critical safety net (CWE-400)
-        # Prevents memory exhaustion even if model was crafted via direct protobuf APIs
-        file_size = os.fstat(data_file.fileno()).st_size
-
-        if info.offset is not None:
-            if info.offset > file_size:
-                raise ValueError(
-                    f"External data offset ({info.offset}) exceeds file size "
-                    f"({file_size}) for tensor {tensor.name!r}"
-                )
-            data_file.seek(info.offset)
-
-        if info.length is not None:
-            read_start = info.offset if info.offset is not None else 0
-            available = file_size - read_start
-            if info.length > available:
-                raise ValueError(
-                    f"External data length ({info.length}) exceeds available data "
-                    f"({available} bytes from offset {read_start}) "
-                    f"for tensor {tensor.name!r}"
-                )
-            tensor.raw_data = data_file.read(info.length)
-        else:
-            tensor.raw_data = data_file.read()
+        tensor.raw_data = _validate_external_data_file_bounds(
+            data_file, info, tensor.name
+        )
 
 
 def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:

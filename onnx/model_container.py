@@ -304,32 +304,8 @@ class ModelContainer:
                 open_flags |= os.O_NOFOLLOW
             fd = os.open(external_data_file_path, open_flags)
             with os.fdopen(fd, "rb") as data_file:
-                # Layer 3: validate against actual file size — critical safety net (CWE-400)
-                # Same defense-in-depth as load_external_data_for_tensor in external_data_helper.py
-                file_size = os.fstat(data_file.fileno()).st_size
-
-                if info.offset is not None:
-                    if info.offset > file_size:
-                        raise ValueError(
-                            f"External data offset ({info.offset}) exceeds file size "
-                            f"({file_size}) for tensor {tensor.name!r}"
-                        )
-                    data_file.seek(info.offset)
-
-                if info.length is not None:
-                    read_start = info.offset if info.offset is not None else 0
-                    available = file_size - read_start
-                    if info.length > available:
-                        raise ValueError(
-                            f"External data length ({info.length}) exceeds available data "
-                            f"({available} bytes from offset {read_start}) "
-                            f"for tensor {tensor.name!r}"
-                        )
-
-                raw_data = (
-                    data_file.read(info.length)
-                    if info.length is not None
-                    else data_file.read()
+                raw_data = ext_data._validate_external_data_file_bounds(
+                    data_file, info, tensor.name
                 )
 
                 dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.data_type)
