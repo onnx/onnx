@@ -1226,7 +1226,9 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         self.assertFalse(hasattr(info, "evil_two"))
         self.assertEqual(info.location, "weights.bin")
         unknown_key_warnings = [
-            str(w.message) for w in caught if "unknown external data key" in str(w.message).lower()
+            str(w.message)
+            for w in caught
+            if "unknown external data key" in str(w.message).lower()
         ]
         self.assertEqual(
             len(unknown_key_warnings),
