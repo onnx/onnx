@@ -8,6 +8,7 @@ import pathlib
 import re
 import sys
 import uuid
+import warnings
 from itertools import chain
 from typing import TYPE_CHECKING
 
@@ -24,6 +25,25 @@ from onnx.onnx_pb import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
+# Security: 3-layer defense against malicious external_data entries (GHSA-538c-55jv-c5g9)
+#
+# Layer 1 (here) — Attribute whitelist: Only spec-defined keys are accepted.
+#   Unknown keys are warned and ignored, preventing arbitrary attribute injection (CWE-915).
+#
+# Layer 2 (ExternalDataInfo.__init__) — Bounds validation: offset and length must be
+#   non-negative integers. Catches invalid values at parse time (CWE-400).
+#
+# Layer 3 (load_external_data_for_tensor) — File-size validation: offset and length are
+#   checked against actual file size before reading. This is the critical safety net that
+#   prevents memory exhaustion regardless of how the model was constructed (CWE-400).
+#
+# 'basepath' is included because set_external_data() and model_container
+# write it to protobuf entries; it must survive save/load round-trips.
+_ALLOWED_EXTERNAL_DATA_KEYS = frozenset(
+    {"location", "offset", "length", "checksum", "basepath"}
+)
+_SORTED_ALLOWED_KEYS = sorted(_ALLOWED_EXTERNAL_DATA_KEYS)
+
 
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
@@ -34,13 +54,36 @@ class ExternalDataInfo:
         self.basepath = ""
 
         for entry in tensor.external_data:
-            setattr(self, entry.key, entry.value)
+            # Layer 1: reject unknown keys (CWE-915 defense-in-depth)
+            if entry.key in _ALLOWED_EXTERNAL_DATA_KEYS:
+                setattr(self, entry.key, entry.value)
+            else:
+                warnings.warn(
+                    f"Ignoring unknown external data key {entry.key!r} "
+                    f"for tensor {tensor.name!r}. "
+                    f"Allowed keys: {_SORTED_ALLOWED_KEYS}",
+                    stacklevel=2,
+                )
 
+        # Layer 2: reject invalid values at parse time (CWE-400)
+        # Note: `if self.offset:` is falsy for both None and "0" → int(0),
+        # so offset=0 is treated the same as unset (None). This matches
+        # the original behavior where offset=0 means "read from start".
         if self.offset:
             self.offset = int(self.offset)
+            if self.offset < 0:
+                raise ValueError(
+                    f"External data offset must be non-negative, got {self.offset} "
+                    f"for tensor {tensor.name!r}"
+                )
 
         if self.length:
             self.length = int(self.length)
+            if self.length < 0:
+                raise ValueError(
+                    f"External data length must be non-negative, got {self.length} "
+                    f"for tensor {tensor.name!r}"
+                )
 
 
 def _validate_external_data_path(
@@ -110,10 +153,27 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         open_flags |= os.O_NOFOLLOW
     fd = os.open(external_data_file_path, open_flags)
     with os.fdopen(fd, "rb") as data_file:
+        # Layer 3: validate against actual file size — critical safety net (CWE-400)
+        # Prevents memory exhaustion even if model was crafted via direct protobuf APIs
+        file_size = os.fstat(data_file.fileno()).st_size
+
         if info.offset:
+            if info.offset > file_size:
+                raise ValueError(
+                    f"External data offset ({info.offset}) exceeds file size "
+                    f"({file_size}) for tensor {tensor.name!r}"
+                )
             data_file.seek(info.offset)
 
         if info.length:
+            read_start = info.offset if info.offset else 0
+            available = file_size - read_start
+            if info.length > available:
+                raise ValueError(
+                    f"External data length ({info.length}) exceeds available data "
+                    f"({available} bytes from offset {read_start}) "
+                    f"for tensor {tensor.name!r}"
+                )
             tensor.raw_data = data_file.read(info.length)
         else:
             tensor.raw_data = data_file.read()
