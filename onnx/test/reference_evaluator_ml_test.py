@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# type: ignore
+# mypy: ignore-errors
 from __future__ import annotations
 
 import importlib
@@ -1472,7 +1472,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         for post, expected in expected_post.items():
             with self.subTest(post_transform=post):
                 model = self._get_test_tree_ensemble_classifier_binary(post)
-                if post in ("NONE",):
+                if post == "NONE":
                     self._check_ort(model, {"X": x})
                 sess = ReferenceEvaluator(model)
                 got = sess.run(None, {"X": x})

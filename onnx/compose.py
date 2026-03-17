@@ -276,7 +276,7 @@ def merge_graphs(
         ]
     )
 
-    g.name = name if name is not None else "_".join([g1.name, g2.name])
+    g.name = name if name is not None else f"{g1.name}_{g2.name}"
 
     if doc_string is None:
         doc_string = (

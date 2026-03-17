@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# type: ignore
+# mypy: ignore-errors
 
 """You can run a specific test by using the following syntax.
 
