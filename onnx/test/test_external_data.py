@@ -1209,7 +1209,7 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         # Should not raise — zero is a valid non-negative value
         info = ExternalDataInfo(tensor)
         self.assertEqual(info.location, "weights.bin")
-        # "0" is truthy as a string → `if self.offset:` passes → int("0") = 0
+        # "0" is truthy as a string → `if self.offset is not None:` passes → int("0") = 0
         self.assertEqual(info.offset, 0)
         self.assertEqual(info.length, 0)
 
@@ -1277,7 +1277,7 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
         set_external_data(tensor, location="data.bin", offset=file_size + 100)
         tensor.ClearField("raw_data")
 
-        with self.assertRaises(ValueError, msg="offset.*exceeds file size"):
+        with self.assertRaisesRegex(ValueError, "offset.*exceeds file size"):
             load_external_data_for_tensor(tensor, self.temp_dir)
 
     def test_length_exceeds_available_data_raises(self) -> None:
@@ -1295,7 +1295,7 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
         set_external_data(tensor, location="data.bin", length=file_size * 1000)
         tensor.ClearField("raw_data")
 
-        with self.assertRaises(ValueError, msg="length.*exceeds available data"):
+        with self.assertRaisesRegex(ValueError, "length.*exceeds available data"):
             load_external_data_for_tensor(tensor, self.temp_dir)
 
     def test_valid_offset_and_length_load_correctly(self) -> None:
