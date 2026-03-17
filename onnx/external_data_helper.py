@@ -65,11 +65,7 @@ class ExternalDataInfo:
                     stacklevel=2,
                 )
 
-        # Layer 2: reject invalid values at parse time (CWE-400)
-        # Note: `if self.offset:` is falsy for both None and "0" → int(0),
-        # so offset=0 is treated the same as unset (None). This matches
-        # the original behavior where offset=0 means "read from start".
-        if self.offset:
+        if self.offset is not None:
             self.offset = int(self.offset)
             if self.offset < 0:
                 raise ValueError(
@@ -77,7 +73,7 @@ class ExternalDataInfo:
                     f"for tensor {tensor.name!r}"
                 )
 
-        if self.length:
+        if self.length is not None:
             self.length = int(self.length)
             if self.length < 0:
                 raise ValueError(
@@ -157,7 +153,7 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         # Prevents memory exhaustion even if model was crafted via direct protobuf APIs
         file_size = os.fstat(data_file.fileno()).st_size
 
-        if info.offset:
+        if info.offset is not None:
             if info.offset > file_size:
                 raise ValueError(
                     f"External data offset ({info.offset}) exceeds file size "
@@ -165,8 +161,8 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
                 )
             data_file.seek(info.offset)
 
-        if info.length:
-            read_start = info.offset if info.offset else 0
+        if info.length is not None:
+            read_start = info.offset if info.offset is not None else 0
             available = file_size - read_start
             if info.length > available:
                 raise ValueError(
@@ -207,7 +203,7 @@ def set_external_data(
         raise ValueError(
             "Tensor "
             + tensor.name
-            + "does not have raw_data field. Cannot set external data for this tensor."
+            + " does not have raw_data field. Cannot set external data for this tensor."
         )
 
     del tensor.external_data[:]
@@ -384,13 +380,10 @@ def _recursive_attribute_processor(
             yield from func(graph)
 
 
-def _get_initializer_tensors_from_graph(
-    graph_or_function: GraphProto | FunctionProto, /
-) -> Iterable[TensorProto]:
-    """Create an iterator of initializer tensors from ONNX model graph/function."""
-    if isinstance(graph_or_function, GraphProto):
-        yield from graph_or_function.initializer
-    for node in graph_or_function.node:
+def _get_initializer_tensors_from_graph(graph: GraphProto, /) -> Iterable[TensorProto]:
+    """Create an iterator of initializer tensors from ONNX model graph."""
+    yield from graph.initializer
+    for node in graph.node:
         for attribute in node.attribute:
             yield from _recursive_attribute_processor(
                 attribute, _get_initializer_tensors_from_graph
@@ -400,8 +393,6 @@ def _get_initializer_tensors_from_graph(
 def _get_initializer_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
     """Create an iterator of initializer tensors from ONNX model."""
     yield from _get_initializer_tensors_from_graph(onnx_model_proto.graph)
-    for function in onnx_model_proto.functions:
-        yield from _get_attribute_tensors_from_graph(function)
 
 
 def _get_attribute_tensors_from_graph(

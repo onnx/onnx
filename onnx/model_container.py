@@ -308,7 +308,7 @@ class ModelContainer:
                 # Same defense-in-depth as load_external_data_for_tensor in external_data_helper.py
                 file_size = os.fstat(data_file.fileno()).st_size
 
-                if info.offset:
+                if info.offset is not None:
                     if info.offset > file_size:
                         raise ValueError(
                             f"External data offset ({info.offset}) exceeds file size "
@@ -316,8 +316,8 @@ class ModelContainer:
                         )
                     data_file.seek(info.offset)
 
-                if info.length:
-                    read_start = info.offset if info.offset else 0
+                if info.length is not None:
+                    read_start = info.offset if info.offset is not None else 0
                     available = file_size - read_start
                     if info.length > available:
                         raise ValueError(
@@ -327,7 +327,9 @@ class ModelContainer:
                         )
 
                 raw_data = (
-                    data_file.read(info.length) if info.length else data_file.read()
+                    data_file.read(info.length)
+                    if info.length is not None
+                    else data_file.read()
                 )
 
                 dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.data_type)
