@@ -212,3 +212,5 @@ required-imports = ["from __future__ import annotations"]
 "onnx/gen_proto.py" = ["T20"] # Build script uses print for progress
 "onnx/defs/gen_*.py" = ["T20"] # Code generators use print for output
 "tools/**" = ["T20"] # Build tools use print for progress
+"examples/**" = ["T20"] # Example notebooks use print for output
+"docs/**" = ["T20"] # Doc scripts use print for debugging
