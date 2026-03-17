@@ -1044,11 +1044,8 @@ class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
         os.symlink(sensitive_dir, subdir_path)
 
         # Loading must fail because realpath resolves outside model_dir.
-        # Accept ValidationError (symlink/path containment check) or
-        # ValueError (file-size clamping detects length mismatch) —
-        # both correctly block the attack.
         loaded_model = onnx.load(model_path, load_external_data=False)
-        with self.assertRaises((checker.ValidationError, ValueError)):
+        with self.assertRaises(checker.ValidationError):
             load_external_data_for_model(loaded_model, model_dir)
 
 
@@ -1164,7 +1161,7 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         the object type, enabling type confusion attacks.
         """
         tensor = self._make_tensor_with_external_data({"location": "weights.bin"})
-        # Add __class__ key via protobuf (can't use dict literal for dunder keys)
+        # Add __class__ key via protobuf add() to mimic direct protobuf injection
         dunder_entry = tensor.external_data.add()
         dunder_entry.key = "__class__"
         dunder_entry.value = "builtins.dict"
@@ -1231,8 +1228,12 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         self.assertEqual(info.location, "weights.bin")
         warning_messages = [str(w.message) for w in caught]
         self.assertEqual(
-            len(warning_messages), 3, "Expected 3 warnings for 3 unknown keys"
+            len(warning_messages), 1, "Expected 1 aggregated warning for all unknown keys"
         )
+        # All unknown keys should be mentioned in the single warning
+        self.assertIn("evil_one", warning_messages[0])
+        self.assertIn("evil_two", warning_messages[0])
+        self.assertIn("__dict__", warning_messages[0])
 
     def test_allowed_keys_constant_is_frozen(self) -> None:
         """The whitelist must be a frozenset to prevent runtime mutation."""

@@ -53,17 +53,21 @@ class ExternalDataInfo:
         self.checksum = None
         self.basepath = ""
 
+        unknown_keys = []
         for entry in tensor.external_data:
             # Layer 1: reject unknown keys (CWE-915 defense-in-depth)
             if entry.key in _ALLOWED_EXTERNAL_DATA_KEYS:
                 setattr(self, entry.key, entry.value)
             else:
-                warnings.warn(
-                    f"Ignoring unknown external data key {entry.key!r} "
-                    f"for tensor {tensor.name!r}. "
-                    f"Allowed keys: {_SORTED_ALLOWED_KEYS}",
-                    stacklevel=2,
-                )
+                unknown_keys.append(entry.key)
+
+        if unknown_keys:
+            warnings.warn(
+                f"Ignoring unknown external data key(s) {unknown_keys!r} "
+                f"for tensor {tensor.name!r}. "
+                f"Allowed keys: {_SORTED_ALLOWED_KEYS}",
+                stacklevel=2,
+            )
 
         if self.offset is not None:
             self.offset = int(self.offset)

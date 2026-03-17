@@ -96,7 +96,7 @@ Symlink and hardlink tests are skipped on Windows (`os.name == "nt"`).
 
 ---
 
-# External Data Attribute Validation
+## External Data Attribute Validation
 
 This section describes the security model for validating external data attributes in `ExternalDataInfo`. It covers defenses against attribute injection (CWE-915) and resource exhaustion (CWE-400) via crafted `external_data` entries in `TensorProto`.
 
