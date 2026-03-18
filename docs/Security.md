@@ -115,7 +115,7 @@ Attack vectors:
 - **Negative offset/length**: Negative values for `offset` cause `file.seek()` to raise `OSError`. Negative `length` causes `file.read(-1)` to read the entire file to EOF, bypassing intended size limits.
 - **Resource exhaustion (DoS)**: Setting `length` to a multi-petabyte value causes unbounded memory allocation when reading external data, even if the actual data file is small.
 
-Three Python consumers of `ExternalDataInfo` exist: `load_external_data_for_tensor`, `set_external_data` / `write_external_data_tensors`, and `ModelContainer._load_large_initializers`. (The C++ checker validates paths but does not use the Python `ExternalDataInfo` class.)
+Four Python consumers of `ExternalDataInfo` exist: `load_external_data_for_tensor`, `set_external_data` / `write_external_data_tensors`, `ModelContainer._load_large_initializers`, and `ReferenceEvaluator` (in `onnx/reference/reference_evaluator.py`). (The C++ checker validates paths but does not use the Python `ExternalDataInfo` class.)
 
 ## Defense Layers
 
@@ -133,7 +133,7 @@ This also blocks dunder attribute injection (e.g. `__class__`, `__dict__`) that 
 
 `offset` and `length` must be non-negative integers. Non-numeric strings raise `ValueError`. This catches obviously invalid values early, before any file I/O occurs.
 
-**Rationale**: Negative `offset` causes `file.seek(-1)` which has undefined behavior; negative `length` could bypass file access controls. Validating at parse time provides a clear error message at the point closest to the malicious input.
+**Rationale**: Negative `offset` causes `file.seek(-1)` to raise `OSError`; negative `length` causes `file.read(-1)` to read the entire file, bypassing intended size limits. Validating at parse time provides a clear error message at the point closest to the malicious input.
 
 ### Layer 3: File-Size Validation at Consumption Time (CWE-400 Mitigation, Defense-in-Depth)
 

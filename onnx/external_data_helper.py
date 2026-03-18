@@ -44,6 +44,7 @@ _ALLOWED_EXTERNAL_DATA_KEYS = frozenset(
 )
 _SORTED_ALLOWED_KEYS = sorted(_ALLOWED_EXTERNAL_DATA_KEYS)
 _MAX_UNKNOWN_KEYS_IN_WARNING = 10
+_MAX_KEY_DISPLAY_LENGTH = 100
 
 
 class ExternalDataInfo:
@@ -54,18 +55,23 @@ class ExternalDataInfo:
         self.checksum = None
         self.basepath = ""
 
-        unknown_keys = []
+        unknown_keys: set[str] = set()
+        unknown_key_count = 0
         for entry in tensor.external_data:
             # Layer 1: reject unknown keys (CWE-915 defense-in-depth)
             if entry.key in _ALLOWED_EXTERNAL_DATA_KEYS:
                 setattr(self, entry.key, entry.value)
             else:
-                unknown_keys.append(entry.key)
+                unknown_key_count += 1
+                if len(unknown_keys) < _MAX_UNKNOWN_KEYS_IN_WARNING:
+                    truncated = entry.key[:_MAX_KEY_DISPLAY_LENGTH]
+                    if len(entry.key) > _MAX_KEY_DISPLAY_LENGTH:
+                        truncated += "..."
+                    unknown_keys.add(truncated)
 
         if unknown_keys:
-            unique_keys = list(dict.fromkeys(unknown_keys))
-            shown = unique_keys[:_MAX_UNKNOWN_KEYS_IN_WARNING]
-            extra = len(unique_keys) - len(shown)
+            shown = sorted(unknown_keys)
+            extra = unknown_key_count - len(shown)
             key_list = repr(shown)
             if extra > 0:
                 key_list += f" and {extra} more"
