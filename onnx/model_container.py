@@ -304,13 +304,8 @@ class ModelContainer:
                 open_flags |= os.O_NOFOLLOW
             fd = os.open(external_data_file_path, open_flags)
             with os.fdopen(fd, "rb") as data_file:
-                if info.offset is not None:
-                    data_file.seek(info.offset)
-
-                raw_data = (
-                    data_file.read(info.length)
-                    if info.length is not None
-                    else data_file.read()
+                raw_data = ext_data._validate_external_data_file_bounds(
+                    data_file, info, tensor.name
                 )
 
                 dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.data_type)
