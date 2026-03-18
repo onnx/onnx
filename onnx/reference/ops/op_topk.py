@@ -41,6 +41,11 @@ class _CommonTopK(OpRun):
         as it sorts everything then extracts the top *k*
         values.
 
+        NaN values are propagated through the output. When comparing
+        values for ordering, NaN is greater than all non-NaN values.
+        When multiple NaN values are present, the order between them
+        is determined by their indices along the axis (lower index first).
+
         .. warning::
             ONNX specifications may be imprecise in case of negative value
             for axis. The implementation follows what `onnxruntime`
