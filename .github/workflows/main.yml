@@ -1,0 +1,284 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: CI
+
+env:
+  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
+  UBSAN_OPTIONS: print_stacktrace=1
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # every day at midnight for reporting code coverage to codecov
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:  # set top-level default permissions as security good practice
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, doc=${{ matrix.documentation }}
+    continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+        python_version: ['3.14t', '3.14', '3.13t', '3.13', '3.12', '3.11', '3.10']
+        include:
+          - python_version: '3.14t'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 0
+            protobuf_type: 'Internal'
+          - python_version: '3.14'
+            onnx_ml: 1
+            debug_build: 1
+            documentation: 0
+            protobuf_type: 'Internal'
+          - python_version: '3.13'
+            onnx_ml: 1
+            debug_build: 1
+            unity_build: 1
+            documentation: 1
+            protobuf_type: 'Internal'
+          - python_version: '3.13t'
+            onnx_ml: 1
+            debug_build: 1
+            unity_build: 0
+            documentation: 0
+            protobuf_type: 'Internal'
+          - python_version: '3.13'
+            onnx_ml: 1
+            debug_build: 1
+            unity_build: 0
+            documentation: 1
+            protobuf_type: 'Internal'
+          - python_version: '3.12'
+            onnx_ml: 1
+            debug_build: 1
+            unity_build: 0
+            documentation: 1
+            protobuf_type: 'Internal'
+          - python_version: '3.11'
+            onnx_ml: 1
+            debug_build: 0
+            unity_build: 0
+            documentation: 0
+            protobuf_type: 'External'
+          - python_version: '3.10'
+            onnx_ml: 0
+            debug_build: 0
+            unity_build: 0
+            documentation: 0
+            protobuf_type: 'Internal'
+        exclude:
+          - os: windows-11-arm
+            python_version: '3.10'
+          - os:  macos-latest
+            python_version: '3.11'
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Show versions
+        run: |
+          python --version
+          cmake --version
+
+      - name: Install external protobuf - Linux
+        if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install libprotobuf-dev protobuf-compiler
+
+      - name: Install external protobuf - MacOS
+        if: matrix.protobuf_type == 'External' && matrix.os == 'macos-latest'
+        run: |
+          source workflow_scripts/protobuf/build_protobuf_unix.sh 3 $(pwd)/protobuf/protobuf_install
+
+      - name: Set up MSBuild (arm64)
+        if: startsWith(matrix.os,'windows-11-arm')
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+        with:
+          msbuild-architecture: arm64
+
+      - name: Set up MSBuild (x64)
+        if: startsWith(matrix.os,'windows-latest')
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+        with:
+          msbuild-architecture: x64
+
+      - name: Install external protobuf - Windows
+        if: matrix.protobuf_type == 'External' && startsWith(matrix.os, 'windows')
+        run: |
+          if ($matrix.os -like "windows-11-arm*") {
+              $cmake_arch = "ARM64"
+          } else {
+              $cmake_arch = "x64"
+          }
+
+          workflow_scripts/protobuf/build_protobuf_win.ps1 -cmake_arch $cmake_arch
+        shell: pwsh
+
+      - name: Build and install ONNX - Linux
+        if: startsWith(matrix.os,'ubuntu')
+        run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+          if [ "${{ matrix.python_version }}" == "3.14" ]; then
+            sudo apt-get update
+            sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
+          fi
+
+          if [ "${{ matrix.protobuf_type }}" == "External" ]; then
+            export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+          fi
+          pip install -e ".[reference]" -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_ASAN=${{ matrix.debug_build }} -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
+
+      - name: Build and install ONNX - MacOS
+        if: matrix.os == 'macos-latest'
+        run: |
+          pip install -e ".[reference]" -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
+
+      - name: Build and install ONNX - Windows
+        if: startsWith(matrix.os,'windows')
+        run: |
+          pip install -e . -v
+        env:
+          DEBUG: ${{ matrix.debug_build }}
+          ONNX_ML: ${{ matrix.onnx_ml }}
+          ONNX_BUILD_TESTS: 1
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
+
+      - name: pip freeze
+        run: |
+          pip freeze
+
+      - name: Setup GCC ASAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
+        run: |
+          export LD_PRELOAD="$(/usr/bin/c++ -print-file-name=libasan.so):$LD_PRELOAD"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install -r requirements-release_test.txt
+
+      - name: Run Python tests
+        #  if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
+        run: |
+          pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
+
+      # - name: Run Python tests (windows)
+      #   if: (matrix.os == 'windows-latest')
+      #   run: |
+      #     pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml --dist loadscope
+
+      - name: Run C++ tests
+        if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
+        run: |
+          export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
+          ./.setuptools-cmake-build/onnx_gtests
+
+      - name: Run C++ extension test
+        if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'Internal'
+        run: |
+          cd ./.setuptools-cmake-build/
+          sudo cmake --build . --target install
+          cd .././onnx/test/cmake
+          mkdir build
+          cd build
+          cmake -DONNX_ML=${{ matrix.onnx_ml }} ..
+          cmake --build .
+          ./main
+
+      - name: Upload coverage to Codecov
+        if: github.repository_owner == 'onnx'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload test results to Codecov
+        if: github.repository_owner == 'onnx' && !cancelled()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          report_type: test_results
+
+      # Note that the test data should be generated with numpy>=2.0.
+      # numpy 1.x and numpy 2.0 produce slightly different numerical values.
+      - name: Test backend test data
+        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu')
+        run: |
+          python onnx/backend/test/cmd_tools.py generate-data --clean
+          git status
+          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+          if [ $? -ne 0 ]; then
+            echo "git diff for test generation returned failures. Please check updated node test files"
+            exit 1
+          fi
+          git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
+          if [ $? -ne 0 ]; then
+            echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
+            exit 1
+          fi
+          pip uninstall -y pillow
+          python onnx/backend/test/cmd_tools.py generate-data --clean
+          git status
+          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
+          if [ $? -ne 0 ]; then
+            echo "git diff for test generation without pillow returned failures. Please check updated node test files"
+            exit 1
+          fi
+
+      - name: Test documentation
+        if: matrix.documentation == 1
+        run: |
+          pip install -r docs/docsgen/source/requirements.txt
+          cd docs/docsgen && make text
+        continue-on-error: false
+
+      - name: Run Python tests with numpy<2.0 (win, mac)
+        # Python 3.13 support was added at numpy 2.1.0
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest')
+        run: |
+          pip install "numpy<2.0" pillow
+          pytest -s
+
+      - name: Run Python tests with numpy<2.0 (ubuntu, python<3.13)
+        # python 3.13 support was added at numpy 2.1.0
+        if: (matrix.python_version == '3.11' || matrix.python_version == '3.12') && startsWith(matrix.os,'ubuntu')
+        run: |
+          # 2024.10.15: Error message: The headers or library files could not be found for jpeg, a required dependency when compiling Pillow from source.
+          sudo apt-get update
+          sudo apt-get install libjpeg-dev zlib1g-dev libpng-dev
+          pip install --prefer-binary "numpy<2.0" pillow
+          pytest -s

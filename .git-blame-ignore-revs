@@ -1,0 +1,8 @@
+# Python clean up #3982
+35092895d9bf3592e58f4710d098f8131afef259
+# Apply clang-format #4084
+a525f98d5ed31660b629bab90c680a39658a5c08
+# Upgrade python syntax with pyupgrade #4212
+529f7cab88eed143fc9f0126147e9732585e4c5e
+# Format all python code with black and isort #4427
+fddb2b6d4ea3fb3dba751d884865042503260899

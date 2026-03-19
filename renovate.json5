@@ -1,0 +1,52 @@
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  // Only enable custom regex manager to avoid overlap with dependabot
+  // Dependabot handles: pip (Python), github-actions
+  // Renovate handles: Docker images (manylinux), CMake dependencies (nanobind)
+  "enabledManagers": ["custom.regex"],
+  // Disable the Dependency Dashboard issue
+  "dependencyDashboard": false,
+  // Custom managers for dependencies not auto-detected by Renovate
+  "customManagers": [
+    {
+      // Detect manylinux Docker images in GitHub Actions workflows
+      // Example: uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.10.10-1
+      "customType": "regex",
+      "fileMatch": ["^\\.github/workflows/release_linux\\.yml$"],
+      "matchStrings": [
+        "uses:\\s*docker://quay\\.io/pypa/(?<depName>manylinux_[^:]+):(?<currentValue>[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}-[0-9]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "quay.io/pypa/{{{depName}}}",
+      "versioningTemplate": "loose"
+    },
+    {
+      // Detect nanobind version in CMakeLists.txt
+      // Example:
+      //   FetchContent_Declare(
+      //     nanobind
+      //     GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+      //     GIT_TAG v2.10.2
+      "customType": "regex",
+      "fileMatch": ["^CMakeLists\\.txt$"],
+      "matchStrings": [
+        "FetchContent_Declare\\(\\s*nanobind\\s+GIT_REPOSITORY\\s+https://github\\.com/(?<depName>[^/]+/[^.]+)\\.git\\s+GIT_TAG\\s+(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }
+  ],
+  // Package-specific rules for grouping
+  "packageRules": [
+    {
+      // Group manylinux Docker images together in a single PR
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["quay.io/pypa/manylinux_**"],
+      "groupName": "manylinux docker images"
+    }
+  ]
+}

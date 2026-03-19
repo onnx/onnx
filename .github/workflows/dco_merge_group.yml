@@ -1,0 +1,17 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: DCO
+on:
+  merge_group:
+
+permissions:  # set top-level default permissions as security best practice
+  contents: read # Check https://github.com/ossf/scorecard/blob/7ce8609469289d5f3b1bf5ee3122f42b4e3054fb/docs/checks.md#token-permissions
+
+jobs:
+  DCO:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - run: echo "dummy DCO workflow (it won't run any check actually) to trigger by merge_group in order to enable merge queue"

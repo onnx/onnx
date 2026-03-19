@@ -1,0 +1,216 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+[build-system]
+requires = ["setuptools>=77", "protobuf>=4.25.1"]
+backend-path = ["."]
+build-backend = "backend"
+
+[project]
+name = "onnx"
+dynamic = ["version", "dependencies", "optional-dependencies"]
+description = "Open Neural Network Exchange"
+readme = "README.md"
+authors = [
+    {name = "ONNX Contributors", email = "onnx-technical-discuss@lists.lfaidata.foundation"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+license = "Apache-2.0"
+requires-python = ">=3.10"
+
+[project.urls]
+Homepage = "https://onnx.ai/"
+Repository = "https://github.com/onnx/onnx"
+
+[project.scripts]
+backend-test-tools = "onnx.backend.test.cmd_tools:main"
+check-model = "onnx.bin.checker:check_model"
+check-node = "onnx.bin.checker:check_node"
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+
+[tool.setuptools.dynamic.optional-dependencies]
+reference = {file = "requirements-reference.txt"}
+
+[tool.setuptools.packages.find]
+include = ["onnx*"]
+
+[tool.setuptools.package-data]
+onnx = [
+    "**/*.c",
+    "**/*.cc",
+    "**/*.h",
+    "**/*.proto",
+    "**/*.pyi",
+    "backend/test/data/**/*",
+    "py.typed",
+]
+
+[tool.pytest.ini_options]
+
+addopts = "--tb=short --color=yes"
+testpaths = [
+    "onnx/test",
+    "onnx/examples",
+]
+
+[tool.mypy]
+follow_imports = "silent"
+strict_optional = true
+warn_return_any = true
+warn_no_return = true
+# TODO warn_unused_ignores = true
+warn_redundant_casts = true
+warn_incomplete_stub = true
+# TODO disallow_untyped_calls = true
+check_untyped_defs = true
+# Allow bare generics like np.ndarray
+disallow_any_generics = false
+no_implicit_optional = true
+# TODO disallow_incomplete_defs = true
+# TODO disallow_subclassing_any = true
+warn_unused_configs = true
+show_error_codes = true
+show_column_numbers = true
+ignore_missing_imports = true
+# NOTE: Do not grow the exclude list. Edit .lintrunner.toml instead
+exclude = []
+
+# NOTE: Avoid adding overrides unless for exceptional cases. Prefer inline ignores.
+# If you must ignore error for the whole file, consider adapting the example
+# `# mypy: disable-error-code="misc,arg-type,type-arg"`
+# and put this comment on the top of the file.
+[[tool.mypy.overrides]]
+module = [
+    'onnx.onnx_data_pb',
+    'onnx.onnx_data_pb2',
+    'onnx.onnx_pb',
+    'onnx.onnx_pb2',
+    'onnx.onnx_ml_pb2',
+    'onnx.onnx_operators_pb',
+    'onnx.onnx_operators_ml_pb2',
+]
+ignore_errors = true
+
+[tool.pylint.message_control]
+disable = [
+    "format",
+    "import-error",
+    "invalid-name",
+    "line-too-long",
+    "missing-docstring",
+    "no-name-in-module",
+    "too-few-public-methods",
+    "use-dict-literal",     # Dict literals are sometimes preferable when creating kwargs
+    "useless-return",
+]
+
+[tool.ruff]
+# NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
+target-version = "py310"
+unsafe-fixes = true
+lint.select = [
+    "A", # flake8-builtins
+    "ARG", # flake8-unused-arguments
+    "B", # flake8-bugbear
+    "BLE", # flake8-blind-except
+    "C4", # flake8-comprehensions
+    "C90", # mccabe complexity
+    "D", # pydocstyle
+    "DTZ", # flake8-datetimez
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "FA", # flake8-future-annotations
+    "FLY", # flynt
+    "FURB", # refurb
+    "G", # flake8-logging-format
+    "I", # isort
+    "ISC", # flake8-implicit-str-concat
+    "LOG", # flake8-logging
+    "N", # pep8-naming
+    "NPY", # modern numpy
+    "PERF", # Perflint
+    "PGH", # pygrep-hooks
+    "PIE", # flake8-pie
+    "PL", # pylint
+    "PYI", # flake8-pyi
+    "RSE", # flake8-raise
+    "RUF", # Ruff-specific rules
+    "S", # flake8-bandit
+    "SIM", # flake8-simplify
+    "SLOT", # flake8-slot
+    "T10", # flake8-debugger
+    "T20", # flake8-print
+    "TC", # flake8-type-checking
+    "TID", # Disallow relative imports
+    "TRY", # flake8-try-except-raise
+    "UP", # pyupgrade
+    "W", # pycodestyle
+    "YTT", # flake8-2020
+    "RET", # flake8-return
+]
+# NOTE: Refrain from growing the ignore list unless for exceptional cases.
+# Always include a comment to explain why.
+lint.ignore = [
+    "D1", # D1 is for missing docstrings, which is not yet enforced.
+    "D205", # D205 Too strict. "1 blank line required between summary line and description"
+    "D400",
+    "D415",
+    "E501", # Line length controlled by black
+    "N803", # Argument casing
+    "N806", # Relax: Variable name in function should be lowercase
+    "N999", # Module names
+    "NPY002", # np.random.Generator may not be preferred in all cases
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments to function call
+    "PLR0915", # Too many statements
+    "PYI011", # Allow protobuf enums as defaults to function arguments
+    "PYI021", # Allow docstrings in pyi files
+    "PYI041", # int | float is sometimes more clear than float
+    "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
+    "RUF022", # We may want to keep __all__ unsorted for better readability
+    "SIM102", # We don't prefer always combining if branches
+    "SIM108", # We don't always encourage ternary operators
+    "SIM114", # Don't always combine if branches for debugability
+    "SIM116", # Don't use dict lookup to replace if-else
+    "S101", # assert is used extensively in tests and validation
+    "C901", # Complex functions are acceptable alongside PLR0912/PLR0915
+    "TRY003", # Messages can be constructed in the exception
+]
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["id", "input"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.per-file-ignores]
+# NOTE: Refrain from growing the ignore list unless for exceptional cases.
+# Prefer inline ignores with `noqa: xxx`.
+# Eventually this list should become empty.
+"**/*_test*" = ["N802"] # Function casing
+"onnx/backend/test/**" = ["PLR2004", "S", "T20"] # Magic numbers, security, print allowed in tests
+"onnx/backend/test/case/**" = ["N802"] # Function casing
+"onnx/reference/ops/**" = [
+    "N801", # Class casing
+    "PLR2004", # Magic numbers
+]
+"onnx/test/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
+"onnx/test/**" = ["PLR2004", "S311", "T20"] # Magic numbers, non-crypto random, print allowed in tests
+"onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]
+"onnx/gen_proto.py" = ["T20"] # Build script uses print for progress
+"onnx/defs/gen_*.py" = ["T20"] # Code generators use print for output
+"tools/**" = ["T20"] # Build tools use print for progress
+"examples/**" = ["T20"] # Example notebooks use print for output
+"docs/**" = ["T20"] # Doc scripts use print for debugging

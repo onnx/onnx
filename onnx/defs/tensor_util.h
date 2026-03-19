@@ -1,0 +1,16 @@
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include <vector>
+
+#include "onnx/common/tensor.h"
+
+namespace ONNX_NAMESPACE {
+
+template <typename T>
+std::vector<T> ParseData(const Tensor* tensor);
+
+} // namespace ONNX_NAMESPACE
