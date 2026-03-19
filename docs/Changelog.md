@@ -13704,6 +13704,10 @@ This version of the operator has been available since version 11 of the default 
   Given two equivalent values, this operator uses the indices along the axis as
   a tiebreaker. That is, the element with the lower index will appear first.
 
+  NaN values are propagated through the output. When comparing values for ordering,
+  NaN is greater than all non-NaN values. When multiple NaN values are present,
+  the order between them is determined by their indices along the axis (lower index first).
+
 #### Version
 
 This version of the operator has been available since version 11 of the default ONNX operator set.
@@ -31304,6 +31308,10 @@ This version of the operator has been available since version 24 of the default 
 
   Given two equivalent values, this operator uses the indices along the axis as
   a tiebreaker. That is, the element with the lower index will appear first.
+
+  NaN values are propagated through the output. When comparing values for ordering,
+  NaN is greater than all non-NaN values. When multiple NaN values are present,
+  the order between them is determined by their indices along the axis (lower index first).
 
 #### Version
 
