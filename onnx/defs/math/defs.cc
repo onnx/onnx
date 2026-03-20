@@ -3332,7 +3332,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             dft_size = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
           }
 
-          bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
+          bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 1));
           int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
 
           // The output has the following shape: [batch_size][frames][dft_unique_bins][2]
