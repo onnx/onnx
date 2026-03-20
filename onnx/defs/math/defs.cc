@@ -3343,10 +3343,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             batch_dim->set_dim_value(input_shape.dim(0).dim_value()); // batch size
           }
 
-          if (signal_size_known) {
-            auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
-            result_shape_proto.add_dim()->set_dim_value(n_dfts);
+          if (signal_size_known && frame_step_value > 0 && signal_size >= dft_size) {
+            const int64_t n_dfts = ((signal_size - dft_size) / frame_step_value) + 1;
+            if (n_dfts > 0) {
+              result_shape_proto.add_dim()->set_dim_value(n_dfts);
+            } else {
+              // Cannot determine a valid number of DFTs; leave dimension unknown.
+              result_shape_proto.add_dim();
+            }
           } else {
+            // Signal size, frame step, or DFT size are not suitable to infer this dimension.
             result_shape_proto.add_dim();
           }
 
