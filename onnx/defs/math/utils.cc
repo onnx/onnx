@@ -29,9 +29,10 @@ shape [a_0, a_1, ..., a_{n-1}] and integer argument k, return two outputs:
 Given two equivalent values, this operator uses the indices along the axis as
 a tiebreaker. That is, the element with the lower index will appear first.
 
-NaN values are propagated through the output. When comparing values for ordering,
-NaN is greater than all non-NaN values. When multiple NaN values are present,
-the order between them is determined by their indices along the axis (lower index first).
+For floating-point inputs, NaN values are propagated through the output. When comparing
+values for ordering, NaN is greater than all non-NaN values. When multiple NaN values
+are present and sorted is 1, the order between them is determined by their indices along
+the axis (lower index first).
 )DOC";
 
 std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types) {
