@@ -219,7 +219,7 @@ def display_schema(
 
     # Function Body
     # TODO: this should be refactored to show the function body graph's picture (DAG).
-    # if schema.has_function or schema.has_context_dependent_function:  # type: ignore
+    # if schema.has_function or schema.has_context_dependent_function:  # type: ignore[attr-defined]
     #    s += '\n#### Function\n'
     #    s += '\nThe Function can be represented as a function.\n'
 
@@ -355,8 +355,8 @@ def main(args: Args) -> None:
             function_ops = []
             for _, namemap in supportmap:
                 for n, schema, versions in namemap:
-                    if schema.has_function or schema.has_context_dependent_function:  # type: ignore
-                        function_versions = schema.all_function_opset_versions  # type: ignore
+                    if schema.has_function or schema.has_context_dependent_function:  # type: ignore[attr-defined]
+                        function_versions = schema.all_function_opset_versions  # type: ignore[attr-defined]
                         function_ops.append((n, schema, versions, function_versions))
                         continue
                     s = '|{}<a href="#{}">{}</a>{}|{}|\n'.format(

@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-# type: ignore
 from __future__ import annotations
+
 import os
 import sys
 import warnings
@@ -17,7 +17,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # -- Project information -----------------------------------------------------
 
 author = "ONNX"
-copyright = "2024"
+copyright = "2024"  # noqa: A001
 project = "ONNX"
 release = onnx.__version__
 version = onnx.__version__
