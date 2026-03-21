@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cmath>
+#include <string>
 #include <vector>
 
 #include "onnx/defs/schema.h"

@@ -4,6 +4,9 @@
 
 #include "onnx/common/model_helpers.h"
 
+#include <string>
+#include <vector>
+
 namespace ONNX_NAMESPACE {
 
 Common::Status BuildNode(

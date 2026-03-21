@@ -91,13 +91,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           submodules: recursive
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python_version }}
 
@@ -109,6 +109,7 @@ jobs:
       - name: Install external protobuf - Linux
         if: matrix.protobuf_type == 'External' && startsWith(matrix.os,'ubuntu')
         run: |
+          sudo apt-get update
           sudo apt-get install libprotobuf-dev protobuf-compiler
 
       - name: Install external protobuf - MacOS
@@ -166,7 +167,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_ASAN=${{ matrix.debug_build }} -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: Build and install ONNX - MacOS
         if: matrix.os == 'macos-latest'
@@ -176,7 +177,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: Build and install ONNX - Windows
         if: startsWith(matrix.os,'windows')
@@ -186,7 +187,7 @@ jobs:
           DEBUG: ${{ matrix.debug_build }}
           ONNX_ML: ${{ matrix.onnx_ml }}
           ONNX_BUILD_TESTS: 1
-          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }}"
+          CMAKE_ARGS: "-DONNX_WERROR=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_USE_UNITY_BUILD=${{ matrix.unity_build }} -DONNX_HARDENING=ON"
 
       - name: pip freeze
         run: |
@@ -207,8 +208,14 @@ jobs:
           echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libtsan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
       - name: Run Python tests
+        #  if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
         run: |
           pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml -n auto --dist loadscope
+
+      # - name: Run Python tests (windows)
+      #   if: (matrix.os == 'windows-latest')
+      #   run: |
+      #     pytest -sv --cov=onnx --cov-report=xml --cov-append --cov-branch --junitxml junit.xml --dist loadscope
 
       - name: Run C++ tests
         if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'

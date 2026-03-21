@@ -46,7 +46,7 @@ source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$(pwd)"/prot
 
 # set ONNX build environments
 export ONNX_ML=1
-export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
+export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DONNX_HARDENING=ON"
 
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
@@ -68,7 +68,7 @@ fi
 # find -exec does not preserve failed exit codes, so use an output file for failures
 failed_wheels=$PWD/failed-wheels
 rm -f "$failed_wheels"
-find . -type f -iname "*-linux*.whl" -exec sh -c "auditwheel repair '{}' -w \$(dirname '{}') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> '$failed_wheels'; }" \;
+find . -type f -iname "*-linux*.whl" -exec sh -c 'auditwheel repair "$1" -w "$(dirname "$1")" --plat "$2" || { echo "Repairing wheels failed."; auditwheel show "$1" >> "$3"; }' _ {} "${PLAT}" "$failed_wheels" \;
 
 if [[ -f "$failed_wheels" ]]; then
     echo "Repairing wheels failed:"

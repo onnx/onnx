@@ -70,32 +70,39 @@ class Node:
         missing_tracks_true: bool,
     ) -> None:
         if mode == Mode.LEQ:
-            self.compare = lambda x: x[feature].item() <= value or (
-                missing_tracks_true and np.isnan(x[feature].item())
+            self.compare = lambda x: (
+                x[feature].item() <= value
+                or (missing_tracks_true and np.isnan(x[feature].item()))
             )
         elif mode == Mode.LT:
-            self.compare = lambda x: x[feature].item() < value or (
-                missing_tracks_true and np.isnan(x[feature].item())
+            self.compare = lambda x: (
+                x[feature].item() < value
+                or (missing_tracks_true and np.isnan(x[feature].item()))
             )
         elif mode == Mode.GTE:
-            self.compare = lambda x: x[feature].item() >= value or (
-                missing_tracks_true and np.isnan(x[feature].item())
+            self.compare = lambda x: (
+                x[feature].item() >= value
+                or (missing_tracks_true and np.isnan(x[feature].item()))
             )
         elif mode == Mode.GT:
-            self.compare = lambda x: x[feature].item() > value or (
-                missing_tracks_true and np.isnan(x[feature].item())
+            self.compare = lambda x: (
+                x[feature].item() > value
+                or (missing_tracks_true and np.isnan(x[feature].item()))
             )
         elif mode == Mode.EQ:
-            self.compare = lambda x: x[feature].item() == value or (
-                missing_tracks_true and np.isnan(x[feature].item())
+            self.compare = lambda x: (
+                x[feature].item() == value
+                or (missing_tracks_true and np.isnan(x[feature].item()))
             )
         elif mode == Mode.NEQ:
-            self.compare = lambda x: x[feature].item() != value or (
-                missing_tracks_true and np.isnan(x[feature].item())
+            self.compare = lambda x: (
+                x[feature].item() != value
+                or (missing_tracks_true and np.isnan(x[feature].item()))
             )
         elif mode == Mode.MEMBER:
-            self.compare = lambda x: x[feature].item() in value or (
-                missing_tracks_true and np.isnan(x[feature].item())
+            self.compare = lambda x: (
+                x[feature].item() in value
+                or (missing_tracks_true and np.isnan(x[feature].item()))
             )
         self.mode = mode
         self.value = value

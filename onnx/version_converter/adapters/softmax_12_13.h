@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Softmax amd LogSoftmax in default domain from version 12 to 13
 
@@ -27,9 +25,9 @@ class Softmax_12_13 final : public Adapter {
     if (old_axis < 0)
       old_axis = input_rank + old_axis;
 
-    if (old_axis == input_rank - 1)
+    if (old_axis == input_rank - 1) {
       node->i_(kaxis, -1);
-    else {
+    } else {
       //    -- shape ------------------
       //   /                           |
       // ----- flatten -- softmax -- reshape

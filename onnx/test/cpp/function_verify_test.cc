@@ -1,11 +1,14 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
+#include <algorithm>
 #include <iostream>
 #include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
@@ -18,7 +21,6 @@
 
 namespace ONNX_NAMESPACE {
 namespace Test {
-using namespace checker;
 using TENSOR_TYPES_MAP = std::unordered_map<std::string, std::vector<std::string>>;
 
 static void GetFunctionProtoOpsetImport(
@@ -36,7 +38,7 @@ static void GetFunctionProtoOpsetImport(
 
 static void VerifyTypeConstraint(const OpSchema& function_op, const FunctionProto* function_proto, int& counter) {
   // This is a simple partial type-checker for a function-body.
-  // TODO: Revisit to make the type-checker more complete.
+  // TODO(ONNX): Revisit to make the type-checker more complete.
   TENSOR_TYPES_MAP tc_map;
   std::set<std::string> primitive_types(OpSchema::all_tensor_types().begin(), OpSchema::all_tensor_types().end());
   for (const auto& input : function_op.inputs()) {
@@ -285,7 +287,7 @@ static void VerifyFunction(const OpSchema& op, const FunctionProto* function_pro
   if (!function_proto) {
     fail_check("Cannot get function body for op '", op.Name(), "'");
   }
-  CheckerContext ctx;
+  checker::CheckerContext ctx;
   std::unordered_map<std::string, int> op_set;
   GetFunctionProtoOpsetImport(op, function_proto, op_set);
   auto version_range = OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(op.domain());
@@ -295,11 +297,11 @@ static void VerifyFunction(const OpSchema& op, const FunctionProto* function_pro
 
   ctx.set_opset_imports(op_set);
   ctx.set_is_main_graph(false);
-  LexicalScopeContext lex_ctx;
+  checker::LexicalScopeContext lex_ctx;
   ONNX_TRY {
-    check_function(*function_proto, ctx, lex_ctx);
+    checker::check_function(*function_proto, ctx, lex_ctx);
   }
-  ONNX_CATCH(ValidationError & ex) {
+  ONNX_CATCH(checker::ValidationError & ex) {
     ONNX_HANDLE_EXCEPTION([&]() { fail_check(ex.what()); });
   }
 
@@ -429,12 +431,12 @@ TEST(FunctionVerification, VerifyFunctionBodyWithMultipleDomains) {
   const FunctionProto* fnProto = schema->GetFunction();
   EXPECT_EQ(fnProto->node_size(), 16);
 
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{AI_ONNX_ML_DOMAIN, 2}, {"", 13}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(*fnProto, checkerCtx, lexicalScope);
+  checker::check_function(*fnProto, checkerCtx, lexicalScope);
 }
 
 TEST(FunctionVerification, VerifyModelLocalFunctions) {
@@ -486,7 +488,7 @@ foo (x) => (y) {
   ModelProto model;
   auto status = OnnxParser::Parse(model, code);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-  check_model(model);
+  checker::check_model(model);
 
   ShapeInferenceOptions options{true, 1, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);
@@ -552,7 +554,7 @@ foo (x) => (y) {
   auto status = OnnxParser::Parse(model, code);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
 
-  check_model(model);
+  checker::check_model(model);
 
   ShapeInferenceOptions options{true, 1, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, OpSchemaRegistry::Instance(), options);

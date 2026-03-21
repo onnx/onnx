@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/inliner/inliner.h"
 
@@ -27,8 +25,6 @@ namespace ONNX_NAMESPACE {
 namespace inliner {
 
 namespace { // internal/private API
-
-using namespace internal;
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
@@ -84,7 +80,7 @@ struct OpsetMap : public OpsetMapBase {
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
-class NameGenerator : private Visitor {
+class NameGenerator : private internal::Visitor {
  public:
   explicit NameGenerator(const GraphProto& graph) : index_(0) {
     NameGenerator::VisitGraph(graph);
@@ -159,7 +155,7 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class InliningRenamer : public MutableVisitor {
+class InliningRenamer : public internal::MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
@@ -325,7 +321,7 @@ class InliningRenamer : public MutableVisitor {
 // In the case of variables referenced in sub-graphs, only non-local variables
 // are treated as implicit inputs.
 
-class ComputeInputs : private Visitor {
+class ComputeInputs : private internal::Visitor {
  private:
   std::vector<std::unordered_set<std::string>> namescopes;
 
@@ -453,9 +449,8 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
     }
   }
 
-  // TODO: Use std::move when it is fully supported on all protobuf platforms used
   for (auto& function_node : function_nodes)
-    *nodes.Add() = function_node;
+    *nodes.Add() = std::move(function_node);
   function_nodes.Clear();
 
   auto converted = ONNX_NAMESPACE::version_conversion::ConvertVersion(function_as_model, target_version);
@@ -529,10 +524,10 @@ struct InlinerImpl {
     }
 
     if (function_map != nullptr) {
-      auto iter = this->function_map->find(GetCalleeId(node));
-      if (iter != this->function_map->end()) {
-        callee = *iter->second.first;
-        target_version = iter->second.second;
+      if (auto iter = this->function_map->find(GetCalleeId(node)); iter != this->function_map->end()) {
+        auto& [func_ptr, version] = iter->second;
+        callee = *func_ptr;
+        target_version = version;
         return true;
       }
     }
@@ -556,7 +551,7 @@ struct InlinerImpl {
 
       // Check if this node has a schema defined function proto.
       if (op_schema->HasContextDependentFunction()) {
-        shape_inference::InferShapes(model); // TODO: do shape inference incrementally
+        shape_inference::InferShapes(model); // TODO(ONNX): do shape inference incrementally
         std::vector<TypeProto> input_types;
         for (const auto& input : node.input()) {
           input_types.emplace_back(GetType(model, input));
@@ -606,9 +601,6 @@ struct InlinerImpl {
           append_node(callee_node);
       } else {
         // Append node without inlining.
-        // TODO: use std::move instead of copying. Use of move doesn't seem to work with
-        // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-
         for (auto& attr : *node.mutable_attribute()) {
           if (attr.has_g()) {
             ProcessGraph(*attr.mutable_g());
@@ -618,7 +610,7 @@ struct InlinerImpl {
           }
         }
 
-        *nodes.Add() = node;
+        *nodes.Add() = std::move(node);
       }
     };
     for (auto& node : original_nodes) {

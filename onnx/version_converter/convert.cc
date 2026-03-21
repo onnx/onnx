@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/version_converter/convert.h"
 
@@ -35,7 +33,7 @@ void DefaultVersionConverter::convert_graph(
     const OpSetID& target_version) const {
   assertNonNull(g);
 
-  // TODO: Move to Inter-Domain Converter
+  // TODO(ONNX): Move to Inter-Domain Converter
   // Get initial model versions
   // std::vector<OpSetID> initial_versions = g->opset_versions_mutable();
 

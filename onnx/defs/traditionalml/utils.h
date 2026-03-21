@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#ifndef ONNX_DEFS_TRADITIONALML_UTILS_H_
+#define ONNX_DEFS_TRADITIONALML_UTILS_H_
+
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
@@ -28,3 +31,5 @@ inline void AssertAttributeProtoTypeAndLength(
 }
 
 } // namespace ONNX_NAMESPACE
+
+#endif // ONNX_DEFS_TRADITIONALML_UTILS_H_

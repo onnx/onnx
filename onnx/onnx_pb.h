@@ -1,9 +1,9 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-#ifndef ONNX_ONNX_PB_H
-#define ONNX_ONNX_PB_H
+#ifndef ONNX_ONNX_PB_H_
+#define ONNX_ONNX_PB_H_
 
 // Defines ONNX_EXPORT and ONNX_IMPORT. On Windows, this corresponds to
 // different declarations (dllexport and dllimport). On Linux/Mac, it just
@@ -53,4 +53,4 @@
 #include "onnx/onnx.pb.h"
 #endif
 
-#endif // ! ONNX_ONNX_PB_H
+#endif // ONNX_ONNX_PB_H_

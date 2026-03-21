@@ -1,13 +1,117 @@
 # SPDX-License-Identifier: Apache-2.0
 #
-# Add MSVC RunTime Flag
-function(add_msvc_runtime_flag lib)
-  if(ONNX_USE_MSVC_STATIC_RUNTIME)
-    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MT>
-                                          $<$<CONFIG:Debug>:/MTd>)
+# Compiler hardening flags based on OpenSSF guidelines:
+# https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html
+function(add_onnx_hardening_flags target)
+  if(NOT ONNX_HARDENING)
+    return()
+  endif()
+
+  if(MSVC)
+    # MSVC hardening compile flags
+    target_compile_options(${target} PRIVATE
+      /GS        # Buffer security checks
+      /guard:cf  # Control Flow Guard
+      /sdl       # Security Development Lifecycle checks
+    )
+    # MSVC hardening linker flags
+    target_link_options(${target} PRIVATE
+      /DYNAMICBASE  # ASLR
+      /NXCOMPAT     # Data Execution Prevention
+      /guard:cf     # Control Flow Guard (linker side)
+    )
+    # CET shadow stack requires VS 2019 (MSVC 19.20+) and is x86/x64 only
+    if(MSVC_VERSION GREATER_EQUAL 1920 AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86|x64|X86|AMD64")
+      target_link_options(${target} PRIVATE /CETCOMPAT)
+    endif()
   else()
-    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MD>
-                                          $<$<CONFIG:Debug>:/MDd>)
+    # GCC/Clang hardening compile flags
+    target_compile_options(${target} PRIVATE
+      -Wformat
+      -Wformat=2
+      -Wimplicit-fallthrough
+      -Werror=format-security
+      -fstack-protector-strong
+      -fno-delete-null-pointer-checks
+      -fno-strict-overflow
+      -fno-strict-aliasing
+    )
+
+    # Zero-initialize uninitialized stack variables (requires compiler support)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag(-ftrivial-auto-var-init=zero COMPILER_SUPPORTS_AUTO_VAR_INIT)
+    if(COMPILER_SUPPORTS_AUTO_VAR_INIT)
+      target_compile_options(${target} PRIVATE -ftrivial-auto-var-init=zero)
+    endif()
+
+    # _FORTIFY_SOURCE requires optimization and conflicts with sanitizers
+    if(NOT ONNX_USE_ASAN)
+      target_compile_options(${target} PRIVATE
+        -U_FORTIFY_SOURCE
+        -D_FORTIFY_SOURCE=3
+      )
+    endif()
+
+    # C++ standard library assertions
+    target_compile_definitions(${target} PRIVATE _GLIBCXX_ASSERTIONS)
+
+    # Stack clash protection (Linux only - not supported on macOS)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      include(CheckCXXCompilerFlag)
+      check_cxx_compiler_flag(-fstack-clash-protection COMPILER_SUPPORTS_STACK_CLASH)
+      if(COMPILER_SUPPORTS_STACK_CLASH)
+        target_compile_options(${target} PRIVATE -fstack-clash-protection)
+      endif()
+    endif()
+
+    # Control-flow protection for x86_64 (Linux only - not supported on macOS)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
+      include(CheckCXXCompilerFlag)
+      check_cxx_compiler_flag(-fcf-protection=full COMPILER_SUPPORTS_CF_PROTECTION)
+      if(COMPILER_SUPPORTS_CF_PROTECTION)
+        target_compile_options(${target} PRIVATE -fcf-protection=full)
+      endif()
+    endif()
+
+    # Branch protection for AArch64 (Linux only - macOS uses different mechanism)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64|ARM64")
+      include(CheckCXXCompilerFlag)
+      check_cxx_compiler_flag(-mbranch-protection=standard COMPILER_SUPPORTS_BRANCH_PROTECTION)
+      if(COMPILER_SUPPORTS_BRANCH_PROTECTION)
+        target_compile_options(${target} PRIVATE -mbranch-protection=standard)
+      endif()
+    endif()
+
+    # Linker hardening flags (Linux only, not macOS)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      target_link_options(${target} PRIVATE
+        -Wl,-z,noexecstack
+        -Wl,-z,relro
+        -Wl,-z,now
+      )
+    endif()
+  endif()
+endfunction()
+
+# Adjusts the MSVC_RUNTIME_LIBRARY property for a given target.
+# If CMAKE_MSVC_RUNTIME_LIBRARY is defined, we assume the user wants to explicitly use that value.
+# If not, we respect ONNX_USE_MSVC_STATIC_RUNTIME and delegate to the static/dynamic lib respectively,
+# with Debug builds using the debug libs.
+function(add_msvc_runtime_flag lib)
+  if(DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+    # Don't do anything here and respect parent-project provided value.
+    # CMake will have already associated the default value with our target.
+    message(STATUS "Ignoring ONNX_USE_MSVC_STATIC_RUNTIME since CMAKE_MSVC_RUNTIME_LIBRARY is defined.")
+  else()
+    if(ONNX_USE_MSVC_STATIC_RUNTIME)
+      set_target_properties(${lib} PROPERTIES
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+      )
+    else()
+      set_target_properties(${lib} PROPERTIES
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+      )
+    endif()
   endif()
 endfunction()
 
@@ -113,4 +217,6 @@ function(add_onnx_compile_options target)
       message(STATUS "No TypeSAN detected for ${target}")
     endif()
   endif()
+  # Apply hardening flags if enabled
+  add_onnx_hardening_flags(${target})
 endfunction()

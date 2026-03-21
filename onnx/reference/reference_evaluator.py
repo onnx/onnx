@@ -322,11 +322,13 @@ class ReferenceEvaluator:
             "An instance of LargeContainer should be created before using ReferenceEvaluator."
         )
 
-    def _log_arg(self, a: Any) -> Any:
+    def _log_arg(self, a: Any) -> Any:  # noqa: PLR0911
         if isinstance(a, (str, int, float)):
             return a
         if isinstance(a, np.ndarray):
             if self.verbose < 4:  # noqa: PLR2004
+                if a.size == 0:
+                    return f"{a.dtype}:{a.shape} (empty)"
                 return f"{a.dtype}:{a.shape} in [{a.min()}, {a.max()}]"
             elements = a.ravel().tolist()
             if len(elements) > 5:  # noqa: PLR2004
@@ -340,7 +342,7 @@ class ReferenceEvaluator:
     def _log(self, level: int, pattern: str, *args: list[Any]) -> None:
         if level < self.verbose:
             new_args = [self._log_arg(a) for a in args]
-            print(pattern % tuple(new_args))
+            print(pattern % tuple(new_args))  # noqa: T201
 
     @property
     def input_names(self):
@@ -563,7 +565,7 @@ class ReferenceEvaluator:
         if output_names is None:
             output_names = self.output_names
         if isinstance(self.proto_, FunctionProto) and attributes is None:
-            raise TypeError()
+            raise TypeError
 
         # step 1: inputs and initializers
         results = {"": None}  # optional input

@@ -1,10 +1,10 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
-// Copyright (c) ONNX Project Contributors.
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
+#include <string>
 
 #ifdef _WIN32
 // windows.h has preproc definitions for min and max, which prevents from using std::min and std::max.

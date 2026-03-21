@@ -89,7 +89,7 @@ Each model has the following components:
 |functions|FunctionProto[]|An optional list of functions local to the model.|
 |configuration|DeviceConfigurationProto[]|(IR version >= 11) An optional list of multi-device configurations for distributed execution.|
 
- Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
+ Models SHOULD specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
 __Note: Exploring an ONNX file__
 
@@ -381,7 +381,7 @@ The dynamic-optional allows for more expressiveness than static-optional.
 
 #### External Tensor Data
 
-The raw data for large constant tensors, such as initializers, MAY be serialised in a separate file. In such a case, the tensor MUST provide the filename relative to the model file and MUST NOT use the value fields. It MAY provide a byte offset and length within that file. It MAY also specify a SHA1 digest of the file. One file MAY contain the data for multiple tensors.
+The raw data for large constant tensors, such as initializers, MAY be serialized in a separate file. In such a case, the tensor MUST provide the filename relative to the model file and MUST NOT use the value fields. It MAY provide a byte offset and length within that file. It MAY also specify a SHA1 digest of the file. One file MAY contain the data for multiple tensors.
 
 More details can be found in [External Data](ExternalData.md).
 
