@@ -293,15 +293,19 @@ class ModelContainer:
             external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
                 base_dir, info.location, tensor.name
             )
+            # Security checks (symlink, containment, hardlink) already performed
+            # by C++ _resolve_external_data_location() above.
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 
-            with open(external_data_file_path, "rb") as data_file:
-                if info.offset:
-                    data_file.seek(info.offset)
-
-                raw_data = (
-                    data_file.read(info.length) if info.length else data_file.read()
+            # Use O_NOFOLLOW where available for symlink protection
+            open_flags = os.O_RDONLY
+            if hasattr(os, "O_NOFOLLOW"):
+                open_flags |= os.O_NOFOLLOW
+            fd = os.open(external_data_file_path, open_flags)
+            with os.fdopen(fd, "rb") as data_file:
+                raw_data = ext_data._validate_external_data_file_bounds(
+                    data_file, info, tensor.name
                 )
 
                 dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.data_type)

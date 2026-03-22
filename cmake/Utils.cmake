@@ -8,11 +8,22 @@ function(add_onnx_hardening_flags target)
   endif()
 
   if(MSVC)
-    # MSVC hardening flags
+    # MSVC hardening compile flags
+    target_compile_options(${target} PRIVATE
+      /GS        # Buffer security checks
+      /guard:cf  # Control Flow Guard
+      /sdl       # Security Development Lifecycle checks
+    )
+    # MSVC hardening linker flags
     target_link_options(${target} PRIVATE
       /DYNAMICBASE  # ASLR
-      /NXCOMPAT     # Data Execution Prevention      
+      /NXCOMPAT     # Data Execution Prevention
+      /guard:cf     # Control Flow Guard (linker side)
     )
+    # CET shadow stack requires VS 2019 (MSVC 19.20+) and is x86/x64 only
+    if(MSVC_VERSION GREATER_EQUAL 1920 AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86|x64|X86|AMD64")
+      target_link_options(${target} PRIVATE /CETCOMPAT)
+    endif()
   else()
     # GCC/Clang hardening compile flags
     target_compile_options(${target} PRIVATE
@@ -21,7 +32,17 @@ function(add_onnx_hardening_flags target)
       -Wimplicit-fallthrough
       -Werror=format-security
       -fstack-protector-strong
+      -fno-delete-null-pointer-checks
+      -fno-strict-overflow
+      -fno-strict-aliasing
     )
+
+    # Zero-initialize uninitialized stack variables (requires compiler support)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag(-ftrivial-auto-var-init=zero COMPILER_SUPPORTS_AUTO_VAR_INIT)
+    if(COMPILER_SUPPORTS_AUTO_VAR_INIT)
+      target_compile_options(${target} PRIVATE -ftrivial-auto-var-init=zero)
+    endif()
 
     # _FORTIFY_SOURCE requires optimization and conflicts with sanitizers
     if(NOT ONNX_USE_ASAN)
@@ -72,14 +93,25 @@ function(add_onnx_hardening_flags target)
   endif()
 endfunction()
 
-# Add MSVC RunTime Flag
+# Adjusts the MSVC_RUNTIME_LIBRARY property for a given target.
+# If CMAKE_MSVC_RUNTIME_LIBRARY is defined, we assume the user wants to explicitly use that value.
+# If not, we respect ONNX_USE_MSVC_STATIC_RUNTIME and delegate to the static/dynamic lib respectively,
+# with Debug builds using the debug libs.
 function(add_msvc_runtime_flag lib)
-  if(ONNX_USE_MSVC_STATIC_RUNTIME)
-    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MT>
-                                          $<$<CONFIG:Debug>:/MTd>)
+  if(DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+    # Don't do anything here and respect parent-project provided value.
+    # CMake will have already associated the default value with our target.
+    message(STATUS "Ignoring ONNX_USE_MSVC_STATIC_RUNTIME since CMAKE_MSVC_RUNTIME_LIBRARY is defined.")
   else()
-    target_compile_options(${lib} PRIVATE $<$<NOT:$<CONFIG:Debug>>:/MD>
-                                          $<$<CONFIG:Debug>:/MDd>)
+    if(ONNX_USE_MSVC_STATIC_RUNTIME)
+      set_target_properties(${lib} PROPERTIES
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+      )
+    else()
+      set_target_properties(${lib} PROPERTIES
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+      )
+    endif()
   endif()
 endfunction()
 
