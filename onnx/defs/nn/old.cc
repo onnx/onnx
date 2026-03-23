@@ -1905,6 +1905,66 @@ ONNX_OPERATOR_SET_SCHEMA(
                  {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
                  {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
+static constexpr const char* mvn_ver13_doc = R"DOC(
+      A MeanVarianceNormalization Function: Perform mean variance normalization
+      on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
+)DOC";
+
+static const std::vector<int64_t> old_mvn_ver13_default_axes = {0, 2, 3};
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MeanVarianceNormalization,
+    13,
+    OpSchema()
+        .SetDoc(mvn_ver13_doc)
+        .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Attr(
+            "axes",
+            "A list of integers, along which to reduce. The default is to "
+            "calculate along axes [0,2,3] for calculating mean and variance "
+            "along each channel. Two variables with the same C-coordinate "
+            "are associated with the same mean and variance.",
+            AttributeProto::INTS,
+            old_mvn_ver13_default_axes)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input and output types to all numeric tensors.")
+        .FunctionBody(R"ONNX(
+        {
+          Exponent = Constant <value = float {2.0}>()
+          Epsilon = Constant <value = float {1e-9}>()
+          X_RM = ReduceMean <axes : ints = @axes> (X)
+          EX_squared = Pow (X_RM, Exponent)
+          X_squared = Pow (X, Exponent)
+          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
+          Variance = Sub (E_Xsquared, EX_squared)
+          STD = Sqrt (Variance)
+          X_variance = Sub (X, X_RM)
+          Processed_STD = Add (STD, Epsilon)
+          Y = Div (X_variance, Processed_STD)
+        }
+        )ONNX")
+        .FunctionBody(
+            R"ONNX(
+        {
+          Exponent = Constant <value = float {2.0}>()
+          Epsilon = Constant <value = float {1e-9}>()
+          axes = Constant <value_ints: ints = @axes>()
+          X_RM = ReduceMean (X, axes)
+          EX_squared = Pow (X_RM, Exponent)
+          X_squared = Pow (X, Exponent)
+          E_Xsquared = ReduceMean (X_squared, axes)
+          Variance = Sub (E_Xsquared, EX_squared)
+          STD = Sqrt (Variance)
+          X_variance = Sub (X, X_RM)
+          Processed_STD = Add (STD, Epsilon)
+          Y = Div (X_variance, Processed_STD)
+        }
+        )ONNX",
+            18));
+
 constexpr const char* pads_doc2 =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "

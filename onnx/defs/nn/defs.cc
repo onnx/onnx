@@ -2163,18 +2163,67 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
-static constexpr const char* mvn_ver13_doc = R"DOC(
+static constexpr const char* mvn_ver27_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
-      on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
+      on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2 + epsilon)`
 )DOC";
 
 static const std::vector<int64_t> mvn_default_axes = {0, 2, 3};
 
+static bool BuildContextDependentFunctionBodyMVN(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto,
+    int sinceVersion) {
+  const auto* const epsilon_attr = ctx.getAttribute("epsilon");
+  float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-9f;
+
+  FunctionBuilder builder(functionProto);
+  builder.Const("Exponent", ToTensor<float>(2.0f))
+      .Const("Epsilon", ToTensor<float>(epsilon));
+
+  if (sinceVersion <= 17) {
+    builder.Add("X_RM = ReduceMean <axes : ints = @axes> (X)")
+        .Add("EX_squared = Pow (X_RM, Exponent)")
+        .Add("X_squared = Pow (X, Exponent)")
+        .Add("E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)");
+  } else {
+    builder.Add("axes = Constant <value_ints: ints = @axes>()")
+        .Add("X_RM = ReduceMean (X, axes)")
+        .Add("EX_squared = Pow (X_RM, Exponent)")
+        .Add("X_squared = Pow (X, Exponent)")
+        .Add("E_Xsquared = ReduceMean (X_squared, axes)");
+  }
+
+  builder.Add("Variance = Sub (E_Xsquared, EX_squared)")
+      .Add("STD = Sqrt (Variance)")
+      .Add("X_variance = Sub (X, X_RM)")
+      .Add("Processed_STD = Add (STD, Epsilon)")
+      .Add("Y = Div (X_variance, Processed_STD)");
+
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+static bool BuildContextDependentFunctionBodyMVNVer27Pre18(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildContextDependentFunctionBodyMVN(ctx, schema, functionProto, 17);
+}
+
+static bool BuildContextDependentFunctionBodyMVNVer27Post18(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  return BuildContextDependentFunctionBodyMVN(ctx, schema, functionProto, 18);
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     MeanVarianceNormalization,
-    13,
+    27,
     OpSchema()
-        .SetDoc(mvn_ver13_doc)
+        .SetDoc(mvn_ver27_doc)
         .Input(0, "X", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "Y", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Attr(
@@ -2185,43 +2234,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "are associated with the same mean and variance.",
             AttributeProto::INTS,
             mvn_default_axes)
+        .Attr(
+            "epsilon",
+            "The epsilon value to use to avoid division by zero.",
+            AttributeProto::FLOAT,
+            1e-9f)
         .TypeConstraint(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(R"ONNX(
-        {
-          Exponent = Constant <value = float {2.0}>()
-          Epsilon = Constant <value = float {1e-9}>()
-          X_RM = ReduceMean <axes : ints = @axes> (X)
-          EX_squared = Pow (X_RM, Exponent)
-          X_squared = Pow (X, Exponent)
-          E_Xsquared = ReduceMean <axes : ints = @axes> (X_squared)
-          Variance = Sub (E_Xsquared, EX_squared)
-          STD = Sqrt (Variance)
-          X_variance = Sub (X, X_RM)
-          Processed_STD = Add (STD, Epsilon)
-          Y = Div (X_variance, Processed_STD)
-        }
-        )ONNX")
-        .FunctionBody(
-            R"ONNX(
-        {
-          Exponent = Constant <value = float {2.0}>()
-          Epsilon = Constant <value = float {1e-9}>()
-          axes = Constant <value_ints: ints = @axes>()
-          X_RM = ReduceMean (X, axes)
-          EX_squared = Pow (X_RM, Exponent)
-          X_squared = Pow (X, Exponent)
-          E_Xsquared = ReduceMean (X_squared, axes)
-          Variance = Sub (E_Xsquared, EX_squared)
-          STD = Sqrt (Variance)
-          X_variance = Sub (X, X_RM)
-          Processed_STD = Add (STD, Epsilon)
-          Y = Div (X_variance, Processed_STD)
-        }
-        )ONNX",
-            18));
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMVNVer27Pre18, 17)
+        .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyMVNVer27Post18, 18)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static void col2imShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);

@@ -1455,13 +1455,13 @@ class OpSet_Onnx_ver26 {
 };
 
 // Forward declarations for ai.onnx version 27
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, MeanVarianceNormalization);
 
 // Iterate over schema from ai.onnx version 27
 class OpSet_Onnx_ver27 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
-    // TODO: Remove after introducing the first schema to opset 27
-    (void)fn;
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, MeanVarianceNormalization)>());
   }
 };
 
