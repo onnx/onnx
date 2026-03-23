@@ -314,8 +314,10 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name="test")
         serialized = model.SerializeToString()
 
-        with unittest.mock.patch.object(checker, "MAXIMUM_PROTOBUF", len(serialized) - 1):
-            self.assertRaises(ValueError, checker.check_model, serialized)
+        with unittest.mock.patch.object(
+            checker, "MAXIMUM_PROTOBUF", len(serialized)
+        ):
+            checker.check_model(serialized)
 
     def test_check_model_protobuf_size_over_limit_raises(self) -> None:
         node = helper.make_node("Relu", ["X"], ["Y"], name="test")
@@ -328,8 +330,8 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name="test")
         serialized = model.SerializeToString()
 
-        with unittest.mock.patch.object(checker, "MAXIMUM_PROTOBUF", len(serialized) + 1):
-            checker.check_model(serialized)
+        with unittest.mock.patch.object(checker, "MAXIMUM_PROTOBUF", len(serialized) - 1):
+            self.assertRaises(ValueError, checker.check_model, serialized)
 
     def test_check_old_model(self) -> None:
         node = helper.make_node("Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
