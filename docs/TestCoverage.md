@@ -28848,6 +28848,7 @@ expect(
     outputs=[Y],
     name="test_flexattention",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -28881,6 +28882,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_diff_head_sizes",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -28914,6 +28916,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_double",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -28947,6 +28950,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_fp16",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -28957,12 +28961,11 @@ expect(
 <summary>flexattention_gqa</summary>
 
 ```python
-"""FlexAttention with Grouped Query Attention (GQA) enabled."""
+"""FlexAttention with Grouped Query Attention (GQA)."""
 node = helper.make_node(
     "FlexAttention",
     inputs=["Q", "K", "V"],
     outputs=["Y"],
-    enable_gqa=1,
     domain=AI_ONNX_PREVIEW_DOMAIN,
 )
 
@@ -28972,7 +28975,7 @@ Q = np.random.rand(B, Hq, L, E).astype(np.float32)
 K = np.random.rand(B, Hkv, S, E).astype(np.float32)
 V = np.random.rand(B, Hkv, S, Ev).astype(np.float32)
 
-(Y,) = _compute_flex_attention(Q, K, V, enable_gqa=1)
+(Y,) = _compute_flex_attention(Q, K, V)
 
 expect(
     node,
@@ -28980,6 +28983,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_gqa",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -28987,11 +28991,12 @@ expect(
 
 </details>
 <details>
-<summary>flexattention_mask_mod_causal</summary>
+<summary>flexattention_prob_mod</summary>
 
 ```python
-"""FlexAttention with causal mask_mod subgraph."""
-mask_mod_graph = _make_causal_mask_mod_graph()
+"""FlexAttention with prob_mod subgraph (scales probabilities)."""
+scale_value = 0.5
+prob_mod_graph = _make_prob_mod_scale_graph(scale_value, TensorProto.FLOAT)
 
 node = helper.make_node(
     "FlexAttention",
@@ -28999,35 +29004,30 @@ node = helper.make_node(
     outputs=["Y"],
     domain=AI_ONNX_PREVIEW_DOMAIN,
 )
-mask_mod_attr = helper.make_attribute("mask_mod", mask_mod_graph)
-node.attribute.append(mask_mod_attr)
+prob_mod_attr = helper.make_attribute("prob_mod", prob_mod_graph)
+node.attribute.append(prob_mod_attr)
 
-B, Hq, L, E = 1, 2, 4, 4
-S, Ev = 4, 4
+B, Hq, L, E = 1, 2, 3, 4
+S, Ev = 3, 4
 
 Q = np.random.rand(B, Hq, L, E).astype(np.float32)
 K = np.random.rand(B, Hq, S, E).astype(np.float32)
 V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
 
-# Compute expected output with causal mask
 scale = 1.0 / np.sqrt(E)
 scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
-
-# Apply causal mask: mask[q, k] = (q >= k)
-causal_mask = np.tril(np.ones((L, S), dtype=bool))
-scores = np.where(causal_mask, scores, -np.inf)
-
-probs = np.exp(scores - np.max(scores, axis=-1, keepdims=True))
-probs = np.nan_to_num(probs)  # Handle -inf -> 0
-probs = probs / (probs.sum(axis=-1, keepdims=True) + 1e-10)
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+probs = probs * scale_value
 Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
 
 expect(
     node,
     inputs=[Q, K, V],
     outputs=[Y],
-    name="test_flexattention_mask_mod_causal",
+    name="test_flexattention_prob_mod",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -29063,6 +29063,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_scaled",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
@@ -29075,7 +29076,7 @@ expect(
 ```python
 """FlexAttention with score_mod subgraph (adds bias to scores)."""
 bias_value = 0.5
-score_mod_graph = _make_score_mod_bias_graph(bias_value)
+score_mod_graph = _make_score_mod_bias_graph(bias_value, TensorProto.FLOAT)
 
 node = helper.make_node(
     "FlexAttention",
@@ -29094,8 +29095,6 @@ Q = np.random.rand(B, Hq, L, E).astype(np.float32)
 K = np.random.rand(B, Hq, S, E).astype(np.float32)
 V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
 
-# Reference implementation applies score_mod element-wise
-# For simplicity, compute expected output manually
 scale = 1.0 / np.sqrt(E)
 scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
 scores = scores + bias_value  # score_mod: add bias
@@ -29109,6 +29108,7 @@ expect(
     outputs=[Y],
     name="test_flexattention_score_mod",
     opset_imports=[
+        helper.make_opsetid("", 26),
         helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
     ],
 )
