@@ -407,30 +407,27 @@ static bool BuildFlexAttentionFunctionBody(
       .Add("VAligned = Reshape(VExpanded, VAlignedShape)");
 
   // Compute scaling factor.
-  builder.Add("QShapeAll = Shape(Q)")
-      .Const("Idx3Head", ToTensor<int64_t>(3))
-      .Add("QKHeadSize = Gather <axis = 0> (QShapeAll, Idx3Head)")
-      .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", kFloat32)
-      .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
-      .Const("OneF", ToTensor<float>(1.0f))
-      .Add("CalculatedScale = Div(OneF, SqrtHeadSize)")
-      .Const("ScaleF", ToTensor<float>(scale));
-
   if (scale_attr != nullptr) {
-    builder.Add("ScaleFactorF32 = Identity(ScaleF)");
+    builder.Const("ScaleFactorF32", ToTensor<float>(scale));
   } else {
-    builder.Add("ScaleFactorF32 = Identity(CalculatedScale)");
+    builder.Add("QShapeAll = Shape(Q)")
+        .Const("Idx3Head", ToTensor<int64_t>(3))
+        .Add("QKHeadSize = Gather <axis = 0> (QShapeAll, Idx3Head)")
+        .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", kFloat32)
+        .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
+        .Const("OneF", ToTensor<float>(1.0f))
+        .Add("CalculatedScale = Div(OneF, SqrtHeadSize)")
+        .Add("ScaleFactorF32 = Identity(CalculatedScale)");
   }
-  builder.Add("ScaleFactorSqrtF32 = Sqrt(ScaleFactorF32)");
+  builder.Add("ScaleFactorSqrtF32 = Sqrt(ScaleFactorF32)")
+      .Add("ScaleFactorSqrt = Cast (ScaleFactorSqrtF32)", "to", input_elem_type);
 
   // Compute attention scores by pre-scaling Q and K with sqrt(scale).
-  builder.Add("QF = Cast (Q)", "to", kFloat32)
-      .Add("KF = Cast (KAligned)", "to", kFloat32)
-      .Add("QScaledF = Mul(QF, ScaleFactorSqrtF32)")
-      .Add("KScaledF = Mul(KF, ScaleFactorSqrtF32)")
-      .Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KScaledF)")
-      .Add("ScoreF = MatMul(QScaledF, KTranspose)")
-      .Add("SoftmaxCast = Cast (ScoreF)", "to", softmax_precision);
+  builder.Add("QScaled = Mul(Q, ScaleFactorSqrt)")
+      .Add("KScaled = Mul(KAligned, ScaleFactorSqrt)")
+      .Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KScaled)")
+      .Add("Score = MatMul(QScaled, KTranspose)")
+      .Add("SoftmaxCast = Cast (Score)", "to", softmax_precision);
 
   // Apply score_mod.
   if (need_score_mod) {

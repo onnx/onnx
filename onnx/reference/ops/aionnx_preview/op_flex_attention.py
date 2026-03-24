@@ -86,23 +86,28 @@ def _compute_flex_attention(
         raise RuntimeError("Key and value must share the same sequence length.")
     if Ek != E:
         raise RuntimeError("Query and key must share the same embedding dimension.")
-    # Determine the computation dtype based on softmax_precision.
-    compute_dtype = _get_softmax_dtype(Q.dtype, softmax_precision)
-    Q_f = Q.astype(compute_dtype, copy=False)
-    K_f = K.astype(compute_dtype, copy=False)
-    V_f = V.astype(compute_dtype, copy=False)
 
+    # Handle GQA repeat if number of query heads differs from key/value heads.
     if Hq != Hkv:
         if Hkv <= 0 or (Hq % Hkv) != 0:
             raise RuntimeError(
                 "q_num_heads must be a multiple of kv_num_heads when they differ."
             )
         repeat = Hq // Hkv
-        K_f = np.repeat(K_f, repeats=repeat, axis=1)
-        V_f = np.repeat(V_f, repeats=repeat, axis=1)
+        K_aligned = np.repeat(K, repeats=repeat, axis=1)
+        V_aligned = np.repeat(V, repeats=repeat, axis=1)
+    else:
+        K_aligned = K
+        V_aligned = V
 
-    # Scores: (B, Hq, L, S)
-    scores = np.matmul(Q_f, np.swapaxes(K_f, -1, -2)) * float(scale)
+    # Pre-scale Q and K with sqrt(scale).
+    # Scale factor is computed in float32 then cast to input type.
+    sqrt_scale = np.array(np.sqrt(np.float32(scale)), dtype=Q.dtype)
+    scores = np.matmul(Q * sqrt_scale, np.swapaxes(K_aligned * sqrt_scale, -1, -2))
+
+    # Cast to softmax computation dtype.
+    compute_dtype = _get_softmax_dtype(Q.dtype, softmax_precision)
+    scores = scores.astype(compute_dtype)
 
     if score_mod is not None:
         scores_out = _call_mod_graph(score_mod, [scores])
@@ -117,6 +122,8 @@ def _compute_flex_attention(
         probs_out = _call_mod_graph(prob_mod, [probs])
         probs = np.asarray(probs_out, dtype=compute_dtype)
 
+    # Final MatMul: Prob @ V in softmax precision, cast back to input type.
+    V_f = V_aligned.astype(compute_dtype)
     out = np.matmul(probs, V_f)
 
     return (out.astype(V.dtype),)
