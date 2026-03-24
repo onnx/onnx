@@ -32802,6 +32802,93 @@ This version of the operator has been available since version 26 of the default 
 <dd>axis tensor can be int32 or int64 only</dd>
 </dl>
 
+# ai.onnx.preview
+## Version 1 of the 'ai.onnx.preview' operator set
+### <a name="ai.onnx.preview.FlexAttention-1"></a>**ai.onnx.preview.FlexAttention-1**</a>
+
+  Computes scaled dot-product attention over rank-4 (batched, multi-head) inputs,
+  with optional user-provided customization subgraphs at up to three stages:
+
+  1. score_mod: Modify each scalar attention score after Q·K^T
+  2. mask_mod: Determine which (q_idx, k_idx) connections are allowed
+  3. prob_mod: Modify each scalar probability after Softmax
+
+  This operator mirrors the capabilities of PyTorch's flex_attention:
+  https://docs.pytorch.org/docs/stable/nn.attention.flex_attention.html
+
+  Input Shapes (MUST be rank-4 tensors):
+  - Q: `(batch_size, q_num_heads, q_sequence_length, head_size)`
+  - K: `(batch_size, kv_num_heads, kv_sequence_length, head_size)`
+  - V: `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)`
+
+  Output Shape:
+  - Y: `(batch_size, q_num_heads, q_sequence_length, v_head_size)`
+
+  FlexAttention Computation:
+  ```
+  Scores = (Q @ K^T) * scale
+  Scores = score_mod(Scores)             # if provided
+  Scores = apply_mask(Scores, mask_mod)  # if provided, masked positions get -inf
+  Probs = Softmax(Scores, axis=-1)
+  Probs = prob_mod(Probs)                # if provided
+  Y = Probs @ V
+  ```
+
+  Grouped Query Attention (GQA):
+  When `enable_gqa=1`, supports GQA where `q_num_heads` is a multiple of `kv_num_heads`.
+  K/V heads are broadcast to match query heads count.
+
+  Note: The default function body uses a Loop for element-wise modifier
+  application, which is intended as a fallback. Optimized backends should
+  recognize this pattern and apply fused kernel implementations.
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>enable_gqa</tt> : int (default is 0)</dt>
+<dd>Enable Grouped Query Attention. 0 (default): requires Hq == Hkv. 1: K/V heads are broadcast to query heads (Hq must be divisible by Hkv).</dd>
+<dt><tt>mask_mod</tt> : graph</dt>
+<dd>Optional mask modifier subgraph with 4 scalar inputs: (batch, head, q_idx, k_idx) -> mask_out (BOOL). All inputs are INT64 scalars.</dd>
+<dt><tt>mask_value</tt> : float (default is -inf)</dt>
+<dd>Value for masked scores before softmax. Defaults to -infinity.</dd>
+<dt><tt>prob_mod</tt> : graph</dt>
+<dd>Optional probability modifier subgraph with 5 scalar inputs: (prob, batch, head, q_idx, k_idx) -> prob_out. prob uses softmax_precision type; indices are INT64.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor for Q*K^T. Defaults to 1/sqrt(head_size).</dd>
+<dt><tt>score_mod</tt> : graph</dt>
+<dd>Optional score modifier subgraph with 5 scalar inputs: (score, batch, head, q_idx, k_idx) -> score_out. score uses softmax_precision type; indices are INT64.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>Floating-point precision for softmax computation. Defaults to float32 for float16/bfloat16 inputs, otherwise uses input type. Must be explicitly specified for non-float types.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Query tensor with shape `(batch_size, q_num_heads, q_seq_len, head_size)`.</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Key tensor with shape `(batch_size, kv_num_heads, kv_seq_len, head_size)`.</dd>
+<dt><tt>V</tt> : T1</dt>
+<dd>Value tensor with shape `(batch_size, kv_num_heads, kv_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Output tensor with shape `(batch_size, q_num_heads, q_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q, K, V to float tensors.</dd>
+</dl>
+
 # ai.onnx.preview.training
 ## Version 1 of the 'ai.onnx.preview.training' operator set
 ### <a name="ai.onnx.preview.training.Adagrad-1"></a>**ai.onnx.preview.training.Adagrad-1**</a>
