@@ -80,6 +80,9 @@ ONNX_API void convPoolShapeInference(
     if (strides.size() != n_input_dims) {
       fail_shape_inference("Attribute strides has incorrect size");
     }
+    if (std::find(strides.begin(), strides.end(), int64_t{0}) != strides.end()) {
+      fail_shape_inference("Attribute strides must only contain non-zero values");
+    }
   } else {
     strides.assign(n_input_dims, 1);
   }
