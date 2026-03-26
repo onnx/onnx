@@ -28,7 +28,7 @@ jobs:
     name: Install and test (${{ matrix.os }}, ${{ matrix.environment }})
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         os:
           - ubuntu-latest

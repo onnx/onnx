@@ -138,7 +138,7 @@ def dump_value(value: Any):  # noqa: PLR0911
         case set() | frozenset():
             return sorted(dump_value(v) for v in value)  # type: ignore[type-var]
         case Iterable():
-            return type(value)(dump_value(v) for v in value)  # type: ignore
+            return type(value)(dump_value(v) for v in value)  # type: ignore[call-arg]
 
     raise RuntimeError(f"Unhandled type {type(value)}")
 
