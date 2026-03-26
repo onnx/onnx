@@ -357,11 +357,19 @@ An earlier draft proposed two separate operators (`LinearAttentionRecurrent` for
 3. **No ambiguity**: Graph builders always know they need to pack heads before calling
    `LinearAttention`. There is no layout selection decision at graph construction time.
 
-### Why rank-4 decay `(B, H, T, d_k)`?
+### Why broadcastable packed decay?
 
-Rank-4 decay supports both per-head scalar decay (DeltaNet/RetNet: broadcast from `(B, H, T, 1)`)
-and per-key-dimension decay (GLA/RWKV-6: full `(B, H, T, d_k)`). A scalar shape would not cover
-GLA, which selectively retains different components of the state matrix independently.
+In the 3D packed convention, decay uses shapes `(B, T, H_{kv})` for per-head scalar decay
+(DeltaNet/RetNet) or `(B, T, H_{kv} \cdot d_k)` for per-key-dimension decay (GLA/RWKV-6).
+Internally (after unpacking), these correspond to `(B, H, T, 1)` and `(B, H, T, d_k)`. The
+packed broadcastable design supports both:
+
+- **Per-head scalar decay**: `(B, T, H_{kv})` — one scalar gate per head per token
+- **Per-key-dimension decay**: `(B, T, H_{kv} \cdot d_k)` — independent gate per key dimension
+
+A per-key-dimension decay allows the model to selectively retain or forget different components of
+the state matrix independently — a key capability of GLA and RWKV-6 that per-head scalar cannot
+express.
 
 ### Why packed QKV?
 
@@ -645,8 +653,8 @@ these backends.
   lengths and states. A future op variant could support variable-length batches with a mask input.
 
 - **Block-sparse decay**: Some architectures use block-sparse or low-rank decay matrices for
-  efficiency. The current `decay` shape `(B, H, T, d_k)` is dense; a future extension could accept
-  sparse formats.
+  efficiency. The current packed `decay` shape `(B, T, H_{kv} \cdot d_k)` is dense; a future
+  extension could accept sparse formats.
 
 - **Hardware-specific layouts**: Future opset versions could add layout attributes (e.g., NHWC-like
   variants) for hardware backends that prefer different memory layouts for the state matrix.
