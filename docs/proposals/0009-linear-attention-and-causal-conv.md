@@ -261,7 +261,10 @@ correct output; the chunk-parallel algorithm achieves the same result with bette
 | `"delta"` | `beta` | DeltaNet |
 | `"gated_delta"` | `decay`, `beta` | **Qwen3.5**, Qwen3-Next, Gated DeltaNet |
 
-#### Compute dtype
+#### State precision (`stash_type` convention)
+
+Following the ONNX `stash_type` convention (as used in `LayerNormalization` and `GroupNormalization`),
+the type parameter `S` controls the precision of the recurrent state tensors:
 
 The op's externally visible activations (`query`, `key`, `value`, `output`) use the **native dtype
 `T`** (float16, bfloat16, or float32) — there is no requirement for callers to upcast these to
