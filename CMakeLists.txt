@@ -288,6 +288,12 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
+    # utf8_validity.h is included by protobuf headers but its include dir
+    # is only added via include_directories() inside protobuf's directory scope.
+    # Make it available globally so onnx targets can compile .pb.cc files.
+    if(EXISTS "${protobuf_SOURCE_DIR}/third_party/utf8_range")
+      include_directories("${protobuf_SOURCE_DIR}/third_party/utf8_range")
+    endif()
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
     set(Protobuf_VERSION "6.33.5")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
