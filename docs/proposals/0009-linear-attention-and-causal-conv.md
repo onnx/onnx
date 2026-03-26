@@ -195,6 +195,21 @@ packed head dimension. The op splits using `q_num_heads` and `kv_num_heads` (alw
 | `scale` | float | `0.0` | Output scaling factor. When `0.0` (default), the op derives the per-head key dimension $d_k$ from the `query` shape and `q_num_heads`: (1) if `key`/`value` are present (Q-only mode), $d_k = \text{query.shape}[-1] / \text{q\_num\_heads}$; (2) if `key`/`value` are absent (packed-QKV mode), $d_k = \text{query.shape}[-1] / (\text{q\_num\_heads} + 2 \cdot \text{kv\_num\_heads})$. In both cases $d_k$ must be an integer, and the op uses $1/\sqrt{d_k}$. Set explicitly to override (e.g., `scale=1.0` when queries are pre-scaled by the caller). |
 | `chunk_size` | int | `64` | Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness. |
 
+#### Input combinations and validation
+
+The optional inputs `decay` and `beta` are tightly coupled to `update_rule`. Implementations
+**MUST** validate these combinations at model-load time and **MUST NOT** silently substitute
+default values for missing required inputs:
+
+| `update_rule` | `decay` | `beta` | Notes |
+|---------------|---------|--------|-------|
+| `"linear"` | must be omitted | must be omitted | Pure associative recall; no gating |
+| `"gated"` | **required** | must be omitted | Per-head or per-key-dim decay gate |
+| `"delta"` | must be omitted | **required** | DeltaNet update rate |
+| `"gated_delta"` | **required** | **required** | Gated DeltaNet (Qwen3.5) |
+
+Providing a forbidden input or omitting a required input is a **model validation error**.
+
 #### Mathematical definition by `update_rule`
 
 All modes share the same state shape $S \in \mathbb{R}^{B \times H \times d_k \times d_v}$.
@@ -217,8 +232,9 @@ where $g_t$ is the `decay` input at position $t$.
 #### Reference pseudocode (`gated_delta`, internal 4D computation)
 
 ```python
-def linear_attention(query_3d, key_3d, v_3d, past_state, decay_3d, beta_3d, scale=0.0,
-                     update_rule="gated_delta"):
+def linear_attention(query_3d, key_3d, v_3d, past_state, decay_3d, beta_3d,
+                     q_num_heads, kv_num_heads,  # op attributes — always required
+                     scale=0.0, update_rule="gated_delta"):
     # Inputs are 3D: query_3d (B, T, H_q*d_k), key_3d (B, T, H_kv*d_k), etc.
     # Op unpacks to 4D internally before computation:
     q, k, v = unpack_3d(query_3d, key_3d, v_3d, q_num_heads, kv_num_heads)
@@ -309,9 +325,11 @@ preprocessing step in Gated DeltaNet and Mamba architectures.
 
 Causality is always enforced on the **last spatial dimension** (position axis). For ndim=1 this
 is $L$; for ndim=2 it is $W$; for ndim=3 it is $W$. All other spatial dimensions ($H$, $D$) are
-treated as independent channels — not causal. Causal padding (size $k-1$) is applied on the
-left (past-facing) side of the last spatial dimension only, ensuring the output at position $t$
-depends only on positions $\leq t$ along that axis.
+treated as independent channels — not causal — and **are not convolved across**: their kernel
+sizes **MUST** be 1, so there is no spatial mixing along those axes. Causal padding (size $k-1$)
+is applied on the left (past-facing) side of the last spatial dimension only, ensuring the output
+at position $t$ depends only on positions $\leq t$ along that axis. No padding is applied on the
+non-causal spatial dimensions.
 
 ---
 
@@ -472,8 +490,8 @@ for _ in range(T):
 
 **Roofline analysis** for one head, $d_k = d_v = 128$:
 
-| | FLOPs | Memory Traffic | Arithmetic Intensity | A100 Position |
-|-|-------|---------------|---------------------|---------------|
+| Operation | FLOPs | Memory Traffic | Arithmetic Intensity | A100 Position |
+|-----------|-------|----------------|----------------------|---------------|
 | **Fused kernel** | ~115K | ~1.3 KB (Q,K,V,g,β,output) | **~90 FLOPs/byte** | ✅ Compute-bound |
 | **Decomposed (~20 ONNX ops)** | ~115K | ~640 KB (state round-trips 5× read+write) | **~0.18 FLOPs/byte** | ❌ Memory-bound |
 
@@ -513,8 +531,8 @@ for (row = 0; row < d_k; row += 16) {
 
 Comparison with ORT's existing `DeepCpuLstmOp`:
 
-| | LSTM (ORT CPU) | `LinearAttention` |
-|-|---------------|--------------------------|
+| Property | LSTM (ORT CPU) | `LinearAttention` |
+|----------|----------------|--------------------------|
 | State size | Vector ~1–2 KB | Matrix ~64 KB |
 | Core ops | 4× GEMV + sigmoid/tanh | 1 decay + 1 outer product + 1 GEMV |
 | BLAS needed? | Yes (MlasGemm) | **No** — pure element-wise |
