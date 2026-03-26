@@ -632,9 +632,6 @@ these backends.
 - **RWKV-6 full coverage**: RWKV-6 uses both token mixing and channel mixing. The `"gated"` update
   rule covers the core recurrence, but RWKV-6's full layer may need additional ops.
 
-- **Training gradients**: The chunk-parallel WY decomposition for `gated_delta` during training
-  requires careful gradient computation. Should the op spec address backward pass requirements?
-
 - **Numerical precision for state accumulation**: Should the spec allow the op to accumulate the
   state in float32 even when inputs are float16/bfloat16 (similar to how some softmax attention
   impls upcast the softmax denominator)?
