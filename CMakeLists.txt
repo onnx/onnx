@@ -278,6 +278,16 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
+    # Fetch Abseil via URL tarball so protobuf doesn't fall back to git clone,
+    # which fails in restricted environments (e.g. piwheels).
+    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20250127.0/abseil-cpp-20250127.0.tar.gz)
+    set(AbseilSHA1 3e4a608cfdb580126b90ae651bcc6261357511ce)
+    FetchContent_Declare(
+      absl
+      URL ${AbseilURL}
+      URL_HASH SHA1=${AbseilSHA1}
+    )
+    FetchContent_MakeAvailable(absl)
     set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v33.5/protobuf-33.5.tar.gz)
     set(ProtobufSHA1 24f666eb4974e405581da5a174eb7f9113eb1241)
     FetchContent_Declare(
