@@ -2,6 +2,20 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# This workflow is the first half of a two-workflow pattern used to securely
+# auto-update generated files from fork PRs. It runs on `pull_request` (no
+# secrets, no write access) so fork code is never executed with elevated
+# permissions. It builds ONNX, regenerates docs and backend test data, and
+# uploads a binary git patch as an artifact.
+#
+# The second half (auto_update_doc_commit.yml) runs on `workflow_run`, picks
+# up the patch artifact, and commits it back to the PR branch. That workflow
+# has write access but never executes fork code.
+#
+# To trigger: add the "auto update doc" label to a PR. The PR must also have
+# "Allow edits from maintainers" enabled so the commit workflow can push back.
+#
+# See: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 name: Auto update documentation/backend test data - Generate
 on:
   pull_request:
@@ -22,7 +36,7 @@ jobs:
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Setup Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
