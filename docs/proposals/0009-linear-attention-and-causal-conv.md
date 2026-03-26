@@ -6,11 +6,10 @@ SPDX-License-Identifier: Apache-2.0
 
 - Feature Name: `linear_attention_and_causal_conv`
 - Start Date: 2026-03-26
-- RFC PR: [onnx/onnx#0000](https://github.com/onnx/onnx/pull/0000)
+- RFC PR: [onnx/onnx#7767](https://github.com/onnx/onnx/pull/7767)
 - Status: under discussion
 - Authors:
-  - Justin Chu (@justinchuby)
-  - GitHub Copilot
+  - @justinchuby
 
 ## Summary
 [summary]: #summary
@@ -63,7 +62,9 @@ This works for **correctness** — the graphs produce numerically equivalent res
 - The Gated DeltaNet recurrent step decomposes into **~20 individual ONNX ops** (Exp, Mul, MatMul,
   Sub, Add, Unsqueeze, Squeeze, Transpose, ReduceSum, etc.)
 - Each op requires a separate GPU kernel launch and materializes intermediate tensors to global memory
-- The state matrix is $(B, H, 128, 128)$ — **512 KB per head in fp16**. The decomposed path reads
+- The state matrix has shape $(B, H, 128, 128)$. Each $(128, 128)$ slice per $(\text{batch}, \text{head})$
+  is $128 \times 128 \times 2$ bytes ≈ **32 KB in fp16**; for a representative batch size $B = 16$
+  this is $32\ \text{KB} \times 16 = \mathbf{512\ \text{KB}}$ of state per head across the batch. The decomposed path reads
   and writes this to global memory **5+ times per token** (decay, retrieve, delta, update, read).
   A fused kernel keeps it in registers/shared memory for the entire update.
 - **Estimated performance gap: 10–50×** slower than fused kernels, driven by memory bandwidth
@@ -110,11 +111,13 @@ returns the attention output alongside the updated state:
 ```python
 # Decode: one token at a time
 output, state = LinearAttention(q, k, v, past_state, decay, beta,
-                                update_rule="gated_delta", scale=0.0)
+                                update_rule="gated_delta", scale=0.0,
+                                q_num_heads=16, kv_num_heads=16)
 
 # Prefill: full sequence (same op, T > 1)
 output, final_state = LinearAttention(q, k, v, initial_state, decay, beta,
-                                      update_rule="gated_delta", scale=0.0)
+                                      update_rule="gated_delta", scale=0.0,
+                                      q_num_heads=16, kv_num_heads=16)
 
 # Packed QKV: k and v omitted, q contains concatenated QKV
 output, state = LinearAttention(packed_qkv, None, None, past_state, decay, beta,
@@ -153,7 +156,7 @@ computation.
 | `query` | T | $(B, T, H_q \cdot d_k)$ | Packed query vectors. When `key`/`value` are absent, contains packed QKV: $(B, T, (H_q + 2H_{kv}) \cdot d_k)$ |
 | `key` | T (optional) | $(B, T, H_{kv} \cdot d_k)$ | Packed key vectors. If absent, `query` must contain packed QKV. |
 | `value` | T (optional) | $(B, T, H_{kv} \cdot d_v)$ | Packed value vectors. If absent, `query` must contain packed QKV. |
-| `past_state` | T (optional) | $(B, H_{kv}, d_k, d_v)$ | Recurrent state from previous step or context (always 4D) |
+| `past_state` | S (optional) | $(B, H_{kv}, d_k, d_v)$ | Recurrent state from previous step or context (always 4D). If omitted, the operator **MUST** behave as if a zero-initialized tensor of this shape were provided, representing the first token/chunk with no prior context. |
 | `decay` | T (optional) | $(B, T, H_{kv} \cdot d_k)$ or $(B, T, H_{kv})$ | Packed decay gates (log-space). Broadcastable: `(B, T, H_{kv})` for per-head scalar (DeltaNet/RetNet), `(B, T, H_{kv} * d_k)` for per-key-dimension (GLA/RWKV-6). Required for `gated_*` modes. |
 | `beta` | T (optional) | $(B, T, H_{kv})$ or $(B, T, 1)$ | Packed update rates (sigmoid output). Broadcastable. Required for `*_delta` modes. |
 
@@ -175,7 +178,11 @@ packed head dimension. The op splits using `q_num_heads` and `kv_num_heads` (alw
 | Name | Type | Shape | Description |
 |------|------|-------|-------------|
 | `output` | T | $(B, T, H_q \cdot d_v)$ | Attention output (3D packed) |
-| `present_state` | T | $(B, H_{kv}, d_k, d_v)$ | Updated recurrent state (always 4D) |
+| `present_state` | S | $(B, H_{kv}, d_k, d_v)$ | Updated recurrent state (always 4D) |
+
+**Type parameters:**
+- `T`: activation dtype for `query`, `key`, `value`, `decay`, `beta`, and `output` (float16, bfloat16, or float32).
+- `S`: state dtype for `past_state` and `present_state`. Must be float32 or the same as `T`. Using `S = float32` with `T = float16/bfloat16` is the recommended configuration for long sequences; runtimes handle any necessary casting internally.
 
 #### Attributes
 
@@ -184,7 +191,7 @@ packed head dimension. The op splits using `q_num_heads` and `kv_num_heads` (alw
 | `q_num_heads` | int | — | Number of query heads. **Always required.** |
 | `kv_num_heads` | int | — | Number of key/value heads. **Always required.** |
 | `update_rule` | string | `"gated_delta"` | One of: `"linear"`, `"gated"`, `"delta"`, `"gated_delta"` |
-| `scale` | float | `0.0` | Output scaling factor. When `0.0` (default), uses $1/\sqrt{d_k}$ inferred from query's last dimension. Set explicitly to override (e.g., `scale=1.0` when queries are pre-scaled by the caller). |
+| `scale` | float | `0.0` | Output scaling factor. When `0.0` (default), the op derives the per-head key dimension $d_k$ from the `query` shape and `q_num_heads`: (1) if `key`/`value` are present (Q-only mode), $d_k = \text{query.shape}[-1] / \text{q\_num\_heads}$; (2) if `key`/`value` are absent (packed-QKV mode), $d_k = \text{query.shape}[-1] / (\text{q\_num\_heads} + 2 \cdot \text{kv\_num\_heads})$. In both cases $d_k$ must be an integer, and the op uses $1/\sqrt{d_k}$. Set explicitly to override (e.g., `scale=1.0` when queries are pre-scaled by the caller). |
 | `chunk_size` | int | `64` | Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness. |
 
 #### Mathematical definition by `update_rule`
@@ -256,9 +263,15 @@ correct output; the chunk-parallel algorithm achieves the same result with bette
 
 #### Compute dtype
 
-The op computes in the **native dtype of the inputs** (float16, bfloat16, float32). No mandatory
-float32 upcast. Callers who need float32 precision for state accumulation can cast inputs before
-calling the op.
+The op's externally visible activations (`query`, `key`, `value`, `output`) use the **native dtype
+`T`** (float16, bfloat16, or float32) — there is no requirement for callers to upcast these to
+float32 at the API boundary.
+
+The recurrent state (`past_state`/`present_state`) uses dtype `S`, which may be float32 even when
+`T` is float16 or bfloat16. Runtimes that use float32 state accumulation handle any necessary
+casting between `S` and `T` internally, without changing the public tensor dtypes seen by the
+model. This matches LSTM's convention of maintaining a float32 cell state regardless of the
+activation dtype.
 
 ---
 
@@ -272,16 +285,16 @@ preprocessing step in Gated DeltaNet and Mamba architectures.
 | Name | Type | Shape | Description |
 |------|------|-------|-------------|
 | `input` | T | $(B, C, ...)$ | Input tensor. Spatial dims: 1D: $(L,)$; 2D: $(H, W)$; 3D: $(D, H, W)$ |
-| `weight` | T | $(C, 1, k_1, ...)$ | Depthwise convolution kernel |
+| `weight` | T | $(C, 1, k_1, ...)$ | Depthwise convolution kernel (spatial kernel sizes: $(k_1, \ldots, k_{\text{ndim}})$) |
 | `bias` | T (optional) | $(C,)$ | Per-channel bias |
-| `past_state` | T (optional) | Kernel-extent prefix of spatial dims | Carry-over state from previous step |
+| `past_state` | T (optional) | ndim=1: $(B, C, k_1{-}1)$; ndim=2: $(B, C, H, k_2{-}1)$; ndim=3: $(B, C, D, H, k_3{-}1)$ | Carry-over state (last $k-1$ positions along the causal axis). If omitted, treated as zeros. |
 
 #### Outputs
 
 | Name | Type | Shape | Description |
 |------|------|-------|-------------|
 | `output` | T | Same as `input` | Convolution output after optional activation |
-| `present_state` | T | Kernel-extent prefix | Updated carry state for next call |
+| `present_state` | T | Same shape as `past_state` | Updated carry state for next call |
 
 #### Attributes
 
@@ -290,8 +303,11 @@ preprocessing step in Gated DeltaNet and Mamba architectures.
 | `ndim` | int | `1` | Spatial dimensionality: `1`, `2`, or `3` |
 | `activation` | string | `"none"` | Optional fused activation: `"silu"`, `"swish"`, `"none"`. (`"silu"` and `"swish"` are aliases.) |
 
-Causal padding is applied on the **left** (past-facing) side of the last spatial dimension only,
-ensuring the output at position $t$ depends only on positions $\leq t$.
+Causality is always enforced on the **last spatial dimension** (position axis). For ndim=1 this
+is $L$; for ndim=2 it is $W$; for ndim=3 it is $W$. All other spatial dimensions ($H$, $D$) are
+treated as independent channels — not causal. Causal padding (size $k-1$) is applied on the
+left (past-facing) side of the last spatial dimension only, ensuring the output at position $t$
+depends only on positions $\leq t$ along that axis.
 
 ---
 
@@ -583,12 +599,12 @@ KV cache grows linearly with sequence length:
 The crossover point is typically **1.5K–3K tokens** for common GQA configurations. At 128K tokens
 with $H_{kv}=4$, the KV cache is **42× larger** than the linear attention state.
 
-**fp32 state accumulation is strongly recommended for long sequences.** The state matrix
-accumulates over thousands of tokens — fp16 accumulation loses precision (or overflows beyond
-65,504) after ~1K updates. All FLA implementations universally use fp32 state, matching LSTM's
-fp32 cell state convention. The operator spec should document that callers are encouraged to use
-fp32 dtype for `past_state`/`present_state` inputs, particularly for sequences longer than ~1K
-tokens, and should clearly document the numerical implications of fp16 state.
+**fp32 state accumulation (`S = float32`) is strongly recommended for long sequences.** The state
+matrix accumulates over thousands of tokens — fp16 accumulation loses precision (or overflows
+beyond 65,504) after ~1K updates. All FLA implementations universally use fp32 state, matching
+LSTM's fp32 cell state convention. Callers should set the `past_state`/`present_state` dtype
+(`S`) to float32 for sequences longer than ~1K tokens, while keeping activations (`T`) at
+float16/bfloat16 for throughput. Runtimes handle the T↔S casting internally.
 
 **Serving note**: For batched inference with batch size $B$, state memory scales as $B \times 48$
 MB. Unlike KV cache, this is **constant** — no paging needed. Linear attention's fixed-size state
