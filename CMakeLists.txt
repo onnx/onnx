@@ -447,9 +447,8 @@ if(ONNX_BUILD_PYTHON)
 
     FetchContent_Declare(
       nanobind
-      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      GIT_TAG v2.10.2
-      GIT_SHALLOW TRUE
+      URL https://github.com/wjakob/nanobind/archive/refs/tags/v2.10.2.tar.gz
+      URL_HASH SHA256=5bb7f866f6c9c64405308b69de7e7681d8f779323e345bd71a00199c1eaec073
     )
     FetchContent_MakeAvailable(nanobind)
   endif()
