@@ -9,7 +9,8 @@ SPDX-License-Identifier: Apache-2.0
 - RFC PR: [onnx/onnx#7767](https://github.com/onnx/onnx/pull/7767)
 - Status: under discussion
 - Authors:
-  - @justinchuby
+  - Justin Chu (@justinchuby)
+  - GitHub Copilot
 
 ## Summary
 [summary]: #summary
