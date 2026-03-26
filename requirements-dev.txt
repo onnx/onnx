@@ -1,5 +1,6 @@
 build
 numpy
+ruamel.yaml
 parameterized
 protobuf
 pytest
