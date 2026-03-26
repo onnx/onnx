@@ -412,6 +412,208 @@ The current workaround (used in [onnxruntime/mobius](https://github.com/onnxrunt
 decomposition into ~70 primitive ONNX ops using `Scan`. This produces correct results but is
 10–50× slower than fused implementations due to memory bandwidth bottlenecks.
 
+## Discussion: Runtime Implementation Considerations
+[runtime-implementation]: #runtime-implementation
+
+The following addresses the question: *"Can backends actually implement this efficiently?"*
+The short answer is **yes** — the recurrent decode kernel is comparable in complexity to LSTM,
+while the chunk-parallel prefill is more complex but follows established patterns from the FLA
+library. This section covers GPU, CPU, NPU, compiler backends, and the fallback strategy.
+
+### 1. GPU Kernel: Fused vs. Decomposed — Over an Order of Magnitude Gap
+
+The [flash-linear-attention](https://github.com/fla-org/flash-linear-attention) (FLA) library
+provides production Triton kernels used by HuggingFace transformers for Qwen3.5 inference today.
+
+**Fused recurrent kernel (decode)**: One Triton program per (batch, head, value\_tile). The state
+tile `[BK=64, BV=64]` lives entirely in **fp32 registers** — never touches global memory during
+the token loop:
+
+```python
+# Simplified from fla/ops/gated_delta_rule/fused_recurrent.py
+b_h = tl.zeros([BK, BV], dtype=tl.float32)   # State in registers
+for _ in range(T):
+    b_q, b_k, b_v, b_beta, b_g = load_token(...)
+    b_h *= exp(b_g)                            # Decay
+    b_v = b_beta * (b_v - tl.sum(b_h * b_k[:, None], 0))  # Delta
+    b_h += b_k[:, None] * b_v                  # Update
+    b_o = tl.sum(b_h * b_q[:, None], 0)        # Readout
+    store(b_o)
+```
+
+**Roofline analysis** for one head, $d_k = d_v = 128$:
+
+| | FLOPs | Memory Traffic | Arithmetic Intensity | A100 Position |
+|-|-------|---------------|---------------------|---------------|
+| **Fused kernel** | ~115K | ~1.3 KB (Q,K,V,g,β,output) | **~90 FLOPs/byte** | ✅ Compute-bound |
+| **Decomposed (~20 ONNX ops)** | ~115K | ~640 KB (state round-trips 5× read+write) | **~0.18 FLOPs/byte** | ❌ Memory-bound |
+
+The A100's compute/bandwidth ridge point is ~10 FLOPs/byte. The fused kernel sits at ~90
+(deeply compute-bound); the decomposed path sits at ~0.18 (deeply memory-bound). In practice the
+fused kernel achieves 50–80% of A100's 19.5 TFLOPS peak, while the decomposed path is
+bandwidth-limited to ~360 GFLOPS — a **20–40× speedup from fusion**, driven entirely by
+eliminating intermediate memory traffic for the state matrix.
+
+The 128×128 fp32 state (64 KB) requires 4 tiles of `[64, BV]` to fit in registers. FLA handles
+this with unrolled tile variables — a well-understood pattern that scales across GPU generations
+including Blackwell (SM100).
+
+**Chunk-parallel kernel (prefill)** uses a multi-kernel WY decomposition pipeline:
+(1) intra-chunk causal attention via dense matmul (Tensor Core friendly),
+(2) inter-chunk state propagation,
+(3) combined output.
+Each chunk is parallelized independently; only the inter-chunk scan is sequential across $T/C$
+chunks (typically $T/C = 64$ for a 4K prompt).
+
+### 2. CPU Kernel: Simpler Than LSTM
+
+The state matrix (128×128×4 = 64 KB per head in fp32) fits comfortably in L2 cache. The update
+is element-wise — **no BLAS/GEMV dependency**, just AVX-512/NEON intrinsics:
+
+```c
+// AVX-512: tile state into 64×64 blocks (16 KB each, fits L1)
+for (row = 0; row < d_k; row += 16) {
+    __m512 s[d_v/16];
+    load_state_tile(s, &S[row]);
+    decay_tile(s, exp_g);             // S *= exp(g)
+    accumulate_retrieval(retrieval, s, k[row]);  // S^T @ k
+    update_tile(s, k[row], delta);    // S += k ⊗ delta
+    store_state_tile(&S[row], s);
+}
+```
+
+Comparison with ORT's existing `DeepCpuLstmOp`:
+
+| | LSTM (ORT CPU) | `LinearAttention` |
+|-|---------------|--------------------------|
+| State size | Vector ~1–2 KB | Matrix ~64 KB |
+| Core ops | 4× GEMV + sigmoid/tanh | 1 decay + 1 outer product + 1 GEMV |
+| BLAS needed? | Yes (MlasGemm) | **No** — pure element-wise |
+| Parallelism | batch, direction | batch, head, K-tile |
+| Est. kernel size | ~50 KB C++ | ~200–400 LOC C++ |
+
+Key advantage: linear attention heads are fully independent — embarrassingly parallel across $H$
+heads. For Qwen3.5 with 32 value heads, all 32 can execute on separate cores.
+
+### 3. NPU / Accelerator Considerations
+
+**Recurrent decode** is a poor fit for most NPUs (Qualcomm Hexagon, Intel NPU, Apple ANE)
+because of the sequential token-by-token dependency. NPUs are optimized for data-parallel
+throughput, not recurrent loops.
+
+**Chunk-parallel prefill** maps much better — the intra-chunk dense matmuls are exactly what NPU
+matrix-multiply units are designed for. The inter-chunk sequential scan is short ($T/C$ steps).
+
+**Custom silicon is ideal**: Groq (230 MB SRAM) and Cerebras WSE-3 (44 GB on-chip SRAM) can hold
+the entire model's state without touching HBM. The fixed-size state never needs external memory,
+unlike KV cache which may overflow SRAM for long sequences.
+
+### 4. Runtime Dispatch: Following the Attention Op Precedent
+
+ORT's standard `Attention` op (opset 23/24) demonstrates the ideal dispatch pattern, cascading:
+`Flash Attention 2 (SM ≥ 80, fp16/bf16) → Memory-Efficient (cutlass) → Unfused math`.
+The spec says nothing about flash attention — it's purely a backend optimization. `LinearAttention`
+follows the same model:
+
+```
+ORT CUDA:
+  ├─ Fused Triton/CUDA kernel (SM ≥ 80) — fastest (FLA-style)
+  ├─ Simpler fused CUDA (SM ≥ 70) — fast
+  └─ Scan decomposition fallback — correct but slow
+ORT CPU:
+  ├─ AVX-512 optimized kernel — fast
+  └─ Reference loop — correct
+TensorRT:
+  ├─ IPluginV3 custom plugin — fast
+  └─ Falls back to CUDA EP
+```
+
+Registration follows the standard ORT contrib op pattern —
+`BuildKernelCreateInfo<LinearAttention>()` in `cuda_contrib_kernels.cc` and
+`cpu_contrib_kernels.cc`, exactly as done for `Attention`, `GroupQueryAttention`, etc.
+Estimated effort: 500–800 LOC for CUDA, 200–400 LOC for CPU.
+
+### 5. Compiler Backend Lowering
+
+TVM, IREE/MLIR, and XLA can all **express** the recurrence but **cannot auto-fuse** the full
+state update through general-purpose fusion heuristics:
+
+- **TVM**: `te.compute` generates a fused kernel for one step, but the T-token loop needs
+  host-level orchestration. The WY solve for chunk-parallel is not a natural fit for polyhedral
+  scheduling.
+- **IREE**: The retrieval step (`S^T @ k`, a reduction) breaks the pure element-wise pattern. The
+  data dependency chain (retrieve → delta → outer → update) requires custom tiling rules.
+- **XLA**: `jax.lax.scan` handles the recurrence; fusion heuristics may not cover the full step.
+
+This is exactly why a dedicated op is needed: compilers need to *recognize* the structure to apply
+the right optimization. An opaque `Scan` body with 20 ops is just a bag of operations to the
+compiler. A named `LinearAttention` op tells the backend what computation to optimize for.
+
+The ONNX function body (Scan-based reference) serves dual purpose: **semantic specification** for
+the op's behavior, and **universal fallback** for backends that haven't implemented native kernels.
+
+### 6. Memory Characteristics and fp32 State Accumulation
+
+**Fixed state vs. growing KV cache** for a Qwen3.5-like model (24 linear layers, 32 value heads,
+$d_k = d_v = 128$; 8 softmax layers with GQA KV heads, fp16 storage):
+
+Linear attention state is fixed regardless of sequence length:
+- **fp16**: $24 \times 32 \times 128 \times 128 \times 2 = 24$ MB
+- **fp32** (recommended for numerical stability): $24 \times 32 \times 128 \times 128 \times 4 = 48$ MB
+
+KV cache grows linearly with sequence length:
+
+| Sequence Length | Linear Attn State (fp32) | KV Cache ($H_{kv}=4$) | KV Cache ($H_{kv}=8$) |
+|----------------|--------------------------|----------------------|----------------------|
+| 1K tokens | 48 MB (fixed) | 16 MB | 32 MB |
+| **3K tokens** | **48 MB** | **48 MB** | — |
+| 32K tokens | 48 MB (fixed) | 512 MB | 1,024 MB |
+| 128K tokens | 48 MB (fixed) | 2 GB | 4 GB |
+| 1M tokens | 48 MB (fixed) | 16 GB | 32 GB |
+
+The crossover point is typically **1.5K–3K tokens** for common GQA configurations. At 128K tokens
+with $H_{kv}=4$, the KV cache is **42× larger** than the linear attention state.
+
+**fp32 state accumulation is strongly recommended for long sequences.** The state matrix
+accumulates over thousands of tokens — fp16 accumulation loses precision (or overflows beyond
+65,504) after ~1K updates. All FLA implementations universally use fp32 state, matching LSTM's
+fp32 cell state convention. The operator spec should document that callers are encouraged to use
+fp32 dtype for `past_state`/`present_state` inputs, particularly for sequences longer than ~1K
+tokens, and should clearly document the numerical implications of fp16 state.
+
+**Serving note**: For batched inference with batch size $B$, state memory scales as $B \times 48$
+MB. Unlike KV cache, this is **constant** — no paging needed. Linear attention's fixed-size state
+simplifies memory management for request arrival/departure (no PagedAttention-style eviction).
+
+### 7. Fallback Strategy: The LSTM/Scan Precedent
+
+Despite `Scan` being theoretically sufficient to express LSTM/GRU, ORT maintains native kernels
+for every execution provider (`DeepCpuLstmOp` with ~50 KB of optimized C++ for CPU, custom CUDA
+kernels for GPU). The performance gap between Scan execution and native kernels was too large for
+practical use. **This is the exact precedent for `LinearAttention`.**
+
+Recommended strategy:
+1. Define `LinearAttention` as a first-class operator with a Scan-based **function body** for semantics and fallback
+2. Runtimes implement native kernels for their EPs (porting FLA kernels for CUDA, AVX-512 for CPU)
+3. Runtimes that don't recognize the op automatically expand the function body and execute via Scan — correct but 10–50× slower
+4. This mirrors how many opset 18+ ONNX ops have function bodies that ORT never actually uses (because native kernels are always faster)
+
+### Backend Implementation Summary
+
+| Backend | Est. Effort | Native Kernel Path | Fallback |
+|---------|------------|-------------------|----------|
+| **ORT CUDA** | 500–800 LOC | Port FLA Triton kernels, register in `cuda_contrib_kernels.cc` | Scan expansion |
+| **ORT CPU** | 200–400 LOC | AVX-512/NEON element-wise, follow `DeepCpuLstmOp` pattern | Scan expansion |
+| **TensorRT** | Custom plugin | `IPluginV3` wrapping CUDA kernel (like `IRNNv2Layer` for LSTM) | CUDA EP fallback |
+| **TVM** | Low | Auto-schedule single step; BYOC for external kernel lib | TE decomposition |
+| **IREE/MLIR** | Medium | Pattern-match to optimized linalg + scf lowering | Generic tiled lowering |
+| **OpenVINO** | Medium | `ov::Op` extension, CPU via oneDNN custom primitive | `evaluate()` reference |
+| **QNN (Qualcomm)** | High | HTP graph library + HVX intrinsics | Decompose to supported ops |
+
+The kernel engineering is well-understood, existing fused implementations are production-tested,
+and the implementation cost is comparable to (or less than) what was done for LSTM/GRU across
+these backends.
+
 ## Unresolved questions
 [unresolved-questions]: #unresolved-questions
 
