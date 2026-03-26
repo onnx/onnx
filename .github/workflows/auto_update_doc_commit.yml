@@ -10,7 +10,10 @@
 # produced by the generate workflow and commits it back to the PR branch.
 name: Auto update documentation/backend test data - Commit
 on:
-  workflow_run:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
+    # Safe: this workflow never checks out or executes fork code. It only
+    # downloads a pre-computed patch artifact from the generate workflow
+    # (which runs on `pull_request` with no secrets) and applies it.
     workflows: ["Auto update documentation/backend test data - Generate"]
     types: [completed]
 
