@@ -26,13 +26,16 @@
     },
     {
       // Detect nanobind version in CMakeLists.txt
-      // Example: set(NANOBIND_VERSION "v2.4.0")
+      // Example:
+      //   FetchContent_Declare(
+      //     nanobind
+      //     GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+      //     GIT_TAG v2.10.2
       "customType": "regex",
       "fileMatch": ["^CMakeLists\\.txt$"],
       "matchStrings": [
-        "set\\(NANOBIND_VERSION\\s+\"v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\"\\)"
+        "FetchContent_Declare\\(\\s*nanobind\\s+GIT_REPOSITORY\\s+https://github\\.com/(?<depName>[^/]+/[^.]+)\\.git\\s+GIT_TAG\\s+(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
-      "depNameTemplate": "wjakob/nanobind",
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v(?<version>.*)$"
     }
