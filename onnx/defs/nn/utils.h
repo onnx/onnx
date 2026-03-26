@@ -14,8 +14,7 @@ namespace utils {
 
 /**
  * Reads and validates the 'strides' attribute for Conv/Pool shape inference.
- * Returns the strides vector with validated size and non-zero values,
- * or defaults to all-1s if the attribute is not present.
+ * Returns the attribute value or a default value if the attribute is not present.
  */
 std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_dims);
 
