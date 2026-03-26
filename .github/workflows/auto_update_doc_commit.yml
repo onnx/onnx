@@ -1,0 +1,59 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Auto update documentation/backend test data - Commit
+on:
+  workflow_run:
+    workflows: ["Auto update documentation/backend test data - Generate"]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  commit:
+    # Only run for pull_request events (not workflow_dispatch) that succeeded
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download patch artifact
+      id: download
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      with:
+        name: doc-updates
+        path: /tmp/doc-artifacts/
+        run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Check if patch has changes
+      id: check
+      run: |
+        if [ -s /tmp/doc-artifacts/doc-updates.patch ]; then
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_changes=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      if: steps.check.outputs.has_changes == 'true'
+      with:
+        # Check out the fork branch so we can push the generated changes back.
+        # Requires "Allow edits from maintainers" to be enabled on the PR.
+        repository: ${{ github.event.workflow_run.head_repository.full_name }}
+        ref: ${{ github.event.workflow_run.head_sha }}
+        persist-credentials: true
+
+    - name: Apply patch
+      if: steps.check.outputs.has_changes == 'true'
+      run: git apply --binary /tmp/doc-artifacts/doc-updates.patch
+
+    - name: Commit changes with updated files
+      if: steps.check.outputs.has_changes == 'true'
+      uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+      with:
+        commit_message: CI:apply auto updated documentation/backend test data
+        commit_options: "--signoff"

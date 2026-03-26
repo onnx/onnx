@@ -1,0 +1,59 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Auto update documentation/backend test data - Generate
+on:
+  pull_request:
+    types: [labeled, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    if: contains(github.event.pull_request.labels.*.name, 'auto update doc')
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+    - name: Setup Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.11"
+
+    - name: Install ONNX from source and update documentation
+      run: |
+        source workflow_scripts/protobuf/build_protobuf_unix.sh 3
+        python -m pip install -q --upgrade pip
+        python -m pip install -r requirements-release_build.txt
+        git submodule update --init --recursive
+        export ONNX_ML=1
+        pip install --verbose -e .
+
+        python onnx/defs/gen_doc.py
+        python onnx/gen_proto.py -l
+        python onnx/gen_proto.py -l --ml
+        python onnx/backend/test/stat_coverage.py
+
+        python onnx/backend/test/cmd_tools.py generate-data --diff
+
+        git diff -- . ':(exclude)onnx/onnx-data.proto' ':(exclude)onnx/onnx-data.proto3'
+
+    - name: Create patch of generated changes
+      run: |
+        git add -A
+        git diff --staged --binary > /tmp/doc-updates.patch
+
+    - name: Upload patch artifact
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: doc-updates
+        path: /tmp/doc-updates.patch
