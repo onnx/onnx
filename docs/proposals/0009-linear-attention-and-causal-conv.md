@@ -121,8 +121,8 @@ output, state = LinearAttention(packed_qkv, None, None, past_state, decay, beta,
                                 q_num_heads=16, kv_num_heads=16)
 ```
 
-The operator supports both **4D unpacked** `[B, H, T, D]` and **3D packed** `[B, T, H*D]`
-layouts for all inputs, consistent with the ONNX `Attention` op convention.
+The operator supports **3D packed inputs** `[B, T, H*D]`; `q_num_heads` and `kv_num_heads`
+are always required. The op internally unpacks to 4D for computation.
 
 ### Using `CausalConvWithState`
 
@@ -141,60 +141,47 @@ The `ndim` attribute generalizes the op to 1D, 2D, or 3D spatial dimensions.
 ### Operator 1: `LinearAttention`
 
 Unified linear attention operator that handles both autoregressive decoding (T=1) and prefill
-(T>1) through a single interface. Supports 3D packed and 4D unpacked input layouts.
+(T>1) through a single interface. All inputs use **3D packed format** `[B, T, H*D]`;
+`q_num_heads` and `kv_num_heads` are always required. The op internally unpacks to 4D for
+computation.
 
-#### Input formats
-
-**4D inputs** (unpacked, head-explicit):
-
-| Name | Type | Shape | Description |
-|------|------|-------|-------------|
-| `query` | T | $(B, H_q, T, d_k)$ | Query vectors. When `key`/`value` are absent, contains packed QKV: $(B, H_q + 2H_{kv}, T, d_k)$ |
-| `key` | T (optional) | $(B, H_{kv}, T, d_k)$ | Key vectors (L2-normalized for DeltaNet variants). If absent, `query` must contain packed QKV. |
-| `value` | T (optional) | $(B, H_{kv}, T, d_v)$ | Value vectors. If absent, `query` must contain packed QKV. |
-| `past_state` | T (optional) | $(B, H_{kv}, d_k, d_v)$ | Recurrent state from previous step or context |
-| `decay` | T (optional) | $(B, H_{kv}, T, d_k)$ | Exponential decay gate (log-space). Broadcastable: per-head scalar $(B, H_{kv}, T, 1)$ for DeltaNet/RetNet, per-key-dimension for GLA/RWKV-6. Required for `gated_*` modes. |
-| `beta` | T (optional) | $(B, H_{kv}, T, 1)$ | Update rate (sigmoid output). Required for `*_delta` modes. |
-
-**3D inputs** (packed, head-fused — requires `q_num_heads` and `kv_num_heads` attributes):
+#### Inputs
 
 | Name | Type | Shape | Description |
 |------|------|-------|-------------|
 | `query` | T | $(B, T, H_q \cdot d_k)$ | Packed query vectors. When `key`/`value` are absent, contains packed QKV: $(B, T, (H_q + 2H_{kv}) \cdot d_k)$ |
 | `key` | T (optional) | $(B, T, H_{kv} \cdot d_k)$ | Packed key vectors. If absent, `query` must contain packed QKV. |
 | `value` | T (optional) | $(B, T, H_{kv} \cdot d_v)$ | Packed value vectors. If absent, `query` must contain packed QKV. |
-| `past_state` | T (optional) | $(B, H_{kv}, d_k, d_v)$ | Recurrent state (always 4D regardless of input layout) |
-| `decay` | T (optional) | $(B, T, H_{kv} \cdot d_k)$ or $(B, T, H_{kv})$ | Packed decay gates (broadcastable) |
-| `beta` | T (optional) | $(B, T, H_{kv})$ or $(B, T, 1)$ | Packed update rates (broadcastable) |
+| `past_state` | T (optional) | $(B, H_{kv}, d_k, d_v)$ | Recurrent state from previous step or context (always 4D) |
+| `decay` | T (optional) | $(B, T, H_{kv} \cdot d_k)$ or $(B, T, H_{kv})$ | Packed decay gates (log-space). Broadcastable: `(B, T, H_{kv})` for per-head scalar (DeltaNet/RetNet), `(B, T, H_{kv} * d_k)` for per-key-dimension (GLA/RWKV-6). Required for `gated_*` modes. |
+| `beta` | T (optional) | $(B, T, H_{kv})$ or $(B, T, 1)$ | Packed update rates (sigmoid output). Broadcastable. Required for `*_delta` modes. |
 
-The 3D layout mirrors the ONNX `Attention` op: the op internally reshapes `[B, T, H*D]` →
-`[B, T, H, D]` → transposes to `[B, H, T, D]`, computes, then reshapes the output back to 3D.
+The op internally reshapes `[B, T, H*D]` → `[B, T, H, D]` → transposes to `[B, H, T, D]`,
+computes, then transposes and reshapes the output back to 3D.
 
 #### Packed QKV
 
 When `key` and `value` are both absent, `query` contains all three tensors concatenated along the
-head dimension. The op splits them using `q_num_heads` and `kv_num_heads` (which are **required**
-in this case for both 3D and 4D inputs):
+packed head dimension. The op splits using `q_num_heads` and `kv_num_heads` (always required):
 
-- **4D packed QKV**: `query` is $(B, H_q + 2H_{kv}, T, d_k)$. Split along axis 1:
-  Q = `query[:, :H_q, :, :]`, K = `query[:, H_q:H_q+H_{kv}, :, :]`, V = `query[:, H_q+H_{kv}:, :, :]`.
-- **3D packed QKV**: `query` is $(B, T, (H_q + 2H_{kv}) \cdot d_k)$. Unpack to 4D first, then split on the head axis.
+- `query` shape is $(B, T, (H_q + 2H_{kv}) \cdot d_k)$.
+- The op unpacks to `[B, T, H_q + 2H_{kv}, d_k]`, then splits: Q = first $H_q$ heads, K = next $H_{kv}$ heads, V = last $H_{kv}$ heads.
 
 `key` and `value` must either both be provided or both be absent.
 
 #### Outputs
 
-| Name | Type | Shape (4D) | Shape (3D) | Description |
-|------|------|------------|------------|-------------|
-| `output` | T | $(B, H_q, T, d_v)$ | $(B, T, H_q \cdot d_v)$ | Attention output |
-| `present_state` | T | $(B, H_{kv}, d_k, d_v)$ | $(B, H_{kv}, d_k, d_v)$ | Updated recurrent state (always 4D) |
+| Name | Type | Shape | Description |
+|------|------|-------|-------------|
+| `output` | T | $(B, T, H_q \cdot d_v)$ | Attention output (3D packed) |
+| `present_state` | T | $(B, H_{kv}, d_k, d_v)$ | Updated recurrent state (always 4D) |
 
 #### Attributes
 
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
-| `q_num_heads` | int | — | Number of query heads. **Required for 3D inputs and packed QKV.** |
-| `kv_num_heads` | int | — | Number of key/value heads. **Required for 3D inputs and packed QKV.** |
+| `q_num_heads` | int | — | Number of query heads. **Always required.** |
+| `kv_num_heads` | int | — | Number of key/value heads. **Always required.** |
 | `update_rule` | string | `"gated_delta"` | One of: `"linear"`, `"gated"`, `"delta"`, `"gated_delta"` |
 | `scale` | float | `0.0` | Output scaling factor. When `0.0` (default), uses $1/\sqrt{d_k}$ inferred from query's last dimension. Set explicitly to override (e.g., `scale=1.0` when queries are pre-scaled by the caller). |
 | `chunk_size` | int | `64` | Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness. |
@@ -218,15 +205,18 @@ Let $s = \text{scale}$ if `scale != 0.0`, else $s = 1/\sqrt{d_k}$.
 
 where $g_t$ is the `decay` input at position $t$.
 
-#### Reference pseudocode (`gated_delta`, 4D)
+#### Reference pseudocode (`gated_delta`, internal 4D computation)
 
 ```python
-def linear_attention(q, k, v, past_state, decay, beta, scale=0.0,
+def linear_attention(query_3d, key_3d, v_3d, past_state, decay_3d, beta_3d, scale=0.0,
                      update_rule="gated_delta"):
+    # Inputs are 3D: query_3d (B, T, H_q*d_k), key_3d (B, T, H_kv*d_k), etc.
+    # Op unpacks to 4D internally before computation:
+    q, k, v = unpack_3d(query_3d, key_3d, v_3d, q_num_heads, kv_num_heads)
+    decay = unpack_3d_decay(decay_3d, kv_num_heads)
+    beta = unpack_3d_beta(beta_3d, kv_num_heads)
     # q, k: (B, H, T, d_k), v: (B, H, T, d_v)
-    # past_state: (B, H, d_k, d_v)
-    # decay: (B, H, T, d_k) or broadcastable from (B, H, T, 1)
-    # beta: (B, H, T, 1) or broadcastable
+    # decay: (B, H, T, d_k) or broadcastable, beta: (B, H, T, 1) or broadcastable
     d_k = q.shape[-1]
     s = scale if scale != 0.0 else (1.0 / sqrt(d_k))
     T = q.shape[2]
@@ -246,7 +236,7 @@ def linear_attention(q, k, v, past_state, decay, beta, scale=0.0,
         state = state + einsum('bhk,bhv->bhkv', kt, delta)    # write to memory
         outputs.append(s * einsum('bhkv,bhk->bhv', state, qt))  # query
 
-    output = stack(outputs, dim=2)  # (B, H, T, d_v)
+    output = stack(outputs, dim=2)  # (B, H, T, d_v), repacked to (B, T, H*d_v) on return
     return output, state
 ```
 
@@ -352,12 +342,19 @@ An earlier draft proposed two separate operators (`LinearAttentionRecurrent` for
 4. **Runtime freedom**: The runtime can dispatch T=1 to an optimized recurrent kernel and T>1 to
    chunk-parallel internally. The `chunk_size` attribute is a tuning hint, not a correctness param.
 
-### Why 3D input support?
+### Why 3D-only inputs?
 
-The ONNX `Attention` op supports both `[B, T, H*D]` (3D) and `[B, H, T, D]` (4D) layouts. Linear
-attention should use the same convention: models that mix softmax and linear attention layers (like
-Qwen3.5) use the same packing convention throughout, and forcing a Transpose at each layer boundary
-would add unnecessary memory traffic.
+`LinearAttention` accepts only 3D packed inputs `[B, T, H*D]` with `q_num_heads` and
+`kv_num_heads` always required. This is a deliberate simplification:
+
+1. **Reduced implementation complexity**: Supporting one input layout halves the kernel variants
+   backends must implement. The 3D → 4D unpacking is a trivial reshape+transpose that the runtime
+   can fuse with the first computation step.
+2. **Alignment with existing linear attention kernels**: The `com.microsoft.LinearAttention` contrib
+   op and all major fused kernel libraries (flash-linear-attention, etc.) use the packed
+   `[B, T, H*D]` layout. Aligning with this convention reduces porting friction.
+3. **No ambiguity**: Graph builders always know they need to pack heads before calling
+   `LinearAttention`. There is no layout selection decision at graph construction time.
 
 ### Why rank-4 decay `(B, H, T, d_k)`?
 
@@ -406,8 +403,8 @@ The PyTorch ecosystem has production-quality fused kernels for all proposed vari
 The ONNX `Attention` op (opset 23) provides direct precedent for this proposal:
 - It started as `com.microsoft.Attention` in ORT contrib, was validated in production, and was
   promoted to the standard opset.
-- It supports both 3D and 4D inputs, handles GQA via `q_num_heads`/`kv_num_heads`, and accepts
-  optional past KV and attn_mask — all design patterns carried forward in this proposal.
+- It handles GQA via `q_num_heads`/`kv_num_heads` and accepts optional past KV and attn_mask —
+  design patterns carried forward in this proposal (with `LinearAttention` using 3D-only inputs).
 
 ### Existing ONNX workaround
 
