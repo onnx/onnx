@@ -20,7 +20,7 @@ Branch cuts for a new release are planned every 4 months. However, the times can
 | 1.19.0 | 31. July 2025 | 27. August 2025 | 9. October 2025 |
 | 1.20.0  | 31. October 2025 | November 2025 | January 2026 |
 | 1.21.0 (tbd) | February 2026 | March 2026 | tbd |
-| 1.22.0 (tbd) | May 2026 | June 2026 | tbd |
+| 1.22.0 (tbd) | 11. May 2026 | May 2026 | tbd |
 
 ## Long-Term Support (LTS)
 
