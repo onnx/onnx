@@ -1077,15 +1077,6 @@ std::string resolve_external_data_location(
         data_path_str,
         ", but it has multiple hard links, indicating a potential hardlink attack.");
   }
-  // Check whether the file exists
-  if (data_path_str[0] != '#' && !std::filesystem::exists(data_path)) {
-    fail_check(
-        "Data of TensorProto ( tensor name: ",
-        tensor_name,
-        ") should be stored in ",
-        data_path_str,
-        ", but it doesn't exist or is not accessible.");
-  }
   return data_path_str;
 }
 

@@ -8,8 +8,9 @@ import pathlib
 import re
 import sys
 import uuid
+import warnings
 from itertools import chain
-from typing import TYPE_CHECKING
+from typing import IO, TYPE_CHECKING
 
 import onnx.checker as onnx_checker
 import onnx.onnx_cpp2py_export.checker as c_checker
@@ -24,6 +25,27 @@ from onnx.onnx_pb import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
+# Security: 3-layer defense against malicious external_data entries (GHSA-538c-55jv-c5g9)
+#
+# Layer 1 (here) — Attribute whitelist: Only spec-defined keys are accepted.
+#   Unknown keys are warned and ignored, preventing arbitrary attribute injection (CWE-915).
+#
+# Layer 2 (ExternalDataInfo.__init__) — Bounds validation: offset and length must be
+#   non-negative integers. Catches invalid values at parse time (CWE-400).
+#
+# Layer 3 (load_external_data_for_tensor) — File-size validation: offset and length are
+#   checked against actual file size before reading. This is the critical safety net that
+#   prevents memory exhaustion regardless of how the model was constructed (CWE-400).
+#
+# 'basepath' is included because set_external_data() and model_container
+# write it to protobuf entries; it must survive save/load round-trips.
+_ALLOWED_EXTERNAL_DATA_KEYS = frozenset(
+    {"location", "offset", "length", "checksum", "basepath"}
+)
+_SORTED_ALLOWED_KEYS = sorted(_ALLOWED_EXTERNAL_DATA_KEYS)
+_MAX_UNKNOWN_KEYS_IN_WARNING = 10
+_MAX_KEY_DISPLAY_LENGTH = 100
+
 
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
@@ -33,14 +55,83 @@ class ExternalDataInfo:
         self.checksum = None
         self.basepath = ""
 
+        unknown_keys: set[str] = set()
+        unknown_key_count = 0
         for entry in tensor.external_data:
-            setattr(self, entry.key, entry.value)
+            # Layer 1: reject unknown keys (CWE-915 defense-in-depth)
+            if entry.key in _ALLOWED_EXTERNAL_DATA_KEYS:
+                setattr(self, entry.key, entry.value)
+            else:
+                unknown_key_count += 1
+                if len(unknown_keys) < _MAX_UNKNOWN_KEYS_IN_WARNING:
+                    truncated = entry.key[:_MAX_KEY_DISPLAY_LENGTH]
+                    if len(entry.key) > _MAX_KEY_DISPLAY_LENGTH:
+                        truncated += "..."
+                    unknown_keys.add(truncated)
 
-        if self.offset:
+        if unknown_keys:
+            shown = sorted(unknown_keys)
+            extra = unknown_key_count - len(shown)
+            key_list = repr(shown)
+            if extra > 0:
+                key_list += f" and {extra} more"
+            warnings.warn(
+                f"Ignoring unknown external data key(s) {key_list} "
+                f"for tensor {tensor.name!r}. "
+                f"Allowed keys: {_SORTED_ALLOWED_KEYS}",
+                stacklevel=2,
+            )
+
+        if self.offset is not None:
             self.offset = int(self.offset)
+            if self.offset < 0:
+                raise ValueError(
+                    f"External data offset must be non-negative, got {self.offset} "
+                    f"for tensor {tensor.name!r}"
+                )
 
-        if self.length:
+        if self.length is not None:
             self.length = int(self.length)
+            if self.length < 0:
+                raise ValueError(
+                    f"External data length must be non-negative, got {self.length} "
+                    f"for tensor {tensor.name!r}"
+                )
+
+
+def _validate_external_data_file_bounds(
+    data_file: IO[bytes],
+    info: ExternalDataInfo,
+    tensor_name: str,
+) -> bytes:
+    """Validate offset/length against actual file size and read data.
+
+    Layer 3 defense-in-depth (CWE-400): prevents memory exhaustion even if the
+    model was crafted via direct protobuf APIs that bypass Python parsing.
+
+    Returns the raw bytes read from the file.
+    """
+    file_size = os.fstat(data_file.fileno()).st_size
+
+    if info.offset is not None:
+        if info.offset > file_size:
+            raise ValueError(
+                f"External data offset ({info.offset}) exceeds file size "
+                f"({file_size}) for tensor {tensor_name!r}"
+            )
+        data_file.seek(info.offset)
+
+    if info.length is not None:
+        read_start = info.offset if info.offset is not None else 0
+        available = file_size - read_start
+        if info.length > available:
+            raise ValueError(
+                f"External data length ({info.length}) exceeds available data "
+                f"({available} bytes from offset {read_start}) "
+                f"for tensor {tensor_name!r}"
+            )
+        return data_file.read(info.length)
+    return data_file.read()
 
 
 def _validate_external_data_path(
@@ -110,13 +201,9 @@ def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
         open_flags |= os.O_NOFOLLOW
     fd = os.open(external_data_file_path, open_flags)
     with os.fdopen(fd, "rb") as data_file:
-        if info.offset:
-            data_file.seek(info.offset)
-
-        if info.length:
-            tensor.raw_data = data_file.read(info.length)
-        else:
-            tensor.raw_data = data_file.read()
+        tensor.raw_data = _validate_external_data_file_bounds(
+            data_file, info, tensor.name
+        )
 
 
 def load_external_data_for_model(model: ModelProto, base_dir: str) -> None:
@@ -147,7 +234,7 @@ def set_external_data(
         raise ValueError(
             "Tensor "
             + tensor.name
-            + "does not have raw_data field. Cannot set external data for this tensor."
+            + " does not have raw_data field. Cannot set external data for this tensor."
         )
 
     del tensor.external_data[:]
@@ -324,13 +411,10 @@ def _recursive_attribute_processor(
             yield from func(graph)
 
 
-def _get_initializer_tensors_from_graph(
-    graph_or_function: GraphProto | FunctionProto, /
-) -> Iterable[TensorProto]:
-    """Create an iterator of initializer tensors from ONNX model graph/function."""
-    if isinstance(graph_or_function, GraphProto):
-        yield from graph_or_function.initializer
-    for node in graph_or_function.node:
+def _get_initializer_tensors_from_graph(graph: GraphProto, /) -> Iterable[TensorProto]:
+    """Create an iterator of initializer tensors from ONNX model graph."""
+    yield from graph.initializer
+    for node in graph.node:
         for attribute in node.attribute:
             yield from _recursive_attribute_processor(
                 attribute, _get_initializer_tensors_from_graph
@@ -340,8 +424,6 @@ def _get_initializer_tensors_from_graph(
 def _get_initializer_tensors(onnx_model_proto: ModelProto) -> Iterable[TensorProto]:
     """Create an iterator of initializer tensors from ONNX model."""
     yield from _get_initializer_tensors_from_graph(onnx_model_proto.graph)
-    for function in onnx_model_proto.functions:
-        yield from _get_attribute_tensors_from_graph(function)
 
 
 def _get_attribute_tensors_from_graph(

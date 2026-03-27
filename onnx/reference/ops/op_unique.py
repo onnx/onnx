@@ -17,7 +17,7 @@ def _specify_int64(indices, inverse_indices, counts):
 
 
 class Unique(OpRun):
-    def _run(self, x, axis=None, sorted=None):  # type: ignore  # noqa: A002
+    def _run(self, x, axis=None, sorted=None):  # type: ignore[override]  # noqa: A002
         if axis is None or np.isnan(axis):
             y, indices, inverse_indices, counts = np.unique(x, True, True, True)
         else:
