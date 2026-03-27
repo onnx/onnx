@@ -3271,7 +3271,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
           }
-
+          
+          if (frame_step_known && frame_step_value <= 0) {
+            fail_shape_inference("frame_step must be greater than 0.");
+          }
           // Determine the size of the DFT based on the 2 optional inputs window and frame_length.
           // One must be set.
           int64_t dft_size = -1;
@@ -3345,7 +3348,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             batch_dim->set_dim_value(input_shape.dim(0).dim_value()); // batch size
           }
 
-          if (signal_size_known && frame_step_value > 0 && signal_size >= dft_size) {
+          if (frame_step_value > 0 && signal_size >= dft_size) {
             const int64_t n_dfts = ((signal_size - dft_size) / frame_step_value) + 1;
             if (n_dfts > 0) {
               result_shape_proto.add_dim()->set_dim_value(n_dfts);
