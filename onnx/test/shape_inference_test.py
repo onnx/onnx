@@ -10217,7 +10217,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     [],
                     ["window"],
                     value=make_tensor(
-                        "window", TensorProto.INT64, (5,), (1, 2, 3, 4, 5)
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
                     ),
                 ),
                 make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
@@ -10230,7 +10230,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [
                 make_tensor_value_info("signal", TensorProto.FLOAT, (2, 10, 1)),
                 make_tensor_value_info("frame_step", TensorProto.INT64, ()),
-                make_tensor_value_info("window", TensorProto.INT64, (5,)),
+                make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 3, 2)),
             ],
         )
@@ -10260,7 +10260,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     [],
                     ["window"],
                     value=make_tensor(
-                        "window", TensorProto.INT64, (5,), (1, 2, 3, 4, 5)
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
                     ),
                 ),
                 make_node(
@@ -10281,7 +10281,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             [
                 make_tensor_value_info("signal", TensorProto.FLOAT, (2, 10, 1)),
                 make_tensor_value_info("frame_step", TensorProto.INT64, ()),
-                make_tensor_value_info("window", TensorProto.INT64, (5,)),
+                make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
                 make_tensor_value_info("frame_length", TensorProto.INT64, ()),
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 5, 2)),
             ],
@@ -10345,7 +10345,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     [],
                     ["window"],
                     value=make_tensor(
-                        "window", TensorProto.INT64, (5,), (1, 2, 3, 4, 5)
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
                     ),
                 ),
                 make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
@@ -10357,7 +10357,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info("frame_step", TensorProto.INT64, ()),
-                make_tensor_value_info("window", TensorProto.INT64, (5,)),
+                make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
                 make_tensor_value_info("output", TensorProto.FLOAT, (None, None, 3, 2)),
             ],
         )
@@ -10437,7 +10437,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     [],
                     ["window"],
                     value=make_tensor(
-                        "window", TensorProto.INT64, (5,), (1, 2, 3, 4, 5)
+                        "window", TensorProto.FLOAT, (5,), (1, 2, 3, 4, 5)
                     ),
                 ),
                 make_node("STFT", ["signal", "frame_step", "window"], ["output"]),
@@ -10447,7 +10447,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("window", TensorProto.INT64, (5,)),
+                make_tensor_value_info("window", TensorProto.FLOAT, (5,)),
                 make_tensor_value_info("output", TensorProto.FLOAT, (1, None, 3, 2)),
             ],
         )
