@@ -119,11 +119,6 @@ output, state = LinearAttention(q, k, v, past_state, decay, beta,
 output, final_state = LinearAttention(q, k, v, initial_state, decay, beta,
                                       update_rule="gated_delta", scale=0.0,
                                       q_num_heads=16, kv_num_heads=16)
-
-# Packed QKV: k and v omitted, q contains concatenated QKV
-output, state = LinearAttention(packed_qkv, None, None, past_state, decay, beta,
-                                update_rule="gated_delta",
-                                q_num_heads=16, kv_num_heads=16)
 ```
 
 The operator supports **3D packed inputs** `[B, T, H*D]`; `q_num_heads` and `kv_num_heads`
@@ -154,25 +149,15 @@ computation.
 
 | Name | Type | Shape | Description |
 |------|------|-------|-------------|
-| `query` | T | $(B, T, H_q \cdot d_k)$ | Packed query vectors. When `key`/`value` are absent, contains packed QKV: $(B, T, (H_q + 2H_{kv}) \cdot d_k)$ |
-| `key` | T (optional) | $(B, T, H_{kv} \cdot d_k)$ | Packed key vectors. If absent, `query` must contain packed QKV. |
-| `value` | T (optional) | $(B, T, H_{kv} \cdot d_v)$ | Packed value vectors. If absent, `query` must contain packed QKV. |
+| `query` | T | $(B, T, H_q \cdot d_k)$ | Query vectors (heads packed into last dimension) |
+| `key` | T | $(B, T, H_{kv} \cdot d_k)$ | Key vectors |
+| `value` | T | $(B, T, H_{kv} \cdot d_v)$ | Value vectors |
 | `past_state` | S (optional) | $(B, H_{kv}, d_k, d_v)$ | Recurrent state from previous step or context (always 4D). If omitted, the operator **MUST** behave as if a zero-initialized tensor of this shape were provided, representing the first token/chunk with no prior context. |
 | `decay` | T (optional) | $(B, T, H_{kv} \cdot d_k)$ or $(B, T, H_{kv})$ | Packed decay gates (log-space). Broadcastable: `(B, T, H_{kv})` for per-head scalar (DeltaNet/RetNet), `(B, T, H_{kv} * d_k)` for per-key-dimension (GLA/RWKV-6). Required for `gated_*` modes. |
 | `beta` | T (optional) | $(B, T, H_{kv})$ or $(B, T, 1)$ | Packed update rates (sigmoid output). Broadcastable. Required for `*_delta` modes. |
 
 The op internally reshapes `[B, T, H*D]` → `[B, T, H, D]` → transposes to `[B, H, T, D]`,
 computes, then transposes and reshapes the output back to 3D.
-
-#### Packed QKV
-
-When `key` and `value` are both absent, `query` contains all three tensors concatenated along the
-packed head dimension. The op splits using `q_num_heads` and `kv_num_heads` (always required):
-
-- `query` shape is $(B, T, (H_q + 2H_{kv}) \cdot d_k)$.
-- The op unpacks to `[B, T, H_q + 2H_{kv}, d_k]`, then splits: Q = first $H_q$ heads, K = next $H_{kv}$ heads, V = last $H_{kv}$ heads.
-
-`key` and `value` must either both be provided or both be absent.
 
 #### Outputs
 
@@ -192,7 +177,7 @@ packed head dimension. The op splits using `q_num_heads` and `kv_num_heads` (alw
 | `q_num_heads` | int | — | Number of query heads. **Always required.** |
 | `kv_num_heads` | int | — | Number of key/value heads. **Always required.** |
 | `update_rule` | string | `"gated_delta"` | One of: `"linear"`, `"gated"`, `"delta"`, `"gated_delta"` |
-| `scale` | float | `0.0` | Output scaling factor. When `0.0` (default), the op derives the per-head key dimension $d_k$ from the `query` shape and `q_num_heads`: (1) if `key`/`value` are present (Q-only mode), $d_k = \text{query.shape}[-1] / \text{q\_num\_heads}$; (2) if `key`/`value` are absent (packed-QKV mode), $d_k = \text{query.shape}[-1] / (\text{q\_num\_heads} + 2 \cdot \text{kv\_num\_heads})$. In both cases $d_k$ must be an integer, and the op uses $1/\sqrt{d_k}$. Set explicitly to override (e.g., `scale=1.0` when queries are pre-scaled by the caller). |
+| `scale` | float | `0.0` | Output scaling factor. When `0.0` (default), derives $d_k = \text{query.shape}[-1] / \text{q\_num\_heads}$ and uses $1/\sqrt{d_k}$. $d_k$ must be an integer. Set explicitly to override (e.g., `scale=1.0` when queries are pre-scaled by the caller). |
 | `chunk_size` | int | `64` | Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness. |
 
 #### Input combinations and validation
@@ -236,7 +221,7 @@ def linear_attention(query_3d, key_3d, v_3d, past_state, decay_3d, beta_3d,
                      q_num_heads, kv_num_heads,  # op attributes — always required
                      scale=0.0, update_rule="gated_delta"):
     # Inputs are 3D: query_3d (B, T, H_q*d_k), key_3d (B, T, H_kv*d_k), etc.
-    # Op unpacks to 4D internally before computation:
+    # Op independently reshapes each 3D input to 4D for computation:
     q, k, v = unpack_3d(query_3d, key_3d, v_3d, q_num_heads, kv_num_heads)
     decay = unpack_3d_decay(decay_3d, kv_num_heads)
     beta = unpack_3d_beta(beta_3d, kv_num_heads)
@@ -409,12 +394,38 @@ A per-key-dimension decay allows the model to selectively retain or forget diffe
 the state matrix independently — a key capability of GLA and RWKV-6 that per-head scalar cannot
 express.
 
-### Why packed QKV?
+### Why separate required Q/K/V (packed QKV rejected)?
 
-Many transformer implementations fuse Q, K, V projections into a single weight matrix, producing
-a packed QKV tensor. Making `key` and `value` optional allows the op to accept the fused projection
-output directly, avoiding caller-side splits that add memory traffic. This mirrors the behavior of
-the ORT `com.microsoft.Attention` contrib op.
+Packed QKV — making `key`/`value` optional with `query` holding a concatenated QKV tensor — was
+considered and explicitly rejected for the following reasons:
+
+1. **No cache-locality benefit for linear attention**: Packed QKV benefits softmax attention
+   because Q and K are co-accessed in the $QK^\top$ matmul, so packing them together improves
+   cache hit rates. For `LinearAttention`, Q and K participate at *different steps* of the
+   recurrence: K in the outer-product state update, Q only in the final output projection. Their
+   access patterns are temporally decoupled — packing them provides no locality gain.
+
+2. **State matrix dominates memory traffic**: The bottleneck for `LinearAttention` is the
+   $(d_k \times d_v)$ state matrix (~64 KB per head at $d_k = d_v = 128$, fp32), not the Q/K/V
+   vectors. A fused kernel keeps the state in registers/shared memory; the Q/K/V vectors are
+   streamed in once and are negligible by comparison. Packing them saves nothing.
+
+3. **Chunked prefill: Q/K/V already fit in L1**: In the chunk-parallel path, Q/K/V chunks of
+   size `chunk_size × d_k` (~16 KB at `chunk_size=64`, fp16) already fit in L1 cache regardless
+   of whether they are packed or separate. Packing provides no advantage.
+
+4. **Split is zero-cost**: Slicing a packed QKV tensor into Q, K, V is a zero-copy view of
+   contiguous memory (pointer arithmetic, no data movement). Any performance savings from
+   avoiding such a split are exactly zero in practice.
+
+5. **Projection savings are layer-level, not op-level**: The efficiency of a fused QKV
+   projection weight matrix is realized at the `Linear` layer. That saving is independent of
+   whether `LinearAttention` accepts a packed tensor — the model still produces Q, K, V slices
+   before calling the op.
+
+6. **Simpler op definition**: Requiring all three inputs eliminates optional-input branching:
+   no split logic, no two code paths, no ambiguity about which shape the `query` tensor carries.
+   A single clean signature is easier to implement, validate, and optimize.
 
 ### Why `update_rule` as string?
 
