@@ -217,12 +217,12 @@ where $g_t$ is the `decay` input at position $t$.
 #### Reference pseudocode (`gated_delta`, internal 4D computation)
 
 ```python
-def linear_attention(query_3d, key_3d, v_3d, past_state, decay_3d, beta_3d,
+def linear_attention(query_3d, key_3d, value_3d, past_state, decay_3d, beta_3d,
                      q_num_heads, kv_num_heads,  # op attributes — always required
                      scale=0.0, update_rule="gated_delta"):
-    # Inputs are 3D: query_3d (B, T, H_q*d_k), key_3d (B, T, H_kv*d_k), etc.
+    # Inputs are 3D: query_3d (B, T, H_q*d_k), key_3d (B, T, H_kv*d_k), value_3d (B, T, H_kv*d_v), etc.
     # Op independently reshapes each 3D input to 4D for computation:
-    q, k, v = unpack_3d(query_3d, key_3d, v_3d, q_num_heads, kv_num_heads)
+    q, k, v = unpack_3d(query_3d, key_3d, value_3d, q_num_heads, kv_num_heads)
     decay = unpack_3d_decay(decay_3d, kv_num_heads)
     beta = unpack_3d_beta(beta_3d, kv_num_heads)
     # q, k: (B, H, T, d_k), v: (B, H, T, d_v)
