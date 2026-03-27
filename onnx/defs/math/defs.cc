@@ -3264,8 +3264,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Its value is needed to compute the number output nDFTs, so return early is missing.
           const auto frame_step = ctx.getInputData(1);
           bool frame_step_known = (frame_step != nullptr);
-          auto frame_step_value =
-              frame_step_known ? defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step) : -1;
+          int64_t frame_step_value = -1;
+          if (frame_step_known) {
+            if (frame_step->dims_size() != 0) {
+              fail_shape_inference("Input 1 (frame_step) must be a scalar.");
+            }
+            frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
+          }
 
           // Determine the size of the DFT based on the 2 optional inputs window and frame_length.
           // One must be set.
