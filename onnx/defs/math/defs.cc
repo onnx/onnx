@@ -3248,9 +3248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // The signal size is needed to perform inference because the size of the signal
           // is needed to compute the number of DFTs in the output.
           //
-          // 1) Check if shape exists, return if not
-          // 2) Get the shape
-          // 3) Check if signal dim value exists, return if not
+          // Check if shape exists, return if not
           if (!hasInputShape(ctx, 0)) {
             return;
           }
@@ -3275,11 +3273,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           const TensorProto* frame_length = nullptr;
           if (ctx.hasInput(3)) {
             frame_length = ctx.getInputData(3);
-            if (frame_length == nullptr) {
-              // If we cannot read the frame_length, we cannot infer shape
-              // return...
-              return;
-            }
           }
 
           const TensorShapeProto* window_shape = nullptr;
@@ -3329,6 +3322,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("frame_length input must be scalar.");
             }
             dft_size = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
+          }
+
+          // Fail inference if dft_size<0
+          if (dft_size < 0) {
+            fail_shape_inference("STFT requires a positive dft_size, but got ", dft_size, ".");
           }
 
           bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 1));
