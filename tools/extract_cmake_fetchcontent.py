@@ -109,6 +109,13 @@ def _parse_fetchcontent_declares(
 # CycloneDX component builder
 # ---------------------------------------------------------------------------
 
+# SPDX license IDs for known FetchContent dependencies.
+# Update this table when a new dependency is added to CMakeLists.txt.
+_KNOWN_LICENSES: dict[str, str] = {
+    "protobuf": "BSD-3-Clause",
+    "nanobind": "BSD-3-Clause",
+}
+
 
 def _github_owner_repo(url: str) -> tuple[str, str] | None:
     """Extract (owner, repo) from a GitHub URL, or None."""
@@ -173,6 +180,10 @@ def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
         _apply_url_fields(comp, entry, text)
     elif "git_url" in entry:
         _apply_git_fields(comp, entry)
+
+    spdx_id = _KNOWN_LICENSES.get(name)
+    if spdx_id:
+        comp["licenses"] = [{"license": {"id": spdx_id}}]
 
     comp["bom-ref"] = f"{name}@{comp['version']}" if "version" in comp else name
     return comp
