@@ -30,6 +30,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 
 # ---------------------------------------------------------------------------
@@ -52,7 +53,7 @@ def _parse_cmake_variables(text: str) -> dict[str, str]:
 def _resolve(value: str, variables: dict[str, str]) -> str:
     """Expand ${VAR} references using the variable dict."""
 
-    def _replace(m: re.Match) -> str:
+    def _replace(m: re.Match[str]) -> str:
         return variables.get(m.group(1), m.group(0))
 
     return re.sub(r"\$\{(\w+)\}", _replace, value)
@@ -116,10 +117,10 @@ def _github_owner_repo(url: str) -> tuple[str, str] | None:
     return (m.group(1), m.group(2)) if m else None
 
 
-def _build_component(entry: dict[str, str], text: str) -> dict:
+def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
     """Convert one parsed FetchContent entry to a CycloneDX component."""
     name = entry["name"].lower()
-    comp: dict = {"type": "library", "name": name}
+    comp: dict[str, Any] = {"type": "library", "name": name}
 
     if "url" in entry:
         url = entry["url"]
@@ -175,7 +176,7 @@ def _build_component(entry: dict[str, str], text: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _make_bom(components: list[dict], lifecycle: str) -> dict:
+def _make_bom(components: list[dict[str, Any]], lifecycle: str) -> dict[str, Any]:
     return {
         "bomFormat": "CycloneDX",
         "specVersion": "1.5",
@@ -190,9 +191,9 @@ def _make_bom(components: list[dict], lifecycle: str) -> dict:
     }
 
 
-def _merge_into(base_path: Path, new_components: list[dict], lifecycle: str) -> dict:
+def _merge_into(base_path: Path, new_components: list[dict[str, Any]], lifecycle: str) -> dict[str, Any]:
     """Load an existing CycloneDX BOM and append new_components to it."""
-    bom = json.loads(base_path.read_text(encoding="utf-8"))
+    bom: dict[str, Any] = json.loads(base_path.read_text(encoding="utf-8"))
     bom.setdefault("components", []).extend(new_components)
     bom.setdefault("metadata", {})["lifecycles"] = [{"phase": lifecycle}]
     return bom
