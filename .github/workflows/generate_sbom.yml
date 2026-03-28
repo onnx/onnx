@@ -189,3 +189,53 @@ jobs:
       with:
         name: sbom-build
         path: onnx-build.cdx.json
+
+
+  validate:
+    name: Validate SBOMs
+    needs: [runtime-sbom, build-sbom]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+    - name: Download SBOM artifacts
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      with:
+        pattern: sbom-*
+        path: sboms
+        merge-multiple: true
+
+    - name: Install CycloneDX CLI
+      env:
+        CDX_VERSION: "0.27.1"
+      run: |
+        curl -sSfL \
+          "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v${CDX_VERSION}/cyclonedx-linux-x64" \
+          -o /usr/local/bin/cyclonedx
+        chmod +x /usr/local/bin/cyclonedx
+
+    - name: Install sbomqs
+      env:
+        SBOMQS_VERSION: "0.0.28"
+      run: |
+        curl -sSfL \
+          "https://github.com/interlynk-io/sbomqs/releases/download/v${SBOMQS_VERSION}/sbomqs-linux-amd64" \
+          -o /usr/local/bin/sbomqs
+        chmod +x /usr/local/bin/sbomqs
+
+    - name: Validate SBOM schemas
+      # Fails the job if either SBOM does not conform to the CycloneDX 1.6 JSON schema.
+      run: |
+        for f in sboms/*.cdx.json; do
+          echo "=== Validating $f ==="
+          cyclonedx validate --input-file "$f" --input-format json --input-version v1_6
+        done
+
+    - name: Score SBOM quality
+      # Informational — prints per-file quality scores (0–10); does not fail the job.
+      run: |
+        for f in sboms/*.cdx.json; do
+          echo "=== Scoring $f ==="
+          sbomqs score "$f"
+        done
