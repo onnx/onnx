@@ -1,10 +1,10 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-"""Extract CMake FetchContent dependencies and emit a CycloneDX 1.5 BOM.
+r"""Extract CMake FetchContent dependencies and emit a CycloneDX 1.6 BOM.
 
 Parses FetchContent_Declare blocks from a CMakeLists.txt and generates
-CycloneDX 1.5 JSON components for each dependency. Supports both
+CycloneDX 1.6 JSON components for each dependency. Supports both
 URL-based (e.g. tarball with hash) and git-based (GIT_REPOSITORY/GIT_TAG)
 declarations.
 
@@ -16,9 +16,9 @@ Usage:
     python tools/extract_cmake_fetchcontent.py --output cmake-deps.cdx.json
 
     # Merge cmake components into an existing Python-env BOM
-    python tools/extract_cmake_fetchcontent.py \\
-        --merge-into build-python.cdx.json \\
-        --lifecycle build \\
+    python tools/extract_cmake_fetchcontent.py \
+        --merge-into build-python.cdx.json \
+        --lifecycle build \
         --output onnx-build.cdx.json
 """
 
@@ -31,7 +31,6 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # CMake parsing helpers
@@ -162,7 +161,7 @@ def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
         gh = _github_owner_repo(git_url)
         if gh:
             owner, repo = gh
-            ref = tag if tag else version
+            ref = tag or version
             comp["purl"] = f"pkg:github/{owner}/{repo}@{ref}" if ref else f"pkg:github/{owner}/{repo}"
 
         comp["externalReferences"] = [{"type": "vcs", "url": git_url}]
