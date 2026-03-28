@@ -200,6 +200,14 @@ def _merge_into(base_path: Path, new_components: list[dict[str, Any]], lifecycle
     bom: dict[str, Any] = json.loads(base_path.read_text(encoding="utf-8"))
     bom.setdefault("components", []).extend(new_components)
     bom.setdefault("metadata", {})["lifecycles"] = [{"phase": lifecycle}]
+    # Add cmake components to the dependencies array so they appear in the
+    # dependency graph alongside the requirements-file components.
+    deps = bom.setdefault("dependencies", [])
+    existing_refs = {d["ref"] for d in deps}
+    for comp in new_components:
+        ref = comp.get("bom-ref")
+        if ref and ref not in existing_refs:
+            deps.append({"ref": ref})
     return bom
 
 
