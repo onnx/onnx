@@ -3271,7 +3271,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
             frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
           }
-          
           if (frame_step_known && frame_step_value <= 0) {
             fail_shape_inference("frame_step must be greater than 0.");
           }
@@ -3333,7 +3332,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Fail inference if dft_size<0
-          if (dft_size < 0) {
+          if (dft_size <= 0) {
             fail_shape_inference("STFT requires a positive dft_size, but got ", dft_size, ".");
           }
 
