@@ -236,7 +236,20 @@ jobs:
       # Fails the job if any SBOM scores below 6/10.
       # Raise the threshold once license and supplier metadata are added.
       run: |
+        FAILED=0
         for f in sboms/*.cdx.json; do
           echo "=== Scoring $f ==="
-          sbomqs score --min-score 6 "$f"
+          sbomqs score "$f"
+          SCORE=$(sbomqs score "$f" | grep -oP '[\d]+\.[\d]+' | tail -1)
+          SBOM_FILE="$f" SBOM_SCORE="$SCORE" python3 - <<'EOF'
+        import os, sys
+        score = float(os.environ["SBOM_SCORE"])
+        sbom_file = os.environ["SBOM_FILE"]
+        if score < 6.0:
+            print(f"FAIL: {sbom_file} scored {score:.1f}/10 (minimum 6.0)")
+            sys.exit(1)
+        print(f"PASS: {sbom_file} scored {score:.1f}/10")
+        EOF
+          FAILED=$((FAILED + $?))
         done
+        exit "$FAILED"
