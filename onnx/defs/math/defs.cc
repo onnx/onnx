@@ -3330,7 +3330,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             dft_size = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
           }
 
-          // Fail inference if dft_size<0
+          // Fail inference if dft_size<=0
           if (dft_size <= 0) {
             fail_shape_inference("STFT requires a positive dft_size, but got ", dft_size, ".");
           }
