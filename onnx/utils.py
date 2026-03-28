@@ -312,7 +312,7 @@ def _extract_model_safe(
                 path=local_model_with_data_dir_path, filter="data"
             )
         else:
-            model_with_data_zipped.extractall(
+            model_with_data_zipped.extractall(  # noqa: S202
                 path=local_model_with_data_dir_path,
                 members=_tar_members_filter(
                     model_with_data_zipped, local_model_with_data_dir_path
