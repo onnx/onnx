@@ -26,8 +26,8 @@ on:
   workflow_call:
   workflow_dispatch:
   # TODO: remove before merging — enables testing on every PR commit
-  # pull_request:
-  #   branches: [main, rel-*]
+  pull_request:
+    branches: [main, rel-*]
 
 permissions:
   contents: read
