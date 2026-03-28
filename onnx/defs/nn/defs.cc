@@ -3599,7 +3599,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
                 .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
-                .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4D)");
+                .Add("PaddingMask4DCast = CastLike(PaddingMask4D, AttnBiasCausalOrNot)")
+                .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4DCast)");
           } else {
             builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalOrNot)");
           }
