@@ -240,6 +240,16 @@ def main() -> None:
         help="Lifecycle phase to annotate on the output BOM (default: build)",
     )
     parser.add_argument("--output", required=True, help="Output CycloneDX JSON file")
+    parser.add_argument(
+        "--subject-name",
+        metavar="NAME",
+        help="Package name to set as metadata.component (e.g. onnx or onnx-weekly)",
+    )
+    parser.add_argument(
+        "--subject-version",
+        metavar="VERSION",
+        help="Package version to set as metadata.component",
+    )
     args = parser.parse_args()
 
     text = Path(args.cmake).read_text(encoding="utf-8")
@@ -251,6 +261,15 @@ def main() -> None:
         bom = _merge_into(Path(args.merge_into), components, args.lifecycle)
     else:
         bom = _make_bom(components, args.lifecycle)
+
+    if args.subject_name and args.subject_version:
+        name, version = args.subject_name, args.subject_version
+        bom.setdefault("metadata", {})["component"] = {
+            "type": "library",
+            "name": name,
+            "version": version,
+            "purl": f"pkg:pypi/{name}@{version}",
+        }
 
     Path(args.output).write_text(json.dumps(bom, indent=2), encoding="utf-8")
     print(f"Wrote {len(components)} cmake component(s) to {args.output}")
