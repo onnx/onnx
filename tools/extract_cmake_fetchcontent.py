@@ -284,7 +284,8 @@ def main() -> None:
             "purl": f"pkg:pypi/{name}@{version}",
         }
 
-    Path(args.output).write_text(json.dumps(bom, indent=2), encoding="utf-8")
+    out = Path(args.output).resolve()
+    out.write_text(json.dumps(bom, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":
