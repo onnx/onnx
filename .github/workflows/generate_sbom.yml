@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# Generates two CycloneDX 1.5 SBOMs for the ONNX package.
+# Generates two CycloneDX 1.6 SBOMs for the ONNX package.
 #
 # Two SBOMs are produced because ONNX has dependencies in two lifecycle phases:
 #
