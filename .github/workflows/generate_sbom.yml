@@ -76,11 +76,12 @@ jobs:
 
     - name: Resolve subject name and version
       id: resolve
+      env:
+        INPUT_NAME: ${{ inputs.subject_name }}
+        INPUT_VERSION: ${{ inputs.subject_version }}
       run: |
-        NAME="${{ inputs.subject_name }}"
-        if [ -z "$NAME" ]; then NAME="onnx"; fi
-        VERSION="${{ inputs.subject_version }}"
-        if [ -z "$VERSION" ]; then VERSION=$(cat VERSION_NUMBER); fi
+        NAME="${INPUT_NAME:-onnx}"
+        VERSION="${INPUT_VERSION:-$(cat VERSION_NUMBER)}"
         echo "name=$NAME" >> "$GITHUB_OUTPUT"
         echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
