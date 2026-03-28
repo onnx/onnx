@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -1933,4 +1934,177 @@ class Attention(Base):
             outputs=[Y],
             name="test_attention_4d_diff_heads_mask4d_padded_kv",
             opset_imports=[onnx.helper.make_opsetid("", 24)],
+        )
+
+    # --- bfloat16 / float16 tests for CastLike fixes ---
+
+    @staticmethod
+    def export_attention_causal_bf16() -> None:
+        """is_causal=1 with bfloat16 inputs exercises causal mask CastLike fix."""
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V"],
+            outputs=["Y"],
+            is_causal=1,
+        )
+
+        Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+        K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+        V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+
+        Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+        expect(
+            node,
+            inputs=[Q, K, V],
+            outputs=[Y],
+            name="test_attention_4d_causal_bf16",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
+        )
+
+    @staticmethod
+    def export_attention_causal_fp16() -> None:
+        """is_causal=1 with float16 inputs."""
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V"],
+            outputs=["Y"],
+            is_causal=1,
+        )
+
+        Q = np.random.rand(2, 3, 4, 8).astype(np.float16)
+        K = np.random.rand(2, 3, 6, 8).astype(np.float16)
+        V = np.random.rand(2, 3, 6, 8).astype(np.float16)
+
+        Y, _, _, _ = _compute_attention(Q, K, V, is_causal=1)
+
+        expect(
+            node,
+            inputs=[Q, K, V],
+            outputs=[Y],
+            name="test_attention_4d_causal_fp16",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
+        )
+
+    @staticmethod
+    def export_attention_padded_kv_bf16() -> None:
+        """nonpad_kv_seqlen with bfloat16 inputs exercises padding mask CastLike fix."""
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+            outputs=["Y"],
+        )
+
+        Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+        K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+        V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+        attn_mask = np.random.rand(2, 3, 4, 4).astype(ml_dtypes.bfloat16)
+        nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+        Y, _, _, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            nonpad_kv_seqlen=nonpad_kv_seqlen,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+            outputs=[Y],
+            name="test_attention_4d_padded_kv_bf16",
+            opset_imports=[onnx.helper.make_opsetid("", 24)],
+        )
+
+    @staticmethod
+    def export_attention_causal_padded_kv_bf16() -> None:
+        """is_causal=1 + nonpad_kv_seqlen with bfloat16 exercises both CastLike fixes."""
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+            outputs=["Y"],
+            is_causal=1,
+        )
+
+        Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+        K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+        V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+        attn_mask = np.random.rand(2, 3, 4, 4).astype(ml_dtypes.bfloat16)
+        nonpad_kv_seqlen = np.array([3, 4], dtype=np.int64)
+
+        Y, _, _, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            is_causal=1,
+            nonpad_kv_seqlen=nonpad_kv_seqlen,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+            outputs=[Y],
+            name="test_attention_4d_causal_padded_kv_bf16",
+            opset_imports=[onnx.helper.make_opsetid("", 24)],
+        )
+
+    @staticmethod
+    def export_attention_attn_mask_causal_bf16() -> None:
+        """Float attn_mask + is_causal with bfloat16 — mask is bf16, causal mask must be cast."""
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask"],
+            outputs=["Y"],
+            is_causal=1,
+        )
+
+        Q = np.random.rand(2, 3, 4, 8).astype(ml_dtypes.bfloat16)
+        K = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+        V = np.random.rand(2, 3, 6, 8).astype(ml_dtypes.bfloat16)
+        attn_mask = np.random.rand(2, 1, 4, 6).astype(ml_dtypes.bfloat16)
+
+        Y, _, _, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            is_causal=1,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask],
+            outputs=[Y],
+            name="test_attention_4d_attn_mask_causal_bf16",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
+        )
+
+    @staticmethod
+    def export_attention_3d_causal_bf16() -> None:
+        """3D input with is_causal=1 and bfloat16."""
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V"],
+            outputs=["Y"],
+            is_causal=1,
+            q_num_heads=3,
+            kv_num_heads=3,
+        )
+
+        Q = np.random.rand(2, 4, 24).astype(ml_dtypes.bfloat16)
+        K = np.random.rand(2, 6, 24).astype(ml_dtypes.bfloat16)
+        V = np.random.rand(2, 6, 24).astype(ml_dtypes.bfloat16)
+
+        Y, _, _, _ = _compute_attention(
+            Q, K, V, is_causal=1, q_num_heads=3, kv_num_heads=3
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V],
+            outputs=[Y],
+            name="test_attention_3d_causal_bf16",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
         )
