@@ -144,7 +144,11 @@ def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
         comp["externalReferences"] = [{"type": "distribution", "url": url}]
 
         if "hash_alg" in entry:
-            comp["hashes"] = [{"alg": entry["hash_alg"], "content": entry["hash_val"]}]
+            # Normalize to CycloneDX hash algorithm names (e.g. SHA1 -> SHA-1)
+            alg = entry["hash_alg"].upper()
+            alg = re.sub(r"^SHA(\d+)$", r"SHA-\1", alg)
+            alg = re.sub(r"^MD(\d+)$", r"MD\1", alg)
+            comp["hashes"] = [{"alg": alg, "content": entry["hash_val"]}]
 
     elif "git_url" in entry:
         git_url = entry["git_url"]
