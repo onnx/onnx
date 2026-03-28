@@ -260,8 +260,16 @@ def main() -> None:
     parser.add_argument(
         "--lifecycle",
         default="build",
-        choices=["build", "runtime", "development", "test", "other"],
-        help="Lifecycle phase to annotate on the output BOM (default: build)",
+        choices=[
+            "design",
+            "pre-build",
+            "build",
+            "post-build",
+            "operations",
+            "discovery",
+            "decommission",
+        ],
+        help="CycloneDX 1.6 lifecycle phase to annotate on the output BOM (default: build)",
     )
     parser.add_argument("--output", required=True, help="Output CycloneDX JSON file")
     parser.add_argument(
