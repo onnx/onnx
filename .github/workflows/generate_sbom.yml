@@ -121,7 +121,8 @@ jobs:
         SUBJECT_VERSION: ${{ needs.setup.outputs.subject_version }}
       run: |
         python - <<'EOF'
-        import json, os
+        import json
+        import os
         from pathlib import Path
         bom = json.loads(Path("onnx-runtime.cdx.json").read_text())
         meta = bom.setdefault("metadata", {})
