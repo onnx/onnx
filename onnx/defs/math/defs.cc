@@ -3258,8 +3258,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
           }
           auto signal_dim = input_shape.dim(1);
-          bool signal_size_known = signal_dim.has_dim_value();
-          int64_t signal_size = signal_size_known ? signal_dim.dim_value() : -1;
+          int64_t signal_size = signal_dim.has_dim_value() ? signal_dim.dim_value() : -1;
           // The frame step is a required input.
           // Its value is needed to compute the number output nDFTs, so return early is missing.
           const auto frame_step = ctx.getInputData(1);
