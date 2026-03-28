@@ -1,0 +1,242 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+"""Extract CMake FetchContent dependencies and emit a CycloneDX 1.5 BOM.
+
+Parses FetchContent_Declare blocks from a CMakeLists.txt and generates
+CycloneDX 1.5 JSON components for each dependency. Supports both
+URL-based (e.g. tarball with hash) and git-based (GIT_REPOSITORY/GIT_TAG)
+declarations.
+
+Can optionally merge the extracted components into an existing CycloneDX
+JSON produced by another tool (e.g. cyclonedx-py environment).
+
+Usage:
+    # Standalone cmake-only BOM
+    python tools/extract_cmake_fetchcontent.py --output cmake-deps.cdx.json
+
+    # Merge cmake components into an existing Python-env BOM
+    python tools/extract_cmake_fetchcontent.py \\
+        --merge-into build-python.cdx.json \\
+        --lifecycle build \\
+        --output onnx-build.cdx.json
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+# ---------------------------------------------------------------------------
+# CMake parsing helpers
+# ---------------------------------------------------------------------------
+
+
+def _parse_cmake_variables(text: str) -> dict[str, str]:
+    """Return all set(VAR VALUE) assignments as a flat dict."""
+    variables: dict[str, str] = {}
+    for m in re.finditer(
+        r'set\s*\(\s*(\w+)\s+"?([^"\)\n]+)"?\s*\)',
+        text,
+        re.IGNORECASE,
+    ):
+        variables[m.group(1)] = m.group(2).strip()
+    return variables
+
+
+def _resolve(value: str, variables: dict[str, str]) -> str:
+    """Expand ${VAR} references using the variable dict."""
+
+    def _replace(m: re.Match) -> str:
+        return variables.get(m.group(1), m.group(0))
+
+    return re.sub(r"\$\{(\w+)\}", _replace, value)
+
+
+def _find_version_variable(text: str, name: str) -> str | None:
+    """Look for set(<Name>_VERSION ...) anywhere in the file."""
+    m = re.search(
+        rf'set\s*\(\s*{re.escape(name)}_version\s+"?([^"\)\n]+)"?\s*\)',
+        text,
+        re.IGNORECASE,
+    )
+    return m.group(1).strip() if m else None
+
+
+def _parse_fetchcontent_declares(
+    text: str, variables: dict[str, str]
+) -> list[dict[str, str]]:
+    """Return one dict per FetchContent_Declare block with resolved values."""
+    results = []
+    pattern = re.compile(
+        r"FetchContent_Declare\s*\(\s*(\w+)\s+(.*?)\)",
+        re.DOTALL | re.IGNORECASE,
+    )
+    for match in pattern.finditer(text):
+        name = match.group(1)
+        body = match.group(2)
+        entry: dict[str, str] = {"name": name}
+
+        # URL-based
+        m = re.search(r"\bURL\s+(\S+)", body)
+        if m:
+            entry["url"] = _resolve(m.group(1), variables)
+
+        m = re.search(r"URL_HASH\s+(\w+)=(\S+)", body)
+        if m:
+            entry["hash_alg"] = m.group(1).upper()
+            entry["hash_val"] = _resolve(m.group(2), variables)
+
+        # Git-based
+        m = re.search(r"GIT_REPOSITORY\s+(\S+)", body)
+        if m:
+            entry["git_url"] = _resolve(m.group(1), variables)
+
+        m = re.search(r"GIT_TAG\s+(\S+)", body)
+        if m:
+            entry["git_tag"] = _resolve(m.group(1), variables)
+
+        results.append(entry)
+    return results
+
+
+# ---------------------------------------------------------------------------
+# CycloneDX component builder
+# ---------------------------------------------------------------------------
+
+
+def _github_owner_repo(url: str) -> tuple[str, str] | None:
+    """Extract (owner, repo) from a GitHub URL, or None."""
+    m = re.match(r"https://github\.com/([^/]+)/([^/.]+)", url)
+    return (m.group(1), m.group(2)) if m else None
+
+
+def _build_component(entry: dict[str, str], text: str) -> dict:
+    """Convert one parsed FetchContent entry to a CycloneDX component."""
+    name = entry["name"].lower()
+    comp: dict = {"type": "library", "name": name}
+
+    if "url" in entry:
+        url = entry["url"]
+
+        # Version: explicit variable first, then infer from URL path
+        version = _find_version_variable(text, entry["name"])
+        if not version:
+            v = re.search(r"[/-]v?(\d+\.\d+[\d.]*)", url)
+            version = v.group(1) if v else None
+
+        if version:
+            comp["version"] = version
+
+        gh = _github_owner_repo(url)
+        if gh:
+            owner, repo = gh
+            tag_m = re.search(r"/download/(v?[^/]+)/", url)
+            tag = tag_m.group(1) if tag_m else version
+            comp["purl"] = f"pkg:github/{owner}/{repo}@{tag}"
+
+        comp["externalReferences"] = [{"type": "distribution", "url": url}]
+
+        if "hash_alg" in entry:
+            comp["hashes"] = [{"alg": entry["hash_alg"], "content": entry["hash_val"]}]
+
+    elif "git_url" in entry:
+        git_url = entry["git_url"]
+        tag = entry.get("git_tag", "")
+        # Strip leading 'v' to get a clean semver version string
+        version = tag.lstrip("v") if tag else None
+
+        if version:
+            comp["version"] = version
+
+        gh = _github_owner_repo(git_url)
+        if gh:
+            owner, repo = gh
+            ref = tag if tag else version
+            comp["purl"] = f"pkg:github/{owner}/{repo}@{ref}" if ref else f"pkg:github/{owner}/{repo}"
+
+        comp["externalReferences"] = [{"type": "vcs", "url": git_url}]
+        if tag:
+            comp["externalReferences"].append(
+                {"type": "other", "comment": "git-tag", "url": f"{git_url.rstrip('.git')}/tree/{tag}"}
+            )
+
+    comp["bom-ref"] = f"{name}@{comp['version']}" if "version" in comp else name
+    return comp
+
+
+# ---------------------------------------------------------------------------
+# BOM assembly
+# ---------------------------------------------------------------------------
+
+
+def _make_bom(components: list[dict], lifecycle: str) -> dict:
+    return {
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.5",
+        "serialNumber": f"urn:uuid:{uuid.uuid4()}",
+        "version": 1,
+        "metadata": {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "lifecycles": [{"phase": lifecycle}],
+            "tools": [{"type": "file", "name": "extract_cmake_fetchcontent.py"}],
+        },
+        "components": components,
+    }
+
+
+def _merge_into(base_path: Path, new_components: list[dict], lifecycle: str) -> dict:
+    """Load an existing CycloneDX BOM and append new_components to it."""
+    bom = json.loads(base_path.read_text(encoding="utf-8"))
+    bom.setdefault("components", []).extend(new_components)
+    bom.setdefault("metadata", {})["lifecycles"] = [{"phase": lifecycle}]
+    return bom
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--cmake",
+        default="CMakeLists.txt",
+        help="Path to CMakeLists.txt (default: CMakeLists.txt)",
+    )
+    parser.add_argument(
+        "--merge-into",
+        metavar="PATH",
+        help="Existing CycloneDX JSON to merge cmake components into",
+    )
+    parser.add_argument(
+        "--lifecycle",
+        default="build",
+        choices=["build", "runtime", "development", "test", "other"],
+        help="Lifecycle phase to annotate on the output BOM (default: build)",
+    )
+    parser.add_argument("--output", required=True, help="Output CycloneDX JSON file")
+    args = parser.parse_args()
+
+    text = Path(args.cmake).read_text(encoding="utf-8")
+    variables = _parse_cmake_variables(text)
+    raw = _parse_fetchcontent_declares(text, variables)
+    components = [_build_component(entry, text) for entry in raw]
+
+    if args.merge_into:
+        bom = _merge_into(Path(args.merge_into), components, args.lifecycle)
+    else:
+        bom = _make_bom(components, args.lifecycle)
+
+    Path(args.output).write_text(json.dumps(bom, indent=2), encoding="utf-8")
+    print(f"Wrote {len(components)} cmake component(s) to {args.output}")
+
+
+if __name__ == "__main__":
+    main()

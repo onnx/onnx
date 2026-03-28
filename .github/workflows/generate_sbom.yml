@@ -1,0 +1,117 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Generates two CycloneDX 1.5 SBOMs for the ONNX package.
+#
+# Two SBOMs are produced because ONNX has dependencies in two lifecycle phases:
+#
+#   onnx-runtime.cdx.json  — Python packages installed with the wheel
+#                            (requirements.txt + requirements-reference.txt)
+#                            CycloneDX lifecycle: runtime
+#
+#   onnx-build.cdx.json    — What built the wheel: Python build tools
+#                            (requirements-release_build.txt) plus C++ libraries
+#                            fetched by CMake FetchContent (protobuf, nanobind).
+#                            CycloneDX lifecycle: build
+#
+# The CMake FetchContent components are extracted by
+# tools/extract_cmake_fetchcontent.py, which parses CMakeLists.txt directly so
+# the SBOM stays in sync when dependency versions are bumped there.
+#
+# Called from create_release.yml after all wheels and sdist are built.
+
+name: Generate SBOM
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  runtime-sbom:
+    name: Runtime SBOM
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.11"
+
+    - name: Install runtime dependencies and scanner
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements.txt -r requirements-reference.txt
+        python -m pip install -q cyclonedx-bom
+
+    - name: Generate runtime SBOM
+      run: |
+        cyclonedx-py environment \
+          --output-format JSON \
+          --output-file onnx-runtime.cdx.json
+
+    - name: Annotate lifecycle phase
+      run: |
+        python - <<'EOF'
+        import json
+        from pathlib import Path
+        bom = json.loads(Path("onnx-runtime.cdx.json").read_text())
+        bom.setdefault("metadata", {})["lifecycles"] = [{"phase": "runtime"}]
+        Path("onnx-runtime.cdx.json").write_text(json.dumps(bom, indent=2))
+        EOF
+
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: sbom-runtime
+        path: onnx-runtime.cdx.json
+
+
+  build-sbom:
+    name: Build SBOM
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.11"
+
+    - name: Install build dependencies and scanner
+      run: |
+        python -m pip install -q --upgrade pip
+        python -m pip install -q -r requirements-release_build.txt
+        python -m pip install -q cyclonedx-bom
+
+    - name: Generate Python build-deps SBOM
+      run: |
+        cyclonedx-py environment \
+          --output-format JSON \
+          --output-file build-python.cdx.json
+
+    - name: Extract CMake FetchContent dependencies and merge
+      # Appends protobuf and nanobind (fetched by CMake at wheel-build time)
+      # into the Python build-deps BOM and sets lifecycle: build.
+      run: |
+        python tools/extract_cmake_fetchcontent.py \
+          --cmake CMakeLists.txt \
+          --merge-into build-python.cdx.json \
+          --lifecycle build \
+          --output onnx-build.cdx.json
+
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: sbom-build
+        path: onnx-build.cdx.json
