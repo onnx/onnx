@@ -27,7 +27,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.14t', '3.14', '3.13t', '3.12', '3.11', '3.10']
-      fail-fast: false
+      fail-fast: true
 
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -67,10 +67,10 @@ jobs:
     - name: Debug Python version and artifact name
       run: |
         echo "PYTHON VERSION: $PYTHON_VERSION"
-        if [ "$PYTHON_VERSION" = "3.12" ]; then
-          echo "Artifact name: wheels-$INPUTS_OS-3.12-abi3"
+        if [ "$PYTHON_VERSION" = "3.12" ] || [ "$INPUTS_OS" = "3.14" ]; then
+          echo "Artifact name: wheels-$PYTHON_VERSION-$INPUTS_OS-3.12-abi3"
         else
-          echo "Artifact name: wheels-$INPUTS_OS-$PYTHON_VERSION"
+          echo "Artifact name: wheels-$PYTHON_VERSION-$INPUTS_OS"
         fi
       env:
         PYTHON_VERSION: ${{ matrix.python-version }}
