@@ -116,59 +116,63 @@ def _github_owner_repo(url: str) -> tuple[str, str] | None:
     return (m.group(1), m.group(2)) if m else None
 
 
+def _apply_url_fields(comp: dict[str, Any], entry: dict[str, str], text: str) -> None:
+    """Populate comp in-place for a URL-based FetchContent entry."""
+    url = entry["url"]
+
+    version = _find_version_variable(text, entry["name"])
+    if not version:
+        v = re.search(r"[/-]v?(\d+\.\d+[\d.]*)", url)
+        version = v.group(1) if v else None
+    if version:
+        comp["version"] = version
+
+    gh = _github_owner_repo(url)
+    if gh:
+        owner, repo = gh
+        tag_m = re.search(r"/download/(v?[^/]+)/", url)
+        tag = tag_m.group(1) if tag_m else version
+        comp["purl"] = f"pkg:github/{owner}/{repo}@{tag}"
+
+    comp["externalReferences"] = [{"type": "distribution", "url": url}]
+
+    if "hash_alg" in entry:
+        # Normalize to CycloneDX hash algorithm names (e.g. SHA1 -> SHA-1)
+        alg = entry["hash_alg"].upper()
+        alg = re.sub(r"^SHA(\d+)$", r"SHA-\1", alg)
+        alg = re.sub(r"^MD(\d+)$", r"MD\1", alg)
+        comp["hashes"] = [{"alg": alg, "content": entry["hash_val"]}]
+
+
+def _apply_git_fields(comp: dict[str, Any], entry: dict[str, str]) -> None:
+    """Populate comp in-place for a git-based FetchContent entry."""
+    git_url = entry["git_url"]
+    tag = entry.get("git_tag", "")
+    # Strip leading 'v' to get a clean semver version string
+    version = tag.lstrip("v") if tag else None
+    if version:
+        comp["version"] = version
+
+    gh = _github_owner_repo(git_url)
+    if gh:
+        owner, repo = gh
+        ref = tag or version
+        comp["purl"] = (
+            f"pkg:github/{owner}/{repo}@{ref}" if ref else f"pkg:github/{owner}/{repo}"
+        )
+
+    comp["externalReferences"] = [{"type": "vcs", "url": git_url}]
+
+
 def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
     """Convert one parsed FetchContent entry to a CycloneDX component."""
     name = entry["name"].lower()
     comp: dict[str, Any] = {"type": "library", "name": name}
 
     if "url" in entry:
-        url = entry["url"]
-
-        # Version: explicit variable first, then infer from URL path
-        version = _find_version_variable(text, entry["name"])
-        if not version:
-            v = re.search(r"[/-]v?(\d+\.\d+[\d.]*)", url)
-            version = v.group(1) if v else None
-
-        if version:
-            comp["version"] = version
-
-        gh = _github_owner_repo(url)
-        if gh:
-            owner, repo = gh
-            tag_m = re.search(r"/download/(v?[^/]+)/", url)
-            tag = tag_m.group(1) if tag_m else version
-            comp["purl"] = f"pkg:github/{owner}/{repo}@{tag}"
-
-        comp["externalReferences"] = [{"type": "distribution", "url": url}]
-
-        if "hash_alg" in entry:
-            # Normalize to CycloneDX hash algorithm names (e.g. SHA1 -> SHA-1)
-            alg = entry["hash_alg"].upper()
-            alg = re.sub(r"^SHA(\d+)$", r"SHA-\1", alg)
-            alg = re.sub(r"^MD(\d+)$", r"MD\1", alg)
-            comp["hashes"] = [{"alg": alg, "content": entry["hash_val"]}]
-
+        _apply_url_fields(comp, entry, text)
     elif "git_url" in entry:
-        git_url = entry["git_url"]
-        tag = entry.get("git_tag", "")
-        # Strip leading 'v' to get a clean semver version string
-        version = tag.lstrip("v") if tag else None
-
-        if version:
-            comp["version"] = version
-
-        gh = _github_owner_repo(git_url)
-        if gh:
-            owner, repo = gh
-            ref = tag or version
-            comp["purl"] = (
-                f"pkg:github/{owner}/{repo}@{ref}"
-                if ref
-                else f"pkg:github/{owner}/{repo}"
-            )
-
-        comp["externalReferences"] = [{"type": "vcs", "url": git_url}]
+        _apply_git_fields(comp, entry)
 
     comp["bom-ref"] = f"{name}@{comp['version']}" if "version" in comp else name
     return comp
