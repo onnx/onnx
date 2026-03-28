@@ -203,6 +203,11 @@ def _make_bom(components: list[dict[str, Any]], lifecycle: str) -> dict[str, Any
         "metadata": {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "lifecycles": [{"phase": lifecycle}],
+            "authors": [{"name": "ONNX Project Contributors"}],
+            "supplier": {
+                "name": "Linux Foundation",
+                "url": ["https://www.linuxfoundation.org"],
+            },
             "tools": {
                 "components": [
                     {
@@ -228,6 +233,11 @@ def _merge_into(
     bom.setdefault("components", []).extend(new_components)
     meta = bom.setdefault("metadata", {})
     meta["lifecycles"] = [{"phase": lifecycle}]
+    meta["authors"] = [{"name": "ONNX Project Contributors"}]
+    meta["supplier"] = {
+        "name": "Linux Foundation",
+        "url": ["https://www.linuxfoundation.org"],
+    }
     # Record this script as an additional tool in the BOM provenance chain.
     tools = meta.setdefault("tools", {})
     tools.setdefault("components", []).append(
