@@ -30,7 +30,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 # ---------------------------------------------------------------------------
 # CMake parsing helpers
@@ -186,13 +186,24 @@ def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
 def _make_bom(components: list[dict[str, Any]], lifecycle: str) -> dict[str, Any]:
     return {
         "bomFormat": "CycloneDX",
-        "specVersion": "1.5",
+        "specVersion": "1.6",
         "serialNumber": f"urn:uuid:{uuid.uuid4()}",
         "version": 1,
         "metadata": {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "lifecycles": [{"phase": lifecycle}],
-            "tools": [{"type": "file", "name": "extract_cmake_fetchcontent.py"}],
+            "tools": {
+                "components": [
+                    {
+                        "type": "application",
+                        "name": "extract_cmake_fetchcontent.py",
+                        "description": "Extracts CMake FetchContent dependencies into CycloneDX components",
+                        "externalReferences": [
+                            {"type": "vcs", "url": "https://github.com/onnx/onnx"}
+                        ],
+                    }
+                ]
+            },
         },
         "components": components,
     }
@@ -202,7 +213,7 @@ def _merge_into(
     base_path: Path, new_components: list[dict[str, Any]], lifecycle: str
 ) -> dict[str, Any]:
     """Load an existing CycloneDX BOM and append new_components to it."""
-    bom: dict[str, Any] = json.loads(base_path.read_text(encoding="utf-8"))
+    bom = cast("dict[str, Any]", json.loads(base_path.read_text(encoding="utf-8")))
     bom.setdefault("components", []).extend(new_components)
     meta = bom.setdefault("metadata", {})
     meta["lifecycles"] = [{"phase": lifecycle}]

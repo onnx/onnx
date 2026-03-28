@@ -233,9 +233,10 @@ jobs:
         done
 
     - name: Score SBOM quality
-      # Informational — prints per-file quality scores (0–10); does not fail the job.
+      # Fails the job if any SBOM scores below 6/10.
+      # Raise the threshold once license and supplier metadata are added.
       run: |
         for f in sboms/*.cdx.json; do
           echo "=== Scoring $f ==="
-          sbomqs score "$f"
+          sbomqs score --min-score 6 "$f"
         done
