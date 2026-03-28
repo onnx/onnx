@@ -215,6 +215,15 @@ jobs:
           -o /usr/local/bin/cyclonedx
         chmod +x /usr/local/bin/cyclonedx
 
+    - name: Validate SBOM schemas
+      # Fails the job if either SBOM does not conform to the CycloneDX 1.6 JSON schema.
+      run: |
+        for f in sboms/*.cdx.json; do
+          echo "=== Validating $f ==="
+          cyclonedx validate --input-file "$f" --input-format json --input-version v1_6
+        done
+
+
     - name: Install sbomqs
       env:
         SBOMQS_VERSION: "2.0.5"
@@ -223,15 +232,6 @@ jobs:
           "https://github.com/interlynk-io/sbomqs/releases/download/v${SBOMQS_VERSION}/sbomqs_${SBOMQS_VERSION}_Linux_x86_64.tar.gz" \
           | tar -xzf - -C /tmp
         install -m 755 /tmp/sbomqs /usr/local/bin/sbomqs
-        sbomqs version
-
-    - name: Validate SBOM schemas
-      # Fails the job if either SBOM does not conform to the CycloneDX 1.6 JSON schema.
-      run: |
-        for f in sboms/*.cdx.json; do
-          echo "=== Validating $f ==="
-          cyclonedx validate --input-file "$f" --input-format json --input-version v1_6
-        done
 
     - name: Score SBOM quality
       # Fails the job if any SBOM scores below 6/10.
