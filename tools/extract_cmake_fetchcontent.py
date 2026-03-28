@@ -162,7 +162,11 @@ def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
         if gh:
             owner, repo = gh
             ref = tag or version
-            comp["purl"] = f"pkg:github/{owner}/{repo}@{ref}" if ref else f"pkg:github/{owner}/{repo}"
+            comp["purl"] = (
+                f"pkg:github/{owner}/{repo}@{ref}"
+                if ref
+                else f"pkg:github/{owner}/{repo}"
+            )
 
         comp["externalReferences"] = [{"type": "vcs", "url": git_url}]
 
@@ -190,7 +194,9 @@ def _make_bom(components: list[dict[str, Any]], lifecycle: str) -> dict[str, Any
     }
 
 
-def _merge_into(base_path: Path, new_components: list[dict[str, Any]], lifecycle: str) -> dict[str, Any]:
+def _merge_into(
+    base_path: Path, new_components: list[dict[str, Any]], lifecycle: str
+) -> dict[str, Any]:
     """Load an existing CycloneDX BOM and append new_components to it."""
     bom: dict[str, Any] = json.loads(base_path.read_text(encoding="utf-8"))
     bom.setdefault("components", []).extend(new_components)
@@ -198,12 +204,16 @@ def _merge_into(base_path: Path, new_components: list[dict[str, Any]], lifecycle
     meta["lifecycles"] = [{"phase": lifecycle}]
     # Record this script as an additional tool in the BOM provenance chain.
     tools = meta.setdefault("tools", {})
-    tools.setdefault("components", []).append({
-        "type": "file",
-        "name": "extract_cmake_fetchcontent.py",
-        "description": "Extracts CMake FetchContent dependencies into CycloneDX components",
-        "externalReferences": [{"type": "vcs", "url": "https://github.com/onnx/onnx"}],
-    })
+    tools.setdefault("components", []).append(
+        {
+            "type": "file",
+            "name": "extract_cmake_fetchcontent.py",
+            "description": "Extracts CMake FetchContent dependencies into CycloneDX components",
+            "externalReferences": [
+                {"type": "vcs", "url": "https://github.com/onnx/onnx"}
+            ],
+        }
+    )
     # Add cmake components to the dependencies array so they appear in the
     # dependency graph alongside the requirements-file components.
     deps = bom.setdefault("dependencies", [])
@@ -271,7 +281,6 @@ def main() -> None:
         }
 
     Path(args.output).write_text(json.dumps(bom, indent=2), encoding="utf-8")
-    print(f"Wrote {len(components)} cmake component(s) to {args.output}")
 
 
 if __name__ == "__main__":
