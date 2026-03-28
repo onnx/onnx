@@ -22,12 +22,35 @@
 # tools/extract_cmake_fetchcontent.py, which parses CMakeLists.txt directly so
 # the SBOM stays in sync when dependency versions are bumped there.
 #
-# Called from create_release.yml after all wheels and sdist are built.
+# Called from create_release.yml after all wheels and sdist are built,
+# with subject_name (onnx or onnx-weekly) and subject_version passed as inputs.
+# When triggered by pull_request or workflow_dispatch without inputs, the name
+# defaults to "onnx" and the version is read from the VERSION_NUMBER file.
 
 name: Generate SBOM
 on:
   workflow_call:
+    inputs:
+      subject_name:
+        description: 'Package name (onnx or onnx-weekly)'
+        required: true
+        type: string
+      subject_version:
+        description: 'Package version from VERSION_NUMBER'
+        required: true
+        type: string
   workflow_dispatch:
+    inputs:
+      subject_name:
+        description: 'Package name (onnx or onnx-weekly)'
+        required: false
+        type: string
+        default: ''
+      subject_version:
+        description: 'Package version (leave empty to read from VERSION_NUMBER)'
+        required: false
+        type: string
+        default: ''
   # TODO: remove before merging — enables testing on every PR commit
   pull_request:
     branches: [main, rel-*]
@@ -37,8 +60,34 @@ permissions:
 
 jobs:
 
+  setup:
+    name: Resolve subject
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      subject_name: ${{ steps.resolve.outputs.name }}
+      subject_version: ${{ steps.resolve.outputs.version }}
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Resolve subject name and version
+      id: resolve
+      run: |
+        NAME="${{ inputs.subject_name }}"
+        if [ -z "$NAME" ]; then NAME="onnx"; fi
+        VERSION="${{ inputs.subject_version }}"
+        if [ -z "$VERSION" ]; then VERSION=$(cat VERSION_NUMBER); fi
+        echo "name=$NAME" >> "$GITHUB_OUTPUT"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+
   runtime-sbom:
     name: Runtime SBOM
+    needs: setup
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -65,13 +114,25 @@ jobs:
           --output-format JSON \
           --output-file onnx-runtime.cdx.json
 
-    - name: Annotate lifecycle phase
+    - name: Annotate lifecycle phase and subject component
+      env:
+        SUBJECT_NAME: ${{ needs.setup.outputs.subject_name }}
+        SUBJECT_VERSION: ${{ needs.setup.outputs.subject_version }}
       run: |
         python - <<'EOF'
-        import json
+        import json, os
         from pathlib import Path
         bom = json.loads(Path("onnx-runtime.cdx.json").read_text())
-        bom.setdefault("metadata", {})["lifecycles"] = [{"phase": "runtime"}]
+        meta = bom.setdefault("metadata", {})
+        meta["lifecycles"] = [{"phase": "runtime"}]
+        name = os.environ["SUBJECT_NAME"]
+        version = os.environ["SUBJECT_VERSION"]
+        meta["component"] = {
+            "type": "library",
+            "name": name,
+            "version": version,
+            "purl": f"pkg:pypi/{name}@{version}",
+        }
         Path("onnx-runtime.cdx.json").write_text(json.dumps(bom, indent=2))
         EOF
 
@@ -83,6 +144,7 @@ jobs:
 
   build-sbom:
     name: Build SBOM
+    needs: setup
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -109,11 +171,16 @@ jobs:
     - name: Extract CMake FetchContent dependencies and merge
       # Appends protobuf and nanobind (fetched by CMake at wheel-build time)
       # into the Python build-deps BOM and sets lifecycle: build.
+      env:
+        SUBJECT_NAME: ${{ needs.setup.outputs.subject_name }}
+        SUBJECT_VERSION: ${{ needs.setup.outputs.subject_version }}
       run: |
         python tools/extract_cmake_fetchcontent.py \
           --cmake CMakeLists.txt \
           --merge-into build-python.cdx.json \
           --lifecycle build \
+          --subject-name "$SUBJECT_NAME" \
+          --subject-version "$SUBJECT_VERSION" \
           --output onnx-build.cdx.json
 
     - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
