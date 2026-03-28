@@ -166,10 +166,6 @@ def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
             comp["purl"] = f"pkg:github/{owner}/{repo}@{ref}" if ref else f"pkg:github/{owner}/{repo}"
 
         comp["externalReferences"] = [{"type": "vcs", "url": git_url}]
-        if tag:
-            comp["externalReferences"].append(
-                {"type": "other", "comment": "git-tag", "url": f"{git_url.rstrip('.git')}/tree/{tag}"}
-            )
 
     comp["bom-ref"] = f"{name}@{comp['version']}" if "version" in comp else name
     return comp
@@ -199,7 +195,16 @@ def _merge_into(base_path: Path, new_components: list[dict[str, Any]], lifecycle
     """Load an existing CycloneDX BOM and append new_components to it."""
     bom: dict[str, Any] = json.loads(base_path.read_text(encoding="utf-8"))
     bom.setdefault("components", []).extend(new_components)
-    bom.setdefault("metadata", {})["lifecycles"] = [{"phase": lifecycle}]
+    meta = bom.setdefault("metadata", {})
+    meta["lifecycles"] = [{"phase": lifecycle}]
+    # Record this script as an additional tool in the BOM provenance chain.
+    tools = meta.setdefault("tools", {})
+    tools.setdefault("components", []).append({
+        "type": "file",
+        "name": "extract_cmake_fetchcontent.py",
+        "description": "Extracts CMake FetchContent dependencies into CycloneDX components",
+        "externalReferences": [{"type": "vcs", "url": "https://github.com/onnx/onnx"}],
+    })
     # Add cmake components to the dependencies array so they appear in the
     # dependency graph alongside the requirements-file components.
     deps = bom.setdefault("dependencies", [])
