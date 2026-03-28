@@ -6,14 +6,17 @@
 #
 # Two SBOMs are produced because ONNX has dependencies in two lifecycle phases:
 #
-#   onnx-runtime.cdx.json  — Python packages installed with the wheel
-#                            (requirements.txt + requirements-reference.txt)
+#   onnx-runtime.cdx.json  — Direct runtime deps declared in requirements.txt
+#                            and requirements-reference.txt.
 #                            CycloneDX lifecycle: runtime
 #
-#   onnx-build.cdx.json    — What built the wheel: Python build tools
-#                            (requirements-release_build.txt) plus C++ libraries
-#                            fetched by CMake FetchContent (protobuf, nanobind).
-#                            CycloneDX lifecycle: build
+#   onnx-build.cdx.json    — Direct build tools from requirements-release_build.txt
+#                            plus C++ libraries fetched by CMake FetchContent
+#                            (protobuf, nanobind). CycloneDX lifecycle: build
+#
+# Both SBOMs are generated from requirements files (not from a resolved
+# environment) because transitive resolution is environment-dependent and
+# cannot be canonically represented at build time.
 #
 # The CMake FetchContent components are extracted by
 # tools/extract_cmake_fetchcontent.py, which parses CMakeLists.txt directly so
@@ -49,15 +52,16 @@ jobs:
       with:
         python-version: "3.11"
 
-    - name: Install runtime dependencies and scanner
-      run: |
-        python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements.txt -r requirements-reference.txt
-        python -m pip install -q cyclonedx-bom
+    - name: Install scanner
+      run: python -m pip install -q --upgrade pip cyclonedx-bom
 
-    - name: Generate runtime SBOM
+    - name: Generate runtime SBOM from requirements files
+      # Scans declared direct deps only — not a resolved environment.
+      # requirements-reference.txt (Pillow, ruamel.yaml) provides the optional
+      # extras shipped with the reference implementation.
       run: |
-        cyclonedx-py environment \
+        cat requirements.txt requirements-reference.txt > /tmp/runtime-requirements.txt
+        cyclonedx-py requirements /tmp/runtime-requirements.txt \
           --output-format JSON \
           --output-file onnx-runtime.cdx.json
 
@@ -92,15 +96,13 @@ jobs:
       with:
         python-version: "3.11"
 
-    - name: Install build dependencies and scanner
-      run: |
-        python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-release_build.txt
-        python -m pip install -q cyclonedx-bom
+    - name: Install scanner
+      run: python -m pip install -q --upgrade pip cyclonedx-bom
 
-    - name: Generate Python build-deps SBOM
+    - name: Generate Python build-deps SBOM from requirements file
+      # Scans declared direct deps only — not a resolved environment.
       run: |
-        cyclonedx-py environment \
+        cyclonedx-py requirements requirements-release_build.txt \
           --output-format JSON \
           --output-file build-python.cdx.json
 
