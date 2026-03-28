@@ -8,7 +8,7 @@
 #
 #   onnx-runtime.cdx.json  — Direct runtime deps declared in requirements.txt
 #                            and requirements-reference.txt.
-#                            CycloneDX lifecycle: runtime
+#                            CycloneDX lifecycle: operations
 #
 #   onnx-build.cdx.json    — Direct build tools from requirements-release_build.txt
 #                            plus C++ libraries fetched by CMake FetchContent
@@ -126,7 +126,7 @@ jobs:
         from pathlib import Path
         bom = json.loads(Path("onnx-runtime.cdx.json").read_text())
         meta = bom.setdefault("metadata", {})
-        meta["lifecycles"] = [{"phase": "runtime"}]
+        meta["lifecycles"] = [{"phase": "operations"}]
         name = os.environ["SUBJECT_NAME"]
         version = os.environ["SUBJECT_VERSION"]
         meta["component"] = {
