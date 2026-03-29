@@ -3,6 +3,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
 import numpy as np
 
 import onnx
@@ -11,24 +16,32 @@ from onnx.backend.test.case.node import expect
 
 
 # The below ScatterElements' numpy implementation is from https://stackoverflow.com/a/46204790/11767360
-def scatter_elements(data, indices, updates, axis=0, reduction="none"):  # type: ignore
+def scatter_elements(
+    data: np.ndarray,
+    indices: np.ndarray,
+    updates: np.ndarray,
+    axis: int = 0,
+    reduction: str = "none",
+) -> np.ndarray:
     if axis < 0:
         axis = data.ndim + axis
 
     idx_xsection_shape = indices.shape[:axis] + indices.shape[axis + 1 :]
 
-    def make_slice(arr, axis, i):  # type: ignore
-        slc = [slice(None)] * arr.ndim
+    def make_slice(arr: np.ndarray, axis: int, i: int) -> list[slice | int]:
+        slc: list[slice | int] = [slice(None)] * arr.ndim
         slc[axis] = i
         return slc
 
-    def unpack(packed):  # type: ignore
+    def unpack(packed: Any) -> Any:
         unpacked = packed[0]
         for i in range(1, len(packed)):
             unpacked = unpacked, packed[i]
         return unpacked
 
-    def make_indices_for_duplicate(idx):  # type: ignore
+    def make_indices_for_duplicate(
+        idx: Sequence[Sequence[Any]],
+    ) -> list[tuple[Any, ...]]:
         final_idx = []
         for i in range(len(idx[0])):
             final_idx.append(  # noqa: PERF401
