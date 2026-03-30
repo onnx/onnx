@@ -304,11 +304,22 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     # Attach it to the protobuf target so ONNX targets can compile .pb.cc files
     # without introducing a global include path.
     if(EXISTS "${protobuf_SOURCE_DIR}/third_party/utf8_range")
-      target_include_directories(
-        protobuf::libprotobuf
-        INTERFACE
-          "${protobuf_SOURCE_DIR}/third_party/utf8_range"
-      )
+      # protobuf::libprotobuf and protobuf::libprotobuf-lite are ALIAS targets
+      # and CMake does not allow target_include_directories on aliases;
+      # resolve to the real targets before adding the utf8_range include path.
+      foreach(_pb_alias libprotobuf libprotobuf-lite)
+        if(TARGET protobuf::${_pb_alias})
+          get_target_property(_pb_real protobuf::${_pb_alias} ALIASED_TARGET)
+          if(NOT _pb_real)
+            set(_pb_real protobuf::${_pb_alias})
+          endif()
+          target_include_directories(
+            ${_pb_real}
+            INTERFACE
+              $<BUILD_INTERFACE:${protobuf_SOURCE_DIR}/third_party/utf8_range>
+          )
+        endif()
+      endforeach()
     endif()
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
     set(Protobuf_VERSION "6.33.5")
