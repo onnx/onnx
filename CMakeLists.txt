@@ -282,7 +282,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     # which fails in restricted environments (e.g. piwheels).
     set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20250127.0/abseil-cpp-20250127.0.tar.gz)
     set(AbseilSHA1 3e4a608cfdb580126b90ae651bcc6261357511ce)
-    set(ABSL_ENABLE_INSTALL ON)
+    set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable installation of Abseil targets" FORCE)
     FetchContent_Declare(
       absl
       URL ${AbseilURL}
