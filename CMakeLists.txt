@@ -289,8 +289,8 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
       URL_HASH SHA1=${AbseilSHA1}
     )
     FetchContent_MakeAvailable(absl)
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v33.5/protobuf-33.5.tar.gz)
-    set(ProtobufSHA1 24f666eb4974e405581da5a174eb7f9113eb1241)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz)
+    set(ProtobufSHA1 051fee744fcca04dab37eb009d49aa3e9546acda)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
@@ -322,7 +322,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
       endforeach()
     endif()
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.33.5")
+    set(Protobuf_VERSION "6.33.6")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
