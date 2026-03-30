@@ -69,7 +69,7 @@ def to_float8e8m0(
         exponent += increment
 
     elif round_mode == "up":
-        has_fraction = (f_bits & 0x4FFFFF) > 0
+        has_fraction = (f_bits & 0x7FFFFF) > 0
         round_up = has_fraction & normal_mask
 
         if saturate:
