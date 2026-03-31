@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <vector>
-
 #include "onnx/defs/nn/utils.h"
+
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace defs {
