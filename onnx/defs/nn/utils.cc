@@ -1,12 +1,30 @@
 // Copyright (c) ONNX Project Contributors
 //
 // SPDX-License-Identifier: Apache-2.0
+
 #include "onnx/defs/nn/utils.h"
+
+#include <algorithm>
 
 namespace ONNX_NAMESPACE {
 namespace defs {
 namespace nn {
 namespace utils {
+
+std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_dims) {
+  std::vector<int64_t> strides;
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    if (strides.size() != n_input_dims) {
+      fail_shape_inference("Attribute strides has incorrect size");
+    }
+    if (std::any_of(strides.begin(), strides.end(), [](int64_t s) { return s <= 0; })) {
+      fail_shape_inference("Attribute strides must only contain positive values");
+    }
+  } else {
+    strides.assign(n_input_dims, 1);
+  }
+  return strides;
+}
 
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);

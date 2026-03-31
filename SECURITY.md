@@ -1,5 +1,5 @@
 <!--
-Copyright (c) ONNX Project Contributors
+SPDX-FileCopyrightText: Copyright (c) ONNX Project Contributors
 
 SPDX-License-Identifier: Apache-2.0
 -->
@@ -20,7 +20,7 @@ After your report is received, a maintainer will acknowledge it, work with you t
 Please do not disclose the vulnerability publicly until a fix and advisory have been released.
 
 ## Security announcements
-Please subscribe to the [announcements mailing list](https://lists.lfaidata.foundation/g/onnx-announce), where we post notifications and remediation details for security vulnerabilities.
+Security advisories are published via GitHub Security Advisories. Users depending on ONNX will be notified automatically via GitHub's dependency graph.
 
 ## Security Requirements
 
