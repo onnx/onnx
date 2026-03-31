@@ -10,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 
 class BitCast(OpRun):
-    def _run(self, x, to: int):  # type: ignore
+    def _run(self, x, to: int):  # type: ignore[override]
         if to == onnx.TensorProto.STRING:
             raise ValueError("BitCast to STRING is not supported")
         if x.dtype == np.str_:
