@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - uses: ZedThree/clang-tidy-review/post@a63ad24ca2c9f69340890c82dd235f295f7feac8 # v0.23.0
+      - uses: ZedThree/clang-tidy-review/post@438014136def4cb6242e9d0ef3da1a1cd48fa7ce # v0.23.1
         continue-on-error: true
         with:
           lgtm_comment_body: ""
