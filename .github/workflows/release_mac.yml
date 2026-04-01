@@ -112,12 +112,12 @@ jobs:
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14'
       with:
         name: wheels-${{ inputs.os }}-3.12-abi3
         path: dist
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.13t' || matrix.python-version == '3.14t'
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
