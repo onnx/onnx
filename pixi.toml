@@ -17,8 +17,20 @@ ONNX_BUILD_TESTS="1"
 CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 
 [tasks.gen-docs]
-depends-on = "build"
 cmd = "python onnx/defs/gen_doc.py"
+
+[tasks.gen-operator-coverage]
+cmd = "python onnx/backend/test/stat_coverage.py"
+
+[tasks.gen-proto]
+cmd = "python onnx/gen_proto.py -l && python onnx/gen_proto.py -l --ml"
+
+[tasks.gen-test-data-feature-branch]
+# Generate test data based on what files changed in the current feature branch
+cmd = "python onnx/backend/test/cmd_tools.py generate-data --diff"
+
+[tasks.gen-all]
+depends-on = ["gen-docs", "gen-operator-coverage", "gen-proto", "gen-test-data-feature-branch"]
 
 [tasks.gtest]
 cmd = ".setuptools-cmake-build/onnx_gtests"
