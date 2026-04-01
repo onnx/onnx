@@ -55,9 +55,9 @@ def update_inputs_outputs_dims(
                 if dim.HasField("dim_param"):
                     dim_param_set.add(dim.dim_param)
 
-    init_dim_param_set(dim_param_set, model.graph.input)  # type: ignore
-    init_dim_param_set(dim_param_set, model.graph.output)  # type: ignore
-    init_dim_param_set(dim_param_set, model.graph.value_info)  # type: ignore
+    init_dim_param_set(dim_param_set, model.graph.input)  # type: ignore[arg-type]
+    init_dim_param_set(dim_param_set, model.graph.output)  # type: ignore[arg-type]
+    init_dim_param_set(dim_param_set, model.graph.value_info)  # type: ignore[arg-type]
 
     def update_dim(tensor: ValueInfoProto, dim: Any, j: int, name: str) -> None:
         dim_proto = tensor.type.tensor_type.shape.dim[j]
@@ -78,7 +78,7 @@ def update_inputs_outputs_dims(
         elif isinstance(dim, str):
             dim_proto.dim_param = dim
         else:
-            raise ValueError(  # noqa: TRY004
+            raise TypeError(
                 f"Only int or str is accepted as dimension value, incorrect type: {type(dim)}"
             )
 

@@ -20,11 +20,11 @@ def _concat_from_sequence(seq: list[Any], axis: int, new_axis: int = 0) -> np.nd
             res = np.concatenate(seq2, axis=axis)
     else:
         res = np.concatenate(seq, axis=axis)
-    return res  # type: ignore
+    return res
 
 
 class ConcatFromSequence(OpRun):
-    def _run(self, seq, axis=None, new_axis=None):  # type: ignore
+    def _run(self, seq, axis=None, new_axis=None):
         if seq is None:
             raise RuntimeError("A sequence cannot be null.")
         res = _concat_from_sequence(seq, axis, new_axis=new_axis)

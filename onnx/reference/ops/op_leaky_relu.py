@@ -14,10 +14,10 @@ if TYPE_CHECKING:
 def _leaky_relu(x: np.ndarray, alpha: float) -> np.ndarray:
     sign = (x > 0).astype(x.dtype)
     sign -= ((sign - 1) * alpha).astype(x.dtype)
-    return x * sign  # type: ignore
+    return x * sign
 
 
 class LeakyRelu(OpRunUnaryNum):
-    def _run(self, x, alpha=None):  # type: ignore
-        alpha = alpha or self.alpha  # type: ignore
+    def _run(self, x, alpha=None):
+        alpha = alpha or self.alpha
         return (_leaky_relu(x, alpha).astype(x.dtype),)

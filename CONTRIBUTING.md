@@ -68,7 +68,6 @@ from onnx root dir should work.
   - `shape_inference.py`: a utility to infer types and shapes for ONNX models
   - `version_converter.py`: a utility to upgrade or downgrade version for ONNX models
   - `parser.py`: a utility to create an ONNX model or graph from a textual representation
-  - `hub.py`: a utility for downloading models from [ONNX Model Zoo](https://github.com/onnx/models)
   - `compose.py`: a utility to merge ONNX models
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
@@ -91,6 +90,8 @@ python onnx/defs/gen_doc.py
 ```
 
 ### Coding style
+
+We adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) and [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) for this project.
 
 We use `lintrunner` to drive multiple linters defined in `.lintrunner.toml` to lint the codebase.
 

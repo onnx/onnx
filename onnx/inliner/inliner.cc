@@ -1,12 +1,11 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/inliner/inliner.h"
 
 #include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -26,8 +25,6 @@ namespace ONNX_NAMESPACE {
 namespace inliner {
 
 namespace { // internal/private API
-
-using namespace internal;
 
 using OpsetMapBase = std::unordered_map<std::string, int64_t>;
 
@@ -83,7 +80,7 @@ struct OpsetMap : public OpsetMapBase {
 
 using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
-class NameGenerator : private Visitor {
+class NameGenerator : private internal::Visitor {
  public:
   explicit NameGenerator(const GraphProto& graph) : index_(0) {
     NameGenerator::VisitGraph(graph);
@@ -158,12 +155,15 @@ class NameGenerator : private Visitor {
   std::unordered_set<std::string> existing_names_;
 };
 
-class InliningRenamer : private MutableVisitor {
+class InliningRenamer : public internal::MutableVisitor {
  private:
   std::string suffix;
   NameGenerator& generator;
-  std::vector<std::unordered_map<std::string, std::string>> rename_scopes{};
 
+ protected:
+  std::vector<std::unordered_map<std::string, std::string>> rename_scopes;
+
+ public:
   InliningRenamer(std::string suffix_, NameGenerator& generator_) : suffix(std::move(suffix_)), generator(generator_) {
     // Create an empty mapping for the top-level scope.
     rename_scopes.emplace_back();
@@ -179,30 +179,35 @@ class InliningRenamer : private MutableVisitor {
     return generator.CreateNew(name + suffix);
   }
 
-  // Replace given name with a unique version of the name, and cache the
-  // renaming-binding in current scope.
-  void Rename(std::string& name) {
-    auto new_name = MakeUnique(name);
+  /**
+   * @brief Binds a formal parameter name to an actual parameter name.
+   *
+   * @param formal_name The formal parameter name to bind.
+   * @param actual_name The actual parameter name to bind to.
+   */
+  void BindFormalToActual(const std::string& formal_name, const std::string& actual_name) {
     auto& current_scope = rename_scopes.back();
-    current_scope[name] = new_name;
-    name = new_name;
+    current_scope[formal_name] = actual_name;
   }
 
-  void LookupOrRename(std::string& name, bool is_new_def) {
-    if (name.empty())
-      return;
-    for (auto i = rename_scopes.size(); i > 0; --i) {
-      const auto& map = rename_scopes[i - 1];
-      auto iter = map.find(name);
-      if (iter != map.end()) {
-        name = iter->second;
-        return;
-      }
-    }
-    if (is_new_def) {
-      Rename(name);
-    }
-    // Otherwise, it is a reference to an outer-scope variable that should not be renamed.
+  /**
+   * @brief Creates a unique name for the given name and binds it.
+   *
+   * This method creates a unique name based on the suffix and binds the original
+   * name to the unique name for later reference renaming.
+   *
+   * @param original_name The name to create a unique version of.
+   * @return The unique name that was created and bound.
+   */
+  std::string BindToUniqueName(const std::string& original_name) {
+    // First create the unique name using MakeUnique
+    std::string unique_name = MakeUnique(original_name);
+
+    // Then bind the original name to the unique name
+    auto& current_scope = rename_scopes.back();
+    current_scope[original_name] = unique_name;
+
+    return unique_name;
   }
 
   template <bool isOutput>
@@ -214,7 +219,7 @@ class InliningRenamer : private MutableVisitor {
     // for inputs. However, for outputs we use a unique dummy name to handle the case that it
     // is used in an output-context where it is not optional.
     ONNX_ASSERTM(
-        actuals.size() <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters");
+        actuals.size() <= formals.size(), "Number of actual parameters cannot exceed number of formal parameters")
     auto& current_scope = rename_scopes.back();
     int i = 0;
     for (; i < actuals.size(); ++i) {
@@ -266,6 +271,33 @@ class InliningRenamer : private MutableVisitor {
     rename_scopes.pop_back();
   }
 
+ private:
+  // Replace given name with a unique version of the name, and cache the
+  // renaming-binding in current scope.
+  void Rename(std::string& name) {
+    auto new_name = MakeUnique(name);
+    auto& current_scope = rename_scopes.back();
+    current_scope[name] = new_name;
+    name = new_name;
+  }
+
+  void LookupOrRename(std::string& name, bool is_new_def) {
+    if (name.empty())
+      return;
+    for (auto i = rename_scopes.size(); i > 0; --i) {
+      const auto& map = rename_scopes[i - 1];
+      auto iter = map.find(name);
+      if (iter != map.end()) {
+        name = iter->second;
+        return;
+      }
+    }
+    if (is_new_def) {
+      Rename(name);
+    }
+    // Otherwise, it is a reference to an outer-scope variable that should not be renamed.
+  }
+
  public:
   // Renames variables in a FunctionProto for inlining a particular call-site. This does the following:
   // (i)  Rename all intermediate variables in the function to ensure that they are unique (wrt the main graph).
@@ -289,7 +321,7 @@ class InliningRenamer : private MutableVisitor {
 // In the case of variables referenced in sub-graphs, only non-local variables
 // are treated as implicit inputs.
 
-class ComputeInputs : private Visitor {
+class ComputeInputs : private internal::Visitor {
  private:
   std::vector<std::unordered_set<std::string>> namescopes;
 
@@ -302,7 +334,7 @@ class ComputeInputs : private Visitor {
   }
 
   bool IsLocalVar(const std::string& name) const {
-    for (auto& scope : namescopes) {
+    for (const auto& scope : namescopes) {
       if (scope.count(name) > 0) {
         return true;
       }
@@ -312,23 +344,23 @@ class ComputeInputs : private Visitor {
 
   void VisitGraph(const GraphProto& graph) override {
     namescopes.emplace_back();
-    for (auto& x : graph.input())
+    for (const auto& x : graph.input())
       CurrentScope().insert(x.name());
-    for (auto& init : graph.initializer())
+    for (const auto& init : graph.initializer())
       CurrentScope().insert(init.name());
-    for (auto& n : graph.node())
+    for (const auto& n : graph.node())
       VisitNode(n);
     namescopes.pop_back();
   }
 
   bool ProcessNode(const NodeProto& node) override {
-    for (auto& var : node.input()) {
+    for (const auto& var : node.input()) {
       if (!var.empty() && !IsLocalVar(var)) {
         result.push_back(var);
       }
     }
     if (InNestedScope()) {
-      for (auto& var : node.output()) {
+      for (const auto& var : node.output()) {
         if (!var.empty()) {
           CurrentScope().insert(var);
         }
@@ -363,19 +395,19 @@ ConstNodeMap FindConstantNodes(const GraphProto& graph) {
 }
 
 const TypeProto& GetType(const ModelProto& model, const std::string& var) {
-  for (auto& vi : model.graph().value_info()) {
+  for (const auto& vi : model.graph().value_info()) {
     if (vi.name() == var)
       return vi.type();
   }
-  for (auto& vi : model.graph().input()) {
+  for (const auto& vi : model.graph().input()) {
     if (vi.name() == var)
       return vi.type();
   }
-  for (auto& vi : model.graph().output()) {
+  for (const auto& vi : model.graph().output()) {
     if (vi.name() == var)
       return vi.type();
   }
-  ONNX_ASSERTM(false, "Type unknown for %s", var.c_str());
+  ONNX_ASSERTM(false, "Type unknown for %s", var.c_str())
 }
 
 void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int target_version) {
@@ -417,9 +449,8 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
     }
   }
 
-  // TODO: Use std::move when it is fully supported on all protobuf platforms used
   for (auto& function_node : function_nodes)
-    *nodes.Add() = function_node;
+    *nodes.Add() = std::move(function_node);
   function_nodes.Clear();
 
   auto converted = ONNX_NAMESPACE::version_conversion::ConvertVersion(function_as_model, target_version);
@@ -427,9 +458,9 @@ void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto
   function_nodes.Swap(converted.mutable_graph()->mutable_node());
 
   // Append new initializers to main graph initializers
-  for (auto& added_initializer : converted.graph().initializer())
+  for (const auto& added_initializer : converted.graph().initializer())
     *model.mutable_graph()->mutable_initializer()->Add() = added_initializer;
-  for (auto& added_initializer : converted.graph().sparse_initializer())
+  for (const auto& added_initializer : converted.graph().sparse_initializer())
     *model.mutable_graph()->mutable_sparse_initializer()->Add() = added_initializer;
 }
 
@@ -493,16 +524,16 @@ struct InlinerImpl {
     }
 
     if (function_map != nullptr) {
-      auto iter = this->function_map->find(GetCalleeId(node));
-      if (iter != this->function_map->end()) {
-        callee = *iter->second.first;
-        target_version = iter->second.second;
+      if (auto iter = this->function_map->find(GetCalleeId(node)); iter != this->function_map->end()) {
+        auto& [func_ptr, version] = iter->second;
+        callee = *func_ptr;
+        target_version = version;
         return true;
       }
     }
     if (schema_registry != nullptr) {
       int64_t domain_version = GetDomainVersion(model, domain);
-      const auto* op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
+      const auto* const op_schema = schema_registry->GetSchema(node.op_type(), domain_version, domain);
 
       if (op_schema == nullptr) {
         // If the schema is not found, we cannot inline the function.
@@ -520,7 +551,7 @@ struct InlinerImpl {
 
       // Check if this node has a schema defined function proto.
       if (op_schema->HasContextDependentFunction()) {
-        shape_inference::InferShapes(model); // TODO: do shape inference incrementally
+        shape_inference::InferShapes(model); // TODO(ONNX): do shape inference incrementally
         std::vector<TypeProto> input_types;
         for (const auto& input : node.input()) {
           input_types.emplace_back(GetType(model, input));
@@ -560,7 +591,7 @@ struct InlinerImpl {
         for (const auto& x : node.output())
           actual_parameters.insert(x);
         // Append valueinfos of called function
-        for (auto& callee_vi : callee.value_info()) {
+        for (const auto& callee_vi : callee.value_info()) {
           if (actual_parameters.count(callee_vi.name()) == 0) {
             *value_infos.Add() = callee_vi;
           }
@@ -570,9 +601,6 @@ struct InlinerImpl {
           append_node(callee_node);
       } else {
         // Append node without inlining.
-        // TODO: use std::move instead of copying. Use of move doesn't seem to work with
-        // protobuf in some platforms/settings. [nodes->Add(std::move(node));]
-
         for (auto& attr : *node.mutable_attribute()) {
           if (attr.has_g()) {
             ProcessGraph(*attr.mutable_g());
@@ -582,7 +610,7 @@ struct InlinerImpl {
           }
         }
 
-        *nodes.Add() = node;
+        *nodes.Add() = std::move(node);
       }
     };
     for (auto& node : original_nodes) {
@@ -621,7 +649,7 @@ struct InlinerImpl {
     // Otherwise, we cannot inline, since currently version-conversion supports only
     // standard ONNX domain.
 
-    for (auto& function : model.functions()) {
+    for (const auto& function : model.functions()) {
       auto mismatches = model_imports.Mismatches(function);
       auto iter = mismatches.find(ONNX_DOMAIN);
       int64_t target_onnx_version = kNoConversion;
@@ -720,5 +748,51 @@ void InlineSelectedFunctions(
   }
   InlinerImpl::InlineSelectedFunctions(model, to_inline, schema_registry);
 }
+
+// Implementation of the Renamer class using InliningRenamer directly
+class Renamer::Impl {
+ private:
+  NameGenerator generator_;
+  InliningRenamer renamer_;
+
+ public:
+  Impl(const std::string& prefix, const GraphProto& graph) : generator_(graph), renamer_("__" + prefix, generator_) {}
+
+  Impl(const std::string& prefix, const FunctionProto& function)
+      : generator_(function), renamer_("__" + prefix, generator_) {}
+
+  InliningRenamer& GetRenamer() {
+    return renamer_;
+  }
+
+  void BindName(const std::string& formal_name, const std::string& actual_name) {
+    renamer_.BindFormalToActual(formal_name, actual_name);
+  }
+
+  void RenameNode(NodeProto& node) {
+    // Use the InliningRenamer's ProcessNode method which handles graph-value attributes
+    renamer_.ProcessNode(&node);
+  }
+};
+
+Renamer::Renamer(const std::string& prefix, const GraphProto& graph) : pImpl_(std::make_unique<Impl>(prefix, graph)) {}
+
+Renamer::Renamer(const std::string& prefix, const FunctionProto& function)
+    : pImpl_(std::make_unique<Impl>(prefix, function)) {}
+
+Renamer::~Renamer() = default;
+
+void Renamer::BindName(const std::string& formal_name, const std::string& actual_name) {
+  pImpl_->BindName(formal_name, actual_name);
+}
+
+void Renamer::RenameNode(NodeProto& node) {
+  pImpl_->RenameNode(node);
+}
+
+std::string Renamer::BindToUniqueName(const std::string& original_name) {
+  return pImpl_->GetRenamer().BindToUniqueName(original_name);
+}
+
 } // namespace inliner
 } // namespace ONNX_NAMESPACE

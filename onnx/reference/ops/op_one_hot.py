@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def _one_hot(indices, depth, axis=-1, dtype=np.float32):  # type: ignore
+def _one_hot(indices, depth, axis=-1, dtype=np.float32):
     values = np.asarray(indices)
     rank = len(values.shape)
     depth_range = np.arange(depth)
@@ -23,8 +23,8 @@ def _one_hot(indices, depth, axis=-1, dtype=np.float32):  # type: ignore
 
 
 class OneHot(OpRun):
-    def _run(self, indices, depth, values, axis=None):  # type: ignore
+    def _run(self, indices, depth, values, axis=None):
         off_value, on_value = values
-        y = _one_hot(indices, depth, axis=axis, dtype=values.dtype)  # type: ignore
+        y = _one_hot(indices, depth, axis=axis, dtype=values.dtype)
         y = y * (on_value - off_value) + off_value
         return (y,)

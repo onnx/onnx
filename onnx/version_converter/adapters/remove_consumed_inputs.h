@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for all ops that remove consumed_inputs
 
@@ -21,7 +19,7 @@ class RemoveConsumedInputs : public Adapter {
   explicit RemoveConsumedInputs(const std::string& op_name, const OpSetID& initial, const OpSetID& target)
       : Adapter(op_name, initial, target) {}
 
-  Node* adapt(std::shared_ptr<Graph>, Node* node) const override {
+  Node* adapt(std::shared_ptr<Graph> /*unused*/, Node* node) const override {
     if (node->hasAttribute(kconsumed_inputs))
       node->removeAttribute(kconsumed_inputs);
     return node;

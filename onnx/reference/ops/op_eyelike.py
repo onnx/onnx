@@ -28,4 +28,4 @@ class EyeLike(OpRun):
             sh = shape
         else:
             raise RuntimeError(f"EyeLike only accept 1D or 2D tensors not {shape!r}.")
-        return (np.eye(*sh, k=k, dtype=_dtype),)  # type: ignore
+        return (np.eye(*sh, k=k, dtype=_dtype),)

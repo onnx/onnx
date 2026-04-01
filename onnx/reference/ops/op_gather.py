@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Gather(OpRun):
-    def _run(self, x, indices, axis=None):  # type: ignore
+    def _run(self, x, indices, axis=None):
         if not x.flags["C_CONTIGUOUS"]:
             x = np.ascontiguousarray(x)
         if not indices.flags["C_CONTIGUOUS"]:

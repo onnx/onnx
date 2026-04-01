@@ -7,7 +7,7 @@ from onnx.reference.ops.op_pool_common import CommonPool
 
 
 class AveragePool_1(CommonPool):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         auto_pad=None,
@@ -32,7 +32,7 @@ class AveragePool_1(CommonPool):
 
 
 class AveragePool_7(CommonPool):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         auto_pad=None,
@@ -57,7 +57,7 @@ class AveragePool_7(CommonPool):
 
 
 class AveragePool_11(CommonPool):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         auto_pad=None,
@@ -82,7 +82,7 @@ class AveragePool_11(CommonPool):
 
 
 class AveragePool_19(CommonPool):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         auto_pad=None,

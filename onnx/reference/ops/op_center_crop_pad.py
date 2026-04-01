@@ -9,8 +9,8 @@ from onnx.reference.op_run import OpRun
 
 
 class CenterCropPad(OpRun):
-    def _run(self, input_data, shape, axes=None):  # type: ignore
-        axes = axes or self.axes  # type: ignore
+    def _run(self, input_data, shape, axes=None):
+        axes = axes or self.axes
         input_rank = len(input_data.shape)
         if axes is None:
             axes = list(range(input_rank))
@@ -19,9 +19,9 @@ class CenterCropPad(OpRun):
         pad_slices = [slice(0, s) for s in input_data.shape]
         crop_slices = [slice(0, s) for s in input_data.shape]
         new_shape = list(input_data.shape)
-        for a, sh in zip(axes, shape):
+        for a, sh in zip(axes, shape, strict=False):
             dim = input_data.shape[a]
-            if sh == a:
+            if sh == dim:
                 pass
             elif sh < dim:
                 new_shape[a] = sh

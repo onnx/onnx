@@ -23,7 +23,7 @@ def _batchnorm_test_mode(
     mean = mean.reshape(-1, *dim_ones)
     var = var.reshape(-1, *dim_ones)
     y = s * (x - mean) / np.sqrt(var + epsilon) + bias
-    return y.astype(x.dtype)  # type: ignore
+    return y.astype(x.dtype)
 
 
 def _batchnorm_training_mode(
@@ -41,7 +41,7 @@ def _batchnorm_training_mode(
     output_mean = mean * momentum + saved_mean * (1 - momentum)
     output_var = var * momentum + saved_var * (1 - momentum)
     y = _batchnorm_test_mode(x, s, bias, saved_mean, saved_var, epsilon=epsilon)
-    return (  # type: ignore
+    return (
         y.astype(x.dtype),
         saved_mean.astype(x.dtype),
         saved_var.astype(x.dtype),
@@ -62,7 +62,7 @@ class BatchNormalization_6(OpRun):
         is_test=None,
         momentum=None,
         spatial=None,  # noqa: ARG002
-    ):  # type: ignore
+    ):
         if is_test:
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
         else:
@@ -73,7 +73,7 @@ class BatchNormalization_6(OpRun):
 
 
 class BatchNormalization_9(OpRun):
-    def _run(self, x, scale, bias, mean, var, epsilon=None, momentum=None):  # type: ignore
+    def _run(self, x, scale, bias, mean, var, epsilon=None, momentum=None):
         if momentum is None:
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
             return (res,)
@@ -89,10 +89,10 @@ class BatchNormalization_9(OpRun):
 
 
 class BatchNormalization_14(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self, x, scale, bias, mean, var, epsilon=None, momentum=None, training_mode=None
     ):
-        if training_mode == 0:  # type: ignore
+        if training_mode == 0:
             res = _batchnorm_test_mode(x, scale, bias, mean, var, epsilon=epsilon)
             return (res,)
         res, __, _, output_mean, output_var = _batchnorm_training_mode(

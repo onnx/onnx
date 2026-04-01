@@ -2,7 +2,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 """Automates the generation of ONNX operators."""
+
 from __future__ import annotations
+
 import difflib
 import importlib
 import inspect
@@ -184,8 +186,8 @@ The function definition for this operator.
 {% endfor %}
 {% endif %}
 {% endfor %}""",
-    autoescape=False,
-)
+        autoescape=False,
+    )
 
 
 def _get_main_template():
@@ -232,8 +234,7 @@ def _clean_unicode(text):
     text = text.replace("&#160;", " ")
     text = text.replace("&#39;", "'")
     text = text.replace("&gt;", ">")
-    text = text.replace("&lt;", "<")
-    return text
+    return text.replace("&lt;", "<")
 
 
 _template_diff = _get_diff_template()
@@ -276,7 +277,7 @@ def _populate_all_schemas_with_history():
 
 
 def _get_all_schemas_with_history():
-    global _all_schemas_with_history
+    global _all_schemas_with_history  # noqa: PLW0603
     if _all_schemas_with_history is None:
         _all_schemas_with_history = _populate_all_schemas_with_history()
     return _all_schemas_with_history
@@ -422,7 +423,7 @@ def get_markdown_doc(
         if isinstance(value, float):
             formatted = str(np.round(value, 5))
             # use default formatting, unless too long.
-            if len(formatted) > 10:
+            if len(formatted) > 10:  # noqa: PLR2004
                 formatted = f"({value:e})"
             return formatted
         if isinstance(value, (bytes, bytearray)):
@@ -479,15 +480,15 @@ def get_markdown_doc(
     d_links = {}
     for schema in schemas:
         sdom = schema.domain.replace(".", "-")
-        d_links[
-            schema.since_version
-        ] = f"l-onnx-op{sdom}-{schema.name.lower()}-{schema.since_version}"
+        d_links[schema.since_version] = (
+            f"l-onnx-op{sdom}-{schema.name.lower()}-{schema.since_version}"
+        )
 
     if diff:
         lines = docs.split("\n")
         new_lines = [""]
         for line in lines:
-            line = line.rstrip("\r\t ")
+            line = line.rstrip("\r\t ")  # noqa: PLW2901
             if len(line) == 0 and len(new_lines[-1]) == 0:
                 continue
             new_lines.append(line)
@@ -506,7 +507,7 @@ def get_markdown_doc(
         lines = docs.split("\n")
         new_lines = [""]
         for line in lines:
-            line = line.rstrip("\r\t ")
+            line = line.rstrip("\r\t ")  # noqa: PLW2901
             if len(line) == 0 and len(new_lines[-1]) == 0:
                 continue
             new_lines.append(line)
@@ -540,7 +541,7 @@ def _insert_diff(
         spl2 = spl2.split("### Examples")[0].replace("`", "")
         spl1 = spl1.split("### Summary")[-1].strip("\n ")
         spl2 = spl2.split("### Summary")[-1].strip("\n ")
-        if len(spl1) < 5 or len(spl2) < 5:
+        if len(spl1) < 5 or len(spl2) < 5:  # noqa: PLR2004
             pieces.append(doc_parts[i])
             continue
         if not vers1:
@@ -664,7 +665,7 @@ def get_onnx_example(op_name, domain):
         try:
             mod = importlib.import_module(m)
             module = m
-        except ImportError:
+        except ImportError:  # noqa: PERF203
             continue
     if module is None:
         # Unable to find an example for 'op_name'.
@@ -772,11 +773,10 @@ def onnx_documentation_folder(
             if indent != "":
                 for i in range(len(table_dom)):
                     table_dom[i] = indent + table_dom[i]
-            res = "\n".join(table_dom)
-            return res
+            return "\n".join(table_dom)
 
     all_schemas_available = _get_all_schemas_with_history()
-    if len(all_schemas_available) < 3:
+    if len(all_schemas_available) < 3:  # noqa: PLR2004
         raise RuntimeError(
             f"At least three domains are expected, found {list(all_schemas_available)}."
         )
@@ -795,7 +795,7 @@ def onnx_documentation_folder(
             d[op] = vers
         all_schemas[domain] = d
 
-    if len(all_schemas) < 3:
+    if len(all_schemas) < 3:  # noqa: PLR2004
         raise RuntimeError(
             f"At least three domains are expected, found {list(all_schemas)} in all_schemas."
         )
@@ -824,7 +824,7 @@ def onnx_documentation_folder(
                 folder, op, domain=dom, version=None, example=True, diff=True
             )
             if flog is not None and n_examples == 0:
-                flog(f"{' '* 14}no_example for {op} from domain {domain}")
+                flog(f"{' ' * 14}no_example for {op} from domain {domain}")
             if dom == "":
                 main = op
             else:
@@ -850,7 +850,7 @@ def onnx_documentation_folder(
         tables.append(_Table(dom_pages, dom, sdom))
 
     # final
-    if len(tables) < 3:
+    if len(tables) < 3:  # noqa: PLR2004
         raise RuntimeError(f"At least three domain are expected not {len(tables)}.")
     index = _template_main.render(pages=pages, tabs=tables, os=os, len=len, title=title)
     index = _clean_unicode(index)
@@ -886,9 +886,9 @@ def _copy_repo_docs(app):
 
 def setup(app):
     """Sphinx extension `onnx_sphinx` displays documentation
-    on ONN Operators.
+    on ONNX Operators.
     """
-    import sphinx
+    import sphinx  # noqa: PLC0415
 
     app.add_config_value("onnx_doc_folder", "operators", "env")
     # Folder for storing the Markdown documentation from the repository

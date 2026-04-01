@@ -1,10 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/printer.h"
 
 #include <iomanip>
+#include <string>
 
 #include "onnx/defs/tensor_proto_util.h"
 
@@ -89,36 +90,36 @@ class ProtoPrinter {
   }
 
   template <typename T>
-  inline void print(const T& prim) {
+  void print(const T& prim) {
     output_ << prim;
   }
 
   void printQuoted(const std::string& str) {
     output_ << "\"";
-    for (const char* p = str.c_str(); *p; ++p) {
-      if ((*p == '\\') || (*p == '"'))
+    for (char ch : str) {
+      if ((ch == '\\') || (ch == '"'))
         output_ << '\\';
-      output_ << *p;
+      output_ << ch;
     }
     output_ << "\"";
   }
 
   template <typename T>
-  inline void printKeyValuePair(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
+  void printKeyValuePair(KeyWordMap::KeyWord key, const T& val, bool addsep = true) {
     if (addsep)
       output_ << "," << '\n';
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     print(val);
   }
 
-  inline void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
+  void printKeyValuePair(KeyWordMap::KeyWord key, const std::string& val) {
     output_ << "," << '\n';
     output_ << std::setw(indent_level) << ' ' << KeyWordMap::ToString(key) << ": ";
     printQuoted(val);
   }
 
   template <typename Collection>
-  inline void printSet(const char* open, const char* separator, const char* close, const Collection& coll) {
+  void printSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {
@@ -130,7 +131,7 @@ class ProtoPrinter {
   }
 
   template <typename Collection>
-  inline void printIdSet(const char* open, const char* separator, const char* close, const Collection& coll) {
+  void printIdSet(const char* open, const char* separator, const char* close, const Collection& coll) {
     const char* sep = "";
     output_ << open;
     for (auto& elt : coll) {
@@ -156,9 +157,12 @@ class ProtoPrinter {
 void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
   if (dim.has_dim_value())
     output_ << dim.dim_value();
-  else if (dim.has_dim_param())
-    output_ << dim.dim_param();
-  else
+  else if (dim.has_dim_param()) {
+    if (IsValidIdentifier(dim.dim_param()))
+      output_ << dim.dim_param();
+    else
+      printQuoted(dim.dim_param());
+  } else
     output_ << "?";
 }
 
@@ -169,10 +173,12 @@ void ProtoPrinter::print(const TensorShapeProto& shape) {
 void ProtoPrinter::print(const TypeProto_Tensor& tensortype) {
   output_ << PrimitiveTypeNameMap::ToString(tensortype.elem_type());
   if (tensortype.has_shape()) {
-    if (tensortype.shape().dim_size() > 0)
+    if (tensortype.shape().dim_size() > 0) {
       print(tensortype.shape());
-  } else
+    }
+  } else {
     output_ << "[]";
+  }
 }
 
 void ProtoPrinter::print(const TypeProto_Sequence& seqType) {
@@ -196,10 +202,12 @@ void ProtoPrinter::print(const TypeProto_Optional& optType) {
 void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output_ << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
   if (sparseType.has_shape()) {
-    if (sparseType.shape().dim_size() > 0)
+    if (sparseType.shape().dim_size() > 0) {
       print(sparseType.shape());
-  } else
+    }
+  } else {
     output_ << "[]";
+  }
 
   output_ << ")";
 }
@@ -229,7 +237,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   if (is_initializer) {
     output_ << " = ";
   }
-  // TODO: does not yet handle all types
+  // TODO(ONNX): does not yet handle all types
   if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
     print(tensor.external_data());
   } else if (tensor.has_raw_data()) {
@@ -275,7 +283,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
         break;
       case TensorProto::DataType::TensorProto_DataType_STRING: {
         const char* sep = "{";
-        for (auto& elt : tensor.string_data()) {
+        for (const auto& elt : tensor.string_data()) {
           output_ << sep;
           printQuoted(elt);
           sep = ", ";
@@ -321,12 +329,13 @@ void ProtoPrinter::print(const AttributeProto& attr) {
       printSet("[", ", ", "]", attr.floats());
       break;
     case AttributeProto_AttributeType_STRING:
-      output_ << "\"" << attr.s() << "\"";
+      printQuoted(attr.s());
       break;
     case AttributeProto_AttributeType_STRINGS: {
       const char* sep = "[";
-      for (auto& elt : attr.strings()) {
-        output_ << sep << "\"" << elt << "\"";
+      for (const auto& elt : attr.strings()) {
+        output_ << sep;
+        printQuoted(elt);
         sep = ", ";
       }
       output_ << "]";
@@ -384,14 +393,14 @@ void ProtoPrinter::print(const NodeProto& node) {
   if ((!has_subgraph) && (node.attribute_size() > 0))
     print(node.attribute());
   printIdSet(" (", ", ", ")", node.input());
-  if ((has_subgraph) && (node.attribute_size() > 0))
+  if (has_subgraph && (node.attribute_size() > 0))
     print(node.attribute());
   output_ << "\n";
 }
 
 void ProtoPrinter::print(const NodeList& nodelist) {
   output_ << "{\n";
-  for (auto& node : nodelist) {
+  for (const auto& node : nodelist) {
     print(node);
   }
   if (indent_level > 3)
@@ -405,12 +414,12 @@ void ProtoPrinter::print(const GraphProto& graph) {
   if ((graph.initializer_size() > 0) || (graph.value_info_size() > 0)) {
     output_ << '\n' << std::setw(indent_level) << ' ' << '<';
     const char* sep = "";
-    for (auto& init : graph.initializer()) {
+    for (const auto& init : graph.initializer()) {
       output_ << sep;
       print(init, true);
       sep = ", ";
     }
-    for (auto& vi : graph.value_info()) {
+    for (const auto& vi : graph.value_info()) {
       output_ << sep;
       print(vi);
       sep = ", ";
@@ -446,7 +455,8 @@ void ProtoPrinter::print(const ModelProto& model) {
 }
 
 void ProtoPrinter::print(const OperatorSetIdProto& opset) {
-  output_ << "\"" << opset.domain() << "\" : " << opset.version();
+  printQuoted(opset.domain());
+  output_ << " : " << opset.version();
 }
 
 void ProtoPrinter::print(const OpsetIdList& opsets) {
@@ -456,10 +466,15 @@ void ProtoPrinter::print(const OpsetIdList& opsets) {
 void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "<\n";
   output_ << "  "
-          << "domain: \"" << fn.domain() << "\",\n";
-  if (!fn.overload().empty())
+          << "domain: ";
+  printQuoted(fn.domain());
+  output_ << ",\n";
+  if (!fn.overload().empty()) {
     output_ << "  "
-            << "overload: \"" << fn.overload() << "\",\n";
+            << "overload: ";
+    printQuoted(fn.overload());
+    output_ << ",\n";
+  }
 
   output_ << "  "
           << "opset_import: ";
@@ -481,7 +496,7 @@ void ProtoPrinter::print(const FunctionProto& fn) {
     ProtoPrinter printer(os);                                  \
     printer.print(proto);                                      \
     return os;                                                 \
-  };
+  }
 
 DEF_OP(TensorShapeProto_Dimension)
 

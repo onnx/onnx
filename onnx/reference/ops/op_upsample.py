@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Upsample(OpRun):
-    def _run(self, x, scale, mode=None):  # type: ignore
+    def _run(self, x, scale, mode=None):
         if mode == "nearest" and scale.astype(np.int64).tolist() == scale.tolist():
             r = x
             for axis, s in enumerate(scale):

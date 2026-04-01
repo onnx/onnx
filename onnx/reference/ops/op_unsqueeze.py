@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Unsqueeze_1(OpRun):
-    def _run(self, data, axes=None):  # type: ignore
+    def _run(self, data, axes=None):
         if isinstance(axes, np.ndarray):
             axes = tuple(axes)
         elif axes in ([], ()):
@@ -21,9 +21,7 @@ class Unsqueeze_1(OpRun):
             for a in axes:
                 sq = np.expand_dims(sq, axis=a)
         else:
-            raise RuntimeError(  # noqa: TRY004
-                "axes cannot be None for operator Unsqueeze (Unsqueeze_1)."
-            )
+            raise TypeError("axes cannot be None for operator Unsqueeze (Unsqueeze_1).")
         return (sq,)
 
 
@@ -32,7 +30,7 @@ class Unsqueeze_11(Unsqueeze_1):
 
 
 class Unsqueeze_13(OpRun):
-    def _run(self, data, axes=None):  # type: ignore
+    def _run(self, data, axes=None):
         if axes is not None:
             if hasattr(axes, "__iter__") and len(axes.shape) > 0:
                 try:

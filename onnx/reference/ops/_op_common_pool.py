@@ -35,7 +35,7 @@ def _get_pad_shape(
             f"kernel_spatial_shape={kernel_spatial_shape!r}, "
             f"strides_spatial={strides_spatial!r}."
         )
-    return tuple(pad_shape)  # type: ignore
+    return tuple(pad_shape)
 
 
 def _get_output_shape_no_ceil(
@@ -58,7 +58,7 @@ def _get_output_shape_no_ceil(
                     / float(strides_spatial[i])
                 )
             )
-    return tuple(out_shape)  # type: ignore
+    return tuple(out_shape)
 
 
 def _get_output_shape(
@@ -75,11 +75,11 @@ def _get_output_shape(
         )
     else:
         round_fct = np.ceil if ceil_mode else np.floor
-        out_shape = [0] * len(input_spatial_shape)  # type: ignore
+        out_shape = [0] * len(input_spatial_shape)
         if auto_pad in ("SAME_UPPER", "SAME_LOWER"):
             for i in range(len(input_spatial_shape)):
-                out_shape[i] = int(  # type: ignore
-                    round_fct(float(input_spatial_shape[i]) / float(strides_spatial[i]))  # type: ignore
+                out_shape[i] = int(
+                    round_fct(float(input_spatial_shape[i]) / float(strides_spatial[i]))
                 )
         elif auto_pad == "VALID":
             if pad_shape is None:
@@ -88,8 +88,8 @@ def _get_output_shape(
                     "'VALID' and ceil_mode is 1."
                 )
             for i in range(len(input_spatial_shape)):
-                out_shape[i] = int(  # type: ignore
-                    round_fct(  # type: ignore
+                out_shape[i] = int(
+                    round_fct(
                         float(
                             input_spatial_shape[i]
                             + pad_shape[i]
@@ -113,7 +113,7 @@ def _get_output_shape(
             f"kernel_spatial_shape={kernel_spatial_shape!r}, "
             f"strides_spatial={strides_spatial!r}, ceil_mode={ceil_mode!r}."
         )
-    return tuple(out_shape)  # type: ignore
+    return tuple(out_shape)
 
 
 def _pool(
@@ -138,16 +138,16 @@ def _pool(
             f"Pooling type {pooling_type!r} does not support. Should be AVG, MAX."
         )
     spatial_size = len(x_shape) - 2
-    y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)])  # type: ignore
+    y = np.zeros([x_shape[0], x_shape[1], *list(out_shape)])
     if indices:
         z = np.full(y.shape, fill_value=-1, dtype=np.int64)
     round_fct = np.ceil if ceil_mode else np.floor
 
-    def loop_range():  # type: ignore
+    def loop_range():
         return [
             range(
                 int(
-                    round_fct(  # type: ignore
+                    round_fct(
                         float(x_shape[i + 2] + pad_shape[i] - kernel_shape[i])
                         / float(strides_shape[i])
                         + 1
@@ -157,7 +157,7 @@ def _pool(
             for i in range(spatial_size)
         ]
 
-    for shape in itertools.product(range(x_shape[0]), range(x_shape[1]), *loop_range()):  # type: ignore
+    for shape in itertools.product(range(x_shape[0]), range(x_shape[1]), *loop_range()):
         window = padded[shape[0], shape[1]]
         listi = [
             range(
@@ -189,17 +189,17 @@ def _pool(
                     window_vals_min[np.isnan(window_vals_min)] = no_nan.min()
                 arg = np.argmax(window_vals_min)
                 coordinates = _get_indices(arg, out_shape)
-                delta = shape[2:] - pads[:, 0]  # type: ignore
+                delta = shape[2:] - pads[:, 0]
                 coordinates += delta
                 new_arg = _get_index(coordinates, x_shape[2:])
                 z[shape] = new_arg
     if indices:
-        return y.astype(padded.dtype), z  # type: ignore
-    return y.astype(padded.dtype)  # type: ignore
+        return y.astype(padded.dtype), z
+    return y.astype(padded.dtype)
 
 
 class CommonPool(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         pooling_type,
         count_include_pad,
@@ -250,9 +250,9 @@ class CommonPool(OpRun):
                 kernel_shape,
                 strides,
                 pad_shape,
-                ceil_mode,  # type: ignore
+                ceil_mode,
             )
-            pad_shape = _get_pad_shape(  # type: ignore
+            pad_shape = _get_pad_shape(
                 auto_pad, x_shape, kernel_shape, strides, out_shape
             )
             if auto_pad == "SAME_LOWER":
@@ -278,7 +278,7 @@ class CommonPool(OpRun):
                 kernel_shape,
                 strides,
                 pad_shape,
-                ceil_mode,  # type: ignore
+                ceil_mode,
             )
 
         n_dims = len(pads) // 2
@@ -289,11 +289,11 @@ class CommonPool(OpRun):
             kernel_shape,
             strides,
             out_shape,
-            pad_shape,  # type: ignore
+            pad_shape,
             pooling_type,
             count_include_pad=count_include_pad,
             ceil_mode=ceil_mode,
-            indices=len(self.output) > 1,  # type: ignore
+            indices=len(self.output) > 1,
             pads=new_pads,
         )
         if isinstance(res, tuple):

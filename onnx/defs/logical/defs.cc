@@ -1,6 +1,8 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#include <string>
 
 #include "onnx/defs/schema.h"
 
@@ -13,6 +15,17 @@ inline static void unaryLogicalOpInference(InferenceContext& ctx) {
   if (hasInputShape(ctx, 0)) {
     propagateShapeFromInputToOutput(ctx, 0, 0);
   }
+}
+
+static void binaryLogicalOpInference(InferenceContext& ctx) {
+  // Type inference
+  updateOutputElemType(ctx, 0, TensorProto::BOOL);
+  // Shape inference
+  if (hasNInputShapes(ctx, 2))
+    bidirectionalBroadcastShapeInference(
+        ctx.getInputType(0)->tensor_type().shape(),
+        ctx.getInputType(1)->tensor_type().shape(),
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
 }
 
 // NOLINTNEXTLINE(misc-use-internal-linkage)
@@ -48,16 +61,7 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
         1,
         OpSchema::NonDifferentiable);
     schema.Output(0, "C", "Result tensor.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable);
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      // Type inference
-      updateOutputElemType(ctx, 0, TensorProto::BOOL);
-      // Shape inference
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
+    schema.TypeAndShapeInferenceFunction(binaryLogicalOpInference);
   };
 }
 
@@ -125,7 +129,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input types to all (non-complex) tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor."));
 
-static const char* Not_ver1_doc = R"DOC(
+static constexpr const char* Not_ver1_doc = R"DOC(
 Returns the negation of the input tensor element-wise.
 )DOC";
 
@@ -139,7 +143,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", {"tensor(bool)"}, "Constrain input/output to boolean tensors.")
         .TypeAndShapeInferenceFunction(unaryLogicalOpInference));
 
-static const char* BitShift_ver11_doc = R"DOC(
+static constexpr const char* BitShift_ver11_doc = R"DOC(
 Bitwise shift operator performs element-wise operation. For each input element, if the
 attribute "direction" is "RIGHT", this operator moves its binary representation toward
 the right side so that the input value is effectively decreased. If the attribute "direction"
@@ -196,7 +200,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(BinaryLogicDocGenerator("less_equal"))
         .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor.")
-        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .TypeAndShapeInferenceFunction(binaryLogicalOpInference)
         .FunctionBody(R"ONNX(
         {
             O1 = Less (A, B)
@@ -212,7 +216,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .FillUsing(BinaryLogicDocGenerator("greater_equal"))
         .TypeConstraint("T", OpSchema::all_numeric_types_ir4(), "Constrain input types to all numeric tensors.")
         .TypeConstraint("T1", {"tensor(bool)"}, "Constrain output to boolean tensor.")
-        .TypeAndShapeInferenceFunction(InferenceFunction())
+        .TypeAndShapeInferenceFunction(binaryLogicalOpInference)
         .FunctionBody(R"ONNX(
         {
             O1 = Greater (A, B)
@@ -221,7 +225,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }
         )ONNX"));
 
-static const char* BitwiseNot_ver18_doc = R"DOC(
+static constexpr const char* BitwiseNot_ver18_doc = R"DOC(
 Returns the bitwise not of the input tensor element-wise.
 )DOC";
 

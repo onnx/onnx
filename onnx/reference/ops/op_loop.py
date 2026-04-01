@@ -9,15 +9,15 @@ from onnx.reference.op_run import OpRun
 
 
 class Loop(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         OpRun.__init__(self, onnx_node, run_params)
         if "opsets" not in self.run_params:
             raise KeyError("run_params must contains key 'opsets'.")
         if "verbose" not in run_params:
             raise KeyError("run_params must contains key 'verbose'.")
-        self.output_index = {n: i for i, n in enumerate(self.body.output_names)}  # type: ignore
-        self.N = len(self.body.input_names) - 2  # type: ignore
-        self.K = len(self.body.output_names) - self.N - 1  # type: ignore
+        self.output_index = {n: i for i, n in enumerate(self.body.output_names)}
+        self.N = len(self.body.input_names) - 2
+        self.K = len(self.body.output_names) - self.N - 1
 
     def need_context(self) -> bool:
         """The operator Loop needs to know all results produced
@@ -27,7 +27,7 @@ class Loop(OpRun):
         """
         return True
 
-    def _run(self, M, cond, *args, context=None, body=None, attributes=None):  # type: ignore
+    def _run(self, M, cond, *args, context=None, body=None, attributes=None):
         if args:
             v_initial = args[0]
             args = args[1:]
@@ -35,7 +35,7 @@ class Loop(OpRun):
             v_initial = None
         if M is not None and not hasattr(M, "dtype"):
             raise TypeError(f"M must be empty or an array but its type is {type(M)}.")
-        body = self.body  # type: ignore
+        body = self.body
         loop_inputs = body.input_names
         inputs = dict.fromkeys(loop_inputs)
         if v_initial is not None:
@@ -44,23 +44,23 @@ class Loop(OpRun):
         if args:
             begin = len(loop_inputs) - len(args)
             all_inputs = loop_inputs[begin:]
-            for name, val in zip(all_inputs, args):
+            for name, val in zip(all_inputs, args, strict=False):
                 inputs[name] = val
         if context is not None:
             for a in context:
                 inputs[a] = context[a]
 
-        k_carried_away = [[] for i in range(self.K)]  # type: ignore
+        k_carried_away = [[] for i in range(self.K)]
         it = 0
         while cond and (M is None or it < M):
             self._log("  -- loop> {%r}", context)
             if len(body.input_names) > 0 and body.input_names[0] is not None:
                 inputs[body.input_names[0]] = np.array(
                     it, dtype=None if M is None else M.dtype
-                )  # type: ignore
+                )
             if len(body.input_names) > 1 and body.input_names[1] is not None:
                 inputs[body.input_names[1]] = cond
-            outputs = self._run_body(inputs, attributes=attributes)  # type: ignore
+            outputs = self._run_body(inputs, attributes=attributes)
             if self.K > 0:
                 for k in range(self.K):
                     k_carried_away[k].append(outputs[-self.K + k])
@@ -70,7 +70,7 @@ class Loop(OpRun):
                 raise RuntimeError(
                     f"Condition {cond_name!r} returned by the subgraph cannot be None."
                 )
-            for i, o in zip(body.input_names[2:], body.output_names[1:]):
+            for i, o in zip(body.input_names[2:], body.output_names[1:], strict=False):
                 inputs[i] = outputs[self.output_index[o]]
             it += 1
             self._log("  -- loop<")

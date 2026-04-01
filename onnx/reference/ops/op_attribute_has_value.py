@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class AttributeHasValue(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         value_float=None,  # noqa: ARG002
         value_floats=None,  # noqa: ARG002

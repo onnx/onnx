@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import itertools
-import os
 import platform
 import unittest
 from typing import TYPE_CHECKING, Any
@@ -84,7 +83,7 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def supports_device(cls, device: str) -> bool:
         d = Device(device)
-        return d.type == DeviceType.CPU  # type: ignore[no-any-return]
+        return d.type == DeviceType.CPU
 
 
 test_coverage_safelist = {
@@ -115,13 +114,8 @@ test_kwargs = {
 backend_test = onnx.backend.test.BackendTest(
     DummyBackend, __name__, test_kwargs=test_kwargs
 )
-if os.getenv("APPVEYOR"):
-    backend_test.exclude(r"(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
     backend_test.exclude(r"(test_vgg19|test_zfnet|test_bvlc_alexnet)")
-
-# Needs investigation on onnxruntime.
-backend_test.exclude("test_dequantizelinear_e4m3fn_float16")
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)

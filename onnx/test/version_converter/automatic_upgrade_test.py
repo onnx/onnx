@@ -293,7 +293,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade("Constant", 1, [], attrs={"value": value})
@@ -353,6 +353,15 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
 
     def test_Cos(self) -> None:
         self._test_op_upgrade("Cos", 7)
+
+    def test_CumProd(self) -> None:
+        self._test_op_upgrade(
+            "CumProd",
+            26,
+            [[3, 4, 5], []],
+            [[3, 4, 5]],
+            [TensorProto.FLOAT, TensorProto.INT64],
+        )
 
     def test_Cumsum(self) -> None:
         self._test_op_upgrade(
@@ -577,7 +586,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         then_node = helper.make_node("Constant", [], ["out"], value=then_tensor)
@@ -586,7 +595,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "Value",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         else_node = helper.make_node("Constant", [], ["out"], value=else_tensor)
@@ -1038,7 +1047,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "a",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade(
@@ -1055,7 +1064,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             "a",
             TensorProto.FLOAT,
             dims=[3, 4, 5],
-            vals=np.random.rand(3, 4, 5).astype(np.float32).tobytes(),
+            vals=np.random.rand(3, 4, 5).astype(np.float32),
             raw=True,
         )
         self._test_op_upgrade(
@@ -1473,6 +1482,9 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"consumed_inputs": [0]},
         )
 
+    def test_Swish(self) -> None:
+        self._test_op_upgrade("Swish", 24, attrs={"alpha": 0.2})
+
     def test_Tanh(self) -> None:
         self._test_op_upgrade("Tanh", 1, attrs={"consumed_inputs": [0]})
 
@@ -1622,9 +1634,6 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade("DFT", 17, [[2, 16, 2], []], [[2, 16, 2]])
         self._test_op_upgrade(
             "DFT", 17, [[2, 16, 1], []], [[2, 9, 2]], attrs={"onesided": 1}
-        )
-        self._test_op_upgrade(
-            "DFT", 17, [[2, 16, 2], []], [[2, 9, 2]], attrs={"onesided": 1}
         )
         self._test_op_upgrade(
             "DFT", 17, [[2, 16, 1], []], [[2, 16, 2]], attrs={"inverse": 1}
@@ -1912,6 +1921,33 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             [[2, 3]],
             [TensorProto.STRING],
             [TensorProto.BOOL],
+        )
+
+    def test_TensorScatter(self) -> None:
+        self._test_op_upgrade(
+            "TensorScatter",
+            24,
+            [
+                [2, 3, 4, 5],
+                [2, 3, 2, 5],
+                [
+                    2,
+                ],
+            ],
+            [[2, 3, 4, 5]],
+            [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.INT64],
+            [TensorProto.FLOAT],
+        )
+
+    def test_BitCast(self) -> None:
+        self._test_op_upgrade(
+            "BitCast",
+            26,
+            [[2, 3, 4]],
+            [[2, 3, 4]],
+            [TensorProto.FLOAT],
+            [TensorProto.INT32],
+            attrs={"to": TensorProto.INT32},
         )
 
     def test_ops_tested(self) -> None:

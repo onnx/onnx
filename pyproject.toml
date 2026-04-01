@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=64", "protobuf>=4.25.1"]
+requires = ["setuptools>=77", "protobuf>=4.25.1"]
 backend-path = ["."]
 build-backend = "backend"
 
@@ -18,8 +18,8 @@ authors = [
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-license = {text = "Apache License v2.0"}
-requires-python = ">=3.9"
+license = "Apache-2.0"
+requires-python = ">=3.10"
 
 [project.urls]
 Homepage = "https://onnx.ai/"
@@ -78,9 +78,7 @@ show_error_codes = true
 show_column_numbers = true
 ignore_missing_imports = true
 # NOTE: Do not grow the exclude list. Edit .lintrunner.toml instead
-exclude = [
-    '^third_party',
-]
+exclude = []
 
 # NOTE: Avoid adding overrides unless for exceptional cases. Prefer inline ignores.
 # If you must ignore error for the whole file, consider adapting the example
@@ -113,7 +111,7 @@ disable = [
 
 [tool.ruff]
 # NOTE: Do not create an exclude list. Edit .lintrunner.toml instead
-target-version = "py39"
+target-version = "py310"
 unsafe-fixes = true
 lint.select = [
     "A", # flake8-builtins
@@ -121,10 +119,14 @@ lint.select = [
     "B", # flake8-bugbear
     "BLE", # flake8-blind-except
     "C4", # flake8-comprehensions
+    "C90", # mccabe complexity
     "D", # pydocstyle
+    "DTZ", # flake8-datetimez
     "E", # pycodestyle
     "F", # Pyflakes
     "FA", # flake8-future-annotations
+    "FLY", # flynt
+    "FURB", # refurb
     "G", # flake8-logging-format
     "I", # isort
     "ISC", # flake8-implicit-str-concat
@@ -132,19 +134,24 @@ lint.select = [
     "N", # pep8-naming
     "NPY", # modern numpy
     "PERF", # Perflint
+    "PGH", # pygrep-hooks
     "PIE", # flake8-pie
     "PL", # pylint
     "PYI", # flake8-pyi
+    "RSE", # flake8-raise
     "RUF", # Ruff-specific rules
+    "S", # flake8-bandit
     "SIM", # flake8-simplify
     "SLOT", # flake8-slot
     "T10", # flake8-debugger
+    "T20", # flake8-print
     "TC", # flake8-type-checking
     "TID", # Disallow relative imports
     "TRY", # flake8-try-except-raise
     "UP", # pyupgrade
     "W", # pycodestyle
     "YTT", # flake8-2020
+    "RET", # flake8-return
 ]
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Always include a comment to explain why.
@@ -167,14 +174,12 @@ lint.ignore = [
     "RUF015", # next(iter(...)) sometimes obscures the intent when we access the 0th element of a shape
     "RUF022", # We may want to keep __all__ unsorted for better readability
     "SIM102", # We don't prefer always combining if branches
-    "SIM103", # We don't always prefer combining if branches
     "SIM108", # We don't always encourage ternary operators
     "SIM114", # Don't always combine if branches for debugability
     "SIM116", # Don't use dict lookup to replace if-else
+    "S101", # assert is used extensively in tests and validation
+    "C901", # Complex functions are acceptable alongside PLR0912/PLR0915
     "TRY003", # Messages can be constructed in the exception
-]
-lint.unfixable = [
-    "SIM112", # Envvars should not be modified
 ]
 
 [tool.ruff.lint.flake8-builtins]
@@ -191,26 +196,21 @@ convention = "google"
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
-"**/*.pyi" = ["I002"] # from __future__ import annotations` has no effect in stub files
 # NOTE: Refrain from growing the ignore list unless for exceptional cases.
 # Prefer inline ignores with `noqa: xxx`.
 # Eventually this list should become empty.
 "**/*_test*" = ["N802"] # Function casing
-"onnx/backend/test/**" = ["PLR2004"] # Magic numbers allowed in tests
+"onnx/backend/test/**" = ["PLR2004", "S", "T20"] # Magic numbers, security, print allowed in tests
 "onnx/backend/test/case/**" = ["N802"] # Function casing
 "onnx/reference/ops/**" = [
     "N801", # Class casing
     "PLR2004", # Magic numbers
 ]
-"onnx/reference/ops/_op_list.py" = ["F401"]
-"onnx/__init__.py" = ["F401"]
-"onnx/reference/__init__.py" = ["F401"]
-"onnx/reference/ops/__init__.py" = ["F401"]
-"onnx/reference/ops/aionnxml/_op_list.py" = ["F401"]
-"onnx/reference/ops/aionnxml/__init__.py" = ["F401"]
-"onnx/reference/ops/aionnx_preview_training/__init__.py" = ["F401"]
-"onnx/reference/ops/aionnx_preview_training/_op_list.py" = ["F401"]
-"onnx/reference/ops/experimental/__init__.py" = ["F401"]
-"onnx/test/reference_evaluator_test.py"= ["C408"]  # dict(...) -> { ... }
-"onnx/test/**" = ["PLR2004"] # Magic numbers allowed in tests
+"onnx/test/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
+"onnx/test/**" = ["PLR2004", "S311", "T20"] # Magic numbers, non-crypto random, print allowed in tests
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]
+"onnx/gen_proto.py" = ["T20"] # Build script uses print for progress
+"onnx/defs/gen_*.py" = ["T20"] # Code generators use print for output
+"tools/**" = ["T20"] # Build tools use print for progress
+"examples/**" = ["T20"] # Example notebooks use print for output
+"docs/**" = ["T20"] # Doc scripts use print for debugging

@@ -4,20 +4,11 @@
 
 name: Test source dist of preview build at onnx-weekly
 
-on:  # Specifies the event triggering the workflow
+on:
   schedule:
-    # Run weekly on Tuesday 00:00 UTC
-    - cron:  '00 00 * * 2'
-  workflow_call:  # Indicates that this is a reusable workflow
-    inputs:
-      os:
-        required: true
-        type: string
+    - cron:  '0 0 * * 2'
+  workflow_call:
   workflow_dispatch:
-    inputs:
-      os:
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -28,33 +19,25 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-24.04, ubuntu-22.04, windows-latest]
-        python-version: ['3.10','3.12']
-        target-architecture: ['arm64', 'x86_64']
+        os: [ubuntu-24.04, windows-latest]
+        python-version: ['3.10', '3.12', '3.13']
       fail-fast: false
     runs-on: ${{ matrix.os }}
-    
+
     steps:
 
         - name: Checkout repository
-          uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+          uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+          with:
+            persist-credentials: false
 
-        
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+          with:
+            python-version: ${{ matrix.python-version }}
+
         - name: Test preview build source distribution from PyPI
-          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
           run: |
-            python -m pip uninstall -y onnx-weekly
-            python -m pip install --upgrade pip
-            python -m pip install setuptools
-            python -m pip install --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest ml_dtypes pillow parameterized google-re2
-            pytest
-            
-        - name: Test preview build source distribution from test.PyPI
-          if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
-          run: |
-            python -m pip uninstall -y onnx-weekly
-            python -m pip install setuptools
-            python -m pip install -i https://test.pypi.org/pypi/ --use-deprecated=legacy-resolver --no-binary onnx-weekly onnx-weekly
-            python -m pip install pytest ml_dtypes pillow parameterized google-re2
+            python -m pip install --no-binary onnx-weekly onnx-weekly
+            python -m pip install pytest ml_dtypes pillow parameterized
             pytest

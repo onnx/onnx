@@ -47,10 +47,10 @@ See the [test-cases](../onnx/test/cpp/parser_test.cc) for more examples illustra
 
 The grammar below describes the syntax:
 
-```
+```bnf
    id-list ::= id (',' id)*
    quotable-id-list ::= quotable-id (',' quotable-id)*
-   tensor-dim ::= '?' | id | int-constant
+   tensor-dim ::= '?' | quotable-id | int-constant
    tensor-dims ::= tensor-dim (',' tensor-dim)*
    tensor-type ::= prim-type | prim-type '[' ']' | prim-type '[' tensor-dims ']'
    type ::= tensor-type | 'seq' '(' type ')' | 'map' '(' prim-type ',' type ')'

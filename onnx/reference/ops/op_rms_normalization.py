@@ -40,10 +40,10 @@ def _rms_normalization(
 
 
 class RMSNormalization(OpRun):
-    def _run(self, X, Scale, axis=None, epsilon=None, stash_type=None):  # type: ignore
+    def _run(self, X, Scale, axis=None, epsilon=None, stash_type=None):
         if stash_type != 1:
             raise NotImplementedError(
                 f"RMSNormalization not implemented for stash_type={stash_type} != 1."
             )
         res = _rms_normalization(X, Scale, axis=axis, epsilon=epsilon)
-        return (res,)  # type: ignore
+        return (res,)

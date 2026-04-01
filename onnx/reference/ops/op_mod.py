@@ -9,9 +9,9 @@ from onnx.reference.op_run import OpRun
 
 
 class Mod(OpRun):
-    def _run(self, a, b, fmod=None):  # type: ignore
-        fmod = fmod or self.fmod  # type: ignore
-        if fmod == 1:  # type: ignore
+    def _run(self, a, b, fmod=None):
+        fmod = fmod or self.fmod
+        if fmod == 1:
             return (np.fmod(a, b),)
         if a.dtype in (np.float16, np.float32, np.float64):
             return (np.nan_to_num(np.fmod(a, b)),)

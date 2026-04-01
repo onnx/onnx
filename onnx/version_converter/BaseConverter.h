@@ -1,14 +1,13 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Version converter interface for ONNX models between different opset versions.
 
 #pragma once
 
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -21,7 +20,7 @@
 namespace ONNX_NAMESPACE {
 namespace version_conversion {
 
-// TODO: Consider creating interface for this class.
+// TODO(ONNX): Consider creating interface for this class.
 class BaseVersionConverter {
   // Schema for adapters: {<op_name>:{<from_domain>$<from_version>:{<to_domain>
   // <to_version>: adapter}}}
@@ -48,7 +47,7 @@ class BaseVersionConverter {
     const std::string initial = initial_version.toString();
     const std::string target = target_version.toString();
     // Find appropriate adapter in adapters map for provided initial and target versions
-    // TODO: Consider abstracting elements of this that are specific to
+    // TODO(ONNX): Consider abstracting elements of this that are specific to
     // DefaultConverter to separate methods here and maintain the procedure in Base Converter
     const auto op_adapters = adapters.find(op_name);
     if (op_adapters != adapters.end()) {
@@ -62,14 +61,14 @@ class BaseVersionConverter {
         if (adapter_ptr != target_map->second.end()) {
           return *(adapter_ptr->second);
         } else {
-          ONNX_ASSERTM(false, "No Adapter To Version %s for %s", target.c_str(), op_name.c_str());
+          ONNX_ASSERTM(false, "No Adapter To Version %s for %s", target.c_str(), op_name.c_str())
         }
       } else {
-        ONNX_ASSERTM(false, "No Adapter From Version %s for %s", initial.c_str(), op_name.c_str());
+        ONNX_ASSERTM(false, "No Adapter From Version %s for %s", initial.c_str(), op_name.c_str())
       }
     } else {
       // No adapters exist for the given op
-      ONNX_ASSERTM(false, "No Adapter For %s", op_name.c_str());
+      ONNX_ASSERTM(false, "No Adapter For %s", op_name.c_str())
     }
   }
 

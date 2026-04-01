@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class NonZero(OpRun):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         # Specify np.int64 for Windows x86 machines
         res = np.vstack(np.nonzero(x)).astype(np.int64)
         return (res,)

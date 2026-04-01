@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunUnary
 
 
 class Not(OpRunUnary):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         return (np.logical_not(x),)

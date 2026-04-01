@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -22,7 +20,7 @@ inline void appendDimToTensorShapeProto(TensorShapeProto& tsp, const TensorShape
 
 // Returns true if the given axis attribute is 0
 inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
-  auto axisAttr = ctx.getAttribute("axis");
+  const auto* axisAttr = ctx.getAttribute("axis");
   // if axis is not defined
   if (!axisAttr) {
     if (defaultZero) {
@@ -54,7 +52,7 @@ inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
 
 inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int idx) {
   // propagate input data
-  const auto input_data = ctx.getInputData(idx);
+  const auto* const input_data = ctx.getInputData(idx);
   if (input_data != nullptr) {
     TensorShapeProto tsp;
     tsp.CopyFrom(*input_data);
@@ -66,11 +64,11 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
   if (!axisIsZero(ctx, true)) {
     return;
   }
-  const auto input_data = ctx.getInputData(0);
+  const auto* const input_data = ctx.getInputData(0);
   if (input_data == nullptr) {
     return;
   }
-  const auto input_indices = ctx.getInputData(1);
+  const auto* const input_indices = ctx.getInputData(1);
   if (input_indices == nullptr) {
     return;
   }

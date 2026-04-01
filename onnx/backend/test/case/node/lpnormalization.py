@@ -21,7 +21,8 @@ class LpNormalization(Base):
             dtype=np.float32,
         )
         l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True))
-        y = x / l2_norm_axis_0
+        # When norm is 0, output is 0 (0/0 = 0)
+        y = np.where(l2_norm_axis_0 == 0, 0, x / l2_norm_axis_0)
         expect(node, inputs=[x], outputs=[y], name="test_l2normalization_axis_0")
 
     @staticmethod

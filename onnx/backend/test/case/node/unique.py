@@ -56,7 +56,7 @@ class Unique(Base):
         # prepare index mapping from sorted to unsorted
         argsorted_indices = np.argsort(indices)
         inverse_indices_map = dict(
-            zip(argsorted_indices, np.arange(len(argsorted_indices)))
+            zip(argsorted_indices, np.arange(len(argsorted_indices)), strict=True)
         )
 
         indices = indices[argsorted_indices]

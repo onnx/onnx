@@ -1,10 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <cmath>
+#include <string>
 #include <vector>
 
 #include "onnx/defs/schema.h"
@@ -49,6 +50,7 @@ void KeepAspectRatioHelper(
     std::vector<int64_t>& sizes_data);
 
 extern const char* NonZero_ver9_doc;
+extern const char* Transpose_doc;
 
 std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,

@@ -10,7 +10,7 @@ from onnx.reference.ops.op_col2im import col2im_naive_implementation
 
 
 class ConvTranspose(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,
@@ -94,7 +94,7 @@ class ConvTranspose(OpRun):
                     )
                     if final is None:
                         final = np.empty(
-                            X.shape[:1] + (num_output_channels,) + res.shape,
+                            (*X.shape[:1], num_output_channels, *res.shape),
                             dtype=X.dtype,
                         )
                     if B is not None:

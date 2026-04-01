@@ -4,19 +4,18 @@
 
 #pragma once
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE {
-namespace py = pybind11;
+namespace nb = nanobind;
 
 template <typename Proto>
-bool ParseProtoFromPyBytes(Proto* proto, const py::bytes& bytes) {
+bool ParseProtoFromPyBytes(Proto* proto, const nb::bytes& bytes) {
   // Get the buffer from Python bytes object
-  char* buffer = nullptr;
-  Py_ssize_t length = 0;
-  PyBytes_AsStringAndSize(bytes.ptr(), &buffer, &length);
+  auto buffer = static_cast<const char*>(bytes.data());
+  size_t length = bytes.size();
 
   return ParseProtoFromBytes(proto, buffer, length);
 }

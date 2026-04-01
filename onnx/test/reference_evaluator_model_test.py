@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# type: ignore
+# mypy: ignore-errors
 from __future__ import annotations
 
 import unittest
@@ -19,8 +19,8 @@ def create_model():
 
     .. code-block:: python
 
-        from onnx importonnx.TensorProto
-        from onnx.helper import oh.make_tensor
+        from onnx import TensorProto
+        from onnx.helper import make_tensor
 
         from onnxscript import script
         from onnxscript.onnx_opset import opset15 as op
@@ -94,7 +94,7 @@ def create_model():
             oh.make_tensor_value_info("cond_out", onnx.TensorProto.BOOL, shape=[])
         )
         outputs.append(oh.make_tensor_value_info("T_0", onnx.TensorProto.UNDEFINED, []))
-        graph = oh.make_graph(
+        return oh.make_graph(
             nodes,
             "loop_body",
             inputs,
@@ -102,7 +102,6 @@ def create_model():
             initializers,
             sparse_initializer=sparse_initializers,
         )
-        return graph
 
     body = _make_local_graph_body()
     nodes.append(oh.make_node("Loop", ["", "true", "A"], ["T_2"], body=body))
@@ -117,8 +116,7 @@ def create_model():
         initializers,
         sparse_initializer=sparse_initializers,
     )
-    model = oh.make_model(graph, functions=functions, opset_imports=opset_imports)
-    return model
+    return oh.make_model(graph, functions=functions, opset_imports=opset_imports)
 
 
 class TestReferenceEvaluatorModel(unittest.TestCase):

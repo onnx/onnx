@@ -20,9 +20,8 @@ __all__ = [
     "SchemaError",
 ]
 
-
+import onnx
 import onnx.onnx_cpp2py_export.defs as C  # noqa: N812
-from onnx import AttributeProto, FunctionProto
 
 ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = "ai.onnx.ml"
@@ -46,25 +45,34 @@ def onnx_ml_opset_version() -> int:
     return C.schema_version_map()[ONNX_ML_DOMAIN][1]
 
 
-@property  # type: ignore
+@property  # type: ignore[misc]
 def _function_proto(self):
-    func_proto = FunctionProto()
+    func_proto = onnx.FunctionProto()
     func_proto.ParseFromString(self._function_body)
     return func_proto
 
 
 OpSchema = C.OpSchema
-OpSchema.function_body = _function_proto  # type: ignore
+OpSchema.function_body = _function_proto  # type: ignore[method-assign]
 
 
-@property  # type: ignore
+@property  # type: ignore[misc]
+def _non_deterministic(self):
+    """Check if the operator is non-deterministic."""
+    return self.node_determinism != OpSchema.NodeDeterminism.Deterministic
+
+
+OpSchema.non_deterministic = _non_deterministic  # type: ignore[attr-defined]
+
+
+@property  # type: ignore[misc]
 def _attribute_default_value(self):
-    attr = AttributeProto()
+    attr = onnx.AttributeProto()
     attr.ParseFromString(self._default_value)
     return attr
 
 
-OpSchema.Attribute.default_value = _attribute_default_value  # type: ignore
+OpSchema.Attribute.default_value = _attribute_default_value  # type: ignore[method-assign]
 
 
 def _op_schema_repr(self) -> str:
@@ -81,7 +89,7 @@ OpSchema(
 )"""
 
 
-OpSchema.__repr__ = _op_schema_repr  # type: ignore
+OpSchema.__repr__ = _op_schema_repr  # type: ignore[method-assign]
 
 
 def _op_schema_formal_parameter_repr(self) -> str:
@@ -93,7 +101,7 @@ def _op_schema_formal_parameter_repr(self) -> str:
     )
 
 
-OpSchema.FormalParameter.__repr__ = _op_schema_formal_parameter_repr  # type: ignore
+OpSchema.FormalParameter.__repr__ = _op_schema_formal_parameter_repr  # type: ignore[method-assign]
 
 
 def _op_schema_type_constraint_param_repr(self) -> str:
@@ -103,7 +111,7 @@ def _op_schema_type_constraint_param_repr(self) -> str:
     )
 
 
-OpSchema.TypeConstraintParam.__repr__ = _op_schema_type_constraint_param_repr  # type: ignore
+OpSchema.TypeConstraintParam.__repr__ = _op_schema_type_constraint_param_repr  # type: ignore[method-assign]
 
 
 def _op_schema_attribute_repr(self) -> str:
@@ -113,7 +121,7 @@ def _op_schema_attribute_repr(self) -> str:
     )
 
 
-OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore
+OpSchema.Attribute.__repr__ = _op_schema_attribute_repr  # type: ignore[method-assign]
 
 
 def get_function_ops() -> list[OpSchema]:

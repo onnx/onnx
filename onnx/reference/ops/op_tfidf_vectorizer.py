@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import collections
 from enum import IntEnum
 
 import numpy as np
@@ -10,9 +11,9 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-class IntMap(dict):  # type: ignore
+class IntMap(collections.UserDict):
     def __init__(self):
-        dict.__init__(self)
+        super().__init__()
         self.added_keys = []
 
     def emplace(self, key, value):
@@ -22,8 +23,8 @@ class IntMap(dict):  # type: ignore
             raise TypeError(f"value must be a NGramPart not {type(value)}.")
         if key not in self:
             self.added_keys.append(key)
-            self[key] = value
-        return self[key]
+            self.data[key] = value
+        return self.data[key]
 
     def __repr__(self):
         vals = {k: repr(v) for k, v in self.items()}
@@ -56,40 +57,40 @@ class IntMap(dict):  # type: ignore
 class NgramPart:
     def __init__(self, nid: int):
         self.id_ = nid  # 0 - means no entry, search for a bigger N
-        self._leafs_ = None
+        self._leaves_ = None
 
     def init(self):
-        self._leafs_ = IntMap()  # type: ignore
+        self._leaves_ = IntMap()
 
     def __repr__(self):
         if self.empty():
             return f"NgramPart({self.id_})"
-        return f"NgramPart({self.id_}, {self.leafs_!r})"
+        return f"NgramPart({self.id_}, {self.leaves_!r})"
 
     def empty(self):
-        return self._leafs_ is None
+        return self._leaves_ is None
 
     def has_leaves(self):
-        return self._leafs_ is not None and len(self._leafs_) > 0
+        return self._leaves_ is not None and len(self._leaves_) > 0
 
     @property
-    def leafs_(self):
-        if self._leafs_ is None:
+    def leaves_(self):
+        if self._leaves_ is None:
             raise RuntimeError("NgramPart was not initialized.")
-        return self._leafs_
+        return self._leaves_
 
     def find(self, key):
         if not self.has_leaves():
             return None
-        if key in self._leafs_:  # type: ignore
+        if key in self._leaves_:
             return key
         return None
 
     def emplace(self, key, value):
-        return self.leafs_.emplace(key, value)
+        return self.leaves_.emplace(key, value)
 
     def __getitem__(self, key):
-        return self._leafs_[key]  # type: ignore
+        return self._leaves_[key]
 
 
 class WeightingCriteria(IntEnum):
@@ -119,16 +120,16 @@ def populate_grams(
                 break
             if p.empty():
                 p.init()
-            m = p.leafs_
+            m = p.leaves_
             n += 1
             els_index += 1
     return ngram_id
 
 
 class TfIdfVectorizer(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         OpRun.__init__(self, onnx_node, run_params)
-        mode = self.mode  # type: ignore
+        mode = self.mode
 
         if mode == "TF":
             self.weighting_criteria_ = WeightingCriteria.TF
@@ -137,16 +138,16 @@ class TfIdfVectorizer(OpRun):
         elif mode == "TFIDF":
             self.weighting_criteria_ = WeightingCriteria.TFIDF
 
-        self.min_gram_length_ = self.min_gram_length  # type: ignore
-        self.max_gram_length_ = self.max_gram_length  # type: ignore
-        self.max_skip_count_ = self.max_skip_count  # type: ignore
-        self.ngram_counts_ = self.ngram_counts  # type: ignore
-        self.max_gram_length_ = self.max_gram_length  # type: ignore
-        self.ngram_indexes_ = self.ngram_indexes  # type: ignore
+        self.min_gram_length_ = self.min_gram_length
+        self.max_gram_length_ = self.max_gram_length
+        self.max_skip_count_ = self.max_skip_count
+        self.ngram_counts_ = self.ngram_counts
+        self.max_gram_length_ = self.max_gram_length
+        self.ngram_indexes_ = self.ngram_indexes
         self.output_size_ = max(self.ngram_indexes_) + 1
-        self.weights_ = self.weights  # type: ignore
-        self.pool_int64s_ = self.pool_int64s  # type: ignore
-        self.pool_strings_ = self.pool_strings  # type: ignore
+        self.weights_ = self.weights
+        self.pool_int64s_ = self.pool_int64s
+        self.pool_strings_ = self.pool_strings
 
         self.int64_map_ = NgramPart(-10)
         self.int64_map_.init()
@@ -237,7 +238,7 @@ class TfIdfVectorizer(OpRun):
             raise RuntimeError("Unexpected weighting_criteria.")
         return Y.reshape(output_dims)
 
-    def compute_impl(  # type: ignore
+    def compute_impl(
         self,
         X: np.ndarray,
         row_num: int,
@@ -300,7 +301,7 @@ class TfIdfVectorizer(OpRun):
                 if start_ngram_size > max_gram_length:
                     break
 
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         max_gram_length=None,

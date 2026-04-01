@@ -264,8 +264,19 @@ def merge_graphs(
 
     g.value_info.extend(g1.value_info)
     g.value_info.extend([vi for vi in g2.value_info if vi.name not in io_map_g2_ins])
+    value_info_names = {vi.name for vi in g.value_info}
+    output_names = {o.name for o in g.output}
+    g.value_info.extend(
+        [
+            o
+            for o in g1.output
+            if o.name in io_map_g1_outs
+            and o.name not in value_info_names
+            and o.name not in output_names
+        ]
+    )
 
-    g.name = name if name is not None else "_".join([g1.name, g2.name])
+    g.name = name if name is not None else f"{g1.name}_{g2.name}"
 
     if doc_string is None:
         doc_string = (
@@ -477,12 +488,16 @@ def add_prefix_graph(
 
     if name_map is None:
         name_map = {}
+
     if rename_edges:
+        # See https://github.com/onnx/onnx/pull/6869#issuecomment-2852719536.
+        # Consider only intermediate nodes, that are not connected to graph outputs.
+        # Rename graph inputs or outputs separately based on rename_inputs/rename_outputs flags.
+        graph_output_names = {o.name for o in g.output}
         for n in g.node:
-            for e in n.input:
-                name_map[e] = _prefixed(prefix, e)
             for e in n.output:
-                name_map[e] = _prefixed(prefix, e)
+                if e not in graph_output_names:
+                    name_map[e] = _prefixed(prefix, e)
 
     if rename_inputs:
         for entry in g.input:

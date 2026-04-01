@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
+def topk_sorted_implementation(X, k, axis, largest):
     """See function `_kneighbors_reduce_func
     <https://github.com/scikit-learn/scikit-learn/blob/main/
     sklearn/neighbors/_base.py#L304>`_.
@@ -35,7 +35,7 @@ def topk_sorted_implementation(X, k, axis, largest):  # type: ignore
 
 
 class _CommonTopK(OpRun):
-    def _common_run(self, data, ink, axis, largest=1):  # type: ignore
+    def _common_run(self, data, ink, axis, largest=1):
         """Runtime for operator *TopK*.
         The implementation is not the most efficient
         as it sorts everything then extracts the top *k*
@@ -48,13 +48,13 @@ class _CommonTopK(OpRun):
             <https://github.com/Microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
         k = ink[0]
-        axis = axis if axis >= 0 else (axis + len(data.shape))  # type: ignore
+        axis = axis if axis >= 0 else (axis + len(data.shape))
         sort, sorti = topk_sorted_implementation(data, k, axis, largest)
         return (sort, sorti.astype(np.int64))
 
 
 class TopK_1(_CommonTopK):
-    def _run(self, data, k=None, axis=None):  # type: ignore
+    def _run(self, data, k=None, axis=None):
         """Runtime for operator *TopK*.
         The implementation is not the most efficient
         as it sorts everything then extracts the top *k*
@@ -66,11 +66,11 @@ class TopK_1(_CommonTopK):
             does in `top_k.cc
             <https://github.com/Microsoft/onnxruntime/blob/main/onnxruntime/core/providers/cpu/math/top_k.cc#L63>`_.
         """
-        return _CommonTopK._common_run(self, data, [k], axis=axis)  # type: ignore
+        return _CommonTopK._common_run(self, data, [k], axis=axis)
 
 
 class TopK_10(_CommonTopK):
-    def _run(self, data, ink, axis=None):  # type: ignore
+    def _run(self, data, ink, axis=None):
         """Runtime for operator *TopK*.
         The implementation is not the most efficient
         as it sorts everything then extracts the top *k*
@@ -93,7 +93,7 @@ class TopK_11(_CommonTopK):
         axis=None,
         largest=None,
         sorted=None,  # noqa: A002
-    ):  # type: ignore
+    ):
         """Runtime for operator *TopK*.
 
         The implementation is not the most efficient

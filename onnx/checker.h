@@ -144,38 +144,39 @@ class LexicalScopeContext final {
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
-void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
-void check_tensor(const TensorProto& tensor, const CheckerContext&);
-void check_sparse_tensor(const SparseTensorProto& sparse_tensor, const CheckerContext&);
-void check_sequence(const SequenceProto& sequence, const CheckerContext&);
-void check_map(const MapProto& map, const CheckerContext&);
-void check_optional(const OptionalProto& opt, const CheckerContext&);
-void check_attribute(const AttributeProto& attr, const CheckerContext&, const LexicalScopeContext&);
-void check_node(const NodeProto& node, const CheckerContext&, const LexicalScopeContext&);
-void check_graph(const GraphProto& graph, const CheckerContext&, const LexicalScopeContext&);
-void check_function(const FunctionProto& function, const CheckerContext&, const LexicalScopeContext&);
+void check_value_info(const ValueInfoProto& value_info, const CheckerContext& /*ctx*/);
+void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/);
+void check_sparse_tensor(const SparseTensorProto& sparse_tensor, const CheckerContext& /*ctx*/);
+void check_sequence(const SequenceProto& sequence, const CheckerContext& /*ctx*/);
+void check_map(const MapProto& map, const CheckerContext& /*ctx*/);
+void check_optional(const OptionalProto& opt, const CheckerContext& /*ctx*/);
+void check_attribute(const AttributeProto& attr, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*lex_ctx*/);
+void check_node(const NodeProto& node, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*lex_ctx*/);
+void check_graph(const GraphProto& graph, const CheckerContext& /*ctx*/, const LexicalScopeContext& /*parent_lex*/);
+void check_function(
+    const FunctionProto& function,
+    const CheckerContext& /*ctx*/,
+    const LexicalScopeContext& /*parent_lex*/);
 
 // Check schema compatibility for 2 opset versions for a given node.
 // Checks whether the schema for 2 versions is same, this is true when the opschema
 // does not change between versions.
-void check_opset_compatibility(
+ONNX_API void check_opset_compatibility(
     const NodeProto& node,
     const CheckerContext& ctx,
     const std::unordered_map<std::string, int>& func_opset_imports,
     const std::unordered_map<std::string, int>& model_opset_imports);
 
 // Checks all model local functions present in ModelProto
-void check_model_local_functions(
-    const ModelProto& model,
-    const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex);
+ONNX_API void
+check_model_local_functions(const ModelProto& model, const CheckerContext& ctx, const LexicalScopeContext& parent_lex);
 
-void check_model(
+ONNX_API void check_model(
     const ModelProto& model,
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
     bool check_custom_domain = false);
-void check_model(
+ONNX_API void check_model(
     const std::string& model_path,
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
@@ -184,7 +185,7 @@ std::string resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,
     const std::string& tensor_name);
-bool check_is_experimental_op(const NodeProto& node);
+ONNX_API bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE

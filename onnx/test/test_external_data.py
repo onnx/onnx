@@ -6,9 +6,11 @@ from __future__ import annotations
 import itertools
 import os
 import pathlib
+import shutil
 import tempfile
 import unittest
 import uuid
+import warnings
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -25,10 +27,13 @@ from onnx import (
     shape_inference,
 )
 from onnx.external_data_helper import (
+    _ALLOWED_EXTERNAL_DATA_KEYS,
+    ExternalDataInfo,
     convert_model_from_external_data,
     convert_model_to_external_data,
     load_external_data_for_model,
     load_external_data_for_tensor,
+    save_external_data,
     set_external_data,
 )
 from onnx.numpy_helper import from_array, to_array
@@ -78,14 +83,14 @@ class TestLoadExternalDataBase(unittest.TestCase):
             inputs=[],
             outputs=["values"],
             value=self.create_external_data_tensor(
-                self.attribute_value,  # type: ignore[arg-type]
+                self.attribute_value,
                 "attribute_value",
             ),
         )
 
         initializers = [
             self.create_external_data_tensor(
-                self.initializer_value,  # type: ignore[arg-type]
+                self.initializer_value,
                 "input_value",
                 location,
             )
@@ -219,9 +224,13 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         attribute_tensor = new_model.graph.node[0].attribute[0].t
         np.testing.assert_allclose(to_array(attribute_tensor), self.attribute_value)
 
-    @parameterized.parameterized.expand(itertools.product((True, False), (True, False)))
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (True, False),
+        )
+    )
     def test_save_external_invalid_single_file_data_and_check(
-        self, use_absolute_path: bool, use_model_path: bool
+        self, use_absolute_path: bool
     ) -> None:
         model = onnx.load_model(self.model_filename, self.serialization_format)
 
@@ -229,7 +238,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
         os.mkdir(model_dir)
 
         traversal_external_data_dir = os.path.join(
-            self.temp_dir, "invlid_external_data"
+            self.temp_dir, "invalid_external_data"
         )
         os.mkdir(traversal_external_data_dir)
 
@@ -238,7 +247,7 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
                 traversal_external_data_dir, "tensors.bin"
             )
         else:
-            traversal_external_data_location = "../invlid_external_data/tensors.bin"
+            traversal_external_data_location = "../invalid_external_data/tensors.bin"
 
         external_data_dir = os.path.join(self.temp_dir, "external_data")
         os.mkdir(external_data_dir)
@@ -254,16 +263,8 @@ class TestLoadExternalDataSingleFile(TestLoadExternalDataBase):
             location=traversal_external_data_location,
         )
 
-        onnx.save_model(model, new_model_filepath, self.serialization_format)
-        if use_model_path:
-            with self.assertRaises(onnx.checker.ValidationError):
-                _ = onnx.load_model(new_model_filepath, self.serialization_format)
-        else:
-            onnx_model = onnx.load_model(
-                new_model_filepath, self.serialization_format, load_external_data=False
-            )
-            with self.assertRaises(onnx.checker.ValidationError):
-                load_external_data_for_model(onnx_model, external_data_dir)
+        with self.assertRaises(onnx.checker.ValidationError):
+            onnx.save_model(model, new_model_filepath, self.serialization_format)
 
 
 @parameterized.parameterized_class(
@@ -299,8 +300,8 @@ class TestSaveAllTensorsAsExternalData(unittest.TestCase):
     def create_test_model_proto(self) -> ModelProto:
         tensors = self.create_data_tensors(
             [
-                (self.attribute_value, "attribute_value"),  # type: ignore[list-item]
-                (self.initializer_value, "input_value"),  # type: ignore[list-item]
+                (self.attribute_value, "attribute_value"),
+                (self.initializer_value, "input_value"),
             ]
         )
 
@@ -598,7 +599,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="X",
             data_type=TensorProto.FLOAT,
             dims=self.large_data.shape,
-            vals=self.large_data.tobytes(),
+            vals=onnx.numpy_helper.tobytes_little_endian(self.large_data),
             raw=True,
         )
 
@@ -607,7 +608,7 @@ class TestExternalDataToArray(unittest.TestCase):
             name="Shape",
             data_type=TensorProto.INT64,
             dims=shape_data.shape,
-            vals=shape_data.tobytes(),
+            vals=onnx.numpy_helper.tobytes_little_endian(shape_data),
             raw=True,
         )
         C = helper.make_tensor_value_info("C", TensorProto.INT64, self.small_data)
@@ -628,8 +629,7 @@ class TestExternalDataToArray(unittest.TestCase):
             [C],
             initializer=[input_init, shape_init],
         )
-        model = helper.make_model(graph_def, producer_name="onnx-example")
-        return model
+        return helper.make_model(graph_def, producer_name="onnx-example")
 
     @unittest.skipIf(
         serialization_format != "protobuf",
@@ -887,6 +887,438 @@ class TestFunctionsAndSubGraphs(unittest.TestCase):
         if_node = model.graph.node[0]
         constant_nodes = [attr.g.node[0] for attr in if_node.attribute]
         self._check(model, constant_nodes)
+
+
+def _make_external_data_test_model() -> tuple[ModelProto, np.ndarray]:
+    """Create a simple model with a large initializer suitable for external data tests."""
+    model = parser.parse_model(
+        """
+        <ir_version: 7, opset_import: ["": 17]>
+        agraph (float[100, 100] input) => (float[100, 100] output) {
+            output = Identity(input)
+        }
+        """
+    )
+    array = np.ones((100, 100), dtype=np.float32)
+    model.graph.initializer.append(from_array(array, name="weight"))
+    return model, array
+
+
+@unittest.skipIf(
+    os.name == "nt", reason="Symlinks require elevated privileges on Windows"
+)
+class TestSaveExternalDataSymlinkProtection(TestLoadExternalDataBase):
+    """Test that save_external_data rejects symlinks to prevent arbitrary file overwrites."""
+
+    def test_save_rejects_symlink_target(self) -> None:
+        """Saving external data must refuse to follow symlinks."""
+        sensitive_file = os.path.join(self.temp_dir, "sensitive.txt")
+        with open(sensitive_file, "w") as f:
+            f.write("SENSITIVE DATA")
+
+        model, array = _make_external_data_test_model()
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Replace external data file with a symlink to the sensitive file
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        os.remove(ext_data_path)
+        os.symlink(sensitive_file, ext_data_path)
+
+        loaded_model = onnx.load(model_path, load_external_data=False)
+        loaded_model.graph.initializer[0].raw_data = array.tobytes()
+
+        with self.assertRaises(checker.ValidationError):
+            onnx.save_model(
+                loaded_model,
+                model_path,
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=ext_data,
+                size_threshold=1024,
+            )
+
+        # Sensitive file must not be modified
+        with open(sensitive_file) as f:
+            self.assertEqual(f.read(), "SENSITIVE DATA")
+
+
+@unittest.skipIf(
+    os.name == "nt", reason="Symlinks require elevated privileges on Windows"
+)
+class TestLoadExternalDataSymlinkProtection(TestLoadExternalDataBase):
+    """Test that loading external data rejects symlinks to prevent arbitrary file reads."""
+
+    def test_load_rejects_symlink_external_data(self) -> None:
+        """Loading a model whose external data is a symlink must raise ValidationError."""
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Create a target file and replace external data with a symlink to it
+        target_file = os.path.join(self.temp_dir, "target.txt")
+        with open(target_file, "w") as f:
+            f.write("SENSITIVE DATA")
+
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        os.remove(ext_data_path)
+        os.symlink(target_file, ext_data_path)
+
+        # Loading with onnx.load (which loads external data) must fail
+        with self.assertRaises(checker.ValidationError):
+            onnx.load(model_path)
+
+    def test_load_external_data_for_model_rejects_symlink(self) -> None:
+        """load_external_data_for_model must reject symlinked external data."""
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Replace external data with a symlink
+        target_file = os.path.join(self.temp_dir, "target.txt")
+        with open(target_file, "w") as f:
+            f.write("SENSITIVE DATA")
+
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        os.remove(ext_data_path)
+        os.symlink(target_file, ext_data_path)
+
+        # Load model without external data, then try to load external data explicitly
+        loaded_model = onnx.load(model_path, load_external_data=False)
+        with self.assertRaises(checker.ValidationError):
+            load_external_data_for_model(loaded_model, self.temp_dir)
+
+    def test_load_rejects_parent_directory_symlink(self) -> None:
+        """A symlink in the parent directory must be caught by realpath containment."""
+        # Create a "sensitive" directory outside the model directory with a data file
+        sensitive_dir = os.path.join(self.temp_dir, "sensitive")
+        os.makedirs(sensitive_dir)
+        secret_file = os.path.join(sensitive_dir, "secret.bin")
+        with open(secret_file, "wb") as f:
+            f.write(b"SENSITIVE DATA" * 100)
+
+        # Create a model directory with a real subdir for saving
+        model_dir = os.path.join(self.temp_dir, "model_dir")
+        os.makedirs(model_dir)
+        subdir_path = os.path.join(model_dir, "subdir")
+        os.makedirs(subdir_path)
+
+        # Create model with external data location "subdir/secret.bin"
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(model_dir, "model.onnx")
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location="subdir/secret.bin",
+            size_threshold=1024,
+        )
+
+        # Replace the real subdir with a symlink to the sensitive directory
+        shutil.rmtree(subdir_path)
+        os.symlink(sensitive_dir, subdir_path)
+
+        # Loading must fail because realpath resolves outside model_dir.
+        loaded_model = onnx.load(model_path, load_external_data=False)
+        with self.assertRaises(checker.ValidationError):
+            load_external_data_for_model(loaded_model, model_dir)
+
+
+@unittest.skipIf(os.name == "nt", reason="Hardlinks behave differently on Windows")
+class TestLoadExternalDataHardlinkProtection(TestLoadExternalDataBase):
+    """Test that loading external data rejects files with multiple hardlinks."""
+
+    def test_load_rejects_hardlinked_external_data(self) -> None:
+        """Loading a model whose external data has multiple hardlinks must raise ValidationError."""
+        model, _ = _make_external_data_test_model()
+        model_path = os.path.join(self.temp_dir, "model.onnx")
+        ext_data = "data.bin"
+        onnx.save_model(
+            model,
+            model_path,
+            save_as_external_data=True,
+            all_tensors_to_one_file=True,
+            location=ext_data,
+            size_threshold=1024,
+        )
+
+        # Create a hardlink to the external data file
+        ext_data_path = os.path.join(self.temp_dir, ext_data)
+        hardlink_path = os.path.join(self.temp_dir, "hardlink_data.bin")
+        os.link(ext_data_path, hardlink_path)
+
+        # Loading must fail because the external data file has multiple hardlinks.
+        # Either the C++ checker or Python code catches this as ValidationError.
+        with self.assertRaises(checker.ValidationError):
+            onnx.load(model_path)
+
+
+class TestSaveExternalDataAbsolutePathValidation(TestLoadExternalDataBase):
+    """Test that save_external_data rejects absolute paths."""
+
+    def test_save_rejects_absolute_path(self) -> None:
+        """Absolute paths must be rejected as external data locations."""
+        array = np.ones((100,), dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        set_external_data(tensor, location="/etc/passwd")
+        with self.assertRaises(checker.ValidationError):
+            save_external_data(tensor, self.temp_dir)
+
+
+class TestExternalDataInfoSecurity(unittest.TestCase):
+    """Tests for ExternalDataInfo hardening against attribute injection and bounds.
+
+    Covers all attack vectors from the security advisory: unknown key injection,
+    dunder attribute injection, negative offset/length bypass, and validates
+    that legitimate keys still work correctly.
+    """
+
+    @staticmethod
+    def _make_tensor_with_external_data(
+        entries: dict[str, str],
+        tensor_name: str = "test_tensor",
+    ) -> TensorProto:
+        """Create a TensorProto with given external_data key-value entries."""
+        tensor = TensorProto()
+        tensor.name = tensor_name
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([4])
+        tensor.data_location = TensorProto.EXTERNAL
+        for key, value in entries.items():
+            entry = tensor.external_data.add()
+            entry.key = key
+            entry.value = value
+        return tensor
+
+    def test_valid_external_data_accepted(self) -> None:
+        """All valid external_data keys must be accepted and correctly parsed."""
+        tensor = self._make_tensor_with_external_data(
+            {
+                "location": "weights.bin",
+                "offset": "16",
+                "length": "1024",
+                "checksum": "sha256:abc123",
+            }
+        )
+        info = ExternalDataInfo(tensor)
+        self.assertEqual(info.location, "weights.bin")
+        self.assertEqual(info.offset, 16)
+        self.assertIsInstance(info.offset, int)
+        self.assertEqual(info.length, 1024)
+        self.assertIsInstance(info.length, int)
+        self.assertEqual(info.checksum, "sha256:abc123")
+
+    def test_unknown_key_rejected(self) -> None:
+        """Unknown external_data keys must not be set as object attributes (CWE-915)."""
+        tensor = self._make_tensor_with_external_data(
+            {"location": "weights.bin", "malicious_attr": "evil_value"}
+        )
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            info = ExternalDataInfo(tensor)
+        # Unknown attribute must NOT be set on the object
+        self.assertFalse(
+            hasattr(info, "malicious_attr"),
+            "Unknown key 'malicious_attr' should not become an attribute",
+        )
+        # Valid key must still work
+        self.assertEqual(info.location, "weights.bin")
+        # A warning must have been emitted for the unknown key
+        self.assertTrue(
+            any("malicious_attr" in str(w.message) for w in caught),
+            "Expected warning about unknown key 'malicious_attr'",
+        )
+
+    def test_dunder_key_rejected(self) -> None:
+        """Dunder keys like '__class__' must not be injected via external_data (CWE-915).
+
+        Without the whitelist, setattr(self, '__class__', ...) would corrupt
+        the object type, enabling type confusion attacks.
+        """
+        tensor = self._make_tensor_with_external_data({"location": "weights.bin"})
+        # Add __class__ key via protobuf add() to mimic direct protobuf injection
+        dunder_entry = tensor.external_data.add()
+        dunder_entry.key = "__class__"
+        dunder_entry.value = "builtins.dict"
+
+        original_class = ExternalDataInfo
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            info = ExternalDataInfo(tensor)
+        # Object type must not have been corrupted
+        self.assertIsInstance(info, original_class)
+        self.assertEqual(type(info).__name__, "ExternalDataInfo")
+        self.assertEqual(info.location, "weights.bin")
+        # A warning must have been emitted for the dunder key
+        self.assertTrue(
+            any("__class__" in str(w.message) for w in caught),
+            "Expected warning about dunder key '__class__'",
+        )
+
+    def test_negative_offset_rejected(self) -> None:
+        """Negative offset must raise ValueError to prevent seek(-1) attacks."""
+        tensor = self._make_tensor_with_external_data(
+            {"location": "weights.bin", "offset": "-1"}
+        )
+        with self.assertRaises(ValueError) as ctx:
+            ExternalDataInfo(tensor)
+        self.assertIn("non-negative", str(ctx.exception).lower())
+
+    def test_negative_length_rejected(self) -> None:
+        """Negative length must raise ValueError to prevent underflow attacks."""
+        tensor = self._make_tensor_with_external_data(
+            {"location": "weights.bin", "length": "-100"}
+        )
+        with self.assertRaises(ValueError) as ctx:
+            ExternalDataInfo(tensor)
+        self.assertIn("non-negative", str(ctx.exception).lower())
+
+    def test_zero_offset_and_length_accepted(self) -> None:
+        """Zero values for offset/length should be accepted (edge case for bounds check)."""
+        tensor = self._make_tensor_with_external_data(
+            {"location": "weights.bin", "offset": "0", "length": "0"}
+        )
+        # Should not raise — zero is a valid non-negative value
+        info = ExternalDataInfo(tensor)
+        self.assertEqual(info.location, "weights.bin")
+        self.assertEqual(info.offset, 0)
+        self.assertEqual(info.length, 0)
+
+    def test_multiple_unknown_keys_all_rejected(self) -> None:
+        """Multiple unknown keys in a single tensor must all be rejected."""
+        tensor = self._make_tensor_with_external_data(
+            {
+                "location": "weights.bin",
+                "evil_one": "a",
+                "evil_two": "b",
+                "__dict__": "c",
+            }
+        )
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            info = ExternalDataInfo(tensor)
+        self.assertFalse(hasattr(info, "evil_one"))
+        self.assertFalse(hasattr(info, "evil_two"))
+        self.assertEqual(info.location, "weights.bin")
+        unknown_key_warnings = [
+            str(w.message)
+            for w in caught
+            if "unknown external data key" in str(w.message).lower()
+        ]
+        self.assertEqual(
+            len(unknown_key_warnings),
+            1,
+            "Expected 1 aggregated warning for unknown keys",
+        )
+        # All unknown keys should be mentioned in the single warning
+        self.assertIn("evil_one", unknown_key_warnings[0])
+        self.assertIn("evil_two", unknown_key_warnings[0])
+        self.assertIn("__dict__", unknown_key_warnings[0])
+
+    def test_allowed_keys_constant_is_frozen(self) -> None:
+        """The whitelist must be a frozenset to prevent runtime mutation."""
+        self.assertIsInstance(_ALLOWED_EXTERNAL_DATA_KEYS, frozenset)
+        self.assertEqual(
+            _ALLOWED_EXTERNAL_DATA_KEYS,
+            frozenset({"location", "offset", "length", "checksum", "basepath"}),
+        )
+
+    def test_non_numeric_offset_raises(self) -> None:
+        """Non-numeric offset string must raise ValueError from int() conversion."""
+        tensor = self._make_tensor_with_external_data(
+            {"location": "weights.bin", "offset": "abc"}
+        )
+        with self.assertRaises(ValueError):
+            ExternalDataInfo(tensor)
+
+    def test_non_numeric_length_raises(self) -> None:
+        """Non-numeric length string must raise ValueError from int() conversion."""
+        tensor = self._make_tensor_with_external_data(
+            {"location": "weights.bin", "length": "not_a_number"}
+        )
+        with self.assertRaises(ValueError):
+            ExternalDataInfo(tensor)
+
+
+class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
+    """Tests for defense-in-depth file-size validation in load_external_data_for_tensor."""
+
+    def test_offset_exceeds_file_size_raises(self) -> None:
+        """Offset beyond file size must raise ValueError."""
+        array = np.ones((4,), dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        set_external_data(tensor, location="data.bin")
+
+        data_path = os.path.join(self.temp_dir, "data.bin")
+        with open(data_path, "wb") as f:
+            f.write(tensor.raw_data)
+
+        file_size = os.path.getsize(data_path)
+        # Set offset beyond file size
+        set_external_data(tensor, location="data.bin", offset=file_size + 100)
+        tensor.ClearField("raw_data")
+
+        with self.assertRaisesRegex(ValueError, "offset.*exceeds file size"):
+            load_external_data_for_tensor(tensor, self.temp_dir)
+
+    def test_length_exceeds_available_data_raises(self) -> None:
+        """Length that overflows available data must raise ValueError."""
+        array = np.ones((4,), dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        set_external_data(tensor, location="data.bin")
+
+        data_path = os.path.join(self.temp_dir, "data.bin")
+        with open(data_path, "wb") as f:
+            f.write(tensor.raw_data)
+
+        file_size = os.path.getsize(data_path)
+        # Set length much larger than file
+        set_external_data(tensor, location="data.bin", length=file_size * 1000)
+        tensor.ClearField("raw_data")
+
+        with self.assertRaisesRegex(ValueError, "length.*exceeds available data"):
+            load_external_data_for_tensor(tensor, self.temp_dir)
+
+    def test_valid_offset_and_length_load_correctly(self) -> None:
+        """Valid offset+length within file size should load correctly."""
+        array = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        raw = tensor.raw_data
+
+        data_path = os.path.join(self.temp_dir, "data.bin")
+        with open(data_path, "wb") as f:
+            f.write(raw)
+
+        set_external_data(tensor, location="data.bin", offset=0, length=len(raw))
+        tensor.ClearField("raw_data")
+
+        load_external_data_for_tensor(tensor, self.temp_dir)
+        self.assertEqual(tensor.raw_data, raw)
 
 
 if __name__ == "__main__":

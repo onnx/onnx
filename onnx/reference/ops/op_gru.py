@@ -9,18 +9,18 @@ from onnx.reference.op_run import OpRun
 
 
 class CommonGRU(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         OpRun.__init__(self, onnx_node, run_params)
         self.n_outputs = len(onnx_node.output)
         self.number_of_gates = 3
 
-    def f(self, x):  # type: ignore
+    def f(self, x):
         return 1 / (1 + np.exp(-x))
 
-    def g(self, x):  # type: ignore
+    def g(self, x):
         return np.tanh(x)
 
-    def _step(self, X, R, B, W, H_0, num_directions):  # type: ignore
+    def _step(self, X, R, B, W, H_0, num_directions):
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
@@ -52,7 +52,7 @@ class CommonGRU(OpRun):
                 + r * (np.dot(H_t, np.transpose(r_h)) + r_bh)
                 + w_bh
             )
-            h = h_linear if self.linear_before_reset else h_default  # type: ignore
+            h = h_linear if self.linear_before_reset else h_default
             H = (1 - z) * h + z * H_t
             h_list.append(H)
             H_t = H
@@ -61,7 +61,7 @@ class CommonGRU(OpRun):
         if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
-        if self.layout == 0:  # type: ignore
+        if self.layout == 0:
             Y_h = Y[-1]
         else:
             Y = np.transpose(Y, [2, 0, 1, 3])
@@ -69,7 +69,7 @@ class CommonGRU(OpRun):
 
         return Y, Y_h
 
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,
@@ -128,5 +128,5 @@ class CommonGRU(OpRun):
 
 
 class GRU(CommonGRU):
-    def __init__(self, onnx_node, run_params):  # type: ignore
-        CommonGRU.__init__(self, onnx_node, run_params)  # type: ignore
+    def __init__(self, onnx_node, run_params):
+        CommonGRU.__init__(self, onnx_node, run_params)

@@ -1,7 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
-# ruff: noqa: A005
 from __future__ import annotations
 
 import onnx

@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def _conv_implementation(  # type: ignore
+def _conv_implementation(
     X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
 ):
     if dilations is None:
@@ -122,7 +122,7 @@ def _conv_implementation(  # type: ignore
         eh = h_out * sth
         res = np.zeros((X.shape[0], W.shape[0], h_out))  # type: ignore[assignment]
         if B is not None:
-            res[:, :, :] += B.reshape((1, -1, 1))  # type: ignore
+            res[:, :, :] += B.reshape((1, -1, 1))
 
         for n in range(sN):
             for nw in range(W.shape[0]):
@@ -150,7 +150,7 @@ def _conv_implementation(  # type: ignore
                             s = np.dot(img.reshape((1, -1)), w.reshape((-1, 1)))[
                                 0, 0
                             ]  # (img * w).sum()
-                        res[n, nw, hr] += s  # type: ignore
+                        res[n, nw, hr] += s
 
         return res
 
@@ -169,7 +169,7 @@ def _conv_implementation(  # type: ignore
         eh, ew = h_out * sth, w_out * stw
         res = np.zeros((X.shape[0], W.shape[0], h_out, w_out))  # type: ignore[assignment]
         if B is not None:
-            res[:, :, :, :] = B.reshape((1, -1, 1, 1))  # type: ignore
+            res[:, :, :, :] = B.reshape((1, -1, 1, 1))
 
         for n in range(sN):
             for nw in range(W.shape[0]):
@@ -210,7 +210,7 @@ def _conv_implementation(  # type: ignore
                                 s = np.dot(img.reshape((1, -1)), w.reshape((-1, 1)))[
                                     0, 0
                                 ]  # (img * w).sum()
-                            res[n, nw, hr, wr] += s  # type: ignore
+                            res[n, nw, hr, wr] += s
 
         return res
 
@@ -229,7 +229,7 @@ def _conv_implementation(  # type: ignore
         eh, ew, ez = h_out * sth, w_out * stw, z_out * stz
         res = np.zeros((X.shape[0], W.shape[0], h_out, w_out, z_out))  # type: ignore[assignment]
         if B is not None:
-            res[:, :, :, :, :] = B.reshape((1, -1, 1, 1, 1))  # type: ignore
+            res[:, :, :, :, :] = B.reshape((1, -1, 1, 1, 1))
 
         for n in range(sN):
             for nw in range(W.shape[0]):
@@ -281,7 +281,7 @@ def _conv_implementation(  # type: ignore
                                     s = np.dot(
                                         img.reshape((1, -1)), w.reshape((-1, 1))
                                     )[0, 0]  # (img * w).sum()
-                                res[n, nw, hr, wr, zr] += s  # type: ignore
+                                res[n, nw, hr, wr, zr] += s
 
         return res
 
@@ -292,7 +292,7 @@ def _conv_implementation(  # type: ignore
 
 
 class Conv(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,

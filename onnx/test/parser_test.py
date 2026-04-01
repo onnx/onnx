@@ -242,6 +242,18 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertEqual(list(node.input), ["", "y"])
         self.assertEqual(list(node.output), ["", "x"])
 
+    def test_quoted_string_symbolic_dim(self):
+        # Test parsing a quoted string as a symbolic dimension (non-identifier dim_param)
+        graph = onnx.parser.parse_graph(
+            'agraph (float["M + N"] x) => (float["M + N"] y) { y = Identity(x) }'
+        )
+        self.assertEqual(
+            graph.input[0].type.tensor_type.shape.dim[0].dim_param, "M + N"
+        )
+        self.assertEqual(
+            graph.output[0].type.tensor_type.shape.dim[0].dim_param, "M + N"
+        )
+
     @parameterized.expand(
         [
             ("not_a_good_float", True),
@@ -303,12 +315,14 @@ class TestBasicFunctions(unittest.TestCase):
             ("float8e4m3fnuz", TensorProto.FLOAT8E4M3FNUZ),
             ("float8e5m2", TensorProto.FLOAT8E5M2),
             ("float8e5m2fnuz", TensorProto.FLOAT8E5M2FNUZ),
+            ("int2", TensorProto.INT2),
             ("int4", TensorProto.INT4),
             ("int8", TensorProto.INT8),
             ("int16", TensorProto.INT16),
             ("int32", TensorProto.INT32),
             ("int64", TensorProto.INT64),
             ("string", TensorProto.STRING),
+            ("uint2", TensorProto.UINT2),
             ("uint4", TensorProto.UINT4),
             ("uint8", TensorProto.UINT8),
             ("uint16", TensorProto.UINT16),

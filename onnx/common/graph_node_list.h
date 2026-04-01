@@ -1,8 +1,9 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+#ifndef ONNX_COMMON_GRAPH_NODE_LIST_H_
+#define ONNX_COMMON_GRAPH_NODE_LIST_H_
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -59,7 +60,7 @@ struct generic_graph_node_list_iterator final {
     return cur;
   }
   generic_graph_node_list_iterator& operator++() {
-    ONNX_ASSERT(cur);
+    ONNX_ASSERT(cur)
     cur = cur->next_in_graph[d];
     return *this;
   }
@@ -69,7 +70,7 @@ struct generic_graph_node_list_iterator final {
     return old;
   }
   generic_graph_node_list_iterator& operator--() {
-    ONNX_ASSERT(cur);
+    ONNX_ASSERT(cur)
     cur = cur->next_in_graph[reverseDir()];
     return *this;
   }
@@ -131,7 +132,7 @@ struct generic_graph_node_list final {
   generic_graph_node_list reverse() {
     return generic_graph_node_list(head, d == kNextDirection ? kPrevDirection : kNextDirection);
   }
-  const generic_graph_node_list reverse() const {
+  generic_graph_node_list reverse() const {
     return generic_graph_node_list(head, d == kNextDirection ? kPrevDirection : kNextDirection);
   }
   generic_graph_node_list(T* head, size_t d) : head(head), d(d) {}
@@ -165,3 +166,5 @@ struct iterator_traits<ONNX_NAMESPACE::generic_graph_node_list_iterator<T>> {
 };
 
 } // namespace std
+
+#endif // ONNX_COMMON_GRAPH_NODE_LIST_H_

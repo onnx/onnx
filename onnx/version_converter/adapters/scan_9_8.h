@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Scan in default domain from version 9 to 8
 
@@ -20,7 +18,7 @@ namespace version_conversion {
 struct Scan_9_8 final : public Adapter {
   explicit Scan_9_8() : Adapter("Scan", OpSetID(9), OpSetID(8)) {}
 
-  void adapt_scan_9_8(const std::shared_ptr<Graph>&, Node* node) const {
+  void adapt_scan_9_8(const std::shared_ptr<Graph>& /*unused*/, Node* node) const {
     const std::vector<Value*> inputs(node->inputs().vec());
     const std::vector<Value*> outputs(node->outputs().vec());
 
@@ -37,7 +35,7 @@ struct Scan_9_8 final : public Adapter {
     if (node->hasAttribute(output_dirs)) {
       const std::vector<int64_t> scan_output_directions(node->is(output_dirs));
       for (int64_t x : scan_output_directions) {
-        ONNX_ASSERTM(x == 0, "Unsupported output direction for Version 8");
+        ONNX_ASSERTM(x == 0, "Unsupported output direction for Version 8")
       }
       node->removeAttribute(output_dirs);
     }
@@ -46,7 +44,7 @@ struct Scan_9_8 final : public Adapter {
     if (node->hasAttribute(input_axes)) {
       const std::vector<int64_t> scan_input_axes(node->is(input_axes));
       for (int64_t x : scan_input_axes) {
-        ONNX_ASSERTM(x == 0, "Unsupported input axes for Version 8");
+        ONNX_ASSERTM(x == 0, "Unsupported input axes for Version 8")
       }
       node->removeAttribute(input_axes);
     }
@@ -55,7 +53,7 @@ struct Scan_9_8 final : public Adapter {
     if (node->hasAttribute(output_axes)) {
       const std::vector<int64_t> scan_output_axes(node->is(output_axes));
       for (int64_t x : scan_output_axes) {
-        ONNX_ASSERTM(x == 0, "Unsupported output axes for Version 8");
+        ONNX_ASSERTM(x == 0, "Unsupported output axes for Version 8")
       }
       node->removeAttribute(output_axes);
     }

@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class PRelu(OpRun):
-    def _run(self, x, slope):  # type: ignore
+    def _run(self, x, slope):
         try:
             return (np.where(x > 0, x, x * slope).astype(x.dtype),)
         except ValueError:

@@ -8,9 +8,9 @@ import numpy as np
 from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
-def _apply_adam(  # type: ignore
+def _apply_adam(
     r, t, x, g, v, h, norm_coefficient, norm_coefficient_post, alpha, beta, epsilon
-):  # type: ignore
+):
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Update momentum.
@@ -35,7 +35,7 @@ def _apply_adam(  # type: ignore
 
 
 class Adam(OpRunTraining):
-    def _run(  # type: ignore
+    def _run(
         self,
         *data,
         alpha=None,
@@ -45,7 +45,7 @@ class Adam(OpRunTraining):
         norm_coefficient_post=None,
     ):
         if len(data) == 6:
-            return self._run1(  # type: ignore
+            return self._run1(
                 *data,
                 alpha=alpha,
                 beta=beta,
@@ -58,7 +58,7 @@ class Adam(OpRunTraining):
         vs = []
         hs = []
         for i in range(n):
-            a, b, c = self._run1(  # type: ignore
+            a, b, c = self._run1(
                 *data[:2],
                 data[2 + i],
                 data[2 + n + i],
@@ -75,7 +75,7 @@ class Adam(OpRunTraining):
             hs.append(c.astype(np.float32))
         return tuple(xs + vs + hs)
 
-    def _run1(  # type: ignore
+    def _run1(
         self,
         r,
         t,

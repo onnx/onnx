@@ -7,7 +7,7 @@ from onnx.reference.op_run import OpRun
 
 
 class SequenceErase(OpRun):
-    def _run(self, S, ind=None):  # type: ignore
+    def _run(self, S, ind=None):
         if ind is None:
             ind = -1
         else:

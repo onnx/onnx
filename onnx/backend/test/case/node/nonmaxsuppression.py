@@ -418,3 +418,58 @@ class NonMaxSuppression(Base):
             outputs=[selected_indices],
             name="test_nonmaxsuppression_two_batches",
         )
+
+    @staticmethod
+    def export_nonmaxsuppression_iou_threshold_boundary() -> None:
+        """Test boundary condition where IoU exactly equals threshold.
+
+        This test verifies that the comparison is strict (>), not inclusive (>=).
+        When IoU exactly equals the threshold, boxes should be KEPT, not suppressed.
+        This follows PyTorch's NMS implementation.
+        """
+        node = onnx.helper.make_node(
+            "NonMaxSuppression",
+            inputs=[
+                "boxes",
+                "scores",
+                "max_output_boxes_per_class",
+                "iou_threshold",
+                "score_threshold",
+            ],
+            outputs=["selected_indices"],
+        )
+        # Two boxes with 50% overlap in each dimension
+        # box1=[0,0,1,1], box2=[0.5,0.5,1.5,1.5]
+        # Intersection area = 0.5 * 0.5 = 0.25
+        # Union area = 1.0 + 1.0 - 0.25 = 1.75
+        # IoU = 0.25 / 1.75 (exact value computed below as float32)
+        boxes = np.array(
+            [
+                [
+                    [0.0, 0.0, 1.0, 1.0],  # box 0
+                    [0.5, 0.5, 1.5, 1.5],  # box 1 - overlaps box 0
+                ]
+            ]
+        ).astype(np.float32)
+        scores = np.array([[[0.9, 0.8]]]).astype(np.float32)
+        max_output_boxes_per_class = np.array([3]).astype(np.int64)
+        # Compute the exact IoU value and use it as threshold
+        # This ensures the threshold exactly equals the IoU
+        exact_iou = np.float32(0.25 / 1.75)
+        iou_threshold = np.array([exact_iou]).astype(np.float32)
+        score_threshold = np.array([0.0]).astype(np.float32)
+        # Both boxes should be selected because IoU == threshold (not > threshold)
+        selected_indices = np.array([[0, 0, 0], [0, 0, 1]]).astype(np.int64)
+
+        expect(
+            node,
+            inputs=[
+                boxes,
+                scores,
+                max_output_boxes_per_class,
+                iou_threshold,
+                score_threshold,
+            ],
+            outputs=[selected_indices],
+            name="test_nonmaxsuppression_iou_threshold_boundary",
+        )

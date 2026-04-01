@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -43,7 +41,7 @@ void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g);
 
 std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp);
 
-ModelProto PrepareOutput(const ModelProto& mp_in);
+ONNX_API ModelProto PrepareOutput(const ModelProto& mp_in);
 
 void assertNonNull(const std::shared_ptr<Graph>& g);
 } // namespace ONNX_NAMESPACE

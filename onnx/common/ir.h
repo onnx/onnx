@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -11,11 +9,13 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstdint>
 #include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -36,15 +36,12 @@
 
 namespace ONNX_NAMESPACE {
 
-namespace { // internal/private API
-
-std::string toVarName(size_t i) {
+// internal/private API
+static inline std::string toVarName(size_t i) {
   std::ostringstream oss;
   oss << "_v_" << i;
   return oss.str();
 }
-
-} // namespace
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -62,21 +59,16 @@ struct Value;
 
 class ResourceGuard final {
   std::function<void()> destructor_;
-  bool released_{false};
 
  public:
   ONNX_DISALLOW_COPY_AND_ASSIGN(ResourceGuard);
+  ResourceGuard(ResourceGuard&&) = delete;
+  ResourceGuard& operator=(ResourceGuard&&) = delete;
+
   explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)) {}
-  ResourceGuard(ResourceGuard&& other) = default;
-  ResourceGuard& operator=(ResourceGuard&& other) = default;
 
   ~ResourceGuard() {
-    if (!released_)
-      destructor_();
-  }
-
-  void release() {
-    released_ = true;
+    destructor_();
   }
 };
 
@@ -111,8 +103,8 @@ enum class AttributeKind : uint8_t {
 static inline const char* toString(AttributeKind kind) {
   // NOLINTNEXTLINE(modernize-avoid-c-arrays)
   static constexpr const char* names[] = {"f", "fs", "i", "is", "s", "ss", "t", "ts", "g", "gs", "tp", "tps"};
-  ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(const char*));
-  return names[int(kind)];
+  ONNX_ASSERT(size_t(kind) < std::size(names));
+  return names[static_cast<int>(kind)];
 }
 
 struct AttributeValue {
@@ -187,7 +179,7 @@ struct Attributes {
   void copyAttributes(const Attributes& rhs) {
     values_.clear();
     values_.reserve(rhs.values_.size());
-    for (auto& i : rhs.values_) {
+    for (const auto& i : rhs.values_) {
       values_.push_back(i->clone());
     }
   }
@@ -208,7 +200,7 @@ struct Attributes {
   std::vector<Symbol> attributeNames() const {
     std::vector<Symbol> names;
     names.reserve(values_.size());
-    for (auto& a : values_)
+    for (const auto& a : values_)
       names.push_back(a->name);
     return names;
   }
@@ -264,7 +256,7 @@ struct Attributes {
   using iterator = std::vector<AVPtr>::iterator;
   iterator find(Symbol name, bool required) {
     auto it = std::find_if(values_.begin(), values_.end(), [&](const AVPtr& v) { return v->name == name; });
-    ONNX_ASSERT(!required || it != values_.end());
+    ONNX_ASSERT(!required || it != values_.end())
     return it;
   }
   using const_iterator = std::vector<AVPtr>::const_iterator;
@@ -276,7 +268,7 @@ struct Attributes {
         __FILE__,
         __LINE__,
         __func__,
-        name.toString());
+        name.toString())
     return it;
   }
 };
@@ -321,6 +313,7 @@ struct Value final {
   int32_t elem_type_{ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED};
   bool has_sizes_{false};
   std::vector<Dimension> sizes_;
+  std::unique_ptr<TypeProto> type_;
 
  public:
   Value* setElemType(int32_t elem_type) {
@@ -357,7 +350,7 @@ struct Value final {
       return unique_name_;
     return toVarName(unique());
   }
-  Value* setUniqueName(const std::string& name, bool rename_subgraph_captured_nodes = true);
+  Value* setUniqueName(const std::string& name, bool update_related_names = true);
   Value* setStage(size_t s) {
     stage_ = s;
     return this;
@@ -376,7 +369,6 @@ struct Value final {
   }
   Graph* owningGraph();
   const Graph* owningGraph() const;
-  // TODO: make this more const correct
   use_list uses() const;
 
   // Replaces all uses of this node with 'newValue'.
@@ -397,6 +389,10 @@ struct Value final {
       setUniqueName(from->uniqueName());
     }
     return this;
+  }
+
+  std::unique_ptr<TypeProto>& type() {
+    return type_;
   }
 };
 
@@ -535,14 +531,14 @@ struct Node : public Attributes<Node> {
     return {outputs_.data(), outputs_.size()};
   }
   bool hasUses() const {
-    for (auto o : outputs()) {
+    for (const auto* o : outputs()) {
       if (!o->uses().empty())
         return true;
     }
     return false;
   }
   void replaceAllUsesWith(Node* n) {
-    ONNX_ASSERT(outputs().size() == n->outputs().size());
+    ONNX_ASSERT(outputs().size() == n->outputs().size())
     size_t nOutputs = outputs().size();
     for (size_t i = 0; i < nOutputs; i++) {
       outputs()[i]->replaceAllUsesWith(n->outputs()[i]);
@@ -551,19 +547,19 @@ struct Node : public Attributes<Node> {
   // lots of things like chunk have a single input or single output, so we have a
   // helper to make accessing it easier
   Value* input() {
-    ONNX_ASSERT(inputs_.size() == 1);
+    ONNX_ASSERT(inputs_.size() == 1)
     return inputs_.at(0);
   }
   Value* output() {
-    ONNX_ASSERT(outputs_.size() == 1);
+    ONNX_ASSERT(outputs_.size() == 1)
     return outputs_.at(0);
   }
   const Value* input() const {
-    ONNX_ASSERT(inputs_.size() == 1);
+    ONNX_ASSERT(inputs_.size() == 1)
     return inputs_.at(0);
   }
-  Value* output() const {
-    ONNX_ASSERT(outputs_.size() == 1);
+  const Value* output() const {
+    ONNX_ASSERT(outputs_.size() == 1)
     return outputs_.at(0);
   }
   // Access a particular input.  This is a checked index.
@@ -595,7 +591,7 @@ struct Node : public Attributes<Node> {
   // Execute: %3.addInput(%4)
   // Result:  %3 = f(%1, %2, %4)
   Value* addInput(Value* node) {
-    ONNX_ASSERT(graph_ == node->owningGraph());
+    ONNX_ASSERT(graph_ == node->owningGraph())
     node->uses_in_current_graph_.emplace_back(this, inputs_.size());
     inputs_.push_back(node);
     return node;
@@ -608,7 +604,7 @@ struct Node : public Attributes<Node> {
   // Execute: %3.replaceInput(1, %4)
   // Result:  %3 = f(%1, %4)
   Value* replaceInput(size_t i, Value* newValue) {
-    ONNX_ASSERT(newValue->owningGraph() == graph_);
+    ONNX_ASSERT(newValue->owningGraph() == graph_)
     Value* old = dropInput(i);
     inputs_[i] = newValue;
     newValue->uses_in_current_graph_.emplace_back(this, i);
@@ -622,10 +618,10 @@ struct Node : public Attributes<Node> {
   // Execute: %3.replaceInputWith(%1, %4)
   // Result:  %3 = f(%4, %2, %4)
   void replaceInputWith(Value* from, Value* to) {
-    ONNX_ASSERT(from->owningGraph() == graph_);
-    ONNX_ASSERT(to->owningGraph() == graph_);
+    ONNX_ASSERT(from->owningGraph() == graph_)
+    ONNX_ASSERT(to->owningGraph() == graph_)
     size_t i = 0;
-    for (auto input : inputs()) {
+    for (const auto* input : inputs()) {
       if (input == from)
         replaceInput(i, to);
       i++;
@@ -650,7 +646,7 @@ struct Node : public Attributes<Node> {
   //          %5 = h(%1)
   //          %4 = g(%3)
   Node* insertBefore(Node* n) {
-    ONNX_ASSERT(n->inGraphList());
+    ONNX_ASSERT(n->inGraphList())
     insertAfter(n->prev());
     return this;
   }
@@ -666,7 +662,7 @@ struct Node : public Attributes<Node> {
   //          %4 = g(%3)
   //          %5 = h(%1)
   Node* insertAfter(Node* n) {
-    ONNX_ASSERT(!inGraphList() && n->inGraphList());
+    ONNX_ASSERT(!inGraphList() && n->inGraphList())
     Node* next = n->next();
     n->next() = this;
     this->prev() = n;
@@ -755,7 +751,6 @@ struct Node : public Attributes<Node> {
   //
   // Example usage: if(auto s = n.cast<Select>()) { ... }
   //
-  // TODO: Make this const correct
   template <typename T>
   T* cast() {
     if (T::Kind == kind())
@@ -763,9 +758,20 @@ struct Node : public Attributes<Node> {
     return nullptr;
   }
   template <typename T>
+  const T* cast() const {
+    if (T::Kind == kind())
+      return static_cast<const T*>(this);
+    return nullptr;
+  }
+  template <typename T>
   T* expect() {
-    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString());
+    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
     return static_cast<T*>(this);
+  }
+  template <typename T>
+  const T* expect() const {
+    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
+    return static_cast<const T*>(this);
   }
 
   virtual ~Node() = default;
@@ -777,7 +783,7 @@ struct Node : public Attributes<Node> {
     // O(N) on the use list, but unless we get nodes with +100 uses
     // vector traversal still is probably faster than linked list
     auto use_it = std::find(input_uses.begin(), input_uses.end(), Use(this, i));
-    ONNX_ASSERT(use_it != input_uses.end());
+    ONNX_ASSERT(use_it != input_uses.end())
     return use_it;
   }
 
@@ -785,8 +791,8 @@ struct Node : public Attributes<Node> {
   // is only used internally to Node before setting it to a new value
   // or erasing the entry from the list.
   Value* dropInput(size_t i) {
-    ONNX_ASSERT(i < inputs_.size());
-    auto input_node = inputs_[i];
+    ONNX_ASSERT(i < inputs_.size())
+    auto* input_node = inputs_[i];
     auto use_it = findUseForInput(i);
     input_node->uses_in_current_graph_.erase(use_it);
     inputs_[i] = nullptr;
@@ -794,11 +800,11 @@ struct Node : public Attributes<Node> {
   }
 
   bool inGraphList() const {
-    ONNX_ASSERT(next() != nullptr || prev() == nullptr);
+    ONNX_ASSERT(next() != nullptr || prev() == nullptr)
     return next() != nullptr;
   }
   void removeFromList() {
-    ONNX_ASSERT(inGraphList());
+    ONNX_ASSERT(inGraphList())
     Node* next = this->next();
     Node* prev = this->prev();
     prev->next() = next;
@@ -839,24 +845,34 @@ class OpSetID final {
   explicit OpSetID(const OperatorSetIdProto& proto) : domain_(proto.domain()), version_(proto.version()) {}
 
   // Default Domain Constructor
-  explicit OpSetID(const int64_t version) : domain_(""), version_(version) {}
+  explicit OpSetID(const int64_t version) : version_(version) {}
 
   explicit OpSetID(std::string domain, int64_t version) : domain_(std::move(domain)), version_(version) {}
 
-  // target must be in the form "<domain>&<version>"
+  // target must be in the form "<domain>$<version>"
   std::string toString() const {
     return domain_ + "$" + ONNX_NAMESPACE::to_string(version_);
   }
 
-  // target must be in the form "<domain>&<version>"
+  // target must be in the form "<domain>$<version>"
   static OpSetID fromString(const std::string& target) {
     ONNX_TRY {
-      std::string new_domain = target.substr(0, target.find('$'));
-      int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find('$') + 1, target.length()));
+      auto pos = target.find('$');
+      if (pos == std::string::npos) {
+        ONNX_THROW("Invalid OpSetID string '", target, "': must be in the form \"<domain>$<version>\"");
+      }
+      std::string new_domain = target.substr(0, pos);
+      const char* version_start = target.data() + pos + 1;
+      const char* version_end = target.data() + target.size();
+      int64_t new_version = 0;
+      auto result = std::from_chars(version_start, version_end, new_version);
+      if (result.ec != std::errc{} || result.ptr != version_end) {
+        ONNX_THROW("Invalid OpSetID string '", target, "': must be in the form \"<domain>$<version>\"");
+      }
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
-      ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()); });
+      ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()) });
     }
 
     // The control will never reach here.
@@ -940,11 +956,11 @@ struct Graph final {
           }
         }
       }
-      const auto found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
+      const auto* const found_in = std::find_if(node->inputs().begin(), node->inputs().end(), f);
       if (found_in != node->inputs().end()) {
         return false;
       }
-      const auto found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
+      const auto* const found_out = std::find_if(node->outputs().begin(), node->outputs().end(), f);
       if (found_out != node->outputs().end()) {
         return false;
       }
@@ -958,7 +974,7 @@ struct Graph final {
   bool has_doc_string() const {
     return has_doc_string_;
   }
-  const std::string& docString() {
+  const std::string& docString() const {
     return doc_string_;
   }
   void setDocString(std::string doc_string) {
@@ -968,7 +984,7 @@ struct Graph final {
 
   void addInitializer(Tensor& initializer) {
     if (initializer.name().empty()) {
-      initializer.setName(toVarName(getNextUnique()));
+      initializer.setName(getNextUniqueName());
     }
     initializers_.push_back(initializer);
     initializer_names_.push_back(initializer.name());
@@ -1055,6 +1071,10 @@ struct Graph final {
     return next_unique_;
   }
 
+  std::string getNextUniqueName() {
+    return toVarName(getNextUnique());
+  }
+
   // These invocations of begin() on output of function are OK
   // because graph_node_list is non-owning, so it doesn't matter
   // if it immediately dies after the invocation.
@@ -1117,27 +1137,27 @@ struct Graph final {
 
   Node* create(NodeKind kind, size_t num_outputs = 1) {
     // NB: Node constructor adds node to all_nodes
-    auto n = new Node(this, kind);
+    auto* n = new Node(this, kind);
     for (size_t i = 0; i < num_outputs; i++)
       n->addOutput();
     return n;
   }
 
   Node* create(NodeKind kind, ArrayRef<Value*> inputs, size_t num_outputs = 1) {
-    auto n = create(kind, num_outputs);
-    for (auto i : inputs)
+    auto* n = create(kind, num_outputs);
+    for (auto* i : inputs)
       n->addInput(i);
     return n;
   }
 
   Node* appendNode(Node* n) {
-    ONNX_ASSERT(n->graph_ == this && !n->inGraphList());
+    ONNX_ASSERT(n->graph_ == this && !n->inGraphList())
     n->insertBefore(output_);
     return n;
   }
 
   Node* prependNode(Node* n) {
-    ONNX_ASSERT(n->graph_ == this && !n->inGraphList());
+    ONNX_ASSERT(n->graph_ == this && !n->inGraphList())
     n->insertAfter(output_);
     return n;
   }
@@ -1158,15 +1178,17 @@ struct Graph final {
   }
 
   Value* addInitializerAndInput(const Tensor& initializer) {
-    return addInitializerAndInput(initializer, toVarName(getNextUnique()));
+    return addInitializerAndInput(initializer, getNextUniqueName());
   }
 
   // Erases from graph initializer list, initializer names list, and as a graph input
   // Must have no uses
   void eraseInitializerAndInput(Value* v) {
+    Node* node = v->node();
+    const size_t offset = v->offset();
     eraseInitializer(v->uniqueName());
-    if (v->node() == input_) {
-      eraseInput(v->offset());
+    if (node == input_) {
+      eraseInput(offset);
     }
   }
 
@@ -1244,21 +1266,21 @@ struct Graph final {
 
   void freeNode(Node* n) {
     auto it = all_nodes.find(n);
-    ONNX_ASSERT(it != all_nodes.end());
+    ONNX_ASSERT(it != all_nodes.end())
     delete *it;
     all_nodes.erase(it);
   }
   void freeValue(Value* v) {
     auto it = all_values.find(v);
-    ONNX_ASSERT(it != all_values.end());
+    ONNX_ASSERT(it != all_values.end())
     delete *it;
     all_values.erase(it);
   }
 };
 
-inline Value::Value(Node* node_, size_t offset_)
-    : node_(node_), offset_(offset_), unique_(node_->graph_->getNextUnique()), stage_(node_->graph_->new_node_stage_) {
-  node_->graph_->all_values.emplace(this);
+inline Value::Value(Node* node, size_t offset)
+    : node_(node), offset_(offset), unique_(node->graph_->getNextUnique()), stage_(node->graph_->new_node_stage_) {
+  node->graph_->all_values.emplace(this);
 }
 
 inline Graph* Value::owningGraph() {
@@ -1272,7 +1294,7 @@ inline const Graph* Value::owningGraph() const {
 // `captured` nodes in subgraph determines which value it captures
 // by storing the value's unique name, so old unique names in `captured` nodes
 // should also be updated.
-// Initializer names are also storaged in graph.initializer_names_, it should be
+// Initializer names are also stored in graph.initializer_names_, it should be
 // updated too.
 inline Value* Value::setUniqueName(const std::string& name, bool update_related_names) {
   if (has_unique_name() && update_related_names) {
@@ -1305,7 +1327,7 @@ inline Value* Value::setUniqueName(const std::string& name, bool update_related_
 
 inline void Value::replaceAllUsesWith(Value* newValue) {
   auto* graph = owningGraph();
-  ONNX_ASSERT(graph == newValue->owningGraph());
+  ONNX_ASSERT(graph == newValue->owningGraph())
   // propagate sizes and elem type
   if (this->has_sizes()) {
     newValue->setSizes(this->sizes());
@@ -1319,7 +1341,7 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
     newValue->setUniqueName(unique_name);
     // The "unique" semantic of unique_name should be kept or uses()
     // will return an incorrect result when the value is used in subgraph
-    this->setUniqueName(toVarName(graph->getNextUnique()), false);
+    this->setUniqueName(graph->getNextUniqueName(), false);
   }
   newValue->uses_in_current_graph_.reserve(this->uses_in_current_graph_.size());
   for (auto u : uses_in_current_graph_) {
@@ -1347,8 +1369,8 @@ inline Node::Node(Graph* graph_, NodeKind kind_) : kind_(kind_), graph_(graph_),
 }
 
 inline void Node::eraseOutput(size_t i) {
-  ONNX_ASSERT(i < outputs_.size());
-  ONNX_ASSERT(outputs_[i]->uses().empty());
+  ONNX_ASSERT(i < outputs_.size())
+  ONNX_ASSERT(outputs_[i]->uses().empty())
   Value* n = outputs_[i];
   outputs_.erase(outputs_.begin() + i);
   owningGraph()->freeValue(n);
@@ -1370,7 +1392,7 @@ inline bool Node::isBefore(const Node* n) {
   if (n->kind() == kParam) {
     return false;
   }
-  ONNX_ASSERT(n->inGraphList());
+  ONNX_ASSERT(n->inGraphList())
   for (Node* p = next(); p != *graph_->end(); p = p->next()) {
     if (p == n) {
       return true;
@@ -1380,7 +1402,7 @@ inline bool Node::isBefore(const Node* n) {
 }
 
 inline void Node::destroy() {
-  ONNX_ASSERT(inGraphList());
+  ONNX_ASSERT(inGraphList())
   while (!outputs().empty())
     eraseOutput(outputs().size() - 1);
   removeAllInputs();

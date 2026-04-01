@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class SpaceToDepth(OpRun):
-    def _run(self, data, blocksize=None):  # type: ignore
+    def _run(self, data, blocksize=None):
         if len(data.shape) != 4:
             raise RuntimeError(f"Unexpected shape {data.shape!r}.")
         b, C, H, W = data.shape

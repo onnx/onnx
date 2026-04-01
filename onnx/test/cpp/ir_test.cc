@@ -1,15 +1,13 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
-#include <iostream>
+#include <memory>
+#include <string>
 
 #include "gtest/gtest.h"
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
-#include "onnx/defs/printer.h"
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -49,8 +47,8 @@ TEST(IR, ValidIdentifierTest) {
   ModelProto model;
   ExportModelProto(&model, std::shared_ptr<Graph>(g));
 
-  for (auto& node : model.graph().node()) {
-    for (auto& name : node.output()) {
+  for (const auto& node : model.graph().node()) {
+    for (const auto& name : node.output()) {
       EXPECT_TRUE(IsValidIdentifier(name));
     }
   }

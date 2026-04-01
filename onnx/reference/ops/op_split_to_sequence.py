@@ -33,7 +33,7 @@ class SplitToSequence(OpRun):
         res = []
         pos = 0
         for spl in split_length:
-            sli[axis] = slice(pos, pos + spl)  # type: ignore
+            sli[axis] = slice(pos, pos + spl)
             pos += spl
             res.append(mat[tuple(sli)])
         return res

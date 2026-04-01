@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.ops._op import OpRunBinaryNum
 
 
-def numpy_matmul(a, b):  # type: ignore
+def numpy_matmul(a, b):
     """Implements a matmul product. See :func:`np.matmul`.
     Handles sparse matrices.
     """
@@ -21,5 +21,5 @@ def numpy_matmul(a, b):  # type: ignore
 
 
 class MatMul(OpRunBinaryNum):
-    def _run(self, a, b):  # type: ignore
+    def _run(self, a, b):
         return (numpy_matmul(a, b),)

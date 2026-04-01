@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunBinary
 
 
 class Or(OpRunBinary):
-    def _run(self, x, y):  # type: ignore
+    def _run(self, x, y):
         return (np.logical_or(x, y),)

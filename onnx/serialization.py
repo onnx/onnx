@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 import typing
-from typing import Any, Optional, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 import google.protobuf.json_format
 import google.protobuf.message
@@ -108,7 +108,7 @@ class _ProtobufSerializer(ProtoSerializer):
                         "Please use save_as_external_data to save tensors separately from the model file."
                     ) from e
                 raise
-            return result  # type: ignore
+            return result
         raise TypeError(
             f"No SerializeToString method is detected.\ntype is {type(proto)}"
         )
@@ -118,7 +118,7 @@ class _ProtobufSerializer(ProtoSerializer):
             raise TypeError(
                 f"Parameter 'serialized' must be bytes, but got type: {type(serialized)}"
             )
-        decoded = typing.cast("Optional[int]", proto.ParseFromString(serialized))
+        decoded = typing.cast("int | None", proto.ParseFromString(serialized))
         if decoded is not None and decoded != len(serialized):
             raise google.protobuf.message.DecodeError(
                 f"Protobuf decoding consumed too few bytes: {decoded} out of {len(serialized)}"
@@ -130,7 +130,7 @@ class _TextProtoSerializer(ProtoSerializer):
     """Serialize and deserialize text proto."""
 
     supported_format = "textproto"
-    file_extensions = frozenset({".textproto", ".prototxt", ".pbtxt"})
+    file_extensions = frozenset({".txtpb", ".textproto", ".prototxt", ".pbtxt"})
 
     def serialize_proto(self, proto: _Proto) -> bytes:
         textproto = google.protobuf.text_format.MessageToString(proto)

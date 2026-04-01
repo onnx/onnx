@@ -6,11 +6,20 @@ from __future__ import annotations
 import os
 import tarfile
 from collections import deque
+from typing import TYPE_CHECKING
 
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
-from onnx import FunctionProto, ModelProto, NodeProto, TensorProto, ValueInfoProto
+
+if TYPE_CHECKING:
+    from onnx.onnx_pb import (
+        FunctionProto,
+        ModelProto,
+        NodeProto,
+        TensorProto,
+        ValueInfoProto,
+    )
 
 
 class Extractor:
@@ -177,10 +186,9 @@ class Extractor:
         nodes = self._collect_reachable_nodes(input_names, output_names)
         initializer, value_info = self._collect_reachable_tensors(nodes)
         local_functions = self._collect_referred_local_functions(nodes)
-        model = self._make_model(
+        return self._make_model(
             nodes, inputs, outputs, initializer, value_info, local_functions
         )
-        return model
 
 
 def extract_model(
@@ -304,7 +312,7 @@ def _extract_model_safe(
                 path=local_model_with_data_dir_path, filter="data"
             )
         else:
-            model_with_data_zipped.extractall(
+            model_with_data_zipped.extractall(  # noqa: S202
                 path=local_model_with_data_dir_path,
                 members=_tar_members_filter(
                     model_with_data_zipped, local_model_with_data_dir_path
