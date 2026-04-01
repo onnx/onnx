@@ -298,7 +298,9 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
       URL ${ProtobufURL}
       URL_HASH SHA256=${ProtobufSHA256}
     )
-    set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+    if(NOT DEFINED protobuf_BUILD_TESTS)
+      set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests")
+    endif()
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
     # utf8_validity.h is included by protobuf headers but its include dir
