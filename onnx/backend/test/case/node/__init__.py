@@ -418,16 +418,35 @@ def collect_diff_testcases() -> list[TestCase]:
 
 def get_diff_op_types():
     cwd_path = Path.cwd()
-    # git fetch first for git diff on GitHub Action
-    subprocess.run(
-        ["git", "fetch", "origin", "main:main"],
+    # Resolve the upstream main branch from the canonical onnx/onnx repository
+    # to avoid depending on local branch or remote naming conventions.
+    upstream_url = "https://github.com/onnx/onnx.git"
+    ls_remote = subprocess.run(
+        ["git", "ls-remote", upstream_url, "refs/heads/main"],
         cwd=cwd_path,
         capture_output=True,
         check=True,
     )
-    # obtain list of added or modified files in this PR
+    upstream_main_hash = ls_remote.stdout.split()[0].decode("utf-8")
+    # Fetch the upstream main commit so merge-base works even if the
+    # local repo hasn't fetched recently.
+    subprocess.run(
+        ["git", "fetch", upstream_url, upstream_main_hash],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    # Find the fork point from upstream main
+    merge_base = subprocess.run(
+        ["git", "merge-base", "HEAD", upstream_main_hash],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    base_commit = merge_base.stdout.strip().decode("utf-8")
+    # obtain list of added or modified files since the fork point
     result = subprocess.run(
-        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
+        ["git", "diff", "--name-only", "--diff-filter=AM", base_commit, "HEAD"],
         cwd=cwd_path,
         capture_output=True,
         check=True,
