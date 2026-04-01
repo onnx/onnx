@@ -281,20 +281,22 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     # Fetch Abseil via URL tarball so protobuf doesn't fall back to git clone,
     # which fails in restricted environments (e.g. piwheels).
     set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20250127.0/abseil-cpp-20250127.0.tar.gz)
-    set(AbseilSHA1 3e4a608cfdb580126b90ae651bcc6261357511ce)
-    set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable installation of Abseil targets" FORCE)
+    set(AbseilSHA256 16242f394245627e508ec6bb296b433c90f8d914f73b9c026fddb905e27276e8)
+    if(NOT DEFINED ABSL_ENABLE_INSTALL)
+      set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable installation of Abseil targets")
+    endif()
     FetchContent_Declare(
       absl
       URL ${AbseilURL}
-      URL_HASH SHA1=${AbseilSHA1}
+      URL_HASH SHA256=${AbseilSHA256}
     )
     FetchContent_MakeAvailable(absl)
     set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz)
-    set(ProtobufSHA1 051fee744fcca04dab37eb009d49aa3e9546acda)
+    set(ProtobufSHA256 16498d7dc7967e9b100632138babd4b86b61592beeccdd556f67539d9c231355)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
-      URL_HASH SHA1=${ProtobufSHA1}
+      URL_HASH SHA256=${ProtobufSHA256}
     )
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
