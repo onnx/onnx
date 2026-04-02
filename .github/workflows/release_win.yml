@@ -51,7 +51,7 @@ jobs:
         architecture: ${{ matrix.architecture }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+      uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
       with:
         msbuild-architecture: ${{ matrix.architecture }}
 
@@ -109,14 +109,14 @@ jobs:
           Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname }
         }
 
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
 
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
