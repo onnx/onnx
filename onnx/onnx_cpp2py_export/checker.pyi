@@ -43,3 +43,6 @@ def check_model_path(
     skip_opset_compatibility_check: bool,
     check_custom_domain: bool,
 ) -> None: ...
+def _open_external_data(
+    base_dir: str, location: str, tensor_name: str, read_only: bool
+) -> int: ...
