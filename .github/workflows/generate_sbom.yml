@@ -12,7 +12,7 @@
 #
 #   onnx-build.cdx.json    — Direct build tools from requirements-release_build.txt
 #                            plus C++ libraries fetched by CMake FetchContent
-#                            (protobuf, nanobind). CycloneDX lifecycle: build
+#                            (protobuf, nanobind, absl). CycloneDX lifecycle: build
 #
 # Both SBOMs are generated from requirements files (not from a resolved
 # environment) because transitive resolution is environment-dependent and
