@@ -175,7 +175,6 @@ def main():
         outdir.mkdir(parents=True, exist_ok=True)
         path = outdir / f"{schema.name}-{schema.since_version}.yaml"
         with open(path, "w", encoding="utf-8") as f:
-            print(f"Writing {path}")
             yaml.dump(schema_dict, f)
 
 

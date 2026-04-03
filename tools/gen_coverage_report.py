@@ -88,8 +88,6 @@ def main() -> None:
     html_dir = os.path.join(out, "html")
     gen_html_files(root, trace_path, html_dir)
 
-    print(f"Static HTML files have been generated at:\n\t{html_dir}")
-
 
 if __name__ == "__main__":
     main()
