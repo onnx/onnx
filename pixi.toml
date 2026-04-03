@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-[project]
+[workspace]
 authors = ["ONNX Contributors <onnx-technical-discuss@lists.lfaidata.foundation>"]
 channels = ["conda-forge"]
 description = "Open Neural Network Exchange"
@@ -17,8 +17,20 @@ ONNX_BUILD_TESTS="1"
 CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
 
 [tasks.gen-docs]
-depends-on = "build"
 cmd = "python onnx/defs/gen_doc.py"
+
+[tasks.gen-operator-coverage]
+cmd = "python onnx/backend/test/stat_coverage.py"
+
+[tasks.gen-proto]
+cmd = "python onnx/gen_proto.py -l && python onnx/gen_proto.py -l --ml"
+
+[tasks.gen-test-data-feature-branch]
+# Generate test data based on what files changed in the current feature branch
+cmd = "python onnx/backend/test/cmd_tools.py generate-data --diff"
+
+[tasks.gen-all]
+depends-on = ["gen-docs", "gen-operator-coverage", "gen-proto", "gen-test-data-feature-branch"]
 
 [tasks.gtest]
 cmd = ".setuptools-cmake-build/onnx_gtests"
@@ -29,23 +41,21 @@ cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
 [tasks.pytest]
 cmd = "pytest"
 
-[build-dependencies]
+[dependencies]
+libdate = ">=3.0.1,<4"
+libprotobuf = "*"
+make = "*"
+ml_dtypes = ">=0.5.1"
+nanobind = ">=2.8.0"
+ninja = "*"
+packaging = ">=24.1"
+pip = ">=25.0"
+python = ">=3.10"
+
+[feature.dev.dependencies]
 c-compiler = ">=1.8.0"
 cmake = ">=3.31.5"
 cxx-compiler = ">=1.8.0"
-make = "*"
-ninja = "*"
-[host-dependencies]
-libdate = ">=3.0.1,<4"
-libprotobuf = "*"
-pip = ">=25.0"
-nanobind = ">=2.8.0"
-[dependencies]
-packaging = ">=24.1"
-python = ">=3.9"
-ml_dtypes = ">=0.5.1"
-
-[feature.dev.dependencies]
 # follows requirements-dev.txt
 ml_dtypes = ">=0.5.1"
 numpy = ">=1.22.0"
@@ -56,6 +66,8 @@ pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
 setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
+"ruamel.yaml" = ">=0.19.1"
+
 
 [feature.reference.dependencies]
 # follows requirements-reference.txt

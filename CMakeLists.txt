@@ -55,7 +55,7 @@ option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX op
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
 option(ONNX_INSTALL "Install ONNX targets, headers, and CMake config files" ON)
 if(WIN32)
-  option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime" OFF)
+  option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime. Ignored if CMAKE_MSVC_RUNTIME_LIBRARY is defined." OFF)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -278,18 +278,55 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz)
-    set(ProtobufSHA1 da10aaa3bf779735a8a9acde1256a47ce5d148be)
+    # Fetch Abseil via URL tarball so protobuf doesn't fall back to git clone,
+    # which fails in restricted environments (e.g. piwheels).
+    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20250127.0/abseil-cpp-20250127.0.tar.gz)
+    set(AbseilSHA256 16242f394245627e508ec6bb296b433c90f8d914f73b9c026fddb905e27276e8)
+    if(NOT DEFINED ABSL_ENABLE_INSTALL)
+      set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable installation of Abseil targets")
+    endif()
+    FetchContent_Declare(
+      absl
+      URL ${AbseilURL}
+      URL_HASH SHA256=${AbseilSHA256}
+    )
+    FetchContent_MakeAvailable(absl)
+    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz)
+    set(ProtobufSHA256 16498d7dc7967e9b100632138babd4b86b61592beeccdd556f67539d9c231355)
     FetchContent_Declare(
       Protobuf
       URL ${ProtobufURL}
-      URL_HASH SHA1=${ProtobufSHA1}
+      URL_HASH SHA256=${ProtobufSHA256}
     )
-    set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
+    if(NOT DEFINED protobuf_BUILD_TESTS)
+      set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests")
+    endif()
     message(STATUS "Download and build Protobuf from ${ProtobufURL}")
     FetchContent_MakeAvailable(Protobuf)
+    # utf8_validity.h is included by protobuf headers but its include dir
+    # is only added via include_directories() inside protobuf's directory scope.
+    # Attach it to the protobuf target so ONNX targets can compile .pb.cc files
+    # without introducing a global include path.
+    if(EXISTS "${protobuf_SOURCE_DIR}/third_party/utf8_range")
+      # protobuf::libprotobuf and protobuf::libprotobuf-lite are ALIAS targets
+      # and CMake does not allow target_include_directories on aliases;
+      # resolve to the real targets before adding the utf8_range include path.
+      foreach(_pb_alias libprotobuf libprotobuf-lite)
+        if(TARGET protobuf::${_pb_alias})
+          get_target_property(_pb_real protobuf::${_pb_alias} ALIASED_TARGET)
+          if(NOT _pb_real)
+            set(_pb_real protobuf::${_pb_alias})
+          endif()
+          target_include_directories(
+            ${_pb_real}
+            INTERFACE
+              $<BUILD_INTERFACE:${protobuf_SOURCE_DIR}/third_party/utf8_range>
+          )
+        endif()
+      endforeach()
+    endif()
     set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.31.1")
+    set(Protobuf_VERSION "6.33.6")
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -364,9 +401,13 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
     endif()
 
     # Use add_custom_command to avoid re-generate of PROTO files
+    set(deps ${INFILE})
+    if(TARGET protobuf::protoc)
+      list(APPEND deps protobuf::protoc)
+    endif()
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
         COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
-        DEPENDS ${INFILE}
+        DEPENDS ${deps}
         COMMENT "Running gen_proto.py on ${INFILE}")
     message("Generated: ${GENERATED_PROTO}")
 

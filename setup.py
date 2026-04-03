@@ -62,7 +62,7 @@ ONNX_WHEEL_PLATFORM_NAME = os.getenv("ONNX_WHEEL_PLATFORM_NAME")
 
 try:
     _git_version = (
-        subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=TOP_DIR)
+        subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=TOP_DIR)  # noqa: S607
         .decode("ascii")
         .strip()
     )
@@ -73,7 +73,7 @@ with open(os.path.join(TOP_DIR, "VERSION_NUMBER"), encoding="utf-8") as version_
     _version = version_file.read().strip()
     if ONNX_PREVIEW_BUILD:
         # Create the preview build for weekly releases
-        todays_date = datetime.date.today().strftime("%Y%m%d")
+        todays_date = datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y%m%d")
         _version += ".dev" + todays_date
     VERSION_INFO = {"version": _version, "git_version": _git_version}
 
@@ -234,7 +234,7 @@ class CmakeBuild(setuptools.Command):
                 raise RuntimeError(
                     "-DONNX_DISABLE_EXCEPTIONS=ON option is only available for c++ builds. Python binding require exceptions to be enabled."
                 )
-            subprocess.check_call(cmake_args)
+            subprocess.check_call(cmake_args)  # noqa: S603
 
             build_args = [
                 CMAKE,
@@ -250,7 +250,7 @@ class CmakeBuild(setuptools.Command):
                         "--verbose",
                     ]
                 )
-            subprocess.check_call(build_args)
+            subprocess.check_call(build_args)  # noqa: S603
 
 
 class BuildPy(setuptools.command.build_py.build_py):
