@@ -236,7 +236,7 @@ jobs:
         install -m 755 /tmp/sbomqs /usr/local/bin/sbomqs
 
     - name: Score SBOM quality
-      # Fails the job if any SBOM scores below 6/10.
+      # Fails the job if any SBOM scores below 3/10.
       # Raise the threshold once license and supplier metadata are added.
       run: |
         FAILED=0
