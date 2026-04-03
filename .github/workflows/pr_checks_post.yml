@@ -54,4 +54,4 @@ jobs:
           CI_COMMIT: ${{ github.event.workflow_run.head_sha }}
           CI_REPO_OWNER: ${{ github.repository_owner }}
           CI_REPO_NAME: ${{ github.event.repository.name }}
-        run: reviewdog -f=diff -reporter=github-pr-suggestions < /tmp/pr_artifacts/lintrunner.diff
+        run: reviewdog -f=diff -reporter=github-pr-review < /tmp/pr_artifacts/lintrunner.diff
