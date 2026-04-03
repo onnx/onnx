@@ -214,8 +214,16 @@ jobs:
       run: |
         curl -sSfL \
           "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v${CDX_VERSION}/cyclonedx-linux-x64" \
-          -o /usr/local/bin/cyclonedx
-        chmod +x /usr/local/bin/cyclonedx
+          -o /tmp/cyclonedx
+        curl -sSfL \
+          "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v${CDX_VERSION}/cyclonedx-linux-x64.sha256" \
+          -o /tmp/cyclonedx.sha256
+        (
+          cd /tmp
+          sha256sum -c cyclonedx.sha256
+        )
+        install -m 755 /tmp/cyclonedx /usr/local/bin/cyclonedx
+        rm -f /tmp/cyclonedx /tmp/cyclonedx.sha256
 
     - name: Validate SBOM schemas
       # Fails the job if either SBOM does not conform to the CycloneDX 1.6 JSON schema.
