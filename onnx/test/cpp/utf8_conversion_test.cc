@@ -14,12 +14,12 @@ TEST(UTF8Test, WideStringConversion) {
   EXPECT_EQ(ONNX_NAMESPACE::wstring_to_utf8str(ONNX_NAMESPACE::utf8str_to_wstring(utf8_str)), utf8_str);
 }
 
-TEST(UTF8Test, TryConvertUTF8) {
+TEST(UTF8Test, InvalidUtf8Rejected) {
+  // Raw wchar_t bytes are not valid UTF-8 — must be rejected (fail-closed).
   std::string utf8_str(u8"世界，你好！");
   auto wstr = ONNX_NAMESPACE::utf8str_to_wstring(utf8_str);
-  auto wstr2 = ONNX_NAMESPACE::utf8str_to_wstring(
-      std::string(reinterpret_cast<const char*>(wstr.c_str()), sizeof(std::wstring::value_type) * wstr.size()), true);
-  EXPECT_EQ(wstr, wstr2);
+  std::string raw_bytes(reinterpret_cast<const char*>(wstr.c_str()), sizeof(std::wstring::value_type) * wstr.size());
+  EXPECT_THROW(ONNX_NAMESPACE::utf8str_to_wstring(raw_bytes), ONNX_NAMESPACE::checker::ValidationError);
 }
 } // namespace ONNX_NAMESPACE::Test
 #endif

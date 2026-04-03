@@ -37,10 +37,12 @@ This is a belt-and-suspenders check alongside containment. It provides a clear, 
 
 Three platform-specific strategies, in order of preference:
 
-- **Linux 5.6+**: `openat2(RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS)` — atomic kernel-level containment and symlink rejection. No TOCTOU possible. Falls back at runtime if the kernel is too old (`ENOSYS`).
-- **FreeBSD 13+ / macOS 15+**: `openat(O_RESOLVE_BENEATH | O_NOFOLLOW)` — equivalent kernel-level containment via BSD-style flags.
-- **POSIX fallback**: `open(O_NOFOLLOW)` followed by inode comparison (`stat` canonical path vs `fstat` fd) to verify the opened fd matches the validated path. This narrows the TOCTOU window to a race between `open()` and `stat()`.
-- **Windows**: `CreateFileW(FILE_FLAG_OPEN_REPARSE_POINT)` opens without following symlinks/junctions, then checks `dwFileAttributes` for reparse points and verifies via inode comparison (`dwVolumeSerialNumber` + `nFileIndexHigh/Low` from `GetFileInformationByHandle()`). Returns a raw OS HANDLE (not a CRT fd) to avoid fd table mismatch across DLL boundaries; Python converts via `msvcrt.open_osfhandle()`.
+- **Linux 5.6+**: `openat2(RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS)` — atomic kernel containment. No TOCTOU. Falls back on `ENOSYS`.
+- **FreeBSD 13+ / macOS 15+**: `openat(O_RESOLVE_BENEATH | O_NOFOLLOW)` — equivalent BSD-style containment.
+- **POSIX fallback**: `open(O_NOFOLLOW)` + post-open inode comparison (`fstat` fd vs `stat` canonical path).
+- **Windows**: `CreateFileW(FILE_FLAG_OPEN_REPARSE_POINT)` + reparse point attribute check + inode comparison. Converted to CRT fd via `_open_osfhandle()` before returning.
+
+All POSIX fds are opened with `O_CLOEXEC`. All platforms return a CRT file descriptor.
 
 Hardlinks are detected via `fstat()` link count (POSIX) or `GetFileInformationByHandle()` (Windows), always fail closed.
 
@@ -52,15 +54,16 @@ This is defense-in-depth alongside Layer 3's post-open hardlink check. It provid
 
 ## Protected Entry Points
 
-All Python entry points that open external data files use the C++ `open_external_data()` function, which applies Layers 1-4 in a single call. The C++ checker (`resolve_external_data_location`) validates paths without opening files, so Layer 3 does not apply there.
+All Python entry points use the C++ `open_external_data()` function. In **read mode** it applies all four layers (pre-open validation via `resolve_external_data_location` for Layers 1, 2, 4, then Layer 3 post-open). In **write mode** it applies Layers 1 and 3 only — Layers 2 and 4 are skipped because the file may not yet exist. The C++ checker calls `resolve_external_data_location` directly without opening files, so Layer 3 does not apply there.
 
-| Entry Point | File | Layers |
-|---|---|---|
-| `resolve_external_data_location` | `onnx/checker.cc` | 1, 2, 4 |
-| `open_external_data` | `onnx/checker.cc` | 1, 2, 3, 4 |
-| `load_external_data_for_tensor` | `onnx/external_data_helper.py` | 1, 2, 3, 4 (via `open_external_data`) |
-| `save_external_data` | `onnx/external_data_helper.py` | 1, 3 (via `open_external_data`) |
-| `ModelContainer._load_large_initializers` | `onnx/model_container.py` | 1, 2, 3, 4 (via `open_external_data`) |
+| Entry Point | File | Mode | Layers |
+|---|---|---|---|
+| `resolve_external_data_location` | `onnx/checker.cc` | read | 1, 2, 4 |
+| `open_external_data` | `onnx/checker.cc` | read | 1, 2, 3, 4 |
+| `open_external_data` | `onnx/checker.cc` | write | 1, 3 |
+| `load_external_data_for_tensor` | `onnx/external_data_helper.py` | read | 1, 2, 3, 4 (via `open_external_data`) |
+| `save_external_data` | `onnx/external_data_helper.py` | write | 1, 3 (via `open_external_data`) |
+| `ModelContainer._load_large_initializers` | `onnx/model_container.py` | read | 1, 2, 3, 4 (via `open_external_data`) |
 
 ## Known Limitations
 

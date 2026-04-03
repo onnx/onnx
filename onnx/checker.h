@@ -186,9 +186,8 @@ std::filesystem::path resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,
     const std::string& tensor_name);
-// Returns a file descriptor (POSIX) or a raw OS HANDLE cast to int64_t (Windows).
-// On Windows, the caller must convert to fd via msvcrt.open_osfhandle() (Python)
-// or _open_osfhandle() (C++) to avoid CRT fd table mismatch across DLL boundaries.
+// Returns a CRT file descriptor on all platforms.
+// The caller owns the fd and must close it.
 int64_t open_external_data(
     const std::string& base_dir,
     const std::string& location,

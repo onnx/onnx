@@ -21,9 +21,6 @@ from onnx.onnx_pb import (
     TensorProto,
 )
 
-if sys.platform == "win32":
-    import msvcrt
-
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
@@ -31,12 +28,8 @@ if TYPE_CHECKING:
 def _open_external_data_fd(
     base_dir: str, location: str, tensor_name: str, read_only: bool
 ) -> int:
-    """Open external data via C++ and return a Python-CRT file descriptor."""
-    raw = c_checker._open_external_data(base_dir, location, tensor_name, read_only)
-    if sys.platform == "win32":
-        flags = os.O_RDONLY | os.O_BINARY if read_only else os.O_RDWR | os.O_BINARY
-        return msvcrt.open_osfhandle(raw, flags)
-    return raw
+    """Open external data via C++ and return a CRT file descriptor."""
+    return c_checker._open_external_data(base_dir, location, tensor_name, read_only)
 
 
 # Security: 3-layer defense against malicious external_data entries (GHSA-538c-55jv-c5g9)

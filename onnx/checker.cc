@@ -12,13 +12,15 @@
 #include <vector>
 
 #include "onnx/common/file_utils.h"
+#include "onnx/common/path.h"
+#include "onnx/common/scoped_resource.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"
 
 #ifdef _WIN32
 #include <Windows.h>
-
-#include "onnx/common/path.h"
+#include <fcntl.h>
+#include <io.h>
 #else
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -711,7 +713,7 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         ex.AppendContext("Bad node spec for node. Name: " + node.name() + " OpType: " + node.op_type());
-        throw;
+        ONNX_THROW_EX(ex);
       });
     }
     // check for SSA form
@@ -1000,51 +1002,11 @@ void check_model(
   }
 }
 
-static std::filesystem::path utf8_to_path(const std::string& utf8) {
+using ONNX_NAMESPACE::ScopedFd;
+using ONNX_NAMESPACE::utf8_to_path;
 #ifdef _WIN32
-  return std::filesystem::path(utf8str_to_wstring(utf8));
-#else
-  return std::filesystem::path(utf8);
+using ONNX_NAMESPACE::ScopedHandle;
 #endif
-}
-
-namespace {
-template <auto Invalid, void (*Close)(decltype(Invalid))>
-class ScopedResource {
-  using T = decltype(Invalid);
-  T val_;
-
- public:
-  explicit ScopedResource(T v) : val_(v) {}
-  ~ScopedResource() {
-    if (val_ != Invalid) {
-      Close(val_);
-    }
-  }
-  T get() const {
-    return val_;
-  }
-  T release() {
-    T tmp = val_;
-    val_ = Invalid;
-    return tmp;
-  }
-  ScopedResource(const ScopedResource&) = delete;
-  ScopedResource& operator=(const ScopedResource&) = delete;
-};
-
-#ifdef _WIN32
-void close_handle(HANDLE h) {
-  CloseHandle(h);
-}
-using ScopedHandle = ScopedResource<INVALID_HANDLE_VALUE, close_handle>;
-#else
-void close_fd(int fd) {
-  close(fd);
-}
-using ScopedFd = ScopedResource<-1, close_fd>;
-#endif
-} // namespace
 
 #ifdef _WIN32
 // Compare two BY_HANDLE_FILE_INFORMATION structs by volume + file index (inode equivalent).
@@ -1202,14 +1164,19 @@ int64_t open_external_data(
   // Inode comparison: open canonical path, compare volume + file index.
   auto canonical_data = verify_path_containment(data_path, base_dir, tensor_name);
   HANDLE h2 = CreateFileW(
-      canonical_data.native().c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+      canonical_data.native().c_str(),
+      0,
+      FILE_SHARE_READ | FILE_SHARE_WRITE,
+      nullptr,
+      OPEN_EXISTING,
+      FILE_FLAG_OPEN_REPARSE_POINT,
+      nullptr);
   if (h2 == INVALID_HANDLE_VALUE) {
     fail_check("Tensor ", tensor_name, " external data: cannot open canonical path for verification.");
   }
+  ScopedHandle guard2(h2);
   BY_HANDLE_FILE_INFORMATION canon_info;
-  bool got_info = GetFileInformationByHandle(h2, &canon_info);
-  CloseHandle(h2);
-  if (!got_info) {
+  if (!GetFileInformationByHandle(h2, &canon_info)) {
     fail_check("Tensor ", tensor_name, " external data: cannot query canonical path file information.");
   }
   if (!same_file(file_info, canon_info)) {
@@ -1221,7 +1188,15 @@ int64_t open_external_data(
     fail_check("Tensor ", tensor_name, " external data has multiple hard links (possible hardlink attack).");
   }
 
-  return reinterpret_cast<int64_t>(guard.release()); // NOSONAR NOLINT(performance-no-int-to-ptr)
+  // Convert HANDLE → CRT fd so callers get a uniform fd on all platforms.
+  HANDLE h_released = guard.release();
+  int flags = read_only ? (_O_RDONLY | _O_BINARY) : (_O_RDWR | _O_BINARY);
+  int fd = _open_osfhandle(reinterpret_cast<intptr_t>(h_released), flags);
+  if (fd < 0) {
+    CloseHandle(h_released);
+    fail_check("Cannot convert handle to fd for tensor ", tensor_name);
+  }
+  return static_cast<int64_t>(fd);
 }
 
 #else // POSIX
@@ -1243,10 +1218,11 @@ static int try_kernel_contained_open(
   int fd = -1;
 
 #ifdef ONNX_HAS_OPENAT2
-  static bool openat2_supported = true;
+  static thread_local bool openat2_supported = true;
   if (openat2_supported) {
     struct open_how how = {};
-    how.flags = read_only ? static_cast<uint64_t>(O_RDONLY) : static_cast<uint64_t>(O_CREAT | O_RDWR);
+    how.flags =
+        read_only ? static_cast<uint64_t>(O_RDONLY | O_CLOEXEC) : static_cast<uint64_t>(O_CREAT | O_RDWR | O_CLOEXEC);
     how.mode = read_only ? 0 : 0600;
     how.resolve = RESOLVE_BENEATH | RESOLVE_NO_SYMLINKS;
     fd = static_cast<int>(syscall(SYS_openat2, raw_dirfd, rel.c_str(), &how, sizeof(how)));
@@ -1259,7 +1235,7 @@ static int try_kernel_contained_open(
     }
   }
 #elif defined(ONNX_HAS_RESOLVE_BENEATH)
-  int flags = O_RESOLVE_BENEATH;
+  int flags = O_RESOLVE_BENEATH | O_CLOEXEC;
 #ifdef O_NOFOLLOW
   flags |= O_NOFOLLOW;
 #endif
@@ -1298,6 +1274,9 @@ int64_t open_external_data(
   // Fallback: open() + O_NOFOLLOW + post-open inode verification.
   if (fd < 0) {
     int flags = read_only ? O_RDONLY : (O_CREAT | O_RDWR);
+#ifdef O_CLOEXEC
+    flags |= O_CLOEXEC;
+#endif
 #ifdef O_NOFOLLOW
     flags |= O_NOFOLLOW;
 #endif
