@@ -81,3 +81,13 @@ rm -f dist/*-linux*.whl
 
 echo "Successfully build wheels:"
 find . -type f -iname "*manylinux*.whl"
+
+# Verify SBOM (PEP 770) was embedded by auditwheel >= 6.5.0
+echo "Verifying SBOM presence in wheels..."
+for whl in dist/*manylinux*.whl; do
+    if python3 -c "import zipfile, sys; z=zipfile.ZipFile('$whl'); sbom=[f for f in z.namelist() if f.endswith('sbom.cdx.json')]; sys.exit(0) if sbom else sys.exit(1)"; then
+        echo "  SBOM found: $whl"
+    else
+        echo "  WARNING: SBOM missing in $whl (requires auditwheel >= 6.5.0)"
+    fi
+done
