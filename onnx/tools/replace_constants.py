@@ -44,7 +44,7 @@ def _replace_constant(
             value = att.t
             new_name = f"{value.name}__SHAPE"
             dims = value.dims
-            size = np.prod(dims)
+            size = np.prod(dims, dtype=np.int64)
             if size <= threshold:
                 return [node]
             init = from_array(np.array(list(dims), dtype=np.int64), name=new_name)
@@ -330,7 +330,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
     new_inits: list[TensorProto] = []
     for init in onx.initializer:
         dims = tuple(init.dims)
-        size = np.prod(dims)
+        size = np.prod(dims, dtype=np.int64)
         if size <= threshold:
             new_inits.append(init)
             continue
@@ -356,7 +356,7 @@ def replace_initializer_by_constant_of_shape(  # noqa: PLR0911
     new_sparse_inits: list[SparseTensorProto] = []
     for sp_init in onx.sparse_initializer:
         dims = tuple(sp_init.dims)
-        size = np.prod(dims)
+        size = np.prod(dims, dtype=np.int64)
         if size <= threshold:
             new_sparse_inits.append(sp_init)
             continue
