@@ -112,6 +112,7 @@ def _parse_fetchcontent_declares(
 # SPDX license IDs for known FetchContent dependencies.
 # Update this table when a new dependency is added to CMakeLists.txt.
 _KNOWN_LICENSES: dict[str, str] = {
+    "absl": "Apache-2.0",
     "protobuf": "BSD-3-Clause",
     "nanobind": "BSD-3-Clause",
 }
