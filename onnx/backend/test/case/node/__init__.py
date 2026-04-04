@@ -152,13 +152,13 @@ def function_testcase_helper(
     # opset versions include the op's since_version and other opset versions
     # if it is needed to define the op for a opset version other than the op's since_version.
     function_protos = []
-    for opset_version in schema.function_opset_versions:  # type: ignore
-        function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore
+    for opset_version in schema.function_opset_versions:  # type: ignore[attr-defined]
+        function_proto_str = schema.get_function_with_opset_version(opset_version)  # type: ignore[attr-defined]
         function_proto = FunctionProto()
         function_proto.ParseFromString(function_proto_str)
         function_protos.append(function_proto)
-    for opset_version in schema.context_dependent_function_opset_versions:  # type: ignore
-        function_proto_str = schema.get_context_dependent_function_with_opset_version(  # type: ignore
+    for opset_version in schema.context_dependent_function_opset_versions:  # type: ignore[attr-defined]
+        function_proto_str = schema.get_context_dependent_function_with_opset_version(  # type: ignore[attr-defined]
             opset_version,
             node.SerializeToString(),
             [t.SerializeToString() for t in input_types],
@@ -214,7 +214,7 @@ def _make_test_model_gen_version(graph: GraphProto, **kwargs: Any) -> ModelProto
         latest_onnx_version,
         latest_ml_version,
         latest_training_version,
-    ) = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore
+    ) = onnx.helper.VERSION_TABLE[-1][2:5]  # type: ignore[index]
     if "opset_imports" in kwargs:
         for opset in kwargs["opset_imports"]:
             # If the test model uses an unreleased opset version (latest_version+1),
@@ -418,27 +418,45 @@ def collect_diff_testcases() -> list[TestCase]:
 
 def get_diff_op_types():
     cwd_path = Path.cwd()
-    # git fetch first for git diff on GitHub Action
-    subprocess.run(
-        ["git", "fetch", "origin", "main:main"],
+    # Resolve the upstream main branch from the canonical onnx/onnx repository
+    # to avoid depending on local branch or remote naming conventions.
+    upstream_url = "https://github.com/onnx/onnx.git"
+    ls_remote = subprocess.run(
+        ["git", "ls-remote", upstream_url, "refs/heads/main"],
         cwd=cwd_path,
         capture_output=True,
         check=True,
     )
-    # obtain list of added or modified files in this PR
-    with subprocess.Popen(
-        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
+    upstream_main_hash = ls_remote.stdout.split()[0].decode("utf-8")
+    # Fetch the upstream main commit so merge-base works even if the
+    # local repo hasn't fetched recently.
+    subprocess.run(
+        ["git", "fetch", upstream_url, upstream_main_hash],
         cwd=cwd_path,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    ) as obtain_diff:
-        stdoutput, _ = obtain_diff.communicate()
-        diff_list = stdoutput.split()
-        changed_op_types = []
-        for file in diff_list:
-            file_name = file.decode("utf-8")
-            if file_name.startswith(
-                "onnx/backend/test/case/node/"
-            ) and file_name.endswith(".py"):
-                changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
-        return changed_op_types
+        capture_output=True,
+        check=True,
+    )
+    # Find the fork point from upstream main
+    merge_base = subprocess.run(
+        ["git", "merge-base", "HEAD", upstream_main_hash],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    base_commit = merge_base.stdout.strip().decode("utf-8")
+    # obtain list of added or modified files since the fork point
+    result = subprocess.run(
+        ["git", "diff", "--name-only", "--diff-filter=AM", base_commit, "HEAD"],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    diff_list = result.stdout.split()
+    changed_op_types = []
+    for file in diff_list:
+        file_name = file.decode("utf-8")
+        if file_name.startswith("onnx/backend/test/case/node/") and file_name.endswith(
+            ".py"
+        ):
+            changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
+    return changed_op_types
