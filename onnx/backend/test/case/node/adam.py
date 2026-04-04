@@ -97,6 +97,7 @@ class Adam(Base):
             norm_coefficient=norm_coefficient,
             alpha=alpha,
             beta=beta,
+            epsilon=epsilon,
             domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
         )
 
