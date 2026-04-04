@@ -6,3 +6,4 @@ include CMakeLists.txt
 include requirements.txt
 include requirements-reference.txt
 include backend.py
+include onnx/version.py
