@@ -61,12 +61,12 @@ def get_requires_for_build_wheel(*args, **kwargs) -> list[str]:
 def _ensure_version_file() -> None:
     """Ensure onnx/version.py is created with the correct version."""
     # Import here to ensure setup.py code is available
-    import os  # noqa: F401
-    import sys  # noqa: F401
+    import os
+    import sys
 
     sys.path.insert(0, os.path.dirname(__file__))
     try:
-        from setup import TOP_DIR, create_version  # noqa: F401
+        from setup import TOP_DIR, create_version
 
         create_version(TOP_DIR)
     finally:
