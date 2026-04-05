@@ -17,11 +17,13 @@ import shutil
 
 from setuptools.build_meta import (
     build_editable,
-    build_sdist,
     build_wheel,
     get_requires_for_build_sdist,
     prepare_metadata_for_build_editable,
     prepare_metadata_for_build_wheel,
+)
+from setuptools.build_meta import (
+    build_sdist as _build_sdist,
 )
 from setuptools.build_meta import (
     get_requires_for_build_editable as _get_requires_for_build_editable,
@@ -54,3 +56,24 @@ def get_requires_for_build_editable(*args, **kwargs) -> list[str]:
 
 def get_requires_for_build_wheel(*args, **kwargs) -> list[str]:
     return _get_requires_for_build_wheel(*args, **kwargs) + _get_cmake_dep()
+
+
+def _ensure_version_file() -> None:
+    """Ensure onnx/version.py is created with the correct version."""
+    # Import here to ensure setup.py code is available
+    import os
+    import sys
+
+    sys.path.insert(0, os.path.dirname(__file__))
+    try:
+        from setup import TOP_DIR, create_version
+
+        create_version(TOP_DIR)
+    finally:
+        sys.path.pop(0)
+
+
+def build_sdist(sdist_directory: str, config_settings=None) -> str:
+    """Override build_sdist to ensure version.py is created first."""
+    _ensure_version_file()
+    return _build_sdist(sdist_directory, config_settings=config_settings)
