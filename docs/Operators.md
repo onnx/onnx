@@ -38651,6 +38651,11 @@ expect(node, inputs=[x, repeats], outputs=[z], name="test_tile_precomputed")
   Given two equivalent values, this operator uses the indices along the axis as
   a tiebreaker. That is, the element with the lower index will appear first.
 
+  For floating-point inputs, NaN values are propagated through the output. When comparing
+  values for ordering, NaN is greater than all non-NaN values. When multiple NaN values
+  are present and sorted is 1, the order between them is determined by their indices along
+  the axis (lower index first).
+
 #### Version
 
 This version of the operator has been available since version 24 of the default ONNX operator set.
@@ -38731,6 +38736,85 @@ values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
 
 expect(
     node, inputs=[X, K], outputs=[values_ref, indices_ref], name="test_top_k"
+)
+```
+
+</details>
+
+
+<details>
+<summary>top_k_nan_handling</summary>
+
+```python
+axis = 1
+largest = 1
+
+k = 3
+node = onnx.helper.make_node(
+    "TopK", inputs=["x", "k"], outputs=["values", "indices"], axis=axis
+)
+X = np.array(
+    [
+        [1.0, np.nan, 3.0, 2.0],
+        [np.nan, 5.0, np.nan, 7.0],
+    ],
+    dtype=np.float32,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# NaN is treated as greater than all non-NaN values.
+# Row 0: NaN(idx1) > 3.0(idx2) > 2.0(idx3) → values=[NaN, 3, 2], indices=[1, 2, 3]
+# Row 1: NaN(idx0) > NaN(idx2) > 7.0(idx3) → values=[NaN, NaN, 7], indices=[0, 2, 3]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_nan_handling",
+)
+```
+
+</details>
+
+
+<details>
+<summary>top_k_nan_smallest</summary>
+
+```python
+axis = 1
+largest = 0
+sorted_ = 1
+k = 2
+
+node = onnx.helper.make_node(
+    "TopK",
+    inputs=["x", "k"],
+    outputs=["values", "indices"],
+    axis=axis,
+    largest=largest,
+    sorted=sorted_,
+)
+
+X = np.array(
+    [
+        [np.nan, 1.0, 3.0, 2.0],
+    ],
+    dtype=np.float32,
+)
+K = np.array([k], dtype=np.int64)
+values_ref, indices_ref = topk_sorted_implementation(X, k, axis, largest)
+
+# With largest=0, returns the smallest k elements.
+# NaN is greater than all non-NaN values, so it is not
+# among the smallest.
+# [1.0(idx1), 2.0(idx3)] → values=[1, 2], indices=[1, 3]
+
+expect(
+    node,
+    inputs=[X, K],
+    outputs=[values_ref, indices_ref],
+    name="test_top_k_nan_smallest",
 )
 ```
 
