@@ -336,8 +336,7 @@ def from_array(array: np.ndarray, /, name: str | None = None) -> onnx.TensorProt
                 tensor.string_data.append(e)
             else:
                 raise NotImplementedError(
-                    "Unrecognized object in the object array, expect a string, or array of bytes: ",
-                    str(type(e)),
+                    f"Unrecognized object in the object array, expect a string, or array of bytes: {type(e)}"
                 )
         return tensor
 
@@ -401,7 +400,7 @@ def from_list(
     if name:
         sequence.name = name
 
-    if dtype:
+    if dtype is not None:
         elem_type = dtype
     elif len(lst) > 0:
         first_elem = lst[0]
@@ -458,9 +457,7 @@ def to_dict(map_proto: onnx.MapProto) -> dict[Any, Any]:
     value_list = to_list(map_proto.values)
     if len(key_list) != len(value_list):
         raise IndexError(
-            "Length of keys and values for MapProto (map name: ",
-            map_proto.name,
-            ") are not the same.",
+            f"Length of keys and values for MapProto (map name: {map_proto.name}) are not the same."
         )
     return dict(zip(key_list, value_list, strict=False))
 
@@ -478,6 +475,8 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
     map_proto = onnx.MapProto()
     if name:
         map_proto.name = name
+    if not dict_:
+        raise ValueError("Cannot convert an empty dictionary to MapProto.")
     keys = list(dict_)
     raw_key_type = np.result_type(keys[0])
     key_type = helper.np_dtype_to_tensor_dtype(raw_key_type)
@@ -514,6 +513,8 @@ def from_dict(dict_: dict[Any, Any], name: str | None = None) -> onnx.MapProto:
         map_proto.string_keys.extend(keys)
     elif key_type in valid_key_int_types:
         map_proto.keys.extend(keys)
+    else:
+        raise TypeError(f"Unsupported map key type: {key_type}")
     map_proto.values.CopyFrom(value_seq)
     return map_proto
 
