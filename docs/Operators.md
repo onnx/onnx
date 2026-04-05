@@ -190,7 +190,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
-|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
+|<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-27">27</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|17, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
@@ -20442,19 +20442,21 @@ expect(
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization
-        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
+        on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2 + epsilon)`
 
 #### Version
 
-This version of the operator has been available since version 13 of the default ONNX operator set.
+This version of the operator has been available since version 27 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>
+Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization-9">9</a>, <a href="Changelog.md#MeanVarianceNormalization-13">13</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axes</tt> : list of ints (default is ['0', '2', '3'])</dt>
 <dd>A list of integers, along which to reduce. The default is to calculate along axes [0,2,3] for calculating mean and variance along each channel. Two variables with the same C-coordinate are associated with the same mean and variance.</dd>
+<dt><tt>epsilon</tt> : float (default is 0.0)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
 </dl>
 
 #### Inputs
@@ -20480,6 +20482,58 @@ Other versions of this operator: <a href="Changelog.md#MeanVarianceNormalization
 
 
 #### Examples
+
+<details>
+<summary>epsilon</summary>
+
+```python
+epsilon = 1e-5
+node = onnx.helper.make_node(
+    "MeanVarianceNormalization",
+    inputs=["X"],
+    outputs=["Y"],
+    epsilon=epsilon,
+)
+
+input_data = np.array(
+    [
+        [
+            [[0.8439683], [0.5665144], [0.05836735]],
+            [[0.02916367], [0.12964272], [0.5060197]],
+            [[0.79538304], [0.9411346], [0.9546573]],
+        ],
+        [
+            [[0.17730942], [0.46192095], [0.26480448]],
+            [[0.6746842], [0.01665257], [0.62473077]],
+            [[0.9240844], [0.9722341], [0.11965699]],
+        ],
+        [
+            [[0.41356155], [0.9129373], [0.59330076]],
+            [[0.81929934], [0.7862604], [0.11799799]],
+            [[0.69248444], [0.54119414], [0.07513223]],
+        ],
+    ],
+    dtype=np.float32,
+)
+
+# Calculate expected output with custom epsilon
+data_mean = np.mean(input_data, axis=(0, 2, 3), keepdims=1)
+data_mean_squared = np.power(data_mean, 2)
+data_squared = np.power(input_data, 2)
+data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
+std = np.sqrt(data_squared_mean - data_mean_squared)
+expected_output = (input_data - data_mean) / (std + epsilon)
+
+expect(
+    node,
+    inputs=[input_data],
+    outputs=[expected_output],
+    name="test_mvn_epsilon",
+)
+```
+
+</details>
+
 
 <details>
 <summary>meanvariancenormalization</summary>
