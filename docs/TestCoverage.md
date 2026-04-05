@@ -252,6 +252,7 @@ node = onnx.helper.make_node(
     norm_coefficient=norm_coefficient,
     alpha=alpha,
     beta=beta,
+    epsilon=epsilon,
     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
 )
 
@@ -11862,7 +11863,9 @@ There are 1 test cases, listed as following:
 <summary>instancenormalization</summary>
 
 ```python
-def _instancenorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
+def _instancenorm_test_mode(
+    x: np.ndarray, s: np.ndarray, bias: np.ndarray, epsilon: float = 1e-5
+) -> np.ndarray:
     dims_x = len(x.shape)
     axis = tuple(range(2, dims_x))
     mean = np.mean(x, axis=axis, keepdims=True)
