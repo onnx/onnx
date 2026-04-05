@@ -57,6 +57,14 @@ on:
           - 'release'
           - 'preview'
         default: 'preview'
+      generate_sbom:
+        description: 'Generate SBOM (always set for publish_pypi_release and publish_testpypi_release)'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
 
 permissions:
   contents: read
@@ -94,6 +102,21 @@ jobs:
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+
+  call-sbom:
+    name: Generate SBOM
+    needs: [call-linux, call-mac, call-win, call-sdist]
+    if: |
+      (!contains(join(needs.*.result, ' '), 'skipped')) &&
+      (
+        github.event.inputs.publish_pypi_release == 'yes' ||
+        github.event.inputs.publish_testpypi_release == 'yes' ||
+        github.event.inputs.generate_sbom == 'yes'
+      )
+    uses: ./.github/workflows/generate_sbom.yml
+    with:
+      subject_name: 'onnx'
+      subject_version: ''
 
   check_for_publish_release_build_to_pypi:
     name: Check for Publish release build to pypi
