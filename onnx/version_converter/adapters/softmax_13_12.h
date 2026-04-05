@@ -20,6 +20,7 @@ class Softmax_13_12 final : public Adapter {
 
   void adapt_softmax_13_12(const std::shared_ptr<Graph>& graph, Node* node) const {
     (void)graph; // Suppress unused parameter warning
+    ONNX_ASSERTM(node->inputs().size() >= 1, "Softmax node must have at least 1 input")
 
     int new_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : -1;
 
