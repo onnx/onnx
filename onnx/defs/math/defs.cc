@@ -3248,9 +3248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // The signal size is needed to perform inference because the size of the signal
           // is needed to compute the number of DFTs in the output.
           //
-          // 1) Check if shape exists, return if not
-          // 2) Get the shape
-          // 3) Check if signal dim value exists, return if not
+          // Check if shape exists, return if not
           if (!hasInputShape(ctx, 0)) {
             return;
           }
@@ -3260,30 +3258,27 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("First input should have at least 2 dimensions in ", ctx.getDisplayName(), ".");
           }
           auto signal_dim = input_shape.dim(1);
-          if (!signal_dim.has_dim_value()) {
-            return;
-          }
-          auto signal_size = signal_dim.dim_value();
-
+          int64_t signal_size = signal_dim.has_dim_value() ? signal_dim.dim_value() : -1;
           // The frame step is a required input.
           // Its value is needed to compute the number output nDFTs, so return early is missing.
           const auto frame_step = ctx.getInputData(1);
-          if (nullptr == frame_step) {
-            return;
+          bool frame_step_known = (frame_step != nullptr);
+          int64_t frame_step_value = -1;
+          if (frame_step_known) {
+            if (frame_step->dims_size() != 0) {
+              fail_shape_inference("Input 1 (frame_step) must be a scalar.");
+            }
+            frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
           }
-          auto frame_step_value = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_step);
-
+          if (frame_step_known && frame_step_value <= 0) {
+            fail_shape_inference("frame_step must be greater than 0.");
+          }
           // Determine the size of the DFT based on the 2 optional inputs window and frame_length.
           // One must be set.
           int64_t dft_size = -1;
           const TensorProto* frame_length = nullptr;
           if (ctx.hasInput(3)) {
             frame_length = ctx.getInputData(3);
-            if (frame_length == nullptr) {
-              // If we cannot read the frame_length, we cannot infer shape
-              // return...
-              return;
-            }
           }
 
           const TensorShapeProto* window_shape = nullptr;
@@ -3335,10 +3330,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             dft_size = defs::math::utils::GetScalarValueFromTensor<int64_t>(frame_length);
           }
 
-          bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 0));
-          int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
+          // Fail inference if dft_size<=0
+          if (dft_size <= 0) {
+            fail_shape_inference("STFT requires a positive dft_size, but got ", dft_size, ".");
+          }
 
-          auto n_dfts = static_cast<int64_t>((signal_size - dft_size) / static_cast<float>(frame_step_value)) + 1;
+          bool is_onesided = static_cast<bool>(getAttribute(ctx, "onesided", 1));
+          int64_t dft_unique_bins = is_onesided ? ((dft_size >> 1) + 1) : dft_size;
 
           // The output has the following shape: [batch_size][frames][dft_unique_bins][2]
           ONNX_NAMESPACE::TensorShapeProto result_shape_proto;
@@ -3348,7 +3346,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             batch_dim->set_dim_value(input_shape.dim(0).dim_value()); // batch size
           }
 
-          result_shape_proto.add_dim()->set_dim_value(n_dfts);
+          if (frame_step_value > 0 && signal_size >= dft_size) {
+            const int64_t n_dfts = ((signal_size - dft_size) / frame_step_value) + 1;
+            if (n_dfts > 0) {
+              result_shape_proto.add_dim()->set_dim_value(n_dfts);
+            } else {
+              // Cannot determine a valid number of DFTs; leave dimension unknown.
+              result_shape_proto.add_dim();
+            }
+          } else {
+            // Signal size, frame step, or DFT size are not suitable to infer this dimension.
+            result_shape_proto.add_dim();
+          }
+
           result_shape_proto.add_dim()->set_dim_value(dft_unique_bins);
           result_shape_proto.add_dim()->set_dim_value(2);
           updateOutputShape(ctx, 0, result_shape_proto);
