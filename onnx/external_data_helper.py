@@ -456,7 +456,7 @@ def _is_valid_filename(filename: str) -> bool:
 
 def uses_external_data(tensor: TensorProto) -> bool:
     """Returns true if the tensor stores data in an external location."""
-    return (
+    return bool(
         tensor.HasField("data_location")
         and tensor.data_location == TensorProto.EXTERNAL
     )

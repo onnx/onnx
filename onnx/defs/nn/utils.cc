@@ -5,6 +5,7 @@
 #include "onnx/defs/nn/utils.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace defs {

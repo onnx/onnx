@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#include <filesystem>
+#include <filesystem> // NOLINT(build/c++17)
 #include <fstream>
 #include <memory>
 #include <string>

@@ -110,7 +110,6 @@ def convert_to_proto3(lines: Iterable[str]) -> Iterable[str]:
 def gen_proto3_code(
     protoc_path: str, proto3_path: str, include_path: str, cpp_out: str, python_out: str
 ) -> None:
-    print(f"Generate pb3 code using {protoc_path}")
     build_args = [protoc_path, proto3_path, "-I", include_path]
     build_args.extend(["--cpp_out", cpp_out, "--python_out", python_out])
     subprocess.run(build_args, check=True)  # noqa: S603
@@ -157,10 +156,8 @@ def convert(
     proto = qualify(f"{proto_base}.proto", pardir=output)
     proto3 = qualify(f"{proto_base}.proto3", pardir=output)
 
-    print(f"Processing {proto_in}")
     with open(proto_in, encoding="utf-8") as fin:
         source = fin.read()
-        print(f"Writing {proto}")
         with open(proto, "w", newline="", encoding="utf-8") as fout:
             fout.write(autogen_header)
             fout.write(
@@ -168,7 +165,6 @@ def convert(
             )
             if lite:
                 fout.write(LITE_OPTION)
-        print(f"Writing {proto3}")
         with open(proto3, "w", newline="", encoding="utf-8") as fout:
             fout.write(autogen_header)
             fout.write(
@@ -182,7 +178,6 @@ def convert(
             gen_proto3_code(protoc_path, proto3, base_dir, base_dir, base_dir)
             pb3_files = glob.glob(os.path.join(porto3_dir, f"{proto_base}.proto3.*"))
             for pb3_file in pb3_files:
-                print(f"Removing {pb3_file}")
                 os.remove(pb3_file)
 
         if need_rename:
@@ -190,7 +185,6 @@ def convert(
                 proto_header = qualify(f"{stem}-ml.pb.h", pardir=output)
             else:
                 proto_header = qualify(f"{stem}.pb.h", pardir=output)
-            print(f"Writing {proto_header}")
             with open(proto_header, "w", newline="", encoding="utf-8") as fout:
                 fout.write("#pragma once\n")
                 fout.write(f'#include "{proto_base}.pb.h"\n')
@@ -206,7 +200,6 @@ def convert(
         else:
             pb2_py = qualify(f"{stem.replace('-', '_')}_pb2.py", pardir=output)
 
-    print(f"generating {pb_py}")
     with open(pb_py, "w", encoding="utf-8") as f:
         f.write(
             dedent(
