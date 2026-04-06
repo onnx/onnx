@@ -1,0 +1,66 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test Quick Start Notebook
+
+on:
+  pull_request:
+    paths:
+      - 'examples/quickstart.ipynb'
+  push:
+    branches: [main]
+    paths:
+      - 'examples/quickstart.ipynb'
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly
+
+permissions:
+  contents: read
+
+jobs:
+  test-notebook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install jupyter nbconvert ipykernel
+          pip install onnx torch onnxruntime numpy onnxscript
+          python -m ipykernel install --user
+
+      - name: Check kernel registration
+        run: |
+          jupyter kernelspec list
+          python -c "import ipykernel; print('ipykernel version:', ipykernel.__version__)"
+
+      - name: Execute notebook
+        run: |
+          jupyter execute \
+            --timeout=300 \
+            --kernel_name=python3 \
+            examples/quickstart.ipynb
+
+      - name: Show cell outputs
+        if: always()
+        run: |
+          python3 -c "
+          import json
+          nb = json.load(open('examples/quickstart.ipynb'))
+          for i, cell in enumerate(nb['cells']):
+              if cell['cell_type'] == 'code':
+                  print(f'--- Cell {i} (execution_count={cell.get(\"execution_count\")}) ---')
+                  print('SOURCE:', ''.join(cell['source'])[:200])
+                  for out in cell.get('outputs', []):
+                      text = out.get('text') or out.get('traceback') or [out.get('data', {}).get('text/plain', '')]
+                      print('OUTPUT:', ''.join(text)[:300])
+                  print()
+          "
