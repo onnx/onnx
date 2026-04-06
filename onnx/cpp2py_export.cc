@@ -691,7 +691,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       nb::arg("skip_opset_compatibility_check") = false,
       nb::arg("check_custom_domain") = false);
 
-  checker.def("_resolve_external_data_location", &checker::resolve_external_data_location);
+  checker.def("_open_external_data", &checker::open_external_data);
 
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
