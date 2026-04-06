@@ -4417,6 +4417,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (25, 32, 32, 32))]
         )
 
+    def test_conv_transpose_group_not_divisible(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (1, 32, 14, 14)),
+                ("W", TensorProto.FLOAT, (32, 64, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", group=3)],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def test_mvn_function_output_shape(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (25, 48, 16, 16))],

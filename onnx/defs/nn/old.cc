@@ -609,6 +609,15 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
     return; // Input tensor should have at least two dimensions.
   }
 
+  // Validate that the number of input channels (C) is divisible by group.
+  if (input_shape.dim(1).has_dim_value()) {
+    int64_t in_channels = input_shape.dim(1).dim_value();
+    if (in_channels % group != 0) {
+      fail_shape_inference(
+          "The number of input channels (", in_channels, ") is not divisible by the group attribute (", group, ").");
+    }
+  }
+
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
@@ -2930,6 +2939,15 @@ static void convTransposeShapeInference1(InferenceContext& ctx) {
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     return; // Input tensor should have at least two dimensions.
+  }
+
+  // Validate that the number of input channels (C) is divisible by group.
+  if (input_shape.dim(1).has_dim_value()) {
+    int64_t in_channels = input_shape.dim(1).dim_value();
+    if (in_channels % group != 0) {
+      fail_shape_inference(
+          "The number of input channels (", in_channels, ") is not divisible by the group attribute (", group, ").");
+    }
   }
 
   // first dim is the batch axis and the next is the number of channels.
