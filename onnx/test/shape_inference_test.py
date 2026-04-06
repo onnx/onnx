@@ -234,6 +234,50 @@ class TestShapeInference(TestShapeInferenceHelper):
         graph = self._make_graph(["y"], [], [])
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
+    def test_infer_types_ignores_shape_errors(self) -> None:
+        axes = make_tensor("axes", TensorProto.INT64, (1,), (1,))
+        x = make_tensor_value_info("x", TensorProto.FLOAT, (2,))
+        graph = make_graph(
+            [make_node("Squeeze", ["x", "axes"], ["y"])],
+            "test_infer_types_shape_error",
+            [x],
+            [],
+            initializer=[axes],
+        )
+        model = helper.make_model(
+            graph, opset_imports=[make_opsetid(ONNX_DOMAIN, defs.onnx_opset_version())]
+        )
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+        inferred = onnx.shape_inference.infer_types(model, strict_mode=True)
+        y_info = next(vi for vi in inferred.graph.value_info if vi.name == "y")
+        self.assertEqual(y_info.type.tensor_type.elem_type, TensorProto.FLOAT)
+        self.assertFalse(y_info.type.tensor_type.HasField("shape"))
+
+    def test_infer_types_does_not_copy_shape_into_empty_type_proto(self) -> None:
+        axes = make_tensor("axes", TensorProto.INT64, (1,), (1,))
+        x = make_tensor_value_info("x", TensorProto.FLOAT, (2,))
+        y = ValueInfoProto()
+        y.name = "y"
+        y.type.CopyFrom(TypeProto())
+        graph = make_graph(
+            [make_node("Squeeze", ["x", "axes"], ["y"])],
+            "test_infer_types_empty_type_proto",
+            [x],
+            [],
+            value_info=[y],
+            initializer=[axes],
+        )
+        model = helper.make_model(
+            graph, opset_imports=[make_opsetid(ONNX_DOMAIN, defs.onnx_opset_version())]
+        )
+
+        inferred = onnx.shape_inference.infer_types(model, strict_mode=True)
+        y_info = next(vi for vi in inferred.graph.value_info if vi.name == "y")
+        self.assertEqual(y_info.type.tensor_type.elem_type, TensorProto.FLOAT)
+        self.assertFalse(y_info.type.tensor_type.HasField("shape"))
+
     def _identity_prop(self, op: str, **kwargs: Any) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (30, 4, 5))],
