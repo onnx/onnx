@@ -4,6 +4,8 @@
 
 #include "onnx/checker.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
 #include <string>
@@ -13,6 +15,7 @@
 
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
+#include "onnx/common/proto_util.h"
 #include "onnx/common/scoped_resource.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"
@@ -799,6 +802,68 @@ void check_opset_compatibility(
   }
 }
 
+namespace {
+enum class VisitState : uint8_t { Unvisited, InPath, Done };
+} // namespace
+
+static void DetectCycleDFS(
+    const std::string& func_id,
+    const std::unordered_map<std::string, std::vector<std::string>>& call_graph,
+    std::unordered_map<std::string, VisitState>& state,
+    std::vector<std::string>& path) {
+  state[func_id] = VisitState::InPath;
+  path.push_back(func_id);
+
+  if (auto it = call_graph.find(func_id); it != call_graph.end()) {
+    for (const auto& callee : it->second) {
+      if (auto s = state[callee]; s == VisitState::InPath) {
+        auto start = std::find(path.begin(), path.end(), callee);
+        std::string cycle;
+        for (auto cit = start; cit != path.end(); ++cit)
+          cycle += (cit == start ? "" : " -> ") + *cit;
+        fail_check(
+            "Cycle detected in model-local function references: ",
+            cycle,
+            " -> ",
+            callee,
+            ". Self-referencing or cyclically-referencing functions would cause infinite recursion.");
+      } else if (s == VisitState::Unvisited) {
+        DetectCycleDFS(callee, call_graph, state, path);
+      }
+    }
+  }
+
+  path.pop_back();
+  state[func_id] = VisitState::Done;
+}
+
+void check_function_call_cycles(const ModelProto& model) {
+  // Build function map with consistent key format from proto_util.h
+  std::unordered_map<std::string, const FunctionProto*> func_map;
+  for (const auto& f : model.functions()) {
+    func_map[GetFunctionImplId(f)] = &f;
+  }
+
+  // Build adjacency list: for each function, which other model-local functions does it call?
+  std::unordered_map<std::string, std::vector<std::string>> call_graph;
+  for (const auto& [func_id, func_proto] : func_map) {
+    auto& callees = call_graph[func_id];
+    for (const auto& node : func_proto->node()) {
+      if (auto key = GetCalleeId(node); func_map.count(key)) {
+        callees.push_back(std::move(key));
+      }
+    }
+  }
+
+  std::unordered_map<std::string, VisitState> state;
+  std::vector<std::string> path;
+  for ([[maybe_unused]] const auto& [func_id, func_proto] : func_map) {
+    if (state[func_id] == VisitState::Unvisited) {
+      DetectCycleDFS(func_id, call_graph, state, path);
+    }
+  }
+}
+
 void check_model_local_functions(
     const ModelProto& model,
     const CheckerContext& ctx,
@@ -818,6 +883,8 @@ void check_model_local_functions(
       }
     }
   }
+
+  check_function_call_cycles(model);
 
   CheckerContext ctx_copy = ctx;
   ctx_copy.set_opset_imports(model_opset_imports);
