@@ -23,15 +23,20 @@ endif()
 
 # https://reproducible-builds.org/docs/source-date-epoch/
 if(DEFINED ENV{SOURCE_DATE_EPOCH})
-  execute_process(
-    COMMAND "date" "-u" "-d" "@$ENV{SOURCE_DATE_EPOCH}" "+%Y-%m-%d"
-    OUTPUT_VARIABLE BUILD_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  # Use Python to convert the epoch timestamp to a date string.
+  # The date command's -d flag is GNU-only and fails on macOS/BSD.
+  find_package(Python3 COMPONENTS Interpreter QUIET)
+  if(Python3_FOUND)
+    execute_process(
+      COMMAND ${Python3_EXECUTABLE} -c
+        "import datetime; print(datetime.datetime.fromtimestamp($ENV{SOURCE_DATE_EPOCH}, tz=datetime.timezone.utc).strftime('%Y-%m-%d'))"
+      OUTPUT_VARIABLE BUILD_DATE
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+  else()
+    string(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
+  endif()
 else()
-  execute_process(
-    COMMAND "date" "+%Y-%m-%d"
-    OUTPUT_VARIABLE BUILD_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  string(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
 endif()
 
 if(NOT BUILD_SHARED_LIBS)
