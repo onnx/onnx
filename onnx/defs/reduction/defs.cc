@@ -64,7 +64,27 @@ ONNX_OPERATOR_SET_SCHEMA(
     ReduceLogSumExp,
     18,
     OpSchema().FillUsing(ReduceFunctionOp("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body)));
+// Opset 21: Remove integer support (Log/Exp don't support integers)
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSumExp,
+    21,
+    OpSchema()
+        .FillUsing(ReduceFunctionOp("log sum exponent", EMPTY_MINUS_INF, reduce_log_sum_exp_func_body))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_float_types_ir4(),
+            "Constrain input and output types to float tensors."));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSum,
+    21,
+    OpSchema()
+        .FillUsing(ReduceFunctionOp("log sum", EMPTY_MINUS_INF, reduce_log_sum_func_body))
+        .TypeConstraint(
+            "T",
+            OpSchema::all_float_types_ir4(),
+            "Constrain input and output types to float tensors."));
+static const char* reduce_l1_func_body = R"ONNX(
 static constexpr const char* reduce_l1_func_body = R"ONNX(
   {
     data_abs = Abs(data)
