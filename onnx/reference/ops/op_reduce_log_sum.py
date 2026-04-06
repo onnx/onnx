@@ -14,6 +14,11 @@ class ReduceLogSum_1(OpRunReduceNumpy):
         if data.size == 0:
             return self.reduce_constant(data, -np.inf, tax, keepdims)
         res = np.sum(data, axis=tax, keepdims=keepdims)  # type: ignore[arg-type]
+        # Cast to float to support integer inputs since np.log
+        # cannot write to an integer output buffer.
+        # See https://github.com/onnx/onnx/issues/7141
+        if not np.issubdtype(res.dtype, np.floating):
+            res = res.astype(np.float64)
         if len(res.shape) > 0:
             return (np.log(res, out=res),)
         return (np.log(res),)
@@ -29,6 +34,11 @@ class ReduceLogSum_18(OpRunReduceNumpy):
             return self.reduce_constant(data, -np.inf, axes, keepdims)
 
         res = np.sum(data, axis=axes, keepdims=keepdims)
+        # Cast to float to support integer inputs since np.log
+        # cannot write to an integer output buffer.
+        # See https://github.com/onnx/onnx/issues/7141
+        if not np.issubdtype(res.dtype, np.floating):
+            res = res.astype(np.float64)
         if len(res.shape) > 0:
             return (np.log(res, out=res),)
         return (np.log(res),)
