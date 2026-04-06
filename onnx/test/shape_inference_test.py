@@ -834,6 +834,52 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @parameterized.expand(all_versions_for("Reshape"))
+    def test_reshape_dynamic_zero_input_no_allowzero(self, _, version) -> None:
+        if version >= 14:
+            graph = self._make_graph(
+                [
+                    ("x", TensorProto.UINT8, (0, 4, 3)),
+                    ("shape", TensorProto.INT64, (3,)),
+                ],
+                [make_node("Reshape", ["x", "shape"], ["y"], allowzero=0)],
+                [],
+                initializer=[make_tensor("shape", TensorProto.INT64, (3,), (1, 12, -1))],
+            )
+        else:
+            graph = self._make_graph(
+                [
+                    ("x", TensorProto.UINT8, (0, 4, 3)),
+                    ("shape", TensorProto.INT64, (3,)),
+                ],
+                [make_node("Reshape", ["x", "shape"], ["y"])],
+                [],
+                initializer=[make_tensor("shape", TensorProto.INT64, (3,), (1, 12, -1))],
+            )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (1, 12, None))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Reshape"))
+    def test_reshape_dynamic_zero_input_with_allowzero(self, _, version) -> None:
+        self.skipIf(version < 14, "allowzero is added from Version 14")
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.UINT8, (0, 4, 3)),
+                ("shape", TensorProto.INT64, (3,)),
+            ],
+            [make_node("Reshape", ["x", "shape"], ["y"], allowzero=1)],
+            [],
+            initializer=[make_tensor("shape", TensorProto.INT64, (3,), (1, 12, -1))],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.UINT8, (1, 12, 0))],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     @parameterized.expand(all_versions_for("Upsample"))
     def test_upsample(self, _, version) -> None:
         if version == 7:
