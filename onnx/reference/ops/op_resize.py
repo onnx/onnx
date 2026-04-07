@@ -275,6 +275,23 @@ def _interpolate_nd_with_x(
             exclude_outside=exclude_outside,
             **kwargs,
         )
+    # When scale_factor is 1.0 for this dimension and the size is unchanged,
+    # the interpolation is an identity mapping: the output coordinate maps
+    # directly to the same input coordinate. Skip iterating over all input
+    # elements in this dimension and index directly for a large speedup on
+    # pass-through dimensions (e.g. batch and channel).
+    if scale_factors[0] == 1.0 and output_size[0] == data.shape[0]:
+        return _interpolate_nd_with_x(
+            data[int(x[0])],
+            n - 1,
+            scale_factors[1:],
+            output_size[1:],
+            x[1:],
+            get_coeffs,
+            roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
+            exclude_outside=exclude_outside,
+            **kwargs,
+        )
     res1d = []
     for i in range(data.shape[0]):
         r = _interpolate_nd_with_x(
