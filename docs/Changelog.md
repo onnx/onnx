@@ -20922,7 +20922,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -21006,7 +21006,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -21046,7 +21046,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -23296,7 +23296,7 @@ This version of the operator has been available since version 19 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -25198,7 +25198,7 @@ This version of the operator has been available since version 21 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -28951,7 +28951,7 @@ This version of the operator has been available since version 23 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -30554,7 +30554,7 @@ This version of the operator has been available since version 24 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -32034,7 +32034,7 @@ This version of the operator has been available since version 25 of the default 
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 

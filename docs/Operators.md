@@ -6040,7 +6040,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -15284,7 +15284,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -15369,7 +15369,7 @@ This version of the operator has been available since version 17 of the default 
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain the input size to int64_t.</dd>
+<dd>Constrain the input size to int32_t or int64_t.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain output types to numeric tensors.</dd>
 </dl>
@@ -16420,7 +16420,9 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 <summary>instancenormalization</summary>
 
 ```python
-def _instancenorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
+def _instancenorm_test_mode(
+    x: np.ndarray, s: np.ndarray, bias: np.ndarray, epsilon: float = 1e-5
+) -> np.ndarray:
     dims_x = len(x.shape)
     axis = tuple(range(2, dims_x))
     mean = np.mean(x, axis=axis, keepdims=True)
@@ -23460,7 +23462,7 @@ expect(node, inputs=[x, slope], outputs=[y], name="test_prelu_broadcast")
   Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
   a padded tensor (`output`) is generated.
 
-  The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+  The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
   1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
