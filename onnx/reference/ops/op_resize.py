@@ -275,23 +275,6 @@ def _interpolate_nd_with_x(
             exclude_outside=exclude_outside,
             **kwargs,
         )
-    # When scale_factor is 1.0 for this dimension and the size is unchanged,
-    # the interpolation is an identity mapping: the output coordinate maps
-    # directly to the same input coordinate. Skip iterating over all input
-    # elements in this dimension and index directly for a large speedup on
-    # pass-through dimensions (e.g. batch and channel).
-    if scale_factors[0] == 1.0 and output_size[0] == data.shape[0]:
-        return _interpolate_nd_with_x(
-            data[int(x[0])],
-            n - 1,
-            scale_factors[1:],
-            output_size[1:],
-            x[1:],
-            get_coeffs,
-            roi=None if roi is None else np.concatenate([roi[1:n], roi[n + 1 :]]),
-            exclude_outside=exclude_outside,
-            **kwargs,
-        )
     res1d = []
     for i in range(data.shape[0]):
         r = _interpolate_nd_with_x(
@@ -324,6 +307,117 @@ def _get_all_coords(data: np.ndarray) -> np.ndarray:
     return _cartesian(
         [list(range(data.shape[i])) for i in range(len(data.shape))]  # type: ignore[arg-type,misc]
     )
+
+
+def _interpolate_1d_along_axis(
+    data: np.ndarray,
+    axis: int,
+    scale_factor: float,
+    output_size_axis: int,
+    get_coeffs: Callable[[float, float], np.ndarray],
+    roi: np.ndarray | None = None,
+    extrapolation_value: float = 0.0,
+    coordinate_transformation_mode: str = "half_pixel",
+    exclude_outside: bool = False,
+) -> np.ndarray:
+    """Resize data along a single axis using vectorized operations.
+
+    Computes coordinate mappings and interpolation coefficients for all
+    output positions along the axis, then gathers neighbor values and
+    computes weighted sums using vectorized NumPy operations.
+    """
+    input_width = data.shape[axis]
+    output_width = scale_factor * input_width
+
+    # Compute x_ori for all output positions along this axis
+    x = np.arange(output_size_axis, dtype=np.float64)
+
+    if coordinate_transformation_mode == "align_corners":
+        if output_width == 1:
+            x_ori = np.zeros_like(x)
+        else:
+            x_ori = x * (input_width - 1) / (output_width - 1)
+    elif coordinate_transformation_mode == "asymmetric":
+        x_ori = x / scale_factor
+    elif coordinate_transformation_mode == "tf_crop_and_resize":
+        if roi is None:
+            raise ValueError("roi cannot be None.")
+        if output_width == 1:
+            x_ori = np.full_like(x, (roi[1] - roi[0]) * (input_width - 1) / 2)
+        else:
+            x_ori = x * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
+        x_ori = x_ori + roi[0] * (input_width - 1)
+    elif coordinate_transformation_mode == "pytorch_half_pixel":
+        if output_width == 1:
+            x_ori = np.full_like(x, -0.5)
+        else:
+            x_ori = (x + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "half_pixel":
+        x_ori = (x + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "half_pixel_symmetric":
+        adjustment = output_size_axis / output_width
+        center = input_width / 2
+        offset = center * (1 - adjustment)
+        x_ori = offset + (x + 0.5) / scale_factor - 0.5
+    else:
+        raise ValueError(
+            f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
+        )
+
+    # Compute ratios (in (0, 1], with 1 for integer positions)
+    x_ori_int = np.floor(x_ori).astype(int)
+    ratios = np.where(x_ori == x_ori_int, 1.0, x_ori - x_ori_int)
+
+    # Compute coefficients for each output position
+    coeff_list = [get_coeffs(float(r), scale_factor) for r in ratios]
+    n_coeffs = len(coeff_list[0])
+    coeffs_arr = np.stack(coeff_list)  # (output_size_axis, n_coeffs)
+
+    # Compute neighbor indices in padded coordinate space
+    pad_width = int(np.ceil(n_coeffs / 2))
+    padded_len = input_width + 2 * pad_width
+
+    neighbor_idxes = np.stack(
+        [
+            _get_neighbor_idxes(float(xo) + pad_width, n_coeffs, padded_len)
+            for xo in x_ori
+        ]
+    )  # (output_size_axis, n_coeffs)
+
+    # Apply exclude_outside
+    if exclude_outside:
+        orig_idxes = neighbor_idxes - pad_width
+        outside_mask = (orig_idxes < 0) | (orig_idxes >= input_width)
+        coeffs_arr = coeffs_arr.copy()
+        coeffs_arr[outside_mask] = 0
+        coeff_sums = coeffs_arr.sum(axis=-1, keepdims=True)
+        coeffs_arr = coeffs_arr / coeff_sums
+
+    # Identify extrapolation positions for tf_crop_and_resize
+    extrap_mask = None
+    if coordinate_transformation_mode == "tf_crop_and_resize":
+        extrap_mask = (x_ori < 0) | (x_ori > input_width - 1)
+
+    # Vectorized gather and weighted sum
+    # Move target axis to last position
+    data_t = np.moveaxis(data, axis, -1)  # (..., input_width)
+
+    # Pad along the last axis
+    pad_config = [(0, 0)] * (data_t.ndim - 1) + [(pad_width, pad_width)]
+    padded = np.pad(data_t, pad_config, mode="edge")  # (..., padded_len)
+
+    # Gather neighbors: (..., output_size_axis, n_coeffs)
+    gathered = padded[..., neighbor_idxes]
+
+    # Weighted sum: (..., output_size_axis)
+    result = np.einsum("...jk,jk->...j", gathered, coeffs_arr)
+
+    # Apply extrapolation for tf_crop_and_resize
+    if extrap_mask is not None:
+        result[..., extrap_mask] = extrapolation_value
+
+    # Move axis back to original position
+    return np.moveaxis(result, -1, axis)
 
 
 def _interpolate_nd(
@@ -394,20 +488,26 @@ def _interpolate_nd(
     if output_size is None:
         raise ValueError("output_size is None.")
 
-    ret = np.zeros(output_size)
-    for x in _get_all_coords(ret):
-        ret[tuple(x)] = _interpolate_nd_with_x(
-            data,
-            len(data.shape),
-            scale_factors,
-            output_size,
-            x,
+    # Vectorized separable interpolation: resize one dimension at a time.
+    # This replaces the element-by-element Python loop with per-axis
+    # vectorized operations, reducing complexity from O(prod(output_shape))
+    # Python iterations to O(ndim) vectorized passes.
+    result = np.array(data, dtype=np.float64)
+    for d in range(r):
+        if scale_factors[d] == 1.0 and output_size[d] == result.shape[d]:
+            continue
+        roi_1d = None if roi is None else np.array([roi[d], roi[r + d]])
+        result = _interpolate_1d_along_axis(
+            result,
+            d,
+            scale_factors[d],
+            output_size[d],
             get_coeffs,
-            roi=roi,
+            roi=roi_1d,
             exclude_outside=exclude_outside,
             **kwargs,
         )
-    return ret
+    return result
 
 
 class Resize(OpRun):
