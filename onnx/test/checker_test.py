@@ -1175,7 +1175,6 @@ class TestChecker(unittest.TestCase):
         )
         self.assertRaises(checker.ValidationError, checker.check_model, model)
 
-
     def test_check_tensor_invalid_dims(self) -> None:
         """Reject tensors with overflowing or negative dimensions."""
         # Overflow: 2^62 * 2^62 exceeds int64
