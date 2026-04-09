@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
+#include <vector>
+
 #include "onnx/common/assertions.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
