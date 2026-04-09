@@ -1068,7 +1068,7 @@ std::filesystem::path resolve_external_data_location(
         "' points outside the directory.");
   }
   auto data_path = base_dir_path / relative_path;
-  auto data_path_str = data_path.string();
+  auto data_path_str = path_to_utf8(data_path);
   // Do not allow symlinks or directories.
   if (data_path.empty() || std::filesystem::is_symlink(data_path)) {
     fail_check(
