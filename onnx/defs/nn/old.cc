@@ -635,6 +635,16 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
         "Weight tensor must have at least 3 dimensions (C x M/group x k1...kn). Got: ", weight_shape.dim_size());
   }
 
+  const auto& input_channels_dim = input_shape.dim(1);
+  if (input_channels_dim.has_dim_value() && group > 0 && input_channels_dim.dim_value() % group != 0) {
+    fail_shape_inference(
+        "Input channels C must be divisible by group for ConvTranspose. C=",
+        input_channels_dim.dim_value(),
+        " group=",
+        group,
+        ".");
+  }
+
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
@@ -2984,6 +2994,16 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   if (weight_shape.dim_size() < 3) {
     fail_shape_inference(
         "Weight tensor must have at least 3 dimensions (C x M/group x k1...kn). Got: ", weight_shape.dim_size());
+  }
+
+  const auto& input_channels_dim = input_shape.dim(1);
+  if (input_channels_dim.has_dim_value() && group > 0 && input_channels_dim.dim_value() % group != 0) {
+    fail_shape_inference(
+        "Input channels C must be divisible by group for ConvTranspose. C=",
+        input_channels_dim.dim_value(),
+        " group=",
+        group,
+        ".");
   }
 
   // first dim is the batch axis and the next is the number of channels.
