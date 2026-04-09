@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "onnx/common/assertions.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
@@ -52,14 +53,16 @@ struct Tensor final {
   /// if tensor is a scalar, the sizes is empty, but the element number is actually 1.
   /// size_from_dim() cannot handle this case, while elem_num() handles it correctly
   int64_t elem_num() const {
-    return std::accumulate(sizes_.begin(), sizes_.end(), 1, std::multiplies<int64_t>{});
+    return safe_dim_product(sizes_, [](const char* msg) { throw tensor_error(msg); });
   }
   int64_t size_from_dim(int dim) const {
     if (dim < 0) {
       dim += static_cast<int>(sizes_.size());
     }
     ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size())
-    return std::accumulate(sizes_.begin() + dim, sizes_.end(), 1, std::multiplies<int64_t>{});
+    // Reuse safe_dim_product over a subrange without copying.
+    auto tail = std::vector<int64_t>(sizes_.begin() + dim, sizes_.end());
+    return safe_dim_product(tail, [](const char* msg) { throw tensor_error(msg); });
   }
 
   int32_t elem_type() const {
