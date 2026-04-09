@@ -9,11 +9,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '.github/workflows/pixi_build.yml'
-      - 'CMakeLists.txt'
-      - 'pixi.lock'
-      - 'pixi.toml'
 
 permissions:
   contents: read
@@ -46,7 +41,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@v0.9.4
+        uses: prefix-dev/setup-pixi@1b2de7f3351f171c8b4dfeb558c639cb58ed4ec0 # v0.9.5
         with:
           environments: ${{ matrix.environment }}
       - name: Install repository
@@ -56,7 +51,7 @@ jobs:
       - name: pytest
         run: pixi run -e ${{ matrix.environment }} pytest
       - name: Issue on failure
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         if: ${{ failure() && github.ref == 'refs/heads/main' }}
         with:
           script: |

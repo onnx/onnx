@@ -78,6 +78,7 @@ Various files in this project are auto generated and may have to be updated in a
 The easiest way to ensure that all files are up to date is by running the `gen-all` pixi task:
 
 ```
+pixi run install
 pixi run gen-all
 ```
 
