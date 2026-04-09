@@ -175,30 +175,27 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
     }
-    // Validate that raw_data is large enough for the declared packed sub-byte type and shape.
-    int64_t expected_bytes = 0;
-    switch (tensor.data_type()) {
-      case TensorProto::UINT4:
-      case TensorProto::INT4:
-      case TensorProto::FLOAT4E2M1:
-        expected_bytes = (nelem + 1) / 2; // 2 elements per byte, ceiling division
-        break;
-      case TensorProto::UINT2:
-      case TensorProto::INT2:
-        expected_bytes = (nelem + 3) / 4; // 4 elements per byte, ceiling division
-        break;
-      default:
-        break;
+    const int64_t bit_width = ElementBitWidth(tensor.data_type());
+    if (bit_width < 0) {
+      fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
     }
-    if (expected_bytes > 0 && static_cast<int64_t>(tensor.raw_data().size()) < expected_bytes) {
-      fail_check(
-          "TensorProto (tensor name: ",
-          tensor.name(),
-          ") raw_data size (",
-          tensor.raw_data().size(),
-          " bytes) is too small for the declared shape and packed type (",
-          expected_bytes,
-          " bytes required).");
+    // A segmented tensor holds only one chunk, so dims do not describe raw_data.
+    if (nelem > 0 && !tensor.has_segment()) {
+      int64_t total_bits = 0;
+      if (checked_mul_overflow(nelem, bit_width, &total_bits) || checked_add_overflow(total_bits, 7, &total_bits)) {
+        fail_check("Tensor byte size overflow (tensor name: ", tensor.name(), ")");
+      }
+      const int64_t expected_bytes = total_bits / 8;
+      const int64_t actual_bytes = static_cast<int64_t>(tensor.raw_data().size());
+      if (actual_bytes < expected_bytes) {
+        fail_check(
+            "raw_data size mismatch for tensor '",
+            tensor.name(),
+            "': expected at least ",
+            expected_bytes,
+            " bytes based on dimensions, got ",
+            actual_bytes);
+      }
     }
     return;
   } else {

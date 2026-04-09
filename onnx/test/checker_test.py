@@ -1419,6 +1419,64 @@ class TestChecker:
         tensor3.name = "t"
         checker.check_tensor(tensor3)
 
+    @staticmethod
+    def _raw_data_tensor(dtype: int, dims: list[int], nbytes: int) -> TensorProto:
+        tensor = TensorProto()
+        tensor.data_type = dtype
+        tensor.dims.extend(dims)
+        tensor.name = "t"
+        tensor.raw_data = b"\x00" * nbytes
+        return tensor
+
+    def test_check_tensor_raw_data_size(self) -> None:
+        """Reject whole-byte tensors whose raw_data payload is too small."""
+        # (data type, bytes per element)
+        cases = [
+            (TensorProto.BOOL, 1),
+            (TensorProto.UINT8, 1),
+            (TensorProto.FLOAT8E4M3FN, 1),
+            (TensorProto.FLOAT16, 2),
+            (TensorProto.BFLOAT16, 2),
+            (TensorProto.FLOAT, 4),
+            (TensorProto.INT32, 4),
+            (TensorProto.DOUBLE, 8),
+            (TensorProto.INT64, 8),
+            (TensorProto.COMPLEX64, 8),
+            (TensorProto.COMPLEX128, 16),
+        ]
+        for dtype, elem_size in cases:
+            with pytest.raises(checker.ValidationError):
+                checker.check_tensor(
+                    self._raw_data_tensor(dtype, [4], 4 * elem_size - 1)
+                )
+            # Exactly enough bytes must pass.
+            checker.check_tensor(self._raw_data_tensor(dtype, [4], 4 * elem_size))
+
+        # Trailing bytes are accepted: external data loaded without a length key reads to EOF.
+        checker.check_tensor(self._raw_data_tensor(TensorProto.FLOAT, [4], 64))
+
+        # Segmented tensors are skipped: raw_data holds one chunk of the tensor dims describe.
+        tensor = self._raw_data_tensor(TensorProto.FLOAT, [1000], 16)
+        tensor.segment.begin = 0
+        tensor.segment.end = 4
+        checker.check_tensor(tensor)
+
+        # An unrecognized data_type has no known element size.
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(self._raw_data_tensor(99, [4], 16))
+
+        # Byte-size overflow is reported instead of overflowing int64 internally.
+        # 2**63 - 1 elements overflow the multiplication; (2**63 - 2) // 2 two-bit
+        # elements fit it, and overflow the rounding-up addition instead.
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(
+                self._raw_data_tensor(TensorProto.FLOAT, [2**63 - 1], 1)
+            )
+        with pytest.raises(checker.ValidationError):
+            checker.check_tensor(
+                self._raw_data_tensor(TensorProto.INT2, [(2**63 - 2) // 2], 1)
+            )
+
     def test_check_tensor_packed_subbyte_raw_data(self) -> None:
         """Reject packed sub-byte tensors whose raw_data payload is too small."""
         # 4-bit types (INT4, UINT4, FLOAT4E2M1): 2 elements per byte.
