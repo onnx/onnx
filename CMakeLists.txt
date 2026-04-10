@@ -467,7 +467,7 @@ if(ONNX_BUILD_PYTHON)
   # find system nanobind
   if(NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL "")
     execute_process(
-      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake-dir
+      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake_dir
       RESULT_VARIABLE NANOBIND_CMAKE_RESULT
       OUTPUT_VARIABLE NANOBIND_CMAKE_DIR
       OUTPUT_STRIP_TRAILING_WHITESPACE
