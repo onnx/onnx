@@ -103,7 +103,7 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 
 **Vulnerability disclosure**: Reports via GitHub Security Advisories (preferred) or onnx-security@lists.lfaidata.foundation as a fallback; CVE assignment through Linux Foundation CNA. See [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md).
 
-**Code review**: All changes require maintainer review; security-sensitive changes require Architecture SIG review; one approval for dependency updates; automated checks must pass before merge ([CODEOWNERS](https://github.com/onnx/onnx/blob/main/.github/CODEOWNERS)).
+**Code review**: All changes require maintainer review; security-sensitive changes require Architecture SIG review; one approval for dependency updates; automated checks must pass before merge ([CODEOWNERS](https://github.com/onnx/onnx/blob/main/CODEOWNERS)).
 
 **Build & distribution**: artifacts signed with Sigstore; PyPI Trusted Publishing with 2FA required for maintainers; SHA256 checksums published; actions pinned to SHA in CI.
 
