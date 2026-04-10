@@ -60,9 +60,7 @@ struct Tensor final {
       dim += static_cast<int>(sizes_.size());
     }
     ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size())
-    // Reuse safe_dim_product over a subrange without copying.
-    auto tail = std::vector<int64_t>(sizes_.begin() + dim, sizes_.end());
-    return safe_dim_product(tail, [](const char* msg) { throw tensor_error(msg); });
+    return safe_dim_product(sizes_.begin() + dim, sizes_.end(), [](const char* msg) { throw tensor_error(msg); });
   }
 
   int32_t elem_type() const {

@@ -50,9 +50,9 @@ namespace ONNX_NAMESPACE {
           " Actual:",                                                                                              \
           Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));                                      \
     }                                                                                                              \
-    int64_t num_elements = safe_dim_product(tensor_proto->dims(), [&](const char* msg) {                             \
-      fail_shape_inference(msg, " for tensor: ", tensor_proto->name());                                             \
-    });                                                                                                              \
+    int64_t num_elements = safe_dim_product(tensor_proto->dims(), [&](const char* msg) {                           \
+      fail_shape_inference(msg, " for tensor: ", tensor_proto->name());                                            \
+    });                                                                                                            \
     std::vector<type> res;                                                                                         \
     if (tensor_proto->has_data_location() && tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) { \
       fail_shape_inference(                                                                                        \
@@ -88,7 +88,7 @@ namespace ONNX_NAMESPACE {
     if (checked_mul_overflow(num_elements, static_cast<int64_t>(element_size), &required_bytes)) {                 \
       fail_shape_inference("Tensor byte size overflow for tensor: ", tensor_proto->name());                        \
     }                                                                                                              \
-    if (static_cast<int64_t>(raw_data.size()) < required_bytes) {                                                  \
+    if (raw_data.size() < static_cast<size_t>(required_bytes)) {                                                   \
       fail_shape_inference(                                                                                        \
           "Data size mismatch. Tensor: ",                                                                          \
           tensor_proto->name(),                                                                                    \
