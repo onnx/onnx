@@ -93,7 +93,12 @@ lintrunner = ">=0.10.7"
 lintrunner-adapters = ">=0.12.3"
 editorconfig-checker = "==3.2.1"
 
+[feature.link-checker.dependencies]
+lychee = ">=0.23.0"
+[feature.link-checker.tasks.link-checker]
+cmd = "pixi exec lychee --root-dir . ."
 
 [environments]
 default = ["dev", "lint", "reference"]
 oldies = ["dev", "lint", "reference", "oldies"]
+link-checker = {features=["link-checker"], no-default-feature=true}
