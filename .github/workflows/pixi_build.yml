@@ -5,10 +5,10 @@
 name: Pixi CI
 
 on:
-  schedule:
-    # run weekly on Sunday 23:59
-    - cron:  '29 23 * * SUN'
+  pull_request:
   push:
+    branches:
+      - main
     paths:
       - '.github/workflows/pixi_build.yml'
       - 'CMakeLists.txt'
@@ -24,13 +24,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  install-lint:
+  install-and-test:
     name: Install and test (${{ matrix.os }}, ${{ matrix.environment }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os:
+          - ubuntu-24.04-arm
           - ubuntu-latest
           - macos-latest
           - windows-latest
