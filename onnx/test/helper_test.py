@@ -438,6 +438,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 22)], 10)
         test([("", 23)], 11)
         test([("", 24)], 12)
+        test([("", 25)], 13)
+        test([("", 26)], 13)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
@@ -960,7 +962,7 @@ class TestPrintableGraph(unittest.TestCase):
 @pytest.mark.parametrize(
     "tensor_dtype",
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
-    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
+    ids=helper.tensor_dtype_to_string,
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
     np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
@@ -1000,7 +1002,7 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
 @pytest.mark.parametrize(
     "tensor_dtype",
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
-    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
+    ids=helper.tensor_dtype_to_string,
 )
 @pytest.mark.parametrize(
     "vals_as_bytes",

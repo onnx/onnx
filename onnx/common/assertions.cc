@@ -10,6 +10,7 @@
 #include <array>
 #include <cstdarg>
 #include <cstdio>
+#include <string>
 
 #include "onnx/common/common.h"
 

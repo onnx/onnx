@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#ifndef ONNX_INLINER_INLINER_H_
+#define ONNX_INLINER_INLINER_H_
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -141,3 +144,5 @@ class Renamer {
 
 } // namespace inliner
 } // namespace ONNX_NAMESPACE
+
+#endif // ONNX_INLINER_INLINER_H_

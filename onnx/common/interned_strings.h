@@ -197,7 +197,7 @@ enum BuiltinSymbol : std::uint8_t {
 
 struct Symbol {
   Symbol() = default;
-  // NOLINTNEXTLINE(google-explicit-constructor)
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ Symbol(BuiltinSymbol value) : value(value) {}
   explicit Symbol(const std::string& s);
   explicit Symbol(uint32_t value) : value(value) {}

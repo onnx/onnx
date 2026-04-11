@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -834,7 +834,7 @@ inline void unifyDim(const Dim& dim1, const Dim& dim2) {
     checkDimEquality(dim1.dim_value(), dim2.dim_value());
 }
 
-// TODO: The functionality of unifyDim is similar to that of
+// TODO(ONNX): The functionality of unifyDim is similar to that of
 // mergeInDimensionInfo. However, the error messages are different. Leaving this
 // duplication in-place to preserve error message content.
 inline void unifyDim(const Dim& source_dim, Dim& target_dim) {
@@ -884,8 +884,9 @@ inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int d
 inline void unifyDim(Dim& dim, int64_t value) {
   if (dim.has_dim_value()) {
     checkDimEquality(dim.dim_value(), value);
-  } else
+  } else {
     dim.set_dim_value(value);
+  }
 }
 
 // target-shape = Union (target-shape, source_shape)

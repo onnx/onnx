@@ -245,7 +245,7 @@ For full list refer to CMakeLists.txt
 **Default**: `ONNX_WERROR=OFF` in local builds, `ON` in CI and release pipelines.
 
 * `nanobind_DIR` can be set to the directory that contains `nanobindConfig.cmake` (for example,
-  `python -m nanobind --cmake-dir`) if CMake cannot find nanobind. You can also set
+  `python -m nanobind --cmake_dir`) if CMake cannot find nanobind. You can also set
   `CMAKE_PREFIX_PATH` instead.
 
 * `FETCHCONTENT_FULLY_DISCONNECTED` is intended for subsequent re-configures after

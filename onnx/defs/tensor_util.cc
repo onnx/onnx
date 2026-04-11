@@ -1,7 +1,7 @@
 // Copyright (c) ONNX Project Contributors
 //
 // SPDX-License-Identifier: Apache-2.0
-#include "tensor_util.h"
+#include "onnx/defs/tensor_util.h"
 
 #include <cstring>
 #include <string>
