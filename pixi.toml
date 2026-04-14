@@ -115,9 +115,16 @@ linkify-it-py = "*"
 [feature.docs.pypi-dependencies]
 sphinx-exec-code = "*"
 
+[feature.link-checker.dependencies]
+lychee = ">=0.23.0"
+[feature.link-checker.tasks.link-checker]
+cmd = "pixi exec lychee --root-dir . ."
+
+
 [environments]
 default = ["dev", "lint", "reference"]
 oldies = ["dev", "lint", "reference", "oldies"]
 # Keep a separate docs environment since some of those dependencies
 # may introduce upper bounds
 docs = ["dev", "lint", "reference", "docs"]
+link-checker = {features=["link-checker"], no-default-feature=true}
