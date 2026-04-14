@@ -1209,6 +1209,10 @@ static int try_kernel_contained_open(
     const std::string& location,
     const std::string& tensor_name,
     bool read_only) {
+  // Suppress unused parameter warnings for parameters that are only used
+  // in conditionally compiled code blocks
+  (void)tensor_name;
+  (void)read_only;
   int raw_dirfd = open(base_dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
   if (raw_dirfd < 0) {
     return -1;
