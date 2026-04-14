@@ -12,7 +12,7 @@ on:
     - cron:  '0 0 1 * *'
   workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 jobs:
@@ -29,5 +29,4 @@ jobs:
         environments: link-checker
 
     - name: Check links
-      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4 # v0.0.34
       run: pixi run link-checker
