@@ -326,10 +326,10 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
 endif()
 message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
 
-# function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
-# b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
-# orflow/contrib/cmake/tf_core_framework.cmake to solve the problem that
-# customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
+# function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from
+# https://github.com/tensorflow/tensorflow/blob/d2c3b873/tensorflow/contrib/cmake/tf_core_framework.cmake
+# to solve the problem that customized dir can't be specified when
+# calling PROTOBUF_GENERATE_CPP.
 function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   if(NOT ARGN)
     message(
@@ -459,7 +459,7 @@ if(ONNX_BUILD_PYTHON)
   # find system nanobind
   if(NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL "")
     execute_process(
-      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake-dir
+      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake_dir
       RESULT_VARIABLE NANOBIND_CMAKE_RESULT
       OUTPUT_VARIABLE NANOBIND_CMAKE_DIR
       OUTPUT_STRIP_TRAILING_WHITESPACE
