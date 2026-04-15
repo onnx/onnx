@@ -88,7 +88,10 @@ namespace ONNX_NAMESPACE {
     if (checked_mul_overflow(num_elements, static_cast<int64_t>(element_size), &required_bytes)) {                 \
       fail_shape_inference("Tensor byte size overflow for tensor: ", tensor_proto->name());                        \
     }                                                                                                              \
-    if (raw_data.size() < static_cast<size_t>(required_bytes)) {                                                   \
+    const size_t required_bytes_sz = safe_cast_to_size(required_bytes, [&](const char* msg) {                       \
+      fail_shape_inference(msg, " for tensor: ", tensor_proto->name());                                            \
+    });                                                                                                            \
+    if (raw_data.size() < required_bytes_sz) {                                                                     \
       fail_shape_inference(                                                                                        \
           "Data size mismatch. Tensor: ",                                                                          \
           tensor_proto->name(),                                                                                    \
@@ -98,7 +101,7 @@ namespace ONNX_NAMESPACE {
           raw_data.size());                                                                                        \
     }                                                                                                              \
     /* in case raw_data has extra bytes, we only parse the required bytes according to tensor shape */             \
-    raw_data.resize(static_cast<size_t>(required_bytes));                                                          \
+    raw_data.resize(required_bytes_sz);                                                                             \
     /* okay to remove const qualifier as we have already made a copy */                                            \
     char* bytes = raw_data.data();                                                                                 \
     /* onnx is little endian serialized always-tweak byte order if needed */                                       \

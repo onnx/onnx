@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 
@@ -60,6 +61,17 @@ template <typename Iter, typename ErrorHandler>
     }
   }
   return result;
+}
+
+// Safe cast from int64_t to size_t. Calls on_error if the value exceeds
+// size_t range (relevant for 32-bit platforms where size_t is 32 bits).
+// value must be non-negative (callers ensure this via prior overflow checks).
+template <typename ErrorHandler>
+[[nodiscard]] inline size_t safe_cast_to_size(int64_t value, ErrorHandler on_error) {
+  if (static_cast<uint64_t>(value) > std::numeric_limits<size_t>::max()) {
+    on_error("Value too large for this platform");
+  }
+  return static_cast<size_t>(value);
 }
 
 } // namespace ONNX_NAMESPACE
