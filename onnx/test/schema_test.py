@@ -17,6 +17,12 @@ if TYPE_CHECKING:
 
 
 class TestSchema(unittest.TestCase):
+    @staticmethod
+    def _tensor_type_proto(elem_type: int) -> onnx.TypeProto:
+        type_proto = onnx.TypeProto()
+        type_proto.tensor_type.elem_type = elem_type
+        return type_proto
+
     def test_get_schema(self) -> None:
         relu_schema = defs.get_schema("Relu")
         self.assertEqual(
@@ -52,16 +58,11 @@ class TestSchema(unittest.TestCase):
             kv_num_heads=2,
         )
 
-        def _tensor_type_proto(elem_type: int) -> onnx.TypeProto:
-            type_proto = onnx.TypeProto()
-            type_proto.tensor_type.elem_type = elem_type
-            return type_proto
-
         input_types = [
-            _tensor_type_proto(TensorProto.BFLOAT16),
-            _tensor_type_proto(TensorProto.BFLOAT16),
-            _tensor_type_proto(TensorProto.BFLOAT16),
-            _tensor_type_proto(TensorProto.BFLOAT16),
+            self._tensor_type_proto(TensorProto.BFLOAT16),
+            self._tensor_type_proto(TensorProto.BFLOAT16),
+            self._tensor_type_proto(TensorProto.BFLOAT16),
+            self._tensor_type_proto(TensorProto.BFLOAT16),
         ]
         function_proto = onnx.FunctionProto()
         function_proto.ParseFromString(
@@ -71,9 +72,13 @@ class TestSchema(unittest.TestCase):
             )
         )
 
-        self.assertIn(
-            ("CastLike", ("MaskTri", "AttnBias"), ("MaskTriTyped",)),
-            [(n.op_type, tuple(n.input), tuple(n.output)) for n in function_proto.node],
+        self.assertTrue(
+            any(
+                n.op_type == "CastLike"
+                and tuple(n.input) == ("MaskTri", "AttnBias")
+                and tuple(n.output) == ("MaskTriTyped",)
+                for n in function_proto.node
+            )
         )
         output_types = onnx.shape_inference.infer_function_output_types(
             function_proto, input_types, list(node.attribute)
