@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 import parameterized
 
 import onnx
-from onnx import defs
+from onnx import TensorProto, defs, helper
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -37,6 +37,48 @@ class TestSchema(unittest.TestCase):
         self.assertEqual(
             selu_schema.node_determinism, defs.OpSchema.NodeDeterminism.Deterministic
         )
+
+    def test_attention_context_dependent_function_with_bfloat16_causal_mask(
+        self,
+    ) -> None:
+        schema = defs.get_schema("Attention", 23)
+        self.assertTrue(schema.has_context_dependent_function)
+        node = helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask"],
+            ["Y"],
+            is_causal=1,
+            q_num_heads=2,
+            kv_num_heads=2,
+        )
+
+        def _tensor_type_proto(elem_type: int) -> onnx.TypeProto:
+            type_proto = onnx.TypeProto()
+            type_proto.tensor_type.elem_type = elem_type
+            return type_proto
+
+        input_types = [
+            _tensor_type_proto(TensorProto.BFLOAT16),
+            _tensor_type_proto(TensorProto.BFLOAT16),
+            _tensor_type_proto(TensorProto.BFLOAT16),
+            _tensor_type_proto(TensorProto.BFLOAT16),
+        ]
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [input_type.SerializeToString() for input_type in input_types],
+            )
+        )
+
+        self.assertIn(
+            ("CastLike", ("MaskTri", "AttnBias"), ("MaskTriTyped",)),
+            [(n.op_type, tuple(n.input), tuple(n.output)) for n in function_proto.node],
+        )
+        output_types = onnx.shape_inference.infer_function_output_types(
+            function_proto, input_types, list(node.attribute)
+        )
+        self.assertEqual(output_types[0].tensor_type.elem_type, TensorProto.BFLOAT16)
 
     def test_node_determinism(self) -> None:
         rand_schema = defs.get_schema("RandomNormalLike")
