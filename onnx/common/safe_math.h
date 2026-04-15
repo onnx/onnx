@@ -26,13 +26,13 @@ inline bool checked_mul_overflow(int64_t a, int64_t b, int64_t* result) {
 #endif
 }
 
-// Safe product of dims. Calls on_error(const char*) on negative dim or overflow.
-// on_error must not return (i.e. must throw or abort).
-template <typename DimsContainer, typename ErrorHandler>
-[[nodiscard]] inline int64_t safe_dim_product(const DimsContainer& dims, ErrorHandler on_error) {
+// Safe product of dims over an iterator range. Calls on_error(const char*) on
+// negative dim or overflow. on_error must not return (i.e. must throw or abort).
+template <typename Iter, typename ErrorHandler>
+[[nodiscard]] inline int64_t safe_dim_product(Iter begin, Iter end, ErrorHandler on_error) {
   int64_t result = 1;
-  for (auto d : dims) {
-    int64_t dim = static_cast<int64_t>(d);
+  for (auto it = begin; it != end; ++it) {
+    int64_t dim = static_cast<int64_t>(*it);
     if (dim < 0) {
       on_error("Negative dimension value");
       return result; // unreachable if on_error throws; guards against misuse
@@ -45,22 +45,10 @@ template <typename DimsContainer, typename ErrorHandler>
   return result;
 }
 
-// Iterator-pair overload for subranges (avoids container copy).
-template <typename Iter, typename ErrorHandler>
-[[nodiscard]] inline int64_t safe_dim_product(Iter begin, Iter end, ErrorHandler on_error) {
-  int64_t result = 1;
-  for (auto it = begin; it != end; ++it) {
-    int64_t dim = static_cast<int64_t>(*it);
-    if (dim < 0) {
-      on_error("Negative dimension value");
-      return result;
-    }
-    if (checked_mul_overflow(result, dim, &result)) {
-      on_error("Tensor dimension product overflow");
-      return result;
-    }
-  }
-  return result;
+// Container overload — delegates to the iterator-pair version.
+template <typename DimsContainer, typename ErrorHandler>
+[[nodiscard]] inline int64_t safe_dim_product(const DimsContainer& dims, ErrorHandler on_error) {
+  return safe_dim_product(dims.begin(), dims.end(), on_error);
 }
 
 // Safe cast from int64_t to size_t. Calls on_error if the value exceeds
