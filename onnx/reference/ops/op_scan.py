@@ -15,6 +15,10 @@ class Scan(OpRun):
             raise RuntimeError(
                 f"Parameter 'body' must have a method 'run', type {type(self.body)}."
             )
+        if self.num_scan_inputs <= 0:
+            raise RuntimeError(
+                f"Scan requires num_scan_inputs > 0, got {self.num_scan_inputs}."
+            )
         self.input_directions_ = [
             (
                 0
@@ -24,11 +28,12 @@ class Scan(OpRun):
             )
             for i in range(self.num_scan_inputs)
         ]
-        max_dir_in = max(self.input_directions_)
-        if max_dir_in != 0:
-            raise RuntimeError(
-                "Scan is not implemented for other output input_direction than 0."
-            )
+        if self.input_directions_:
+            max_dir_in = max(self.input_directions_)
+            if max_dir_in != 0:
+                raise RuntimeError(
+                    "Scan is not implemented for other output input_direction than 0."
+                )
         self.input_axes_ = [
             (
                 0
@@ -37,9 +42,12 @@ class Scan(OpRun):
             )
             for i in range(self.num_scan_inputs)
         ]
-        max_axe_in = max(self.input_axes_)
-        if max_axe_in != 0:
-            raise RuntimeError("Scan is not implemented for other input axes than 0.")
+        if self.input_axes_:
+            max_axe_in = max(self.input_axes_)
+            if max_axe_in != 0:
+                raise RuntimeError(
+                    "Scan is not implemented for other input axes than 0."
+                )
         self.input_names = self.body.input_names
         self.output_names = self.body.output_names
 
@@ -73,7 +81,7 @@ class Scan(OpRun):
         if max_axe_out != 0:
             raise RuntimeError("Scan is not implemented for other output axes than 0.")
 
-        state_names_in = self.input_names[: self.num_scan_inputs]
+        state_names_in = self.input_names[:num_loop_state_vars]
         state_names_out = self.output_names[: len(state_names_in)]
         scan_names_in = self.input_names[num_loop_state_vars:]
         scan_names_out = self.output_names[num_loop_state_vars:]
@@ -147,7 +155,10 @@ class Scan(OpRun):
             for i, name in enumerate(scan_names_out):
                 results[i].append(np.expand_dims(outputs[name], axis=0))
 
-        for res in results:
-            conc = np.vstack(res)
-            states.append(conc)
+        for i, res in enumerate(results):
+            if res:
+                states.append(np.concatenate(res, axis=0))
+            else:
+                dtype = scan_values[min(i, len(scan_values) - 1)].dtype
+                states.append(np.empty((0,), dtype=dtype))
         return self._check_and_fix_outputs(tuple(states))
