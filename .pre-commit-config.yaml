@@ -61,13 +61,13 @@ repos:
       #   types: [text]
       #   files: \.(md|yml|yaml)$
 
-      # - id: typos
-      #   name: typos
-      #   entry: pixi run typos --force-exclude
-      #   language: system
-      #   types: [text]
-      #   require_serial: true
-      #   exclude: "^docs/docsgen/"
+      - id: typos
+        name: typos
+        entry: pixi run typos --force-exclude
+        language: system
+        types: [text]
+        require_serial: true
+        exclude: "^docs/docsgen/"
 
       # REUSE license compliance
       - id: reuse
