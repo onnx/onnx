@@ -1,0 +1,84 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Tools are either builtin or managed through pixi environments.
+repos:
+  - repo: builtin
+    hooks:
+      - id: trailing-whitespace
+        exclude: "^docs/docsgen/source/_static/diff2html"
+      - id: end-of-file-fixer
+        exclude: "^docs/docsgen/source/_static/diff2html"
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-added-large-files
+
+  # Python linting and formatting
+  - repo: local
+    hooks:
+      - id: ruff-lint
+        name: ruff lint
+        entry: pixi run ruff check --force-exclude --fix
+        language: system
+        types_or: [python, pyi]
+        exclude: '(_pb2|\.setuptools-cmake-build/|^docs/)'
+
+      - id: ruff-format
+        name: ruff format
+        entry: pixi run ruff format --force-exclude
+        language: system
+        types: [python]
+        exclude: '(_pb2|\.setuptools-cmake-build/|^cmake/|^docs/)'
+
+      - id: mypy
+        name: mypy
+        entry: pixi run mypy --config-file=pyproject.toml
+        language: system
+        types: [python]
+        files: "^(onnx|tools)/"
+        exclude: '(^onnx/backend/test/|^onnx/reference/ops/|^onnx/test/|^onnx/reference/reference_evaluator\.py)'
+        require_serial: true
+
+      - id: clang-format
+        name: clang-format
+        entry: pixi run clang-format -i
+        language: system
+        types_or: [c, c++]
+        files: "^onnx/"
+
+      - id: namespace-check
+        name: namespace check (no hardcoded onnx namespace)
+        entry: pixi run python tools/check_namespace.py
+        language: system
+        types_or: [c, c++]
+        exclude: "^third_party/"
+
+      # prettier
+      - id: prettier
+        name: prettier
+        entry: pixi run prettier --write --list-different
+        language: system
+        types: [text]
+        files: \.(md|yml|yaml)$
+
+      - id: typos
+        name: typos
+        entry: pixi run typos --force-exclude
+        language: system
+        types: [text]
+        require_serial: true
+        exclude: "^docs/docsgen/"
+
+      # REUSE license compliance
+      - id: reuse
+        name: reuse lint
+        entry: pixi run reuse lint
+        language: system
+        pass_filenames: false
+
+      - id: shellcheck
+        name: shellcheck
+        entry: pixi run shellcheck
+        language: system
+        types: [shell]
