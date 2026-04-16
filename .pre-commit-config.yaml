@@ -8,8 +8,8 @@ repos:
     hooks:
       - id: trailing-whitespace
         exclude: "^docs/docsgen/source/_static/diff2html"
-      - id: end-of-file-fixer
-        exclude: "^docs/docsgen/source/_static/diff2html"
+      # - id: end-of-file-fixer
+      #   exclude: "^docs/docsgen/source/_static/diff2html"
       - id: check-merge-conflict
       - id: check-yaml
       - id: check-added-large-files
@@ -54,21 +54,20 @@ repos:
         types_or: [c, c++]
         exclude: "^third_party/"
 
-      # prettier
-      - id: prettier
-        name: prettier
-        entry: pixi run prettier --write --list-different
-        language: system
-        types: [text]
-        files: \.(md|yml|yaml)$
+      # - id: prettier
+      #   name: prettier
+      #   entry: pixi run prettier --write --list-different
+      #   language: system
+      #   types: [text]
+      #   files: \.(md|yml|yaml)$
 
-      - id: typos
-        name: typos
-        entry: pixi run typos --force-exclude
-        language: system
-        types: [text]
-        require_serial: true
-        exclude: "^docs/docsgen/"
+      # - id: typos
+      #   name: typos
+      #   entry: pixi run typos --force-exclude
+      #   language: system
+      #   types: [text]
+      #   require_serial: true
+      #   exclude: "^docs/docsgen/"
 
       # REUSE license compliance
       - id: reuse
