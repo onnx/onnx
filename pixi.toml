@@ -103,7 +103,7 @@ prettier = ">=3.8.1,<4"
 reuse = ">=5.1.1,<7"
 ruff = ">=0.15.7"
 shellcheck = ">=0.11.0"
-types-protobuf = ">=6.32.1.20260221"
+types-protobuf = ">=6.32.1.20260221,<7"
 typos = ">=1.44.0,<2"
 [feature.lint.pypi-dependencies]
 lintrunner = ">=0.10.7"

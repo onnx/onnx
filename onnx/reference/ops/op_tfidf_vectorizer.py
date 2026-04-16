@@ -212,28 +212,20 @@ class TfIdfVectorizer(OpRun):
                 Y[i] = f
         elif self.weighting_criteria_ == WeightingCriteria.IDF:
             if len(w) > 0:
-                p = 0
-                for _batch in range(B):
+                for p in range(B):
                     for i in range(row_size):
                         Y[p] = w[i] if frequencies[p] > 0 else 0
-                        p += 1
             else:
-                p = 0
-                for f in frequencies:
+                for p, f in enumerate(frequencies):
                     Y[p] = 1 if f > 0 else 0
-                    p += 1
         elif self.weighting_criteria_ == WeightingCriteria.TFIDF:
             if len(w) > 0:
-                p = 0
-                for _batch in range(B):
+                for p in range(B):
                     for i in range(row_size):
                         Y[p] = w[i] * frequencies[p]
-                        p += 1
             else:
-                p = 0
-                for f in frequencies:
+                for p, f in enumerate(frequencies):
                     Y[p] = f
-                    p += 1
         else:
             raise RuntimeError("Unexpected weighting_criteria.")
         return Y.reshape(output_dims)
