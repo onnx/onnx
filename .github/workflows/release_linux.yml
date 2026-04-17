@@ -130,6 +130,10 @@ jobs:
           python -m pip install -q --upgrade pip
           python -m pip install -q -r requirements-release_test.txt
 
+      - name: Check wheel contents
+        run: |
+          check-wheel-contents dist/*${{ matrix.architecture == 'x64' && env.MANYLINUX_WHEEL_X64 || env.MANYLINUX_WHEEL_ARM64 }}*.whl
+
       - name: Check abi3 compatibility with abi3audit
         run: |
           if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then

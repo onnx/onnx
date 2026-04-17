@@ -1,4 +1,5 @@
 abi3audit
+check-wheel-contents
 parameterized
 pytest
 pytest-cov

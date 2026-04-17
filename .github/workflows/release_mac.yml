@@ -123,6 +123,10 @@ jobs:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist
 
+    - name: Check wheel contents
+      run: |
+        arch -${{ matrix.target-architecture }} check-wheel-contents dist/*.whl
+
     - name: Test the wheel
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install --upgrade dist/*.whl
