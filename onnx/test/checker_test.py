@@ -1286,16 +1286,18 @@ class TestChecker(unittest.TestCase):
             checker.check_tensor(tensor)
 
     def test_convtranspose_input_channels_must_be_divisible_by_group(self):
-        model = onnx.parser.parse_model(
-            """
-            <ir_version: 7, opset_import: ["" : 17]>
-            test_model (float[N, 32, 14, 14] X) => (float[N, ?, ?, ?] Y)
-            <float[32, 64, 3, 3] W>
-            {
-                Y = ConvTranspose<group=3>(X, W)
-            }
-        """
+        node = helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=3)
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, ["N", 32, 14, 14]),
+                helper.make_tensor_value_info("W", TensorProto.FLOAT, [32, 64, 3, 3]),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
         )
+        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 17)], ir_version=7)
+
         with self.assertRaises(checker.ValidationError):
             checker.check_model(model, full_check=True)
 

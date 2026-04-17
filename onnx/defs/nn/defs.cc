@@ -1121,27 +1121,34 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
 
   int64_t group = getAttribute(ctx, "group", 1);
 
+  auto validate_input_channels_for_group = [](const TensorShapeProto& input_shape_proto, int64_t channel_group) {
+    if (input_shape_proto.dim_size() < 2) {
+      return;
+    }
+
+    const auto& input_channels_dim = input_shape_proto.dim(1);
+    if (input_channels_dim.has_dim_value() && channel_group > 0 && input_channels_dim.dim_value() % channel_group != 0) {
+      fail_shape_inference(
+          "Input channels C must be divisible by group for ConvTranspose. C=",
+          input_channels_dim.dim_value(),
+          " group=",
+          channel_group,
+          ".");
+    }
+  };
+
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
   }
+  validate_input_channels_for_group(input_shape, group);
 
   // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
   auto weight_shape = ctx.getInputType(1)->tensor_type().shape();
   if (weight_shape.dim_size() < 3) {
     fail_shape_inference(
         "Weight tensor must have at least 3 dimensions (C x M/group x k1...kn). Got: ", weight_shape.dim_size());
-  }
-
-  const auto& input_channels_dim = input_shape.dim(1);
-  if (input_channels_dim.has_dim_value() && group > 0 && input_channels_dim.dim_value() % group != 0) {
-    fail_shape_inference(
-        "Input channels C must be divisible by group for ConvTranspose. C=",
-        input_channels_dim.dim_value(),
-        " group=",
-        group,
-        ".");
   }
 
   // first dim is the batch axis and the next is the number of channels.
