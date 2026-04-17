@@ -72,6 +72,7 @@ extern const char kDoc_Size_ver24[];
 extern const char kDoc_Softplus_ver1[];
 extern const char kDoc_Softsign_ver1[];
 extern const char kDoc_SpaceToDepth_ver1[];
+extern const char kDoc_SpaceToDepth_ver27[];
 extern const char kDoc_Sqrt_ver6[];
 extern const char kDoc_Squeeze_ver24[];
 extern const char kDoc_Tan_ver7[];
