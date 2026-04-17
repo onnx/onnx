@@ -125,7 +125,7 @@ jobs:
 
     - name: Check wheel contents
       run: |
-        arch -${{ matrix.target-architecture }} check-wheel-contents dist/*.whl
+        check-wheel-contents dist/*.whl
 
     - name: Test the wheel
       run: |
