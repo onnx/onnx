@@ -1207,8 +1207,8 @@ int64_t open_external_data(
 static int try_kernel_contained_open(
     const std::string& base_dir,
     const std::string& location,
-    const std::string& tensor_name,
-    bool read_only) {
+    [[maybe_unused]] const std::string& tensor_name,
+    [[maybe_unused]] bool read_only) {
   int raw_dirfd = open(base_dir.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
   if (raw_dirfd < 0) {
     return -1;
