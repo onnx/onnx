@@ -16,7 +16,6 @@ import numpy as np
 import onnx
 import onnx.external_data_helper as ext_data
 import onnx.helper
-import onnx.onnx_cpp2py_export.checker as c_checker
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -290,19 +289,12 @@ class ModelContainer:
                 continue
 
             info = ext_data.ExternalDataInfo(tensor)
-            external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
-                base_dir, info.location, tensor.name
-            )
-            # Security checks (symlink, containment, hardlink) already performed
-            # by C++ _resolve_external_data_location() above.
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 
-            # Use O_NOFOLLOW where available for symlink protection
-            open_flags = os.O_RDONLY
-            if hasattr(os, "O_NOFOLLOW"):
-                open_flags |= os.O_NOFOLLOW
-            fd = os.open(external_data_file_path, open_flags)
+            fd = ext_data._open_external_data_fd(
+                base_dir, info.location, tensor.name, True
+            )
             with os.fdopen(fd, "rb") as data_file:
                 raw_data = ext_data._validate_external_data_file_bounds(
                     data_file, info, tensor.name
