@@ -1127,7 +1127,8 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     }
 
     const auto& input_channels_dim = input_shape_proto.dim(1);
-    if (input_channels_dim.has_dim_value() && channel_group > 0 && input_channels_dim.dim_value() % channel_group != 0) {
+    if (input_channels_dim.has_dim_value() && channel_group > 0 &&
+        input_channels_dim.dim_value() % channel_group != 0) {
       fail_shape_inference(
           "Input channels C must be divisible by group for ConvTranspose. C=",
           input_channels_dim.dim_value(),

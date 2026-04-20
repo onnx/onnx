@@ -1291,12 +1291,16 @@ class TestChecker(unittest.TestCase):
             [node],
             "test",
             [
-                helper.make_tensor_value_info("X", TensorProto.FLOAT, ["N", 32, 14, 14]),
+                helper.make_tensor_value_info(
+                    "X", TensorProto.FLOAT, ["N", 32, 14, 14]
+                ),
                 helper.make_tensor_value_info("W", TensorProto.FLOAT, [32, 64, 3, 3]),
             ],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
         )
-        model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 17)], ir_version=7)
+        model = helper.make_model(
+            graph, opset_imports=[helper.make_opsetid("", 17)], ir_version=7
+        )
 
         with self.assertRaises(checker.ValidationError):
             checker.check_model(model, full_check=True)
