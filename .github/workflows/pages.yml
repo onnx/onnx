@@ -27,28 +27,14 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@1b2de7f3351f171c8b4dfeb558c639cb58ed4ec0 # v0.9.5
         with:
-          python-version: '3.10'
-      - name: Install Dependencies
-        run: |
-          python -m pip install --quiet --upgrade pip setuptools wheel
-          python -m pip install -r docs/docsgen/source/requirements.txt
-          python -m pip install protobuf
-      - name: Uninstall onnx
-        run: python -m pip uninstall -y onnx
-      - name: Install onnx development version
-        run: |
-          sudo apt-get remove libprotobuf-dev protobuf-compiler
-          git submodule update --init --recursive
-          export CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_WERROR=ON"
-          export ONNX_ML=1
-          pip install .
+          environments: docs
+      - name: Install repository
+        run: pixi run -e docs install
       - name: Build Docs
-        run: |
-          cd docs/docsgen
-          make html
+        run: pixi run -e docs docs-build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
         with:

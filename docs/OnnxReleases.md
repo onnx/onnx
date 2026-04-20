@@ -69,10 +69,6 @@ RC-Candidates
 **Partner Validation**
 
  * User should install the rc-packages with `pip install onnx=={rc version}`
- * Test with onnxruntime package:
-     * Run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
-        * The scripts tests ONNX functions like `load`, `checker.check_model`, and `shape_inference.infer_shapes`, with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model.
-
  * Open Issues for external repos:
      * Create GitHub issues in converters' repos to provide them the package links and oppuruntity to test the release before it goes public.
         * https://github.com/microsoft/onnxruntime

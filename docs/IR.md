@@ -591,7 +591,7 @@ For tensor parallelism, tensors can be:
 
 Pipeline parallelism is indicated through optional pipeline stage identifiers that suggest how to distribute subgraphs across devices for pipelined execution.
 
-For more detailed information about multi-device execution patterns and examples, see the [Multi-Device Proposal](proposals/ONNXMultiDeviceProposal.md).
+For more detailed information about multi-device execution patterns and examples, see the [Multi-Device Proposal](proposals/0006-ONNXMultiDeviceProposal.md).
 
 ## Other Specification Documents
 

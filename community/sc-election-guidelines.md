@@ -55,7 +55,7 @@ The election will use [Condorcet ranking](https://en.wikipedia.org/wiki/Condorce
 For ONNX Steering Committee election, the Condorcet ranking with Schulze method will be performed twice. The individual Contributor votes gets tallied first to Member Companies, and the results of the Member Company votes are ranked again using the same method.
 
 ### Voting platform
-We will use Condorcet Internet Voting Service ([civs.cs.cornell.edu](https://civs.cs.cornell.edu/)) to collect votes from Contributors.
+We will use Condorcet Internet Voting Service ([civs.cs.cornell.edu](https://civs1.civs.us/)) to collect votes from Contributors.
 
 After votes are casted, the results of individual votes will be uploaded to ONNX Github election directory to ensure transparency.
 
