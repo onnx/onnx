@@ -327,6 +327,13 @@ def _interpolate_1d_along_axis(
     operation. Resize interpolation is separable along axes, so resizing an
     N-D tensor reduces to applying this routine once per axis.
     """
+    if output_width_int == 0:
+        # Zero-sized output along this axis — nothing to interpolate, but
+        # downstream code indexes ratios[0] / coeffs[0], so bail out early.
+        empty_shape = list(data.shape)
+        empty_shape[axis] = 0
+        return np.empty(empty_shape, dtype=data.dtype)
+
     input_width = data.shape[axis]
     output_width = scale_factor * input_width
     y = np.arange(output_width_int, dtype=np.float64)
@@ -443,6 +450,12 @@ def _interpolate_nd(
 ) -> np.ndarray:
     if output_size is None and scale_factors is None:
         raise ValueError("output_size is None and scale_factors is None.")
+
+    # roi is only meaningful for tf_crop_and_resize; for other modes it may
+    # arrive as an empty tensor. Normalize to None so downstream indexing
+    # (roi[axis], roi[axis + r]) doesn't fault on an empty array.
+    if roi is not None and np.asarray(roi).size == 0:
+        roi = None
 
     r = len(data.shape)
     if axes is not None:
