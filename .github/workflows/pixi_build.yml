@@ -12,7 +12,6 @@ on:
 
 permissions:
   contents: read
-  issues: write  # Needed to create an issue on failure
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,6 +40,10 @@ jobs:
   install-and-test:
     name: Install and test (${{ matrix.os }}, ${{ matrix.environment }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      issues: write  # Needed to create an issue on failure
+
     strategy:
       fail-fast: false
       matrix:
