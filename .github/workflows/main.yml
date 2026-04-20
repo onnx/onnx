@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, doc=${{ matrix.documentation }}
+    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}
     continue-on-error: ${{ matrix.os == 'windows-11-arm' }}
     strategy:
       fail-fast: false
@@ -38,48 +38,48 @@ jobs:
           - python_version: '3.14t'
             onnx_ml: 1
             debug_build: 1
-            documentation: 0
+            autogenerate_files: 0
             protobuf_type: 'Internal'
           - python_version: '3.14'
             onnx_ml: 1
             debug_build: 1
-            documentation: 0
+            autogenerate_files: 0
             protobuf_type: 'Internal'
           - python_version: '3.13'
             onnx_ml: 1
             debug_build: 1
             unity_build: 1
-            documentation: 1
+            autogenerate_files: 0
             protobuf_type: 'Internal'
           - python_version: '3.13t'
             onnx_ml: 1
             debug_build: 1
             unity_build: 0
-            documentation: 0
+            autogenerate_files: 0
             protobuf_type: 'Internal'
           - python_version: '3.13'
             onnx_ml: 1
             debug_build: 1
             unity_build: 0
-            documentation: 1
+            autogenerate_files: 0
             protobuf_type: 'Internal'
           - python_version: '3.12'
             onnx_ml: 1
             debug_build: 1
             unity_build: 0
-            documentation: 1
+            autogenerate_files: 0
             protobuf_type: 'Internal'
           - python_version: '3.11'
             onnx_ml: 1
             debug_build: 0
             unity_build: 0
-            documentation: 0
+            autogenerate_files: 1
             protobuf_type: 'External'
           - python_version: '3.10'
             onnx_ml: 0
             debug_build: 0
             unity_build: 0
-            documentation: 0
+            autogenerate_files: 0
             protobuf_type: 'Internal'
         exclude:
           - os: windows-11-arm
@@ -231,7 +231,7 @@ jobs:
       # Note that the test data should be generated with numpy>=2.0.
       # numpy 1.x and numpy 2.0 produce slightly different numerical values.
       - name: Test backend test data
-        if: matrix.documentation == 1 && startsWith(matrix.os,'ubuntu')
+        if: matrix.autogenerate_files == 1 && startsWith(matrix.os,'ubuntu')
         run: |
           python onnx/backend/test/cmd_tools.py generate-data --clean
           git status
@@ -253,13 +253,6 @@ jobs:
             echo "git diff for test generation without pillow returned failures. Please check updated node test files"
             exit 1
           fi
-
-      - name: Test documentation
-        if: matrix.documentation == 1
-        run: |
-          pip install -r docs/docsgen/source/requirements.txt
-          cd docs/docsgen && make text
-        continue-on-error: false
 
       - name: Run Python tests with numpy<2.0 (win, mac)
         # Python 3.13 support was added at numpy 2.1.0;
