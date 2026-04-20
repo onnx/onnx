@@ -41,7 +41,7 @@ cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
 [tasks.pytest]
 cmd = "pytest"
 
-[feature.lint.tasks.lint-install]
+[feature.lint.tasks.pre-commit-install]
 description = "Install prek hooks"
 cmd = "prek install"
 [feature.lint.tasks.lint]
@@ -95,7 +95,6 @@ python = "3.10.*"
 numpy = "==1.23.2"
 
 [feature.lint.dependencies]
-# follows requirements-lintrunner.txt
 clang-format = ">=22.1.1"
 mypy = ">=1.19.1"
 prek = ">=0.3.9"

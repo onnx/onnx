@@ -2,19 +2,19 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# Tools are either builtin or managed through pixi environments.
+# Tools are either builtin or managed through Pixi environments.
 repos:
   - repo: builtin
     hooks:
       - id: trailing-whitespace
         exclude: "^docs/docsgen/source/_static/diff2html"
+      # TODO: Enable this step which creates some churn
       # - id: end-of-file-fixer
       #   exclude: "^docs/docsgen/source/_static/diff2html"
       - id: check-merge-conflict
       - id: check-yaml
       - id: check-added-large-files
 
-  # Python linting and formatting
   - repo: local
     hooks:
       - id: ruff-lint
@@ -54,6 +54,7 @@ repos:
         types_or: [c, c++]
         exclude: "^third_party/"
 
+      # TODO: Enable this step which creates some churn
       # - id: prettier
       #   name: prettier
       #   entry: pixi run prettier --write --list-different
