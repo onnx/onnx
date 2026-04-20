@@ -108,7 +108,6 @@ pillow = "*"
 pydot = "*"
 sphinx = "<9"  # Seems to be required by sphinx-tabs?
 sphinx-copybutton = "*"
-sphinx-gallery = "*"
 sphinx-tabs = "*"
 setuptools = "<82"  # sphinx-tabs needs pkg_resources which was removed in 82
 linkify-it-py = "*"

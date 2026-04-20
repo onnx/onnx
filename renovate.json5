@@ -6,10 +6,12 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   // Only enable custom regex manager to avoid overlap with dependabot
   // Dependabot handles: pip (Python), github-actions
-  // Renovate handles: Docker images (manylinux), CMake dependencies (nanobind)
+  // Renovate handles: custom-only dependencies like manylinux, nanobind, googletest
   "enabledManagers": ["custom.regex"],
   // Disable the Dependency Dashboard issue
   "dependencyDashboard": false,
+  // Apply label to all Renovate PRs to trigger release CI
+  "labels": ["run release CIs"],
   // Custom managers for dependencies not auto-detected by Renovate
   "customManagers": [
     {
@@ -31,11 +33,30 @@
       //     nanobind
       //     GIT_REPOSITORY https://github.com/wjakob/nanobind.git
       //     GIT_TAG v2.10.2
+      // nanobind is fetched via GIT_TAG (git clone), not as a release tarball, so no
+      // URL_HASH is available. If nanobind switches to publishing release tarballs,
+      // this should be migrated to github-releases with a URL + SHA256 hash (like googletest).
       "customType": "regex",
       "fileMatch": ["^CMakeLists\\.txt$"],
       "matchStrings": [
         "FetchContent_Declare\\(\\s*nanobind\\s+GIT_REPOSITORY\\s+https://github\\.com/(?<depName>[^/]+/[^.]+)\\.git\\s+GIT_TAG\\s+(?<currentValue>v[0-9]+\\.[0-9]+\\.[0-9]+)"
       ],
+      // github-tags is used because nanobind publishes tags (e.g. v2.12.0) but not GitHub releases
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      // Detect googletest release tarball and SHA256 hash in cmake/external/googletest.cmake
+      // Example:
+      //   URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
+      //   URL_HASH SHA256=65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
+      "customType": "regex",
+      "fileMatch": ["^cmake/external/googletest\\.cmake$"],
+      "matchStrings": [
+        "URL\\s+https://github\\.com/google/googletest/releases/download/v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)/googletest-[0-9]+\\.[0-9]+\\.[0-9]+\\.tar\\.gz\\n\\s+URL_HASH\\s+SHA256=(?<currentDigest>[a-f0-9]+)"
+      ],
+      "autoReplaceStringTemplate": "URL https://github.com/google/googletest/releases/download/v{{{newValue}}}/googletest-{{{newValue}}}.tar.gz\n  URL_HASH SHA256={{{newDigest}}}",
+      "depNameTemplate": "google/googletest",
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v(?<version>.*)$"
     }
