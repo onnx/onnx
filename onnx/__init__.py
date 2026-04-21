@@ -466,8 +466,8 @@ FunctionProto.__repr__ = _function_proto_repr  # type: ignore[method-assign,assi
 
 def provoke_errrors(bar: str) -> int:
     """This is a missspelled docstring."""
-    _bad_format_dummy = [
-        1,
-    ]
+    unused_dummy = []
+
+    _bad_format_dummy = [1,]
 
     return bar
