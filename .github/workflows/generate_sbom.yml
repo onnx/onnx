@@ -1,0 +1,266 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Generates two CycloneDX 1.6 SBOMs for the ONNX package.
+#
+# Two SBOMs are produced because ONNX has dependencies in two lifecycle phases:
+#
+#   onnx-runtime.cdx.json  — Direct runtime deps declared in requirements.txt
+#                            and requirements-reference.txt.
+#                            CycloneDX lifecycle: operations
+#
+#   onnx-build.cdx.json    — Direct build tools from requirements-release_build.txt
+#                            plus C++ libraries fetched by CMake FetchContent
+#                            (protobuf, nanobind, absl). CycloneDX lifecycle: build
+#
+# The FetchContent components are build-time provenance only. They are not
+# runtime wheel dependencies unless they are explicitly shipped in the wheel.
+#
+# Both SBOMs are generated from requirements files (not from a resolved
+# environment) because transitive resolution is environment-dependent and
+# cannot be canonically represented at build time.
+#
+# The CMake FetchContent components are extracted by
+# tools/extract_cmake_fetchcontent.py, which parses CMakeLists.txt directly so
+# the SBOM stays in sync when dependency versions are bumped there.
+#
+# Called from create_release.yml after all wheels and sdist are built,
+# with subject_name (onnx or onnx-weekly) and subject_version passed as inputs.
+# Also runs on pull_request so every push to a PR branch regenerates SBOMs.
+# When triggered by workflow_dispatch without inputs, the name defaults to
+# "onnx". When triggered by pull_request without inputs, the name defaults to
+# "onnx-weekly". The version is read from the VERSION_NUMBER file.
+
+name: Generate SBOM
+on:
+  pull_request:
+  workflow_call:
+    inputs:
+      subject_name:
+        description: 'Package name (onnx or onnx-weekly)'
+        required: true
+        type: string
+      subject_version:
+        description: 'Package version from VERSION_NUMBER'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      subject_name:
+        description: 'Package name (onnx or onnx-weekly)'
+        required: false
+        type: string
+        default: ''
+      subject_version:
+        description: 'Package version (leave empty to read from VERSION_NUMBER)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+
+  setup:
+    name: Resolve subject
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      subject_name: ${{ steps.resolve.outputs.name }}
+      subject_version: ${{ steps.resolve.outputs.version }}
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - name: Resolve subject name and version
+      id: resolve
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        INPUT_NAME: ${{ inputs.subject_name }}
+        INPUT_VERSION: ${{ inputs.subject_version }}
+      run: |
+        if [ -n "${INPUT_NAME}" ]; then
+          NAME="${INPUT_NAME}"
+        elif [ "${EVENT_NAME}" = "pull_request" ]; then
+          NAME="onnx-weekly"
+        else
+          NAME="onnx"
+        fi
+        VERSION="${INPUT_VERSION:-$(cat VERSION_NUMBER)}"
+        echo "name=$NAME" >> "$GITHUB_OUTPUT"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+
+  runtime-sbom:
+    name: Runtime SBOM
+    needs: setup
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.11"
+
+    - name: Install scanner
+      run: python -m pip install -q --upgrade pip cyclonedx-bom
+
+    - name: Generate runtime SBOM from requirements files
+      # Scans declared direct deps only — not a resolved environment.
+      # requirements-reference.txt (Pillow, ruamel.yaml) provides the optional
+      # extras shipped with the reference implementation.
+      # Build-only CMake FetchContent components are intentionally excluded.
+      run: |
+        cat requirements.txt requirements-reference.txt > /tmp/runtime-requirements.txt
+        cyclonedx-py requirements /tmp/runtime-requirements.txt \
+          --pyproject pyproject.toml \
+          --output-format JSON \
+          --output-file onnx-runtime.cdx.json
+
+    - name: Annotate lifecycle phase and subject component
+      shell: python
+      run: |
+        import json
+        from pathlib import Path
+        bom = json.loads(Path("onnx-runtime.cdx.json").read_text())
+        meta = bom.setdefault("metadata", {})
+        meta["lifecycles"] = [{"phase": "operations"}]
+        meta["manufacturer"] = {"name": "ONNX Project Contributors"}
+        meta["supplier"] = {"name": "Linux Foundation", "url": ["https://www.linuxfoundation.org"]}
+        Path("onnx-runtime.cdx.json").write_text(json.dumps(bom, indent=2))
+
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: sbom-runtime
+        path: onnx-runtime.cdx.json
+
+
+  build-sbom:
+    name: Build SBOM
+    needs: setup
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: "3.11"
+
+    - name: Install scanner
+      run: python -m pip install -q --upgrade pip cyclonedx-bom
+
+    - name: Generate Python build-deps SBOM from requirements file
+      # Scans declared direct deps only — not a resolved environment.
+      run: |
+        cyclonedx-py requirements requirements-release_build.txt \
+          --output-format JSON \
+          --output-file build-python.cdx.json
+
+    - name: Extract CMake FetchContent dependencies and merge
+      # Appends protobuf and nanobind (fetched by CMake at wheel-build time)
+      # into the Python build-deps BOM and sets lifecycle: build.
+      # These entries capture compilation provenance and are not runtime deps.
+      env:
+        SUBJECT_NAME: ${{ needs.setup.outputs.subject_name }}
+        SUBJECT_VERSION: ${{ needs.setup.outputs.subject_version }}
+      run: >
+        python tools/extract_cmake_fetchcontent.py
+        --cmake CMakeLists.txt
+        --merge-into build-python.cdx.json
+        --lifecycle build
+        --subject-name "$SUBJECT_NAME"
+        --subject-version "$SUBJECT_VERSION"
+        --output onnx-build.cdx.json
+
+    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: sbom-build
+        path: onnx-build.cdx.json
+
+
+  validate:
+    name: Validate SBOMs
+    needs: [runtime-sbom, build-sbom]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+    - name: Download SBOM artifacts
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+      with:
+        pattern: sbom-*
+        path: sboms
+        merge-multiple: true
+
+    - name: Install CycloneDX CLI
+      env:
+        CDX_VERSION: "0.27.1"
+      run: |
+        curl -sSfL \
+          "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v${CDX_VERSION}/cyclonedx-linux-x64" \
+          -o /tmp/cyclonedx
+        install -m 755 /tmp/cyclonedx /usr/local/bin/cyclonedx
+        cyclonedx --version
+        rm -f /tmp/cyclonedx
+
+    - name: Validate SBOM schemas
+      # Fails the job if either SBOM does not conform to the CycloneDX 1.6 JSON schema.
+      run: |
+        for f in sboms/*.cdx.json; do
+          echo "=== Validating $f ==="
+          cyclonedx validate --input-file "$f" --input-format json --input-version v1_6
+        done
+
+
+    - name: Install sbomqs
+      env:
+        SBOMQS_VERSION: "2.0.5"
+      run: |
+        curl -sSfL \
+          "https://github.com/interlynk-io/sbomqs/releases/download/v${SBOMQS_VERSION}/sbomqs_${SBOMQS_VERSION}_Linux_x86_64.tar.gz" \
+          | tar -xzf - -C /tmp
+        install -m 755 /tmp/sbomqs /usr/local/bin/sbomqs
+
+    - name: Score SBOM quality
+      # Fails the job if any SBOM scores below 3/10.
+      # Raise the threshold once license and supplier metadata are added.
+      run: |
+        FAILED=0
+        for f in sboms/*.cdx.json; do
+          echo "=== Scoring $f ==="
+          OUTPUT=$(sbomqs score "$f")
+          echo "$OUTPUT"
+          SCORE=$(echo "$OUTPUT" | grep "SBOM Quality Score:" | grep -oP '[\d]+\.[\d]+' | head -1)
+          if [ -z "$SCORE" ]; then
+            echo "ERROR: could not extract score from sbomqs output for $f"
+            FAILED=$((FAILED + 1))
+            continue
+          fi
+          SBOM_FILE="$f" SBOM_SCORE="$SCORE" python3 - <<'EOF'
+        import os, sys
+        score = float(os.environ["SBOM_SCORE"])
+        sbom_file = os.environ["SBOM_FILE"]
+        if score < 3.0:
+            print(f"FAIL: {sbom_file} scored {score:.1f}/10 (minimum 3.0)")
+            sys.exit(1)
+        print(f"PASS: {sbom_file} scored {score:.1f}/10")
+        EOF
+          FAILED=$((FAILED + $?))
+        done
+        exit "$FAILED"

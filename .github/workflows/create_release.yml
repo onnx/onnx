@@ -57,6 +57,14 @@ on:
           - 'release'
           - 'preview'
         default: 'preview'
+      generate_sbom:
+        description: 'Generate SBOM (always set for publish_pypi_release and publish_testpypi_release)'
+        required: true
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
+        default: 'no'
 
 permissions:
   contents: read
@@ -101,6 +109,22 @@ jobs:
     with:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+
+  call-sbom:
+    name: Generate SBOM
+    needs: [call-linux, call-mac, call-win, call-pyodide, call-sdist]
+    if: |
+      (!contains(join(needs.*.result, ' '), 'skipped')) &&
+      (
+        github.event_name == 'pull_request' ||
+        github.event.inputs.publish_pypi_release == 'yes' ||
+        github.event.inputs.publish_testpypi_release == 'yes' ||
+        github.event.inputs.generate_sbom == 'yes'
+      )
+    uses: ./.github/workflows/generate_sbom.yml
+    with:
+      subject_name: ${{ (github.event_name == 'pull_request' || github.event.inputs.build_mode == 'preview') && 'onnx-weekly' || 'onnx' }}
+      subject_version: ''
 
   check_for_publish_release_build_to_pypi:
     name: Check for Publish release build to pypi
@@ -202,7 +226,7 @@ jobs:
   publish_release_build_to_testpypi:
       name: Publish release build to test.pypi
       runs-on: ubuntu-latest
-      needs: [check_for_publish_release_build_to_testpypi]
+      needs: [check_for_publish_release_build_to_testpypi, call-sbom]
 
       environment:
         name: testpypi-release
@@ -217,7 +241,7 @@ jobs:
         - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
           if: (github.event_name == 'workflow_dispatch' )
           with:
-            pattern: wheels*
+            pattern: wheels-*
             path: dist
             merge-multiple: true
 
@@ -290,7 +314,7 @@ jobs:
   publish_release_build_to_pypi:
     name: Publish release build to pypi
     runs-on: ubuntu-latest
-    needs: [check_for_publish_release_build_to_pypi]
+    needs: [check_for_publish_release_build_to_pypi, call-sbom]
 
     environment:
       name: pypi-release
@@ -303,7 +327,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          pattern: wheels*
+          pattern: wheels-*
           path: dist
           merge-multiple: true
 
