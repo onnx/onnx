@@ -35,7 +35,7 @@ jobs:
       - name: Install repository
         run: pixi run install
       - name: Lint
-        run: pixi run lint
+        run: pixi run lint --show-diff-on-failure
 
   install-and-test:
     name: Install and test (${{ matrix.os }}, ${{ matrix.environment }})

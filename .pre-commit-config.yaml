@@ -23,13 +23,15 @@ repos:
         language: system
         types_or: [python, pyi]
         exclude: '(_pb2|\.setuptools-cmake-build/|^docs/)'
+        require_serial: true
 
       - id: ruff-format
         name: ruff format
         entry: pixi run ruff format --force-exclude
         language: system
-        types: [python]
+        types_or: [python, pyi]
         exclude: '(_pb2|\.setuptools-cmake-build/|^cmake/|^docs/)'
+        require_serial: true
 
       - id: mypy
         name: mypy
