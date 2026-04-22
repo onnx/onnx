@@ -462,12 +462,3 @@ def _operator_set_protos_repr(protos: Sequence[OperatorSetIdProto]) -> str:
 ModelProto.__repr__ = _model_proto_repr  # type: ignore[method-assign,assignment]
 GraphProto.__repr__ = _graph_proto_repr  # type: ignore[method-assign,assignment]
 FunctionProto.__repr__ = _function_proto_repr  # type: ignore[method-assign,assignment]
-
-
-def provoke_errrors(bar: str) -> int:
-    """This is a missspelled docstring."""
-    unused_dummy = []
-
-    _bad_format_dummy = [1,]
-
-    return bar
