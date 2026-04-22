@@ -43,6 +43,7 @@ class GroupNormalization_20_21 final : public Adapter {
   }
 
   void adapt_group_normalization_20_21(const std::shared_ptr<Graph>& graph, Node* node) const {
+    ONNX_ASSERTM(node->inputs().size() >= 3, "GroupNormalization node must have at least 3 inputs")
     // Perform following sequence of ops on scale/bias, effect is similar to numpy.repeat()
     //
     //   Shape<start=1,end=2>(input0) -- Div(Shape_out (C), num_groups)

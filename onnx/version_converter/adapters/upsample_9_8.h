@@ -52,7 +52,7 @@ struct Upsample_9_8 final : public Adapter {
     }
 
     for (Node* op : graph->nodes()) {
-      if (op->kind() == kConstant && op->outputs()[0]->uniqueName() == scale_input_name) {
+      if (op->kind() == kConstant && op->outputs().size() >= 1 && op->outputs()[0]->uniqueName() == scale_input_name) {
         std::vector<float> value = ParseData<float>(&op->t(kvalue));
         std::vector<double> d_values;
         d_values.reserve(value.size());
