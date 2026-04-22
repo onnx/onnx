@@ -78,6 +78,7 @@ Various files in this project are auto generated and may have to be updated in a
 The easiest way to ensure that all files are up to date is by running the `gen-all` pixi task:
 
 ```
+pixi run install
 pixi run gen-all
 ```
 
@@ -85,7 +86,7 @@ If you are not using pixi, you can run the commands manually as described below.
 
 #### Generate operator documentation
 
-Operator docs ([Operators.md](Operators.md), [Operators-ml.md](Operators-ml.md)) and Changelog docs ([Changelog.md](Changelog.md), [Changelog-ml.md](Changelog-ml.md)) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh all these docs, run the following commands from the repo root and commit the results by setting "ONNX_ML=1". By contrast, setting `ONNX_ML=0` will only update `Operators.md` and `Changelog.md`.
+Operator docs ([Operators.md](docs/Operators.md), [Operators-ml.md](docs/Operators-ml.md)) and Changelog docs ([Changelog.md](docs/Changelog.md), [Changelog-ml.md](docs/Changelog-ml.md)) are automatically generated based on C++ operator definitions and backend Python snippets. To refresh all these docs, run the following commands from the repo root and commit the results by setting "ONNX_ML=1". By contrast, setting `ONNX_ML=0` will only update `Operators.md` and `Changelog.md`.
 
 ```pwsh
 # Windows
