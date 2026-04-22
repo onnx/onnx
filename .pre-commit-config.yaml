@@ -2,7 +2,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-# Tools are either builtin or managed through Pixi environments.
+# Dependencies are centrally managed by Pixi. Using Pixi is the
+# recommended way to obtain linter-results that match what runs on
+# CI. A fall-back that looks for the tools in PATH is provided, but
+# not recommended.
+#
+# The fall-back logic hinges on the assumption that every supported
+# system provides a `python3` interpreter in PATH. The executed script
+# then looks for Pixi. If found the hooks are executed through its
+# default environment. Otherwise, they are looked for in PATH directly
+# (user-managed).
 repos:
   - repo: builtin
     hooks:
@@ -19,7 +28,7 @@ repos:
     hooks:
       - id: ruff-lint
         name: ruff lint
-        entry: pixi run ruff check --force-exclude --fix
+        entry: python3 tools/pixi-shim.py ruff check --force-exclude --fix
         language: system
         types_or: [python, pyi]
         exclude: '(_pb2|\.setuptools-cmake-build/|^docs/)'
@@ -27,7 +36,7 @@ repos:
 
       - id: ruff-format
         name: ruff format
-        entry: pixi run ruff format --force-exclude
+        entry: python3 tools/pixi-shim.py ruff format --force-exclude
         language: system
         types_or: [python, pyi]
         exclude: '(_pb2|\.setuptools-cmake-build/|^cmake/|^docs/)'
@@ -35,7 +44,7 @@ repos:
 
       - id: mypy
         name: mypy
-        entry: pixi run mypy --config-file=pyproject.toml
+        entry: python3 tools/pixi-shim.py mypy --config-file=pyproject.toml
         language: system
         types: [python]
         files: "^(onnx|tools)/"
@@ -44,14 +53,14 @@ repos:
 
       - id: clang-format
         name: clang-format
-        entry: pixi run clang-format -i
+        entry: python3 tools/pixi-shim.py clang-format -i
         language: system
         types_or: [c, c++]
         files: "^onnx/"
 
       - id: namespace-check
         name: namespace check (no hardcoded onnx namespace)
-        entry: pixi run python tools/check_namespace.py
+        entry: python3 tools/pixi-shim.py python tools/check_namespace.py
         language: system
         types_or: [c, c++]
         exclude: "^third_party/"
@@ -66,7 +75,7 @@ repos:
 
       - id: typos
         name: typos
-        entry: pixi run typos --force-exclude
+        entry: python3 tools/pixi-shim.py typos --force-exclude
         language: system
         types: [text]
         require_serial: true
@@ -75,12 +84,12 @@ repos:
       # REUSE license compliance
       - id: reuse
         name: reuse lint
-        entry: pixi run reuse lint
+        entry: python3 tools/pixi-shim.py reuse lint
         language: system
         pass_filenames: false
 
       - id: shellcheck
         name: shellcheck
-        entry: pixi run shellcheck
+        entry: python3 tools/pixi-shim.py shellcheck
         language: system
         types: [shell]
