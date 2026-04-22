@@ -2279,6 +2279,40 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (30, 50, 6, 3, 2))]
         )
 
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_zero_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", strides=[0, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", strides=[-1, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_conv_pads(self) -> None:
         graph = self._make_graph(
             [
@@ -3705,6 +3739,50 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
         )
 
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_zero_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[2, 2],
+                    strides=[0, 2],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_negative_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[2, 2],
+                    strides=[-1, 2],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_maxpool_with_floor_mode(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (32, 288, 35, 35))],
@@ -3939,6 +4017,50 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+        )
+
+    @parameterized.expand(all_versions_for("AveragePool"))
+    def test_averagepool_zero_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "AveragePool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[2, 2],
+                    strides=[2, 0],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("AveragePool"))
+    def test_averagepool_negative_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "AveragePool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[2, 2],
+                    strides=[2, -1],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_averagepool_ceil(self) -> None:

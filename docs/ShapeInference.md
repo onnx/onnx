@@ -16,7 +16,7 @@ member of the OpSchema objects.
 
 In ONNX 1.10 release, symbol generation and propagation along with shape
 data propagation was added to ONNX graph level shape inference.
-Detailed proposal is [here](proposals/SymbolicShapeInfProposal.md)
+Detailed proposal is [here](proposals/0005-SymbolicShapeInfProposal.md)
 
 ## Background
 
