@@ -46,8 +46,11 @@ Y = Probs @ V
 ```
 
 Grouped Query Attention (GQA):
-When `q_num_heads != kv_num_heads`, K/V heads are broadcast to match query heads
-count, and `q_num_heads` must be a multiple of `kv_num_heads`.
+When `q_num_heads != kv_num_heads`, each K/V head is shared by a contiguous
+group of query heads in head-index order. Let
+`group_size = q_num_heads / kv_num_heads`; then query head `h` uses K/V head
+`floor(h / group_size)`. `q_num_heads` must be a multiple of
+`kv_num_heads`.
 
 Modifier Subgraphs (score_mod, prob_mod):
 Each modifier subgraph takes exactly one rank-4 tensor input and must produce
@@ -55,7 +58,7 @@ exactly one rank-4 tensor output of the same shape and element type.
 - score_mod input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
 - prob_mod  input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
 The element type is determined by softmax_precision (defaults to float32 for
-float16/bfloat16 inputs, otherwise the input element type).
+non-double inputs, otherwise double).
 
 Masking can be expressed in score_mod by writing masked positions as -inf (or a
 large negative value appropriate for the target precision).
@@ -82,18 +85,14 @@ static bool IsValidSoftmaxElementType(int32_t elem_type) {
 // Determines the element type for softmax computation.
 // Priority:
 //   1. Use explicit softmax_precision attribute if provided
-//   2. Promote float16/bfloat16 to float32 for numerical stability
-//   3. Use input type as-is for float32/double
+//   2. Default to float32 for all non-double input types
+//   3. Keep double as double
 static int32_t GetSoftmaxElementType(int32_t input_elem_type, const AttributeProto* softmax_precision_attr) {
   // Honor explicit precision setting
   if (softmax_precision_attr != nullptr) {
     return static_cast<int32_t>(softmax_precision_attr->i());
   }
-  // Auto-promote half-precision types to float32
-  if (input_elem_type == TensorProto::FLOAT16 || input_elem_type == TensorProto::BFLOAT16) {
-    return TensorProto::FLOAT;
-  }
-  return input_elem_type;
+  return input_elem_type == TensorProto::DOUBLE ? TensorProto::DOUBLE : TensorProto::FLOAT;
 }
 
 // ---------------------------------------------------------------------------
@@ -210,9 +209,6 @@ static void ValidateModifierGraph(
       graph.output(0).type().has_tensor_type()) {
     const auto& in_shape = graph.input(0).type().tensor_type().shape();
     const auto& out_shape = graph.output(0).type().tensor_type().shape();
-    if (in_shape.dim_size() > 0 && out_shape.dim_size() > 0 && in_shape.dim_size() != out_shape.dim_size()) {
-      fail_shape_inference("Attribute ", attr_name, " output rank must match input rank when specified.");
-    }
     const int dim_count = std::min(in_shape.dim_size(), out_shape.dim_size());
     for (int i = 0; i < dim_count; ++i) {
       if (in_shape.dim(i).has_dim_value() && out_shape.dim(i).has_dim_value() &&
@@ -391,7 +387,8 @@ static bool BuildFlexAttentionFunctionBody(
 
   builder.Add("QNumHeads = Shape <start = 1, end = 2> (Q)").Add("KVNumHeads = Shape <start = 1, end = 2> (K)");
 
-  // Handle Grouped Query Attention (GQA) by broadcasting K/V heads when needed.
+  // Handle Grouped Query Attention (GQA) by sharing each K/V head across
+  // contiguous query-head groups when needed.
   builder.Add("KVRepeat = Div (QNumHeads, KVNumHeads)")
       .Const1D("Axis2", static_cast<int64_t>(2))
       // K: [B, Hkv, S, E] -> [B, Hq, S, E]
@@ -417,15 +414,23 @@ static bool BuildFlexAttentionFunctionBody(
       .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
       .Const("OneF", ToTensor<float>(1.0f))
       .Add("CalculatedScale = Div(OneF, SqrtHeadSize)")
-      .Const("ScaleF", ToTensor<float>(scale))
-      .Add(scale_attr != nullptr ? "ScaleFactorF32 = Identity(ScaleF)" : "ScaleFactorF32 = Identity(CalculatedScale)");
+      .Const("ScaleF", ToTensor<float>(scale));
 
-  // Compute attention scores: (Q @ K^T) * scale.
-  builder.Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KAligned)")
-      .Add("Score = MatMul(Q, KTranspose)")
-      .Add("ScoreF = Cast (Score)", "to", kFloat32)
-      .Add("SoftmaxCastF = Mul(ScoreF, ScaleFactorF32)")
-      .Add("SoftmaxCast = Cast (SoftmaxCastF)", "to", softmax_precision);
+  if (scale_attr != nullptr) {
+    builder.Add("ScaleFactorF32 = Identity(ScaleF)");
+  } else {
+    builder.Add("ScaleFactorF32 = Identity(CalculatedScale)");
+  }
+  builder.Add("ScaleFactorSqrtF32 = Sqrt(ScaleFactorF32)");
+
+  // Compute attention scores by pre-scaling Q and K with sqrt(scale).
+  builder.Add("QF = Cast (Q)", "to", kFloat32)
+      .Add("KF = Cast (KAligned)", "to", kFloat32)
+      .Add("QScaledF = Mul(QF, ScaleFactorSqrtF32)")
+      .Add("KScaledF = Mul(KF, ScaleFactorSqrtF32)")
+      .Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KScaledF)")
+      .Add("ScoreF = MatMul(QScaledF, KTranspose)")
+      .Add("SoftmaxCast = Cast (ScoreF)", "to", softmax_precision);
 
   // Apply score_mod.
   if (need_score_mod) {
@@ -480,7 +485,7 @@ ONNX_PREVIEW_OPERATOR_SET_SCHEMA(
         .Attr(
             "softmax_precision",
             "Floating-point precision for softmax computation. "
-            "Defaults to float32 for float16/bfloat16 inputs, otherwise uses input type. "
+            "Defaults to float32 for non-double inputs, otherwise uses double. "
             "Must be explicitly specified for non-float types.",
             AttributeProto::INT,
             OPTIONAL_VALUE)
