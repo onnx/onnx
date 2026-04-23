@@ -351,7 +351,6 @@ static void FinalizeScalarContractLoopBody(GraphProto* body, const char* result_
 // Validates a modifier graph attribute during shape inference.
 // Checks I/O counts, element types, and scalar requirements.
 static void ValidateModifierGraph(
-    InferenceContext& ctx,
     const AttributeProto* attr,
     size_t expected_inputs,
     const std::string& attr_name,
@@ -552,11 +551,9 @@ static void FlexAttentionShapeInference(InferenceContext& ctx) {
   }
 
   // Validate modifier graphs.
-  ValidateModifierGraph(
-      ctx, ctx.getAttribute("score_mod"), kScoreProbModInputCount, "score_mod", softmax_elem_type, true);
-  ValidateModifierGraph(ctx, ctx.getAttribute("mask_mod"), kMaskModInputCount, "mask_mod", TensorProto::BOOL, true);
-  ValidateModifierGraph(
-      ctx, ctx.getAttribute("prob_mod"), kScoreProbModInputCount, "prob_mod", softmax_elem_type, true);
+  ValidateModifierGraph(ctx.getAttribute("score_mod"), kScoreProbModInputCount, "score_mod", softmax_elem_type, true);
+  ValidateModifierGraph(ctx.getAttribute("mask_mod"), kMaskModInputCount, "mask_mod", TensorProto::BOOL, true);
+  ValidateModifierGraph(ctx.getAttribute("prob_mod"), kScoreProbModInputCount, "prob_mod", softmax_elem_type, true);
 }
 
 // ---------------------------------------------------------------------------
