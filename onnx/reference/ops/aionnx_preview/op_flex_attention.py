@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+import ml_dtypes
 import numpy as np
 
 from onnx import TensorProto
@@ -17,6 +18,7 @@ if TYPE_CHECKING:
 _SOFTMAX_PRECISION_TO_NP_DTYPE: dict[int, np.dtype] = {
     int(TensorProto.FLOAT): np.dtype("float32"),
     int(TensorProto.FLOAT16): np.dtype("float16"),
+    int(TensorProto.BFLOAT16): np.dtype(ml_dtypes.bfloat16),
     int(TensorProto.DOUBLE): np.dtype("float64"),
 }
 
@@ -57,7 +59,7 @@ def _get_softmax_dtype(
                 f"Unsupported softmax_precision value: {softmax_precision}"
             )
         return _SOFTMAX_PRECISION_TO_NP_DTYPE[softmax_precision]
-    if input_dtype == np.float16:
+    if input_dtype in (np.float16, ml_dtypes.bfloat16):
         return np.dtype("float32")
     return np.dtype("float32") if input_dtype.itemsize < 4 else input_dtype
 
