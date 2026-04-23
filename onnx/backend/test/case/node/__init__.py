@@ -141,10 +141,10 @@ def function_testcase_helper(
     else:
         # We take the function defined in the specific version mentioned
         # in the model. Find the opset_import matching the node's domain.
-        node_domain = node.domain if node.domain else ""
+        node_domain = node.domain or ""
         matching_opset = None
         for opset in opset_imports:
-            opset_domain = opset.domain if opset.domain else ""
+            opset_domain = opset.domain or ""
             if opset_domain == node_domain or (
                 node_domain in {"", "ai.onnx"} and opset_domain in {"", "ai.onnx"}
             ):
