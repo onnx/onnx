@@ -3710,7 +3710,108 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
-  
+
+static constexpr const char* CausalConvWithState_ver25_doc = R"DOC(
+
+Stateful causal depthwise convolution, generalized to N spatial dimensions.
+
+Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
+Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
+
+The convolution is causal (looks only at current and past positions along the last
+spatial dimension) and depthwise (each channel is convolved independently with its own kernel).
+
+Input layout is channels-first: (batch_size, channels, ...).
+Weight layout: (channels, 1, k_1, ...) for depthwise convolution.
+The carry state stores the last (k-1) positions along the causal axis for incremental decode.
+
+The ndim attribute generalizes the op to 1D, 2D, or 3D spatial dimensions. Causality is
+enforced on the last spatial dimension only.
+
+The optional activation attribute supports fused SiLU/Swish activation.
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    CausalConvWithState,
+    25,
+    OpSchema()
+        .SetDoc(CausalConvWithState_ver25_doc)
+        .Attr(
+            "activation",
+            "Fused activation function. One of: 'silu', 'swish', 'none'. "
+            "Default is 'none'.",
+            AttributeProto::STRING,
+            std::string("none"))
+        .Attr(
+            "ndim",
+            "Spatial dimensionality: 1, 2, or 3. Default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Input(
+            0,
+            "input",
+            "Input tensor with shape (batch_size, channels, ...). Channels-first layout. "
+            "Spatial dims: 1D: (L,); 2D: (H, W); 3D: (D, H, W).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "weight",
+            "Depthwise convolution kernel with shape (channels, 1, k_1, ...). "
+            "Spatial kernel sizes: (k_1, ..., k_ndim).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "bias",
+            "Optional per-channel bias with shape (channels).",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            3,
+            "past_state",
+            "Carry state from previous step. For ndim=1: (batch_size, channels, k_1 - 1). "
+            "If not provided, padding is zero.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Convolution output with same shape as input.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            1,
+            "present_state",
+            "Updated carry state. For ndim=1: (batch_size, channels, k_1 - 1). "
+            "Contains the last (k-1) values from the virtual input along the causal axis.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+            "Constrain input and output types to float tensors.")
+  );
+
 static constexpr const char* LinearAttention_ver25_doc = R"DOC(
   
 Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
