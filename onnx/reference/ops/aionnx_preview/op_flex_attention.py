@@ -73,7 +73,11 @@ def _compute_flex_attention(
     prob_mod: Any = None,
     softmax_precision: int | None = None,
 ) -> tuple[np.ndarray,]:
-    assert len(Q.shape) == len(K.shape) == len(V.shape) == 4
+    if len(Q.shape) != 4 or len(K.shape) != 4 or len(V.shape) != 4:
+        raise RuntimeError(
+            f"FlexAttention requires rank-4 inputs but got "
+            f"Q: {Q.shape!r}, K: {K.shape!r}, V: {V.shape!r}."
+        )
 
     _B, Hq, _L, E = Q.shape
 
