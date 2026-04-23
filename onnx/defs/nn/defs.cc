@@ -3699,4 +3699,146 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
+  
+static constexpr const char* LinearAttention_ver25_doc = R"DOC(
+  
+Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
+
+All inputs use 3D packed format [B, T, H*D]; q_num_heads and kv_num_heads are always
+required. The op internally unpacks to 4D for computation.
+
+The update_rule attribute selects the recurrence type:
+- "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+- "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+- "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+- "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+
+where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
+
+Semantics: Equivalent to running the recurrent update sequentially for each token,
+but may be implemented using chunk-parallel algorithms for GPU efficiency.
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LinearAttention,
+    25,
+    OpSchema()
+        .SetDoc(LinearAttention_ver25_doc)
+        .Attr(
+            "update_rule",
+            "The update rule for the linear attention recurrence. "
+            "One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.",
+            AttributeProto::STRING,
+            std::string("gated_delta"))
+        .Attr(
+            "scale",
+            "Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads "
+            "and uses 1/sqrt(d_k). Set explicitly to override.",
+            AttributeProto::FLOAT,
+            0.0f)
+        .Attr(
+            "q_num_heads",
+            "Number of query heads. Always required.",
+            AttributeProto::INT)
+        .Attr(
+            "kv_num_heads",
+            "Number of key/value heads. Always required.",
+            AttributeProto::INT)
+        .Attr(
+            "chunk_size",
+            "Chunk size for the chunk-parallel WY decomposition during prefill (T>1). "
+            "Tuning hint; does not affect output correctness.",
+            AttributeProto::INT,
+            static_cast<int64_t>(64))
+        .Input(
+            0,
+            "query",
+            "Query vectors with 3D packed shape (B, T, H_q * d_k). "
+            "Heads are packed into the last dimension.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "key",
+            "Key vectors with 3D packed shape (B, T, H_kv * d_k). "
+            "Should be L2-normalized for delta/gated_delta modes.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "value",
+            "Value vectors with 3D packed shape (B, T, H_kv * d_v).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            3,
+            "past_state",
+            "Recurrent state from previous step with shape (B, H_kv, d_k, d_v). "
+            "Always 4D. If not provided, defaults to zeros.",
+            "S",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            4,
+            "decay",
+            "Exponential decay gate in log-space. 3D packed shape: "
+            "(B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or "
+            "(B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). "
+            "Required for 'gated' and 'gated_delta' modes.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            5,
+            "beta",
+            "Update rate (sigmoid output). 3D packed shape: "
+            "(B, T, H_kv) or (B, T, 1). "
+            "Required for 'delta' and 'gated_delta' modes.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Attention output with 3D packed shape (B, T, H_q * d_v).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            1,
+            "present_state",
+            "Updated recurrent state with shape (B, H_kv, d_k, d_v). Always 4D.",
+            "S",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(bfloat16)", "tensor(float)"},
+            "Constrain activation input and output types to float16, bfloat16, or float32 tensors.")
+        .TypeConstraint(
+            "S",
+            {"tensor(float16)", "tensor(bfloat16)", "tensor(float)"},
+            "Constrain state types to float16, bfloat16, or float32 tensors. "
+            "Should be float32 or the same as T for numerical stability on long sequences.")
+  );
 } // namespace ONNX_NAMESPACE
