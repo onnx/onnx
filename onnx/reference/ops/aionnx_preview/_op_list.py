@@ -43,7 +43,7 @@ def load_op(
     if custom is not None:
         return lambda *args: OpFunction(*args, impl=custom)
     if domain != "ai.onnx.preview":
-        raise ValueError(f"Domain must be '' not {domain!r}.")
+        raise ValueError(f"Domain must be 'ai.onnx.preview' not {domain!r}.")
     if op_type not in _registered_operators:
         available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
         raise NotImplementedError(
