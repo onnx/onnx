@@ -3993,7 +3993,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           // q_num_heads and value.shape[2] is divisible by kv_num_heads before
           // computing d_k and d_v. Currently integer division silently produces
           // wrong shapes for invalid inputs.
-          
+
+          // Validate input ranks
+          for (int i = 0; i < 3; ++i) {
+            if (hasInputShape(ctx, i) && getInputShape(ctx, i).dim_size() != 3) {
+              fail_shape_inference("Input ", i, " (query/key/value) must be rank 3 (3D packed format)");
+            }
+          }
+          if (hasInputShape(ctx, 3) && getInputShape(ctx, 3).dim_size() != 4) {
+            fail_shape_inference("Input 3 (past_state) must be rank 4");
+          }
+
           // Propagate types and shapes
           propagateElemTypeFromInputToOutput(ctx, 0, 0);  // output gets type T from query
           if (ctx.getNumInputs() > 3 && ctx.getInputType(3) != nullptr &&
@@ -4015,7 +4025,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // H_q * d_v: d_v = value.dim(2) / kv_num_heads, then H_q * d_v
             if (value_shape.dim(2).has_dim_value()) {
               int64_t d_v = value_shape.dim(2).dim_value() / kv_num_heads;
-              output_shape.add_dim()->set_dim_value(kv_num_heads * d_v);
+              output_shape.add_dim()->set_dim_value(q_num_heads * d_v);
             } else {
               output_shape.add_dim();  // unknown
             }
