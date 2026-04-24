@@ -4000,6 +4000,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
+          // TODO: Add head count validation — verify query.shape[2] is divisible by
+          // q_num_heads and value.shape[2] is divisible by kv_num_heads before
+          // computing d_k and d_v. Currently integer division silently produces
+          // wrong shapes for invalid inputs.
+
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           propagateElemTypeFromInputToOutput(ctx, 0, 1);
 
