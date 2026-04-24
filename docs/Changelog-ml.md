@@ -10,7 +10,7 @@ For an operator input/output's differentiability, it can be differentiable,
 
 # ai.onnx.ml
 ## Version 1 of the 'ai.onnx.ml' operator set
-### <a name="ai.onnx.ml.ArrayFeatureExtractor-1"></a>**ai.onnx.ml.ArrayFeatureExtractor-1**</a>
+### <a name="ai.onnx.ml.ArrayFeatureExtractor-1"></a>**ai.onnx.ml.ArrayFeatureExtractor-1**
 
   Select elements of the input tensor based on the indices passed.<br>
       The indices are applied to the last axes of the tensor.
@@ -42,7 +42,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input must be a tensor of a numeric type or string. The output will be of the same tensor type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.Binarizer-1"></a>**ai.onnx.ml.Binarizer-1**</a>
+### <a name="ai.onnx.ml.Binarizer-1"></a>**ai.onnx.ml.Binarizer-1**
 
   Maps the values of the input tensor to either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
 
@@ -78,7 +78,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input must be a tensor of a numeric type. The output will be of the same tensor type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.CastMap-1"></a>**ai.onnx.ml.CastMap-1**</a>
+### <a name="ai.onnx.ml.CastMap-1"></a>**ai.onnx.ml.CastMap-1**
 
   Converts a map to a tensor.<br>The map key must be an int64 and the values will be ordered
       in ascending order based on this key.<br>The operator supports dense packing or sparse packing.
@@ -122,7 +122,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The output is a 1-D tensor of string, float, or integer.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.CategoryMapper-1"></a>**ai.onnx.ml.CategoryMapper-1**</a>
+### <a name="ai.onnx.ml.CategoryMapper-1"></a>**ai.onnx.ml.CategoryMapper-1**
 
   Converts strings to integers and vice versa.<br>
       Two sequences of equal length are used to map between integers and strings,
@@ -173,7 +173,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The output is a tensor of strings or integers. Its shape will be the same as the input shape.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.DictVectorizer-1"></a>**ai.onnx.ml.DictVectorizer-1**</a>
+### <a name="ai.onnx.ml.DictVectorizer-1"></a>**ai.onnx.ml.DictVectorizer-1**
 
   Uses an index mapping to convert a dictionary to an array.<br>
       Given a dictionary, each key is looked up in the vocabulary attribute corresponding to
@@ -224,7 +224,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The output will be a tensor of the value type of the input map. It's shape will be [1,C], where C is the length of the input dictionary.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.FeatureVectorizer-1"></a>**ai.onnx.ml.FeatureVectorizer-1**</a>
+### <a name="ai.onnx.ml.FeatureVectorizer-1"></a>**ai.onnx.ml.FeatureVectorizer-1**
 
   Concatenates input tensors into one continuous output.<br>
       All input shapes are 2-D and are concatenated along the second dimension. 1-D tensors are treated as [1,C].
@@ -263,7 +263,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.Imputer-1"></a>**ai.onnx.ml.Imputer-1**</a>
+### <a name="ai.onnx.ml.Imputer-1"></a>**ai.onnx.ml.Imputer-1**
 
   Replaces inputs that equal one value with another, leaving all other elements alone.<br>
       This operator is typically used to replace missing values in situations where they have a canonical
@@ -312,7 +312,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input type must be a tensor of a numeric type, either [N,C] or [C]. The output type will be of the same tensor type and shape.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.LabelEncoder-1"></a>**ai.onnx.ml.LabelEncoder-1**</a>
+### <a name="ai.onnx.ml.LabelEncoder-1"></a>**ai.onnx.ml.LabelEncoder-1**
 
   Converts strings to integers and vice versa.<br>
       If the string default value is set, it will convert integers to strings.
@@ -363,7 +363,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The output type will be a tensor of strings or integers, and will have the same shape as the input.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.LinearClassifier-1"></a>**ai.onnx.ml.LinearClassifier-1**</a>
+### <a name="ai.onnx.ml.LinearClassifier-1"></a>**ai.onnx.ml.LinearClassifier-1**
 
   Linear classifier
 
@@ -413,7 +413,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The output will be a tensor of strings or integers.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.LinearRegressor-1"></a>**ai.onnx.ml.LinearRegressor-1**</a>
+### <a name="ai.onnx.ml.LinearRegressor-1"></a>**ai.onnx.ml.LinearRegressor-1**
 
   Generalized linear regression evaluation.<br>
       If targets is set to 1 (default) then univariate regression is performed.<br>
@@ -460,7 +460,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.Normalizer-1"></a>**ai.onnx.ml.Normalizer-1**</a>
+### <a name="ai.onnx.ml.Normalizer-1"></a>**ai.onnx.ml.Normalizer-1**
 
   Normalize the input.  There are three normalization modes, which have the corresponding formulas,
       defined using element-wise infix operators '/' and '^' and tensor-wide functions 'max' and 'sum':<br>
@@ -505,7 +505,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.OneHotEncoder-1"></a>**ai.onnx.ml.OneHotEncoder-1**</a>
+### <a name="ai.onnx.ml.OneHotEncoder-1"></a>**ai.onnx.ml.OneHotEncoder-1**
 
   Replace each input element with an array of ones and zeros, where a single
       one is placed at the index of the category that was passed in. The total category count
@@ -552,7 +552,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.SVMClassifier-1"></a>**ai.onnx.ml.SVMClassifier-1**</a>
+### <a name="ai.onnx.ml.SVMClassifier-1"></a>**ai.onnx.ml.SVMClassifier-1**
 
   Support Vector Machine classifier
 
@@ -612,7 +612,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used. Its size will match the batch size of the input.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.SVMRegressor-1"></a>**ai.onnx.ml.SVMRegressor-1**</a>
+### <a name="ai.onnx.ml.SVMRegressor-1"></a>**ai.onnx.ml.SVMRegressor-1**
 
   Support Vector Machine regression prediction and one-class SVM anomaly detection.
 
@@ -662,7 +662,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input type must be a tensor of a numeric type, either [C] or [N,C].</dd>
 </dl>
 
-### <a name="ai.onnx.ml.Scaler-1"></a>**ai.onnx.ml.Scaler-1**</a>
+### <a name="ai.onnx.ml.Scaler-1"></a>**ai.onnx.ml.Scaler-1**
 
   Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
 
@@ -700,7 +700,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.TreeEnsembleClassifier-1"></a>**ai.onnx.ml.TreeEnsembleClassifier-1**</a>
+### <a name="ai.onnx.ml.TreeEnsembleClassifier-1"></a>**ai.onnx.ml.TreeEnsembleClassifier-1**
 
   Tree Ensemble classifier.  Returns the top class for each of N inputs.<br>
       The attributes named 'nodes_X' form a sequence of tuples, associated by
@@ -780,7 +780,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.TreeEnsembleRegressor-1"></a>**ai.onnx.ml.TreeEnsembleRegressor-1**</a>
+### <a name="ai.onnx.ml.TreeEnsembleRegressor-1"></a>**ai.onnx.ml.TreeEnsembleRegressor-1**
 
   Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
       All args with nodes_ are fields of a tuple of tree nodes, and
@@ -857,7 +857,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.ZipMap-1"></a>**ai.onnx.ml.ZipMap-1**</a>
+### <a name="ai.onnx.ml.ZipMap-1"></a>**ai.onnx.ml.ZipMap-1**
 
   Creates a map from the input and the attributes.<br>
       The values are provided by the input tensor, while the keys are specified by the attributes.
@@ -899,7 +899,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 </dl>
 
 ## Version 2 of the 'ai.onnx.ml' operator set
-### <a name="ai.onnx.ml.LabelEncoder-2"></a>**ai.onnx.ml.LabelEncoder-2**</a>
+### <a name="ai.onnx.ml.LabelEncoder-2"></a>**ai.onnx.ml.LabelEncoder-2**
 
   Maps each element in the input tensor to another value.<br>
       The mapping is determined by the two parallel attributes, 'keys_*' and
@@ -970,7 +970,7 @@ This version of the operator has been available since version 2 of the 'ai.onnx.
 </dl>
 
 ## Version 3 of the 'ai.onnx.ml' operator set
-### <a name="ai.onnx.ml.TreeEnsembleClassifier-3"></a>**ai.onnx.ml.TreeEnsembleClassifier-3**</a>
+### <a name="ai.onnx.ml.TreeEnsembleClassifier-3"></a>**ai.onnx.ml.TreeEnsembleClassifier-3**
 
   Tree Ensemble classifier. Returns the top class for each of N inputs.<br>
       The attributes named 'nodes_X' form a sequence of tuples, associated by
@@ -1060,7 +1060,7 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 <dd>The output type will be a tensor of strings or integers, depending on which of the classlabels_* attributes is used.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.TreeEnsembleRegressor-3"></a>**ai.onnx.ml.TreeEnsembleRegressor-3**</a>
+### <a name="ai.onnx.ml.TreeEnsembleRegressor-3"></a>**ai.onnx.ml.TreeEnsembleRegressor-3**
 
   Tree Ensemble regressor.  Returns the regressed values for each input in N.<br>
       All args with nodes_ are fields of a tuple of tree nodes, and
@@ -1148,7 +1148,7 @@ This version of the operator has been available since version 3 of the 'ai.onnx.
 </dl>
 
 ## Version 4 of the 'ai.onnx.ml' operator set
-### <a name="ai.onnx.ml.LabelEncoder-4"></a>**ai.onnx.ml.LabelEncoder-4**</a>
+### <a name="ai.onnx.ml.LabelEncoder-4"></a>**ai.onnx.ml.LabelEncoder-4**
 
   Maps each element in the input tensor to another value.<br>
       The mapping is determined by the two parallel attributes, 'keys_*' and
@@ -1227,7 +1227,7 @@ This version of the operator has been available since version 4 of the 'ai.onnx.
 </dl>
 
 ## Version 5 of the 'ai.onnx.ml' operator set
-### <a name="ai.onnx.ml.TreeEnsemble-5"></a>**ai.onnx.ml.TreeEnsemble-5**</a>
+### <a name="ai.onnx.ml.TreeEnsemble-5"></a>**ai.onnx.ml.TreeEnsemble-5**
 
   Tree Ensemble operator.  Returns the regressed values for each input in a batch.
       Inputs have dimensions `[N, F]` where `N` is the input batch size and `F` is the number of input features.
@@ -1305,7 +1305,7 @@ This version of the operator has been available since version 5 of the 'ai.onnx.
 <dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 
-### <a name="ai.onnx.ml.TreeEnsembleClassifier-5"></a>**ai.onnx.ml.TreeEnsembleClassifier-5** (deprecated)</a>
+### <a name="ai.onnx.ml.TreeEnsembleClassifier-5"></a>**ai.onnx.ml.TreeEnsembleClassifier-5** (deprecated)
 
   This operator is DEPRECATED. Please use TreeEnsemble with provides similar functionality.
       In order to determine the top class, the ArgMax node can be applied to the output of TreeEnsemble.
@@ -1326,7 +1326,7 @@ This version of the operator has been available since version 5 of the 'ai.onnx.
 
 This version of the operator has been deprecated since version 5 of the 'ai.onnx.ml' operator set.
 
-### <a name="ai.onnx.ml.TreeEnsembleRegressor-5"></a>**ai.onnx.ml.TreeEnsembleRegressor-5** (deprecated)</a>
+### <a name="ai.onnx.ml.TreeEnsembleRegressor-5"></a>**ai.onnx.ml.TreeEnsembleRegressor-5** (deprecated)
 
   This operator is DEPRECATED. Please use TreeEnsemble instead which provides the same
       functionality.<br>

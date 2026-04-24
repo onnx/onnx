@@ -35,6 +35,7 @@
 #include "onnx/version_converter/adapters/gridsample_19_20.h"
 #include "onnx/version_converter/adapters/group_normalization_20_21.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/mean_variance_normalization_27_26.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
@@ -972,8 +973,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(26), OpSetID(27)));
 
     // 27 -> 26
-    registerAdapter(
-        std::make_unique<CompatibleAdapter>("MeanVarianceNormalization", OpSetID(27), OpSetID(26)));
+    registerAdapter(std::make_unique<MeanVarianceNormalization_27_26>());
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
