@@ -3953,6 +3953,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* update_rule_attr = ctx.getAttribute("update_rule");
           std::string update_rule = (update_rule_attr != nullptr) ? update_rule_attr->s() : "gated_delta";
 
+          // Validate update_rule value
+          // TODO: See if needed
+          if (update_rule != "linear" && update_rule != "gated" && update_rule != "delta" && update_rule != "gated_delta") {
+            fail_type_inference("update_rule must be one of: 'linear', 'gated', 'delta', 'gated_delta'");
+          }
+
+
           // Validate update_rule vs optional inputs (decay=input 4, beta=input 5).
           bool has_decay = ctx.getNumInputs() > 4 && ctx.getInputType(4) != nullptr &&
               ctx.getInputType(4)->value_case() == TypeProto::kTensorType;
