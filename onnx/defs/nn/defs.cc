@@ -3993,9 +3993,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           // q_num_heads and value.shape[2] is divisible by kv_num_heads before
           // computing d_k and d_v. Currently integer division silently produces
           // wrong shapes for invalid inputs.
-
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateElemTypeFromInputToOutput(ctx, 0, 1);
+          
+          // Propagate types and shapes
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);  // output gets type T from query
+          if (ctx.getNumInputs() > 3 && ctx.getInputType(3) != nullptr &&
+              ctx.getInputType(3)->has_tensor_type()) {
+            propagateElemTypeFromInputToOutput(ctx, 3, 1);  // present_state gets type S from past_state
+          } else {
+            // TODO: Proposal says S must be float32 or same as T, but does not specify
+            // how to infer S when past_state is omitted. Defaulting to T for now.
+            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+          }
 
           // Output 0: (B, T, H_q * d_v) — 3D packed
           if (hasInputShape(ctx, 0) && hasInputShape(ctx, 2) && q_num_heads > 0 && kv_num_heads > 0) {
