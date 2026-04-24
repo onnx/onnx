@@ -4036,6 +4036,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               output_shape.add_dim();  // unknown
             }
             updateOutputShape(ctx, 0, output_shape);
+          } else {
+            // Rank inference fallback: output is always rank 3
+            TensorShapeProto output_shape;
+            output_shape.add_dim();
+            output_shape.add_dim();
+            output_shape.add_dim();
+            updateOutputShape(ctx, 0, output_shape);
           }
 
           // Output 1: present_state shape (B, H_kv, d_k, d_v) — 4D
@@ -4060,6 +4067,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             updateOutputShape(ctx, 1, state_shape);
           } else if (hasInputShape(ctx, 3)) {
             propagateShapeFromInputToOutput(ctx, 3, 1);
+          } else {
+            // Rank inference fallback: state is always rank 4
+            TensorShapeProto state_shape;
+            state_shape.add_dim();
+            state_shape.add_dim();
+            state_shape.add_dim();
+            state_shape.add_dim();
+            updateOutputShape(ctx, 1, state_shape);
           }
         }));
 } // namespace ONNX_NAMESPACE
