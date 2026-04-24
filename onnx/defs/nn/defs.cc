@@ -3953,6 +3953,42 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* update_rule_attr = ctx.getAttribute("update_rule");
           std::string update_rule = (update_rule_attr != nullptr) ? update_rule_attr->s() : "gated_delta";
 
+          // Validate update_rule vs optional inputs (decay=input 4, beta=input 5).
+          bool has_decay = ctx.getNumInputs() > 4 && ctx.getInputType(4) != nullptr &&
+              ctx.getInputType(4)->value_case() == TypeProto::kTensorType;
+          bool has_beta = ctx.getNumInputs() > 5 && ctx.getInputType(5) != nullptr &&
+              ctx.getInputType(5)->value_case() == TypeProto::kTensorType;
+
+          if (update_rule == "linear") {
+            if (has_decay) {
+              fail_type_inference("update_rule 'linear' forbids decay input");
+            }
+            if (has_beta) {
+              fail_type_inference("update_rule 'linear' forbids beta input");
+            }
+          } else if (update_rule == "gated") {
+            if (!has_decay) {
+              fail_type_inference("update_rule 'gated' requires decay input");
+            }
+            if (has_beta) {
+              fail_type_inference("update_rule 'gated' forbids beta input");
+            }
+          } else if (update_rule == "delta") {
+            if (has_decay) {
+              fail_type_inference("update_rule 'delta' forbids decay input");
+            }
+            if (!has_beta) {
+              fail_type_inference("update_rule 'delta' requires beta input");
+            }
+          } else if (update_rule == "gated_delta") {
+            if (!has_decay) {
+              fail_type_inference("update_rule 'gated_delta' requires decay input");
+            }
+            if (!has_beta) {
+              fail_type_inference("update_rule 'gated_delta' requires beta input");
+            }
+          }
+
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           propagateElemTypeFromInputToOutput(ctx, 0, 1);
 
