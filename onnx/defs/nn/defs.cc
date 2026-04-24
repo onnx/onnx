@@ -4049,6 +4049,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             updateOutputShape(ctx, 0, output_shape);
           } else {
             // Rank inference fallback: output is always rank 3
+            // TODO: See if needed
             TensorShapeProto output_shape;
             output_shape.add_dim();
             output_shape.add_dim();
@@ -4080,6 +4081,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateShapeFromInputToOutput(ctx, 3, 1);
           } else {
             // Rank inference fallback: state is always rank 4
+            // TODO: See if needed
             TensorShapeProto state_shape;
             state_shape.add_dim();
             state_shape.add_dim();
