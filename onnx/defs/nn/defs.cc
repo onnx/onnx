@@ -3952,5 +3952,56 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(bfloat16)", "tensor(float)"},
             "Constrain state types to float16, bfloat16, or float32 tensors. "
             "Should be float32 or the same as T for numerical stability on long sequences.")
-  );
+        
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 1);
+
+          // Read required attributes
+          auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+          auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+          int64_t q_num_heads = (q_num_heads_attr && q_num_heads_attr->has_i()) ? q_num_heads_attr->i() : 0;
+          int64_t kv_num_heads = (kv_num_heads_attr && kv_num_heads_attr->has_i()) ? kv_num_heads_attr->i() : 0;
+
+          // Output 0: (B, T, H_q * d_v) — 3D packed
+          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 2) && q_num_heads > 0 && kv_num_heads > 0) {
+            auto& query_shape = getInputShape(ctx, 0);
+            auto& value_shape = getInputShape(ctx, 2);
+            TensorShapeProto output_shape;
+            *output_shape.add_dim() = query_shape.dim(0);  // B
+            *output_shape.add_dim() = query_shape.dim(1);  // T
+            // H_q * d_v: d_v = value.dim(2) / kv_num_heads, then H_q * d_v
+            if (value_shape.dim(2).has_dim_value()) {
+              int64_t d_v = value_shape.dim(2).dim_value() / kv_num_heads;
+              output_shape.add_dim()->set_dim_value(kv_num_heads * d_v);
+            } else {
+              output_shape.add_dim();  // unknown
+            }
+            updateOutputShape(ctx, 0, output_shape);
+          }
+
+          // Output 1: present_state shape (B, H_kv, d_k, d_v) — 4D
+          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 2) && q_num_heads > 0 && kv_num_heads > 0) {
+            auto& query_shape = getInputShape(ctx, 0);
+            auto& value_shape = getInputShape(ctx, 2);
+            TensorShapeProto state_shape;
+            *state_shape.add_dim() = query_shape.dim(0);         // B
+            state_shape.add_dim()->set_dim_value(kv_num_heads);  // H_kv
+            // d_k = query.dim(2) / q_num_heads
+            if (query_shape.dim(2).has_dim_value()) {
+              state_shape.add_dim()->set_dim_value(query_shape.dim(2).dim_value() / q_num_heads);
+            } else {
+              state_shape.add_dim();
+            }
+            // d_v = value.dim(2) / kv_num_heads
+            if (value_shape.dim(2).has_dim_value()) {
+              state_shape.add_dim()->set_dim_value(value_shape.dim(2).dim_value() / kv_num_heads);
+            } else {
+              state_shape.add_dim();
+            }
+            updateOutputShape(ctx, 1, state_shape);
+          } else if (hasInputShape(ctx, 3)) {
+            propagateShapeFromInputToOutput(ctx, 3, 1);
+          }
+        }));
 } // namespace ONNX_NAMESPACE
