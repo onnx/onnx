@@ -1964,9 +1964,7 @@ class Attention(Base):
             softcap=softcap,
         )
 
-        Y, _, _, _ = _compute_attention(
-            Q, K, V, attn_mask=attn_mask, softcap=softcap
-        )
+        Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
 
         expect(
             node,
@@ -2008,9 +2006,7 @@ class Attention(Base):
             softcap=softcap,
         )
 
-        Y, _, _, _ = _compute_attention(
-            Q, K, V, attn_mask=attn_mask, softcap=softcap
-        )
+        Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
 
         expect(
             node,
