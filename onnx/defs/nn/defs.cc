@@ -4014,6 +4014,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 3) && getInputShape(ctx, 3).dim_size() != 4) {
             fail_shape_inference("Input 3 (past_state) must be rank 4");
           }
+          if (has_decay && hasInputShape(ctx, 4) && getInputShape(ctx, 4).dim_size() != 3) {
+            fail_shape_inference("Input 4 (decay) must be rank 3 (3D packed format)");
+          }
+          if (has_beta && hasInputShape(ctx, 5) && getInputShape(ctx, 5).dim_size() != 3) {
+            fail_shape_inference("Input 5 (beta) must be rank 3 (3D packed format)");
+          }
 
           // Propagate types and shapes
           propagateElemTypeFromInputToOutput(ctx, 0, 0);  // output gets type T from query
