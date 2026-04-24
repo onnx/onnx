@@ -3954,14 +3954,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Should be float32 or the same as T for numerical stability on long sequences.")
         
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          propagateElemTypeFromInputToOutput(ctx, 0, 1);
-
           // Read required attributes
           auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
           auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
           int64_t q_num_heads = (q_num_heads_attr && q_num_heads_attr->has_i()) ? q_num_heads_attr->i() : 0;
           int64_t kv_num_heads = (kv_num_heads_attr && kv_num_heads_attr->has_i()) ? kv_num_heads_attr->i() : 0;
+
+          // Read update_rule attribute with default
+          auto* update_rule_attr = ctx.getAttribute("update_rule");
+          std::string update_rule = (update_rule_attr != nullptr) ? update_rule_attr->s() : "gated_delta";
+
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateElemTypeFromInputToOutput(ctx, 0, 1);
 
           // Output 0: (B, T, H_q * d_v) — 3D packed
           if (hasInputShape(ctx, 0) && hasInputShape(ctx, 2) && q_num_heads > 0 && kv_num_heads > 0) {
