@@ -18,12 +18,12 @@ This plan defines how the ONNX team receives vulnerability reports, assesses sev
 
 ### 1. Confirm
 - Confirm this is a genuine security issue (not a bug or feature request)
-- Assign an **Incident Lead** from the security team
+- Assign an **Incident Lead** from the security team (the GitHub team with access to private advisories)
 - Use the GitHub Security Advisory draft as the private coordination channel
 
 ### 2. Triage
 
-Severity is based on [CVSS](https://www.first.org/cvss/) scores (v4.0 or v3.1) and assessed case by case. The security team decides per incident whether the fix warrants an out-of-cycle patch release or can be included in the next scheduled release.
+Severity is based on [CVSS](https://www.first.org/cvss/) scores (v4.0 or v3.1) and assessed case by case. The security team (the GitHub team with access to private advisories) decides per incident whether the fix warrants an out-of-cycle patch release or can be included in the next scheduled release.
 
 **Not every report results in a CVE.** A CVE is issued when there is a confirmed, exploitable vulnerability with real-world impact. Reports describing expected behavior, unrealistic preconditions, or issues outside the project's threat model may be closed without a CVE.
 
@@ -57,7 +57,7 @@ Severity is based on [CVSS](https://www.first.org/cvss/) scores (v4.0 or v3.1) a
 
 ## Escalation
 
-Reporter → Security Contacts → Core Maintainers → Linux Foundation (infrastructure compromise only)
+The escalation path will be confirmed and documented here.
 
 ---
 
