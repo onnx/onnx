@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # ONNX Incident Response Plan
 
 **Repository:** [github.com/onnx/onnx](https://github.com/onnx/onnx) | **License:** Apache 2.0 | **Last Reviewed:** April 2026
