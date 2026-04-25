@@ -10,7 +10,7 @@ name = "onnx"
 platforms = ["osx-arm64", "linux-64", "linux-aarch64", "win-64"]
 
 [tasks.install]
-cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation .'
+cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation --editable .'
 [tasks.install.env]
 ONNX_ML="1"
 ONNX_BUILD_TESTS="1"
@@ -41,6 +41,15 @@ cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
 [tasks.pytest]
 cmd = "pytest"
 
+[tasks.lintrunner-init]
+cmd = "lintrunner init"
+[tasks.lintrunner-run]
+cmd = "lintrunner --all-files"
+
+[feature.docs.tasks.docs-build]
+description = "Build sphinx documentation"
+cmd = "cd docs/docsgen && make html"
+
 [dependencies]
 libdate = ">=3.0.1,<4"
 libprotobuf = "*"
@@ -68,7 +77,6 @@ setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
 "ruamel.yaml" = ">=0.19.1"
 
-
 [feature.reference.dependencies]
 # follows requirements-reference.txt
 pillow = ">=11.2.1,<12"
@@ -79,9 +87,6 @@ protobuf = "==4.25.1"
 python = "3.10.*"
 numpy = "==1.23.2"
 
-[feature.lint.tasks]
-lintrunner-init = "lintrunner init"
-lintrunner-run = "lintrunner --all-files"
 [feature.lint.dependencies]
 # follows requirements-lintrunner.txt
 ruff = "==0.13.1"
@@ -93,12 +98,32 @@ lintrunner = ">=0.10.7"
 lintrunner-adapters = ">=0.12.3"
 editorconfig-checker = "==3.2.1"
 
+[feature.docs.dependencies]
+furo = "*"
+markupsafe = "*"
+matplotlib = "*"
+myst-parser = "*"
+onnxruntime = "*"
+pillow = "*"
+pydot = "*"
+sphinx = "<9"  # Seems to be required by sphinx-tabs?
+sphinx-copybutton = "*"
+sphinx-tabs = "*"
+setuptools = "<82"  # sphinx-tabs needs pkg_resources which was removed in 82
+linkify-it-py = "*"
+[feature.docs.pypi-dependencies]
+sphinx-exec-code = "*"
+
 [feature.link-checker.dependencies]
 lychee = ">=0.23.0"
 [feature.link-checker.tasks.link-checker]
 cmd = "pixi exec lychee --root-dir . ."
 
+
 [environments]
 default = ["dev", "lint", "reference"]
 oldies = ["dev", "lint", "reference", "oldies"]
+# Keep a separate docs environment since some of those dependencies
+# may introduce upper bounds
+docs = ["dev", "lint", "reference", "docs"]
 link-checker = {features=["link-checker"], no-default-feature=true}
