@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <limits>
 
 namespace ONNX_NAMESPACE {
@@ -32,7 +33,7 @@ template <typename Iter, typename ErrorHandler>
 [[nodiscard]] inline int64_t safe_dim_product(Iter begin, Iter end, ErrorHandler on_error) {
   int64_t result = 1;
   for (auto it = begin; it != end; ++it) {
-    int64_t dim = static_cast<int64_t>(*it);
+    auto dim = static_cast<int64_t>(*it);
     if (dim < 0) {
       on_error("Negative dimension value");
       return result; // unreachable if on_error throws; guards against misuse
@@ -48,7 +49,7 @@ template <typename Iter, typename ErrorHandler>
 // Container overload — delegates to the iterator-pair version.
 template <typename DimsContainer, typename ErrorHandler>
 [[nodiscard]] inline int64_t safe_dim_product(const DimsContainer& dims, ErrorHandler on_error) {
-  return safe_dim_product(dims.begin(), dims.end(), on_error);
+  return safe_dim_product(std::begin(dims), std::end(dims), on_error);
 }
 
 // Safe cast from int64_t to size_t. Calls on_error if the value exceeds
