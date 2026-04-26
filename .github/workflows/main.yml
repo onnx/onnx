@@ -28,7 +28,6 @@ concurrency:
 jobs:
   test:
     name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, onnx_ml=${{ matrix.onnx_ml }}, autogen=${{ matrix.autogenerate_files }}
-    name: Test ${{ matrix.os }}, ${{ matrix.python_version }}, ${{ matrix.protobuf_type }}, debug=${{ matrix.debug_build }}, unity_build=${{ matrix.unity_build }}, autogen=${{ matrix.autogenerate_files }}
     strategy:
       fail-fast: false
       matrix:
