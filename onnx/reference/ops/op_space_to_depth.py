@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class SpaceToDepth(OpRun):
-    def _run(self, data, blocksize=None):
+    def _run(self, data, blocksize=None, mode=None):
         if len(data.shape) != 4:
             raise RuntimeError(f"Unexpected shape {data.shape!r}.")
         b, C, H, W = data.shape
@@ -22,7 +22,11 @@ class SpaceToDepth(OpRun):
             blocksize,
         )
         reshaped = np.reshape(data, tmpshape)
-        transposed = np.transpose(reshaped, [0, 3, 5, 1, 2, 4])
+        if mode is None or mode == "DCR":
+            transposed = np.transpose(reshaped, [0, 3, 5, 1, 2, 4])
+        else:
+            # CRD mode
+            transposed = np.transpose(reshaped, [0, 1, 3, 5, 2, 4])
         finalshape = (
             b,
             C * blocksize * blocksize,

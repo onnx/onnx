@@ -144,6 +144,33 @@ this op outputs a copy of the input tensor where values from the height and widt
 are moved to the depth dimension.
 )DOC";
 
+const char kDoc_SpaceToDepth_ver27[] =
+    R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+this op outputs a copy of the input tensor where values from the height and width dimensions
+are moved to the depth dimension. This is the reverse transformation of DepthToSpace.
+By default, `mode` = `DCR`.
+
+In the DCR mode, elements from the spatial dimensions are rearranged in the following
+order: depth, column, and then row. The output y is computed from the input x as below:
+
+```
+b, C, H, W = x.shape
+tmp = np.reshape(x, [b, C, H // blocksize, blocksize, W // blocksize, blocksize])
+tmp = np.transpose(tmp, [0, 3, 5, 1, 2, 4])
+y = np.reshape(tmp, [b, C * blocksize * blocksize, H // blocksize, W // blocksize])
+```
+
+In the CRD mode, elements from the spatial dimensions are rearranged in the following
+order: column, row, and then depth. The output y is computed from the input x as below:
+
+```
+b, C, H, W = x.shape
+tmp = np.reshape(x, [b, C, H // blocksize, blocksize, W // blocksize, blocksize])
+tmp = np.transpose(tmp, [0, 1, 3, 5, 2, 4])
+y = np.reshape(tmp, [b, C * blocksize * blocksize, H // blocksize, W // blocksize])
+```
+)DOC";
+
 const char kDoc_InstanceNormalization_ver6[] = R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
