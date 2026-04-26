@@ -138,10 +138,8 @@ jobs:
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
-      - name: print debug vars
-        run: |
-          echo "All environment variables:"
-          printenv
+      - name: Confirm preview publish request
+        run: echo "Proceeding with test.pypi-weekly publish checks."
 
 
   publish_preview_build_to_testpypi_weekly:
@@ -191,10 +189,8 @@ jobs:
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes') && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
-      - name: print debug vars
-        run: |
-          echo "All environment variables:"
-          printenv
+      - name: Confirm release publish request
+        run: echo "Proceeding with test.pypi release publish checks."
 
   publish_release_build_to_testpypi:
       name: Publish release build to test.pypi
@@ -243,10 +239,8 @@ jobs:
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
 
     steps:
-      - name: placeholder for debug vars
-        run: |
-          echo "All environment variables:"
-          printenv
+      - name: Confirm weekly publish request
+        run: echo "Proceeding with pypi-weekly publish checks."
 
   publish_preview_build_to_pypi_weekly:
     name: Publish preview build to pypi-weekly

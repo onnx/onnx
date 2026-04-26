@@ -2,12 +2,18 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "main", rel-* ]
+    branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ "main", rel-* ]
+    branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   schedule:
     - cron: '33 6 * * 5'
+  workflow_dispatch:
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -29,13 +35,12 @@ jobs:
       fail-fast: false
       matrix:
         language: [ 'cpp', 'python' ]
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        submodules: recursive
         persist-credentials: false
 
     - name: Set up Python
@@ -43,33 +48,34 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
+    - name: Upgrade pip
+      run: python -m pip install --upgrade pip
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e
+      uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
       with:
         languages: ${{ matrix.language }}
-        queries: security-extended,security-and-quality
-        # If you wish to specify custom queries, you can do so here or in a config file.
-        # By default, queries listed here will override any specified in a config file.
-        # Prefix the list here with "+" to use these queries and those in the config file.
-
-        # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
-        config-file: ./.github/codeql/codeql-config.yml
+        config: |
+          queries:
+            - uses: security-extended
+            - uses: security-and-quality
+          paths-ignore:
+            - '.setuptools-cmake-build/**'
+          query-filters:
+            - exclude:
+                id: py/import-and-import-from
 
     # Install onnx so that it is found by the linters
     - name: Install ONNX
       run: |
         source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
         python -m pip install --quiet -r requirements-release_build.txt
-        git submodule update --init --recursive
         export ONNX_ML=1
+        export ONNX_BUILD_TESTS=1
         pip install .
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e
+      uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
       with:
         category: "/language:${{matrix.language}}"
