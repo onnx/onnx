@@ -28280,7 +28280,8 @@ This version of the operator has been available since version 22 of the default 
   1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
   2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
 
-  Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+  Both past and present state key/values are optional. If cache update is used inside Attention, all four cache tensors
+  (`past_key`, `past_value`, `present_key`, `present_value`) shall be used together; using only a subset is invalid.
   The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
 
   ```
@@ -29862,7 +29863,8 @@ This version of the operator has been available since version 23 of the default 
   Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
   as the maximum value of `nonpad_kv_seqlen`.
 
-  Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+  Both past and present state key/values are optional. If cache update is used inside Attention, all four cache tensors
+  (`past_key`, `past_value`, `present_key`, `present_value`) shall be used together; using only a subset is invalid.
   The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
 
   ```
