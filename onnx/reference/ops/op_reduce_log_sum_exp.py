@@ -9,6 +9,11 @@ from onnx.reference.ops._op import OpRunReduceNumpy
 
 
 def compute_log_sum_exp(data, axes, keepdims):
+    # Cast integer inputs to float64 since the algorithm uses -np.inf
+    # and floating point operations (exp, log) that are incompatible
+    # with integer dtypes. See https://github.com/onnx/onnx/issues/7141
+    if not np.issubdtype(data.dtype, np.floating):
+        data = data.astype(np.float64)
     data_max = data.copy()
     ind = np.isinf(data_max)
     data_max[ind] = -np.inf
