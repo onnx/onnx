@@ -1,0 +1,16 @@
+model_parameters:
+  onnx_model: ../export/model_cuda.onnx
+  march: nash-p
+  working_dir: ./hb_workspace_cuda
+  output_model_file_prefix: sample_add_cuda
+
+input_parameters:
+  input_name: x;y
+  input_shape: 1x3x8x8;1x3x8x8
+  input_type_train: featuremap;featuremap
+  input_type_rt: featuremap;featuremap
+  norm_type: no_preprocess;no_preprocess
+
+calibration_parameters:
+  cal_data_dir: ../data/calibration
+  calibration_type: default
