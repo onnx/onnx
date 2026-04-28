@@ -19,8 +19,7 @@ namespace version_conversion {
 // epsilon was used the conversion is lossy and a warning comment is attached.
 class MeanVarianceNormalization_27_26 final : public Adapter {
  public:
-  explicit MeanVarianceNormalization_27_26()
-      : Adapter("MeanVarianceNormalization", OpSetID(27), OpSetID(26)) {}
+  explicit MeanVarianceNormalization_27_26() : Adapter("MeanVarianceNormalization", OpSetID(27), OpSetID(26)) {}
 
   Node* adapt(std::shared_ptr<Graph> /*graph*/, Node* node) const override {
     if (node->hasAttribute(kepsilon)) {
