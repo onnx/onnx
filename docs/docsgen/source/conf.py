@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-# type: ignore
+from __future__ import annotations
+
 import os
 import sys
 import warnings
@@ -16,7 +17,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 # -- Project information -----------------------------------------------------
 
 author = "ONNX"
-copyright = "2024"
+copyright = "2024"  # noqa: A001
 project = "ONNX"
 release = onnx.__version__
 version = onnx.__version__
@@ -101,21 +102,6 @@ intersphinx_mapping = {
     "python": (f"https://docs.python.org/{sys.version_info.major}/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "torch": ("https://pytorch.org/docs/stable/", None),
-}
-
-sphinx_gallery_conf = {
-    "examples_dirs": ["examples"],
-    "gallery_dirs": ["auto_examples", "auto_tutorial"],
-    "capture_repr": ("_repr_html_", "__repr__"),
-    "ignore_repr_types": r"matplotlib.text|matplotlib.axes",
-    "binder": {
-        "org": "onnx",
-        "repo": ".",
-        "notebooks_dir": "auto_examples",
-        "binderhub_url": "https://mybinder.org",
-        "branch": "master",
-        "dependencies": "./requirements.txt",
-    },
 }
 
 warnings.filterwarnings("ignore", category=FutureWarning)

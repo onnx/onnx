@@ -1,17 +1,9 @@
 # onnx.model_container
 
-
 ## ModelContainer
 
 ```{eval-rst}
 .. autoclass:: onnx.model_container.ModelContainer
-    :members:
-```
-
-## LargeModelFileFormat
-
-```{eval-rst}
-.. autoclass:: onnx.model_container.LargeModelFileFormat
     :members:
 ```
 

@@ -42,12 +42,12 @@ def im2col_fast(X, kernel_shape, pads, strides):
     X_padded = np.pad(X, tuple(nc) + tuple(padding), mode="constant")
 
     getitem = (slice(0, m), d, *indices)
-    cols = X_padded[getitem]  # type: ignore[index]
+    cols = X_padded[getitem]
     conc_cols = np.concatenate(cols, axis=-1)
     return conc_cols, tuple(shape_out)
 
 
-def _conv_implementation_im2col(  # type: ignore
+def _conv_implementation_im2col(
     X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
 ):
     if dilations is None:
@@ -165,7 +165,7 @@ def _conv_implementation_im2col(  # type: ignore
 
 
 class Conv(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,

@@ -6,7 +6,7 @@ from __future__ import annotations
 from onnx.reference.ops.aionnx_preview_training._op_run_training import OpRunTraining
 
 
-def _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
+def _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Coefficient of gradient should be 1 at the first iteration.
@@ -18,7 +18,7 @@ def _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: igno
     return x_new, v_new
 
 
-def _apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
+def _apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta):
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Coefficient of gradient should be 1 at the first iteration.
@@ -31,10 +31,10 @@ def _apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: igno
 
 
 class Momentum(OpRunTraining):
-    def _run(self, *data, alpha=None, beta=None, mode=None, norm_coefficient=None):  # type: ignore
+    def _run(self, *data, alpha=None, beta=None, mode=None, norm_coefficient=None):
         if len(data) == 5:
             r, t, x, g, v = data
-            return self._run1(  # type: ignore
+            return self._run1(
                 r,
                 t,
                 x,
@@ -49,7 +49,7 @@ class Momentum(OpRunTraining):
         xs = []
         vs = []
         for i in range(n):
-            a, b = self._run1(  # type: ignore
+            a, b = self._run1(
                 *data[:2],
                 data[2 + i],
                 data[2 + n + i],
@@ -74,7 +74,7 @@ class Momentum(OpRunTraining):
         norm_coefficient=None,
         alpha=None,
         beta=None,
-    ):  # type: ignore
+    ):
         if mode == "standard":
             x_new, v_new = _apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta)
         else:

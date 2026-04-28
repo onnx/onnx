@@ -6,7 +6,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -21,6 +21,9 @@ from onnx import (
     numpy_helper,
     shape_inference,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class TestChecker(unittest.TestCase):
@@ -316,7 +319,9 @@ class TestChecker(unittest.TestCase):
         tensor = self._sample_float_tensor
         checker.check_tensor(tensor)
 
-        tensor.raw_data = np.random.randn(2, 3).astype(np.float32).tobytes()
+        input_np = np.random.randn(2, 3).astype(np.float32)
+
+        tensor.raw_data = onnx.numpy_helper.tobytes_little_endian(input_np)
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
     def test_check_string_tensor(self) -> None:

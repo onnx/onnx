@@ -2,15 +2,34 @@
 
 # Operator ZipMap is not implemented. Its use should
 # be discouraged. It is just a different way to output
-# probabilites not consumed by any operator.
+# probabilities not consumed by any operator.
 from __future__ import annotations
 
-import textwrap
-from typing import Any, Dict
-from typing import Optional as TOptional
-from typing import Union
+__all__ = [
+    "load_op",
+    "ArrayFeatureExtractor",
+    "Binarizer",
+    "DictVectorizer",
+    "FeatureVectorizer",
+    "Imputer",
+    "LabelEncoder",
+    "LinearClassifier",
+    "LinearRegressor",
+    "Normalizer",
+    "OneHotEncoder",
+    "Scaler",
+    "SVMClassifier",
+    "SVMRegressor",
+    "TreeEnsemble",
+    "TreeEnsembleClassifier",
+    "TreeEnsembleRegressor",
+    "OpRunAiOnnxMl",
+]
 
-from onnx.reference.op_run import OpFunction
+import textwrap
+from typing import Any
+
+from onnx.reference.op_run import OpFunction, OpRun
 from onnx.reference.ops._helpers import build_registered_operators_any_domain
 from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 from onnx.reference.ops.aionnxml.op_array_feature_extractor import ArrayFeatureExtractor
@@ -33,8 +52,8 @@ from onnx.reference.ops.aionnxml.op_tree_ensemble_classifier import (
 from onnx.reference.ops.aionnxml.op_tree_ensemble_regressor import TreeEnsembleRegressor
 
 
-def _build_registered_operators() -> dict[str, dict[int | None, OpRunAiOnnxMl]]:
-    return build_registered_operators_any_domain(globals().copy())  # type: ignore[return-value]
+def _build_registered_operators() -> dict[str, dict[int | None, type[OpRun]]]:
+    return build_registered_operators_any_domain(globals().copy())
 
 
 def load_op(
@@ -42,34 +61,32 @@ def load_op(
     op_type: str,
     version: None | int,
     custom: Any = None,
-    evaluator_cls: type | None = None,  # noqa: ARG001
 ) -> Any:
     """Loads the implemented for a specified operator.
 
     Args:
         domain: domain
-        op_type: oprator type
+        op_type: operator type
         version: requested version
         custom: custom implementation (like a function)
-        evaluator_cls: unused
 
     Returns:
         class
     """
     global _registered_operators  # noqa: PLW0603
     if _registered_operators is None:
-        _registered_operators = _build_registered_operators()  # type: ignore[assignment]
+        _registered_operators = _build_registered_operators()
     if custom is not None:
-        return lambda *args: OpFunction(*args, impl=custom)  # type: ignore
+        return lambda *args: OpFunction(*args, impl=custom)
     if domain != "ai.onnx.ml":
         raise ValueError(f"Domain must be '' not {domain!r}.")
-    if op_type not in _registered_operators:  # type: ignore
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
+    if op_type not in _registered_operators:
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
         raise NotImplementedError(
             f"No registered implementation for operator {op_type!r} "
             f"and domain {domain!r} in\n{available}"
         )
-    impl = _registered_operators[op_type]  # type: ignore
+    impl = _registered_operators[op_type]
     if None not in impl:
         raise RuntimeError(
             f"No default implementation for operator {op_type!r} "
@@ -93,7 +110,7 @@ def load_op(
             )
         cl = impl[best]
     if cl is None:
-        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))  # type: ignore
+        available = "\n".join(textwrap.wrap(", ".join(sorted(_registered_operators))))
         raise ValueError(
             f"Not registered implementation for operator {op_type!r}, "
             f"domain {domain!r}, and {version!r} in\n{available}"
@@ -101,4 +118,4 @@ def load_op(
     return cl
 
 
-_registered_operators: dict[str, dict[int | None, OpRunAiOnnxMl]] | None = None
+_registered_operators: dict[str, dict[int | None, type[OpRun]]] | None = None

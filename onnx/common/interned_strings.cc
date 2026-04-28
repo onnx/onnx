@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -56,7 +54,7 @@ struct InternedStrings {
   const char* customString(Symbol sym) {
     std::lock_guard<std::mutex> guard(mutex_);
     auto it = sym_to_string_.find(sym);
-    ONNX_ASSERT(it != sym_to_string_.end());
+    ONNX_ASSERT(it != sym_to_string_.end())
     return it->second.c_str();
   }
   std::unordered_map<std::string, uint32_t> string_to_sym_;

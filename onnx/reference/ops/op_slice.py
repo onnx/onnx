@@ -29,20 +29,22 @@ def _slice(
         ends = np.array([ends])
     if axes is None:
         if steps is None:
-            slices = [slice(s, e) for s, e in zip(starts, ends)]
+            slices = [slice(s, e) for s, e in zip(starts, ends, strict=False)]
         else:
-            slices = [slice(s, e, d) for s, e, d in zip(starts, ends, steps)]
+            slices = [
+                slice(s, e, d) for s, e, d in zip(starts, ends, steps, strict=False)
+            ]
     else:  # noqa: PLR5501
         if steps is None:
             slices = [slice(0, a) for a in data.shape]
-            for s, e, a in zip(starts, ends, axes):
+            for s, e, a in zip(starts, ends, axes, strict=False):
                 slices[a] = slice(s, e)
         else:
             slices = [slice(0, a) for a in data.shape]
-            for s, e, a, d in zip(starts, ends, axes, steps):
+            for s, e, a, d in zip(starts, ends, axes, steps, strict=False):
                 slices[a] = slice(s, e, d)
     try:
-        return data[tuple(slices)]  # type: ignore
+        return data[tuple(slices)]
     except TypeError as e:  # pragma: no cover
         raise TypeError(
             f"Unable to extract slice {slices!r} for shape {data.shape!r}."
@@ -50,18 +52,18 @@ def _slice(
 
 
 class SliceCommon(OpRun):
-    def _run(self, data, starts, ends, axes=None, steps=None):  # type: ignore
+    def _run(self, data, starts, ends, axes=None, steps=None):
         res = _slice(data, starts, ends, axes, steps)
         return (res,)
 
 
 class Slice_10(SliceCommon):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         SliceCommon.__init__(self, onnx_node, run_params)
 
 
 class Slice_1(SliceCommon):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         SliceCommon.__init__(self, onnx_node, run_params)
         for f in ["starts", "ends", "steps", "axes"]:
             if not hasattr(self, f):
@@ -69,5 +71,5 @@ class Slice_1(SliceCommon):
             if getattr(self, f) is not None and len(getattr(self, f)) == 0:
                 setattr(self, f, None)
 
-    def _run(self, data, axes=None, ends=None, starts=None):  # type: ignore
+    def _run(self, data, axes=None, ends=None, starts=None):
         return SliceCommon._run(self, data, starts, ends, axes)

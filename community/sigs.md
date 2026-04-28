@@ -12,7 +12,7 @@ As described in the ONNX [governance](/community/readme.md#sig---special-interes
 
 If you are interested in participating, please [join the discussion](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) in the respective Slack channels. Details about any upcoming meetings will also be shared in the Slack channels. SIG artifacts can be found in the [sigs repository](https://github.com/onnx/sigs).
 
-You can find the schedule of SIG meetings on the [LF AI calendar](https://wiki.lfai.foundation/pages/viewpage.action?pageId=18481196)
+You can find the schedule of SIG meetings on the [LFX calendar](https://zoom-lfx.platform.linuxfoundation.org/meetings/lfai-onnx?view=month)
 
 ## Current SIGs
 

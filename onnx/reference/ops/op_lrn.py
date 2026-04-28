@@ -11,15 +11,15 @@ from onnx.reference.op_run import OpRun
 
 
 class LRN(OpRun):
-    def _run(self, x, alpha=None, beta=None, bias=None, size=None):  # type: ignore
+    def _run(self, x, alpha=None, beta=None, bias=None, size=None):
         if len(x.shape) != 4:
             raise RuntimeError(
                 f"LRN only applies on 4D tensors but shape is {x.shape!r}."
             )
         square_sum = np.zeros(x.shape).astype(x.dtype)
         minc = x.shape[1]
-        c1 = int(math.floor((size - 1) / 2))
-        c2 = int(math.ceil((size - 1) / 2)) + 1
+        c1 = math.floor((size - 1) / 2)
+        c2 = math.ceil((size - 1) / 2) + 1
         for c in range(x.shape[0]):
             begin = max(0, c - c1)
             end = min(minc, c + c2)

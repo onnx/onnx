@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import contextlib
+import os
 import struct
+import tempfile
 import unittest
 
 import numpy as np
@@ -18,6 +20,7 @@ from onnx import (
     TensorProto,
     checker,
     helper,
+    shape_inference,
 )
 
 
@@ -1440,7 +1443,6 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.opset_import[0].version == 12
 
     def test_split_with_optional_input(self) -> None:
-
         nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], axis=1)]
         graph = helper.make_graph(
             nodes,
@@ -1475,6 +1477,24 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Constant"
         assert converted_model.graph.node[1].op_type == "Split"
         assert converted_model.opset_import[0].version == 13
+
+    # Test Split Adapter: 13 -> 12 with optional split input
+    def test_split_13_12_optional_input(self) -> None:
+        """Test Split 13->12 conversion with optional split input."""
+        nodes = [helper.make_node("Split", ["X"], ["Y1", "Y2"], axis=0)]
+        graph = helper.make_graph(
+            nodes,
+            "test_split_13_12_optional",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (10,))],
+            [
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (5,)),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Split"
+        assert converted_model.opset_import[0].version == 12
 
     # Test AxesInputToAttribute Adapter: 13 -> 12
     def test_axes_input_to_attr_13_12(self) -> None:
@@ -1511,6 +1531,80 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Constant"
         assert converted_model.opset_import[0].version == 13
+
+    # Test AxesInputToAttribute Adapter: 13 -> 11 with optional axes input
+    def test_squeeze_13_11_optional_axes(self) -> None:
+        """Test Squeeze 13->11 conversion with optional axes input."""
+        nodes = [helper.make_node("Squeeze", ["X"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test_squeeze_13_11_optional",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 10, 1))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (10,))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 11)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Squeeze"
+        assert converted_model.opset_import[0].version == 11
+
+    # Test Reshape Adapter: 4 -> 5 with optional axes input
+    def test_reshape_4_5_optional_shape(self) -> None:
+        """Test Reshape 4->5 conversion - shape in attribute should become input."""
+        nodes = [helper.make_node("Reshape", ["X"], ["Y"], shape=[2, 5])]
+        graph = helper.make_graph(
+            nodes,
+            "test_reshape_4_5",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (10,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 5))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 4), 5)
+        # Should have added a Constant node for the shape
+        assert converted_model.graph.node[0].op_type == "Constant"
+        assert converted_model.graph.node[1].op_type == "Reshape"
+        assert converted_model.opset_import[0].version == 5
+
+    # Test Resize Adapter: 10 -> 11
+    def test_resize_10_11_bounds_check(self) -> None:
+        """Test Resize 10->11 conversion with proper bounds checking."""
+        nodes = [
+            helper.make_node(
+                "Constant",
+                [],
+                ["scales"],
+                value=helper.make_tensor(
+                    "", TensorProto.FLOAT, [4], [1.0, 1.0, 2.0, 2.0]
+                ),
+            ),
+            helper.make_node("Resize", ["X", "scales"], ["Y"], mode="nearest"),
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test_resize_10_11",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 1, 2, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 1, 4, 4))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
+        assert converted_model.opset_import[0].version == 11
+
+    # Test Scatter Adapter: 10 -> 11
+    def test_scatter_10_11_bounds_check(self) -> None:
+        """Test Scatter 10->11 conversion with proper bounds checking."""
+        nodes = [
+            helper.make_node("Scatter", ["data", "indices", "updates"], ["Y"], axis=0)
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test_scatter_10_11",
+            [
+                helper.make_tensor_value_info("data", TensorProto.FLOAT, (3,)),
+                helper.make_tensor_value_info("indices", TensorProto.INT64, (2,)),
+                helper.make_tensor_value_info("updates", TensorProto.FLOAT, (2,)),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3,))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 10), 11)
+        assert converted_model.graph.node[0].op_type == "ScatterElements"
+        assert converted_model.opset_import[0].version == 11
 
     # Test Slice Adapter: 9 -> 10
     def test_slice_9_10(self) -> None:
@@ -2006,6 +2100,91 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[3].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 13
 
+    def test_softmax_13_12(self) -> None:
+        axis = -1
+        nodes = [helper.make_node("Softmax", ["X"], ["Y"], axis=axis)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2, 3))],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Softmax"
+        assert converted_model.graph.node[0].attribute[0].name == "axis"
+        assert converted_model.graph.node[0].attribute[0].i == 2
+        assert converted_model.opset_import[0].version == 12
+
+    @parameterized.parameterized.expand(
+        [
+            (
+                "cast_9_8",
+                "Cast",
+                {"to": TensorProto.FLOAT},
+                9,
+                8,
+                TensorProto.FLOAT,
+                (1,),
+            ),
+            (
+                "softmax_12_13",
+                "Softmax",
+                {"axis": 1},
+                12,
+                13,
+                TensorProto.FLOAT,
+                (1,),
+            ),
+            (
+                "upsample_9_10",
+                "Upsample",
+                {"mode": "nearest"},
+                9,
+                10,
+                TensorProto.FLOAT,
+                (1, 1, 2, 2),
+            ),
+        ]
+    )
+    def test_rejects_missing_required_inputs(
+        self,
+        _: str,
+        op_type: str,
+        attrs: dict[str, int | str],
+        from_opset: int,
+        to_opset: int,
+        output_type: int,
+        output_shape: tuple[int, ...],
+    ) -> None:
+        def test() -> None:
+            nodes = [helper.make_node(op_type, [], ["Y"], **attrs)]
+            graph = helper.make_graph(
+                nodes,
+                f"test_{op_type.lower()}_{from_opset}_{to_opset}_rejects_missing_input",
+                [],
+                [helper.make_tensor_value_info("Y", output_type, output_shape)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        self.assertRaises((RuntimeError, shape_inference.InferenceError), test)
+
+    def test_softmax_13_12_rejects_malformed_flatten_input(self) -> None:
+        def test() -> None:
+            nodes = [
+                helper.make_node("Flatten", [], ["F"], axis=1),
+                helper.make_node("Softmax", ["F"], ["Y"], axis=0),
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_softmax_13_12_rejects_malformed_flatten_input",
+                [],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 13), 12)
+
+        self.assertRaises((RuntimeError, shape_inference.InferenceError), test)
+
     @parameterized.parameterized.expand(
         [
             ("per_tensor", (16, 3), (1,), None, None, None, TensorProto.INT8, True),
@@ -2118,7 +2297,7 @@ class TestVersionConverter(unittest.TestCase):
         context_manager = (
             contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
         )
-        with context_manager:  # type: ignore[attr-defined]
+        with context_manager:
             test(x_shape, scale_shape, axis, block_size, output_dtype, zero_point_dtype)
 
     @parameterized.parameterized.expand(
@@ -2166,8 +2345,213 @@ class TestVersionConverter(unittest.TestCase):
         context_manager = (
             contextlib.nullcontext() if compatible else self.assertRaises(RuntimeError)
         )
-        with context_manager:  # type: ignore[attr-defined]
+        with context_manager:
             test(y_shape, scale_shape, axis, block_size)
+
+    def test_external_data_version_conversion(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a model with external data
+            shape = (2, 3)
+            random_data = np.random.rand(*shape).astype(np.float32)
+
+            initializer_tensor = onnx.helper.make_tensor(
+                name="initializer_tensor",
+                data_type=onnx.TensorProto.FLOAT,
+                dims=list(shape),
+                vals=random_data,
+                raw=True,
+            )
+            initializer_scalar = onnx.helper.make_tensor(
+                name="initializer_scalar",
+                data_type=onnx.TensorProto.FLOAT,
+                dims=[],
+                vals=[1.0],
+            )
+
+            add_node = onnx.helper.make_node(
+                "Add",
+                inputs=["initializer_tensor", "initializer_scalar"],
+                outputs=["sum_output"],
+            )
+
+            graph_def = onnx.helper.make_graph(
+                name="SimpleAddition",
+                nodes=[add_node],
+                inputs=[],
+                outputs=[
+                    onnx.helper.make_tensor_value_info(
+                        "sum_output", onnx.TensorProto.FLOAT, list(shape)
+                    )
+                ],
+                initializer=[initializer_tensor, initializer_scalar],
+            )
+
+            # Save model to file with external data
+            model_filename = os.path.join(temp_dir, "test_simple_add.onnx")
+            data_filename = "test_simple_add.onnx.data"  # Use relative path
+            opset_imports = [onnx.helper.make_opsetid("", 20)]
+            model_def = onnx.helper.make_model(graph_def, opset_imports=opset_imports)
+            model_def.ir_version = 10
+            onnx.save_model(
+                model_def,
+                model_filename,
+                save_as_external_data=True,
+                all_tensors_to_one_file=True,
+                location=data_filename,
+                size_threshold=0,
+                convert_attribute=False,
+            )
+
+            # Load the model and verify external data
+            converted_model = onnx.version_converter.convert_version(
+                onnx.load(model_filename, load_external_data=False), 21
+            )
+            self.assertEqual(len(converted_model.graph.initializer), 2)
+
+            # Verify the large tensor has external data
+            tensors = {init.name: init for init in converted_model.graph.initializer}
+            self.assertIn("initializer_tensor", tensors)
+            large_tensor = tensors["initializer_tensor"]
+            self.assertEqual(large_tensor.data_location, TensorProto.EXTERNAL)
+            self.assertEqual(len(large_tensor.external_data), 3)
+
+            # Convert external_data to dictionary for order-independent checking
+            external_data_dict = {ed.key: ed.value for ed in large_tensor.external_data}
+            self.assertEqual(external_data_dict["location"], data_filename)
+            self.assertEqual(external_data_dict["offset"], "0")
+            self.assertEqual(external_data_dict["length"], "24")
+
+    # Where 16 -> 15: TypeRestriction rejects bfloat16
+    def test_where_16_15_success(self) -> None:
+        nodes = [helper.make_node("Where", ["cond", "x", "y"], ["out"])]
+        graph = helper.make_graph(
+            nodes,
+            "where",
+            [
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, (2, 3)),
+                helper.make_tensor_value_info("x", TensorProto.FLOAT, (2, 3)),
+                helper.make_tensor_value_info("y", TensorProto.FLOAT, (2, 3)),
+            ],
+            [helper.make_tensor_value_info("out", TensorProto.FLOAT, (2, 3))],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 16), 15)
+        assert converted.opset_import[0].version == 15
+
+    def test_where_bfloat16_16_15_fails(self) -> None:
+        def test() -> None:
+            nodes = [helper.make_node("Where", ["cond", "x", "y"], ["out"])]
+            graph = helper.make_graph(
+                nodes,
+                "where_bf16",
+                [
+                    helper.make_tensor_value_info("cond", TensorProto.BOOL, (2, 3)),
+                    helper.make_tensor_value_info("x", TensorProto.BFLOAT16, (2, 3)),
+                    helper.make_tensor_value_info("y", TensorProto.BFLOAT16, (2, 3)),
+                ],
+                [helper.make_tensor_value_info("out", TensorProto.BFLOAT16, (2, 3))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 16), 15)
+
+        self.assertRaises(RuntimeError, test)
+
+    def _make_scatter_graph(
+        self,
+        op_name: str,
+        dtype: int = TensorProto.FLOAT,
+        reduction: str | None = None,
+    ) -> GraphProto:
+        """Build a graph for ScatterElements or ScatterND with standard test shapes."""
+        scatter_graph_config = {
+            "ScatterElements": ((2, 3), (2, 3), (2, 3), {"axis": 0}),
+            "ScatterND": ((4, 5), (2, 1), (2, 5), {}),
+        }
+        data_s, indices_s, updates_s, attrs = scatter_graph_config[op_name]
+        attrs = dict(attrs)
+        if reduction is not None:
+            attrs["reduction"] = reduction
+        nodes = [
+            helper.make_node(op_name, ["data", "indices", "updates"], ["out"], **attrs)
+        ]
+        return helper.make_graph(
+            nodes,
+            op_name.lower(),
+            [
+                helper.make_tensor_value_info("data", dtype, data_s),
+                helper.make_tensor_value_info("indices", TensorProto.INT64, indices_s),
+                helper.make_tensor_value_info("updates", dtype, updates_s),
+            ],
+            [helper.make_tensor_value_info("out", dtype, data_s)],
+        )
+
+    # Scatter 16 -> 15: TypeRestriction (bfloat16) + RemoveAttribute (reduction)
+    @parameterized.parameterized.expand([("ScatterElements",), ("ScatterND",)])
+    def test_scatter_16_15_success(self, op_name: str) -> None:
+        graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, "none")
+        converted = self._converted(graph, helper.make_operatorsetid("", 16), 15)
+        assert converted.opset_import[0].version == 15
+
+    @parameterized.parameterized.expand([("ScatterElements",), ("ScatterND",)])
+    def test_scatter_16_15_bfloat16_fails(self, op_name: str) -> None:
+        def test() -> None:
+            graph = self._make_scatter_graph(op_name, TensorProto.BFLOAT16)
+            self._converted(graph, helper.make_operatorsetid("", 16), 15)
+
+        self.assertRaises(RuntimeError, test)
+
+    # Opset 16 added reduction 'add' and 'mul'; 16 -> 15 only allows 'none'
+    @parameterized.parameterized.expand(
+        [
+            ("ScatterElements", "add"),
+            ("ScatterElements", "mul"),
+            ("ScatterND", "add"),
+            ("ScatterND", "mul"),
+        ]
+    )
+    def test_scatter_16_15_reduction_add_mul_fails(
+        self, op_name: str, reduction: str
+    ) -> None:
+        def test() -> None:
+            graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
+            self._converted(graph, helper.make_operatorsetid("", 16), 15)
+
+        self.assertRaises(RuntimeError, test)
+
+    # Scatter 18 -> 17: reject reduction "max" / "min"
+    @parameterized.parameterized.expand(
+        [
+            ("ScatterElements", "max"),
+            ("ScatterElements", "min"),
+            ("ScatterND", "max"),
+            ("ScatterND", "min"),
+        ]
+    )
+    def test_scatter_18_17_reduction_max_min_fails(
+        self, op_name: str, reduction: str
+    ) -> None:
+        def test() -> None:
+            graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
+            self._converted(graph, helper.make_operatorsetid("", 18), 17)
+
+        self.assertRaises(RuntimeError, test)
+
+    @parameterized.parameterized.expand(
+        [
+            ("ScatterElements", None),
+            ("ScatterElements", "none"),
+            ("ScatterElements", "add"),
+            ("ScatterElements", "mul"),
+            ("ScatterND", None),
+            ("ScatterND", "none"),
+            ("ScatterND", "add"),
+            ("ScatterND", "mul"),
+        ]
+    )
+    def test_scatter_18_17_allowed_reductions_success(
+        self, op_name: str, reduction: str | None
+    ) -> None:
+        graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
+        converted = self._converted(graph, helper.make_operatorsetid("", 18), 17)
+        checker.check_model(converted)
 
 
 if __name__ == "__main__":

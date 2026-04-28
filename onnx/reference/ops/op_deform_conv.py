@@ -6,9 +6,10 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops import op_grid_sample
 
 
-def _deform_conv_implementation(  # type: ignore
+def _deform_conv_implementation(
     X, W, offset, B, mask, dilations, group, kernel_shape, offset_group, pads, strides
 ):
     if dilations is None:
@@ -38,7 +39,10 @@ def _deform_conv_implementation(  # type: ignore
         raise ValueError("Number of input channels must be divisible by offset_group.")
     ics_per_offset_group = ic // offset_group
 
-    if offset_group * np.prod(kernel_shape) * len(kernel_shape) != offset.shape[1]:
+    if (
+        offset_group * np.prod(kernel_shape, dtype=np.int64) * len(kernel_shape)
+        != offset.shape[1]
+    ):
         raise ValueError(
             f"Offset shape {offset.shape} is inconsistent with offset_group {offset_group} "
             f"and kernel shape {kernel_shape}."
@@ -48,10 +52,10 @@ def _deform_conv_implementation(  # type: ignore
     )
 
     if mask is None:
-        mask = np.ones((n, offset_group * np.prod(kernel_shape), *output_shape))
+        mask = np.ones(
+            (n, offset_group * np.prod(kernel_shape, dtype=np.int64), *output_shape)
+        )
     mask = mask.reshape((n, offset_group, *kernel_shape, *output_shape))
-
-    from onnx.reference.ops._op_list import GridSample
 
     if len(X.shape) == 4:
         ih, iw = X.shape[2:]
@@ -117,7 +121,7 @@ def _deform_conv_implementation(  # type: ignore
                             kernel = np.flip(
                                 kernel, 3
                             )  # spatial GridSample expects (x, y) input
-                            grid_sample_output = GridSample.eval(
+                            grid_sample_output = op_grid_sample.GridSample.eval(
                                 X[batch_idx : batch_idx + 1, ic_idx : ic_idx + 1],
                                 kernel,
                                 align_corners=1,
@@ -142,7 +146,7 @@ def _deform_conv_implementation(  # type: ignore
 
 
 class DeformConv(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,

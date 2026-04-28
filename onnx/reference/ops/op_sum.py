@@ -7,5 +7,5 @@ from onnx.reference.op_run import OpRun
 
 
 class Sum(OpRun):
-    def _run(self, *args):  # type: ignore
+    def _run(self, *args):
         return (sum(args).astype(args[0].dtype),)

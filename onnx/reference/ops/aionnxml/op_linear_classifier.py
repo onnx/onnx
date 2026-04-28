@@ -15,7 +15,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 class LinearClassifier(OpRunAiOnnxMl):
     @staticmethod
-    def _post_process_predicted_label(label, scores, classlabels_ints_string):  # type: ignore
+    def _post_process_predicted_label(label, scores, classlabels_ints_string):
         """Replaces int64 predicted labels by the corresponding
         strings.
         """
@@ -23,7 +23,7 @@ class LinearClassifier(OpRunAiOnnxMl):
             label = np.array([classlabels_ints_string[i] for i in label])
         return label, scores
 
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         classlabels_ints=None,

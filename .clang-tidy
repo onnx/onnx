@@ -1,45 +1,64 @@
-# `-allow-enabling-analyzer-alpha-checkers` should be passed to clang-tidy for CSA checkers named `clang-analyzer-alpha.*`
-# `aggressive-binary-operation-simplification` should be enabled (via `-Xclang -analyzer-config -Xclang aggressive-binary-operation-simplification=true` in clang)
-# there is some problem in `clang-analyzer-alpha.clone.*`, so do not enable it
-# `clang-analyzer-alpha.deadcode.*` is just too verbose to enable
 Checks: >-
   -*,
   bugprone-*,
-  -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
+  -bugprone-derived-method-shadowing-base-method,
   -bugprone-lambda-function-name,
   -bugprone-macro-parentheses,
   -bugprone-narrowing-conversions,
   -bugprone-reserved-identifier,
+  -bugprone-throwing-static-initialization,
   clang-diagnostic-*,
   clang-analyzer-.*,
   cppcoreguidelines-avoid-goto,
   cppcoreguidelines-interfaces-global-init,
-  cppcoreguidelines-init-variables,
   cppcoreguidelines-no-malloc,
   cppcoreguidelines-prefer-member-initializer,
   cppcoreguidelines-pro-type-member-init,
   cppcoreguidelines-pro-type-static-cast-downcast,
   cppcoreguidelines-slicing,
   cppcoreguidelines-special-member-functions,
+  cppcoreguidelines-owning-memory,
   performance-*,
+  -performance-enum-size,
   google-default-arguments,
   google-global-names-in-headers,
   google-explicit-constructor,
+  google-readability-casting,
   misc-*,
   -misc-const-correctness,
   -misc-include-cleaner,
+  -misc-override-with-different-visibility,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -misc-use-anonymous-namespace,
   modernize-*,
+  -modernize-avoid-c-arrays,
   -modernize-concat-nested-namespaces,
-  -modernize-raw-string-literal,
   -modernize-return-braced-init-list,
   -modernize-use-auto,
+  -modernize-use-constraints,
+  -modernize-use-integer-sign-comparison,
+  -modernize-use-ranges,
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
-  readability-container-size-empty
+  readability-*,
+  -readability-braces-around-statements,
+  -readability-container-contains,
+  -readability-convert-member-functions-to-static,
+  -readability-else-after-return,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-inconsistent-declaration-parameter-name,
+  -readability-isolate-declaration,
+  -readability-magic-numbers,
+  -readability-math-missing-parentheses,
+  -readability-redundant-access-specifiers,
+  -readability-redundant-typename,
+  -readability-uppercase-literal-suffix,
+  -readability-use-anyofallof,
+  -readability-use-anyofanyof,
 
 CheckOptions:
   # `cppcoreguidelines-special-member-functions` is enabled, refer to https://en.cppreference.com/w/cpp/language/rule_of_three
@@ -49,3 +68,5 @@ CheckOptions:
     value:           False
   - key:             cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted
     value:           True
+  - key:             modernize-use-scoped-lock.WarnOnSingleLocks
+    value:           False

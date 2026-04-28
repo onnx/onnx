@@ -31,9 +31,9 @@ class GRUHelper:
         self.num_directions = params[W].shape[0]
 
         if self.num_directions == 1:
-            for k in params:
+            for k, v in params.items():
                 if k != X:
-                    params[k] = np.squeeze(params[k], axis=0)
+                    params[k] = np.squeeze(v, axis=0)
 
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
@@ -58,7 +58,7 @@ class GRUHelper:
             self.LAYOUT = layout
 
         else:
-            raise NotImplementedError()
+            raise NotImplementedError
 
     def f(self, x: np.ndarray) -> np.ndarray:
         return 1 / (1 + np.exp(-x))

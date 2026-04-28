@@ -9,7 +9,7 @@ from onnx.reference.ops._op_common_pool import CommonPool
 
 
 class MaxPool(CommonPool):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         auto_pad=None,
@@ -51,7 +51,7 @@ class MaxPool(CommonPool):
             strides=strides,
         )
 
-    def _max_pool(  # type: ignore
+    def _max_pool(
         self,
         x,
         auto_pad,
@@ -179,7 +179,7 @@ class MaxPool(CommonPool):
 
         raise RuntimeError(f"Not implemented yet for shape {x.shape}.")
 
-    def _max_pool_1d(  # type: ignore
+    def _max_pool_1d(
         self,
         x,
         auto_pad,  # noqa: ARG002
@@ -231,11 +231,11 @@ class MaxPool(CommonPool):
         for c in range(total_channels):
             iteration(c)
 
-        if len(self.output) == 1:  # type: ignore
+        if len(self.output) == 1:
             return (Y_data.reshape(y_dims),)
         return (Y_data.reshape(y_dims), I_data.reshape(y_dims))
 
-    def _max_pool_2d(  # type: ignore
+    def _max_pool_2d(
         self,
         x,
         auto_pad,  # noqa: ARG002
@@ -270,7 +270,7 @@ class MaxPool(CommonPool):
         Y_data = y.ravel()
         I_data = indices.ravel()
 
-        def iteration(c):  # type: ignore
+        def iteration(c):
             x_d = c * x_step  # X_data
             y_d = c * y_step  # Y_data
             for ph in range(pooled_height):
@@ -308,11 +308,11 @@ class MaxPool(CommonPool):
         for c in range(total_channels):
             iteration(c)
 
-        if len(self.output) == 1:  # type: ignore
+        if len(self.output) == 1:
             return (Y_data.reshape(y_dims),)
         return (Y_data.reshape(y_dims), I_data.reshape(y_dims))
 
-    def _max_pool_3d(  # type: ignore
+    def _max_pool_3d(
         self,
         x,
         auto_pad,  # noqa: ARG002
@@ -408,6 +408,6 @@ class MaxPool(CommonPool):
         for c in range(total_channels):
             iteration(c)
 
-        if len(self.output) == 1:  # type: ignore
+        if len(self.output) == 1:
             return (Y_data.reshape(y_dims),)
         return (Y_data.reshape(y_dims), I_data.reshape(y_dims))

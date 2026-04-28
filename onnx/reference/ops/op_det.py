@@ -9,5 +9,5 @@ from onnx.reference.op_run import OpRun
 
 
 class Det(OpRun):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         return (np.array(np.linalg.det(x)),)

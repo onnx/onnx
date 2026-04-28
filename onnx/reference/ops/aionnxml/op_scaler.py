@@ -7,6 +7,6 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class Scaler(OpRunAiOnnxMl):
-    def _run(self, x, offset=None, scale=None):  # type: ignore
+    def _run(self, x, offset=None, scale=None):
         dx = x - offset
         return ((dx * scale).astype(x.dtype),)

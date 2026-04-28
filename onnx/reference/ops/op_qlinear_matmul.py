@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class QLinearMatMul(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self, a, a_scale, a_zero_point, b, b_scale, b_zero_point, y_scale, y_zero_point
     ):
         A = a.astype(np.int32)

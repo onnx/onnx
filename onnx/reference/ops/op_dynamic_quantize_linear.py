@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class DynamicQuantizeLinear(OpRun):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         # args: x, y_scale, zero_point
         dtype, qmin, qmax = np.uint8, 0, 255
         maxx = np.float32(np.maximum(0, np.max(x)))

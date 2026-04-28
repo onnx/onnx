@@ -3,13 +3,16 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.model import expect
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class NormalizeStrings(Base):
@@ -20,7 +23,7 @@ class NormalizeStrings(Base):
             input_shape: Sequence[int],
             output_shape: Sequence[int],
         ) -> onnx.helper.GraphProto:
-            graph = onnx.helper.make_graph(
+            return onnx.helper.make_graph(
                 nodes=[node],
                 name="StringNormalizer",
                 inputs=[
@@ -34,7 +37,6 @@ class NormalizeStrings(Base):
                     )
                 ],
             )
-            return graph
 
         # 1st model_monday_casesensintive_nochangecase
         stopwords = ["monday"]

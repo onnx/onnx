@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def _scatter_nd_impl(data, indices, updates, reduction=None):  # type: ignore
+def _scatter_nd_impl(data, indices, updates, reduction=None):
     output = np.copy(data)
     for i in np.ndindex(indices.shape[:-1]):
         if reduction == "add":
@@ -25,6 +25,6 @@ def _scatter_nd_impl(data, indices, updates, reduction=None):  # type: ignore
 
 
 class ScatterND(OpRun):
-    def _run(self, data, indices, updates, reduction=None):  # type: ignore
+    def _run(self, data, indices, updates, reduction=None):
         y = _scatter_nd_impl(data, indices, updates, reduction=reduction)
         return (y,)

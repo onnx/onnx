@@ -1,16 +1,19 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
-#include <cmath>
+#include <string>
+#include <vector>
 
 #include "onnx/common/assertions.h"
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/nn/utils.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* pads_doc =
+static constexpr const char* pads_doc =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
     "and end part of the corresponding axis. `pads` format should be as follow "
@@ -18,7 +21,7 @@ static const char* pads_doc =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each spatial axis.";
-static const char* conv_auto_pad_doc =
+static constexpr const char* conv_auto_pad_doc =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -26,7 +29,7 @@ static const char* conv_auto_pad_doc =
     "The padding is split between the two sides equally or almost equally (depending "
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
-static const char* conv_transpose_auto_pad_doc =
+static constexpr const char* conv_transpose_auto_pad_doc =
     "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
     "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that "
@@ -35,7 +38,7 @@ static const char* conv_transpose_auto_pad_doc =
     "on whether it is even or odd). In case the padding is an odd number, the extra "
     "padding is added at the end for SAME_UPPER and at the beginning for SAME_LOWER.";
 
-static void convPoolShapeInference(
+ONNX_API void convPoolShapeInference(
     InferenceContext& ctx,
     bool use_dilation,
     bool require_kernel_shape,
@@ -72,14 +75,7 @@ static void convPoolShapeInference(
     dilations.assign(n_input_dims, 1);
   }
 
-  std::vector<int64_t> strides;
-  if (getRepeatedAttribute(ctx, "strides", strides)) {
-    if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");
-    }
-  } else {
-    strides.assign(n_input_dims, 1);
-  }
+  std::vector<int64_t> strides = defs::nn::utils::getConvPoolStrides(ctx, n_input_dims);
 
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
@@ -99,7 +95,7 @@ static void convPoolShapeInference(
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+  for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
@@ -111,7 +107,7 @@ static void convPoolShapeInference(
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
-    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    const auto* const auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
@@ -130,8 +126,7 @@ static void convPoolShapeInference(
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
         }
         int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
-        if (total_pad < 0)
-          total_pad = 0;
+        total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
@@ -145,7 +140,7 @@ static void convPoolShapeInference(
     }
   }
 
-  auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   if (require_kernel_shape) {
     // add the first two dimensions from the input.
@@ -153,7 +148,7 @@ static void convPoolShapeInference(
     *output_shape->add_dim() = input_shape.dim(1);
   } else {
     *output_shape->add_dim() = input_shape.dim(0);
-    auto& second_input_shape = getInputShape(ctx, input2Idx);
+    const auto& second_input_shape = getInputShape(ctx, input2Idx);
     if (second_input_shape.dim_size() < 1) {
       fail_shape_inference("Second input tensor has wrong dimension");
     }
@@ -162,7 +157,7 @@ static void convPoolShapeInference(
 
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
   for (int i = 0; i < kernel_shape_size; ++i) {
-    auto newdim = output_shape->add_dim();
+    auto* newdim = output_shape->add_dim();
     if (!input_shape.dim(2 + i).has_dim_value()) {
       continue;
     }
@@ -188,7 +183,7 @@ static void convPoolShapeInference(
 
   if (ctx.getNumOutputs() > 1) {
     // MaxPool with two outputs case.
-    auto second_output_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+    auto* second_output_shape = ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
     second_output_shape->CopyFrom(*output_shape);
   }
 }
@@ -303,7 +298,7 @@ static std::function<void(OpSchema&)> PoolOpSchemaGenerator(
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (ctx.getNumOutputs() > 1) {
         // MaxPool with two outputs case.
-        auto output_type = ctx.getOutputType(1);
+        auto* output_type = ctx.getOutputType(1);
         if (output_type->value_case() == TypeProto::kTensorType ||
             output_type->value_case() == TypeProto::VALUE_NOT_SET) {
           output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
@@ -421,12 +416,12 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
     // If the third input, output_size, is specified, then use that instead
     // of inferring shape from inputs.
     if (hasInputShape(ctx, 2)) {
-      auto& output_shape = getInputShape(ctx, 2);
+      const auto& output_shape = getInputShape(ctx, 2);
       if (output_shape.dim_size() != 1) {
         fail_type_inference("'output_shape' must be rank 1 tensor.");
       }
-      if (output_shape.dim((int)0).has_dim_value() &&
-          static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
+      if (output_shape.dim(0).has_dim_value() &&
+          static_cast<int>(output_shape.dim(0).dim_value()) != input_shape.dim_size()) {
         fail_shape_inference("'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
@@ -434,7 +429,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
             // determined at runtime.
   }
 
-  auto final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
@@ -442,7 +437,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
 
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
   for (int i = 0; i < kernel_shape_size; ++i) {
-    auto newdim = final_output_shape->add_dim();
+    auto* newdim = final_output_shape->add_dim();
     if (!input_shape.dim(2 + i).has_dim_value()) {
       continue;
     }
@@ -457,26 +452,7 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 }
 
-static const char* MaxUnpool_ver22_doc = R"DOC(
-MaxUnpool essentially computes the partial inverse of the MaxPool op.
- The input information to this op is typically the output information from a MaxPool op. The first
- input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
- from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corresponding
- to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
- The third (optional) input is a tensor that specifies the output size of the unpooling operation.
-
-MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
- values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
- the result of an unpooling operation should give back the original input to the unpooling op.
-
-MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
- The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
- known/predictable size.
-
-In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
- which define the exact unpooling op. The attributes typically have the same values as the corresponding
- pooling op that the unpooling op is trying to invert.
-)DOC";
+static const char* const MaxUnpool_ver22_doc = kDoc_MaxUnpool_ver11;
 
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
@@ -551,7 +527,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
@@ -575,7 +552,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) 
  ```
  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + {kernelSpatialShape} - input_spatial_shape[i]
  ```)DOC";
-                        ReplaceAll(doc, "{name}", name););
+        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS);
     schema.Attr(
@@ -666,7 +643,7 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
   }
 
   // (num_rois, channels, pooled_shape[0], pooled_shape[1])
-  auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *output_shape->add_dim() = rios_shape.dim(0);
   *output_shape->add_dim() = input_shape.dim(1);
@@ -677,11 +654,12 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
 static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  ROI {name} pool consumes an input tensor X and region of interests (RoIs) to
  apply {name} pooling across each RoI, to produce output 4-D tensor of shape
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
-                        ReplaceAll(doc, "{name}", name););
+        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("pooled_shape", "ROI pool output shape (height, width).", AttributeProto::INTS);
     schema.Attr(
@@ -732,10 +710,11 @@ ONNX_OPERATOR_SET_SCHEMA(MaxRoiPool, 22, OpSchema().FillUsing(RoiPoolOpSchemaGen
 static std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
-                        ReplaceAll(doc, "{filter_desc}", filter_desc););
+        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -832,7 +811,7 @@ computes the output.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(Conv, 22, OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
 
-static const char* QLinearConv_ver10_doc = R"DOC(
+static constexpr const char* QLinearConv_ver10_doc = R"DOC(
 The convolution operator consumes a quantized input tensor, its scale and zero point,
 a quantized filter, its scale and zero point, and output's scale and zero point,
 and computes the quantized output. Each scale and zero-point pair must have same shape.
@@ -984,7 +963,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           convPoolShapeInference(ctx, true, false, 0, 3);
         }));
 
-static const char* ConvInteger_ver10_doc = R"DOC(
+static constexpr const char* ConvInteger_ver10_doc = R"DOC(
 The integer convolution operator consumes an input tensor, its zero-point, a filter, and its zero-point,
 and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 )DOC";
@@ -1101,7 +1080,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           convPoolShapeInference(ctx, true, false, 0, 1);
         }));
 
-static void convTransposeShapeInference(InferenceContext& ctx) {
+ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // we need at least two inputs to have a shape for this inference.
@@ -1153,7 +1132,7 @@ static void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); i++) {
+  for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_shape[i] = (effective_kernel_shape[i] - 1) * dilations[i] + 1;
   }
@@ -1163,19 +1142,18 @@ static void convTransposeShapeInference(InferenceContext& ctx) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
     }
-    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    const auto* const auto_pad_attr = ctx.getAttribute("auto_pad");
     if (nullptr != auto_pad_attr && auto_pad_attr->s() != "NOTSET") {
       fail_shape_inference("The pads attribute cannot be used simultaneously with auto_pad attribute");
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
-    const auto* auto_pad_attr = ctx.getAttribute("auto_pad");
+    const auto* const auto_pad_attr = ctx.getAttribute("auto_pad");
     if ((nullptr != auto_pad_attr) && (auto_pad_attr->s() != "VALID")) {
       int input_dims_size = static_cast<int>(n_input_dims);
       for (int i = 0; i < input_dims_size; ++i) {
         int64_t total_pad = effective_kernel_shape[i] - strides[i];
-        if (total_pad < 0)
-          total_pad = 0;
+        total_pad = std::max<int64_t>(total_pad, 0);
         int64_t half_pad_small = total_pad >> 1;
         int64_t half_pad_big = total_pad - half_pad_small;
         if (auto_pad_attr->s() == "SAME_UPPER") {
@@ -1208,7 +1186,7 @@ static void convTransposeShapeInference(InferenceContext& ctx) {
     output_padding.assign(n_input_dims, 0);
   }
 
-  auto final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
@@ -1221,7 +1199,7 @@ static void convTransposeShapeInference(InferenceContext& ctx) {
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
         if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
-          // TODO: throw exception?
+          // TODO(ONNX): throw exception?
           return; // output shape value cannot be smaller than the input shape
                   // value
         }
@@ -1247,7 +1225,8 @@ static void convTransposeShapeInference(InferenceContext& ctx) {
 static std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.
 
@@ -1262,7 +1241,7 @@ output_shape can also be explicitly specified in which case pads values are auto
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
-                        ReplaceAll(doc, "{filter_desc}", filter_desc););
+        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1365,10 +1344,7 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 22, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
-static const char* DeformConv_ver22_doc = R"DOC(
-Performs deformable convolution as described in https://arxiv.org/abs/1703.06211 and https://arxiv.org/abs/1811.11168.
-This operator specification supports the general N-D case. Note that most common use cases have 2D or 3D data.
-)DOC";
+static const char* const DeformConv_ver22_doc = kDoc_DeformConv_ver19;
 
 ONNX_OPERATOR_SET_SCHEMA(
     DeformConv,
@@ -1461,7 +1437,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         }));
 
 // For GlobalPool operations.
-static void globalPoolTypeShapeInference(InferenceContext& ctx) {
+ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
   // needs at least one input with shape.
@@ -1478,7 +1454,7 @@ static void globalPoolTypeShapeInference(InferenceContext& ctx) {
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
   // (N, C, 1, 1, ..., 1)
-  auto output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
   *output_shape->add_dim() = input_shape.dim(0);
   *output_shape->add_dim() = input_shape.dim(1);
 
@@ -1490,12 +1466,13 @@ static void globalPoolTypeShapeInference(InferenceContext& ctx) {
 static std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char* op_type, const char* op) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
-                        ReplaceAll(doc, "{op_type}", op_type);
-                        ReplaceAll(doc, "{op}", op););
+        ReplaceAll(doc, "{op_type}", op_type);
+        ReplaceAll(doc, "{op}", op););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1537,12 +1514,13 @@ ONNX_OPERATOR_SET_SCHEMA(GlobalMaxPool, 22, OpSchema().FillUsing(GlobalPoolingOp
 static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const char* op_type, const char* op) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
  Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
-                        ReplaceAll(doc, "{op_type}", op_type);
-                        ReplaceAll(doc, "{op}", op););
+        ReplaceAll(doc, "{op_type}", op_type);
+        ReplaceAll(doc, "{op}", op););
     schema.SetDoc(doc);
     schema.Attr(
         "p", "p value of the Lp norm used to pool over the input data.", AttributeProto::INT, static_cast<int64_t>(2));
@@ -1573,17 +1551,14 @@ static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const cha
         true,
         1,
         OpSchema::Differentiable);
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { globalPoolTypeShapeInference(ctx); });
   };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(GlobalLpPool, 22, OpSchema().FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver15_doc = R"DOC(
+static constexpr const char* BatchNormalization_ver15_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 There are five required inputs 'X', 'scale', 'B', 'input_mean' and
@@ -1763,14 +1738,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* InstanceNormalization_ver22_doc = R"DOC(
-Carries out instance normalization as described in the paper
-https://arxiv.org/abs/1607.08022.
-
-y = scale * (x - mean) / sqrt(variance + epsilon) + B,
-where mean and variance are computed per instance per channel.
-
-)DOC";
+static const char* const InstanceNormalization_ver22_doc = kDoc_InstanceNormalization_ver6;
 
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
@@ -1824,9 +1792,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* LpNormalization_ver22_doc = R"DOC(
-Given a matrix, apply Lp-normalization along the provided axis.
-)DOC";
+static const char* const LpNormalization_ver22_doc = kDoc_LpNormalization_ver1;
 
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
@@ -1848,19 +1814,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* Dropout_ver22_doc = R"DOC(
-Dropout takes an input floating-point tensor, an optional input ratio (floating-point scalar) and an optional input training_mode (boolean scalar). It produces two tensor outputs,
-output (floating-point tensor) and mask (optional `Tensor<bool>`). If `training_mode` is true then the output Y will be a random dropout;
-Note that this Dropout scales the masked input data by the following equation, so to convert the trained model into inference mode,
-the user can simply not pass `training_mode` input or set it to false.
-```
-output = scale * data * mask,
-```
-where
-```
-scale = 1. / (1. - ratio).
-```
-)DOC";
+static const char* const Dropout_ver22_doc = kDoc_Dropout_ver13;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
@@ -1876,8 +1830,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "ratio",
-            "The ratio of random dropout, with value in [0, 1). If this input was not set, "
-            "or if it was set to 0, the output would be a simple copy of the input. "
+            "The ratio of random dropout, with value in [0, 1). If set to 0, "
+            "the output would be a simple copy of the input. "
             "If it's non-zero, output will be a random dropout of the scaled input, which is typically "
             "the case during training. It is an optional value, if not specified it will default to 0.5.",
             "T1",
@@ -1901,6 +1855,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir10(), "Constrain input and output types to float tensors.")
         .TypeConstraint("T1", OpSchema::all_float_types_ir10(), "Constrain input 'ratio' types to float tensors.")
         .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output 'mask' types to boolean tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (hasInputShape(ctx, 0)) {
@@ -1929,7 +1884,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Shrink_ver9_doc = R"DOC(
+static constexpr const char* Shrink_ver9_doc = R"DOC(
 Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
 having same datatype and shape with input. It has two attributes, lambd and
 bias. The formula of this operator is: If x < -lambd, y = x + bias;
@@ -1967,17 +1922,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* Flatten_ver11_doc = R"DOC(
-Flattens the input tensor into a 2D matrix. If input tensor has shape
-(d_0, d_1, ... d_n) then the output will have shape
-(d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
-)DOC";
+static const char* const Flatten_ver25_doc = kDoc_Flatten_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    23,
+    25,
     OpSchema()
-        .SetDoc(Flatten_ver11_doc)
+        .SetDoc(Flatten_ver25_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -1993,8 +1944,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            OpSchema::all_tensor_types_ir11(),
-            "Constrain input and output to all tensor types up to IRv10.")
+            OpSchema::all_tensor_types_ir13(),
+            "Constrain input and output to all tensor types up to IRv13.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "
@@ -2018,11 +1969,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          // TODO: is the operation defined for input-rank < 2?
+          // TODO(ONNX): is the operation defined for input-rank < 2?
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* LRN_ver13_doc = R"DOC(
+static constexpr const char* LRN_ver13_doc = R"DOC(
 Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
 It normalizes over local input regions.
 The local region is defined across the channels. For an element `X[n, c, d1, ..., dk]` in a tensor
@@ -2079,7 +2030,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(LRN_ver13_doc)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* TfIdfVectorizer_ver9_doc = R"DOC(
+static constexpr const char* TfIdfVectorizer_ver9_doc = R"DOC(
 This transform extracts n-grams from the input sequence and save them as a vector. Input can
 be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.
 For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row.
@@ -2205,7 +2156,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
-static const char* mvn_ver13_doc = R"DOC(
+static constexpr const char* mvn_ver13_doc = R"DOC(
       A MeanVarianceNormalization Function: Perform mean variance normalization
       on the input tensor X using formula: `(X-EX)/sqrt(E(X-EX)^2)`
 )DOC";
@@ -2332,7 +2283,7 @@ static void col2imShapeInference(InferenceContext& ctx) {
   }
 
   // Final shape will be (N, C, dim_1, ..., dim_N)
-  auto final_image_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  auto* final_image_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   // Dimensions N and C are always present
   Dim N, C;
@@ -2354,10 +2305,9 @@ static void col2imShapeInference(InferenceContext& ctx) {
     }
     *final_image_shape->add_dim() = image_dim_i;
   }
-  return;
 }
 
-static const char* Col2Im_ver18_doc = R"DOC(
+static constexpr const char* Col2Im_ver18_doc = R"DOC(
 The operator rearranges column blocks back into a multidimensional image
 
 Col2Im behaves similarly to PyTorch's fold https://pytorch.org/docs/stable/generated/torch.nn.Fold.html,
@@ -2450,7 +2400,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all numeric tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { col2imShapeInference(ctx); }));
 
-static const char* LayerNormalization_ver17_doc = R"DOC(
+static constexpr const char* LayerNormalization_ver17_doc = R"DOC(
       This is layer normalization defined in ONNX as function.
       The overall computation can be split into two stages.
       The first stage is standardization, which makes the
@@ -2499,22 +2449,22 @@ static bool BuildContextDependentFunctionBodyLayerNormalization(
     const OpSchema& schema,
     FunctionProto& functionProto,
     int sinceVersion) {
-  ONNX_ASSERT(sinceVersion == 17 || sinceVersion == 18);
+  ONNX_ASSERT(sinceVersion == 17 || sinceVersion == 18)
   // LayerNormalization <axis, epsilon, stash_type> (X, Scale, B) => (Y, Mean?, InvStdDev?)
-  auto* tp = ctx.getInputType(0);
+  const auto* const tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
     return false;
   int64_t T = tp->tensor_type().elem_type();
 
-  auto type_attr = ctx.getAttribute("stash_type");
+  const auto* const type_attr = ctx.getAttribute("stash_type");
   int64_t U =
       (type_attr != nullptr) ? type_attr->i() : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
   if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) && (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16))
     return false; // Error
 
-  auto* axis_attr = ctx.getAttribute("axis");
+  const auto* const axis_attr = ctx.getAttribute("axis");
   int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
-  auto* epsilon_attr = ctx.getAttribute("epsilon");
+  const auto* const epsilon_attr = ctx.getAttribute("epsilon");
   float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
 
   auto mktensor = [](int64_t val) -> ONNX_NAMESPACE::TensorProto {
@@ -2632,6 +2582,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
             "Constrain input types and output Y type to float tensors.")
         .TypeConstraint("U", {"tensor(float)", "tensor(bfloat16)"}, "Type of Mean and InvStdDev tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer17, 17)
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer18, 18)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -2690,7 +2641,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* GroupNormalization_ver21_doc = R"DOC(
+static constexpr const char* GroupNormalization_ver21_doc = R"DOC(
 A GroupNormalization function. Carries out group normalization as described in
 the paper https://arxiv.org/abs/1803.08494
 
@@ -2756,17 +2707,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
               // GroupNormalization <epsilon, num_groups> (X, scale, bias) => (Y)
-              auto* tp = ctx.getInputType(0);
+              auto tp = ctx.getInputType(0);
               if ((tp == nullptr) || (!tp->has_tensor_type()))
                 return false;
               int64_t in_type = tp->tensor_type().elem_type();
 
-              auto* epsilon_attr = ctx.getAttribute("epsilon");
+              auto epsilon_attr = ctx.getAttribute("epsilon");
               float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
-              auto* num_groups_attr = ctx.getAttribute("num_groups");
+              auto num_groups_attr = ctx.getAttribute("num_groups");
               if (num_groups_attr == nullptr)
                 return false;
               int64_t num_groups = num_groups_attr->i();
@@ -2801,7 +2753,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("X3D = Reshape (XReshaped, Shape3D)")
 
                   // Calculate statistics
-                  .Const1D("Axes2", (int64_t)2)
+                  .Const1D("Axes2", static_cast<int64_t>(2))
                   .Add("Mean = ReduceMean (X3D, Axes2)")
                   .Add("Square = Mul (X3D, X3D)")
                   .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
@@ -2832,4 +2784,918 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             }));
+
+static constexpr const char* RMSNormalization_ver23_doc = R"DOC(
+      This is RMS normalization defined in ONNX as function as described in the paper https://arxiv.org/pdf/1910.07467.
+      The overall computation can be split into two stages. The root mean squared norm is taken over the last D dimensions,
+      where D is the dimension of normalized_shape. For example, if normalized_shape is (3, 5) (a 2-dimensional shape),
+      the rms norm is computed over the last 2 dimensions of the input. The computation required by standardization can be
+      described by the following equations.
+      ```
+      XSquared = Mul(X, X)
+      XSquaredMean = ReduceMean<axes=normalized_axes>(XSquared)
+      MeanSquareEpsilon = Add(XSquaredMean, epsilon)
+      RMS = Sqrt(MeanSquareEpsilon)
+      Normalized = Div(X, RMS)
+      ```
+      where `normalized_axes` is `[axis, ..., rank of X - 1]`. The variables `RMS` stand for root mean square,
+      Depending on `stash_type` attribute, the actual computation
+      must happen in different floating-point precision.
+      For example, if `stash_type` is 1, this operator casts
+      all input variables to 32-bit float, perform the computation, and
+      finally cast `Normalized` back to the original type of `X`.
+      The second stage then scales the outcome of the first stage using:
+      ```
+      Y= Mul(Normalized, Scale)
+      ```
+      Let `d[i]` indicate the i-th dimension of `X`.
+      If `X`'s shape is `[d[0], ..., d[axis-1], d[axis], ..., d[rank-1]]`,
+      the shape of `RMS` is `[d[0], ..., d[axis-1], 1, ..., 1]`.
+      `Y` and `X` have the same shape. This operator supports unidirectional broadcasting
+      (`Scale` should be unidirectional broadcastable to tensor `X`);
+      for more details please check [the doc](Broadcasting.md).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    RMSNormalization,
+    23,
+    OpSchema()
+        .SetDoc(RMSNormalization_ver23_doc)
+        .Attr(
+            "axis",
+            "The first normalization dimension. If rank(X) is r, axis' allowed range is [-r, r). "
+            "Negative value means counting dimensions from the back.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
+        .Attr(
+            "stash_type",
+            "The floating-point precision used in stage one of the computation.",
+            AttributeProto::INT,
+            static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT))
+        .Input(
+            0,
+            "X",
+            "The input tensor to be normalized. "
+            "In general, the shape is (D1, D2, ... , Dn) for n-dimensional data, where "
+            "the root mean squared norm is taken over the last D dimensions, D is determined by the axis attribute.",
+            "T")
+        .Input(1, "scale", "Scale tensor. Scale tensor shape should be broadcastable to the normalized shape.", "V")
+        .Output(0, "Y", "Output data tensor. Same shape as X", "V")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain input X type to float tensors.")
+        .TypeConstraint(
+            "V",
+            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            "Constrain output Y and scale type to float tensors.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+          int64_t input_ndim = input_shape.dim_size();
+          int64_t axis = -1;
+          auto axis_proto = ctx.getAttribute("axis");
+          if (axis_proto) {
+            axis = axis_proto->i();
+          }
+          if (axis < 0) {
+            // Convert negative axis value to equivalent
+            // positive value.
+            axis += input_ndim;
+          }
+          if (axis < 0) {
+            fail_shape_inference(
+                "Unexpected axis value (",
+                axis,
+                ") rank of first input is ",
+                input_ndim,
+                " in ",
+                ctx.getDisplayName(),
+                ".");
+          }
+        })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // RMSNormalization <axis, epsilon, stash_type> (X, Scale) => (Y)
+          auto tp = ctx.getInputType(0);
+          if ((tp == nullptr) || (!tp->has_tensor_type()))
+            return false;
+          int64_t T = tp->tensor_type().elem_type();
+
+          auto type_attr = ctx.getAttribute("stash_type");
+          int64_t U = (type_attr != nullptr) ? type_attr->i()
+                                             : static_cast<int64_t>(ONNX_NAMESPACE::TensorProto_DataType_FLOAT);
+          if ((U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (U != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (U != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) && (U != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
+
+          auto axis_attr = ctx.getAttribute("axis");
+          int64_t axis = (axis_attr != nullptr) ? axis_attr->i() : -1;
+          auto epsilon_attr = ctx.getAttribute("epsilon");
+          float epsilon = (epsilon_attr != nullptr) ? epsilon_attr->f() : 1e-5f;
+
+          FunctionBuilder builder(functionProto);
+          builder.Const("FloatEpsilon", ToTensor<float>(epsilon))
+              .Add("Epsilon = Cast (FloatEpsilon)", "to", U)
+              .Add("XShape = Shape (X)") // shape of input tensor: 1D tensor
+              .Add("Rank = Size (XShape)") // rank of input tensor: scalar
+              .Const("Axis", axis) // axis : scalar
+              .Add(
+                  axis >= 0 // number of axes that are reduced =
+                      ? "PosAxis = Identity (Axis)" // axis: scalar
+                      : "PosAxis = Add (Rank, Axis)") // rank + axis : scalar
+              .Const("One", static_cast<int64_t>(1))
+              .Add("ReduceAxes = Range(PosAxis, Rank, One)")
+              .Add("XU = Cast (X)", "to", U);
+          builder.Add("XSquared = Mul (XU, XU)")
+              .Add("XSquaredMean = ReduceMean (XSquared, ReduceAxes)")
+              .Add("MeanSquareEpsilon = Add (XSquaredMean, Epsilon)")
+              .Add("RMS = Sqrt (MeanSquareEpsilon)")
+              .Add("Normalized = Div (XU, RMS)")
+              .Add("NormalizedT = Cast (Normalized)", "to", T);
+          builder.Add("Y = Mul (NormalizedT, scale)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
+
+static constexpr const char* RotaryEmbedding_ver23_doc = R"DOC(
+RotaryEmbedding is the implementation of rotary positional embeddings (RoPE) based on the paper https://arxiv.org/pdf/2104.09864.
+The key advantage of RoPE is that it allows the model to understand both the absolute position of a token and the relative distances
+between tokens. This is achieved through a rotational mechanism where the extent of rotation is computed based on the token's absolute position (position_ids).
+
+The rotational mechanism is defined by sine and cosine functions that are used to represent the rotation angles.
+For each token in the sequence, its positional embedding is computed by rotating its embedding vector. This is done by splitting the
+embedding vector either into two halves or interleaving every alternate token and applying the rotation matrix to each half of the embedding vector.
+The rotation matrix is parameterized by the token's position in the sequence. The rotated halves of the embedding vector are concatenated
+to form the final positional embedding for each token. The rotated positional embeddings are used in the self-attention mechanism.
+The rotation ensures that the model captures both absolute and relative positional information.
+
+Rotary embeddings are defined using the following algorithm:
+
+```python
+def rotary_embedding(
+    input: np.ndarray,
+    cos_cache: np.ndarray,
+    sin_cache: np.ndarray,
+    position_ids: np.ndarray | None = None,
+    interleaved=None,
+    rotary_embedding_dim=None,
+    num_heads=None,
+) -> np.ndarray:
+    original_input_shape = input.shape
+    # First ensure input to be processed has shape [batch_size, seq_len, num_heads, head_size]
+    if len(input.shape) == 4:
+        input = np.transpose(input, (0, 2, 1, 3))
+    batch_size = input.shape[0]
+    sequence_length = input.shape[1]
+    if len(input.shape) == 3:
+        hidden_size = input.shape[2]
+        assert num_heads != 0
+        head_size = int(hidden_size / num_heads)
+        new_shape = [batch_size, sequence_length, num_heads, head_size]
+        input = np.reshape(input, new_shape)
+    assert len(input.shape) == 4
+    head_size = input.shape[3]
+
+    # Fully or partially perform rotation on input based on rotary_embedding_dim attribute
+    if rotary_embedding_dim is None or rotary_embedding_dim == 0:
+        # If rotary_embedding_dim not provided, perform full rotation by using head_size
+        rotary_embedding_dim = head_size
+    x_rotate = input[:, :, :, :rotary_embedding_dim]
+    x_not_rotate = input[:, :, :, rotary_embedding_dim:]
+    rotary_embedding_dim_half = int(rotary_embedding_dim / 2)
+
+    # Retrieve sin and cos caches using position ids
+    if position_ids is not None:
+        cos_cache = cos_cache[
+            position_ids
+        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+        sin_cache = sin_cache[
+            position_ids
+        ]  # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+
+    # Shape: [batch_size, sequence_length, rotary_embedding_dim/2]
+    if cos_cache.shape[-1] != rotary_embedding_dim_half:
+        raise ValueError(
+            f"Last dimension of cos cache ({cos_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+        )
+    if sin_cache.shape[-1] != rotary_embedding_dim_half:
+        raise ValueError(
+            f"Last dimension of sin cache ({sin_cache.shape[-1]}) does not match rotary_embedding_dim/2 ({rotary_embedding_dim_half})."
+        )
+
+    cos_cache = np.expand_dims(
+        cos_cache, axis=2
+    )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+    sin_cache = np.expand_dims(
+        sin_cache, axis=2
+    )  # Shape: [batch_size, sequence_length, 1, rotary_embedding_dim/2]
+
+    # Either divide the input in halves or interleave (based on interleaved attribute)
+    if interleaved:
+        x1 = x_rotate[:, :, :, 0::2]
+        x2 = x_rotate[:, :, :, 1::2]
+    else:
+        x1, x2 = np.split(x_rotate, 2, axis=-1)
+
+    # Calculate real and imaginary values
+    real = (cos_cache * x1) - (sin_cache * x2)
+    imag = (sin_cache * x1) + (cos_cache * x2)
+
+    # Inserted rotated embeddings back to the original input
+    if interleaved:
+        # x_rotate[:, :, :, 0::2] = real
+        # x_rotate[:, :, :, 1::2] = imag
+        real = np.expand_dims(real, axis=-1)
+        imag = np.expand_dims(imag, axis=-1)
+        x_rotate_concat = np.concatenate((real, imag), axis=-1)
+        x_rotate = np.reshape(x_rotate_concat, x_rotate.shape)
+    else:
+        x_rotate = np.concatenate((real, imag), axis=-1)
+    output = np.concatenate((x_rotate, x_not_rotate), axis=-1)
+    if len(original_input_shape) == 3:
+        output = np.reshape(output, original_input_shape)
+    else:
+        output = np.transpose(output, (0, 2, 1, 3))
+    return output
+```
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    RotaryEmbedding,
+    23,
+    OpSchema()
+        .SetDoc(RotaryEmbedding_ver23_doc)
+        .Attr(
+            "interleaved",
+            "Rotate using interleaved pattern. Default value is 0 (False).",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "rotary_embedding_dim",
+            "Rotary embedding dimension used to apply partial rotary embeddings.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "num_heads",
+            "Number of attention heads. Must be provided when input is a 3D tensor. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Input(
+            0,
+            "X",
+            "The input tensor representing the token embeddings. "
+            "4D tensor with shape `(batch_size, num_heads, sequence_length, head_size)` or 3D tensor with shape `(batch_size, sequence_length, hidden_size)`. "
+            "For cases with a 4D input tensor, `head_size` has to be even. For cases with a 3D input tensor, `num_heads` attribute must be provided and "
+            "`hidden_size` must be an even multiple of `num_heads` where `hidden_size = num_heads * head_size`",
+            "T")
+        .Input(
+            1,
+            "cos_cache",
+            "The cosine values for the rotation. "
+            "2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` "
+            "for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` "
+            "for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. "
+            "`max_position_id_plus_1` is a parameter to the model.",
+            "T")
+        .Input(
+            2,
+            "sin_cache",
+            "The sine values for the rotation. "
+            "2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` "
+            "for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` "
+            "for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. "
+            "`max_position_id_plus_1` is a parameter to the model.",
+            "T")
+        .Input(
+            3,
+            "position_ids",
+            "The position indices for the tokens. 2D tensor with shape `(batch_size, sequence_length)`",
+            "M",
+            OpSchema::Optional)
+        .Output(0, "Y", "Tensor with same shape as input.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+            "Constrain input and output types to float tensors.")
+        .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors.")
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          // we need at least one input to have a shape for this inference.
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+
+          auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+          if ((input_shape.dim_size() < 3) || (input_shape.dim_size() > 4)) {
+            fail_shape_inference("Input tensor must have at least 3 and at most 4 dimensions");
+          }
+
+          auto num_heads_attr = ctx.getAttribute("num_heads");
+          if ((input_shape.dim_size() == 3) && (num_heads_attr == nullptr)) {
+            fail_shape_inference("Input shape is 3D, num_heads attribute must be provided");
+          }
+        })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // RotaryEmbedding <scale, interleaved, rotary_embedding_dim, num_heads> (X, position_ids, cos_cache,
+          // sin_cache) => Y
+
+          int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
+          auto interleaved_attr = ctx.getAttribute("interleaved");
+          int64_t interleaved = (interleaved_attr != nullptr) ? interleaved_attr->i() : 0;
+          auto rotary_embedding_dim_attr = ctx.getAttribute("rotary_embedding_dim");
+          int64_t rotary_embedding_dim = (rotary_embedding_dim_attr != nullptr) ? rotary_embedding_dim_attr->i() : 0;
+          auto num_heads_attr = ctx.getAttribute("num_heads");
+          int64_t num_heads = (num_heads_attr != nullptr) ? num_heads_attr->i() : 0;
+
+          // Ensure that num_heads does not control reshaping of input tensor
+          // when input tensor is 4D
+          int64_t is_input_4d = 1;
+          auto x_tp = ctx.getInputType(0);
+          if ((x_tp == nullptr) || (!x_tp->has_tensor_type()))
+            return false;
+          if (!(x_tp->tensor_type().has_shape())) {
+            return false;
+          }
+          if (x_tp->tensor_type().shape().dim_size() == 4) {
+            is_input_4d = 1;
+          } else if (x_tp->tensor_type().shape().dim_size() == 3) {
+            is_input_4d = 0;
+          } else {
+            return false;
+          }
+
+          FunctionBuilder builder(functionProto);
+          // Set input tensor to the correct shape if input shape is 3D
+          // NewShape = [batch_size, sequence_length, num_heads, head_size]
+
+          // Reshape tensor to 4D if input is 3D
+          builder.Const1D("Zero1D", static_cast<int64_t>(0))
+              .Const1D("NumHeads", num_heads) // num_heads
+              .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
+
+          if (is_input_4d == 0) {
+            builder.Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
+                .Add("XIn = Reshape (X, NewShape)"); // new shape of input tensor: 4D tensor
+          } else {
+            builder.Add("XIn = Transpose <perm = [0, 2, 1, 3]> (X)");
+          }
+
+          // Rotary embedding dimension is the value along which the input is to be split
+          // There are two cases for the rotary embedding dimension:
+          // 1. Complete rotation: rotary embedding dimension defaults to head_size, rotary_embedding_dim = cos.shape[3]
+          // * 2 or head_size
+          // 2. Partial rotation: rotary embedding dimension is provided, rotary_embedding_dim = rotary_embedding_dim
+
+          builder.Add("HeadSize = Shape <start = 3, end = 4> (XIn)");
+          if (rotary_embedding_dim > 0) {
+            builder.Const1D("RotaryEmbedDim", rotary_embedding_dim);
+          } else {
+            builder.Add("RotaryEmbedDim = Identity(HeadSize)");
+          }
+          builder.Const1D("Two1D", static_cast<int64_t>(2))
+              .Add("NoRotateLength = Sub(HeadSize, RotaryEmbedDim)")
+              .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
+          // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
+          // shape of input not to rotate = input[:,:,:,rotary_embedding_dim:]
+          builder.Add("XToRotate, XNoRotate = Split <axis = -1> (XIn, RotateSplitLengths)");
+
+          // Gather the cos and sine matrices from the respective caches using position ids if provided.
+          // Otherwise Gather op functions as an Identity op.
+          // Unsqueeze applied to make cos and sin matrices have dimensions that are
+          // valid for multiplication with input when is split. For cases where rotary_embedding_dim is provided,
+          // slice the matrix values until that index only
+          if (ctx.hasInput(3)) {
+            builder
+                .Add("CosCacheGather = Gather(cos_cache, position_ids)") // shape of cos matrix: [batch_size,
+                                                                         // sequence_length, head_size / 2]
+                .Add("SinCacheGather = Gather(sin_cache, position_ids)"); // shape of cos matrix: [batch_size,
+                                                                          // sequence_length, head_size / 2]
+          } else {
+            builder
+                .Add("CosCacheGather = Identity(cos_cache)") // shape of cos matrix: [batch_size, sequence_length,
+                                                             // head_size / 2]
+                .Add("SinCacheGather = Identity(sin_cache)"); // shape of cos matrix: [batch_size, sequence_length,
+                                                              // head_size / 2]
+          }
+
+          builder.Add("RotaryEmbedDimHalf = Div(RotaryEmbedDim, Two1D)")
+              .Add("RotaryEmbedDimHalfInt = Cast (RotaryEmbedDimHalf)", "to", int_type)
+              .Add(
+                  "CosCacheSliced = Slice(CosCacheGather, Zero1D, RotaryEmbedDimHalfInt, Two1D)") // shape of cos
+                                                                                                  // matrix:
+                                                                                                  // [batch_size,
+                                                                                                  // sequence_length,
+                                                                                                  // rotary_embedding_dim
+                                                                                                  // / 2]
+              .Add(
+                  "SinCacheSliced = Slice(SinCacheGather, Zero1D, RotaryEmbedDimHalfInt, Two1D)") // shape of sin
+                                                                                                  // matrix:
+                                                                                                  // [batch_size,
+                                                                                                  // sequence_length,
+                                                                                                  // rotary_embedding_dim
+                                                                                                  // / 2]
+              .Add("CosCacheUnsqueezed = Unsqueeze(CosCacheSliced, Two1D)") // shape of cos matrix: [batch_size,
+                                                                            // sequence_length, 1, rotary_embedding_dim
+                                                                            // / 2]
+              .Add("SinCacheUnsqueezed = Unsqueeze(SinCacheSliced, Two1D)"); // shape of sin matrix: [batch_size,
+                                                                             // sequence_length, 1, rotary_embedding_dim
+                                                                             // / 2]
+
+          // Create slices of inputs to multiply with sin and cos matrices based on interleaved parameter
+          // Choose the correct slices based on interleaved parameter
+          // real = cos_x * x1 - sin_x * x2
+          // imag = sin_x * x1 + cos_x * x2
+          if (interleaved == 0) {
+            // For non-interleaved (basic) rotation, slices are created as follows,
+            builder.Add(
+                "X1, X2 = Split <axis = -1, num_outputs = 2> (XToRotate)"); // shape of X1 =
+                                                                            // input[:,:,:,:rotary_embedding_dim/2],
+                                                                            // X2 =
+                                                                            // input[:,:,:,rotary_embedding_dim/2:rotary_embedding_dim]
+          } else {
+            // For interleaved rotation, slices are created as follows,
+            builder.Const1D("One1D", static_cast<int64_t>(1))
+                .Const1D("AxesRotaryDim", static_cast<int64_t>(3))
+                .Add("RotaryEmbedDimInclusive = Add(RotaryEmbedDim, One1D)")
+                .Add(
+                    "X1 = Slice(XToRotate, Zero1D, RotaryEmbedDim, AxesRotaryDim, Two1D)") // shape of X1 =
+                                                                                           // input[:,:,:,0:rotary_embedding_dim:2]
+                .Add(
+                    "X2 = Slice(XToRotate, One1D, RotaryEmbedDimInclusive, AxesRotaryDim, Two1D)"); // shape of
+                                                                                                    // X2 =
+                                                                                                    // input[:,:,:,1:rotary_embedding_dim:2]
+          }
+
+          builder.Add("CosX1 = Mul(CosCacheUnsqueezed, X1)")
+              .Add("SinX2 = Mul(SinCacheUnsqueezed, X2)")
+              .Add("Real = Sub(CosX1, SinX2)")
+              .Add("SinX1 = Mul(SinCacheUnsqueezed, X1)")
+              .Add("CosX2 = Mul(CosCacheUnsqueezed, X2)")
+              .Add("Imaginary = Add(SinX1, CosX2)");
+
+          // Insert the real and imaginary values into the original input to be rotated based on interleaved parameter
+          if (interleaved == 0) {
+            builder.Add("XRotated = Concat <axis = -1> (Real, Imaginary)");
+          } else {
+            builder
+                .Add("RealInterleave = Unsqueeze(Real, NegOne)") // shape of indices =
+                                                                 // input[:,:,:,0:rotary_embedding_dim:2, 1]
+                .Add("ImaginaryInterleave = Unsqueeze(Imaginary, NegOne)") // shape of indices =
+                                                                           // input[:,:,:,1:rotary_embedding_dim+1:2, 1]
+                .Add("XRotatedInterleavedConcat = Concat <axis = -1> (RealInterleave, ImaginaryInterleave)")
+                .Add("XRotatedShape = Shape(XToRotate)")
+                .Add("XRotated = Reshape(XRotatedInterleavedConcat, XRotatedShape)");
+          }
+
+          // Combine rotated parts with non-rotated parts
+          builder.Add("XConcat = Concat <axis = -1> (XRotated, XNoRotate)");
+
+          if (is_input_4d == 0) {
+            builder.Add("YTransposed = Identity(XConcat)");
+          } else {
+            builder.Add("YTransposed = Transpose <perm = [0, 2, 1, 3]> (XConcat)");
+          }
+          // Reshape back to 3D shape if input is a 3D tensor
+          builder.Add("XShape = Shape(X)").Add("Y = Reshape(YTransposed, XShape)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
+
+static constexpr const char* Attention_ver24_doc = R"DOC(
+
+Computes scaled dot product attention on query, key and value tensors, using an optional attention mask if passed.
+
+This operator covers self and cross variants of the attention operation based on sequence lengths of K, Q and V.
+
+For self attention, `kv_sequence_length` equals to `q_sequence_length`.
+
+For cross attention, query and key might have different lengths.
+
+This operator also covers the 3 following variants based on the number of heads:
+1) Multi-headed Attention (MHA): Described in the paper https://arxiv.org/pdf/1706.03762, `q_num_heads = kv_num_heads`.
+2) Group-query Attention (GQA): Described in the paper https://arxiv.org/pdf/2305.13245, `q_num_heads > kv_num_heads`, `q_num_heads % kv_num_heads == 0`.
+3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
+
+Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
+1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
+2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+
+With respect to KV cache update, this operator allows the following two use cases:
+
+1) Cache update happens inside the Attention operator. In this case, the `K` and `V` inputs contain only the incoming
+tokens for the current autoregressive step, and the four optional inputs/outputs past and present key and value are
+all needed. The Attention op performs a Concat operation on the past and incoming key and value to form the present
+key and value, respectively. Note that this only works correctly for the special case where the past key and value
+do not contain padded tokens.
+2) Cache update happens outside the Attention operator (for example, through the `TensorScatter` operator). In this
+case, the `K` and `V` inputs correspond to the entire cache tensor, so the four optional inputs/outputs past and
+present key and value should not be used. An additional input `nonpad_kv_seqlen` of shape (batch_size,) may be
+provided to indicate the number of non-padding tokens in each sample of the batch to save unnecessary computation.
+Here, the kv_sequence dimension of `attn_mask` can be shorter than `K` and `V`, but still needs to be at least as long
+as the maximum value of `nonpad_kv_seqlen`.
+
+Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
+The following pattern is applied to the Q, K and V inputs after appropriate reshaping of K and V inputs based on sequence lengths and num heads provided:
+
+```
+  The following pattern is applied by this operator:
+      Q          K          V
+      |          |          |
+Q*sqrt(scale) K*sqrt(scale) |
+      |          |          |
+      |       Transpose     |
+      |          |          |
+      ---MatMul---          |
+            |               |
+ at_mask---Add              |
+            |               |
+  softcap (if provided)     |
+            |               |
+         Softmax            |
+            |               |
+            -----MatMul------
+                   |
+                   Y
+```
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Attention,
+    24,
+    OpSchema()
+        .SetDoc(Attention_ver24_doc)
+        .Attr(
+            "is_causal",
+            "If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. "
+            "The attention masking has the form of the upper left causal bias due to the alignment.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "scale",
+            "Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent "
+            "[numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.",
+            AttributeProto::FLOAT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "q_num_heads",
+            "Number of heads of query. Must be used with 3D inputs of Q, K and V. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "kv_num_heads",
+            "Number of heads of key and value. Must be used with 3D inputs of Q, K and V. ",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "softmax_precision",
+            "The floating-point precision used in softmax computation. "
+            "If softmax precision is not provided, the same precision as the input of softmax (Q and K) is used.",
+            AttributeProto::INT,
+            OPTIONAL_VALUE)
+        .Attr(
+            "softcap",
+            "Softcap value for attention weights. Default value is 0.",
+            AttributeProto::FLOAT,
+            static_cast<float>(0))
+        .Attr(
+            "qk_matmul_output_mode",
+            "If set to `0`, qk_matmul_output is the output of qk matmul. "
+            "If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. "
+            "If set to `2`, qk_matmul_output is the output after the softcap operation. "
+            "If set to `3`, qk_matmul_output is the output after the softmax operation. "
+            "Default value is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            0,
+            "Q",
+            "Query tensor. "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, q_hidden_size)`. "
+            "For cases with a 3D input tensor, `q_hidden_size = q_num_heads * head_size`",
+            "T1")
+        .Input(
+            1,
+            "K",
+            "Key tensor. "
+            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, k_hidden_size)`. "
+            "For cases with a 3D input tensor, `k_hidden_size = kv_num_heads * head_size`",
+            "T1")
+        .Input(
+            2,
+            "V",
+            "Value tensor. "
+            "4D tensor with shape `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, kv_sequence_length, v_hidden_size)`. "
+            "For cases with a 3D input tensor, `v_hidden_size = kv_num_heads * v_head_size`",
+            "T2")
+        .Input(
+            3,
+            "attn_mask",
+            "Attention mask. "
+            "Shape must be broadcastable to `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length.` "
+            "The last dimension can also be shorter than `total_sequence_length` and will be padded to `total_sequence_length` with negative infinity. "
+            "Two types of masks are supported: a boolean mask where a value of `True` indicates that the element should take part in attention, "
+            "or a float mask of the same type as query, key, value that is added to the attention score.",
+            "U",
+            OpSchema::Optional)
+        .Input(
+            4,
+            "past_key",
+            "past state cache for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`",
+            "T1",
+            OpSchema::Optional)
+        .Input(
+            5,
+            "past_value",
+            "past state cache for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`",
+            "T2",
+            OpSchema::Optional)
+        .Input(
+            6,
+            "nonpad_kv_seqlen",
+            "A vector of integers of shape `(batch_size,)` that indicates the number of valid (ie, non-padding) "
+            "tokens in each sample. A padding mask can be derived from this. This should not be used together with "
+            "`past_key` and `past_value` inputs or `present_key` and `present_value` outputs "
+            "(See the KV cache use cases in the operator description).",
+            "tensor(int64)",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "Y",
+            "The output tensor . "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, v_head_size)` or 3D tensor with shape `(batch_size, q_sequence_length, hidden_size)`. "
+            "For cases with a 3D input tensor, `hidden_size = q_num_heads * v_head_size`",
+            "T1")
+        .Output(
+            1,
+            "present_key",
+            "Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T1",
+            OpSchema::Optional)
+        .Output(
+            2,
+            "present_value",
+            "Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T2",
+            OpSchema::Optional)
+        .Output(
+            3,
+            "qk_matmul_output",
+            "The output of QK matmul. "
+            "4D tensor with shape `(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
+            "T1",
+            OpSchema::Optional)
+        .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain Q and K inputs types to float tensors.")
+        .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain V input types to float tensors.")
+        .TypeConstraint(
+            "U",
+            OpSchema::all_non_complex_numeric_types_plus_bool_ir4(),
+            "Constrain output 'mask' types to boolean tensors and input types.")
+        .TypeAndShapeInferenceFunction(defs::nn::utils::AttentionPropagateElemTypeFromInputToOutput)
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // ScaledDotProductAttention <scale, is_causal, q_num_heads, kv_numheads> (Q, K, V, attn_mask, past_key,
+          // past_value) => (Y, present_key?, present_value?)
+          int64_t int_type = ONNX_NAMESPACE::TensorProto_DataType_INT64;
+          int64_t float_type = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+
+          // Get input types
+          auto t_qk = ctx.getInputType(0);
+          if ((t_qk == nullptr) || (!t_qk->has_tensor_type()))
+            return false;
+          int64_t T1 = t_qk->tensor_type().elem_type();
+
+          // Determine precision types for Softmax
+          auto softmax_precision_attr = ctx.getAttribute("softmax_precision");
+          int64_t softmax_precision = (softmax_precision_attr != nullptr) ? softmax_precision_attr->i() : T1;
+          if ((softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_FLOAT16) &&
+              (softmax_precision != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE))
+            return false; // Error
+
+          // If shape is 3D, q_num_heads and kv_num_heads is provided,
+          // for 4D cases, set num_heads to zero for reshape purposes
+          auto q_num_heads_attr = ctx.getAttribute("q_num_heads");
+          int64_t q_num_heads = (q_num_heads_attr != nullptr) ? q_num_heads_attr->i() : 0;
+          auto kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+          int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
+
+          // Determine if input is 3D (requires reshape and transpose) or 4D (direct reshape)
+          bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
+
+          FunctionBuilder builder(functionProto);
+          builder
+              .Add("BatchSize = Shape <start = 0, end = 1> (Q)") // batch size
+              .Add("QSeqLen = Shape <start = -2, end = -1> (Q)") // q_sequence_length
+              .Add("KVSeqLen = Shape <start = -2, end = -1> (K)"); // kv_sequence_length
+
+          if (is_3d_input) {
+            // For 3D inputs: First reshape to [batch_size, seq_length, num_heads, head_size]
+            // then transpose to [batch_size, num_heads, seq_length, head_size]
+            builder
+                .Const1D("QNumHeadsAttr", q_num_heads) // q_num_heads from attrs
+                .Const1D("KVNumHeadsAttr", kv_num_heads) // kv_num_heads from attrs
+                .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
+
+            builder.Add("QIntermediateShape = Concat <axis = 0> (BatchSize, QSeqLen, QNumHeadsAttr, NegOne)")
+                .Add("KVIntermediateShape = Concat <axis = 0> (BatchSize, KVSeqLen, KVNumHeadsAttr, NegOne)")
+                .Add("QIntermediate = Reshape (Q, QIntermediateShape)")
+                .Add("KIntermediate = Reshape (K, KVIntermediateShape)")
+                .Add("VIntermediate = Reshape (V, KVIntermediateShape)")
+                // Then transpose to [batch_size, num_heads, seq_length, head_size]
+                .Add("QReshaped = Transpose <perm = [0, 2, 1, 3]> (QIntermediate)")
+                .Add("KReshaped = Transpose <perm = [0, 2, 1, 3]> (KIntermediate)")
+                .Add("VReshaped = Transpose <perm = [0, 2, 1, 3]> (VIntermediate)");
+          } else {
+            // For 4D inputs: Already in desired shape [batch_size, num_heads, seq_length, head_size]
+            builder.Add("QReshaped = Identity(Q)").Add("KReshaped = Identity(K)").Add("VReshaped = Identity(V)");
+          }
+
+          builder
+              .Add("QNumHeads = Shape <start = 1, end = 2> (QReshaped)") // q_num_heads
+              .Add("KVNumHeads = Shape <start = 1, end = 2> (KReshaped)"); // kv_num_heads
+
+          // Calculate scaling factor if scale attribute not provided
+          auto scale_attr = ctx.getAttribute("scale");
+          float scale = (scale_attr != nullptr) ? scale_attr->f() : static_cast<float>(1);
+          builder
+              .Add("QKHeadSize = Shape <start = 3, end = 4> (QReshaped)") // head_size for Q and K
+              .Add("QKHeadSizeF = Cast (QKHeadSize)", "to", float_type)
+              .Add("VHeadSize = Shape <start = 3, end = 4> (VReshaped)") // head_size for V
+              .Add("SqrtHeadSize = Sqrt(QKHeadSizeF)")
+              .Const1D("One1D", static_cast<int64_t>(1))
+              .Const1D("NegOne1D", static_cast<int64_t>(-1))
+              .Const1D("One1DF", static_cast<float>(1))
+              .Const1D("Zero1D", static_cast<int64_t>(0))
+              .Add("CalculatedScale = Div(One1DF, SqrtHeadSize)")
+              .Const("ScaleF", ToTensor<float>(scale))
+              .Add(scale_attr != nullptr ? "ScaleFactor = Identity(ScaleF)" : "ScaleFactor = Identity(CalculatedScale)")
+              .Add("ScaleFactorSqrt = Sqrt(ScaleFactor)")
+              .Add("ScaleFactorF = Cast (ScaleFactorSqrt)", "to", T1);
+
+          // Update key and value caches for past and present states
+
+          if (ctx.hasInput(4)) {
+            builder.Add("PresentKey = Concat <axis = 2> (past_key, KReshaped)");
+            builder.Add("PastKVSeqLen =  Shape <start = -2, end = -1> (past_key)");
+          } else {
+            builder.Add("PresentKey = Identity (KReshaped)");
+            builder.Const1D("PastKVSeqLen", static_cast<int64_t>(0));
+          }
+          if (ctx.hasOutput(1)) {
+            builder.Add("present_key = Identity (PresentKey)");
+          }
+
+          if (ctx.hasInput(5)) {
+            builder.Add("PresentValue = Concat <axis = 2> (past_value, VReshaped)");
+          } else {
+            builder.Add("PresentValue = Identity (VReshaped)");
+          }
+          if (ctx.hasOutput(2)) {
+            builder.Add("present_value = Identity (PresentValue)");
+          }
+
+          if (!defs::nn::utils::AttentionAppendFunctionCausalMask(ctx, builder, true))
+            return false;
+
+          // Add padding mask if kv_nonpad_seqlen is provided
+          if (ctx.hasInput(6)) {
+            builder
+                .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
+                .Add("KVSeqLen0D = Squeeze(KVSeqLen)")
+                .Const("Zero0D", static_cast<int64_t>(0))
+                .Const("One0D", static_cast<int64_t>(1))
+                .Add("Range = Range(Zero0D, KVSeqLen0D, One0D)") // [KVSeqLen,]
+                .Add("PaddingMaskBool = Less(Range, KVSeqLenExpanded)") // [batch_size, KVSeqLen]
+                .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
+                .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
+                .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
+                .Add("AttnBiasCausalPad = Add(AttnBiasCausalOrNot, PaddingMask4D)");
+          } else {
+            builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalOrNot)");
+          }
+          builder.Add("AttnBiasT = Cast (AttnBiasCausalPad)", "to", T1);
+
+          // Group Query Attention is applied if the following are satisfied
+          // 1) q_num_heads != kv_num_heads
+          // 2) q_num_heads % kv_num_heads == 0
+          // 3) kv_num_heads == k_num_heads == v_num_heads
+          builder.Add("NGQACond1 = Equal(QNumHeads, KVNumHeads)")
+              .Add("GQACond1 = Not(NGQACond1)")
+              .Add("DivNumHeads = Div(QNumHeads, KVNumHeads)")
+              .Add("IDivNumHeads = Cast(DivNumHeads)", "to", int_type)
+              .Add("RemainderNumHeads = Mod(QNumHeads, KVNumHeads)")
+              .Add("GQACond2 = Equal(RemainderNumHeads, Zero1D)")
+              .Add("GQACond = And(GQACond1, GQACond2)")
+              .Add("InterleaveDim = Where(GQACond, IDivNumHeads, One1D)");
+
+          // repeat kv (repeat_interleave)
+          builder.Const1D("Two1D", static_cast<int64_t>(2))
+              .Add("KUnsqueezed = Unsqueeze(PresentKey, Two1D)") // [B, Hk, 1, T, Dk]
+              .Add("VUnsqueezed = Unsqueeze(PresentValue, Two1D)"); // [B, Hk, 1, T, Dv]
+
+          // Build expand shape: [B, Hk, repeats, T, Dk]
+          builder
+              .Add("KExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, QKHeadSize)")
+              .Add("KExpanded = Expand(KUnsqueezed, KExpandShape)");
+          builder.Add("VExpandShape = Concat <axis = 0> (BatchSize, KVNumHeads, InterleaveDim, NewKVSeqLen, VHeadSize)")
+              .Add("VExpanded = Expand(VUnsqueezed, VExpandShape)");
+
+          // Reshape to [B, Hq, T, Dk] where Hq = Hk * repeats
+          builder.Add("KAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, QKHeadSize)")
+              .Add("VAttentionShape = Concat <axis = 0> (BatchSize, QNumHeads, NewKVSeqLen, VHeadSize)")
+              .Add("KAttentionInput = Reshape(KExpanded, KAttentionShape)")
+              .Add("VAttentionInput = Reshape(VExpanded, VAttentionShape)");
+
+          // The following pattern is applied
+          //      Q          K          V
+          //      |          |          |
+          //     Q*scale    K*scale     |
+          //      |          |          |
+          //      |       Transpose     |
+          //      |          |          |
+          //      ---MatMul---          |
+          //            |               |
+          // at_mask---Add              |
+          //  softcap (if provided)     |
+          //            |               |
+          //            |               |
+          //         Softmax            |
+          //            |               |
+          //            -----MatMul------
+          //                    |
+          //                    Y
+          builder.Add("KTranspose = Transpose <perm = [0, 1, 3, 2]> (KAttentionInput)")
+              .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
+              .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
+              .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
+              .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1)
+              .Add("QKAttnWeightWithBias = Add(QKAttnCast, AttnBiasT)");
+
+          // Apply softcap if provided
+          auto softcap_attr = ctx.getAttribute("softcap");
+          float softcap_val = (softcap_attr != nullptr) ? softcap_attr->f() : static_cast<float>(0);
+          if (softcap_val != 0) {
+            builder.Const1D("Softcap", softcap_val)
+                .Add("SoftcapF = Cast (Softcap)", "to", T1)
+                .Add("SoftcapDiv = Div(QKAttnWeightWithBias, SoftcapF)")
+                .Add("SoftcapTanh = Tanh(SoftcapDiv)")
+                .Add("QKAttnWeightSoftcap = Mul(SoftcapTanh, SoftcapF)");
+          } else {
+            builder.Add("QKAttnWeightSoftcap = Identity(QKAttnWeightWithBias)");
+          }
+          builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
+              .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
+              .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
+
+          // QK MatMul output if required
+          auto qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
+          int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
+          if (ctx.hasOutput(3)) {
+            if (qk_matmul_output_mode == 1) {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightWithBias)");
+            } else if (qk_matmul_output_mode == 2) {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
+            } else if (qk_matmul_output_mode == 3) {
+              builder.Add("qk_matmul_output = Identity(AttnWeightSoftmax)");
+            } else {
+              builder.Add("qk_matmul_output = Identity(QKAttnWeight)");
+            }
+          }
+
+          builder.Add("YPreReshape = MatMul(SoftmaxOut, VAttentionInput)");
+          // Reshape Y to 3D if input is a 3D tensor
+          if (is_3d_input) {
+            builder.Add("YTranspose = Transpose <perm = [0, 2, 1, 3]> (YPreReshape)")
+                .Add("YNewShape = Concat <axis = 0> (Zero1D, Zero1D, NegOne)")
+                .Add("Y = Reshape(YTranspose, YNewShape)");
+          } else {
+            builder.Add("Y = Identity(YPreReshape)");
+          }
+
+          schema.BuildFunction(functionProto);
+          return true;
+        }));
 } // namespace ONNX_NAMESPACE

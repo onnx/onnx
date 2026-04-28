@@ -10,7 +10,7 @@ from onnx.reference.ops.op_conv import _conv_implementation
 
 
 class QLinearConv(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         x,
         x_scale,
@@ -28,12 +28,12 @@ class QLinearConv(OpRun):
         pads=None,
         strides=None,
     ):
-        auto_pad = auto_pad or self.auto_pad  # type: ignore
-        dilations = dilations or self.dilations  # type: ignore
-        group = group or self.group  # type: ignore
-        kernel_shape = kernel_shape or self.kernel_shape  # type: ignore
-        pads = pads or self.pads  # type: ignore
-        strides = strides or self.strides  # type: ignore
+        auto_pad = auto_pad or self.auto_pad
+        dilations = dilations or self.dilations
+        group = group or self.group
+        kernel_shape = kernel_shape or self.kernel_shape
+        pads = pads or self.pads
+        strides = strides or self.strides
 
         X = x.astype(np.int32)
         if x_zero_point is not None:
@@ -49,6 +49,19 @@ class QLinearConv(OpRun):
         res = _conv_implementation(
             X, W, B, auto_pad, dilations, group, kernel_shape, pads, strides
         ).astype(np.int32)
+
+        # w_scale could be a scalar or a 1-D tensor. A 1-D tensor means a per
+        # output channel quantization.
+        if np.size(w_scale) > 1:
+            if np.ndim(w_scale) != 1:
+                raise ValueError(
+                    f"w_scale must be a scalar or a 1-D tensor. Got shape {np.shape(w_scale)}."
+                )
+            if np.size(w_scale) != np.shape(w)[0]:
+                raise ValueError(
+                    f"w_scale elements must match output channels: {np.size(w_scale)} != {np.shape(w)[0]}"
+                )
+            w_scale = np.expand_dims(w_scale, (0, 2, 3))
 
         R = res * (x_scale * w_scale / y_scale)
         if y_zero_point is not None:

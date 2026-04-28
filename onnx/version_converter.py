@@ -6,6 +6,7 @@
 This enables users to convert their models between different opsets within the
 default domain ("" or "ai.onnx").
 """
+
 from __future__ import annotations
 
 import onnx

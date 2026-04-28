@@ -11,12 +11,16 @@ from onnx.backend.test.case.node import expect
 
 
 # Reference implementation of shape op
-def shape_reference_impl(x, start=None, end=None):  # type: ignore
+def shape_reference_impl(
+    x: np.ndarray, start: int | None = None, end: int | None = None
+) -> np.ndarray:
     dims = x.shape[start:end]
     return np.array(dims).astype(np.int64)
 
 
-def test_shape(testname, xval, start=None, end=None):  # type: ignore
+def test_shape(
+    testname: str, xval: np.ndarray, start: int | None = None, end: int | None = None
+) -> None:
     node = onnx.helper.make_node(
         "Shape", inputs=["x"], outputs=["y"], start=start, end=end
     )
@@ -56,3 +60,5 @@ class Shape(Base):
         test_shape("_clip_start", x, start=-10)
 
         test_shape("_clip_end", x, end=10)
+
+        test_shape("_start_greater_than_end", x, start=2, end=1)

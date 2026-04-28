@@ -25,7 +25,7 @@ def gather_nd_impl(
     # The number of elements in the batch_dims for data/indice array
     batch_dims_size = 1
 
-    # Check the shape of indice and data are identicial for batch dims.
+    # Check the shape of indice and data are identical for batch dims.
     for i in range(batch_dims):
         batch_dims_shape.append(indices.shape[i])
         batch_dims_size *= indices.shape[i]
@@ -48,7 +48,7 @@ def gather_nd_impl(
     reshaped_indices = indices.reshape(batch_dims_size, -1, indices.shape[-1])
 
     # Flatten 'data' to array of shape (batch_dim_size, data.shape[batch_dimes:])
-    reshaped_data = data.reshape((batch_dims_size,) + data.shape[batch_dims:])
+    reshaped_data = data.reshape((batch_dims_size, *data.shape[batch_dims:]))
 
     # gather each scalar value from 'data'
     for batch_dim in range(reshaped_indices.shape[0]):

@@ -9,6 +9,6 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Reciprocal(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         with np.errstate(divide="ignore"):
             return (np.reciprocal(x).astype(x.dtype),)

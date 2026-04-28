@@ -31,7 +31,7 @@ def argmax_use_numpy_select_last_index(
 class ArgMax(Base):
     @staticmethod
     def export_no_keepdims() -> None:
-        data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+        data = np.array([[2, 2], [3, 10]], dtype=np.float32)
         axis = 1
         keepdims = 0
         node = onnx.helper.make_node(
@@ -55,7 +55,7 @@ class ArgMax(Base):
 
     @staticmethod
     def export_keepdims() -> None:
-        data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+        data = np.array([[2, 2], [3, 10]], dtype=np.float32)
         axis = 1
         keepdims = 1
         node = onnx.helper.make_node(
@@ -76,7 +76,7 @@ class ArgMax(Base):
 
     @staticmethod
     def export_default_axes_keepdims() -> None:
-        data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+        data = np.array([[2, 2], [3, 10]], dtype=np.float32)
         keepdims = 1
         node = onnx.helper.make_node(
             "ArgMax", inputs=["data"], outputs=["result"], keepdims=keepdims
@@ -103,7 +103,7 @@ class ArgMax(Base):
 
     @staticmethod
     def export_negative_axis_keepdims() -> None:
-        data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+        data = np.array([[2, 2], [3, 10]], dtype=np.float32)
         axis = -1
         keepdims = 1
         node = onnx.helper.make_node(

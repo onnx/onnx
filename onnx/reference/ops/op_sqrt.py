@@ -11,7 +11,7 @@ from onnx.reference.ops._op import OpRunUnaryNum
 
 
 class Sqrt(OpRunUnaryNum):
-    def _run(self, x):  # type: ignore
+    def _run(self, x):
         with catch_warnings():
             simplefilter("ignore")
             return (np.sqrt(x).astype(x.dtype),)

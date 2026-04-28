@@ -1,25 +1,23 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+#include <string>
+#include <unordered_map>
 
 #include "gtest/gtest.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/schema.h"
 #include "onnx/shape_inference/implementation.h"
 
-using namespace ONNX_NAMESPACE::shape_inference;
-
 namespace ONNX_NAMESPACE {
-
 namespace Test {
 
 static bool CompareShape(
     const TensorShapeProto& inferredShape,
     const TensorShapeProto& expectedShape,
     bool checkSameParam = false) {
-  EXPECT_TRUE(inferredShape.dim_size() == expectedShape.dim_size())
+  EXPECT_EQ(inferredShape.dim_size(), expectedShape.dim_size())
       << "Dim size for inferred and expected shape is different.";
 
   for (int i = 0; i < inferredShape.dim_size(); i++) {
@@ -92,8 +90,9 @@ static TensorShapeProto RunDataPropagation(const char* graphCode, int domainVers
     if (n.op_type() == "Constant") {
       continue;
     }
-    DataPropagationContextImpl dataPropagationCtx(n, valueTypesByName, inputDataByName, generatedShapeDataByName);
-    const auto schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
+    shape_inference::DataPropagationContextImpl dataPropagationCtx(
+        n, valueTypesByName, inputDataByName, generatedShapeDataByName);
+    const auto* const schema = schemaRegistry->GetSchema(n.op_type(), domainVersion, n.domain());
     EXPECT_TRUE(schema->has_data_propagation_function());
     schema->GetDataPropagationFunction()(dataPropagationCtx);
   }
@@ -294,6 +293,23 @@ agraph (int32[1,2] x, int32[3,4] y) => (int32[4] w)
   expected_tsp.mutable_dim()->Add()->set_dim_value(2);
   expected_tsp.mutable_dim()->Add()->set_dim_value(3);
   expected_tsp.mutable_dim()->Add()->set_dim_value(4);
+  const auto propagated_tsp = RunDataPropagation(code);
+  EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
+}
+
+TEST(DataPropagationImplTest, DynamicConcatTest) {
+  const char* code = R"ONNX(
+agraph (float[32, 1024] x, int64[2] dynamic_shape) => (int64[4] z)
+{
+    xs = Shape(x)   # [32, 1024]
+    z = Concat<axis = 0>(xs, dynamic_shape)  # [32, 1024, ?, ?]
+}
+)ONNX";
+  TensorShapeProto expected_tsp;
+  expected_tsp.mutable_dim()->Add()->set_dim_value(32);
+  expected_tsp.mutable_dim()->Add()->set_dim_value(1024);
+  expected_tsp.mutable_dim()->Add();
+  expected_tsp.mutable_dim()->Add();
   const auto propagated_tsp = RunDataPropagation(code);
   EXPECT_TRUE(CompareShape(propagated_tsp, expected_tsp));
 }

@@ -8,7 +8,7 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ignore
+def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):
     input_rank = data.ndim
     if axes is None:
         axes = list(range(input_rank))
@@ -34,21 +34,21 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):  # type: ig
 
 
 class Pad_1(OpRun):
-    def _run(self, data, paddings=None, mode=None, value=None):  # type: ignore
+    def _run(self, data, paddings=None, mode=None, value=None):
         if value is None:
             value = 0
         return (_pad_impl(data, paddings, mode=mode, constant_values=value),)
 
 
 class Pad_2(OpRun):
-    def _run(self, data, pads=None, mode=None, value=None):  # type: ignore
+    def _run(self, data, pads=None, mode=None, value=None):
         if value is None:
             value = 0
         return (_pad_impl(data, pads, mode=mode, constant_values=value),)
 
 
 class Pad_11(OpRun):
-    def _run(self, data, pads, constant_value=None, mode=None):  # type: ignore
+    def _run(self, data, pads, constant_value=None, mode=None):
         if constant_value is None:
             constant_value = 0
         return (
@@ -57,7 +57,7 @@ class Pad_11(OpRun):
 
 
 class Pad_18(OpRun):
-    def _run(self, data, pads, constant_value=None, axes=None, mode=None):  # type: ignore
+    def _run(self, data, pads, constant_value=None, axes=None, mode=None):
         if constant_value is None:
             constant_value = 0
         return (

@@ -1,9 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
-
+//
+// SPDX-License-Identifier: Apache-2.0
 #pragma once
 
 #define ONNX_UNUSED_PARAMETER(x) (void)(x)
@@ -16,10 +13,10 @@
     abort();                                              \
   } while (false)
 
-#define ONNX_THROW_EX(ex)                \
-  do {                                   \
-    std::cerr << ex.what() << std::endl; \
-    abort();                             \
+#define ONNX_THROW_EX(ex)                             \
+  do {                                                \
+    std::cerr << ex.what() << std::endl; /* NOLINT */ \
+    abort();                                          \
   } while (false)
 
 #define ONNX_TRY if (true)

@@ -6,12 +6,15 @@
 from __future__ import annotations
 
 import os
-from typing import IO, Any, Sequence
+from typing import IO, TYPE_CHECKING, Any
 
 from onnx import AttributeProto, defs, load
 from onnx.backend.test.case import collect_snippets
 from onnx.backend.test.loader import load_model_tests
 from onnx.backend.test.runner import Runner
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def is_ml(schemas: Sequence[defs.OpSchema]) -> bool:
@@ -124,7 +127,7 @@ def gen_node_test_coverage(
     for t in titles:
         f.write(f"* [{t[9:]}](#{t[9:].lower().replace(' ', '-')})\n")
     f.write("\n")
-    for t, l in zip(titles, all_lists):  # noqa: E741
+    for t, l in zip(titles, all_lists, strict=False):  # noqa: E741
         f.write(f"## {t}\n")
         for s in l:
             f.write(f"### {s}")
@@ -181,8 +184,7 @@ def gen_model_test_coverage(
                     ml_present = True
             if not ml_present:
                 continue
-            else:
-                model_written = True
+            model_written = True
         f.write(f"## {model.graph.name}\n")
         # Deconstruct model
         num_covered = 0
@@ -252,14 +254,19 @@ def gen_model_test_coverage(
 
 
 def gen_overall_test_coverage(
-    schemas: Sequence[defs.OpSchema], f: IO[Any], ml: bool  # noqa: ARG001
+    f: IO[Any],
 ) -> None:
     f.write("# Overall Test Coverage\n")
     f.write("## To be filled.\n")
 
 
 def gen_spdx(f: IO[Any]) -> None:
+    # REUSE-IgnoreStart
+    # This source file intentionally writes an SPDX header into the generated
+    # output file. The literal string would confuse the REUSE linter when
+    # scanning this source file; ignore this region for REUSE.
     f.write("<!--- SPDX-License-Identifier: Apache-2.0 -->\n")
+    # REUSE-IgnoreEnd
 
 
 def main() -> None:
@@ -271,21 +278,21 @@ def main() -> None:
 
     has_ml = is_ml(schemas)
     fname = os.path.join(docs_dir, "TestCoverage.md")
-    with open(fname, "w+", newline="", encoding="utf-8") as f:  # type: ignore
+    with open(fname, "w+", newline="", encoding="utf-8") as f:  # type: ignore[assignment]
         gen_spdx(f)
         gen_outlines(f, False)
         gen_node_test_coverage(schemas, f, False)
         gen_model_test_coverage(schemas, f, False)
-        gen_overall_test_coverage(schemas, f, False)
+        gen_overall_test_coverage(f)
 
     if has_ml:
         fname = os.path.join(docs_dir, "TestCoverage-ml.md")
-        with open(fname, "w+", newline="", encoding="utf-8") as f:  # type: ignore
+        with open(fname, "w+", newline="", encoding="utf-8") as f:  # type: ignore[assignment]
             gen_spdx(f)
             gen_outlines(f, True)
             gen_node_test_coverage(schemas, f, True)
             gen_model_test_coverage(schemas, f, True)
-            gen_overall_test_coverage(schemas, f, True)
+            gen_overall_test_coverage(f)
 
 
 if __name__ == "__main__":

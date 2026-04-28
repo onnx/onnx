@@ -6,7 +6,6 @@ from __future__ import annotations
 import numpy as np
 
 import onnx
-from onnx.backend.sample.ops.abs import abs
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
 
@@ -20,6 +19,6 @@ class Abs(Base):
             outputs=["y"],
         )
         x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = abs(x)
+        y = np.abs(x)
 
         expect(node, inputs=[x], outputs=[y], name="test_abs")

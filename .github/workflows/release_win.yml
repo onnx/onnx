@@ -2,126 +2,176 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: WindowsRelease
+name: WindowsRelease (aarch64, x86, x64)
 
-on:  # Specifies the event triggering the workflow
-  workflow_call:  # Indicates that this is a reusable workflow
-    inputs:      
+on:
+  workflow_call:
+    inputs:
       os:
         required: true
         type: string
+      build_mode:
+        required: true
+        type: string
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 jobs:
-  build:
-    if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
-    runs-on: windows-latest
+  build-windows:
+    if: github.event_name != 'pull_request' || startsWith(github.base_ref, 'rel-') || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
-        architecture: ['x64', 'x86']
+        python-version: ['3.14t', '3.13t', '3.12', '3.11', '3.10']
+        architecture: ['x64','x86','arm64']
+        exclude:
+          # x86 exclusions
+          - python-version: '3.14t'
+            architecture: 'x86'
+          - python-version: '3.13t'
+            architecture: 'x86'
+          # arm64 exclusions
+          - python-version: '3.10'
+            architecture: 'arm64'
+
+    runs-on: ${{ matrix.architecture == 'arm64' && 'windows-11-arm' || 'windows-2022' }} # Pick OS runner based on architecture
+
     steps:
     - name: Checkout ONNX
-      uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-         path: ./onnx
          submodules: 'recursive'
+         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3 # v5.2.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.architecture }}
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2.0.0
+      uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57 # v3.0.0
       with:
         msbuild-architecture: ${{ matrix.architecture }}
 
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        cd onnx
         if ('${{ matrix.architecture }}' -eq 'x86') {
           echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
-          sed -i '' '/-r requirements-reference.txt/d' requirements-release.txt
+          sed -i '' '/-r requirements-reference.txt/d' requirements-release_build.txt
         }
-        python -m pip install -q -r requirements-release.txt
-        python -m pip install cmake
+
+        python -m pip install -r requirements-release_build.txt
+
+        if ('${{ matrix.architecture }}' -eq 'x64') {
+          python -m pip install cmake
+        }
 
     - name: Build ONNX wheel
+      id: build_wheel
+      env:
+        BUILD_MODE: ${{ inputs.build_mode }}
       run: |
-        $arch = 'x64'
+        # Select correct cmake architecture
+        $cmake_arch = 'x64'
         if ('${{ matrix.architecture }}' -eq 'x86') {
-          $arch = 'Win32'
+          $cmake_arch = 'Win32'
         }
-
-        . .\onnx\workflow_scripts\protobuf\build_protobuf_win.ps1 -arch $arch
-        cd onnx
-
+        elseif ('${{ matrix.architecture }}' -eq 'arm64') {
+          $cmake_arch = 'ARM64'
+        }
+        # Build protobuf with correct architecture
+        . .\workflow_scripts\protobuf\build_protobuf_win.ps1 -cmake_arch $cmake_arch
+        # Build ONNX wheel
         echo "Install ONNX"
-        $Env:ONNX_ML=1
-        $Env:CMAKE_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON"
+        $Env:ONNX_ML = 1
+        $Env:CMAKE_ARGS = "-DONNX_USE_PROTOBUF_SHARED_LIBS=OFF -DONNX_USE_LITE_PROTO=ON -DONNX_WERROR=ON -DONNX_HARDENING=ON"
 
-        if ('${{ github.event_name }}' -eq 'schedule') {
-          echo "Build weekly PyPI package"
-          (Get-Content -Path 'pyproject.toml') | ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } | Set-Content -Path 'pyproject.toml'
-          $Env:ONNX_PREVIEW_BUILD=1
+        # Preview build logic (same for all arches)
+        if ($env:BUILD_MODE -ne 'release') {
+          echo "Build preview build whl package"
+          (Get-Content -Path 'pyproject.toml') |
+            ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } |
+            Set-Content -Path 'pyproject.toml'
+
+          $Env:ONNX_PREVIEW_BUILD = 1
         }
+
         python -m build --wheel
-        Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-    - name: Test the installed wheel
+
+        # ARM64 wheels should not install dependencies (no wheels available)
+        if ('${{ matrix.architecture }}' -eq 'arm64') {
+          Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname --no-deps }
+        }
+        else {
+          Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname }
+        }
+
+    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+      if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
+      with:
+        name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
+        path: |
+            ./dist/*.whl
+
+    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+      if: steps.build_wheel.outcome == 'success' && (matrix.python-version != '3.12')
+      with:
+        name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
+        path: |
+            ./dist/*.whl
+
+    - name: Check abi3 compatibility with abi3audit
+      if: steps.build_wheel.outcome == 'success'
       run: |
-        cd onnx
+        if [ $(ls dist/*.whl | wc -l) -eq 1 ]; then
+            echo "Exactly one wheel file found."
+        else
+            echo "Multiple or no wheel files found."
+        fi
+        for whl in dist/*.whl; do
+          echo "Checking abi3 compatibility for $whl"
+          python -m pip install -q abi3audit
+          python -m abi3audit -v "$whl"
+        done
+      shell: bash
+
+    - name: Test the installed wheel
+      if: steps.build_wheel.outcome == 'success' &&
+          matrix.python-version != '3.13t' &&
+          matrix.architecture != 'arm64'
+      run: |
+        python -m pip install -q -r requirements-release_test.txt
         pytest
 
-    - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874
-      with:
-        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}-${{matrix.architecture}}
-        path: ./onnx/dist
-
-    - name: Upload onnx-weekly wheel to PyPI/PyPI weekly
-      if: (github.event_name == 'schedule') # Only triggered by weekly event
-      run: |
-        twine upload --verbose onnx/dist/*.whl --repository-url https://upload.pypi.org/legacy/ -u ${{ secrets.ONNXWEEKLY_USERNAME }} -p ${{ secrets.ONNXWEEKLY_TOKEN }}
-
     - name: Verify ONNX with the latest numpy
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success' &&
+          matrix.python-version != '3.13t' &&
+          matrix.architecture != 'arm64'
       run: |
-        cd onnx
         python -m pip uninstall -y numpy onnx
         python -m pip install numpy
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
     - name: Verify ONNX with the latest protobuf
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success' &&
+          matrix.python-version != '3.13t' &&
+          matrix.architecture != 'arm64'
       run: |
-        cd onnx
         python -m pip uninstall -y protobuf onnx
         python -m pip install protobuf
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
         pytest
 
     - name: Verify ONNX with the minimumly supported packages
-      if: ${{ always() }}
+      if: steps.build_wheel.outcome == 'success' &&
+          matrix.python-version != '3.13t' &&
+          matrix.architecture != 'arm64'
       run: |
-        cd onnx
         python -m pip uninstall -y protobuf numpy onnx
         python -m pip install -r requirements-min.txt
         Get-ChildItem -Path dist/*.whl | foreach {python -m pip install --upgrade $_.fullname}
-        pytest
-
-    - name: Verify ONNX with ONNX Runtime PyPI package
-      if: matrix.python-version != '3.12'
-      run: |
-        cd onnx
-        python -m pip uninstall -y protobuf numpy
-        python -m pip install -q -r requirements-release.txt
-        python -m pip install -q onnxruntime==1.17.3
-        $Env:ORT_MAX_IR_SUPPORTED_VERSION=9
-        $Env:ORT_MAX_ML_OPSET_SUPPORTED_VERSION=3
-        $Env:ORT_MAX_ONNX_OPSET_SUPPORTED_VERSION=20
         pytest

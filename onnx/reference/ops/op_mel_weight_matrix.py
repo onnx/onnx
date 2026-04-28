@@ -10,7 +10,7 @@ from onnx.reference.op_run import OpRun
 
 
 class MelWeightMatrix(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         num_mel_bins,
         dft_length,

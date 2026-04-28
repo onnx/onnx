@@ -234,7 +234,7 @@ class QuantizeLinear(Base):
             "y_zero_point", TensorProto.UINT4, y_scale.shape, np.ones_like(y_scale)
         )
         y = make_tensor(
-            "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, -1, -1, 3, 4, 4, 5, 5, 11]
+            "y", TensorProto.UINT4, x.shape, [1, 2, 3, 5, 0, 0, 3, 4, 4, 5, 5, 11]
         )
 
         expect(
@@ -274,6 +274,67 @@ class QuantizeLinear(Base):
             inputs=[x, y_scale, y_zero_point],
             outputs=[y],
             name="test_quantizelinear_int4",
+        )
+
+    @staticmethod
+    def export_uint2() -> None:
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            inputs=["x", "y_scale", "y_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+
+        x = np.array(
+            [
+                [0.0, 2.5, 4.8, 8.6],
+                [-2.0, -1.0, 1.0, 3.0],
+                [4.0, 5.0, 6.0, 7.0],
+            ],
+            dtype=np.float32,
+        )
+        y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+        y_zero_point = make_tensor(
+            "y_zero_point", TensorProto.UINT2, y_scale.shape, np.zeros_like(y_scale)
+        )
+        y = make_tensor(
+            "y", TensorProto.UINT2, x.shape, [0, 1, 2, 3, 0, 0, 0, 1, 1, 1, 2, 2]
+        )
+        expect(
+            node,
+            inputs=[x, y_scale, y_zero_point],
+            outputs=[y],
+            name="test_quantizelinear_uint2",
+        )
+
+    @staticmethod
+    def export_int2() -> None:
+        node = onnx.helper.make_node(
+            "QuantizeLinear",
+            inputs=["x", "y_scale", "y_zero_point"],
+            outputs=["y"],
+            axis=0,
+        )
+        x = np.array(
+            [
+                [0.0, 2.5, 4.8, 8.6],
+                [-4.0, -3.0, 1.0, 2.0],
+                [-0.0, -2.5, -4.8, -8.6],
+            ],
+            dtype=np.float32,
+        )
+        y_scale = np.asarray([2.0, 3.0, 4.0], dtype=np.float32)
+        y_zero_point = make_tensor(
+            "y_zero_point", TensorProto.INT2, y_scale.shape, np.zeros_like(y_scale)
+        )
+        y = make_tensor(
+            "y", TensorProto.INT2, x.shape, [0, 1, 1, 1, -1, -1, 0, 1, 0, -1, -1, -2]
+        )
+        expect(
+            node,
+            inputs=[x, y_scale, y_zero_point],
+            outputs=[y],
+            name="test_quantizelinear_int2",
         )
 
     @staticmethod

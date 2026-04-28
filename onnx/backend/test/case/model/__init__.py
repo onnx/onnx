@@ -4,13 +4,17 @@
 from __future__ import annotations
 
 import sys
-from typing import Sequence
+from typing import TYPE_CHECKING
 
-import numpy as np
-
-from onnx import ModelProto
 from onnx.backend.test.case.test_case import TestCase
 from onnx.backend.test.case.utils import import_recursive
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    import numpy as np
+
+    from onnx import ModelProto
 
 _SimpleModelTestCases = []
 
@@ -37,7 +41,6 @@ def expect(
     )
 
 
-# BASE_URL = "https://download.onnxruntime.ai/onnx/models"
 BASE_URL = "onnx/backend/test/data/light/light_%s.onnx"
 
 

@@ -4,18 +4,21 @@
 """Implements function make_large_model to easily create and save models
 bigger than 2 Gb.
 """
+
 from __future__ import annotations
 
 import os
 import sys
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
 import onnx
 import onnx.external_data_helper as ext_data
 import onnx.helper
-import onnx.onnx_cpp2py_export.checker as c_checker
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _set_external_data(
@@ -79,7 +82,7 @@ class ModelContainer:
     No tensor is stored on disk until the user explicitly saves the model.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.model_proto_: onnx.ModelProto | None = None
         self.large_initializers: dict[str, np.ndarray] = {}
 
@@ -126,13 +129,13 @@ class ModelContainer:
                 )
         self.large_initializers = large_initializers
 
-    def check_large_initializers(self):
+    def check_large_initializers(self) -> None:
         for tensor in ext_data._get_all_tensors(self.model_proto):
             if not ext_data.uses_external_data(tensor):
                 continue
             prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:  # type: ignore[assignment]
-                if ext.key == "location":  # type: ignore[attr-defined]
+            for ext in tensor.external_data:
+                if ext.key == "location":
                     prop = ext
             if prop is None:
                 raise RuntimeError(
@@ -195,9 +198,9 @@ class ModelContainer:
             if not ext_data.uses_external_data(tensor):
                 continue
             prop: onnx.StringStringEntryProto | None = None
-            for ext in tensor.external_data:  # type: ignore[assignment]
-                if ext.key == "location":  # type: ignore[attr-defined]
-                    prop = ext  # type: ignore[assignment]
+            for ext in tensor.external_data:
+                if ext.key == "location":
+                    prop = ext
             if prop is None:
                 raise RuntimeError(
                     f"No location found for tensor name {tensor.name!r}."
@@ -210,11 +213,8 @@ class ModelContainer:
                 )
             np_tensor = self.large_initializers[prop.value]
 
-            if sys.byteorder == "big":
-                # Convert endian from little to big
-                tensor_bytes = np_tensor.byteswap().tobytes()
-            else:
-                tensor_bytes = np_tensor.tobytes()
+            tensor_bytes = onnx.numpy_helper.tobytes_little_endian(np_tensor)
+
             if all_tensors_to_one_file:
                 _set_external_data(
                     tensor,
@@ -289,18 +289,15 @@ class ModelContainer:
                 continue
 
             info = ext_data.ExternalDataInfo(tensor)
-            external_data_file_path = c_checker._resolve_external_data_location(  # type: ignore[attr-defined]
-                base_dir, info.location, tensor.name
-            )
             key = f"#t{i}"
             _set_external_data(tensor, location=key)
 
-            with open(external_data_file_path, "rb") as data_file:
-                if info.offset:
-                    data_file.seek(info.offset)
-
-                raw_data = (
-                    data_file.read(info.length) if info.length else data_file.read()
+            fd = ext_data._open_external_data_fd(
+                base_dir, info.location, tensor.name, True
+            )
+            with os.fdopen(fd, "rb") as data_file:
+                raw_data = ext_data._validate_external_data_file_bounds(
+                    data_file, info, tensor.name
                 )
 
                 dtype = onnx.helper.tensor_dtype_to_np_dtype(tensor.data_type)

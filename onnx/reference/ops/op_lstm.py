@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class CommonLSTM(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         OpRun.__init__(self, onnx_node, run_params)
         self.n_outputs = len(onnx_node.output)
         self.n_gates = 3
@@ -65,15 +65,15 @@ class CommonLSTM(OpRun):
         if num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
-        if self.layout == 0:  # type: ignore
+        if self.layout == 0:
             Y_h = Y[-1]
         else:
             Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = Y[:, :, -1, :]
 
-        return Y, Y_h  # type: ignore
+        return Y, Y_h
 
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,
@@ -127,7 +127,7 @@ class CommonLSTM(OpRun):
             hidden_size = R.shape[-1]
             batch_size = X.shape[1]
 
-            if self.layout != 0:  # type: ignore
+            if self.layout != 0:
                 X = np.swapaxes(X, 0, 1)
             if B is None:
                 B = np.zeros(2 * n_gates * hidden_size, dtype=np.float32)
@@ -147,9 +147,9 @@ class CommonLSTM(OpRun):
             X, R, B, W, initial_h, initial_c, P, num_directions=num_directions
         )
         Y = Y.astype(X.dtype)
-        return (Y,) if self.n_outputs == 1 else (Y, Y_h.astype(X.dtype))  # type: ignore
+        return (Y,) if self.n_outputs == 1 else (Y, Y_h.astype(X.dtype))
 
 
 class LSTM(CommonLSTM):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         CommonLSTM.__init__(self, onnx_node, run_params)

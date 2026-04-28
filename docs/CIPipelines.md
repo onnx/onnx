@@ -6,35 +6,56 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX CI Pipelines
 
-* CI pipelines matrix:
+## Core CI
 
-  |   | When it runs | Config | Test |
-  -- | -- | -- | -- |
-  [CI / Test](/.github/workflows/main.yml) | Every PR | <ul><li>linux-latest</li><li>DEBUG=1 or 0</li><li>ONNX_USE_LITE_PROTO=OFF</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=ON or OFF</li><li>ONNX_BUILD_TESTS=1</li><li>ONNX_WERROR=ON</li><li>ONNX_ML=1 or 0</li></ul>| <ul><li>ONNX C++ tests</li><li>Test doc generation</li><li>Test proto generation</li><li>Verify node test generation</li></ul> |
-  [Windows_No_Exception CI](/.github/workflows/win_no_exception_ci.yml) | Every PR  | <ul><li>vs2019-winlatest</li><li>ONNX_DISABLE_EXCEPTIONS=ON</li><li>ONNX_USE_LITE_PROTO=ON</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li><li>ONNX_USE_MSVC_STATIC_RUNTIME=ON</li><li>ONNX_DISABLE_STATIC_REGISTRATION=ON or OFF</li></ul>| <ul><li>Only ONNX C++ tests</li><li>Test selective schema loading</li></ul> |
-  [Lint / Optional Lint](/.github/workflows/lint.yml) | Every PR |<ul>ubuntu-latest</ul>| <ul><li>Not required -- it shows lint warnings for suggestions in PR</li><li>misspell</li><li>shellcheck</li></ul> |
-  [Lint / Enforce style](/.github/workflows/lint.yml) | Every PR |<ul>ubuntu-latest</ul>| <ul><li>flake8</li><li>isort</li><li>black</li><li>mypy</li><li>clang-format</li><li>unix line endings</li><li>c++ namespace rules</li><li>Auto-generated files are up to date</li></ul> |
-  [WindowsRelease](/.github/workflows/release_win.yml) | <ul><li>Main branch</li><li>Release branch</li><li>Weekly(1)</li></ul> | <ul><li>Latest Windows</li><li>x86 and x64</li><li>ONNX_USE_LITE_PROTO=ON</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li><li>ONNX_USE_MSVC_STATIC_RUNTIME=OFF</li></ul>| <ul><li> Release Windows wheel</li><li>Release onnx-weekly package</li><li>Verify with different dependency versions - latest and min supported numpy version, latest and min supported protobuf version(2)</li><li>Verify ONNX with the latest [ONNX Runtime PyPI package](https://pypi.org/project/onnxruntime/)(3).</li></ul> |
-  [LinuxRelease_aarch64](/.github/workflows/release_linux_aarch64.yml) | <ul><li>Main branch</li><li>Release branch</li><li>Weekly</li></ul>  | <ul><li>Latest manylinux2014_aarch64</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li><li>ONNX_USE_LITE_PROTO=ON</li></ul>| <ul><li> Release Linux aarch64 wheel</li><li>Release onnx-weekly package</li><li>Verify with different dependency versions - latest numpy version, latest and min supported protobuf version</li><li>Verify ONNX with the latest ONNX Runtime PyPI package</li></ul> |
-  [LinuxRelease_x86_64](/.github/workflows/release_linux_x86_64.yml) | <ul><li>Main branch</li><li>Release branch</li><li>Weekly</li></ul> | <ul><li>Latest LinuxRelease_x86_64</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li><li>ONNX_USE_LITE_PROTO=ON</li></ul>| <ul><li> Release Linux x86_64 wheel</li><li>Release onnx-weekly package</li><li>Test TEST_HUB=1(4)</li><li>Verify with different dependency versions - latest numpy version, latest and min supported protobuf version</li><li>Verify ONNX with the latest ONNX Runtime PyPI package.</li></ul> |
-  [MacRelease](/.github/workflows/release_mac.yml) | <ul><li>Main branch</li><li>Release branch</li><li>Weekly</li></ul> | <ul><li>macos-latest</li><li> MACOSX_DEPLOYMENT_TARGET=11.0 </li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li><li>ONNX_USE_LITE_PROTO=ON</li></ul>| <ul><li>Release Mac wheel</li><li>Release onnx-weekly package</li><li>Verify with different dependency versions - latest numpy version, latest and min supported protobuf version</li><li>Verify ONNX with the latest ONNX Runtime PyPI package.</li><li>Test source distribution generation</li><li>Test build with source distribution</li><li>Release onnx-weekly source distribution</li></ul> |
-  [Weekly CI with latest onnx.checker](/.github/workflows/weekly_mac_ci.yml) | weekly(6) |<ul><li>macos-latest</li><li>MACOSX_DEPLOYMENT_TARGET=10.12</li><li>ONNX_USE_PROTOBUF_SHARED_LIBS=OFF</li><li>ONNX_ML=1</li></ul>| <ul><li>Test latest ONNX checker</li><li>Test latest ONNX shape inference</li><li>With all models from [onnx/models](https://github.com/onnx/models)(7)</li></ul> |
-  [Reuse](/.github/workflows/reuse.yml) | Every PR | | <ul><li>Checks for Copyright and License header</li><li>More information could be found at: https://reuse.software/</li><li>If no license is to be added, or the checker does not recognize it, it must be configured under REUSE.toml.</li></ul> |
-  [Dependabot](/.github/dependabot.yml) | <ul><li>Main branch</li><li>weekly</li></ul> | | <ul><li>Create PRs for new dependency versions (will occur more often because p.ex. GitHub actions are pinned to commit hashes due to security best practices and not just to a version number).</li></ul> |
+| Workflow | When it runs | What it does |
+|---|---|---|
+| [CI](/.github/workflows/main.yml) | Every PR, merge_group, push to main, daily (midnight UTC) | C++ and Python tests across Linux, Windows, macOS; Python 3.10–3.14 (including free-threading variants); doc generation; proto generation; node test generation; daily run reports code coverage to Codecov |
+| [Windows\_No\_Exception\_CI](/.github/workflows/win_no_exception_ci.yml) | Push and PR to main and rel-\* | C++ tests compiled without exceptions; selective schema loading |
+| [Lint / Optional Lint](/.github/workflows/lint.yml) | Every PR | Not required — posts misspell, shellcheck, and cpplint suggestions as PR review comments |
+| [Lint / Enforce style](/.github/workflows/lint.yml) | Every PR | Required — runs lintrunner (ruff, mypy, clang-format, etc.) and verifies auto-generated files are up to date |
+| [Reuse](/.github/workflows/reuse.yml) | Every PR | Checks copyright and license headers; see [https://reuse.software/](https://reuse.software/). Files without a recognized license must be configured in `REUSE.toml`. |
+| [Require label](/.github/workflows/check_pr_label.yml) | Every PR | Requires at least one `topic:` or `module:` label (skipped for Dependabot PRs) |
+| [PR Checks](/.github/workflows/pr_checks.yml) | PRs to main | Computes and posts auto-fix suggestions as PR review comments (via [PR Checks Post](/.github/workflows/pr_checks_post.yml)) |
+| [Optional Clang-Tidy Review](/.github/workflows/clang_tidy_review.yml) | PRs to main/rel-\* that touch C++ files | Not required — posts clang-tidy diagnostics as PR review comments |
+| [DCO](/.github/workflows/dco_merge_group.yml) | merge\_group | Placeholder DCO job required to enable the GitHub merge queue |
 
-Every PR
+## Release Builds (1)
 
-  * (1) When the release CIs will run:
-    * After a PR has been merged into main/rel-* branch
-    * Run weekly (Sunday midnight) and release Python wheel to [onnx-weekly](https://pypi.org/project/onnx-weekly/) package on PyPI.
-    * Any PR targeting rel-* branch
-    * To manually run them, add a PR label "run release CIs" (only maintainers have permission).
-  * (2) Minimum supported versions are listed [here](/requirements.txt).
-  * (3) [Test](/onnx/test/test_with_ort.py) ONNX Python wheel with `onnxruntime.InferenceSession` from latest ONNXRuntime. Please note that ONNX Runtime does not support Windows-x86 thus its verification is skipped.
-  * (4) TEST_HUB=1 will test [onnx.hub](/onnx/test/hub_test.py) by using this API to download an ONNX model from onnx/models. This test is restricted to only 1 pipeline for saving quota usage.
-  * (5) Although the build environment is macos-11, use MACOSX_DEPLOYMENT_TARGET=10.12 and -p [macosx_10_12_x86_64](https://github.com/onnx/onnx/blob/2e048660ffa8243596aaf3338e60c7c0575458f2/.github/workflows/release_mac.yml#L74) to force the wheel to support 10.12+.
+| Workflow | When it runs | What it does |
+|---|---|---|
+| [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, PRs targeting rel-\* or labeled "run release CIs", weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, and sdistRelease as reusable workflows |
+| [WindowsRelease](/.github/workflows/release_win.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package (2)(3) |
+| [LinuxRelease](/.github/workflows/release_linux.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package |
+| [MacRelease](/.github/workflows/release_mac.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package; tests source distribution build |
+| [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 
-  * (6):
-    * The ONNX Model Zoo test will run weekly (Sunday midnight)
-    * To manually trigger it, add a PR label "test ONNX Model Zoo" (only maintainers have permission). Please note that it will need a lot of bandwidth to download models through git-lfs API when loading models via [onnx.hub](/docs/Hub.md) so use it with caution.
-  * (7) Some old deprecated models (opset-1) are [skipped](/workflow_scripts/config.py).
+## Security and Supply Chain
+
+| Workflow | When it runs | What it does |
+|---|---|---|
+| [CodeQL](/.github/workflows/codeql.yml) | Every PR, push to main/rel-\*, weekly (Friday) | Static analysis of C++ and Python for security vulnerabilities |
+| [Scorecard](/.github/workflows/scorecard.yml) | Push to main, weekly (Saturday) | OpenSSF supply-chain security scorecard; publishes results to code-scanning dashboard |
+| [Zizmor](/.github/workflows/zizmor.yml) | Every PR, push to main | Security analysis of GitHub Actions workflow files |
+| [Dependency Review](/.github/workflows/dependency-review.yml) | Every PR | Flags vulnerable or license-incompatible dependencies introduced by a PR |
+
+## Documentation and Maintenance
+
+| Workflow | When it runs | What it does |
+|---|---|---|
+| [Pages](/.github/workflows/pages.yml) | PRs to main, push to main | Builds and publishes ONNX documentation to GitHub Pages |
+| [Pixi CI](/.github/workflows/pixi_build.yml) | Weekly (Sunday 23:59 UTC) and on PRs | Builds and tests with the [pixi](https://pixi.sh/) environment manager on Linux, macOS, and Windows; opens an issue on failure when scheduled |
+| [Check URLs](/.github/workflows/check_urls.yml) | Push to main/rel-\*, monthly | Checks for broken URLs in the codebase |
+| [Stale](/.github/workflows/stale.yml) | Daily | Warns and eventually closes stale issues and PRs |
+| [Dependabot](/.github/dependabot.yml) | Monthly | Creates PRs for updated dependency versions |
+
+---
+
+* **(1)** Release CIs run when:
+  * A PR is merged into main or a rel-\* branch
+  * Weekly (Monday 00:00 UTC) — publishes a Python wheel to the [onnx-weekly](https://pypi.org/project/onnx-weekly/) package on PyPI
+  * Any PR targeting a rel-\* branch
+  * Any PR labeled "run release CIs" (maintainers only)
+  * Manually via workflow\_dispatch
+
+* **(2)** Minimum supported dependency versions are listed in [requirements.txt](/requirements.txt).

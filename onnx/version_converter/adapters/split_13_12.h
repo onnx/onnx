@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for all ops that remove consumed_inputs
 
@@ -25,6 +23,11 @@ class Split_13_12 : public Adapter {
   Node* adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     // Identify if 'split' is statically determined; if so, feed as attribute
     const ArrayRef<Value*>& inputs = node->inputs();
+    // Check if split input is provided (it's optional)
+    if (inputs.size() <= 1) {
+      // No split input provided, nothing to convert
+      return node;
+    }
     // Get 'split' from initializer or constant operator
     // Identify whether we have a Constant Op or an Initializer
     Value* const_val = inputs[1];
@@ -37,7 +40,7 @@ class Split_13_12 : public Adapter {
         std::string raw_data = node_ptr->t(kvalue).raw();
         ONNX_ASSERTM(
             !raw_data.empty() && raw_data.size() % 8 == 0,
-            "Raw Data must be non-empty and size must be a multiple of 8");
+            "Raw Data must be non-empty and size must be a multiple of 8")
         int64_t* raw = reinterpret_cast<int64_t*>(raw_data.data());
         node->is_(ksplit, std::vector<int64_t>(raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
       } else {
@@ -61,7 +64,7 @@ class Split_13_12 : public Adapter {
         }
       }
     }
-    ONNX_ASSERTM(node->hasAttribute(ksplit), "No initializer or constant input to node found");
+    ONNX_ASSERTM(node->hasAttribute(ksplit), "No initializer or constant input to node found")
     return node;
   }
 };

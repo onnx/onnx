@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Transpose(OpRun):
-    def _run(self, data, perm=None):  # type: ignore
+    def _run(self, data, perm=None):
         perm_ = None if (perm is None or len(perm) == 0) else perm
         if perm_ is None:
             return (np.transpose(data),)

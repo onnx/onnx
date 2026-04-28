@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunBinaryComparison
 
 
 class Equal(OpRunBinaryComparison):
-    def _run(self, a, b):  # type: ignore
+    def _run(self, a, b):
         return (np.equal(a, b),)

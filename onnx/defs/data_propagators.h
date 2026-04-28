@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -22,7 +20,7 @@ inline void appendDimToTensorShapeProto(TensorShapeProto& tsp, const TensorShape
 
 // Returns true if the given axis attribute is 0
 inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
-  auto axisAttr = ctx.getAttribute("axis");
+  const auto* axisAttr = ctx.getAttribute("axis");
   // if axis is not defined
   if (!axisAttr) {
     if (defaultZero) {
@@ -33,25 +31,28 @@ inline bool axisIsZero(DataPropagationContext& ctx, bool defaultZero = false) {
     }
   }
   int axis = static_cast<int>(axisAttr->i());
-  auto input_data_0 = ctx.getInputData(0);
-  if (input_data_0 == nullptr) {
+  if (axis >= 0) {
+    return axis == 0;
+  }
+  // For negative axes, we need rank information to determine if it is equivalent to axis 0
+  const TypeProto* type = ctx.getInputType(0);
+  if ((type == nullptr) || (!type->has_tensor_type()) || (!type->tensor_type().has_shape())) {
     return false;
   }
-  int rank = input_data_0->dim_size();
+
+  int rank = type->tensor_type().shape().dim_size();
   if (axis < -rank || axis >= rank) {
     fail_shape_inference("axis must be in [-rank, rank-1].");
     return false;
   }
-  if (axis < 0) {
-    axis += rank;
-  }
+  axis += rank;
   // Only supports axis = 0 since the data comes from Shape
   return axis == 0;
 }
 
 inline void PropagateShapeDataFromInputToOutput(DataPropagationContext& ctx, int idx) {
   // propagate input data
-  const auto input_data = ctx.getInputData(idx);
+  const auto* const input_data = ctx.getInputData(idx);
   if (input_data != nullptr) {
     TensorShapeProto tsp;
     tsp.CopyFrom(*input_data);
@@ -63,11 +64,11 @@ inline void GatherOp13DataPropagator(DataPropagationContext& ctx) {
   if (!axisIsZero(ctx, true)) {
     return;
   }
-  const auto input_data = ctx.getInputData(0);
+  const auto* const input_data = ctx.getInputData(0);
   if (input_data == nullptr) {
     return;
   }
-  const auto input_indices = ctx.getInputData(1);
+  const auto* const input_indices = ctx.getInputData(1);
   if (input_indices == nullptr) {
     return;
   }

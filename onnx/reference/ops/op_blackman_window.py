@@ -17,7 +17,7 @@ class BlackmanWindow(_CommonWindow):
     See `blackman_window <https://pytorch.org/docs/stable/generated/torch.blackman_window.html>`_
     """
 
-    def _run(self, size, output_datatype=None, periodic=None):  # type: ignore
+    def _run(self, size, output_datatype=None, periodic=None):
         ni, N_1 = np.arange(size), size
         if periodic == 0:
             N_1 = N_1 - 1

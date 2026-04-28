@@ -9,5 +9,5 @@ from onnx.reference.ops._op import OpRunUnary
 
 
 class IsNaN(OpRunUnary):
-    def _run(self, data):  # type: ignore
+    def _run(self, data):
         return (np.isnan(data),)

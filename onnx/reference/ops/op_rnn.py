@@ -9,73 +9,73 @@ from onnx.reference.op_run import OpRun
 
 
 class CommonRNN(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         OpRun.__init__(self, onnx_node, run_params)
 
-        if self.direction in ("forward", "reverse"):  # type: ignore
-            self.num_directions = 1  # type: ignore
-        elif self.direction == "bidirectional":  # type: ignore
-            self.num_directions = 2  # type: ignore
+        if self.direction in ("forward", "reverse"):
+            self.num_directions = 1
+        elif self.direction == "bidirectional":
+            self.num_directions = 2
         else:
-            raise RuntimeError(f"Unknown direction {self.direction!r}.")  # type: ignore
+            raise RuntimeError(f"Unknown direction {self.direction!r}.")
 
         if (
-            self.activation_alpha is not None  # type: ignore
-            and len(self.activation_alpha) != self.num_directions  # type: ignore
+            self.activation_alpha is not None
+            and len(self.activation_alpha) != self.num_directions
         ):
             raise RuntimeError(
-                f"activation_alpha must have the same size as num_directions={self.num_directions}."  # type: ignore
+                f"activation_alpha must have the same size as num_directions={self.num_directions}."
             )
         if (
-            self.activation_beta is not None  # type: ignore
-            and len(self.activation_beta) != self.num_directions  # type: ignore
+            self.activation_beta is not None
+            and len(self.activation_beta) != self.num_directions
         ):
             raise RuntimeError(
-                f"activation_beta must have the same size as num_directions={self.num_directions}."  # type: ignore
+                f"activation_beta must have the same size as num_directions={self.num_directions}."
             )
 
         self.f1 = self.choose_act(
-            self.activations[0],  # type: ignore
+            self.activations[0],
             (
-                self.activation_alpha[0]  # type: ignore
-                if self.activation_alpha is not None and len(self.activation_alpha) > 0  # type: ignore
+                self.activation_alpha[0]
+                if self.activation_alpha is not None and len(self.activation_alpha) > 0
                 else None
             ),
             (
-                self.activation_beta[0]  # type: ignore
-                if self.activation_beta is not None and len(self.activation_beta) > 0  # type: ignore
+                self.activation_beta[0]
+                if self.activation_beta is not None and len(self.activation_beta) > 0
                 else None
             ),
         )
-        if len(self.activations) > 1:  # type: ignore
+        if len(self.activations) > 1:
             self.f2 = self.choose_act(
-                self.activations[1],  # type: ignore
+                self.activations[1],
                 (
-                    self.activation_alpha[1]  # type: ignore
+                    self.activation_alpha[1]
                     if self.activation_alpha is not None
-                    and len(self.activation_alpha) > 1  # type: ignore
+                    and len(self.activation_alpha) > 1
                     else None
                 ),
                 (
-                    self.activation_beta[1]  # type: ignore
+                    self.activation_beta[1]
                     if self.activation_beta is not None
-                    and len(self.activation_beta) > 1  # type: ignore
+                    and len(self.activation_beta) > 1
                     else None
                 ),
             )
         self.n_outputs = len(onnx_node.output)
 
-    def choose_act(self, name, alpha, beta):  # type: ignore
+    def choose_act(self, name, alpha, beta):
         if name in ("Tanh", "tanh"):
             return self._f_tanh
         if name in ("Affine", "affine"):
             return lambda x: x * alpha + beta
         raise RuntimeError(f"Unknown activation function {name!r}.")
 
-    def _f_tanh(self, x):  # type: ignore
+    def _f_tanh(self, x):
         return np.tanh(x)
 
-    def _step(self, X, R, B, W, H_0):  # type: ignore
+    def _step(self, X, R, B, W, H_0):
         h_list = []
         H_t = H_0
         for x in np.split(X, X.shape[0], axis=0):
@@ -91,7 +91,7 @@ class CommonRNN(OpRun):
             output = np.expand_dims(concatenated, 1)
         return output, h_list[-1]
 
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         W,

@@ -3,11 +3,15 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
+import onnx
 from onnx.reference.op_run import OpRun
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def _cartesian(arrays: list[np.ndarray], out: np.ndarray | None = None) -> np.ndarray:
@@ -390,7 +394,7 @@ def _interpolate_nd(
 
 
 class Resize(OpRun):
-    def _run(  # type: ignore
+    def _run(
         self,
         X,
         roi,
@@ -431,17 +435,20 @@ class Resize(OpRun):
             raise ValueError(f"Unexpected value {mode!r} for mode.")
 
         if axes is None:
-            output = _interpolate_nd(
-                X,
-                fct,
-                scale_factors=scales,
-                output_size=sizes,
-                roi=roi,
-                keep_aspect_ratio_policy=keep_aspect_ratio_policy,
-                exclude_outside=exclude_outside,
-                coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
-                extrapolation_value=extrapolation_value,  # type: ignore
-            ).astype(X.dtype)
+            output = onnx.numpy_helper.saturate_cast(
+                _interpolate_nd(
+                    X,
+                    fct,
+                    scale_factors=scales,
+                    output_size=sizes,
+                    roi=roi,
+                    keep_aspect_ratio_policy=keep_aspect_ratio_policy,
+                    exclude_outside=exclude_outside,
+                    coordinate_transformation_mode=coordinate_transformation_mode,
+                    extrapolation_value=extrapolation_value,
+                ),
+                X.dtype,
+            )
             return (output,)
 
         # axes is not None
@@ -460,14 +467,14 @@ class Resize(OpRun):
                 roi=roi,
                 keep_aspect_ratio_policy=keep_aspect_ratio_policy,
                 exclude_outside=exclude_outside,
-                coordinate_transformation_mode=coordinate_transformation_mode,  # type: ignore
-                extrapolation_value=extrapolation_value,  # type: ignore
-            ).astype(X.dtype)
+                coordinate_transformation_mode=coordinate_transformation_mode,
+                extrapolation_value=extrapolation_value,
+            )
             if res is None:
-                res = np.empty((reshaped.shape[0], *output.shape), dtype=output.dtype)
-            res[i] = output
+                res = np.empty((reshaped.shape[0], *output.shape), dtype=X.dtype)
+            res[i] = onnx.numpy_helper.saturate_cast(output, X.dtype)
 
-        res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)  # type: ignore
+        res_reshaped = res.reshape(tuple(X.shape[a] for a in not_axes) + res[0].shape)
         new_perm = list(perm)
         for i, a in enumerate(perm):
             new_perm[a] = i

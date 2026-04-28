@@ -7,11 +7,11 @@ from onnx.reference.op_run import OpRun
 
 
 class CommonSplit(OpRun):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         OpRun.__init__(self, onnx_node, run_params)
         self.n_outputs = len(onnx_node.output)
 
-    def common_run(self, mat, split, axis, num_outputs):  # type: ignore
+    def common_run(self, mat, split, axis, num_outputs):
         n_outputs = num_outputs or self.n_outputs
         if split is None:
             if mat.shape[axis] % n_outputs == 0:
@@ -20,21 +20,21 @@ class CommonSplit(OpRun):
             else:
                 div = mat.shape[axis] // n_outputs + 1
                 split = [div] * n_outputs
-                split[-1] += mat.shape[axis] - sum(split)  # type: ignore
+                split[-1] += mat.shape[axis] - sum(split)
 
         sli = [slice(0, s) for s in mat.shape]
         res = []
         pos = 0
         for spl in split:
-            sli[axis] = slice(pos, pos + spl)  # type: ignore
+            sli[axis] = slice(pos, pos + spl)
             pos += spl
             res.append(mat[tuple(sli)])
         return tuple(res)
 
 
 class Split_2(CommonSplit):
-    def _run(self, mat, axis=None, split=None):  # type: ignore
-        return self.common_run(mat, split, axis=axis, num_outputs=None)  # type: ignore
+    def _run(self, mat, axis=None, split=None):
+        return self.common_run(mat, split, axis=axis, num_outputs=None)
 
 
 class Split_11(Split_2):
@@ -42,10 +42,10 @@ class Split_11(Split_2):
 
 
 class Split_13(CommonSplit):
-    def _run(self, mat, split=None, axis=None):  # type: ignore
+    def _run(self, mat, split=None, axis=None):
         return self.common_run(mat, split, axis=axis, num_outputs=None)
 
 
 class Split_18(CommonSplit):
-    def _run(self, mat, split=None, axis=None, num_outputs=None):  # type: ignore
+    def _run(self, mat, split=None, axis=None, num_outputs=None):
         return self.common_run(mat, split, axis=axis, num_outputs=num_outputs)

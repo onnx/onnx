@@ -9,7 +9,7 @@ from onnx.reference.ops.aionnxml._op_run_aionnxml import OpRunAiOnnxMl
 
 
 class OneHotEncoder(OpRunAiOnnxMl):
-    def _run(self, x, cats_int64s=None, cats_strings=None, zeros=None):  # type: ignore
+    def _run(self, x, cats_int64s=None, cats_strings=None, zeros=None):
         if cats_int64s is not None and len(cats_int64s) > 0:
             classes = {v: i for i, v in enumerate(cats_int64s)}
         elif len(cats_strings) > 0:

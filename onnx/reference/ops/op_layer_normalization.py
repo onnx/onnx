@@ -26,7 +26,7 @@ def _layer_normalization(
     reduction_shape = X_shape[0:axis] + (1,) * unsqueezed_rank
 
     # Parameter used to convert N-D tensor layer
-    # normalization to equivalent 2-D matirx operations.
+    # normalization to equivalent 2-D matrix operations.
     row_number = 1
     col_number = 1
     for i in range(X_rank):
@@ -65,10 +65,9 @@ def _layer_normalization(
 
 
 class LayerNormalization(OpRun):
-    def _run(self, X, Scale, B=None, axis=None, epsilon=None, stash_type=None):  # type: ignore
+    def _run(self, X, Scale, B=None, axis=None, epsilon=None, stash_type=None):
         if stash_type != 1:
             raise NotImplementedError(
                 f"LayerNormalization not implemented for stash_type={stash_type} != 1."
             )
-        res = _layer_normalization(X, Scale, B, axis=axis, epsilon=epsilon)
-        return res
+        return _layer_normalization(X, Scale, B, axis=axis, epsilon=epsilon)

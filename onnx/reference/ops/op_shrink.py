@@ -9,7 +9,7 @@ from onnx.reference.op_run import OpRun
 
 
 class Shrink(OpRun):
-    def _run(self, x, bias=None, lambd=None):  # type: ignore
+    def _run(self, x, bias=None, lambd=None):
         return (
             np.where(
                 x < -lambd,

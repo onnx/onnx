@@ -11,7 +11,7 @@ from onnx.backend.test.case.node import expect
 from onnx.defs import AI_ONNX_PREVIEW_TRAINING_DOMAIN
 
 
-def apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
+def apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Coefficient of gradient should be 1 at the first iteration.
@@ -23,7 +23,7 @@ def apply_momentum(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignor
     return x_new, v_new
 
 
-def apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta):  # type: ignore
+def apply_nesterov(r, t, x, g, v, norm_coefficient, alpha, beta):
     # Add gradient of regularization term.
     g_regularized = norm_coefficient * x + g
     # Coefficient of gradient should be 1 at the first iteration.

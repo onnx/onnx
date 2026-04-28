@@ -9,5 +9,5 @@ from onnx.reference.op_run import OpRun
 
 
 class Size(OpRun):
-    def _run(self, data):  # type: ignore
+    def _run(self, data):
         return (np.array(data.size, dtype=np.int64),)

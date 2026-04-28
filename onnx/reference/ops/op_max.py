@@ -9,10 +9,10 @@ from onnx.reference.ops._op import OpRunBinaryNumpy
 
 
 class Max(OpRunBinaryNumpy):
-    def __init__(self, onnx_node, run_params):  # type: ignore
+    def __init__(self, onnx_node, run_params):
         OpRunBinaryNumpy.__init__(self, np.maximum, onnx_node, run_params)
 
-    def run(self, *data):  # type: ignore
+    def run(self, *data):
         if len(data) == 2:
             return OpRunBinaryNumpy.run(self, *data)
         if len(data) == 1:
