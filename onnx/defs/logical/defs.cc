@@ -32,14 +32,15 @@ static void binaryLogicalOpInference(InferenceContext& ctx) {
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -251,14 +252,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> BinaryBitwiseDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(doc = R"DOC(
+    POPULATE_OP_DOC_STR(
+        doc = R"DOC(
 Returns the tensor resulting from performing the bitwise `{name}` operation
 elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
 {broadcast_doc}
 )DOC";
-                        ReplaceAll(doc, "{name}", name);
-                        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
     schema.SetDoc(doc);
     schema.Input(
         0,
