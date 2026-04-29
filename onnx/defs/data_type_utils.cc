@@ -11,6 +11,7 @@
 
 namespace ONNX_NAMESPACE {
 namespace Utils {
+namespace {
 
 // Singleton wrapper around allowed data types.
 // This implements construct on first use which is needed to ensure
@@ -85,6 +86,8 @@ class StringRange final {
   const char* start_;
   const char* end_;
 };
+
+} // namespace
 
 std::unordered_map<std::string, TypeProto>& DataTypeUtils::GetTypeStrToProtoMap() {
   static std::unordered_map<std::string, TypeProto> map;
@@ -253,6 +256,8 @@ int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   return t.TypeStrToTensorDataType()[type_str];
 }
+
+namespace {
 
 StringRange::StringRange() : data_(""), size_(0), start_(data_), end_(data_) {}
 
@@ -457,5 +462,8 @@ TypesWrapper::TypesWrapper() {
     allowed_data_types_.insert(type_str);
   }
 }
+
+} // namespace
+
 } // namespace Utils
 } // namespace ONNX_NAMESPACE

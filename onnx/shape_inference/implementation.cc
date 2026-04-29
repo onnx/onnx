@@ -269,6 +269,8 @@ static std::string GetFunctionIdentifier(const NodeProto& node) {
   return node.domain() + ":" + node.op_type() + ":" + overload;
 }
 
+namespace {
+
 // InferredTypes: abstracts the differences between FunctionProto and GraphProto
 // for inference. For GraphProto, inferred types are stored in the GraphProto
 // but FunctionProto does not have a place to store inferred types. So, we
@@ -298,7 +300,7 @@ class InferredTypes {
 };
 
 // Initialize a DataValueMap for a called function from the DataValueMap of the caller
-static void BindValuesOnCall(
+void BindValuesOnCall(
     const DataValueMap& caller_map,
     const NodeProto& caller,
     DataValueMap& callee_map,
@@ -317,7 +319,7 @@ static void BindValuesOnCall(
 }
 
 // Update a DataValueMap for a calling function from the DataValueMap of the callee
-static void BindValuesOnReturn(
+void BindValuesOnReturn(
     const DataValueMap& callee_map,
     const FunctionProto& callee,
     DataValueMap& caller_map,
@@ -754,7 +756,7 @@ class ShapeInferenceImplBase {
   bool reuse_constant_tensors = true;
 };
 
-static void InferShapesImpl(
+void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
@@ -785,13 +787,15 @@ static void InferShapesImpl(
 
 // Either ModelProto or FunctionProto
 template <class T>
-static std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
+std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : proto.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
   return opset_imports;
 }
+
+} // namespace
 
 void InferShapes(
     GraphProto* g,
@@ -898,6 +902,8 @@ void InferShapeForFunctionNode(
       generated_shape_data_by_name);
 }
 
+namespace {
+
 struct FunctionInferenceContext : public InferenceContext {
   FunctionInferenceContext(
       const FunctionProto& func_proto,
@@ -989,6 +995,8 @@ struct FunctionInferenceContext : public InferenceContext {
   ShapeInferenceOptions options_;
   const FunctionProto* func_proto_;
 };
+
+} // namespace
 
 std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,

@@ -17,6 +17,8 @@
 
 namespace ONNX_NAMESPACE {
 namespace checker {
+// std::string member means copy may throw when allocation fails
+// NOLINTNEXTLINE(bugprone-exception-copy-constructor-throws)
 class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;

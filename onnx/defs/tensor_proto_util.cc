@@ -29,7 +29,7 @@ namespace ONNX_NAMESPACE {
     TensorProto t;                                              \
     t.clear_##field##_data();                                   \
     t.set_data_type(enumType);                                  \
-    for (const type& val : values) {                            \
+    for (const auto& val : values) {                            \
       t.add_##field##_data(val);                                \
     }                                                           \
     return t;                                                   \

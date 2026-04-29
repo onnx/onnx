@@ -1110,7 +1110,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // check if every index is valid
             std::vector<bool> seen(shape.dim_size(), false);
             for (int64_t fromDimIndex : perm) {
-              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+              if (fromDimIndex < 0 || fromDimIndex >= shape.dim_size()) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
                 for (size_t i = 1; i != perm.size(); ++i) {

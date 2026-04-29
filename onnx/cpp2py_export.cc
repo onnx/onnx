@@ -51,10 +51,7 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
           return false;                                                                           \
         }                                                                                         \
         auto serialized = nanobind::cast<nanobind::bytes>(py_proto.attr("SerializeToString")());  \
-        if (!ParseProtoFromPyBytes(&value, serialized)) {                                         \
-          return false;                                                                           \
-        }                                                                                         \
-        return true;                                                                              \
+        return ParseProtoFromPyBytes(&value, serialized);                                         \
       } catch (const nanobind::python_error&) {                                                   \
         return false;                                                                             \
       }                                                                                           \
@@ -209,7 +206,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
   defs.doc() = "Schema submodule";
-  nb::exception<SchemaError>(defs, "SchemaError");
+  nb::exception<SchemaError>(defs, "SchemaError"); // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
 
   nb::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
 
@@ -561,11 +558,11 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "Return the schema of the operator *op_type* and for a specific version.")
       .def(
           "get_all_schemas",
-          []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); },
+          []() -> std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); },
           "Return the schema of all existing operators for the latest version.")
       .def(
           "get_all_schemas_with_history",
-          []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
+          []() -> std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
           "Return the schema of all existing operators and all versions.")
       .def(
           "set_domain_to_version",
@@ -608,7 +605,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
   lexical_scope_context.def(nb::init<>());
 
-  nb::exception<checker::ValidationError>(checker, "ValidationError");
+  nb::exception<checker::ValidationError>(checker, "ValidationError"); // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
 
   checker.def("check_value_info", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     ValueInfoProto proto{};
@@ -696,7 +693,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
   version_converter.doc() = "VersionConverter submodule";
-  nb::exception<ConvertError>(version_converter, "ConvertError");
+  nb::exception<ConvertError>(version_converter, "ConvertError"); // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
 
   version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
@@ -751,7 +748,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `shape_inference`
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
-  nb::exception<InferenceError>(shape_inference, "InferenceError");
+  nb::exception<InferenceError>(shape_inference, "InferenceError"); // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
 
   nb::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
