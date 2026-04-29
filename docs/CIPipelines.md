@@ -16,8 +16,6 @@ SPDX-License-Identifier: Apache-2.0
 | [Lint / Enforce style](/.github/workflows/lint.yml) | Every PR | Required — runs lintrunner (ruff, mypy, clang-format, etc.) and verifies auto-generated files are up to date |
 | [Reuse](/.github/workflows/reuse.yml) | Every PR | Checks copyright and license headers; see [https://reuse.software/](https://reuse.software/). Files without a recognized license must be configured in `REUSE.toml`. |
 | [Require label](/.github/workflows/check_pr_label.yml) | Every PR | Requires at least one `topic:` or `module:` label (skipped for Dependabot PRs) |
-| [PR Checks](/.github/workflows/pr_checks.yml) | PRs to main | Computes and posts auto-fix suggestions as PR review comments (via [PR Checks Post](/.github/workflows/pr_checks_post.yml)) |
-| [Optional Clang-Tidy Review](/.github/workflows/clang_tidy_review.yml) | PRs to main/rel-\* that touch C++ files | Not required — posts clang-tidy diagnostics as PR review comments |
 | [DCO](/.github/workflows/dco_merge_group.yml) | merge\_group | Placeholder DCO job required to enable the GitHub merge queue |
 
 ## Release Builds (1)
