@@ -48,7 +48,9 @@ description = "Run clang-tidy on the entire project"
 #  - [51/70][20.8s] /...bin/clang-tidy ... — starts with [
 #  - 12101 warnings generated. — starts with digits
 #  - Empty lines between blocks
-cmd = 'set -o pipefail && run-clang-tidy -p .setuptools-cmake-build -use-color -quiet -warnings-as-errors="*" -source-filter="{{ pixi.init_cwd }}/onnx" | grep -vE "^\[|^[0-9]+ warnings generated\." --line-buffer'
+# The `-extra-arg=-Wno-unknown-warning-option` is needed in cases
+# where the compiler_commands.json file was created by/for gcc
+cmd = 'set -o pipefail && run-clang-tidy -p .setuptools-cmake-build -use-color -quiet -warnings-as-errors="*" -extra-arg=-Wno-unknown-warning-option -source-filter="{{ pixi.init_cwd }}/onnx" | grep -vE "^\[|^[0-9]+ warnings generated\." --line-buffer'
 
 [tasks.lintrunner-init]
 cmd = "lintrunner init"
