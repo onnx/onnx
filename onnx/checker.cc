@@ -713,7 +713,11 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         ex.AppendContext("Bad node spec for node. Name: " + node.name() + " OpType: " + node.op_type());
-        ONNX_THROW_EX(ex);
+        // Rethrow without copying to avoid triggering
+        // bugprone-exception-copy-constructor-throws.
+        // The in-place AppendContext modification is preserved because
+        // `ex` is a reference to the active exception object.
+        throw;
       });
     }
     // check for SSA form

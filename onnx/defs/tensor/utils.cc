@@ -395,9 +395,10 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
 std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,
     const char* mode_description,
-    const std::vector<std::string>& op_schema,
-    const std::string& op_schema_description) {
-  return [=](OpSchema& schema) {
+    std::vector<std::string> op_schema,
+    std::string op_schema_description) {
+  return [=, op_schema = std::move(op_schema), op_schema_description = std::move(op_schema_description)](
+             OpSchema& schema) {
     schema.SetDoc(description);
     schema.Attr("mode", mode_description, AttributeProto::STRING, std::string("constant"));
     schema.Input(0, "data", "Input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
