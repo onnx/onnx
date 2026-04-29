@@ -14,7 +14,7 @@ cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-dep
 [tasks.install.env]
 ONNX_ML="1"
 ONNX_BUILD_TESTS="1"
-CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_HARDENING=ON"
+CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_HARDENING=ON -DONNX_WERROR=ON"
 
 [tasks.gen-docs]
 cmd = "python onnx/defs/gen_doc.py"
