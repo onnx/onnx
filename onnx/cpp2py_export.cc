@@ -605,8 +605,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
   lexical_scope_context.def(nb::init<>());
 
-  nb::exception<checker::ValidationError>(
-      checker, "ValidationError"); // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+  nb::exception<checker::ValidationError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+      checker,
+      "ValidationError");
 
   checker.def("check_value_info", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     ValueInfoProto proto{};
@@ -694,8 +695,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
   version_converter.doc() = "VersionConverter submodule";
-  nb::exception<ConvertError>(
-      version_converter, "ConvertError"); // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+  nb::exception<ConvertError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+      version_converter,
+      "ConvertError");
 
   version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
@@ -750,8 +752,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `shape_inference`
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
-  nb::exception<InferenceError>(
-      shape_inference, "InferenceError"); // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+  nb::exception<InferenceError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+      shape_inference,
+      "InferenceError");
 
   nb::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
