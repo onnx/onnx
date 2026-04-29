@@ -582,7 +582,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     23,
@@ -648,7 +647,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     21,
@@ -713,7 +711,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
@@ -813,7 +810,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
@@ -1207,7 +1203,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     23,
@@ -1355,7 +1350,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
@@ -1953,7 +1947,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     23,
@@ -2114,7 +2107,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     23,
@@ -2144,7 +2136,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             ctx.addOutputData(0, std::move(tsp));
           }
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
@@ -3752,7 +3743,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     23,
@@ -3848,7 +3838,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
@@ -4172,7 +4161,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     23,
@@ -4243,7 +4231,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) {
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
@@ -5370,7 +5357,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         OpSchema::all_tensor_types_ir12(),
         "Constrain input and output types to all tensor types up to IRv12.")));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
     23,
@@ -5379,7 +5365,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`",
         OpSchema::all_tensor_types_ir11(),
         "Constrain input and output types to all tensor types up to IRv11.")));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
@@ -5953,7 +5938,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Attribute 'scales' is required.");
           } // nullptr != scales
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
@@ -7410,7 +7394,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor, sequence, and optional types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     14,
@@ -7559,7 +7542,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     21,
@@ -7621,7 +7603,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             ctx.addOutputData(0, std::move(output_shape));
           }
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
@@ -7747,7 +7728,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     21,
@@ -7777,7 +7757,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             ctx.addOutputData(0, std::move(tsp));
           }
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Size,

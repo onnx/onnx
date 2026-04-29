@@ -336,7 +336,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
     23,

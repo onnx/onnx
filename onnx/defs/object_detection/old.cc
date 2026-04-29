@@ -112,7 +112,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     10,

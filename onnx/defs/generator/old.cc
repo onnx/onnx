@@ -383,7 +383,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir12(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     23,
@@ -428,7 +427,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -520,7 +518,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir9(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     13,
@@ -565,7 +562,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
@@ -754,7 +750,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     23,
@@ -802,7 +797,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = output_shape;
           }
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
@@ -925,7 +919,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = output_shape;
           }
         }));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,

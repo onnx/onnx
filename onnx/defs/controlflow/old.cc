@@ -399,7 +399,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     21,
@@ -627,7 +626,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types_ir12(), "All Tensor types up to IRv12.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     23,
@@ -695,7 +693,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             false)
         .TypeConstraint("V", OpSchema::all_tensor_types_ir11(), "All Tensor types up to IRv11.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
@@ -1941,7 +1938,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset11));
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     9,
@@ -2630,7 +2626,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction_13));
-
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,

@@ -25,7 +25,8 @@ struct tensor_error : public assert_error {
 #if defined(__GNUC__) || defined(__clang__)
 __attribute__((format(printf, 1, 2)))
 #endif
-std::string barf(const char* fmt, ...);
+std::string
+barf(const char* fmt, ...);
 
 [[noreturn]] void throw_assert_error(std::string& /*msg*/);
 
@@ -40,7 +41,7 @@ std::string barf(const char* fmt, ...);
 #endif
 
 #define ONNX_ASSERT(cond)                                                                                 \
-  if (_ONNX_EXPECT(!(cond), 0)) { /* NOLINT(readability-simplify-boolean-expr) */                          \
+  if (_ONNX_EXPECT(!(cond), 0)) { /* NOLINT(readability-simplify-boolean-expr) */                         \
     std::string error_msg =                                                                               \
         ::ONNX_NAMESPACE::barf("%s:%u: %s: Assertion `%s` failed.", __FILE__, __LINE__, __func__, #cond); \
     throw_assert_error(error_msg);                                                                        \
