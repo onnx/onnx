@@ -529,7 +529,7 @@ struct InlinerImpl {
 
     if (function_map != nullptr) {
       if (auto iter = this->function_map->find(GetCalleeId(node)); iter != this->function_map->end()) {
-        auto& [func_ptr, version] = iter->second;
+        const auto& [func_ptr, version] = iter->second;
         callee = *func_ptr;
         target_version = version;
         return true;
