@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -309,6 +310,63 @@ def _get_all_coords(data: np.ndarray) -> np.ndarray:
     )
 
 
+def _compute_x_ori(
+    coordinate_transformation_mode: str,
+    y: np.ndarray,
+    scale_factor: float,
+    input_width: int,
+    output_width: float,
+    output_width_int: int,
+    roi: np.ndarray | list[float] | None,
+) -> tuple[np.ndarray, np.ndarray | None]:
+    """Map output indices ``y`` to source coordinates per the chosen mode.
+
+    Returns ``(x_ori, is_extrapolated)``. ``is_extrapolated`` is ``None`` for
+    every mode except ``tf_crop_and_resize``, where it flags output positions
+    whose source coordinate falls outside the input range.
+    """
+    is_extrapolated: np.ndarray | None = None
+    if coordinate_transformation_mode == "align_corners":
+        x_ori = (
+            np.zeros(output_width_int, dtype=np.float64)
+            if output_width == 1
+            else y * (input_width - 1) / (output_width - 1)
+        )
+    elif coordinate_transformation_mode == "asymmetric":
+        x_ori = y / scale_factor
+    elif coordinate_transformation_mode == "tf_crop_and_resize":
+        if roi is None:
+            raise ValueError("roi cannot be None.")
+        if output_width == 1:
+            x_ori = np.full(
+                output_width_int,
+                (roi[1] - roi[0]) * (input_width - 1) / 2,
+                dtype=np.float64,
+            )
+        else:
+            x_ori = y * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
+        x_ori = x_ori + roi[0] * (input_width - 1)
+        is_extrapolated = (x_ori < 0) | (x_ori > input_width - 1)
+    elif coordinate_transformation_mode == "pytorch_half_pixel":
+        x_ori = (
+            np.full(output_width_int, -0.5, dtype=np.float64)
+            if output_width == 1
+            else (y + 0.5) / scale_factor - 0.5
+        )
+    elif coordinate_transformation_mode == "half_pixel":
+        x_ori = (y + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "half_pixel_symmetric":
+        adjustment = output_width_int / output_width
+        center = input_width / 2
+        offset = center * (1 - adjustment)
+        x_ori = offset + (y + 0.5) / scale_factor - 0.5
+    else:
+        raise ValueError(
+            f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
+        )
+    return x_ori, is_extrapolated
+
+
 def _interpolate_1d_along_axis(
     data: np.ndarray,
     axis: int,
@@ -338,43 +396,15 @@ def _interpolate_1d_along_axis(
     output_width = scale_factor * input_width
     y = np.arange(output_width_int, dtype=np.float64)
 
-    is_extrapolated: np.ndarray | None = None
-    if coordinate_transformation_mode == "align_corners":
-        if output_width == 1:
-            x_ori = np.zeros(output_width_int, dtype=np.float64)
-        else:
-            x_ori = y * (input_width - 1) / (output_width - 1)
-    elif coordinate_transformation_mode == "asymmetric":
-        x_ori = y / scale_factor
-    elif coordinate_transformation_mode == "tf_crop_and_resize":
-        if roi is None:
-            raise ValueError("roi cannot be None.")
-        if output_width == 1:
-            x_ori = np.full(
-                output_width_int,
-                (roi[1] - roi[0]) * (input_width - 1) / 2,
-                dtype=np.float64,
-            )
-        else:
-            x_ori = y * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
-        x_ori = x_ori + roi[0] * (input_width - 1)
-        is_extrapolated = (x_ori < 0) | (x_ori > input_width - 1)
-    elif coordinate_transformation_mode == "pytorch_half_pixel":
-        if output_width == 1:
-            x_ori = np.full(output_width_int, -0.5, dtype=np.float64)
-        else:
-            x_ori = (y + 0.5) / scale_factor - 0.5
-    elif coordinate_transformation_mode == "half_pixel":
-        x_ori = (y + 0.5) / scale_factor - 0.5
-    elif coordinate_transformation_mode == "half_pixel_symmetric":
-        adjustment = output_width_int / output_width
-        center = input_width / 2
-        offset = center * (1 - adjustment)
-        x_ori = offset + (y + 0.5) / scale_factor - 0.5
-    else:
-        raise ValueError(
-            f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
-        )
+    x_ori, is_extrapolated = _compute_x_ori(
+        coordinate_transformation_mode,
+        y,
+        scale_factor,
+        input_width,
+        output_width,
+        output_width_int,
+        roi,
+    )
 
     x_ori_int = np.floor(x_ori).astype(np.int64)
     # Match the scalar code: prefer the pixel on the left of x_ori by
@@ -519,9 +549,15 @@ def _interpolate_nd(
         axis_scale = float(scale_factors[axis])
         axis_output = int(output_size[axis])
         if (
-            axis_scale == 1.0
+            math.isclose(axis_scale, 1.0)
             and axis_output == result.shape[axis]
-            and (roi is None or (roi[axis] == 0.0 and roi[axis + r] == 1.0))
+            and (
+                roi is None
+                or (
+                    math.isclose(float(roi[axis]), 0.0)
+                    and math.isclose(float(roi[axis + r]), 1.0)
+                )
+            )
         ):
             # Identity along this axis — skip to avoid unnecessary work.
             continue
