@@ -82,8 +82,7 @@ using RepeatedNodeProto = google::protobuf::RepeatedPtrField<NodeProto>;
 
 } // namespace
 
-namespace {
-
+// NOLINTBEGIN(misc-use-internal-linkage): used by Renamer::Impl (pimpl with external linkage)
 class NameGenerator : private internal::Visitor {
  public:
   explicit NameGenerator(const GraphProto& graph) : index_(0) {
@@ -318,6 +317,9 @@ class InliningRenamer : public internal::MutableVisitor {
       renamer.LookupOrRename(*v.mutable_name(), false);
   }
 };
+// NOLINTEND(misc-use-internal-linkage)
+
+namespace {
 
 // Identify the set of all "input" variables used by a given node.
 // This includes the variables listed as node.input, as well as
