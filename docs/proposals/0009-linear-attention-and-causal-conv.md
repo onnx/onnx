@@ -126,14 +126,16 @@ are always required. The op internally unpacks to 4D for computation.
 
 ### Using `CausalConvWithState`
 
-Stateful causal depthwise convolution used as the preprocessing step in Gated DeltaNet and Mamba:
+Stateful causal 1D depthwise convolution used as the preprocessing step in Gated DeltaNet and Mamba:
 
 ```python
 output, carry_state = CausalConvWithState(input, weight, bias, past_state,
-                                          ndim=1, activation="silu")
+                                          activation="silu")
 ```
 
-The `ndim` attribute generalizes the op to 1D, 2D, or 3D spatial dimensions.
+All inputs and outputs are rank-3 tensors `(B, C, L)`. For higher-dimensional data, use
+`Reshape` nodes before and after the operator to pack extra dimensions into the batch or
+channel axis.
 
 ## Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
@@ -282,39 +284,37 @@ activation dtype.
 
 ### Operator 2: `CausalConvWithState`
 
-Stateful causal depthwise convolution, generalized to N spatial dimensions. Used as the
-preprocessing step in Gated DeltaNet and Mamba architectures.
+Stateful causal 1D depthwise convolution. Used as the preprocessing step in Gated DeltaNet
+and Mamba architectures.
+
+All inputs and outputs are rank-3 tensors. For higher-dimensional data (e.g., 2D or 3D spatial
+dimensions), use `Reshape` nodes before and after this operator to pack the extra spatial
+dimensions into the batch or channel axis, then restore the original shape afterward.
 
 #### Inputs
 
 | Name | Type | Shape | Description |
 |------|------|-------|-------------|
-| `input` | T | $(B, C, ...)$ | Input tensor. Spatial dims: 1D: $(L,)$; 2D: $(H, W)$; 3D: $(D, H, W)$ |
-| `weight` | T | $(C, 1, k_1, ...)$ | Depthwise convolution kernel (spatial kernel sizes: $(k_1, \ldots, k_{\text{ndim}})$) |
+| `input` | T | $(B, C, L)$ | Input tensor. Channels-first layout: batch size, channels, sequence length. |
+| `weight` | T | $(C, 1, k)$ | Depthwise convolution kernel. $k$ is the kernel size. |
 | `bias` | T (optional) | $(C,)$ | Per-channel bias |
-| `past_state` | T (optional) | ndim=1: $(B, C, k_1{-}1)$; ndim=2: $(B, C, H, k_2{-}1)$; ndim=3: $(B, C, D, H, k_3{-}1)$ | Carry-over state (last $k-1$ positions along the causal axis). If omitted, treated as zeros. |
+| `past_state` | T (optional) | $(B, C, k{-}1)$ | Carry-over state (last $k-1$ positions). If omitted, treated as zeros. |
 
 #### Outputs
 
 | Name | Type | Shape | Description |
 |------|------|-------|-------------|
-| `output` | T | Same as `input` | Convolution output after optional activation |
-| `present_state` | T | Same shape as `past_state` | Updated carry state for next call |
+| `output` | T | $(B, C, L)$ | Convolution output after optional activation. Same shape as `input`. |
+| `present_state` | T | $(B, C, k{-}1)$ | Updated carry state for next call |
 
 #### Attributes
 
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
-| `ndim` | int | `1` | Spatial dimensionality: `1`, `2`, or `3` |
 | `activation` | string | `"none"` | Optional fused activation: `"silu"`, `"swish"`, `"none"`. (`"silu"` and `"swish"` are aliases.) |
 
-Causality is always enforced on the **last spatial dimension** (position axis). For ndim=1 this
-is $L$; for ndim=2 it is $W$; for ndim=3 it is $W$. All other spatial dimensions ($H$, $D$) are
-treated as independent channels — not causal — and **are not convolved across**: their kernel
-sizes **MUST** be 1, so there is no spatial mixing along those axes. Causal padding (size $k-1$)
-is applied on the left (past-facing) side of the last spatial dimension only, ensuring the output
-at position $t$ depends only on positions $\leq t$ along that axis. No padding is applied on the
-non-causal spatial dimensions.
+Causal padding of size $k-1$ is applied on the left (past-facing) side of the sequence,
+ensuring the output at position $t$ depends only on positions $\leq t$.
 
 ---
 
