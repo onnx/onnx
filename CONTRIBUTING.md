@@ -160,6 +160,16 @@ lintrunner f
 
 Run `lintrunner --help` and see the `.lintrunner.toml` file for more usage examples, as well as instructions on how to adopt new linters.
 
+#### Naming for legacy helper functions in `onnx/defs/*/old.cc`
+
+When adding or renaming helper functions in legacy schema files (`old.cc`), prefer explicit opset-based names over numeric suffixes. This keeps intent clear and avoids ambiguity.
+
+- Prefer `..._opsetN` for a single opset.
+- Prefer `..._opsetN_to_M` for helpers shared across a contiguous opset range.
+- Avoid names like `...1`, `...2`, `..._9`, or `...Opset9`.
+
+Examples: `RNNShapeInference_opset7_to_13`, `PoolOpSchemaGenerator_opset10_to_11`.
+
 ### Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
