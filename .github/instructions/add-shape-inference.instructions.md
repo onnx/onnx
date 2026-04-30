@@ -205,3 +205,35 @@ lintrunner -a --output oneline
 - Don't silently return without setting anything — at minimum set the output type
 - Don't fail on unknown dimensions — leave them unset instead
 - Shape inference must be deterministic and side-effect free
+
+## Code Style: Prefer Named Functions
+
+Define inference functions as **separate named functions** rather than inline lambdas within `ONNX_OPERATOR_SET_SCHEMA`. This makes it easier to set debugger breakpoints (the macro expansion makes breakpoints on inline lambdas unreliable) and improves readability.
+
+```cpp
+// PREFERRED: named function — easy to set breakpoints
+static void InferShapeForMyOp(InferenceContext& ctx) {
+    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    if (!hasNInputShapes(ctx, 1)) return;
+    // ...shape logic...
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MyOp, 21,
+    OpSchema()
+        // ...
+        .TypeAndShapeInferenceFunction(InferShapeForMyOp));
+```
+
+```cpp
+// AVOID: inline lambda (harder to debug)
+ONNX_OPERATOR_SET_SCHEMA(
+    MyOp, 21,
+    OpSchema()
+        // ...
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            // breakpoints here are unreliable due to macro expansion
+        }));
+```
+
+Short one-liners (e.g., `propagateShapeAndTypeFromFirstInput`) are fine as direct references since they're already named functions.

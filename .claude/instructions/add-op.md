@@ -116,3 +116,23 @@ When moving a schema to `old.cc`, avoid significant code/documentation duplicati
 - Don't forget `from __future__ import annotations` in new Python files
 - Don't forget copyright headers
 - When updating, always move old schema to `old.cc` first
+
+## Code Style: Prefer Named Functions
+
+Define shape inference functions and function body builders as **separate named functions** rather than inline lambdas within `ONNX_OPERATOR_SET_SCHEMA`. This makes it easier to set debugger breakpoints (the macro expansion makes breakpoints on inline lambdas unreliable) and improves readability.
+
+```cpp
+// PREFERRED: named function
+static void InferShapeForMyOp(InferenceContext& ctx) {
+    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    // ...
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MyOp, 21,
+    OpSchema()
+        // ...
+        .TypeAndShapeInferenceFunction(InferShapeForMyOp));
+```
+
+The same applies to context-dependent function body builders — define them as named `static bool BuildFunctionBodyMyOp(...)` functions.

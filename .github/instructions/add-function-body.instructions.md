@@ -190,3 +190,28 @@ lintrunner -a --output oneline
 - Use `CastLike` instead of `Cast` when the target type depends on an input
 - The function body must produce all declared outputs
 - When using `@attr_name`, the attribute must be declared in the schema's `.Attr()` calls
+
+## Code Style: Prefer Named Functions
+
+Define context-dependent function body builders as **separate named functions** rather than inline lambdas within `ONNX_OPERATOR_SET_SCHEMA`. This makes it easier to set debugger breakpoints (the macro expansion makes breakpoints on inline lambdas unreliable).
+
+```cpp
+// PREFERRED: named function — easy to debug
+static bool BuildFunctionBodyMyOp(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  FunctionBuilder builder(functionProto);
+  // ...
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MyOp, 21,
+    OpSchema()
+        // ...
+        .SetContextDependentFunctionBodyBuilder(BuildFunctionBodyMyOp));
+```
+
+Simple string-based `.FunctionBody(R"ONNX(...)ONNX")` definitions don't have this issue since there's no logic to step through.
