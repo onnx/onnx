@@ -175,6 +175,16 @@ variable = OpName <attr = value> (input1, input2)
 - Use `CastLike` to match types dynamically
 - Attributes are referenced with `@attr_name`
 
+For the formal grammar, see [docs/Syntax.md](../../docs/Syntax.md). The parser implementation and its tests provide additional examples:
+
+| Resource | File |
+|----------|------|
+| Formal syntax specification | `docs/Syntax.md` |
+| C++ parser implementation | `onnx/defs/parser.h`, `onnx/defs/parser.cc` |
+| Python parser | `onnx/parser.py` |
+| C++ parser tests | `onnx/test/cpp/parser_test.cc` |
+| Python parser tests | `onnx/test/parser_test.py` |
+
 ## After Making Changes
 
 ```bash

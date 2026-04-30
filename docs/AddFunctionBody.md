@@ -230,6 +230,16 @@ Rules:
 - **Type matching** — use `CastLike` instead of `Cast` when the target type depends on an input
 - **Attributes** are referenced with `@attr_name` for the enclosing op's attributes
 
+For the formal grammar, see [Syntax.md](Syntax.md). The parser implementation and its tests provide additional examples:
+
+| Resource | File |
+|----------|------|
+| Formal syntax specification | [docs/Syntax.md](Syntax.md) |
+| C++ parser implementation | `onnx/defs/parser.h`, `onnx/defs/parser.cc` |
+| Python parser | `onnx/parser.py` |
+| C++ parser tests | `onnx/test/cpp/parser_test.cc` |
+| Python parser tests | `onnx/test/parser_test.py` |
+
 ## Testing
 
 Function bodies are tested in the C++ test suite:
