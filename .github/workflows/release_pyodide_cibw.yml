@@ -1,0 +1,51 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Pyodide Build
+
+on:
+  pull_request:
+    branches: [main, "rel-*"]
+  push:
+    branches: [main, "rel-*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install cibuildwheel
+        run: python -m pip install -q cibuildwheel>=2.21
+
+      - name: Build Pyodide wheel
+        run: cibuildwheel --platform pyodide --output-dir dist/
+        env:
+          # Use the host protoc for code generation during cross-compilation.
+          # The wasm protobuf library is built via CMake's FetchContent.
+          CIBW_ENVIRONMENT: >-
+            ONNX_ML=1
+            CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF"
+
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: wheels-pyodide
+          path: dist/*.whl
