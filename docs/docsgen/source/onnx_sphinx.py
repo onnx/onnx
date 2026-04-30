@@ -186,7 +186,7 @@ The function definition for this operator.
 {% endfor %}
 {% endif %}
 {% endfor %}""",
-        autoescape=False,
+        autoescape=jinja2.select_autoescape(),
     )
 
 
