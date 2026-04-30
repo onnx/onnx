@@ -57,4 +57,4 @@ SPDX-License-Identifier: Apache-2.0
   * Any PR labeled "run release CIs" (maintainers only)
   * Manually via workflow\_dispatch
 
-* **(2)** Minimum supported dependency versions are listed in [requirements.txt](/requirements.txt).
+* **(2)** Minimum supported dependency versions are listed in `[project.dependencies]` in [pyproject.toml](/pyproject.toml).

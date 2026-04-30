@@ -60,6 +60,7 @@ ninja = "*"
 packaging = ">=24.1"
 pip = ">=25.0"
 python = ">=3.10"
+scikit-build-core = ">=0.12.1"
 
 [feature.dev.dependencies]
 c-compiler = ">=1.8.0"

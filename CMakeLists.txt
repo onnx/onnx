@@ -124,6 +124,12 @@ if(ONNX_DISABLE_EXCEPTIONS)
   endif()
 endif()
 
+if(ONNX_BUILD_PYTHON AND ONNX_DISABLE_EXCEPTIONS)
+  message(FATAL_ERROR
+    "ONNX_DISABLE_EXCEPTIONS=ON is incompatible with ONNX_BUILD_PYTHON=ON. "
+    "The Python binding requires exceptions to be enabled.")
+endif()
+
 if(ONNX_BUILD_PYTHON)
   set(python_dev_component Development.Module Development.SABIModule)
 endif()
@@ -361,6 +367,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   endif()
 
   set(${SRCS})
+  set(_py_files)
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
   set(GENERATED_FILES)
@@ -418,7 +425,16 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
     if(TARGET protobuf::protoc)
       list(APPEND deps protobuf::protoc)
     endif()
-    add_custom_command(OUTPUT "${GENERATED_PROTO}"
+    set(_gen_proto_outputs "${GENERATED_PROTO}")
+    if(ONNX_BUILD_PYTHON)
+      # gen_proto.py also produces a _pb.py re-export wrapper
+      string(REPLACE "-" "_" _stem_py "${FILE_WE}")
+      set(_pb_py "${OUTPUT_PROTO_DIR}/${_stem_py}_pb.py")
+      list(APPEND _gen_proto_outputs "${_pb_py}")
+      list(APPEND _py_files "${_pb_py}")
+    endif()
+
+    add_custom_command(OUTPUT ${_gen_proto_outputs}
         COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
         DEPENDS ${deps}
         COMMENT "Running gen_proto.py on ${INFILE}")
@@ -439,13 +455,28 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
       endif()
     endif()
     list(APPEND GENERATED_FILES "${GENERATED_PROTO}")
-    add_custom_command(OUTPUT "${OUTPUT_PB_SRC}"
+
+    set(_protoc_outputs "${OUTPUT_PB_SRC}")
+    if(ONNX_BUILD_PYTHON)
+      string(REPLACE "-" "_" _py_stem "${GENERATED_FILE_WE}")
+      set(_pb2_py "${OUTPUT_PROTO_DIR}/${_py_stem}_pb2.py")
+      list(APPEND _protoc_outputs "${_pb2_py}")
+      list(APPEND _py_files "${_pb2_py}")
+      if(ONNX_GEN_PB_TYPE_STUBS)
+        set(_pb2_pyi "${OUTPUT_PROTO_DIR}/${_py_stem}_pb2.pyi")
+        list(APPEND _protoc_outputs "${_pb2_pyi}")
+        list(APPEND _py_files "${_pb2_pyi}")
+      endif()
+    endif()
+
+    add_custom_command(OUTPUT ${_protoc_outputs}
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
         DEPENDS ${GENERATED_FILES}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
+  set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
 endfunction()
 
 relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
@@ -613,6 +644,11 @@ if(ONNX_INSTALL)
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
     NAMESPACE ONNX::
   )
+endif()
+
+if(ONNX_BUILD_PYTHON)
+  install(TARGETS onnx_cpp2py_export LIBRARY DESTINATION onnx)
+  install(FILES ${ONNX_PROTO_PY_FILES} DESTINATION onnx)
 endif()
 
 if(ONNX_BUILD_TESTS)
