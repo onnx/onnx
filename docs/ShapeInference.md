@@ -84,6 +84,24 @@ Explicit type inference logic in `TypeAndShapeInferenceFunction` is only needed 
   (e.g., `Cast`, where the `to` attribute specifies the output element type)
 - The output type differs from all input types in a way that cannot be expressed
   via shared type constraint variables
+- The operator uses **heterogeneous** variadic inputs/outputs (see below)
+
+### Homogeneous vs. Heterogeneous variadic inputs/outputs
+
+The homogeneous/heterogeneous flag applies only to variadic (repeated) inputs or
+outputs in the schema definition:
+
+- **Homogeneous** (the default): All repeated arguments must have the same type.
+  The type constraint variable constrains them to be identical, and the framework
+  enforces and propagates this automatically.
+- **Heterogeneous**: Each repeated argument may have a distinct type. The type
+  constraint variable only describes the set of *allowed* types — it does not
+  constrain different arguments to have the same type. This is used by operators
+  like `Loop` and `Scan`, whose carried state variables can have mixed types.
+
+When using heterogeneous variadic arguments, the operator's
+`TypeAndShapeInferenceFunction` must explicitly propagate types for each
+individual argument, since the framework cannot do it automatically.
 
 **Shape inference**, on the other hand, almost always requires explicit logic,
 since output shapes typically depend on input shapes, attributes, or both.

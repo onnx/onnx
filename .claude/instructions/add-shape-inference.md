@@ -28,6 +28,16 @@ See also: `docs/ShapeInference.md`
 Explicit type inference logic is only needed when:
 - The output type is determined by an **attribute** (e.g., `Cast` where `to` sets output type)
 - The output type differs from all inputs in a way not expressible via type constraints
+- The operator uses **heterogeneous** variadic inputs/outputs (see below)
+
+### Homogeneous vs. Heterogeneous variadic inputs/outputs
+
+The homogeneous/heterogeneous flag applies only to variadic (repeated) inputs or outputs:
+
+- **Homogeneous** (default): All repeated arguments must share the same type. The type constraint variable enforces this — the framework propagates types automatically.
+- **Heterogeneous**: Each repeated argument can have a distinct type. The type constraint variable only describes the set of *allowed* types, not a shared constraint. Used by ops like `Loop` and `Scan` whose carried state can have mixed types.
+
+When using heterogeneous variadic arguments, the `TypeAndShapeInferenceFunction` must explicitly propagate types for each individual argument.
 
 **Shape inference** almost always requires explicit logic, since output shapes depend on input shapes, attributes, or both.
 
