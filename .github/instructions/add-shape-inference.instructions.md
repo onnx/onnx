@@ -31,6 +31,8 @@ The inference function is a lambda receiving an `InferenceContext&`:
 
 **Type inference** (element type of outputs) is often handled automatically by the schema's type constraints — no explicit code needed. When a type constraint variable (e.g., `"T"`) is shared between an input and an output, the framework infers the output type from the input type automatically.
 
+However, many existing ops still explicitly call `propagateElemTypeFromInputToOutput` as a best practice for robustness. This is harmless when type constraints already cover the case, and ensures correct behavior regardless of how shape inference is invoked.
+
 You only need explicit type inference logic when:
 - The output type is determined by an **attribute** (e.g., `Cast` where `to` attribute sets output type)
 - The output type differs from all input types in a way not expressible via type constraints
@@ -140,7 +142,7 @@ This built-in handles both type and shape propagation for ops like Relu, Abs, Ne
 Dim operator*(const Dim& a, const Dim& b);
 Dim operator*(const Dim& a, int64_t val);
 Dim operator/(const Dim& a, int64_t divisor);
-int64_t multiplyDims(const TensorShapeProto& shape, int from, int upto);
+Dim multiplyDims(const TensorShapeProto& shape, int from, int upto);
 ```
 
 ## Writing Shape Inference Tests

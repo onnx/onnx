@@ -79,6 +79,11 @@ automatically by the schema's type constraints. When a type constraint variable
 the framework propagates the element type from the input to the output without
 any explicit inference code.
 
+However, many existing ops still explicitly call `propagateElemTypeFromInputToOutput`
+as a best practice for robustness. This is harmless when type constraints already
+cover the case, and ensures correct behavior regardless of how shape inference
+is invoked.
+
 Explicit type inference logic in `TypeAndShapeInferenceFunction` is only needed when:
 - The output type is determined by an **attribute** rather than an input type
   (e.g., `Cast`, where the `to` attribute specifies the output element type)

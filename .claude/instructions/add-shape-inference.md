@@ -25,6 +25,8 @@ See also: `docs/ShapeInference.md`
 
 **Type inference** (element type of outputs) is often handled automatically by the schema's type constraints. When a type constraint variable (e.g., `"T"`) is shared between an input and an output, the framework infers the output type automatically — no explicit code needed.
 
+However, many existing ops still explicitly call `propagateElemTypeFromInputToOutput` as a best practice. This is harmless when type constraints already cover the case, and ensures correct behavior regardless of how shape inference is invoked.
+
 Explicit type inference logic is only needed when:
 - The output type is determined by an **attribute** (e.g., `Cast` where `to` sets output type)
 - The output type differs from all inputs in a way not expressible via type constraints
@@ -124,7 +126,7 @@ When using heterogeneous variadic arguments, the `TypeAndShapeInferenceFunction`
 Dim operator*(const Dim& a, const Dim& b);
 Dim operator*(const Dim& a, int64_t val);
 Dim operator/(const Dim& a, int64_t divisor);
-int64_t multiplyDims(const TensorShapeProto& shape, int from, int upto);
+Dim multiplyDims(const TensorShapeProto& shape, int from, int upto);
 ```
 
 ## Writing Tests

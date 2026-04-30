@@ -17,7 +17,7 @@ Follow the full procedure in [docs/AddNewOp.md](../../docs/AddNewOp.md).
 | Node tests | `onnx/backend/test/case/node/<lowercase_name>.py` |
 | Shape inference tests | `onnx/test/shape_inference_test.py` |
 | Version converter adapter | `onnx/version_converter/adapters/<name>_<from>_<to>.h` |
-| Upgrade/downgrade tests | `onnx/test/version_converter/automatic_upgrade_test.py` |
+| Upgrade/downgrade tests | `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` |
 
 ## Domains
 
