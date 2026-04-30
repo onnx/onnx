@@ -108,6 +108,14 @@ lintrunner -a --output oneline
 4. Add upgrade/downgrade tests using `_test_op_upgrade` / `_test_op_downgrade`
 5. Update the operator set registration in `onnx/defs/operator_sets.h`
 
+### Avoiding duplication between defs.cc and old.cc
+
+When moving a schema to `old.cc`, avoid significant code/documentation duplication between old and new versions:
+
+- **Shared utilities**: Extract common logic (doc strings, type constraint lists, shape inference helpers) into shared functions in the domain's header or utils file.
+- **Parameterized functions**: When versions differ only slightly (e.g., expanded type list, additional optional input), use parameterized helpers that accept the differences as arguments.
+- **Use judgment**: Some duplication is acceptable when sharing would create overly complicated logic. Prefer clarity over DRY when the alternative makes either version harder to understand independently.
+
 ## Common Mistakes to Avoid
 
 - Don't edit generated files (`docs/Operators.md`, `docs/Changelog.md`, `*_pb2.py`) directly

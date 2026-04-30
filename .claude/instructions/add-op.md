@@ -100,6 +100,14 @@ lintrunner -a --output oneline
 4. Add version converter adapter if behavior changed
 5. Add upgrade/downgrade tests
 
+### Avoiding duplication between defs.cc and old.cc
+
+When moving a schema to `old.cc`, avoid significant code/documentation duplication:
+
+- Extract common logic (doc strings, type constraint lists, inference helpers) into shared functions in the domain's header or utils file.
+- Use parameterized helpers when versions differ only slightly (e.g., expanded type list, additional optional input).
+- Some duplication is acceptable when sharing would create overly complicated logic. Prefer clarity over DRY when the alternative makes either version harder to understand independently.
+
 ## Common Mistakes
 
 - Don't edit generated files (`docs/Operators.md`, `docs/Changelog.md`, `*_pb2.py`)

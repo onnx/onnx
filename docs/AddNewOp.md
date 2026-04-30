@@ -137,6 +137,14 @@ The definition of an existing operator may need to be updated when e.g. there ar
 6. **Add upgrade/downgrade tests** using `_test_op_upgrade` and `_test_op_downgrade`.
 7. **Regenerate documentation** by running `python onnx/defs/gen_doc.py`.
 
+### Avoiding duplication between defs.cc and old.cc
+
+When moving an operator schema to `old.cc`, avoid significant duplication of code or documentation between the old and new versions. Use these strategies:
+
+- **Shared utility functions**: Extract common logic (e.g., doc strings, type constraint lists, shape inference helpers) into shared functions in the domain's `utils.cc`/`utils.h` or a `defs.h` header.
+- **Parameterized functions**: When the old and new versions differ only slightly (e.g., an expanded type list or an additional optional input), use parameterized helper functions that accept the differences as arguments.
+- **Use judgment**: Some duplication is acceptable when the alternative would be overly complicated shared logic. If sharing the code makes it harder to understand either version independently, prefer clarity over DRY.
+
 ### Additional files for updates
 
 | Component | File location |
