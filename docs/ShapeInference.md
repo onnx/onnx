@@ -71,6 +71,23 @@ These limitations are a property of the current implementation, not
 fundamental constraints - if you are in need of something more
 advanced, do let us know!
 
+## Type Inference vs. Shape Inference
+
+**Type inference** (determining the element type of outputs) is typically handled
+automatically by the schema's type constraints. When a type constraint variable
+(e.g., `"T"`) is shared between an input and an output in the schema definition,
+the framework propagates the element type from the input to the output without
+any explicit inference code.
+
+Explicit type inference logic in `TypeAndShapeInferenceFunction` is only needed when:
+- The output type is determined by an **attribute** rather than an input type
+  (e.g., `Cast`, where the `to` attribute specifies the output element type)
+- The output type differs from all input types in a way that cannot be expressed
+  via shared type constraint variables
+
+**Shape inference**, on the other hand, almost always requires explicit logic,
+since output shapes typically depend on input shapes, attributes, or both.
+
 ## Implementing Shape Inference For Operators
 
 You can add a shape inference function to your operator's Schema with
