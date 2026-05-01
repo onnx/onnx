@@ -4516,7 +4516,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 static constexpr const char* Crop_ver1_doc =
-    R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
+    R"DOC(Crop an image to the specified spatial dimensions. If scale is given,
 then optionally start the crop offset by the left/top border amounts.
 If scale is not provided, crop the borders as provided.)DOC";
 

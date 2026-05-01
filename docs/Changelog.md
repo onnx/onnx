@@ -716,7 +716,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Crop-1"></a>**Crop-1**</a>
 
-  Crop and image to the specified spatial dimensions. If scale is given,
+  Crop an image to the specified spatial dimensions. If scale is given,
   then optionally start the crop offset by the left/top border amounts.
   If scale is not provided, crop the borders as provided.
 

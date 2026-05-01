@@ -9657,7 +9657,7 @@ expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_pads")
 
 ### <sub>experimental</sub> <a name="Crop"></a><a name="crop">**Crop**</a>
 
-  Crop and image to the specified spatial dimensions. If scale is given,
+  Crop an image to the specified spatial dimensions. If scale is given,
   then optionally start the crop offset by the left/top border amounts.
   If scale is not provided, crop the borders as provided.
 
