@@ -16,18 +16,17 @@ SPDX-License-Identifier: Apache-2.0
 | [Lint / Enforce style](/.github/workflows/lint.yml) | Every PR | Required — runs lintrunner (ruff, mypy, clang-format, etc.) and verifies auto-generated files are up to date |
 | [Reuse](/.github/workflows/reuse.yml) | Every PR | Checks copyright and license headers; see [https://reuse.software/](https://reuse.software/). Files without a recognized license must be configured in `REUSE.toml`. |
 | [Require label](/.github/workflows/check_pr_label.yml) | Every PR | Requires at least one `topic:` or `module:` label (skipped for Dependabot PRs) |
-| [PR Checks](/.github/workflows/pr_checks.yml) | PRs to main | Computes and posts auto-fix suggestions as PR review comments (via [PR Checks Post](/.github/workflows/pr_checks_post.yml)) |
-| [Optional Clang-Tidy Review](/.github/workflows/clang_tidy_review.yml) | PRs to main/rel-\* that touch C++ files | Not required — posts clang-tidy diagnostics as PR review comments |
 | [DCO](/.github/workflows/dco_merge_group.yml) | merge\_group | Placeholder DCO job required to enable the GitHub merge queue |
 
 ## Release Builds (1)
 
 | Workflow | When it runs | What it does |
 |---|---|---|
-| [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, PRs targeting rel-\* or labeled "run release CIs", weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, and sdistRelease as reusable workflows |
+| [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, PRs targeting rel-\* or labeled "run release CIs", weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, PyodideRelease, and sdistRelease as reusable workflows |
 | [WindowsRelease](/.github/workflows/release_win.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package (2)(3) |
 | [LinuxRelease](/.github/workflows/release_linux.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package |
 | [MacRelease](/.github/workflows/release_mac.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package; tests source distribution build |
+| [PyodideRelease](/.github/workflows/release_pyodide.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `pyodide-build`, a host `protoc`, and a wasm protobuf library; validates wheel contents and publish-ready artifacts |
 | [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 
 ## Security and Supply Chain
@@ -44,8 +43,7 @@ SPDX-License-Identifier: Apache-2.0
 | Workflow | When it runs | What it does |
 |---|---|---|
 | [Pages](/.github/workflows/pages.yml) | PRs to main, push to main | Builds and publishes ONNX documentation to GitHub Pages |
-| [Auto update documentation](/.github/workflows/auto_update_doc.yml) | PRs labeled "auto update doc" | Regenerates docs and backend test data directly in the PR branch |
-| [Pixi CI](/.github/workflows/pixi_build.yml) | Weekly (Sunday 23:59 UTC), push when pixi files change | Builds and tests with the [pixi](https://pixi.sh/) environment manager on Linux, macOS, and Windows; opens an issue on failure |
+| [Pixi CI](/.github/workflows/pixi_build.yml) | Weekly (Sunday 23:59 UTC) and on PRs | Builds and tests with the [pixi](https://pixi.sh/) environment manager on Linux, macOS, and Windows; opens an issue on failure when scheduled |
 | [Check URLs](/.github/workflows/check_urls.yml) | Push to main/rel-\*, monthly | Checks for broken URLs in the codebase |
 | [Stale](/.github/workflows/stale.yml) | Daily | Warns and eventually closes stale issues and PRs |
 | [Dependabot](/.github/dependabot.yml) | Monthly | Creates PRs for updated dependency versions |
@@ -60,5 +58,3 @@ SPDX-License-Identifier: Apache-2.0
   * Manually via workflow\_dispatch
 
 * **(2)** Minimum supported dependency versions are listed in [requirements.txt](/requirements.txt).
-
-* **(3)** [Tests](/onnx/test/test_with_ort.py) the ONNX Python wheel with `onnxruntime.InferenceSession` from the latest ONNX Runtime release on PyPI.
