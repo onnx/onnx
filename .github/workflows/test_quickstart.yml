@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install jupyter nbconvert ipykernel
-          pip install onnx torch onnxruntime numpy onnxscript
+          pip install onnx torch onnxruntime numpy
           python -m ipykernel install --user
 
       - name: Check kernel registration

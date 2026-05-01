@@ -140,7 +140,7 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = [".gitignore", "**/**/.gitignore", ".gitmodules", ".lintrunner.toml", ".gitattributes", ".git-blame-ignore-revs", ".clang**", ".editorconfig"]
+path = [".gitignore", "**/**/.gitignore", "examples/.gitignore", ".gitmodules", ".lintrunner.toml", ".gitattributes", ".git-blame-ignore-revs", ".clang**", ".editorconfig"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"

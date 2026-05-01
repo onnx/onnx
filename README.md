@@ -36,23 +36,23 @@ import onnx
 model = torch.nn.Linear(10, 5)
 model.eval()
 
-# 2. Export to ONNX
+# 2. Export to ONNX (using the modern dynamo exporter)
 dummy_input = torch.randn(1, 10)
-torch.onnx.export(model, dummy_input, "model.onnx")
+torch.onnx.export(model, dummy_input, "model.onnx", dynamo=True)
 
 # 3. Load and validate
 onnx_model = onnx.load("model.onnx")
 onnx.checker.check_model(onnx_model)
-print("✅ Model is valid!")
+print("Model is valid!")
 
 # 4. Run inference with ONNX Runtime
 import onnxruntime as ort
 session = ort.InferenceSession("model.onnx")
-outputs = session.run(None, {"input": dummy_input.numpy()})
+input_name = session.get_inputs()[0].name
+outputs = session.run(None, {input_name: dummy_input.numpy()})
 ```
 
 **For a complete tutorial**, see our [interactive notebook](./examples/quickstart.ipynb) or try it directly in [Google Colab](https://colab.research.google.com/github/onnx/onnx/blob/main/examples/quickstart.ipynb).
-
 
 # Use ONNX
 
