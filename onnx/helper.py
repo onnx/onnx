@@ -93,6 +93,8 @@ def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
         ):
             if pair not in result:
                 result[pair] = ir_version
+                if pair[0] == "ai.onnx":
+                    result["ai.onnx.preview", pair[1]] = ir_version
                 if pair[0] == "ai.onnx.training":
                     result["ai.onnx.preview.training", pair[1]] = ir_version
 

@@ -350,6 +350,9 @@ inline bool hasNInputShapes(const Context& ctx, size_t n) {
 
 inline const TensorShapeProto& getInputShape(const InferenceContext& ctx, size_t n) {
   const auto* input_type = ctx.getInputType(n);
+  if (input_type == nullptr) {
+    fail_type_inference("Input ", n, " is null in ", ctx.getDisplayName(), ".");
+  }
   const auto value_case = input_type->value_case();
   if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
     fail_type_inference("Input ", n, "expected to be a tensor or a sparse tensor type in ", ctx.getDisplayName(), ".");
