@@ -3799,6 +3799,63 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // --- Type inference ---
+          // All inputs and outputs share the same type T.
+          // Propagate element type from input to both outputs.
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);  // input -> output
+          propagateElemTypeFromInputToOutput(ctx, 0, 1);  // input -> present_state
+
+          // --- Output 0: same shape as input (B, C, L) ---
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          // --- Input rank validation ---
+          // All tensors are rank-3 for this 1D-only operator.
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            if (input_shape.dim_size() != 3) {
+              fail_shape_inference(
+                  "Input tensor must be rank 3 (batch_size, channels, length), got rank ",
+                  input_shape.dim_size());
+            }
+          }
+
+          if (hasInputShape(ctx, 1)) {
+            auto& weight_shape = getInputShape(ctx, 1);
+            if (weight_shape.dim_size() != 3) {
+              fail_shape_inference(
+                  "Weight tensor must be rank 3 (channels, 1, k), got rank ",
+                  weight_shape.dim_size());
+            }
+          }
+
+          // --- Output 1: present_state shape (B, C, k-1) ---
+          // The carry state stores the last (k-1) input positions for
+          // causal continuity across decode steps.
+          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            auto& weight_shape = getInputShape(ctx, 1);
+            TensorShapeProto state_shape;
+
+            // Batch and channel dims come from the input.
+            *state_shape.add_dim() = input_shape.dim(0);  // B
+            *state_shape.add_dim() = input_shape.dim(1);  // C
+
+            // Causal dim: kernel_size - 1.
+            // Only compute if weight dim 2 (k) has a concrete value.
+            if (weight_shape.dim(2).has_dim_value()) {
+              int64_t k = weight_shape.dim(2).dim_value();
+              if (k < 1) {
+                fail_shape_inference("Kernel size k must be >= 1, got ", k);
+              }
+              state_shape.add_dim()->set_dim_value(k - 1);
+            } else {
+              state_shape.add_dim();  // unknown causal dim
+            }
+
+            updateOutputShape(ctx, 1, state_shape);
+          }
+        })
         .TypeConstraint(
             "T",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
