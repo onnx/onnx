@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/checker.h"
 #include "onnx/common/assertions.h"
 #include "onnx/common/constants.h"
 #include "onnx/common/proto_util.h"
@@ -641,6 +642,7 @@ struct InlinerImpl {
   }
 
   static void InlineLocalFunctions(ModelProto& model, bool convert_version) {
+    checker::check_function_call_cycles(model);
     FunctionIdVector empty_set;
     VectorSet all_functions(std::move(empty_set), true);
     OpsetMap model_imports(model);
@@ -682,6 +684,7 @@ struct InlinerImpl {
 
   static void
   InlineSelectedFunctions(ModelProto& model, const FunctionIdSet& to_inline, const ISchemaRegistry* schema_registry) {
+    checker::check_function_call_cycles(model);
     OpsetMap model_imports(model);
     FunctionMap map;
     std::vector<FunctionProto*> non_inlined_functions;

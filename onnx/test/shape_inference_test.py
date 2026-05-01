@@ -11800,6 +11800,18 @@ class TestShapeInference(TestShapeInferenceHelper):
         model = text_format.Parse(model_text, onnx.ModelProto())
         self._assert_inferred(model, [])
 
+    def test_infer_shapes_rejects_cyclic_function(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) { Y = local.foo (X) }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.foo (x) }
+        """
+        )
+        with self.assertRaises(onnx.checker.ValidationError):
+            onnx.shape_inference.infer_shapes(model)
+
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
     custom_op_type: str = "CustomOp"

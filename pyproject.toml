@@ -50,6 +50,9 @@ onnx = [
     "py.typed",
 ]
 
+[tool.check-wheel-contents]
+ignore = ["W002"]
+
 [tool.pytest.ini_options]
 
 addopts = "--tb=short --color=yes"

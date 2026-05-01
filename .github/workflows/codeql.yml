@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'python' ]
+        language: [ 'actions', 'cpp', 'python' ]
 
     steps:
     - name: Checkout repository
@@ -44,11 +44,13 @@ jobs:
         persist-credentials: false
 
     - name: Set up Python
+      if: matrix.language != 'actions'
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.11'
 
     - name: Upgrade pip
+      if: matrix.language != 'actions'
       run: python -m pip install --upgrade pip
 
     # Initializes the CodeQL tools for scanning.
@@ -62,12 +64,19 @@ jobs:
             - uses: security-and-quality
           paths-ignore:
             - '.setuptools-cmake-build/**'
+            - 'build/**'
+            - 'onnx/**/*_pb2.py'
+            - 'onnx/**/*_pb2.pyi'
+            - '**/*.pb.cc'
+            - '**/*.pb.h'
+            - 'onnx/backend/test/data/**'
           query-filters:
             - exclude:
                 id: py/import-and-import-from
 
     # Install onnx so that it is found by the linters
     - name: Install ONNX
+      if: matrix.language != 'actions'
       run: |
         source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
         python -m pip install --quiet -r requirements-release_build.txt

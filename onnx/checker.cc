@@ -4,6 +4,8 @@
 
 #include "onnx/checker.h"
 
+#include <algorithm>
+#include <cstdint>
 #include <filesystem> // NOLINT(build/c++17)
 #include <iostream>
 #include <string>
@@ -13,6 +15,7 @@
 
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
+#include "onnx/common/proto_util.h"
 #include "onnx/common/scoped_resource.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"
@@ -799,6 +802,129 @@ void check_opset_compatibility(
   }
 }
 
+namespace {
+
+using FuncPtr = const FunctionProto*;
+using CallGraph = std::unordered_map<FuncPtr, std::unordered_set<FuncPtr>>;
+
+// Limits to reject obviously malicious models early.
+constexpr int kMaxModelLocalFunctions = 10000;
+constexpr size_t kMaxFunctionCallDepth = 100;
+
+enum class VisitState : uint8_t { Unvisited, InPath, Done };
+
+// Iterative DFS to detect cycles in the function call graph.
+// Uses an explicit stack to avoid stack overflow on deeply-chained models.
+void DetectCycleDFS(
+    FuncPtr root,
+    const CallGraph& call_graph,
+    std::unordered_map<FuncPtr, VisitState>& state,
+    std::vector<FuncPtr>& path) {
+  // Each frame tracks the current function and an iterator into its callees.
+  using Iter = std::unordered_set<FuncPtr>::const_iterator;
+  struct Frame {
+    FuncPtr func;
+    Iter cur;
+    Iter end;
+  };
+  std::vector<Frame> stack;
+
+  auto push = [&](FuncPtr func) {
+    state[func] = VisitState::InPath;
+    path.push_back(func);
+    if (path.size() > kMaxFunctionCallDepth) {
+      fail_check(
+          "Function call chain depth exceeds limit (",
+          kMaxFunctionCallDepth,
+          "). The model may be malformed or malicious.");
+    }
+    auto it = call_graph.find(func);
+    if (it != call_graph.end()) {
+      stack.push_back({func, it->second.begin(), it->second.end()});
+    } else {
+      stack.push_back({func, {}, {}});
+    }
+  };
+
+  push(root);
+
+  while (!stack.empty()) {
+    auto& frame = stack.back();
+
+    if (frame.cur == frame.end) {
+      // All callees processed — backtrack.
+      path.pop_back();
+      state[frame.func] = VisitState::Done;
+      stack.pop_back();
+      continue;
+    }
+
+    FuncPtr callee = *frame.cur;
+    ++frame.cur;
+
+    auto s = state[callee];
+    if (s == VisitState::InPath) {
+      auto start = std::find(path.begin(), path.end(), callee);
+      std::string cycle;
+      for (auto cit = start; cit != path.end(); ++cit)
+        cycle += (cit == start ? "" : " -> ") + GetFunctionImplId(**cit);
+      fail_check(
+          "Cycle detected in model-local function references: ",
+          cycle,
+          " -> ",
+          GetFunctionImplId(*callee),
+          ". Self-referencing or cyclically-referencing functions would cause infinite recursion.");
+    } else if (s == VisitState::Unvisited) {
+      push(callee);
+    }
+  }
+}
+
+} // namespace
+
+void check_function_call_cycles(const ModelProto& model) {
+  if (model.functions_size() > kMaxModelLocalFunctions) {
+    fail_check(
+        "Model contains ",
+        model.functions_size(),
+        " local functions, exceeding the limit of ",
+        kMaxModelLocalFunctions,
+        ". The model may be malformed or malicious.");
+  }
+
+  // Build function map: callee key -> FunctionProto pointer.
+  // Duplicate keys could mask cycles, so reject them here.
+  std::unordered_map<std::string, FuncPtr> func_by_key;
+  for (const auto& f : model.functions()) {
+    const auto function_impl_id = GetFunctionImplId(f);
+    const bool inserted = func_by_key.emplace(function_impl_id, &f).second;
+    if (!inserted) {
+      fail_check("Model contains multiple local functions with the same implementation id '", function_impl_id, "'.");
+    }
+  }
+
+  // Build adjacency list using pointers directly
+  CallGraph call_graph;
+  for (const auto& entry : func_by_key) {
+    auto* func = entry.second;
+    auto& callees = call_graph[func];
+    for (const auto& node : func->node()) {
+      auto it = func_by_key.find(GetCalleeId(node));
+      if (it != func_by_key.end()) {
+        callees.insert(it->second);
+      }
+    }
+  }
+
+  std::unordered_map<FuncPtr, VisitState> state;
+  std::vector<FuncPtr> path;
+  for (const auto& entry : func_by_key) {
+    if (state[entry.second] == VisitState::Unvisited) {
+      DetectCycleDFS(entry.second, call_graph, state, path);
+    }
+  }
+}
+
 void check_model_local_functions(
     const ModelProto& model,
     const CheckerContext& ctx,
@@ -818,6 +944,8 @@ void check_model_local_functions(
       }
     }
   }
+
+  check_function_call_cycles(model);
 
   CheckerContext ctx_copy = ctx;
   ctx_copy.set_opset_imports(model_opset_imports);

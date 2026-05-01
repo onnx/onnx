@@ -1116,6 +1116,34 @@ class TestChecker(unittest.TestCase):
         )
         self.assertRaises(checker.ValidationError, checker.check_model, model)
 
+    def test_check_model_rejects_self_recursive_function(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.foo (x) }
+        """
+        )
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
+
+    def test_check_model_rejects_indirect_cycle(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.bar (x) }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            bar (x) => (y) { y = local.foo (x) }
+        """
+        )
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
+
 
 if __name__ == "__main__":
     unittest.main()
