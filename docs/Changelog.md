@@ -714,6 +714,46 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
+### <a name="Crop-1"></a>**Crop-1**</a>
+
+  Crop and image to the specified spatial dimensions. If scale is given,
+  then optionally start the crop offset by the left/top border amounts.
+  If scale is not provided, crop the borders as provided.
+
+#### Version
+
+No versioning maintained for experimental ops.
+
+#### Attributes
+
+<dl>
+<dt><tt>border</tt> : list of ints</dt>
+<dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
+<dt><tt>scale</tt> : list of ints</dt>
+<dd>A 1-D values of (height, width).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of shape [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Result, has same type as input, with H and W dimensions reduced.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Div-1"></a>**Div-1**</a>
 
   Performs element-wise binary division (with limited broadcast support).

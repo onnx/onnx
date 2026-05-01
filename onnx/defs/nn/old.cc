@@ -4515,4 +4515,28 @@ ONNX_OPERATOR_SET_SCHEMA(
           schema.BuildFunction(functionProto);
           return true;
         }));
+static constexpr const char* Crop_ver1_doc =
+    R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
+then optionally start the crop offset by the left/top border amounts.
+If scale is not provided, crop the borders as provided.)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Crop,
+    1,
+    OpSchema()
+        .SetSupportLevel(OpSchema::SupportType::EXPERIMENTAL)
+        .SetDoc(Crop_ver1_doc)
+        .Attr(
+            "border",
+            "A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).",
+            AttributeProto::INTS,
+            OPTIONAL_VALUE)
+        .Attr("scale", "A 1-D values of (height, width).", AttributeProto::INTS, OPTIONAL_VALUE)
+        .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
+        .Output(0, "output", "Result, has same type as input, with H and W dimensions reduced.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors."));
+
 } // namespace ONNX_NAMESPACE

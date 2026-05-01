@@ -41,6 +41,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Conv">Conv</a>|<a href="Changelog.md#Conv-22">22</a>, <a href="Changelog.md#Conv-11">11</a>, <a href="Changelog.md#Conv-1">1</a>|
 |<a href="#ConvInteger">ConvInteger</a>|<a href="Changelog.md#ConvInteger-10">10</a>|
 |<a href="#ConvTranspose">ConvTranspose</a>|<a href="Changelog.md#ConvTranspose-22">22</a>, <a href="Changelog.md#ConvTranspose-11">11</a>, <a href="Changelog.md#ConvTranspose-1">1</a>|
+|<sub>experimental</sub> <a href="#Crop">Crop</a>|<a href="Changelog.md#Crop-1">1</a>|
 |<a href="#Cos">Cos</a>|<a href="Changelog.md#Cos-22">22</a>, <a href="Changelog.md#Cos-7">7</a>|
 |<a href="#Cosh">Cosh</a>|<a href="Changelog.md#Cosh-22">22</a>, <a href="Changelog.md#Cosh-9">9</a>|
 |<a href="#CumProd">CumProd</a>|<a href="Changelog.md#CumProd-26">26</a>|
@@ -9652,6 +9653,47 @@ expect(node, inputs=[x, W], outputs=[y], name="test_convtranspose_pads")
 ```
 
 </details>
+
+
+### <sub>experimental</sub> <a name="Crop"></a><a name="crop">**Crop**</a>
+
+  Crop and image to the specified spatial dimensions. If scale is given,
+  then optionally start the crop offset by the left/top border amounts.
+  If scale is not provided, crop the borders as provided.
+
+#### Version
+
+No versioning maintained for experimental ops.
+
+#### Attributes
+
+<dl>
+<dt><tt>border</tt> : list of ints</dt>
+<dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
+<dt><tt>scale</tt> : list of ints</dt>
+<dd>A 1-D values of (height, width).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of shape [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Result, has same type as input, with H and W dimensions reduced.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
 
 
 ### <a name="Cos"></a><a name="cos">**Cos**</a>
