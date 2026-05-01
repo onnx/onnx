@@ -3713,20 +3713,20 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static constexpr const char* CausalConvWithState_ver25_doc = R"DOC(
 
-Stateful causal depthwise convolution, generalized to N spatial dimensions.
+Stateful causal 1D depthwise convolution.
 
 Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
 Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
 
-The convolution is causal (looks only at current and past positions along the last
-spatial dimension) and depthwise (each channel is convolved independently with its own kernel).
+The convolution is causal (looks only at current and past positions) and depthwise
+(each channel is convolved independently with its own kernel).
 
-Input layout is channels-first: (batch_size, channels, ...).
-Weight layout: (channels, 1, k_1, ...) for depthwise convolution.
-The carry state stores the last (k-1) positions along the causal axis for incremental decode.
+All inputs and outputs are rank-3 tensors (batch_size, channels, length).
+For higher-dimensional data, use Reshape nodes before and after this operator
+to pack extra dimensions into the batch or channel axis.
 
-The ndim attribute generalizes the op to 1D, 2D, or 3D spatial dimensions. Causality is
-enforced on the last spatial dimension only.
+Weight layout: (channels, 1, k) for depthwise convolution.
+The carry state stores the last (k-1) positions for incremental decode.
 
 The optional activation attribute supports fused SiLU/Swish activation.
 
@@ -3743,16 +3743,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Default is 'none'.",
             AttributeProto::STRING,
             std::string("none"))
-        .Attr(
-            "ndim",
-            "Spatial dimensionality: 1, 2, or 3. Default is 1.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
         .Input(
             0,
             "input",
-            "Input tensor with shape (batch_size, channels, ...). Channels-first layout. "
-            "Spatial dims: 1D: (L,); 2D: (H, W); 3D: (D, H, W).",
+            "Input tensor with shape (batch_size, channels, length). Channels-first layout.",
             "T",
             OpSchema::Single,
             true,
@@ -3761,8 +3755,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "weight",
-            "Depthwise convolution kernel with shape (channels, 1, k_1, ...). "
-            "Spatial kernel sizes: (k_1, ..., k_ndim).",
+            "Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size.",
             "T",
             OpSchema::Single,
             true,
@@ -3780,7 +3773,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "past_state",
-            "Carry state from previous step. For ndim=1: (batch_size, channels, k_1 - 1). "
+            "Carry state from previous step with shape (batch_size, channels, k - 1). "
             "If not provided, padding is zero.",
             "T",
             OpSchema::Optional,
@@ -3799,8 +3792,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             1,
             "present_state",
-            "Updated carry state. For ndim=1: (batch_size, channels, k_1 - 1). "
-            "Contains the last (k-1) values from the virtual input along the causal axis.",
+            "Updated carry state with shape (batch_size, channels, k - 1). "
+            "Contains the last (k-1) values from the input along the causal axis.",
             "T",
             OpSchema::Single,
             true,
