@@ -110,7 +110,7 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["docs/docsgen/source/api/**md", "docs/docsgen/source/_static/**", "docs/docsgen/source/requirements.txt", "docs/docsgen/source/onnx-favicon.png"]
+path = ["docs/docsgen/source/api/**md", "docs/docsgen/source/_static/**", "docs/docsgen/source/onnx-favicon.png"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"

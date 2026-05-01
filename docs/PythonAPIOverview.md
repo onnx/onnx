@@ -188,7 +188,7 @@ print(f"The converted numpy dtype for {helper.tensor_dtype_to_string(TensorProto
 field_name = helper.tensor_dtype_to_field(TensorProto.FLOAT)
 print(f"The field name for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {field_name}.")
 
-# There are other useful conversion utilities. Please checker onnx.helper
+# There are other useful conversion utilities. Please check onnx.helper
 ```
 
 ## Checking an ONNX Model
