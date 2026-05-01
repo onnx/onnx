@@ -3856,6 +3856,97 @@ ONNX_OPERATOR_SET_SCHEMA(
             updateOutputShape(ctx, 1, state_shape);
           }
         })
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // CausalConvWithState <activation> (input, weight, bias?, past_state?)
+          //   => (output, present_state)
+          //
+          // Reference decomposition:
+          //   1. Left-pad input with past_state (or zeros if absent) along axis 2
+          //   2. Depthwise Conv1d (group=C, no padding) on the padded input
+          //   3. Optional SiLU/Swish activation
+          //   4. Slice last (k-1) positions from padded input as present_state
+
+          // --- Step 1: Extract static channel count for Conv group attribute ---
+          // Conv's group attribute must be a compile-time integer.
+          // TODO(review): If C is unknown at build time, we cannot construct the
+          // function body. Weights are typically initializers so C should be available.
+          auto* input_type = ctx.getInputType(0);
+          if (input_type == nullptr || !input_type->has_tensor_type() ||
+              !input_type->tensor_type().has_shape() ||
+              input_type->tensor_type().shape().dim_size() < 2 ||
+              !input_type->tensor_type().shape().dim(1).has_dim_value()) {
+            return false;
+          }
+          int64_t C = input_type->tensor_type().shape().dim(1).dim_value();
+
+          // Read the activation attribute (default: "none")
+          auto* activation_attr = ctx.getAttribute("activation");
+          std::string activation = (activation_attr != nullptr && activation_attr->has_s())
+              ? activation_attr->s() : "none";
+
+          FunctionBuilder builder(functionProto);
+
+          // --- Step 2: Build the left-padded input (B, C, L+k-1) ---
+          if (ctx.hasInput(3)) {
+            // past_state is provided: concat it on the left along axis 2
+            builder.Add("PaddedInput = Concat <axis = 2> (past_state, input)");
+          } else {
+            // No past_state: zero-pad on the left by (k-1)
+            // Compute pad size dynamically from weight shape
+            builder
+                .Const1D("One1D", static_cast<int64_t>(1))
+                .Add("BatchDim = Shape <start = 0, end = 1> (input)")
+                .Add("ChannelDim = Shape <start = 1, end = 2> (input)")
+                .Add("KernelSize = Shape <start = 2, end = 3> (weight)")
+                .Add("Km1 = Sub (KernelSize, One1D)")
+                .Add("ZeroPadShape = Concat <axis = 0> (BatchDim, ChannelDim, Km1)")
+                .Add("ZeroPad = ConstantOfShape (ZeroPadShape)")
+                .Add("ZeroPadCast = CastLike (ZeroPad, input)")
+                .Add("PaddedInput = Concat <axis = 2> (ZeroPadCast, input)");
+          }
+
+          // --- Step 3: Depthwise Conv1d (group=C, valid padding) ---
+          if (ctx.hasInput(2)) {
+            // Bias provided: pass directly to Conv
+            builder.Add("ConvOut = Conv (PaddedInput, weight, bias)", "group", C);
+          } else {
+            // No bias
+            builder.Add("ConvOut = Conv (PaddedInput, weight)", "group", C);
+          }
+
+          // --- Step 4: Optional fused activation ---
+          if (activation == "silu" || activation == "swish") {
+            builder
+                .Add("ConvSigmoid = Sigmoid (ConvOut)")
+                .Add("output = Mul (ConvOut, ConvSigmoid)");
+          } else {
+            builder.Add("output = Identity (ConvOut)");
+          }
+
+          // --- Step 5: Slice last (k-1) positions from PaddedInput as present_state ---
+          // present_state = PaddedInput[:, :, -(k-1):]
+          // Slice with negative start index to take from the end.
+          if (!ctx.hasInput(3)) {
+            // Km1 was already computed in Step 2; reuse it
+            builder.Add("NegKm1 = Neg (Km1)");
+          } else {
+            // Need to compute k-1 from weight shape
+            builder
+                .Const1D("One1D", static_cast<int64_t>(1))
+                .Add("KernelSize = Shape <start = 2, end = 3> (weight)")
+                .Add("Km1 = Sub (KernelSize, One1D)")
+                .Add("NegKm1 = Neg (Km1)");
+          }
+          builder
+              .Const("SliceAxes", std::vector<int64_t>{2})
+              .Const("SliceEnd", std::vector<int64_t>{std::numeric_limits<int64_t>::max()})
+              .Add("present_state = Slice (PaddedInput, NegKm1, SliceEnd, SliceAxes)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        })
         .TypeConstraint(
             "T",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
