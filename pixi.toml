@@ -43,14 +43,21 @@ cmd = "pytest"
 
 [feature.clang-tools.tasks.run-clang-tidy]
 description = "Run clang-tidy on the entire project"
-# Requires `.setuptools-cmake-build/compile_commands.json` which is produce in the build task.
-# The trailing grep call filters:
-#  - [51/70][20.8s] /...bin/clang-tidy ... — starts with [
-#  - 12101 warnings generated. — starts with digits
-#  - Empty lines between blocks
+# Requires `.setuptools-cmake-build/compile_commands.json` which is produced in the build task.
 # The `-extra-arg=-Wno-unknown-warning-option` is needed in cases
 # where the compiler_commands.json file was created by/for gcc
-cmd = 'set -o pipefail && run-clang-tidy -p .setuptools-cmake-build -use-color -quiet -warnings-as-errors="*" -extra-arg=-Wno-unknown-warning-option -source-filter="{{ pixi.init_cwd }}/onnx" | grep -vE "^\[|^[0-9]+ warnings generated\." --line-buffer'
+cmd = [
+  'python',
+  'tools/pretty_clang_tidy.py',
+  'run-clang-tidy',
+  '-p=.setuptools-cmake-build',
+  '-warnings-as-errors="*"',
+  '-extra-arg=-Wno-unknown-warning-option',
+  '-source-filter="{{ pixi.init_cwd }}/onnx"',
+  '-hide-progress',
+  '-quiet',
+  '-use-color',
+]
 
 [tasks.lintrunner-init]
 cmd = "lintrunner init"
@@ -116,6 +123,7 @@ editorconfig-checker = "==3.2.1"
 clang = ">=22"
 clang-tools = "*"
 clang-format = "*"
+python = "*"
 
 [feature.docs.dependencies]
 furo = "*"
