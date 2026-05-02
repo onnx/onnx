@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Pyodide Build
+name: macOS Release
 
 on:
   workflow_call:
@@ -14,7 +14,7 @@ on:
       protobuf_version:
         required: false
         type: string
-        default: "25.1"
+        default: "33.6"
   workflow_dispatch:
 
 permissions:
@@ -26,7 +26,17 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - "cp310-macosx_universal2"
+          - "cp311-macosx_universal2"
+          - "cp312-macosx_universal2"
+          - "cp313t-macosx_universal2"
+          - "cp314t-macosx_universal2"
+
+    runs-on: macos-14
 
     env:
       PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
@@ -37,8 +47,7 @@ jobs:
           persist-credentials: false
           submodules: true
 
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
 
@@ -52,9 +61,9 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install -q cibuildwheel>=2.21
 
-      - name: Download protoc for host
+      - name: Download protoc
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip" -o protoc.zip
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-osx-universal_binary.zip" -o protoc.zip
           unzip -q protoc.zip -d protoc-host
           chmod +x protoc-host/bin/protoc
 
@@ -66,22 +75,30 @@ jobs:
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
-      - name: Build Pyodide wheel
-        run: cibuildwheel --platform pyodide --output-dir dist/
+      - name: Build wheel
+        run: cibuildwheel --only ${{ matrix.build }} --output-dir dist/
         env:
-          CIBW_TEST_COMMAND: >-
-            python -c "from onnx import NodeProto; n = NodeProto(); n.op_type = 'Add'; print(n)"
           CIBW_ENVIRONMENT: >-
-            ONNX_ML=1
+            MACOSX_DEPLOYMENT_TARGET=12.0
             CMAKE_ARGS="
-            -DONNX_PYODIDE_BUILD=ON
             -DONNX_USE_LITE_PROTO=ON
-            -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF
             -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
+            -DONNX_WERROR=ON
+            -DONNX_HARDENING=ON
+            -DCMAKE_OSX_ARCHITECTURES=arm64;x86_64
             "
+
+      - name: Validate wheel
+        run: |
+          python -m pip install -q abi3audit check-wheel-contents
+          for whl in dist/*.whl; do
+            echo "Checking $whl"
+            check-wheel-contents "$whl"
+            python -m abi3audit -v "$whl"
+          done
 
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: wheels-pyodide
+          name: wheels-macos-${{ matrix.build }}
           path: dist/*.whl
