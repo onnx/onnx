@@ -468,5 +468,7 @@ def get_diff_op_types():
         if file_name.startswith("onnx/backend/test/case/node/") and file_name.endswith(
             ".py"
         ):
-            changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
+            changed_op_types.append(
+                file_name.split("/")[-1].replace(".py", "").rstrip("_")
+            )
     return changed_op_types
