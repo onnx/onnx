@@ -81,7 +81,9 @@ cmake.build-type = "Debug"
 cmake.define.ONNX_COVERAGE = "ON"
 
 [tool.cibuildwheel.pyodide]
-dependency-versions = "latest"
+# We can't use cp312 because that would pick an older version of
+# pyodide[-build] which does not ship with ml_dtypes.
+build = "cp313-pyodide_wasm32"
 
 [tool.check-wheel-contents]
 ignore = ["W002"]

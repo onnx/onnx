@@ -53,7 +53,6 @@ jobs:
       - name: Build Pyodide wheel
         run: cibuildwheel --platform pyodide --output-dir dist/
         env:
-          CIBW_BUILD: "cp312-pyodide_wasm32"
           CIBW_TEST_COMMAND: >-
             python -c "from onnx import NodeProto; n = NodeProto(); n.op_type = 'Add'; print(n)"
           CIBW_ENVIRONMENT: >-
