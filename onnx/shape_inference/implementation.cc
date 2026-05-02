@@ -282,7 +282,6 @@ std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
   return opset_imports;
 }
 
-
 // InferredTypes: abstracts the differences between FunctionProto and GraphProto
 // for inference. For GraphProto, inferred types are stored in the GraphProto
 // but FunctionProto does not have a place to store inferred types. So, we
