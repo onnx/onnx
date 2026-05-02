@@ -312,6 +312,42 @@ class TestVersionConverter(unittest.TestCase):
 
         self.assertRaises(RuntimeError, test)
 
+    def test_gemm_7_6_rejects_1d_A(self) -> None:
+        # Exercises the A-rank guard (B is valid rank-2, A is rank-1).
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_7_6_rejects_1d_A",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (12,)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (3, 4)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 7), 6)
+
+        self.assertRaises(RuntimeError, test)
+
+    def test_gemm_6_7_rejects_1d_A(self) -> None:
+        # Exercises the A-rank guard (B is valid rank-2, A is rank-1).
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_6_7_rejects_1d_A",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (12,)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (3, 4)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 6), 7)
+
+        self.assertRaises(RuntimeError, test)
+
     # Test Relu Adapter: 5 -> 7
     def test_relu_5_7(self) -> None:
         nodes = [helper.make_node("Relu", ["X"], ["Y"])]
