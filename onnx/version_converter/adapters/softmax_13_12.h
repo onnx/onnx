@@ -39,6 +39,7 @@ class Softmax_13_12 final : public Adapter {
     // Check for Flatten node before Softmax and Reshape node after Softmax
     if (node->inputs()[0]->node()->kind() == kFlatten) {
       Node* flatten = node->inputs()[0]->node();
+      ONNX_ASSERTM(flatten->inputs().size() >= 1, "Flatten node must have at least 1 input")
       auto* const flatten_input = flatten->inputs()[0];
       node->replaceInput(0, flatten_input);
       flatten->destroy();
