@@ -593,9 +593,9 @@ class OpRun(abc.ABC):
 class OpRunExpand(OpRun):
     """Class any operator to avoid must inherit from."""
 
-    def __init__(self, *args, **kwargs):  # noqa: ARG002
+    def __new__(cls, *args, **kwargs):  # noqa: ARG004
         raise RuntimeError(
-            f"The reference implementation must not use this node ({type(self)})."
+            f"The reference implementation must not use this node ({cls})."
         )
 
     def _run(self, *inputs, **kwargs):  # noqa: ARG002

@@ -175,6 +175,9 @@ function(add_onnx_compile_options target)
       if(NOT _onnx_linked_protobuf_is_imported)
         add_dependencies(${LINKED_PROTOBUF_TARGET} ${ABSL_USED_TARGET})
       endif()
+    elseif(EXISTS "${ABSL_USED_TARGET}")
+      # Raw path to a static library (e.g. from the Pyodide/Emscripten fallback).
+      target_link_libraries(${target} PUBLIC "${ABSL_USED_TARGET}")
     endif()
   endforeach()
   # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"
