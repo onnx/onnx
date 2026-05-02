@@ -45,6 +45,7 @@ option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
+option(ONNX_PYODIDE_BUILD "Build ONNX for Pyodide/Emscripten (wasm32)." OFF)
 option(ONNX_INSTALL "Install ONNX targets, headers, and CMake config files" ON)
 if(WIN32)
   option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime. Ignored if CMAKE_MSVC_RUNTIME_LIBRARY is defined." OFF)
@@ -272,6 +273,11 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
 
     include(FetchContent)
     set(ABSL_PROPAGATE_CXX_STD 1)
+    if(ONNX_PYODIDE_BUILD)
+      # Prevent absl from using EM_JS-based symbolize_emscripten.inc which is
+      # incompatible with Emscripten SIDE_MODULE builds (Pyodide).
+      add_compile_definitions(STANDALONE_WASM)
+    endif()
     set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.

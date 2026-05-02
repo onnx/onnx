@@ -56,6 +56,7 @@ jobs:
           CIBW_ENVIRONMENT: >-
             ONNX_ML=1
             CMAKE_ARGS="
+            -DONNX_PYODIDE_BUILD=ON
             -DONNX_USE_LITE_PROTO=ON
             -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF
             -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
