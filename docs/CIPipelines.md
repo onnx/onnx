@@ -22,10 +22,11 @@ SPDX-License-Identifier: Apache-2.0
 
 | Workflow | When it runs | What it does |
 |---|---|---|
-| [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, PRs targeting rel-\* or labeled "run release CIs", weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, and sdistRelease as reusable workflows |
+| [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, PRs targeting rel-\* or labeled "run release CIs", weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, PyodideRelease, and sdistRelease as reusable workflows |
 | [WindowsRelease](/.github/workflows/release_win.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package (2)(3) |
 | [LinuxRelease](/.github/workflows/release_linux.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package |
 | [MacRelease](/.github/workflows/release_mac.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package; tests source distribution build |
+| [PyodideRelease](/.github/workflows/release_pyodide.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `pyodide-build`, a host `protoc`, and a wasm protobuf library; validates wheel contents and publish-ready artifacts |
 | [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 
 ## Security and Supply Chain
