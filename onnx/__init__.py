@@ -147,7 +147,10 @@ if typing.TYPE_CHECKING:
 try:
     __version__ = importlib.metadata.version("onnx")
 except importlib.metadata.PackageNotFoundError:
-    __version__ = importlib.metadata.version("onnx-weekly")
+    try:
+        __version__ = importlib.metadata.version("onnx-weekly")
+    except importlib.metadata.PackageNotFoundError:
+        __version__ = "unknown"
 
 # Supported model formats that can be loaded from and saved to
 # The literals are formats with built-in support. But we also allow users to
