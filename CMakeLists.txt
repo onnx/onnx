@@ -215,9 +215,7 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
       else()
         set(Protobuf_USE_STATIC_LIBS ON)
       endif()
-      # Use CONFIG mode so that protobuf's own CMake config propagates
-      # transitive dependencies (absl, utf8_range) automatically.
-      find_package(Protobuf CONFIG)
+      find_package(Protobuf)
       if(Protobuf_FOUND)
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
         set(Build_Protobuf OFF)
