@@ -313,8 +313,9 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
       # We already have a host protoc binary; skip building libprotoc and protoc
       # (saves compiling code generators for Java, C#, Kotlin, ObjC, etc.)
       set(protobuf_BUILD_PROTOC_BINARIES OFF CACHE BOOL "Skip building protoc")
+      # libupb is only needed by protoc's code generators; skip it too.
+      set(protobuf_BUILD_LIBUPB OFF CACHE BOOL "Skip building libupb")
     endif()
-    set(protobuf_BUILD_LIBUPB OFF CACHE BOOL "Skip building libupb")
     set(protobuf_WITH_ZLIB OFF CACHE BOOL "Skip zlib support")
     if(ONNX_BUILD_PYTHON)
       set(protobuf_INSTALL OFF CACHE BOOL "Skip protobuf install rules")
