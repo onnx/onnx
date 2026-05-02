@@ -80,6 +80,9 @@ if.env.COVERAGE = "1"
 cmake.build-type = "Debug"
 cmake.define.ONNX_COVERAGE = "ON"
 
+[tool.cibuildwheel.pyodide]
+dependency-versions = "latest"
+
 [tool.check-wheel-contents]
 ignore = ["W002"]
 
