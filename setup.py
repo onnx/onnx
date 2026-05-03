@@ -479,14 +479,16 @@ if _bdist_wheel is not None:
         def _generate_sboms(self, tmp_dir: str) -> None:
             subject_name = "onnx-weekly" if ONNX_PREVIEW_BUILD else "onnx"
             subject_version = VERSION_INFO["version"]
-            subprocess.check_call([
-                sys.executable,
-                os.path.join(TOP_DIR, "tools", "extract_cmake_fetchcontent.py"),
-                "--cmake", os.path.join(TOP_DIR, "CMakeLists.txt"),
-                "--output", os.path.join(tmp_dir, "onnx-bundled.cdx.json"),
-                "--subject-name", subject_name,
-                "--subject-version", subject_version,
-            ])
+            subprocess.check_call(  # noqa: S603 — all args are controlled internal values
+                [
+                    sys.executable,
+                    os.path.join(TOP_DIR, "tools", "extract_cmake_fetchcontent.py"),
+                    "--cmake", os.path.join(TOP_DIR, "CMakeLists.txt"),
+                    "--output", os.path.join(tmp_dir, "onnx-bundled.cdx.json"),
+                    "--subject-name", subject_name,
+                    "--subject-version", subject_version,
+                ]
+            )
 
 
 CMD_CLASS = {
