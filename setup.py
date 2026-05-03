@@ -468,9 +468,9 @@ if _bdist_wheel is not None:
         def run(self) -> None:
             before = self._wheel_mtimes()
             sbom_dir = self._try_generate_sboms()
-            super().run()
-            if sbom_dir is not None:
-                try:
+            try:
+                super().run()
+                if sbom_dir is not None:
                     after = self._wheel_mtimes()
                     new_wheels = sorted(
                         p for p, mtime in after.items()
@@ -484,7 +484,8 @@ if _bdist_wheel is not None:
                         glob.glob(os.path.join(sbom_dir, "*.cdx.json"))
                     ):
                         shutil.copy2(sbom_path, sbom_output_dir)
-                finally:
+            finally:
+                if sbom_dir is not None:
                     shutil.rmtree(sbom_dir, ignore_errors=True)
 
         def _try_generate_sboms(self) -> str | None:

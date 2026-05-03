@@ -303,6 +303,13 @@ def _make_bom(components: list[Component], lifecycle: str) -> Bom:
 _SCHEMA_URL = "https://cyclonedx.org/schema/bom-1.7.schema.json"
 
 
+def _serialize_bom(bom: Bom, *, indent: int | None = None) -> str:
+    """Serialize a BOM and normalize the $schema URL to https."""
+    data = json.loads(JsonV1Dot7(bom).output_as_string(indent=indent))
+    data["$schema"] = _SCHEMA_URL
+    return json.dumps(data, indent=indent)
+
+
 def _merge_into(
     base_path: Path, new_components: list[Component], lifecycle: str
 ) -> dict[str, Any]:
@@ -310,7 +317,7 @@ def _merge_into(
     # Serialize the new components via a temporary BOM to get schema-correct dicts.
     tmp_bom = Bom()
     tmp_bom.components.update(new_components)
-    tmp_data = json.loads(JsonV1Dot7(tmp_bom).output_as_string())
+    tmp_data = json.loads(_serialize_bom(tmp_bom))
     component_dicts: list[dict[str, Any]] = tmp_data.get("components", [])
 
     bom: dict[str, Any] = json.loads(base_path.read_text(encoding="utf-8"))
@@ -380,7 +387,7 @@ def build_bundled_sbom(cmake_path: str, name: str, version: str) -> str:
     bom.dependencies.add(Dependency(ref=root.bom_ref, dependencies=lib_deps))
     bom.dependencies.update(lib_deps)
 
-    return str(JsonV1Dot7(bom).output_as_string(indent=2))
+    return _serialize_bom(bom, indent=2)
 
 
 # ---------------------------------------------------------------------------
@@ -446,7 +453,7 @@ def main() -> None:
             bom.dependencies.add(Dependency(ref=root.bom_ref, dependencies=lib_deps))
             bom.dependencies.update(lib_deps)
 
-        out_text = JsonV1Dot7(bom).output_as_string(indent=2)
+        out_text = _serialize_bom(bom, indent=2)
 
     Path(args.output).resolve().write_text(out_text, encoding="utf-8")
 
