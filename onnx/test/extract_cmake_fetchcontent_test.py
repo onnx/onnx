@@ -10,6 +10,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
+
+pytest.importorskip("cyclonedx", reason="cyclonedx-python-lib not installed")
+
 # ---------------------------------------------------------------------------
 # Import tools/extract_cmake_fetchcontent.py directly (it is not a package).
 # ---------------------------------------------------------------------------
