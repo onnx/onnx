@@ -109,14 +109,14 @@ jobs:
           Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname }
         }
 
-    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
 
-    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
