@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (c) ONNX Project Contributors
 # SPDX-License-Identifier: Apache-2.0
 """Thin wrapper around run-clang-tidy that filters noisy output."""
