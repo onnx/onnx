@@ -12,7 +12,6 @@ import csv
 import datetime
 import glob
 import hashlib
-import importlib.util
 import io
 import json
 import logging
@@ -27,7 +26,6 @@ import sysconfig
 import tempfile
 import textwrap
 import zipfile
-from pathlib import Path
 from typing import ClassVar
 
 try:
@@ -335,7 +333,7 @@ def _annotate_sbom_occurrences(sbom_data: bytes, binary_paths: list[str]) -> byt
     """
     if not binary_paths:
         return sbom_data
-    bom = json.loads(sbom_data.decode("utf-8"))
+    bom = json.loads(sbom_data)
     occurrences = [{"location": p} for p in sorted(binary_paths)]
     for comp in bom.get("components", []):
         comp["evidence"] = {"occurrences": occurrences}
@@ -355,7 +353,10 @@ def _inject_sboms_into_wheel(wheel_path: str, sbom_dir: str) -> None:
     wheel_basename = os.path.basename(wheel_path)
     tmp_path = wheel_path + ".tmp"
     try:
-        with zipfile.ZipFile(wheel_path, "r") as src_zf:
+        with (
+            zipfile.ZipFile(wheel_path, "r") as src_zf,
+            zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as dst_zf,
+        ):
             all_infos = src_zf.infolist()
             record_paths = [
                 info.filename
@@ -371,50 +372,45 @@ def _inject_sboms_into_wheel(wheel_path: str, sbom_dir: str) -> None:
             dist_info_prefix = record_arcname.rsplit("/", 1)[0]
             record_bytes = src_zf.read(record_arcname)
 
-        # Discover compiled extension modules (.so / .pyd) present in the wheel.
-        # These are the files that physically contain the statically linked C++ code.
-        binary_paths = [
-            info.filename
-            for info in all_infos
-            if info.filename.endswith((".so", ".pyd"))
-        ]
+            # Discover compiled extension modules (.so / .pyd) present in the wheel.
+            # These are the files that physically contain the statically linked C++ code.
+            binary_paths = [
+                info.filename
+                for info in all_infos
+                if info.filename.endswith((".so", ".pyd"))
+            ]
 
-        # Parse RECORD, dropping the self-referential row for RECORD itself
-        record_rows = [
-            row
-            for row in csv.reader(io.StringIO(record_bytes.decode("utf-8")))
-            if row and row[0] != record_arcname
-        ]
+            # Parse RECORD, dropping the self-referential row for RECORD itself
+            record_rows = [
+                row
+                for row in csv.reader(io.StringIO(record_bytes.decode("utf-8")))
+                if row and row[0] != record_arcname
+            ]
 
-        # Prepare SBOM data and compute RECORD entries for them
-        sbom_entries: list[tuple[str, bytes]] = []
-        for sbom_path in sbom_files:
-            with open(sbom_path, "rb") as f:
-                data = f.read()
-            data = _annotate_sbom_occurrences(data, binary_paths)
-            digest = (
-                base64.urlsafe_b64encode(hashlib.sha256(data).digest())
-                .rstrip(b"=")
-                .decode()
-            )
-            arcname = f"{dist_info_prefix}/sboms/{os.path.basename(sbom_path)}"
-            record_rows.append([arcname, f"sha256={digest}", str(len(data))])
-            sbom_entries.append((arcname, data))
-            logging.info(  # noqa: LOG015
-                "SBOM to embed: %s (%d bytes)", os.path.basename(sbom_path), len(data)
-            )
+            # Prepare SBOM data and compute RECORD entries for them
+            sbom_entries: list[tuple[str, bytes]] = []
+            for sbom_path in sbom_files:
+                with open(sbom_path, "rb") as f:
+                    data = f.read()
+                data = _annotate_sbom_occurrences(data, binary_paths)
+                digest = (
+                    base64.urlsafe_b64encode(hashlib.sha256(data).digest())
+                    .rstrip(b"=")
+                    .decode()
+                )
+                arcname = f"{dist_info_prefix}/sboms/{os.path.basename(sbom_path)}"
+                record_rows.append([arcname, f"sha256={digest}", str(len(data))])
+                sbom_entries.append((arcname, data))
+                logging.info(  # noqa: LOG015
+                    "SBOM to embed: %s (%d bytes)", os.path.basename(sbom_path), len(data)
+                )
 
-        # Build updated RECORD content (RECORD entry itself always has empty hash/size)
-        record_buf = io.StringIO()
-        csv.writer(record_buf, lineterminator="\n").writerows(record_rows)
-        record_buf.write(f"{record_arcname},,\n")
-        record_content = record_buf.getvalue().encode("utf-8")
+            # Build updated RECORD content (RECORD entry itself always has empty hash/size)
+            record_buf = io.StringIO()
+            csv.writer(record_buf, lineterminator="\n").writerows(record_rows)
+            record_buf.write(f"{record_arcname},,\n")
+            record_content = record_buf.getvalue().encode("utf-8")
 
-        # Rewrite the wheel with the additional SBOM files and updated RECORD
-        with (
-            zipfile.ZipFile(wheel_path, "r") as src_zf,
-            zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as dst_zf,
-        ):
             for info in all_infos:
                 if info.filename == record_arcname:
                     continue
@@ -479,26 +475,16 @@ if _bdist_wheel is not None:
                 return tmp
 
         def _generate_sboms(self, tmp_dir: str) -> None:
-            """Generate the wheel SBOM into tmp_dir.
-
-            Produces onnx-bundled.cdx.json describing the C++ libraries
-            (protobuf, abseil-cpp, nanobind) compiled into onnx_cpp2py_export
-            and physically contained in the wheel, per PEP 770.
-            """
-            script = os.path.join(TOP_DIR, "tools", "extract_cmake_fetchcontent.py")
-            spec = importlib.util.spec_from_file_location(
-                "extract_cmake_fetchcontent", script
-            )
-            assert spec and spec.loader
-            mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(mod)  # type: ignore[union-attr]
-
             subject_name = "onnx-weekly" if ONNX_PREVIEW_BUILD else "onnx"
             subject_version = VERSION_INFO["version"]
-            cmake_path = os.path.join(TOP_DIR, "CMakeLists.txt")
-            bom = mod.build_bundled_sbom(cmake_path, subject_name, subject_version)
-            out = Path(os.path.join(tmp_dir, "onnx-bundled.cdx.json"))
-            out.write_text(json.dumps(bom, indent=2), encoding="utf-8")
+            subprocess.check_call([
+                sys.executable,
+                os.path.join(TOP_DIR, "tools", "extract_cmake_fetchcontent.py"),
+                "--cmake", os.path.join(TOP_DIR, "CMakeLists.txt"),
+                "--output", os.path.join(tmp_dir, "onnx-bundled.cdx.json"),
+                "--subject-name", subject_name,
+                "--subject-version", subject_version,
+            ])
 
 
 CMD_CLASS = {
