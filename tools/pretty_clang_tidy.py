@@ -16,7 +16,7 @@ ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def main() -> int:
-    result = subprocess.run(sys.argv[1:], capture_output=True, text=True)  # noqa[S603, PLW1510]
+    result = subprocess.run(sys.argv[1:], capture_output=True, text=True)  # noqa: S603,PLW1510
     prev_blank = False
     for line in (result.stdout + result.stderr).splitlines(keepends=True):
         if NOISE.match(ANSI_ESCAPE.sub("", line)):
