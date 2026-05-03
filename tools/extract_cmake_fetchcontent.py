@@ -300,7 +300,7 @@ def _make_bom(components: list[Component], lifecycle: str) -> Bom:
     return bom
 
 
-_SCHEMA_URL = "http://cyclonedx.org/schema/bom-1.7.schema.json"
+_SCHEMA_URL = "https://cyclonedx.org/schema/bom-1.7.schema.json"
 
 
 def _merge_into(
