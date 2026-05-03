@@ -454,7 +454,9 @@ if _bdist_wheel is not None:
                         _inject_sboms_into_wheel(wheel_path, sbom_dir)
                     sbom_output_dir = os.path.join(TOP_DIR, "dist")
                     os.makedirs(sbom_output_dir, exist_ok=True)
-                    for sbom_path in sorted(glob.glob(os.path.join(sbom_dir, "*.cdx.json"))):
+                    for sbom_path in sorted(
+                        glob.glob(os.path.join(sbom_dir, "*.cdx.json"))
+                    ):
                         shutil.copy2(sbom_path, sbom_output_dir)
                 finally:
                     shutil.rmtree(sbom_dir, ignore_errors=True)
