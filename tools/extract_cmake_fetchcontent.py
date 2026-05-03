@@ -377,7 +377,7 @@ def build_bundled_sbom(cmake_path: str, name: str, version: str) -> str:
     bom.dependencies.add(Dependency(ref=root.bom_ref, dependencies=lib_deps))
     bom.dependencies.update(lib_deps)
 
-    return JsonV1Dot7(bom).output_as_string(indent=2)
+    return str(JsonV1Dot7(bom).output_as_string(indent=2))
 
 
 # ---------------------------------------------------------------------------

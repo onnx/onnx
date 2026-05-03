@@ -77,6 +77,10 @@ setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
 "ruamel.yaml" = ">=0.19.1"
 
+[feature.dev.pypi-dependencies]
+cyclonedx-python-lib = ">=7,<12"
+packageurl-python = "*"
+
 [feature.reference.dependencies]
 # follows requirements-reference.txt
 pillow = ">=11.2.1,<12"
