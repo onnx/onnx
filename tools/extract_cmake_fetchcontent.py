@@ -44,12 +44,18 @@ from typing import Any
 def _parse_cmake_variables(text: str) -> dict[str, str]:
     """Return all set(VAR VALUE) assignments as a flat dict."""
     variables: dict[str, str] = {}
+    # Two explicit alternatives avoid the optional-quote ambiguity that causes
+    # O(n²) backtracking: quoted "([^"]*)" is always bounded; unquoted
+    # ([^"\s)\n]+) excludes whitespace so it cannot overlap with the \s* that
+    # follows, keeping backtracking O(n) even on malformed input.
     for m in re.finditer(
-        r'set\s*\(\s*(\w+)\s+"?([^"\)\n]+)"?\s*\)',
+        r'set\s*\(\s*(\w+)\s+(?:"([^"]*)"|((?:[^"\s)\n])+))\s*\)',
         text,
         re.IGNORECASE,
     ):
-        variables[m.group(1)] = m.group(2).strip()
+        value = (m.group(2) if m.group(2) is not None else m.group(3) or "").strip()
+        if value:
+            variables[m.group(1)] = value
     return variables
 
 
@@ -65,11 +71,14 @@ def _resolve(value: str, variables: dict[str, str]) -> str:
 def _find_version_variable(text: str, name: str) -> str | None:
     """Look for set(<Name>_VERSION ...) anywhere in the file."""
     m = re.search(
-        rf'set\s*\(\s*{re.escape(name)}_version\s+"?([^"\)\n]+)"?\s*\)',
+        rf'set\s*\(\s*{re.escape(name)}_version\s+(?:"([^"]*)"|((?:[^"\s)\n])+))\s*\)',
         text,
         re.IGNORECASE,
     )
-    return m.group(1).strip() if m else None
+    if not m:
+        return None
+    value = (m.group(1) if m.group(1) is not None else m.group(2) or "").strip()
+    return value or None
 
 
 def _parse_fetchcontent_declares(
