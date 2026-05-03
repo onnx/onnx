@@ -24,6 +24,7 @@ import subprocess
 import sys
 import sysconfig
 import tempfile
+import time
 import textwrap
 import zipfile
 from typing import ClassVar
@@ -342,8 +343,6 @@ def _annotate_sbom_occurrences(sbom_data: bytes, binary_paths: list[str]) -> byt
 
 def _zip_date_time() -> tuple[int, int, int, int, int, int]:
     """Return a deterministic ZipInfo date_time tuple, respecting SOURCE_DATE_EPOCH."""
-    import time
-
     epoch_str = os.environ.get("SOURCE_DATE_EPOCH")
     ts = int(epoch_str) if epoch_str else 0
     # ZIP format minimum: 1980-01-01 00:00:00

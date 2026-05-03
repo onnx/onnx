@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import json
 import sys
@@ -10,9 +11,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-try:
-    import cyclonedx  # noqa: F401
-except ImportError as exc:
+if importlib.util.find_spec("cyclonedx") is None:
+    exc = ImportError("cyclonedx-python-lib not installed")
     raise unittest.SkipTest("cyclonedx-python-lib not installed") from exc
 
 # ---------------------------------------------------------------------------
