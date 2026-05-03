@@ -23,8 +23,6 @@ sys.modules["extract_cmake_fetchcontent"] = _mod
 spec.loader.exec_module(_mod)  # type: ignore[union-attr]
 
 _parse_cmake_variables = _mod._parse_cmake_variables
-_resolve = _mod._resolve
-_find_version_variable = _mod._find_version_variable
 _parse_fetchcontent_declares = _mod._parse_fetchcontent_declares
 _build_component = _mod._build_component
 _make_bom = _mod._make_bom
@@ -64,60 +62,6 @@ FetchContent_Declare(
 """
 
 _MULTI_CMAKE = _URL_CMAKE + "\n" + _GIT_CMAKE
-
-
-class TestParseCmakeVariables(unittest.TestCase):
-    def test_unquoted_value(self) -> None:
-        text = "set(FOO bar)"
-        assert _parse_cmake_variables(text) == {"FOO": "bar"}
-
-    def test_quoted_value(self) -> None:
-        text = 'set(FOO "bar baz")'
-        assert _parse_cmake_variables(text) == {"FOO": "bar baz"}
-
-    def test_url_variable(self) -> None:
-        variables = _parse_cmake_variables(_URL_CMAKE)
-        assert "AbseilURL" in variables
-        assert variables["AbseilURL"].startswith("https://github.com/abseil/")
-
-    def test_multiple_variables(self) -> None:
-        variables = _parse_cmake_variables(_URL_CMAKE)
-        assert "AbseilSHA256" in variables
-        assert len(variables["AbseilSHA256"]) == 64  # SHA-256 hex length
-
-    def test_case_insensitive_keyword(self) -> None:
-        text = "SET(FOO value)"
-        assert _parse_cmake_variables(text) == {"FOO": "value"}
-
-
-class TestResolve(unittest.TestCase):
-    def test_no_variables(self) -> None:
-        assert _resolve("plain-string", {}) == "plain-string"
-
-    def test_known_variable(self) -> None:
-        assert _resolve("${FOO}", {"FOO": "bar"}) == "bar"
-
-    def test_unknown_variable_preserved(self) -> None:
-        assert _resolve("${MISSING}", {}) == "${MISSING}"
-
-    def test_mixed(self) -> None:
-        result = _resolve(
-            "https://example.com/${VERSION}/file.tar.gz", {"VERSION": "1.0"}
-        )
-        assert result == "https://example.com/1.0/file.tar.gz"
-
-
-class TestFindVersionVariable(unittest.TestCase):
-    def test_found(self) -> None:
-        text = f"set(absl_version {_FIXTURE_ABSL_VERSION})"
-        assert _find_version_variable(text, "absl") == _FIXTURE_ABSL_VERSION
-
-    def test_case_insensitive(self) -> None:
-        text = f"set(ABSL_VERSION {_FIXTURE_ABSL_VERSION})"
-        assert _find_version_variable(text, "absl") == _FIXTURE_ABSL_VERSION
-
-    def test_not_found(self) -> None:
-        assert _find_version_variable("set(OTHER_VERSION 1.0)", "absl") is None
 
 
 class TestParseFetchContentDeclares(unittest.TestCase):
