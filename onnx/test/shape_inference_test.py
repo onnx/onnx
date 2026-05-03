@@ -3619,7 +3619,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ],
                 [],
             )
-            with pytest.raises(onnx.shape_inference.InferenceError):
+            with self.assertRaises(onnx.shape_inference.InferenceError):
                 self._inferred(
                     graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 6)]
                 )
