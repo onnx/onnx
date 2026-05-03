@@ -315,7 +315,10 @@ def _merge_into(
 
     bom: dict[str, Any] = json.loads(base_path.read_text(encoding="utf-8"))
     bom.setdefault("$schema", _SCHEMA_URL)
-    bom.setdefault("components", []).extend(component_dicts)
+    # Deduplicate by bom-ref to avoid adding a component that already exists.
+    existing_bom_refs = {c.get("bom-ref") for c in bom.get("components", []) if c.get("bom-ref")}
+    new_unique = [c for c in component_dicts if c.get("bom-ref") not in existing_bom_refs]
+    bom.setdefault("components", []).extend(new_unique)
     meta = bom.setdefault("metadata", {})
     phase = _LIFECYCLE_PHASE_MAP.get(lifecycle, LifecyclePhase.BUILD)
     meta["lifecycles"] = [{"phase": phase.value}]

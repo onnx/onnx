@@ -72,7 +72,7 @@ jobs:
     - name: Validate SBOM
       if: steps.build_wheel_x86.outcome == 'success' || steps.build_wheel_arm64.outcome == 'success'
       run: |
-        pip install -q -r requirements-release_sbom.txt
+        python -m pip install -q -r requirements-release_sbom.txt
         if ls dist/*.cdx.json 1>/dev/null 2>&1; then
           python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" dist/*.cdx.json
         else

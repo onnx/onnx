@@ -340,11 +340,23 @@ def _annotate_sbom_occurrences(sbom_data: bytes, binary_paths: list[str]) -> byt
     return json.dumps(bom, indent=2).encode("utf-8")
 
 
+def _zip_date_time() -> tuple[int, int, int, int, int, int]:
+    """Return a deterministic ZipInfo date_time tuple, respecting SOURCE_DATE_EPOCH."""
+    import time
+
+    epoch_str = os.environ.get("SOURCE_DATE_EPOCH")
+    ts = int(epoch_str) if epoch_str else 0
+    # ZIP format minimum: 1980-01-01 00:00:00
+    ts = max(ts, 315532800)
+    t = time.gmtime(ts)
+    return (t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
+
+
 def _inject_sboms_into_wheel(wheel_path: str, sbom_dir: str) -> None:
     """Rewrite a wheel to add CycloneDX SBOMs into its dist-info/sboms/ directory.
 
     The RECORD file is updated with the correct hashes so pip can verify the
-    wheel normally.  The original wheel file is replaced atomically.
+    wheel normally.  The original wheel file is replaced in-place via os.replace().
     """
     sbom_files = sorted(glob.glob(os.path.join(sbom_dir, "*.cdx.json")))
     if not sbom_files:
@@ -417,11 +429,16 @@ def _inject_sboms_into_wheel(wheel_path: str, sbom_dir: str) -> None:
                 if info.filename == record_arcname:
                     continue
                 dst_zf.writestr(info, src_zf.read(info.filename))
+            date_time = _zip_date_time()
             for arcname, data in sbom_entries:
-                dst_zf.writestr(arcname, data)
-            dst_zf.writestr(record_arcname, record_content)
+                info = zipfile.ZipInfo(arcname, date_time=date_time)
+                info.compress_type = zipfile.ZIP_DEFLATED
+                dst_zf.writestr(info, data)
+            record_info = zipfile.ZipInfo(record_arcname, date_time=date_time)
+            record_info.compress_type = zipfile.ZIP_DEFLATED
+            dst_zf.writestr(record_info, record_content)
 
-        shutil.move(tmp_path, wheel_path)
+        os.replace(tmp_path, wheel_path)
         logging.info("Embedded SBOMs into %s", wheel_basename)  # noqa: LOG015
 
     except Exception:
@@ -443,14 +460,22 @@ if _bdist_wheel is not None:
         without SBOMs, so the build is never blocked.
         """
 
+        def _wheel_mtimes(self) -> dict[str, float]:
+            return {
+                p: os.path.getmtime(p)
+                for p in glob.glob(os.path.join(self.dist_dir, "*.whl"))
+            }
+
         def run(self) -> None:
-            existing = set(glob.glob(os.path.join(self.dist_dir, "*.whl")))
+            before = self._wheel_mtimes()
             sbom_dir = self._try_generate_sboms()
             super().run()
             if sbom_dir is not None:
                 try:
+                    after = self._wheel_mtimes()
                     new_wheels = sorted(
-                        set(glob.glob(os.path.join(self.dist_dir, "*.whl"))) - existing
+                        p for p, mtime in after.items()
+                        if p not in before or mtime != before[p]
                     )
                     for wheel_path in new_wheels:
                         _inject_sboms_into_wheel(wheel_path, sbom_dir)
