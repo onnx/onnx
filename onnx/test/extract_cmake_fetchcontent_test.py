@@ -27,6 +27,14 @@ _parse_fetchcontent_declares = _mod._parse_fetchcontent_declares
 _build_component = _mod._build_component
 _make_bom = _mod._make_bom
 _merge_into = _mod._merge_into
+_JsonV1Dot7 = _mod.JsonV1Dot7
+
+
+def _bom_dict(components: list, lifecycle: str = "build") -> dict:
+    """Build a BOM from components and return the serialized JSON dict."""
+    bom = _make_bom(components, lifecycle)
+    return json.loads(_JsonV1Dot7(bom).output_as_string())
+
 
 # ---------------------------------------------------------------------------
 # Minimal CMake snippets that mirror the real CMakeLists.txt patterns.
@@ -106,7 +114,8 @@ class TestBuildComponent(unittest.TestCase):
         variables = _parse_cmake_variables(cmake)
         entries = _parse_fetchcontent_declares(cmake, variables)
         entry = next(e for e in entries if e["name"].lower() == name)
-        return _build_component(entry, cmake)
+        comp = _build_component(entry, cmake)
+        return _bom_dict([comp])["components"][0]
 
     def test_url_component_name_canonical(self) -> None:
         comp = self._component_from(_URL_CMAKE, "absl")
@@ -148,7 +157,7 @@ FetchContent_Declare(
 """
         variables = _parse_cmake_variables(cmake)
         entries = _parse_fetchcontent_declares(cmake, variables)
-        comp = _build_component(entries[0], cmake)
+        comp = _bom_dict([_build_component(entries[0], cmake)])["components"][0]
         assert comp["version"] == ver
         assert comp["purl"].endswith(f"@v{ver}"), (
             f"purl tag must match version, got: {comp['purl']}"
@@ -240,7 +249,7 @@ class TestMakeBom(unittest.TestCase):
         variables = _parse_cmake_variables(_GIT_CMAKE)
         entries = _parse_fetchcontent_declares(_GIT_CMAKE, variables)
         self.components = [_build_component(e, _GIT_CMAKE) for e in entries]
-        self.bom = _make_bom(self.components, "build")
+        self.bom = _bom_dict(self.components, "build")
 
     def test_format(self) -> None:
         assert self.bom["bomFormat"] == "CycloneDX"
@@ -264,7 +273,7 @@ class TestMakeBom(unittest.TestCase):
         )
 
     def test_schema_field_present(self) -> None:
-        assert self.bom["$schema"] == "https://cyclonedx.org/schema/bom-1.7.schema.json"
+        assert self.bom["$schema"] == "http://cyclonedx.org/schema/bom-1.7.schema.json"
 
 
 class TestMergeInto(unittest.TestCase):
@@ -319,13 +328,13 @@ class TestMergeInto(unittest.TestCase):
     def test_schema_field_added_when_missing(self) -> None:
         base = self._make_base_bom()
         result = self._merge(base, self._new_comps())
-        assert result["$schema"] == "https://cyclonedx.org/schema/bom-1.7.schema.json"
+        assert result["$schema"] == "http://cyclonedx.org/schema/bom-1.7.schema.json"
 
     def test_schema_field_preserved_when_present(self) -> None:
         base = self._make_base_bom()
-        base["$schema"] = "https://cyclonedx.org/schema/bom-1.7.schema.json"
+        base["$schema"] = "http://cyclonedx.org/schema/bom-1.7.schema.json"
         result = self._merge(base, self._new_comps())
-        assert result["$schema"] == "https://cyclonedx.org/schema/bom-1.7.schema.json"
+        assert result["$schema"] == "http://cyclonedx.org/schema/bom-1.7.schema.json"
 
 
 class TestAgainstRealCMakeLists(unittest.TestCase):
@@ -341,7 +350,8 @@ class TestAgainstRealCMakeLists(unittest.TestCase):
         variables = _parse_cmake_variables(text)
         entries = _parse_fetchcontent_declares(text, variables)
         cls.components = [_build_component(e, text) for e in entries]
-        cls.by_name = {c["name"]: c for c in cls.components}
+        data = _bom_dict(cls.components)
+        cls.by_name = {c["name"]: c for c in data["components"]}
 
     def test_abseil_cpp_present(self) -> None:
         assert "abseil-cpp" in self.by_name
@@ -449,7 +459,7 @@ class TestMainCLI(unittest.TestCase):
 
     def test_schema_field_present(self) -> None:
         bom = self._run_main([])
-        assert bom["$schema"] == "https://cyclonedx.org/schema/bom-1.7.schema.json"
+        assert bom["$schema"] == "http://cyclonedx.org/schema/bom-1.7.schema.json"
 
     def test_leaf_dependency_entries_added_with_subject(self) -> None:
         bom = self._run_main(["--subject-name", "onnx", "--subject-version", "1.0.0"])

@@ -1,1 +1,3 @@
 check-jsonschema
+cyclonedx-python-lib>=7,<12
+packageurl-python

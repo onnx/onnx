@@ -31,10 +31,24 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from cyclonedx.model import (
+    ExternalReference,
+    ExternalReferenceType,
+    HashAlgorithm,
+    HashType,
+    XsUri,
+)
+from cyclonedx.model.bom import Bom
+from cyclonedx.model.component import Component, ComponentType
+from cyclonedx.model.contact import OrganizationalEntity
+from cyclonedx.model.dependency import Dependency
+from cyclonedx.model.license import DisjunctiveLicense
+from cyclonedx.model.lifecycle import LifecyclePhase, PredefinedLifecycle
+from cyclonedx.output.json import JsonV1Dot7
+from packageurl import PackageURL
 
 # ---------------------------------------------------------------------------
 # CMake parsing helpers
@@ -137,6 +151,24 @@ _CANONICAL_NAMES: dict[str, str] = {
     "absl": "abseil-cpp",
 }
 
+_HASH_ALG_MAP: dict[str, HashAlgorithm] = {
+    "MD5": HashAlgorithm.MD5,
+    "SHA1": HashAlgorithm.SHA_1,
+    "SHA256": HashAlgorithm.SHA_256,
+    "SHA384": HashAlgorithm.SHA_384,
+    "SHA512": HashAlgorithm.SHA_512,
+}
+
+_LIFECYCLE_PHASE_MAP: dict[str, LifecyclePhase] = {
+    "design": LifecyclePhase.DESIGN,
+    "pre-build": LifecyclePhase.PRE_BUILD,
+    "build": LifecyclePhase.BUILD,
+    "post-build": LifecyclePhase.POST_BUILD,
+    "operations": LifecyclePhase.OPERATIONS,
+    "discovery": LifecyclePhase.DISCOVERY,
+    "decommission": LifecyclePhase.DECOMMISSION,
+}
+
 
 def _github_owner_repo(url: str) -> tuple[str, str] | None:
     """Extract (owner, repo) from a GitHub URL, or None."""
@@ -144,11 +176,15 @@ def _github_owner_repo(url: str) -> tuple[str, str] | None:
     return (m.group(1), m.group(2)) if m else None
 
 
-def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
-    """Convert one parsed FetchContent entry to a CycloneDX component."""
+def _build_component(entry: dict[str, str], text: str) -> Component:
+    """Convert one parsed FetchContent entry to a CycloneDX Component."""
     fetch_name = entry["name"].lower()
     canonical_name = _CANONICAL_NAMES.get(fetch_name, fetch_name)
-    comp: dict[str, Any] = {"type": "library", "name": canonical_name}
+
+    version: str | None = None
+    purl: PackageURL | None = None
+    ext_refs: list[ExternalReference] = []
+    hashes: list[HashType] = []
 
     if "url" in entry:
         url = entry["url"]
@@ -157,8 +193,6 @@ def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
             v = re.search(r"[/-]v?(\d+\.\d+[\d.]*)", url)
             # Strip trailing dot that the greedy [\d.]* may pull in from ".tar.gz"
             version = v.group(1).rstrip(".") if v else None
-        if version:
-            comp["version"] = version
 
         gh = _github_owner_repo(url)
         if gh:
@@ -173,112 +207,138 @@ def _build_component(entry: dict[str, str], text: str) -> dict[str, Any]:
                 tag_m = re.search(r"/download/(v?[^/]+)/", url)
                 tag = tag_m.group(1) if tag_m else None
             if tag:
-                comp["purl"] = f"pkg:github/{owner}/{repo}@{tag}"
+                purl = PackageURL(
+                    type="github", namespace=owner, name=repo, version=tag
+                )
 
-        comp["externalReferences"] = [{"type": "distribution", "url": url}]
+        ext_refs.append(
+            ExternalReference(type=ExternalReferenceType.DISTRIBUTION, url=XsUri(url))
+        )
 
         if "hash_alg" in entry:
-            # Normalize to CycloneDX hash algorithm names (e.g. SHA1 -> SHA-1)
-            alg = re.sub(r"^SHA(\d+)$", r"SHA-\1", entry["hash_alg"].upper())
-            comp["hashes"] = [{"alg": alg, "content": entry["hash_val"]}]
+            alg = _HASH_ALG_MAP.get(entry["hash_alg"].upper())
+            if alg is not None:
+                hashes.append(HashType(alg=alg, content=entry["hash_val"]))
 
     elif "git_url" in entry:
         git_url = entry["git_url"]
         git_tag = entry.get("git_tag", "")
         # Strip leading 'v' to get a clean semver version string
         version = git_tag.lstrip("v") if git_tag else None
-        if version:
-            comp["version"] = version
 
         gh = _github_owner_repo(git_url)
         if gh:
             owner, repo = gh
             ref = git_tag or version
-            comp["purl"] = (
-                f"pkg:github/{owner}/{repo}@{ref}"
-                if ref
-                else f"pkg:github/{owner}/{repo}"
-            )
+            purl = PackageURL(type="github", namespace=owner, name=repo, version=ref)
 
-        refs: list[dict[str, str]] = [{"type": "vcs", "url": git_url}]
+        ext_refs.append(
+            ExternalReference(type=ExternalReferenceType.VCS, url=XsUri(git_url))
+        )
         # Add a point-in-time distribution URL so consumers have a verifiable artifact
         # reference alongside the VCS pointer.
         if gh and git_tag:
             owner, repo = gh
-            refs.append(
-                {
-                    "type": "distribution",
-                    "url": f"https://github.com/{owner}/{repo}/archive/refs/tags/{git_tag}.tar.gz",
-                }
+            ext_refs.append(
+                ExternalReference(
+                    type=ExternalReferenceType.DISTRIBUTION,
+                    url=XsUri(
+                        f"https://github.com/{owner}/{repo}/archive/refs/tags/{git_tag}.tar.gz"
+                    ),
+                )
             )
-        comp["externalReferences"] = refs
 
     spdx_id = _KNOWN_LICENSES.get(fetch_name)
-    if spdx_id:
-        comp["licenses"] = [{"license": {"id": spdx_id}}]
+    licenses = {DisjunctiveLicense(id=spdx_id)} if spdx_id else set()
 
-    comp["bom-ref"] = (
-        f"{canonical_name}@{comp['version']}" if "version" in comp else canonical_name
+    bom_ref = f"{canonical_name}@{version}" if version else canonical_name
+
+    return Component(
+        type=ComponentType.LIBRARY,
+        name=canonical_name,
+        version=version,
+        purl=purl,
+        bom_ref=bom_ref,
+        licenses=licenses,
+        hashes=hashes,
+        external_references=ext_refs,
     )
-    return comp
 
 
 # ---------------------------------------------------------------------------
 # BOM assembly
 # ---------------------------------------------------------------------------
 
-_TOOL_ENTRY: dict[str, Any] = {
-    "type": "application",
-    "name": "extract_cmake_fetchcontent.py",
-    "description": "Extracts CMake FetchContent dependencies into CycloneDX components",
-    "externalReferences": [{"type": "vcs", "url": "https://github.com/onnx/onnx"}],
-}
+_TOOL_COMPONENT = Component(
+    type=ComponentType.APPLICATION,
+    name="extract_cmake_fetchcontent.py",
+    description="Extracts CMake FetchContent dependencies into CycloneDX components",
+    external_references=[
+        ExternalReference(
+            type=ExternalReferenceType.VCS,
+            url=XsUri("https://github.com/onnx/onnx"),
+        )
+    ],
+)
 
-_ONNX_MANUFACTURER: dict[str, Any] = {"name": "ONNX Project Contributors"}
-_ONNX_SUPPLIER: dict[str, Any] = {
-    "name": "Linux Foundation",
-    "url": ["https://www.linuxfoundation.org"],
-}
+_ONNX_MANUFACTURER = OrganizationalEntity(name="ONNX Project Contributors")
+_ONNX_SUPPLIER = OrganizationalEntity(
+    name="Linux Foundation",
+    urls=[XsUri("https://www.linuxfoundation.org")],
+)
 
 
-_SCHEMA_URL = "https://cyclonedx.org/schema/bom-1.7.schema.json"
+def _make_bom(components: list[Component], lifecycle: str) -> Bom:
+    """Build a CycloneDX Bom from a list of components."""
+    bom = Bom()
+    phase = _LIFECYCLE_PHASE_MAP.get(lifecycle, LifecyclePhase.BUILD)
+    bom.metadata.lifecycles.add(PredefinedLifecycle(phase=phase))
+    bom.metadata.manufacturer = _ONNX_MANUFACTURER
+    bom.metadata.supplier = _ONNX_SUPPLIER
+    bom.metadata.tools.components.add(_TOOL_COMPONENT)
+    bom.components.update(components)
+    return bom
 
 
-def _make_bom(components: list[dict[str, Any]], lifecycle: str) -> dict[str, Any]:
-    return {
-        "$schema": _SCHEMA_URL,
-        "bomFormat": "CycloneDX",
-        "specVersion": "1.7",
-        "serialNumber": f"urn:uuid:{uuid.uuid4()}",
-        "version": 1,
-        "metadata": {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "lifecycles": [{"phase": lifecycle}],
-            "manufacturer": _ONNX_MANUFACTURER,
-            "supplier": _ONNX_SUPPLIER,
-            "tools": {"components": [_TOOL_ENTRY]},
-        },
-        "components": components,
-    }
+_SCHEMA_URL = "http://cyclonedx.org/schema/bom-1.7.schema.json"
 
 
 def _merge_into(
-    base_path: Path, new_components: list[dict[str, Any]], lifecycle: str
+    base_path: Path, new_components: list[Component], lifecycle: str
 ) -> dict[str, Any]:
-    """Load an existing CycloneDX BOM and append new_components to it."""
+    """Load an existing CycloneDX BOM JSON and append new_components to it."""
+    # Serialize the new components via a temporary BOM to get schema-correct dicts.
+    tmp_bom = Bom()
+    tmp_bom.components.update(new_components)
+    tmp_data = json.loads(JsonV1Dot7(tmp_bom).output_as_string())
+    component_dicts: list[dict[str, Any]] = tmp_data.get("components", [])
+
     bom: dict[str, Any] = json.loads(base_path.read_text(encoding="utf-8"))
     bom.setdefault("$schema", _SCHEMA_URL)
-    bom.setdefault("components", []).extend(new_components)
+    bom.setdefault("components", []).extend(component_dicts)
     meta = bom.setdefault("metadata", {})
-    meta["lifecycles"] = [{"phase": lifecycle}]
-    meta["manufacturer"] = _ONNX_MANUFACTURER
-    meta["supplier"] = _ONNX_SUPPLIER
-    meta.setdefault("tools", {}).setdefault("components", []).append(_TOOL_ENTRY)
+    phase = _LIFECYCLE_PHASE_MAP.get(lifecycle, LifecyclePhase.BUILD)
+    meta["lifecycles"] = [{"phase": phase.value}]
+    meta["manufacturer"] = {"name": _ONNX_MANUFACTURER.name}
+    meta["supplier"] = {
+        "name": _ONNX_SUPPLIER.name,
+        "url": ["https://www.linuxfoundation.org"],
+    }
+    meta.setdefault("tools", {}).setdefault("components", []).append(
+        {
+            "type": "application",
+            "name": _TOOL_COMPONENT.name,
+            "description": _TOOL_COMPONENT.description,
+            "externalReferences": [
+                {"type": "vcs", "url": "https://github.com/onnx/onnx"}
+            ],
+        }
+    )
     # Add cmake components to the dependency graph alongside requirements-file components.
     deps = bom.setdefault("dependencies", [])
     existing_refs = {d["ref"] for d in deps}
     for comp in new_components:
-        ref = comp.get("bom-ref")
+        ref = str(comp.bom_ref)
         if ref and ref not in existing_refs:
             deps.append({"ref": ref})
     return bom
@@ -289,8 +349,8 @@ def _merge_into(
 # ---------------------------------------------------------------------------
 
 
-def build_bundled_sbom(cmake_path: str, name: str, version: str) -> dict[str, Any]:
-    """Return a CycloneDX 1.7 BOM dict for the C++ libraries bundled in an ONNX wheel.
+def build_bundled_sbom(cmake_path: str, name: str, version: str) -> str:
+    """Return a CycloneDX 1.7 BOM JSON string for the C++ libraries bundled in an ONNX wheel.
 
     Parses FetchContent_Declare blocks from *cmake_path* and sets *name*/*version*
     as the root component with all fetched libraries as dependencies, suitable for
@@ -300,23 +360,24 @@ def build_bundled_sbom(cmake_path: str, name: str, version: str) -> dict[str, An
     variables = _parse_cmake_variables(text)
     raw = _parse_fetchcontent_declares(text, variables)
     components = [_build_component(entry, text) for entry in raw]
+
     bom = _make_bom(components, "post-build")
 
-    root_ref = f"{name}@{version}"
-    bom.setdefault("metadata", {})["component"] = {
-        "type": "library",
-        "name": name,
-        "version": version,
-        "description": "Open Neural Network Exchange (ONNX) — open format for AI/ML models",
-        "purl": f"pkg:pypi/{name}@{version}",
-        "bom-ref": root_ref,
-    }
-    component_refs = [c["bom-ref"] for c in components if "bom-ref" in c]
-    deps = bom.setdefault("dependencies", [])
-    deps.insert(0, {"ref": root_ref, "dependsOn": component_refs})
-    for ref in component_refs:
-        deps.append({"ref": ref})
-    return bom
+    root = Component(
+        type=ComponentType.LIBRARY,
+        name=name,
+        version=version,
+        description="Open Neural Network Exchange (ONNX) — open format for AI/ML models",
+        purl=PackageURL(type="pypi", name=name, version=version),
+        bom_ref=f"{name}@{version}",
+    )
+    bom.metadata.component = root
+
+    lib_deps = [Dependency(ref=c.bom_ref) for c in components]
+    bom.dependencies.add(Dependency(ref=root.bom_ref, dependencies=lib_deps))
+    bom.dependencies.update(lib_deps)
+
+    return JsonV1Dot7(bom).output_as_string(indent=2)
 
 
 # ---------------------------------------------------------------------------
@@ -339,15 +400,7 @@ def main() -> None:
     parser.add_argument(
         "--lifecycle",
         default="build",
-        choices=[
-            "design",
-            "pre-build",
-            "build",
-            "post-build",
-            "operations",
-            "discovery",
-            "decommission",
-        ],
+        choices=list(_LIFECYCLE_PHASE_MAP),
         help="CycloneDX 1.7 lifecycle phase to annotate on the output BOM (default: build)",
     )
     parser.add_argument("--output", required=True, help="Output CycloneDX JSON file")
@@ -369,34 +422,30 @@ def main() -> None:
     components = [_build_component(entry, text) for entry in raw]
 
     if args.merge_into:
-        bom = _merge_into(Path(args.merge_into), components, args.lifecycle)
+        merged = _merge_into(Path(args.merge_into), components, args.lifecycle)
+        out_text = json.dumps(merged, indent=2)
     else:
         bom = _make_bom(components, args.lifecycle)
 
-    if args.subject_name and args.subject_version:
-        name, version = args.subject_name, args.subject_version
-        root_ref = f"{name}@{version}"
-        bom.setdefault("metadata", {})["component"] = {
-            "type": "library",
-            "name": name,
-            "version": version,
-            "description": "Open Neural Network Exchange (ONNX) — open format for AI/ML models",
-            "purl": f"pkg:pypi/{name}@{version}",
-            "bom-ref": root_ref,
-        }
-        # Emit a dependency graph so consumers can see which C++ libraries the root
-        # component depends on. Leaf entries (no dependsOn) are included for each
-        # component so the graph is complete per CycloneDX spec guidance.
-        component_refs = [c["bom-ref"] for c in components if "bom-ref" in c]
-        deps = bom.setdefault("dependencies", [])
-        deps.insert(0, {"ref": root_ref, "dependsOn": component_refs})
-        existing_refs = {d["ref"] for d in deps}
-        for ref in component_refs:
-            if ref not in existing_refs:
-                deps.append({"ref": ref})
+        if args.subject_name and args.subject_version:
+            name, version = args.subject_name, args.subject_version
+            root = Component(
+                type=ComponentType.LIBRARY,
+                name=name,
+                version=version,
+                description="Open Neural Network Exchange (ONNX) — open format for AI/ML models",
+                purl=PackageURL(type="pypi", name=name, version=version),
+                bom_ref=f"{name}@{version}",
+            )
+            bom.metadata.component = root
 
-    out = Path(args.output).resolve()
-    out.write_text(json.dumps(bom, indent=2), encoding="utf-8")
+            lib_deps = [Dependency(ref=c.bom_ref) for c in components]
+            bom.dependencies.add(Dependency(ref=root.bom_ref, dependencies=lib_deps))
+            bom.dependencies.update(lib_deps)
+
+        out_text = JsonV1Dot7(bom).output_as_string(indent=2)
+
+    Path(args.output).resolve().write_text(out_text, encoding="utf-8")
 
 
 if __name__ == "__main__":
