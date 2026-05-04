@@ -1399,6 +1399,7 @@ class OpSet_Onnx_ver24 {
 // Forward declarations for ai.onnx version 25
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Cast);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, CastLike);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, CausalConvWithState);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Constant);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, ConstantOfShape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, DequantizeLinear);
@@ -1410,6 +1411,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Size);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, If);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Loop);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, LinearAttention);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Pad);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Squeeze);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Transpose);
@@ -1422,6 +1424,7 @@ class OpSet_Onnx_ver25 {
   static void ForEachSchema(const std::function<void(OpSchema&&)>& fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Cast)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, CastLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, CausalConvWithState)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Constant)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, ConstantOfShape)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, DequantizeLinear)>());
@@ -1433,6 +1436,7 @@ class OpSet_Onnx_ver25 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, If)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Loop)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, LinearAttention)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Pad)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Squeeze)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 25, Transpose)>());
