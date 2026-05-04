@@ -402,7 +402,9 @@ def _inject_sboms_into_wheel(wheel_path: str, sbom_dir: str) -> None:
                 record_rows.append([arcname, f"sha256={digest}", str(len(data))])
                 sbom_entries.append((arcname, data))
                 logging.info(  # noqa: LOG015
-                    "SBOM to embed: %s (%d bytes)", os.path.basename(sbom_path), len(data)
+                    "SBOM to embed: %s (%d bytes)",
+                    os.path.basename(sbom_path),
+                    len(data),
                 )
 
             # Build updated RECORD content (RECORD entry itself always has empty hash/size)
@@ -483,10 +485,14 @@ if _bdist_wheel is not None:
                 [
                     sys.executable,
                     os.path.join(TOP_DIR, "tools", "extract_cmake_fetchcontent.py"),
-                    "--cmake", os.path.join(TOP_DIR, "CMakeLists.txt"),
-                    "--output", os.path.join(tmp_dir, "onnx-bundled.cdx.json"),
-                    "--subject-name", subject_name,
-                    "--subject-version", subject_version,
+                    "--cmake",
+                    os.path.join(TOP_DIR, "CMakeLists.txt"),
+                    "--output",
+                    os.path.join(tmp_dir, "onnx-bundled.cdx.json"),
+                    "--subject-name",
+                    subject_name,
+                    "--subject-version",
+                    subject_version,
                 ]
             )
 
