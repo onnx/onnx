@@ -3601,6 +3601,29 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_lstm_forward(self) -> None:
         self._lstm_forward(64, 32, 10, 4)
 
+    def test_rnn_opset1_to_6_invalid_input_rank(self) -> None:
+        # RNNShapeInference_opset1_to_6 must reject non-rank-3 input X and raise
+        # InferenceError rather than accessing dim(0)/dim(1) out-of-bounds.
+        for op, w_shape, r_shape in [
+            ("RNN", (1, 4, 5), (1, 4, 4)),
+            ("GRU", (1, 12, 5), (1, 12, 4)),
+            ("LSTM", (1, 16, 5), (1, 16, 4)),
+        ]:
+            graph = helper.make_graph(
+                [make_node(op, ["x", "w", "r"], [], hidden_size=4)],
+                "test",
+                [
+                    make_tensor_value_info("x", TensorProto.FLOAT, (4, 5)),
+                    make_tensor_value_info("w", TensorProto.FLOAT, w_shape),
+                    make_tensor_value_info("r", TensorProto.FLOAT, r_shape),
+                ],
+                [],
+            )
+            with self.assertRaises(onnx.shape_inference.InferenceError):
+                self._inferred(
+                    graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 6)]
+                )
+
     def test_topk_default_axis(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5, 10))],

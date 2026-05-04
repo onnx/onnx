@@ -211,10 +211,10 @@ def _compute_attention(
         qk_matmul_output = _softcap(qk_matmul_output, softcap)
 
     qk_with_bias = qk_matmul_output + attn_bias
-    if qk_matmul_output_mode == 1:
-        qk_matmul_output = qk_with_bias.copy()
-    elif qk_matmul_output_mode == 2 and softcap is not None:
+    if qk_matmul_output_mode == 1 and softcap is not None:
         pass  # qk_matmul_output already holds the softcapped-only value
+    elif qk_matmul_output_mode == 2:
+        qk_matmul_output = qk_with_bias.copy()
 
     if softmax_precision is not None:
         qk_with_bias = qk_with_bias.astype(
