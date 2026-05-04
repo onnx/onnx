@@ -12,16 +12,41 @@ on:
 
 permissions:
   contents: read
-  issues: write  # Needed to create an issue on failure
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
+  pre-commit-hooks:
+    name: Install and lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04-arm
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@1b2de7f3351f171c8b4dfeb558c639cb58ed4ec0 # v0.9.5
+      - name: Install repository
+        run: pixi run install
+      - name: Lint
+        run: pixi run lint --show-diff-on-failure
+
   install-and-test:
     name: Install and test (${{ matrix.os }}, ${{ matrix.environment }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      issues: write  # Needed to create an issue on failure
+
     strategy:
       fail-fast: false
       matrix:

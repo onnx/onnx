@@ -23276,7 +23276,7 @@ expect(
 
 
 ### ScatterElements
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>scatter_elements_with_axis</summary>
 
@@ -23416,6 +23416,35 @@ expect(
     inputs=[data, indices, updates],
     outputs=[y],
     name="test_scatter_elements_with_reduction_min",
+)
+```
+
+</details>
+<details>
+<summary>scatter_elements_with_reduction_mul</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="mul",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="mul")
+# print(y) produces
+# [[1.0, 4.62, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_mul",
 )
 ```
 

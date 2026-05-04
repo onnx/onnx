@@ -63,6 +63,16 @@ jobs:
         fi
         python -m build --wheel
 
+    - name: Validate SBOM
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        pip install -q -r requirements-release_sbom.txt
+        if ls dist/*.cdx.json 1>/dev/null 2>&1; then
+          python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" dist/*.cdx.json
+        else
+          echo "No SBOM files found; skipping validation"
+        fi
+
     - name: Debug Python version and artifact name
       run: |
         echo "PYTHON VERSION: $PYTHON_VERSION"
