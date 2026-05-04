@@ -4086,7 +4086,255 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(bfloat16)", "tensor(float)"},
             "Constrain state types to float16, bfloat16, or float32 tensors. "
             "Should be float32 or the same as T for numerical stability on long sequences.")
-        
+        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
+                                                   const OpSchema& schema,
+                                                   FunctionProto& functionProto) {
+          // LinearAttention <update_rule, scale, q_num_heads, kv_num_heads, chunk_size>
+          //   (query, key, value, past_state?, decay?, beta?)
+          //   => (output, present_state)
+          //
+          // Reference decomposition (sequential recurrence via Scan):
+          //   1. Reshape/transpose 3D packed inputs (B, T, H*D) -> 4D (B, H, T, D)
+          //   2. Initialize state (past_state or zeros), shape (B, H_kv, d_k, d_v)
+          //   3. Compute scale factor (attribute or 1/sqrt(d_k))
+          //   4. Run Scan over T axis with body implementing one recurrence step
+          //   5. Transpose/reshape 4D outputs back to 3D (B, T, H_q*d_v)
+
+          // --- Step 1: Extract attributes and validate ---
+          auto* update_rule_attr = ctx.getAttribute("update_rule");
+          std::string update_rule =
+              (update_rule_attr != nullptr && update_rule_attr->has_s()) ? update_rule_attr->s() : "gated_delta";
+
+          auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+          auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+          if (q_num_heads_attr == nullptr || !q_num_heads_attr->has_i() ||
+              kv_num_heads_attr == nullptr || !kv_num_heads_attr->has_i()) {
+            return false;
+          }
+          int64_t q_num_heads = q_num_heads_attr->i();
+          int64_t kv_num_heads = kv_num_heads_attr->i();
+
+          auto* scale_attr = ctx.getAttribute("scale");
+          float scale = (scale_attr != nullptr && scale_attr->has_f()) ? scale_attr->f() : 0.0f;
+
+          // Per-rule presence of optional inputs
+          bool has_decay = (update_rule == "gated" || update_rule == "gated_delta");
+          bool has_beta = (update_rule == "delta" || update_rule == "gated_delta");
+
+          // Need query type (for CastLike on zero state) — checked indirectly via input 0 presence.
+          if (ctx.getInputType(0) == nullptr) {
+            return false;
+          }
+
+          //TODO: Determine GQA handling (q_num_heads != kv_num_heads), would assume no inclusion in line with RFC.
+
+          FunctionBuilder builder(functionProto);
+
+          // --- Step 2: Pre-Scan 3D -> 4D reshape and transpose ---
+          // Inputs arrive packed as (B, T, H*D). Reshape to (B, T, H, D) then
+          // transpose to (B, H, T, D) so the Scan iterates along the T axis.
+          builder
+              .Const1D("NegOne1D", static_cast<int64_t>(-1))
+              .Const1D("One1D", static_cast<int64_t>(1))
+              .Const1D("HqConst", q_num_heads)
+              .Const1D("HkvConst", kv_num_heads)
+              .Add("BatchDim = Shape <start = 0, end = 1> (query)")
+              .Add("SeqLenDim = Shape <start = 1, end = 2> (query)");
+
+          // Query: (B, T, H_q*d_k) -> (B, T, H_q, d_k) -> (B, H_q, T, d_k)
+          builder
+              .Add("QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)")
+              .Add("QReshaped = Reshape (query, QShape4D)")
+              .Add("Q4D = Transpose <perm = [0, 2, 1, 3]> (QReshaped)");
+
+          // Key/Value/Decay all share H_kv as the head dimension; -1 absorbs
+          // d_k (key/decay) or d_v (value), and degenerates to 1 for per-head
+          // scalar decay of shape (B, T, H_kv).
+          builder
+              .Add("KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)")
+              .Add("KReshaped = Reshape (key, KVShape4D)")
+              .Add("K4D = Transpose <perm = [0, 2, 1, 3]> (KReshaped)")
+              .Add("VReshaped = Reshape (value, KVShape4D)")
+              .Add("V4D = Transpose <perm = [0, 2, 1, 3]> (VReshaped)");
+
+          if (has_decay) {
+            // Decay: (B, T, H_kv*d_k) -> (B, H_kv, T, d_k), or
+            //        (B, T, H_kv)      -> (B, H_kv, T, 1)   [broadcastable].
+            builder
+                .Add("DecayReshaped = Reshape (decay, KVShape4D)")
+                .Add("Decay4D = Transpose <perm = [0, 2, 1, 3]> (DecayReshaped)");
+          }
+
+          if (has_beta) {
+            // Beta: (B, T, H_kv) or (B, T, 1) -> reshape (B, T, -1, 1)
+            //       -> transpose (B, H_kv_or_1, T, 1) [broadcastable head dim].
+            builder
+                .Add("BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)")
+                .Add("BetaReshaped = Reshape (beta, BetaShape4D)")
+                .Add("Beta4D = Transpose <perm = [0, 2, 1, 3]> (BetaReshaped)");
+          }
+
+          // --- Step 3: Initialize recurrence state (B, H_kv, d_k, d_v) ---
+          // Compute d_k and d_v as 1D shape tensors for downstream use
+          // (state shape here, scale factor in Step 4).
+          builder
+              .Add("QLastDim = Shape <start = 2, end = 3> (query)")
+              .Add("VLastDim = Shape <start = 2, end = 3> (value)")
+              .Add("DkDim = Div (QLastDim, HqConst)")
+              .Add("DvDim = Div (VLastDim, HkvConst)");
+
+          if (ctx.hasInput(3)) {
+            // past_state already has shape (B, H_kv, d_k, d_v).
+            builder.Add("State0 = Identity (past_state)");
+          } else {
+            // Build a zero-initialized state and cast to query's element type.
+            // TODO(review): proposal allows S != T (e.g., float32 state with
+            // float16 activations). Without past_state we have no S anchor, so
+            // we default S to T here.
+            builder
+                .Add("StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)")
+                .Add("ZeroState = ConstantOfShape (StateShape)")
+                .Add("State0 = CastLike (ZeroState, query)");
+          }
+
+          // --- Step 4: Compute scale factor (scalar, query's dtype) ---
+          // If `scale` attribute is non-zero, use it directly; otherwise
+          // derive 1/sqrt(d_k) from query's last dim. ScaleFactor is a
+          // rank-0 tensor that broadcasts cleanly inside the Scan body.
+          if (scale != 0.0f) {
+            builder
+                .Const("ScaleConst", scale)
+                .Add("ScaleFactor = CastLike (ScaleConst, query)");
+          } else {
+            builder
+                .Add("DkScalar = Squeeze (DkDim)")
+                .Add("DkFloat = Cast <to = 1> (DkScalar)")
+                .Add("SqrtDk = Sqrt (DkFloat)")
+                .Add("InvSqrtDk = Reciprocal (SqrtDk)")
+                .Add("ScaleFactor = CastLike (InvSqrtDk, query)");
+          }
+
+          // --- Step 5: Scan node with body subgraph ---
+          // The body implements one recurrence step. Per update_rule we
+          // assemble the body from reusable fragments. ScaleFactor is
+          // referenced from the enclosing scope (Scan subgraphs may
+          // capture outer-scope tensors by name).
+          //
+          // TODO(review): The body assumes state and activation dtypes
+          // match (S == T). Mixed-precision (e.g., float32 state with
+          // float16 activations) would require explicit Cast nodes.
+
+          // Axes constants used inside the body for Unsqueeze/Squeeze.
+          // NegOne1D was added in Step 2.
+          builder.Const1D("NegTwo1D", static_cast<int64_t>(-2));
+
+          // Common decay block (gated, gated_delta): produces DecayedState.
+          const std::string decay_block = R"ONNX(
+                DecayExp = Exp (decay_t)
+                DecayExpUnsq = Unsqueeze (DecayExp, NegOne1D)
+                DecayedState = Mul (state_in, DecayExpUnsq)
+              )ONNX";
+
+          // The "state basis" for write/retrieve is DecayedState when
+          // gating is on, and state_in otherwise.
+          const bool gating = (update_rule == "gated" || update_rule == "gated_delta");
+          const bool delta_correction = (update_rule == "delta" || update_rule == "gated_delta");
+          const std::string state_basis = gating ? "DecayedState" : "state_in";
+
+          // Always-needed: KtCol = (B, H, d_k, 1).
+          const std::string ktcol_block = R"ONNX(
+                KtCol = Unsqueeze (k_t, NegOne1D)
+              )ONNX";
+
+          // Delta-rule retrieval block: produces RetrievedSq = (B, H, d_v).
+          //   StateT = transpose(state_basis) along the last two dims.
+          //   Retrieved = MatMul(StateT, KtCol)
+          //   RetrievedSq = Squeeze(Retrieved, axes=[-1])
+          // Then Diff/Delta computed; "WriteVec" feeds into Outer.
+          // For non-delta rules, WriteVec is just v_t.
+          std::string retrieve_and_writevec_block;
+          std::string write_vec_name;
+          if (delta_correction) {
+            retrieve_and_writevec_block =
+                "                StateT = Transpose <perm = [0, 1, 3, 2]> (" + state_basis + ")\n"
+                "                Retrieved = MatMul (StateT, KtCol)\n"
+                "                RetrievedSq = Squeeze (Retrieved, NegOne1D)\n"
+                "                Diff = Sub (v_t, RetrievedSq)\n"
+                "                Delta = Mul (beta_t, Diff)\n";
+            write_vec_name = "Delta";
+          } else {
+            write_vec_name = "v_t";
+          }
+
+          // Write block: Outer = KtCol @ row(write_vec); state_out = basis + Outer.
+          const std::string write_block =
+              "                WriteRow = Unsqueeze (" + write_vec_name + ", NegTwo1D)\n"
+              "                Outer = MatMul (KtCol, WriteRow)\n"
+              "                state_out = Add (" + state_basis + ", Outer)\n";
+
+          // Read block (always): output_t = ScaleFactor * (q_t^T @ state_out).
+          const std::string read_block = R"ONNX(
+                QtRow = Unsqueeze (q_t, NegTwo1D)
+                ReadOut = MatMul (QtRow, state_out)
+                ReadSq = Squeeze (ReadOut, NegTwo1D)
+                output_t = Mul (ScaleFactor, ReadSq)
+              )ONNX";
+
+          // Body input list and Scan input list vary by rule.
+          std::string body_inputs = "state_in, q_t, k_t, v_t";
+          std::string scan_inputs = "State0, Q4D, K4D, V4D";
+          int64_t num_scan_inputs = 3;
+          std::vector<int64_t> scan_input_axes = {2, 2, 2};
+          if (has_decay) {
+            body_inputs += ", decay_t";
+            scan_inputs += ", Decay4D";
+            num_scan_inputs += 1;
+            scan_input_axes.push_back(2);
+          }
+          if (has_beta) {
+            body_inputs += ", beta_t";
+            scan_inputs += ", Beta4D";
+            num_scan_inputs += 1;
+            scan_input_axes.push_back(2);
+          }
+
+          // Assemble Scan node text. Body name is arbitrary.
+          std::string scan_text =
+              "FinalState, OutputAccum = Scan <\n"
+              "  num_scan_inputs = " + std::to_string(num_scan_inputs) + ",\n"
+              "  scan_input_axes = [";
+          for (size_t i = 0; i < scan_input_axes.size(); ++i) {
+            if (i > 0) scan_text += ", ";
+            scan_text += std::to_string(scan_input_axes[i]);
+          }
+          scan_text +=
+              "],\n"
+              "  scan_output_axes = [2],\n"
+              "  body = linear_attn_step (" + body_inputs + ") => (state_out, output_t) {\n";
+          if (gating) scan_text += decay_block;
+          scan_text += ktcol_block;
+          scan_text += retrieve_and_writevec_block;
+          scan_text += write_block;
+          scan_text += read_block;
+          scan_text +=
+              "              }\n"
+              "> (" + scan_inputs + ")";
+
+          builder.Add(scan_text.c_str());
+
+          // --- Step 6: Post-Scan 4D -> 3D reshape and present_state ---
+          // OutputAccum: (B, H_q, T, d_v) -> Transpose to (B, T, H_q, d_v)
+          // -> Reshape to (B, T, H_q * d_v).
+          // present_state: keep FinalState as-is (B, H_kv, d_k, d_v).
+          builder
+              .Add("OutputTransposed = Transpose <perm = [0, 2, 1, 3]> (OutputAccum)")
+              .Add("OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)")
+              .Add("output = Reshape (OutputTransposed, OutputShape3D)")
+              .Add("present_state = Identity (FinalState)");
+
+          schema.BuildFunction(functionProto);
+          return true;
+        })
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           // Read required attributes
           auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
