@@ -43,6 +43,36 @@ Before proposing a new operator, please read [the tutorial](docs/AddNewOp.md).
 
 You can submit a pull request (PR) with your code. The [SIG](community/sigs.md) or [Working Group](community/working-groups.md) that is responsible for the area of the project your PR touches will review it and merge once any comments are addressed.
 
+### Pixi-based development
+
+The easiest and most reproducible developer experience for this project is provided through [Pixi](https://pixi.prefix.dev/latest/) - a cross-platform package manager based on conda-forge.
+
+Running
+
+```bash
+pixi run install
+```
+
+In the root of this repository compiles and installs the onnx package editably in a pixi-managed environment.
+Optionally, users may subsequently call `ln -s .setuptools-cmake-build/compile_commands.json` on Unix systems to create a `compile_commands.json` symlink where tools such as `clangd` (code navigation) and `clang-tidy` expect it.
+
+Pre-commit hooks, that are identical to those run on CI, can be installed by running:
+
+```bash
+pixi run pre-commit-install
+```
+
+A list of all pixi task is available by running `pixi run`.
+The following is a list of the most common ones:
+
+- `pixi run gen-all` to regenerate all auto-generated files
+- `pixi run gtest` to run the googletest suite
+- `pixi run pytest` to run the Python test suite
+- `pixi run lint` to run the pre-commit hooks on all files
+- `pixi run docs-build` to build the documentation locally (may require a prior `rm -rf .setuptools-cmake-build && pixi run -e docs install`)
+
+The following section provide guidance for developing onnx without Pixi and is not relevant to Pixi users.
+
 ### Development
 
 To build ONNX from source please follow the instructions listed [here](https://github.com/onnx/onnx/blob/main/INSTALL.md#build-onnx-from-source).
@@ -74,15 +104,8 @@ from onnx root dir should work.
   - `test/`: test files
 
 ### Auto generated files
+
 Various files in this project are auto generated and may have to be updated in a PR.
-The easiest way to ensure that all files are up to date is by running the `gen-all` pixi task:
-
-```
-pixi run install
-pixi run gen-all
-```
-
-If you are not using pixi, you can run the commands manually as described below.
 
 #### Generate operator documentation
 
@@ -208,7 +231,7 @@ export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 .setuptools-cmake-build\Release\onnx_gtests.exe
 ```
 
-### DCO
+## DCO
 
 ONNX has adopted the [DCO](https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin). All code repositories under ONNX require a DCO. (ONNX previously used a CLA, which is being replaced with the DCO.)
 
