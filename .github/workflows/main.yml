@@ -204,12 +204,12 @@ jobs:
           python -m pip install -r requirements-release_test.txt
 
       - name: Setup ASAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.13t') && (matrix.python_version != '3.10')
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.14t') && (matrix.python_version != '3.10')
         run: |
           echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libasan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
       - name: Setup TSAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version == '3.13t')
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version == '3.14t')
         run: |
           echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libtsan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
