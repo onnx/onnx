@@ -20,6 +20,7 @@ from onnx import (
     TensorProto,
     checker,
     helper,
+    shape_inference,
 )
 
 
@@ -2114,6 +2115,75 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].attribute[0].name == "axis"
         assert converted_model.graph.node[0].attribute[0].i == 2
         assert converted_model.opset_import[0].version == 12
+
+    @parameterized.parameterized.expand(
+        [
+            (
+                "cast_9_8",
+                "Cast",
+                {"to": TensorProto.FLOAT},
+                9,
+                8,
+                TensorProto.FLOAT,
+                (1,),
+            ),
+            (
+                "softmax_12_13",
+                "Softmax",
+                {"axis": 1},
+                12,
+                13,
+                TensorProto.FLOAT,
+                (1,),
+            ),
+            (
+                "upsample_9_10",
+                "Upsample",
+                {"mode": "nearest"},
+                9,
+                10,
+                TensorProto.FLOAT,
+                (1, 1, 2, 2),
+            ),
+        ]
+    )
+    def test_rejects_missing_required_inputs(
+        self,
+        _: str,
+        op_type: str,
+        attrs: dict[str, int | str],
+        from_opset: int,
+        to_opset: int,
+        output_type: int,
+        output_shape: tuple[int, ...],
+    ) -> None:
+        def test() -> None:
+            nodes = [helper.make_node(op_type, [], ["Y"], **attrs)]
+            graph = helper.make_graph(
+                nodes,
+                f"test_{op_type.lower()}_{from_opset}_{to_opset}_rejects_missing_input",
+                [],
+                [helper.make_tensor_value_info("Y", output_type, output_shape)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        self.assertRaises((RuntimeError, shape_inference.InferenceError), test)
+
+    def test_softmax_13_12_rejects_malformed_flatten_input(self) -> None:
+        def test() -> None:
+            nodes = [
+                helper.make_node("Flatten", [], ["F"], axis=1),
+                helper.make_node("Softmax", ["F"], ["Y"], axis=0),
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_softmax_13_12_rejects_malformed_flatten_input",
+                [],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 13), 12)
+
+        self.assertRaises((RuntimeError, shape_inference.InferenceError), test)
 
     @parameterized.parameterized.expand(
         [

@@ -22,17 +22,9 @@ if(NOT isMultiConfig AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 # https://reproducible-builds.org/docs/source-date-epoch/
-if(DEFINED ENV{SOURCE_DATE_EPOCH})
-  execute_process(
-    COMMAND "date" "-u" "-d" "@$ENV{SOURCE_DATE_EPOCH}" "+%Y-%m-%d"
-    OUTPUT_VARIABLE BUILD_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-else()
-  execute_process(
-    COMMAND "date" "+%Y-%m-%d"
-    OUTPUT_VARIABLE BUILD_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
+# cmake's string(TIMESTAMP ...) command reads SOURCE_DATE_EPOCH automatically,
+# which avoids shelling out to `date` (whose flags differ between GNU and BSD).
+string(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
 
 if(NOT BUILD_SHARED_LIBS)
   # by default, cmake builds static libraries
@@ -57,6 +49,7 @@ option(ONNX_INSTALL "Install ONNX targets, headers, and CMake config files" ON)
 if(WIN32)
   option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime. Ignored if CMAKE_MSVC_RUNTIME_LIBRARY is defined." OFF)
 endif()
+option(ONNX_PYODIDE_BUILD "Build ONNX for Pyodide/Emscripten (wasm32)." OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -217,56 +210,76 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
         set(Protobuf_USE_STATIC_LIBS ON)
       endif()
       find_package(Protobuf)
+      if(CMAKE_VERBOSE_MAKEFILE)
+        message(STATUS "Protobuf_FOUND: ${Protobuf_FOUND}")
+        message(STATUS "Protobuf_VERSION: ${Protobuf_VERSION}")
+        message(STATUS "Protobuf_INCLUDE_DIR: ${Protobuf_INCLUDE_DIR}")
+        message(STATUS "Protobuf_LITE_LIBRARY: ${Protobuf_LITE_LIBRARY}")
+      endif()
       if(Protobuf_FOUND)
         set(PROTOBUF_DIR "${_PROTOBUF_INSTALL_PREFIX}")
         set(Build_Protobuf OFF)
         if("${Protobuf_VERSION}" VERSION_GREATER_EQUAL "4.22.0")
-          # There are extra dependencies for protobuf.
-          find_package(absl REQUIRED)
-          find_package(utf8_range)
-          message(STATUS "absl_VERSION: ${absl_VERSION}")
-          set(protobuf_ABSL_USED_TARGETS
-            absl::absl_check
-            absl::absl_log
-            absl::algorithm
-            absl::base
-            absl::bind_front
-            absl::bits
-            absl::btree
-            absl::cleanup
-            absl::cord
-            absl::core_headers
-            absl::debugging
-            absl::die_if_null
-            absl::dynamic_annotations
-            absl::flags
-            absl::flat_hash_map
-            absl::flat_hash_set
-            absl::function_ref
-            absl::hash
-            absl::layout
-            absl::log_initialize
-            absl::log_severity
-            absl::memory
-            absl::node_hash_map
-            absl::node_hash_set
-            absl::optional
-            absl::span
-            absl::status
-            absl::statusor
-            absl::strings
-            absl::synchronization
-            absl::time
-            absl::type_traits
-            absl::utility
-            absl::variant
-            utf8_range::utf8_range
-            utf8_range::utf8_validity
-          )
+          if(ONNX_PYODIDE_BUILD)
+            # find_package(absl) is skipped for Pyodide: cmake imported targets
+            # carry transitive deps on absl::examine_stack (EM_JS, hard linker
+            # error in wasm side-modules).  Safe static libs are linked via
+            # cmake/PyodideBuild.cmake included below.
+            message(STATUS "Pyodide build: skipping find_package(absl) to avoid EM_JS transitive deps")
+          else()
+            message(STATUS "Protobuf >= 4.22.0: searching for absl and utf8_range via find_package")
+            # There are extra dependencies for protobuf.
+            find_package(absl REQUIRED)
+            find_package(utf8_range)
+            message(STATUS "absl_VERSION: ${absl_VERSION}")
+            set(protobuf_ABSL_USED_TARGETS
+              absl::absl_check
+              absl::absl_log
+              absl::algorithm
+              absl::base
+              absl::bind_front
+              absl::bits
+              absl::btree
+              absl::cleanup
+              absl::cord
+              absl::core_headers
+              absl::debugging
+              absl::die_if_null
+              absl::dynamic_annotations
+              absl::flags
+              absl::flat_hash_map
+              absl::flat_hash_set
+              absl::function_ref
+              absl::hash
+              absl::layout
+              absl::log_initialize
+              absl::log_severity
+              absl::memory
+              absl::node_hash_map
+              absl::node_hash_set
+              absl::optional
+              absl::span
+              absl::status
+              absl::statusor
+              absl::strings
+              absl::synchronization
+              absl::time
+              absl::type_traits
+              absl::utility
+              absl::variant
+              utf8_range::utf8_range
+              utf8_range::utf8_validity
+            )
+          endif()
+        else()
+          message(STATUS "Protobuf_VERSION '${Protobuf_VERSION}' < 4.22.0 or undetected: skipping absl find_package")
         endif()
       endif()
     endif()
   endif()
+endif()
+if(ONNX_PYODIDE_BUILD)
+  include(cmake/PyodideBuild.cmake)
 endif()
 if(NOT ONNX_PROTOC_EXECUTABLE)
     set(Build_Protobuf ON)
@@ -334,10 +347,10 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
 endif()
 message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
 
-# function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
-# b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
-# orflow/contrib/cmake/tf_core_framework.cmake to solve the problem that
-# customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
+# function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from
+# https://github.com/tensorflow/tensorflow/blob/d2c3b873/tensorflow/contrib/cmake/tf_core_framework.cmake
+# to solve the problem that customized dir can't be specified when
+# calling PROTOBUF_GENERATE_CPP.
 function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   if(NOT ARGN)
     message(
@@ -467,7 +480,7 @@ if(ONNX_BUILD_PYTHON)
   # find system nanobind
   if(NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL "")
     execute_process(
-      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake-dir
+      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake_dir
       RESULT_VARIABLE NANOBIND_CMAKE_RESULT
       OUTPUT_VARIABLE NANOBIND_CMAKE_DIR
       OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -489,17 +502,27 @@ if(ONNX_BUILD_PYTHON)
     FetchContent_Declare(
       nanobind
       GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      GIT_TAG v2.10.2
+      GIT_TAG v2.12.0
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
   endif()
 
   # Configure nanobind: https://nanobind.readthedocs.io/en/latest/api_cmake.html
-  nanobind_add_module(
-    onnx_cpp2py_export
-    NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
-    "${ONNX_ROOT}/onnx/cpp2py_export.cc" ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+  # FREE_THREADED and LTO are disabled for Pyodide: FREE_THREADED causes nanobind
+  # to call PyUnstable_Module_SetGIL(), which is outside the stable ABI and not
+  # exported by Pyodide's wasm runtime, causing the module to fail to load.
+  if(ONNX_PYODIDE_BUILD)
+    nanobind_add_module(
+      onnx_cpp2py_export
+      NB_STATIC NB_DOMAIN onnx STABLE_ABI
+      "${ONNX_ROOT}/onnx/cpp2py_export.cc" ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+  else()
+    nanobind_add_module(
+      onnx_cpp2py_export
+      NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
+      "${ONNX_ROOT}/onnx/cpp2py_export.cc" ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+  endif()
   add_dependencies(onnx_cpp2py_export onnx)
 endif()
 
