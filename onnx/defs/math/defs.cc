@@ -3193,7 +3193,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "onesided",
             "If onesided is 1, only values for w in [0, 1, 2, ..., floor(n_fft/2) + 1] are returned because "
-            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m,w]=X[m,n_fft-w]*. "
+            "the real-to-complex Fourier transform satisfies the conjugate symmetry, i.e., X[m, w] = X[m, n_fft-w]*. "
             "Note if the input or window tensors are complex, then onesided output is not possible. "
             "Enabling onesided with real inputs performs a Real-valued fast Fourier transform (RFFT). "
             "When invoked with real or complex valued input, the default value is 1. "
@@ -3207,7 +3207,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For real input, the following shape is expected: [batch_size][signal_length][1]. "
             "For complex input, the following shape is expected: [batch_size][signal_length][2], where "
             "[batch_size][signal_length][0] represents the real component and [batch_size][signal_length][1] represents the imaginary component of the signal. "
-            "The tensor must have rank 3.",
+            "The tensor is expected to have rank 3.",
             "T1",
             OpSchema::Single,
             true,
