@@ -3888,19 +3888,21 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           FunctionBuilder builder(functionProto);
 
+          // --- Shared kernel-size helpers (used by Step 2 zero-pad and Step 5 slice) ---
+          builder
+              .Const1D("One1D", static_cast<int64_t>(1))
+              .Add("KernelSize = Shape <start = 2, end = 3> (weight)")
+              .Add("Km1 = Sub (KernelSize, One1D)");
+
           // --- Step 2: Build the left-padded input (B, C, L+k-1) ---
           if (ctx.hasInput(3)) {
             // past_state is provided: concat it on the left along axis 2
             builder.Add("PaddedInput = Concat <axis = 2> (past_state, input)");
           } else {
             // No past_state: zero-pad on the left by (k-1)
-            // Compute pad size dynamically from weight shape
             builder
-                .Const1D("One1D", static_cast<int64_t>(1))
                 .Add("BatchDim = Shape <start = 0, end = 1> (input)")
                 .Add("ChannelDim = Shape <start = 1, end = 2> (input)")
-                .Add("KernelSize = Shape <start = 2, end = 3> (weight)")
-                .Add("Km1 = Sub (KernelSize, One1D)")
                 .Add("ZeroPadShape = Concat <axis = 0> (BatchDim, ChannelDim, Km1)")
                 .Add("ZeroPad = ConstantOfShape (ZeroPadShape)")
                 .Add("ZeroPadCast = CastLike (ZeroPad, input)")
@@ -3928,18 +3930,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           // --- Step 5: Slice last (k-1) positions from PaddedInput as present_state ---
           // present_state = PaddedInput[:, :, -(k-1):]
           // Slice with negative start index to take from the end.
-          if (!ctx.hasInput(3)) {
-            // Km1 was already computed in Step 2; reuse it
-            builder.Add("NegKm1 = Neg (Km1)");
-          } else {
-            // Need to compute k-1 from weight shape
-            builder
-                .Const1D("One1D", static_cast<int64_t>(1))
-                .Add("KernelSize = Shape <start = 2, end = 3> (weight)")
-                .Add("Km1 = Sub (KernelSize, One1D)")
-                .Add("NegKm1 = Neg (Km1)");
-          }
+          // Km1 was computed once above the Step 2 branch.
           builder
+              .Add("NegKm1 = Neg (Km1)")
               .Const("SliceAxes", std::vector<int64_t>{2})
               .Const("SliceEnd", std::vector<int64_t>{std::numeric_limits<int64_t>::max()})
               .Add("present_state = Slice (PaddedInput, NegKm1, SliceEnd, SliceAxes)");
