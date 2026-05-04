@@ -63,6 +63,22 @@ jobs:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_aarch64 ${{ inputs.build_mode }} ${{ env.SOURCE_DATE_EPOCH }}
 
+    - name: Set up Python for SBOM validation
+      if: steps.build_wheel_x86.outcome == 'success' || steps.build_wheel_arm64.outcome == 'success'
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: '3.12'
+
+    - name: Validate SBOM
+      if: steps.build_wheel_x86.outcome == 'success' || steps.build_wheel_arm64.outcome == 'success'
+      run: |
+        pip install -q -r requirements-release_sbom.txt
+        if ls dist/*.cdx.json 1>/dev/null 2>&1; then
+          python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" dist/*.cdx.json
+        else
+          echo "No SBOM files found; skipping validation"
+        fi
+
     - name: Debug Python version and artifact name
       run: |
         echo "PYTHON VERSION: ${{ matrix.python-version }}"
