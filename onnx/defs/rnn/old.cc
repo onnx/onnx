@@ -596,8 +596,12 @@ static void RNNShapeInference_opset1_to_6(InferenceContext& ctx) {
 
   if (hasInputShape(ctx, 0)) {
     const auto& first_input_shape = getInputShape(ctx, 0);
-    seq_length = first_input_shape.dim(0);
-    batch_size = first_input_shape.dim(1);
+    if (first_input_shape.dim_size() != 3) {
+      fail_shape_inference("First input tensor must have rank 3");
+    } else {
+      seq_length = first_input_shape.dim(0);
+      batch_size = first_input_shape.dim(1);
+    }
   }
 
   // The treatment of outputs is a bit complicated because of the combination of
