@@ -3176,11 +3176,13 @@ The number of frames in the output is computed as:
   `frames = floor((signal_length - frame_length) / frame_step) + 1`
 
 Constraints on inputs:
-- At least one of `window` or `frame_length` must be provided. Both may be provided
-  together; if so, the length of the `window` tensor must equal `frame_length`.
 - `frame_step` must be a scalar.
-- `frame_length` must be a scalar.
-- `window` must be a 1-D tensor.
+- `frame_length` must be a scalar. When omitted and `window` is provided, `frame_length`
+  is inferred from `window.shape[0]`. When both `window` and `frame_length` are omitted,
+  `frame_length` defaults to `signal_length`.
+- `window` must be a 1-D tensor. When omitted, a rectangular (all-ones) window of length
+  `frame_length` is used. When both `window` and `frame_length` are provided, the length
+  of the `window` tensor must equal `frame_length`.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -3226,7 +3228,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "An optional 1-D tensor representing the window function to be applied to each frame of the signal before computing the DFT. "
             "The length of the window (window.shape[0]) determines the frame length when `frame_length` is not specified. "
             "If both `window` and `frame_length` are provided, the length of the `window` must equal `frame_length`. "
-            "At least one of `window` or `frame_length` must be provided.",
+            "When omitted, a rectangular (all-ones) window of length `frame_length` is used.",
             "T1",
             OpSchema::Optional,
             true,
@@ -3235,9 +3237,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "frame_length",
-            "An optional scalar representing the size of the DFT (i.e., the length of each frame after zero-padding, if applicable). "
-            "If both `frame_length` and `window` are provided, the length of the `window` must equal `frame_length`. "
-            "At least one of `window` or `frame_length` must be provided.",
+            "An optional scalar representing the length of each frame (i.e., the DFT size). "
+            "When omitted and `window` is provided, `frame_length` is inferred from `window.shape[0]`. "
+            "When both `window` and `frame_length` are omitted, `frame_length` defaults to `signal_length`. "
+            "If both `frame_length` and `window` are provided, the length of the `window` must equal `frame_length`.",
             "T2",
             OpSchema::Optional,
             true,
