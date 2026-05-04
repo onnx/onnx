@@ -11,7 +11,6 @@ from typing import Any
 
 import ml_dtypes
 import numpy as np
-import numpy.typing as npt
 import parameterized
 import pytest
 
@@ -28,34 +27,8 @@ from onnx import (
     helper,
     numpy_helper,
 )
-
-
-def _pack_4bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    odd_sized = size % 2 == 1
-    if odd_sized:
-        array_flat.resize([size + 1], refcheck=False)
-    array_flat &= 0x0F
-    array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]
-
-
-def _pack_2bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    pad_len = size % 4
-    if pad_len:
-        array_flat.resize([size + (4 - pad_len)], refcheck=False)
-    array_flat &= 0x03
-    array_flat[1::4] <<= 2
-    array_flat[2::4] <<= 4
-    array_flat[3::4] <<= 6
-    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
+from onnx.numpy_helper import _pack_2bitx4 as _pack_2bit
+from onnx.numpy_helper import _pack_4bitx2 as _pack_4bit
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
