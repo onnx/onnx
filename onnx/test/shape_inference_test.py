@@ -2590,6 +2590,197 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_causal_conv_with_state_static(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (2, 4, 8)),
+                ("weight", TensorProto.FLOAT, (4, 1, 4)),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 3)),
+            ],
+        )
+
+    def test_causal_conv_with_state_dynamic_length(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, ("B", "C", "L")),
+                ("weight", TensorProto.FLOAT, ("C", 1, 4)),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, ("B", "C", "L")),
+                make_tensor_value_info("present_state", TensorProto.FLOAT, ("B", "C", 3)),
+            ],
+        )
+
+    def test_causal_conv_with_state_dynamic_kernel(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (2, 4, 8)),
+                ("weight", TensorProto.FLOAT, (4, 1, "k")),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, None)),
+            ],
+        )
+
+    def test_causal_conv_with_state_input_rank2_fails(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (2, 4)),
+                ("weight", TensorProto.FLOAT, (4, 1, 4)),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_causal_conv_with_state_kernel_zero_fails(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (2, 4, 8)),
+                ("weight", TensorProto.FLOAT, (4, 1, 0)),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_causal_conv_with_state_weight_rank2_fails(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (2, 4, 8)),
+                ("weight", TensorProto.FLOAT, (4, 4)),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_causal_conv_with_state_kernel_size_one(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (2, 4, 8)),
+                ("weight", TensorProto.FLOAT, (4, 1, 1)),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 0)),
+            ],
+        )
+
+    def test_causal_conv_with_state_fp16_type_propagation(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT16, (2, 4, 8)),
+                ("weight", TensorProto.FLOAT16, (4, 1, 4)),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT16, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT16, (2, 4, 3)),
+            ],
+        )
+
+    def test_causal_conv_with_state_all_optional_inputs(self) -> None:
+        graph = self._make_graph(
+            [
+                ("input", TensorProto.FLOAT, (2, 4, 8)),
+                ("weight", TensorProto.FLOAT, (4, 1, 4)),
+                ("bias", TensorProto.FLOAT, (4,)),
+                ("past_state", TensorProto.FLOAT, (2, 4, 3)),
+            ],
+            [
+                make_node(
+                    "CausalConvWithState",
+                    ["input", "weight", "bias", "past_state"],
+                    ["output", "present_state"],
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 3)),
+            ],
+        )
+
     def test_flex_attention_basic(self) -> None:
         """Test FlexAttention basic shape inference with symbolic dimensions."""
         graph = self._make_graph(
