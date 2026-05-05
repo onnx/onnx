@@ -1713,7 +1713,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -2622,7 +2622,7 @@ node = onnx.helper.make_node(
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -2642,7 +2642,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     past_value=past_value,
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -2669,7 +2669,7 @@ node = onnx.helper.make_node(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 past_sequence_length = 12
@@ -2690,7 +2690,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -3817,7 +3817,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3835,7 +3835,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3858,7 +3858,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3876,7 +3876,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3899,7 +3899,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3918,7 +3918,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3942,7 +3942,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3960,7 +3960,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3983,7 +3983,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -4002,7 +4002,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -4054,7 +4054,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -4067,7 +4067,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     K,
     V,
     attn_mask=attn_mask,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -4091,7 +4091,7 @@ node = onnx.helper.make_node(
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -4105,7 +4105,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     V,
     attn_mask=attn_mask,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
