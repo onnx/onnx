@@ -55,16 +55,9 @@ class AxisInputToAttribute : public Adapter {
   }
 
   void HandleConstantNode(Node* node, Node* axis_node, Value* axis_val) const {
-    const std::vector<int64_t>& int64s = axis_node->t(kvalue).int64s();
-    if (int64s.empty()) {
-      std::string raw_data = axis_node->t(kvalue).raw();
-      ONNX_ASSERTM(
-          !raw_data.empty() && raw_data.size() % 8 == 0, "Raw Data must be non-empty and size must be a multiple of 8")
-      const int64_t* raw = reinterpret_cast<const int64_t*>(raw_data.c_str());
-      node->i_(kaxis, raw[0]);
-    } else {
-      node->i_(kaxis, int64s.at(0));
-    }
+    const std::vector<int64_t> values = ReadInt64Tensor(axis_node->t(kvalue));
+    ONNX_ASSERTM(!values.empty(), "Axis tensor must contain at least one element.")
+    node->i_(kaxis, values[0]);
     node->removeInput(this->axis_index);
     if (axis_val->uses().empty()) {
       axis_node->destroy();
@@ -75,7 +68,9 @@ class AxisInputToAttribute : public Adapter {
     const std::string initializer_name = axis_val->uniqueName();
     for (const auto& initializer : graph->initializers()) {
       if (initializer.name() == initializer_name) {
-        node->i_(kaxis, initializer.int64s().at(0));
+        const std::vector<int64_t> values = ReadInt64Tensor(initializer);
+        ONNX_ASSERTM(!values.empty(), "Axis tensor must contain at least one element.")
+        node->i_(kaxis, values[0]);
         node->removeInput(this->axis_index);
         // Remove initializer
         if (axis_val->uses().empty())
