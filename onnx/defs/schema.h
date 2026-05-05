@@ -115,7 +115,7 @@ class SchemaError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_schema(...) ONNX_THROW_EX(ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
+#define fail_schema(...) ONNX_THROW_EX(ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
 
 using OperatorSetVersion = int;
 

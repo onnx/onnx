@@ -23,7 +23,7 @@ class Scatter_18_17 : public Adapter {
     if (node->hasAttribute(Symbol("reduction"))) {
       const std::string& r = node->s(Symbol("reduction"));
       ONNX_ASSERTM(
-          r != "max" && r != "min", "Scatter reduction 'max' and 'min' are not supported when downgrading to opset 17");
+          r != "max" && r != "min", "Scatter reduction 'max' and 'min' are not supported when downgrading to opset 17")
     }
     return node;
   }
