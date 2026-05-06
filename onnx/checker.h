@@ -34,8 +34,7 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
+#define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
 
 class CheckerContext final {
  public:
@@ -171,6 +170,10 @@ ONNX_API void check_opset_compatibility(
 // Checks all model local functions present in ModelProto
 ONNX_API void
 check_model_local_functions(const ModelProto& model, const CheckerContext& ctx, const LexicalScopeContext& parent_lex);
+
+// Checks for cycles in model-local function call graph.
+// Throws ValidationError if any function directly or indirectly references itself.
+ONNX_API void check_function_call_cycles(const ModelProto& model);
 
 ONNX_API void check_model(
     const ModelProto& model,

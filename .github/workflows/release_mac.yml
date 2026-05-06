@@ -17,13 +17,12 @@ on:
 env:
   MACOSX_DEPLOYMENT_TARGET: "12.0"
 
-permissions:
-  contents: read
-
 jobs:
   build:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     runs-on: macos-14
+    permissions:
+      contents: read
     strategy:
       matrix:
         python-version: ['3.14t', '3.14', '3.13t', '3.12', '3.11', '3.10']
@@ -64,6 +63,16 @@ jobs:
         fi
         python -m build --wheel
 
+    - name: Validate SBOM
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        pip install -q -r requirements-release_sbom.txt
+        if ls dist/*.cdx.json 1>/dev/null 2>&1; then
+          python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" dist/*.cdx.json
+        else
+          echo "No SBOM files found; skipping validation"
+        fi
+
     - name: Debug Python version and artifact name
       run: |
         echo "PYTHON VERSION: $PYTHON_VERSION"
@@ -76,12 +85,12 @@ jobs:
         PYTHON_VERSION: ${{ matrix.python-version }}
         INPUTS_OS: ${{ inputs.os  }}
 
-    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-3.12-abi3
         path: dist/*.whl
-    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.13t' || matrix.python-version == '3.14t')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
@@ -90,6 +99,8 @@ jobs:
   test:
     needs: build
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
+    permissions:
+      contents: read
     continue-on-error: true
     strategy:
       matrix:
@@ -107,11 +118,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Python dependencies
-      run: |
-        arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
-        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
-
     - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
       if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14'
       with:
@@ -122,6 +128,16 @@ jobs:
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
         path: dist
+
+    - name: Check wheel contents
+      run: |
+        pip install -q check-wheel-contents
+        check-wheel-contents dist/*.whl
+
+    - name: Install Python dependencies
+      run: |
+        arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
+        arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
 
     - name: Test the wheel
       run: |
