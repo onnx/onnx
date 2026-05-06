@@ -116,7 +116,6 @@ jobs:
     if: |
       (!contains(join(needs.*.result, ' '), 'skipped')) &&
       (
-        github.event_name == 'pull_request' ||
         github.event.inputs.publish_pypi_release == 'yes' ||
         github.event.inputs.publish_testpypi_release == 'yes' ||
         github.event.inputs.generate_sbom == 'yes'
