@@ -3953,6 +3953,12 @@ Unified linear attention operator for autoregressive decoding (T=1) and prefill 
 All inputs use 3D packed format [B, T, H*D]; q_num_heads and kv_num_heads are always
 required. The op internally unpacks to 4D for computation.
 
+Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
+kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
+attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
+shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
+special case kv_num_heads == 1).
+
 The update_rule attribute selects the recurrence type:
 - "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
 - "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
@@ -4126,7 +4132,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             return false;
           }
 
-          //TODO: Determine GQA handling (q_num_heads != kv_num_heads), would assume no inclusion in line with RFC.
+          // GQA: q_num_heads must be a positive multiple of kv_num_heads.
+          // group_size == 1 is the standard MHA case (no expansion); group_size > 1
+          // means each KV head is shared by `group_size` query heads.
+          if (q_num_heads <= 0 || kv_num_heads <= 0 || q_num_heads % kv_num_heads != 0) {
+            return false;
+          }
+          int64_t group_size = q_num_heads / kv_num_heads;
 
           FunctionBuilder builder(functionProto);
 
@@ -4141,11 +4153,15 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("BatchDim = Shape <start = 0, end = 1> (query)")
               .Add("SeqLenDim = Shape <start = 1, end = 2> (query)");
 
-          // Query: (B, T, H_q*d_k) -> (B, T, H_q, d_k) -> (B, H_q, T, d_k)
+          // Inputs are reshaped to (B, T, H, D), then transposed so the T axis is
+          // first: (T, B, H, D). The leading T axis is consumed by Scan (which
+          // only supports scan_input_axes=0 in the ONNX reference runtime).
+
+          // Query: (B, T, H_q*d_k) -> (B, T, H_q, d_k) -> (T, B, H_q, d_k)
           builder
               .Add("QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)")
               .Add("QReshaped = Reshape (query, QShape4D)")
-              .Add("Q4D = Transpose <perm = [0, 2, 1, 3]> (QReshaped)");
+              .Add("Q4D = Transpose <perm = [1, 0, 2, 3]> (QReshaped)");
 
           // Key/Value/Decay all share H_kv as the head dimension; -1 absorbs
           // d_k (key/decay) or d_v (value), and degenerates to 1 for per-head
@@ -4153,25 +4169,25 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder
               .Add("KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)")
               .Add("KReshaped = Reshape (key, KVShape4D)")
-              .Add("K4D = Transpose <perm = [0, 2, 1, 3]> (KReshaped)")
+              .Add("K4D = Transpose <perm = [1, 0, 2, 3]> (KReshaped)")
               .Add("VReshaped = Reshape (value, KVShape4D)")
-              .Add("V4D = Transpose <perm = [0, 2, 1, 3]> (VReshaped)");
+              .Add("V4D = Transpose <perm = [1, 0, 2, 3]> (VReshaped)");
 
           if (has_decay) {
-            // Decay: (B, T, H_kv*d_k) -> (B, H_kv, T, d_k), or
-            //        (B, T, H_kv)      -> (B, H_kv, T, 1)   [broadcastable].
+            // Decay: (B, T, H_kv*d_k) -> (T, B, H_kv, d_k), or
+            //        (B, T, H_kv)      -> (T, B, H_kv, 1)   [broadcastable].
             builder
                 .Add("DecayReshaped = Reshape (decay, KVShape4D)")
-                .Add("Decay4D = Transpose <perm = [0, 2, 1, 3]> (DecayReshaped)");
+                .Add("Decay4D = Transpose <perm = [1, 0, 2, 3]> (DecayReshaped)");
           }
 
           if (has_beta) {
             // Beta: (B, T, H_kv) or (B, T, 1) -> reshape (B, T, -1, 1)
-            //       -> transpose (B, H_kv_or_1, T, 1) [broadcastable head dim].
+            //       -> transpose (T, B, H_kv_or_1, 1) [broadcastable head dim].
             builder
                 .Add("BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)")
                 .Add("BetaReshaped = Reshape (beta, BetaShape4D)")
-                .Add("Beta4D = Transpose <perm = [0, 2, 1, 3]> (BetaReshaped)");
+                .Add("Beta4D = Transpose <perm = [1, 0, 2, 3]> (BetaReshaped)");
           }
 
           // --- Step 3: Initialize recurrence state (B, H_kv, d_k, d_v) ---
@@ -4212,6 +4228,21 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("SqrtDk = Sqrt (DkFloat)")
                 .Add("InvSqrtDk = Reciprocal (SqrtDk)")
                 .Add("ScaleFactor = CastLike (InvSqrtDk, query)");
+          }
+
+          // --- Step 4b: Precompute GQA expand/read shapes (only when group_size > 1) ---
+          // GQA expansion uses the same Unsqueeze + Expand + Reshape pattern as the
+          // standard Attention op. The state lives at H_kv heads (one state per
+          // KV head — recurrence is per-KV-head); only the read step needs to
+          // broadcast it across the `group_size` query heads sharing that KV head.
+          // Shapes are computed once outside the Scan body and captured inside
+          // by name.
+          if (group_size > 1) {
+            builder
+                .Const1D("GroupSize", group_size)
+                .Const1D("Two1D", static_cast<int64_t>(2))
+                .Add("StateExpandShape = Concat <axis = 0> (BatchDim, HkvConst, GroupSize, DkDim, DvDim)")
+                .Add("StateReadShape = Concat <axis = 0> (BatchDim, HqConst, DkDim, DvDim)");
           }
 
           // --- Step 5: Scan node with body subgraph ---
@@ -4273,12 +4304,29 @@ ONNX_OPERATOR_SET_SCHEMA(
               "                state_out = Add (" + state_basis + ", Outer)\n";
 
           // Read block (always): output_t = ScaleFactor * (q_t^T @ state_out).
-          const std::string read_block = R"ONNX(
+          // For GQA (group_size > 1) the per-KV-head state must first be
+          // repeat-interleaved across the `group_size` query heads sharing
+          // each KV head. We use the same Unsqueeze + Expand + Reshape
+          // pattern as the standard Attention op. `StateExpandShape` and
+          // `StateReadShape` are captured from the enclosing scope.
+          std::string read_block;
+          if (group_size > 1) {
+            read_block =
+                "                StateUnsq = Unsqueeze (state_out, Two1D)\n"
+                "                StateExpanded = Expand (StateUnsq, StateExpandShape)\n"
+                "                StateForRead = Reshape (StateExpanded, StateReadShape)\n"
+                "                QtRow = Unsqueeze (q_t, NegTwo1D)\n"
+                "                ReadOut = MatMul (QtRow, StateForRead)\n"
+                "                ReadSq = Squeeze (ReadOut, NegTwo1D)\n"
+                "                output_t = Mul (ScaleFactor, ReadSq)\n";
+          } else {
+            read_block = R"ONNX(
                 QtRow = Unsqueeze (q_t, NegTwo1D)
                 ReadOut = MatMul (QtRow, state_out)
                 ReadSq = Squeeze (ReadOut, NegTwo1D)
                 output_t = Mul (ScaleFactor, ReadSq)
               )ONNX";
+          }
 
           // Body input list and Scan input list vary by rule.
           std::string body_inputs = "state_in, q_t, k_t, v_t";
@@ -4299,17 +4347,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Assemble Scan node text. Body name is arbitrary.
+          // We omit scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
+          // were already pre-transposed so the T axis is the leading dimension.
+          (void)scan_input_axes;
           std::string scan_text =
               "FinalState, OutputAccum = Scan <\n"
               "  num_scan_inputs = " + std::to_string(num_scan_inputs) + ",\n"
-              "  scan_input_axes = [";
-          for (size_t i = 0; i < scan_input_axes.size(); ++i) {
-            if (i > 0) scan_text += ", ";
-            scan_text += std::to_string(scan_input_axes[i]);
-          }
-          scan_text +=
-              "],\n"
-              "  scan_output_axes = [2],\n"
               "  body = linear_attn_step (" + body_inputs + ") => (state_out, output_t) {\n";
           if (gating) scan_text += decay_block;
           scan_text += ktcol_block;
@@ -4323,11 +4366,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           builder.Add(scan_text.c_str());
 
           // --- Step 6: Post-Scan 4D -> 3D reshape and present_state ---
-          // OutputAccum: (B, H_q, T, d_v) -> Transpose to (B, T, H_q, d_v)
+          // OutputAccum: (T, B, H_q, d_v) -> Transpose to (B, T, H_q, d_v)
           // -> Reshape to (B, T, H_q * d_v).
           // present_state: keep FinalState as-is (B, H_kv, d_k, d_v).
           builder
-              .Add("OutputTransposed = Transpose <perm = [0, 2, 1, 3]> (OutputAccum)")
+              .Add("OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)")
               .Add("OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)")
               .Add("output = Reshape (OutputTransposed, OutputShape3D)")
               .Add("present_state = Identity (FinalState)");
@@ -4341,6 +4384,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
           int64_t q_num_heads = (q_num_heads_attr && q_num_heads_attr->has_i()) ? q_num_heads_attr->i() : 0;
           int64_t kv_num_heads = (kv_num_heads_attr && kv_num_heads_attr->has_i()) ? kv_num_heads_attr->i() : 0;
+
+          // GQA constraint: q_num_heads must be a positive multiple of kv_num_heads.
+          // q_num_heads == kv_num_heads is MHA; q_num_heads > kv_num_heads with the
+          // divisibility rule is GQA (or MQA when kv_num_heads == 1).
+          if (q_num_heads > 0 && kv_num_heads > 0) {
+            if (q_num_heads % kv_num_heads != 0) {
+              fail_type_inference(
+                  "q_num_heads (", q_num_heads, ") must be a multiple of kv_num_heads (", kv_num_heads, ")");
+            }
+          }
 
           // Read update_rule attribute with default
           auto* update_rule_attr = ctx.getAttribute("update_rule");
@@ -4388,11 +4441,6 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_type_inference("update_rule 'gated_delta' requires beta input");
             }
           }
-
-          // TODO: Add head count validation — verify query.shape[2] is divisible by
-          // q_num_heads and value.shape[2] is divisible by kv_num_heads before
-          // computing d_k and d_v. Currently integer division silently produces
-          // wrong shapes for invalid inputs.
 
           // Validate input ranks
           for (int i = 0; i < 3; ++i) {
