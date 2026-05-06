@@ -580,7 +580,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 // Versions 1 to 6 of RNN/LSTM and versions 3 to 6 of GRU:
 
-static void RNNShapeInference1(InferenceContext& ctx) {
+static void RNNShapeInference_opset1_to_6(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
@@ -596,8 +596,12 @@ static void RNNShapeInference1(InferenceContext& ctx) {
 
   if (hasInputShape(ctx, 0)) {
     const auto& first_input_shape = getInputShape(ctx, 0);
-    seq_length = first_input_shape.dim(0);
-    batch_size = first_input_shape.dim(1);
+    if (first_input_shape.dim_size() != 3) {
+      fail_shape_inference("First input tensor must have rank 3");
+    } else {
+      seq_length = first_input_shape.dim(0);
+      batch_size = first_input_shape.dim(1);
+    }
   }
 
   // The treatment of outputs is a bit complicated because of the combination of
@@ -631,7 +635,7 @@ static void RNNShapeInference1(InferenceContext& ctx) {
   }
 }
 
-static std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGenerator_opset1_to_6(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",
@@ -708,7 +712,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
-    schema.TypeAndShapeInferenceFunction(RNNShapeInference1);
+    schema.TypeAndShapeInferenceFunction(RNNShapeInference_opset1_to_6);
   };
 }
 
@@ -810,7 +814,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "to be 0.",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator1("RNN")));
+        .FillUsing(RNNDocGenerator_opset1_to_6("RNN")));
 
 static const char* const GRU_ver3_doc = GRU_ver1_doc;
 
@@ -857,7 +861,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "- assumed to be 0",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator1("GRU")));
+        .FillUsing(RNNDocGenerator_opset1_to_6("GRU")));
 
 static constexpr const char* LSTM_ver1_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
@@ -999,7 +1003,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "assumed to be 0.",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator1("LSTM"))
+        .FillUsing(RNNDocGenerator_opset1_to_6("LSTM"))
         .Output(
             2,
             "Y_c",
@@ -1013,7 +1017,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 // Versions 7 to 13 of RNN/LSTM/GRU
 
 namespace ONNX_NAMESPACE {
-static void RNNShapeInference2(InferenceContext& ctx) {
+static void RNNShapeInference_opset7_to_13(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
@@ -1057,7 +1061,7 @@ static void RNNShapeInference2(InferenceContext& ctx) {
   }
 }
 
-static std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGenerator_opset7_to_13(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",
@@ -1128,7 +1132,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
-    schema.TypeAndShapeInferenceFunction(RNNShapeInference2);
+    schema.TypeAndShapeInferenceFunction(RNNShapeInference_opset7_to_13);
   };
 }
 
@@ -1230,7 +1234,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "to be 0.",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator2("RNN")));
+        .FillUsing(RNNDocGenerator_opset7_to_13("RNN")));
 
 static constexpr const char* GRU_ver7_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
@@ -1350,7 +1354,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "- assumed to be 0",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator2("GRU")));
+        .FillUsing(RNNDocGenerator_opset7_to_13("GRU")));
 
 static constexpr const char* LSTM_ver7_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
@@ -1488,7 +1492,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "assumed to be 0.",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator2("LSTM"))
+        .FillUsing(RNNDocGenerator_opset7_to_13("LSTM"))
         .Output(
             2,
             "Y_c",

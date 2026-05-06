@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <filesystem>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -33,8 +34,7 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...) \
-  ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)));
+#define fail_check(...) ONNX_THROW_EX(ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__)))
 
 class CheckerContext final {
  public:
@@ -171,6 +171,10 @@ ONNX_API void check_opset_compatibility(
 ONNX_API void
 check_model_local_functions(const ModelProto& model, const CheckerContext& ctx, const LexicalScopeContext& parent_lex);
 
+// Checks for cycles in model-local function call graph.
+// Throws ValidationError if any function directly or indirectly references itself.
+ONNX_API void check_function_call_cycles(const ModelProto& model);
+
 ONNX_API void check_model(
     const ModelProto& model,
     bool full_check = false,
@@ -181,10 +185,17 @@ ONNX_API void check_model(
     bool full_check = false,
     bool skip_opset_compatibility_check = false,
     bool check_custom_domain = false);
-std::string resolve_external_data_location(
+std::filesystem::path resolve_external_data_location(
     const std::string& base_dir,
     const std::string& location,
     const std::string& tensor_name);
+// Returns a CRT file descriptor on all platforms.
+// The caller owns the fd and must close it.
+int64_t open_external_data(
+    const std::string& base_dir,
+    const std::string& location,
+    const std::string& tensor_name,
+    bool read_only);
 ONNX_API bool check_is_experimental_op(const NodeProto& node);
 
 } // namespace checker
