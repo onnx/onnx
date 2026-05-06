@@ -4249,22 +4249,34 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // --- Step 5: Scan node with body subgraph ---
           // The body implements one recurrence step. Per update_rule we
-          // assemble the body from reusable fragments. ScaleFactor is
-          // referenced from the enclosing scope (Scan subgraphs may
-          // capture outer-scope tensors by name).
+          // assemble the body from reusable fragments. To keep the body
+          // self-contained (no outer-scope name capture, which several
+          // backends and the ONNX reference Scan do not propagate), we:
+          //   * inline tiny axis constants (NegOne, NegTwo, Two) as
+          //     Constant nodes inside the body, and
+          //   * pass ScaleFactor (and the GQA shape tensors when
+          //     group_size > 1) through as carried Scan state — they
+          //     enter as body inputs and are echoed unchanged as body
+          //     outputs each step.
           //
           // TODO(review): The body assumes state and activation dtypes
           // match (S == T). Mixed-precision (e.g., float32 state with
           // float16 activations) would require explicit Cast nodes.
 
-          // Axes constants used inside the body for Unsqueeze/Squeeze.
-          // NegOne1D was added in Step 2.
-          builder.Const1D("NegTwo1D", static_cast<int64_t>(-2));
+          // Inlined axis constants used inside the body for
+          // Unsqueeze/Squeeze/Expand. Kept distinct from the outer-scope
+          // NegOne1D/One1D to avoid any ambiguity with name capture.
+          std::string body_constants =
+              "                NegOne = Constant <value_ints = [-1]>()\n"
+              "                NegTwo = Constant <value_ints = [-2]>()\n";
+          if (group_size > 1) {
+            body_constants += "                Two = Constant <value_ints = [2]>()\n";
+          }
 
           // Common decay block (gated, gated_delta): produces DecayedState.
           const std::string decay_block = R"ONNX(
                 DecayExp = Exp (decay_t)
-                DecayExpUnsq = Unsqueeze (DecayExp, NegOne1D)
+                DecayExpUnsq = Unsqueeze (DecayExp, NegOne)
                 DecayedState = Mul (state_in, DecayExpUnsq)
               )ONNX";
 
@@ -4276,7 +4288,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Always-needed: KtCol = (B, H, d_k, 1).
           const std::string ktcol_block = R"ONNX(
-                KtCol = Unsqueeze (k_t, NegOne1D)
+                KtCol = Unsqueeze (k_t, NegOne)
               )ONNX";
 
           // Delta-rule retrieval block: produces RetrievedSq = (B, H, d_v).
@@ -4291,7 +4303,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             retrieve_and_writevec_block =
                 "                StateT = Transpose <perm = [0, 1, 3, 2]> (" + state_basis + ")\n"
                 "                Retrieved = MatMul (StateT, KtCol)\n"
-                "                RetrievedSq = Squeeze (Retrieved, NegOne1D)\n"
+                "                RetrievedSq = Squeeze (Retrieved, NegOne)\n"
                 "                Diff = Sub (v_t, RetrievedSq)\n"
                 "                Delta = Mul (beta_t, Diff)\n";
             write_vec_name = "Delta";
@@ -4301,66 +4313,84 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Write block: Outer = KtCol @ row(write_vec); state_out = basis + Outer.
           const std::string write_block =
-              "                WriteRow = Unsqueeze (" + write_vec_name + ", NegTwo1D)\n"
+              "                WriteRow = Unsqueeze (" + write_vec_name + ", NegTwo)\n"
               "                Outer = MatMul (KtCol, WriteRow)\n"
               "                state_out = Add (" + state_basis + ", Outer)\n";
 
-          // Read block (always): output_t = ScaleFactor * (q_t^T @ state_out).
+          // Read block (always): output_t = scale_in * (q_t^T @ state_out).
           // For GQA (group_size > 1) the per-KV-head state must first be
           // repeat-interleaved across the `group_size` query heads sharing
           // each KV head. We use the same Unsqueeze + Expand + Reshape
-          // pattern as the standard Attention op. `StateExpandShape` and
-          // `StateReadShape` are captured from the enclosing scope.
+          // pattern as the standard Attention op. `expand_shape_in` and
+          // `read_shape_in` are carried Scan state (1D int64 shape tensors).
           std::string read_block;
           if (group_size > 1) {
             read_block =
-                "                StateUnsq = Unsqueeze (state_out, Two1D)\n"
-                "                StateExpanded = Expand (StateUnsq, StateExpandShape)\n"
-                "                StateForRead = Reshape (StateExpanded, StateReadShape)\n"
-                "                QtRow = Unsqueeze (q_t, NegTwo1D)\n"
+                "                StateUnsq = Unsqueeze (state_out, Two)\n"
+                "                StateExpanded = Expand (StateUnsq, expand_shape_in)\n"
+                "                StateForRead = Reshape (StateExpanded, read_shape_in)\n"
+                "                QtRow = Unsqueeze (q_t, NegTwo)\n"
                 "                ReadOut = MatMul (QtRow, StateForRead)\n"
-                "                ReadSq = Squeeze (ReadOut, NegTwo1D)\n"
-                "                output_t = Mul (ScaleFactor, ReadSq)\n";
+                "                ReadSq = Squeeze (ReadOut, NegTwo)\n"
+                "                output_t = Mul (scale_in, ReadSq)\n";
           } else {
             read_block = R"ONNX(
-                QtRow = Unsqueeze (q_t, NegTwo1D)
+                QtRow = Unsqueeze (q_t, NegTwo)
                 ReadOut = MatMul (QtRow, state_out)
-                ReadSq = Squeeze (ReadOut, NegTwo1D)
-                output_t = Mul (ScaleFactor, ReadSq)
+                ReadSq = Squeeze (ReadOut, NegTwo)
+                output_t = Mul (scale_in, ReadSq)
               )ONNX";
           }
 
-          // Body input list and Scan input list vary by rule.
-          std::string body_inputs = "state_in, q_t, k_t, v_t";
-          std::string scan_inputs = "State0, Q4D, K4D, V4D";
+          // Carried state: state matrix (always), ScaleFactor (always), and
+          // the two GQA shape tensors when group_size > 1. Each carried
+          // state input has a corresponding identity output.
+          std::string body_inputs = "state_in, scale_in";
+          std::string scan_inputs = "State0, ScaleFactor";
+          std::string body_outputs = "state_out, scale_out";
+          std::string scan_outputs = "FinalState, FinalScale";
+          std::string state_passthrough = "                scale_out = Identity (scale_in)\n";
+          if (group_size > 1) {
+            body_inputs += ", expand_shape_in, read_shape_in";
+            scan_inputs += ", StateExpandShape, StateReadShape";
+            body_outputs += ", expand_shape_out, read_shape_out";
+            scan_outputs += ", FinalExpandShape, FinalReadShape";
+            state_passthrough +=
+                "                expand_shape_out = Identity (expand_shape_in)\n"
+                "                read_shape_out = Identity (read_shape_in)\n";
+          }
+          body_outputs += ", output_t";
+          scan_outputs += ", OutputAccum";
+
+          // Sliced scan inputs (consumed along axis 0; pre-transposed so T leads).
+          body_inputs += ", q_t, k_t, v_t";
+          scan_inputs += ", Q4D, K4D, V4D";
           int64_t num_scan_inputs = 3;
-          std::vector<int64_t> scan_input_axes = {2, 2, 2};
           if (has_decay) {
             body_inputs += ", decay_t";
             scan_inputs += ", Decay4D";
             num_scan_inputs += 1;
-            scan_input_axes.push_back(2);
           }
           if (has_beta) {
             body_inputs += ", beta_t";
             scan_inputs += ", Beta4D";
             num_scan_inputs += 1;
-            scan_input_axes.push_back(2);
           }
 
-          // Assemble Scan node text. Body name is arbitrary.
-          // We omit scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
-          // were already pre-transposed so the T axis is the leading dimension.
-          (void)scan_input_axes;
+          // Assemble Scan node text. Body name is arbitrary. We omit
+          // scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
+          // were already pre-transposed so the T axis is the leading dim.
           std::string scan_text =
-              "FinalState, OutputAccum = Scan <\n"
+              scan_outputs + " = Scan <\n"
               "  num_scan_inputs = " + std::to_string(num_scan_inputs) + ",\n"
-              "  body = linear_attn_step (" + body_inputs + ") => (state_out, output_t) {\n";
+              "  body = linear_attn_step (" + body_inputs + ") => (" + body_outputs + ") {\n";
+          scan_text += body_constants;
           if (gating) scan_text += decay_block;
           scan_text += ktcol_block;
           scan_text += retrieve_and_writevec_block;
           scan_text += write_block;
           scan_text += read_block;
+          scan_text += state_passthrough;
           scan_text +=
               "              }\n"
               "> (" + scan_inputs + ")";
