@@ -114,6 +114,15 @@ class LinearAttention(OpRun):
             beta4 = beta4.astype(np.float32)
 
         # --- Step 5: initialize state in float32 ---
+        # TODO(review): The proposal allows S != T (e.g., float32 state with
+        # float16/bfloat16 activations). We accumulate internally in float32
+        # regardless, then cast `present_state` back to `past_state.dtype` (or
+        # `query.dtype` when `past_state` is omitted, since there is no S
+        # anchor in that case). A cleaner contract would propagate S
+        # explicitly — possibly via a new attribute or by inferring S from a
+        # zero-shape sentinel — once the spec resolves how S is signalled
+        # when past_state is absent. Mirrors the same TODO in the C++
+        # function-body builder in onnx/defs/nn/defs.cc.
         if past_state is not None:
             if past_state.shape != (b, kv_num_heads, d_k, d_v):
                 raise ValueError(
