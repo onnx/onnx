@@ -95,6 +95,53 @@ class TestSchema(unittest.TestCase):
         )
         self.assertEqual(output_types[0].tensor_type.elem_type, elem_type)
 
+    @parameterized.parameterized.expand(
+        [
+            ("opset24_bfloat16", TensorProto.BFLOAT16),
+            ("opset24_float16", TensorProto.FLOAT16),
+            ("opset24_double", TensorProto.DOUBLE),
+        ]
+    )
+    def test_attention_context_dependent_function_with_typed_padding_mask(
+        self, _: str, elem_type: int
+    ) -> None:
+        """Opset 24 nonpad_kv_seqlen path: PaddingMask4D must be CastLike'd."""
+        schema = defs.get_schema("Attention", 24)
+        self.assertTrue(schema.has_context_dependent_function)
+        node = helper.make_node(
+            "Attention",
+            ["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+            ["Y"],
+            q_num_heads=2,
+            kv_num_heads=2,
+        )
+
+        input_types = [self._tensor_type_proto(elem_type)] * 4 + [
+            self._tensor_type_proto(TensorProto.UNDEFINED),  # key_padding_mask (unused)
+            self._tensor_type_proto(TensorProto.UNDEFINED),  # past_key (unused)
+            self._tensor_type_proto(TensorProto.INT64),  # nonpad_kv_seqlen
+        ]
+        function_proto = onnx.FunctionProto()
+        function_proto.ParseFromString(
+            schema.get_context_dependent_function(
+                node.SerializeToString(),
+                [input_type.SerializeToString() for input_type in input_types],
+            )
+        )
+
+        self.assertTrue(
+            any(
+                n.op_type == "CastLike"
+                and tuple(n.input) == ("PaddingMask4D", "AttnBiasCausalOrNot")
+                and tuple(n.output) == ("PaddingMask4DCast",)
+                for n in function_proto.node
+            )
+        )
+        output_types = onnx.shape_inference.infer_function_output_types(
+            function_proto, input_types, list(node.attribute)
+        )
+        self.assertEqual(output_types[0].tensor_type.elem_type, elem_type)
+
     def test_node_determinism(self) -> None:
         rand_schema = defs.get_schema("RandomNormalLike")
         self.assertEqual(
