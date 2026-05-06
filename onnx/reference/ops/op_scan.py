@@ -73,7 +73,7 @@ class Scan(OpRun):
         if max_axe_out != 0:
             raise RuntimeError("Scan is not implemented for other output axes than 0.")
 
-        state_names_in = self.input_names[: self.num_scan_inputs]
+        state_names_in = self.input_names[:num_loop_state_vars]
         state_names_out = self.output_names[: len(state_names_in)]
         scan_names_in = self.input_names[num_loop_state_vars:]
         scan_names_out = self.output_names[num_loop_state_vars:]
