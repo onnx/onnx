@@ -3928,14 +3928,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // --- Step 5: Slice last (k-1) positions from PaddedInput as present_state ---
-          // present_state = PaddedInput[:, :, -(k-1):]
-          // Slice with negative start index to take from the end.
-          // Km1 was computed once above the Step 2 branch.
+          // present_state = PaddedInput[:, :, L : L+(k-1)]
+          // Compute start/end from PaddedInput's actual length so the k=1 (Km1=0)
+          // edge case yields an empty (B, C, 0) slice. A negative start index
+          // would not work here because Slice treats -0 as 0, returning the full
+          // padded sequence instead of an empty tensor.
           builder
-              .Add("NegKm1 = Neg (Km1)")
+              .Add("PadLen = Shape <start = 2, end = 3> (PaddedInput)")
+              .Add("StartIdx = Sub (PadLen, Km1)")
               .Const("SliceAxes", std::vector<int64_t>{2})
-              .Const("SliceEnd", std::vector<int64_t>{std::numeric_limits<int64_t>::max()})
-              .Add("present_state = Slice (PaddedInput, NegKm1, SliceEnd, SliceAxes)");
+              .Add("present_state = Slice (PaddedInput, StartIdx, PadLen, SliceAxes)");
 
           schema.BuildFunction(functionProto);
           return true;
