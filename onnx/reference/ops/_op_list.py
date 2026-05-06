@@ -117,6 +117,7 @@ __all__ = [
     "LeakyRelu",
     "Less",
     "LessOrEqual",
+    "LinearAttention",
     "Log",
     "LogSoftmax",
     "Loop",
@@ -370,6 +371,7 @@ from onnx.reference.ops.op_layer_normalization import LayerNormalization
 from onnx.reference.ops.op_leaky_relu import LeakyRelu
 from onnx.reference.ops.op_less import Less
 from onnx.reference.ops.op_less_or_equal import LessOrEqual
+from onnx.reference.ops.op_linear_attention import LinearAttention
 from onnx.reference.ops.op_log import Log
 from onnx.reference.ops.op_log_softmax import LogSoftmax
 from onnx.reference.ops.op_loop import Loop
