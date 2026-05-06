@@ -39,7 +39,13 @@ import setuptools.command.build_py
 import setuptools.command.develop
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
-CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
+_onnx_cmake_build_dir = os.getenv("ONNX_CMAKE_BUILD_DIR")
+CMAKE_BUILD_DIR = os.path.join(
+    TOP_DIR,
+    _onnx_cmake_build_dir.strip()
+    if _onnx_cmake_build_dir and _onnx_cmake_build_dir.strip()
+    else ".setuptools-cmake-build",
+)
 
 WINDOWS = os.name == "nt"
 
