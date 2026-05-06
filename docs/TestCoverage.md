@@ -8,7 +8,7 @@
 ## Summary
 Node tests have covered 187/199 (93.97%, 5 generators excluded) common operators.
 
-Node tests have covered 0/0 (N/A) experimental operators.
+Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -252,6 +252,7 @@ node = onnx.helper.make_node(
     norm_coefficient=norm_coefficient,
     alpha=alpha,
     beta=beta,
+    epsilon=epsilon,
     domain=AI_ONNX_PREVIEW_TRAINING_DOMAIN,
 )
 
@@ -1113,7 +1114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 62 test cases, listed as following:
+There are 64 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -1926,7 +1927,7 @@ node = onnx.helper.make_node(
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -1946,7 +1947,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     past_value=past_value,
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -1971,7 +1972,7 @@ node = onnx.helper.make_node(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 past_sequence_length = 12
@@ -1992,7 +1993,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -2883,6 +2884,95 @@ expect(
 
 </details>
 <details>
+<summary>attention_softcap_with_neginf_mask</summary>
+
+```python
+"""Softcap + -inf mask: verifies softcap is applied BEFORE mask/bias.
+
+If ordering were wrong (mask then softcap), tanh(-inf/softcap) = -1,
+so softcap * tanh(-inf/softcap) = -softcap (finite).  That leaks
+probability to masked positions.  With correct ordering (softcap then
+mask), the -inf mask values survive to softmax and yield zero weight.
+"""
+np.random.seed(42)
+B, H, S_q, S_kv, D = 1, 1, 4, 6, 8
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+
+# All Q positions are blocked from KV positions 4 and 5.
+attn_mask = np.zeros((S_q, S_kv), dtype=np.float32)
+attn_mask[:, 4:] = -np.inf
+
+softcap = 0.5
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    softcap=softcap,
+)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_softcap_neginf_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_softcap_with_neginf_mask_poison</summary>
+
+```python
+"""Softcap + -inf mask + poison values at masked KV positions.
+
+V has value 1000 at the masked positions (4 and 5).  With correct
+ordering the output stays in [0, 1] because the mask zeros out those
+positions.  With wrong ordering the output explodes (> 50), making
+the failure obvious even with loose tolerances.
+"""
+np.random.seed(42)
+B, H, S_q, S_kv, D = 1, 1, 4, 6, 8
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+
+# Block all Q positions from KV positions 4 and 5.
+attn_mask = np.zeros((S_q, S_kv), dtype=np.float32)
+attn_mask[:, 4:] = -np.inf
+
+# Poison: if attention leaks to masked positions, output >> 1.
+V[:, :, 4:, :] = 1000.0
+
+softcap = 0.5
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    softcap=softcap,
+)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_softcap_neginf_mask_poison",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
 <summary>attention_with_past_and_present</summary>
 
 ```python
@@ -2964,7 +3054,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -2982,7 +3072,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3003,7 +3093,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3021,7 +3111,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3042,7 +3132,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3061,7 +3151,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3083,7 +3173,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3101,7 +3191,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3122,7 +3212,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3141,7 +3231,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3189,7 +3279,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -3202,7 +3292,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     K,
     V,
     attn_mask=attn_mask,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3224,7 +3314,7 @@ node = onnx.helper.make_node(
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -3238,7 +3328,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     V,
     attn_mask=attn_mask,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -23186,7 +23276,7 @@ expect(
 
 
 ### ScatterElements
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>scatter_elements_with_axis</summary>
 
@@ -23326,6 +23416,35 @@ expect(
     inputs=[data, indices, updates],
     outputs=[y],
     name="test_scatter_elements_with_reduction_min",
+)
+```
+
+</details>
+<details>
+<summary>scatter_elements_with_reduction_mul</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="mul",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="mul")
+# print(y) produces
+# [[1.0, 4.62, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_mul",
 )
 ```
 
@@ -28819,6 +28938,444 @@ expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
+### FlexAttention
+There are 11 test cases, listed as following:
+<details>
+<summary>flexattention</summary>
+
+```python
+"""Basic FlexAttention test with default settings."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_causal_mask</summary>
+
+```python
+"""FlexAttention with causal masking score_mod (Qwen-3, Gemma-3, Llama-3 pattern)."""
+score_mod_graph = _make_score_mod_causal_mask_graph(TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with causal masking
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+# Apply causal mask: set future positions to -inf
+q_idx = np.arange(L).reshape(1, 1, L, 1)
+k_idx = np.arange(S).reshape(1, 1, 1, S)
+mask = q_idx >= k_idx
+scores = np.where(mask, scores, -np.inf)
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_causal_mask",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_diff_head_sizes</summary>
+
+```python
+"""FlexAttention with different head sizes for Q/K vs V."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 32  # V has different head size
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_diff_head_sizes",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_double</summary>
+
+```python
+"""FlexAttention with double precision inputs."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float64)
+K = np.random.rand(B, Hq, S, E).astype(np.float64)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float64)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_double",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_fp16</summary>
+
+```python
+"""FlexAttention with float16 inputs."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float16)
+K = np.random.rand(B, Hq, S, E).astype(np.float16)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float16)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_fp16",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_gqa</summary>
+
+```python
+"""FlexAttention with Grouped Query Attention (GQA)."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, Hkv, L, S, E, Ev = 2, 8, 2, 4, 6, 16, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hkv, S, E).astype(np.float32)
+V = np.random.rand(B, Hkv, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_gqa",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_prob_mod</summary>
+
+```python
+"""FlexAttention with prob_mod subgraph (scales probabilities)."""
+scale_value = 0.5
+prob_mod_graph = _make_prob_mod_scale_graph(scale_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+prob_mod_attr = helper.make_attribute("prob_mod", prob_mod_graph)
+node.attribute.append(prob_mod_attr)
+
+B, Hq, L, E = 1, 2, 3, 4
+S, Ev = 3, 4
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+probs = probs * scale_value
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_prob_mod",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_relative_positional</summary>
+
+```python
+"""FlexAttention with relative positional bias score_mod."""
+score_mod_graph = _make_score_mod_relative_positional_graph(TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with relative positional bias
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+q_idx = np.arange(L).reshape(-1, 1)
+k_idx = np.arange(S).reshape(1, -1)
+rel_pos = (q_idx - k_idx).astype(np.float32)
+scores = scores + rel_pos
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_relative_positional",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_scaled</summary>
+
+```python
+"""FlexAttention with explicit scale attribute."""
+scale = 0.1
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V, scale=scale)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_scaled",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_score_mod</summary>
+
+```python
+"""FlexAttention with score_mod subgraph (adds bias to scores)."""
+bias_value = 0.5
+score_mod_graph = _make_score_mod_bias_graph(bias_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+# Add score_mod as a graph attribute
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 3, 4
+S, Ev = 3, 4
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+scores = scores + bias_value  # score_mod: add bias
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_score_mod",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+<details>
+<summary>flexattention_soft_cap</summary>
+
+```python
+"""FlexAttention with soft capping score_mod (Gemma-2 pattern)."""
+cap_value = 20.0
+score_mod_graph = _make_score_mod_soft_cap_graph(cap_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with soft capping
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+scores = np.tanh(scores / cap_value) * cap_value
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_soft_cap",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
 <br/>
 
 ## &#x1F494;No Cover Experimental Operators

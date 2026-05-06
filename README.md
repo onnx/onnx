@@ -66,7 +66,7 @@ Community Meetups are held at least once a year. Content from previous community
 
 # Discuss
 
-We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-o65errpw-gMTbwNr7FnNbVXNVFkmyNA) to join the group) for more real-time discussion.
+We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use [Slack](https://lfaifoundation.slack.com/) (If you have not joined yet, please use this [link](https://join.slack.com/t/lfaifoundation/shared_invite/zt-3wx5vohc3-MeSYi3_dscb~u~cqs7zlPg) to join the group) for more real-time discussion.
 
 # Follow Us
 

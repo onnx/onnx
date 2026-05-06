@@ -155,15 +155,16 @@ class ProtoPrinter {
 };
 
 void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
-  if (dim.has_dim_value())
+  if (dim.has_dim_value()) {
     output_ << dim.dim_value();
-  else if (dim.has_dim_param()) {
+  } else if (dim.has_dim_param()) {
     if (IsValidIdentifier(dim.dim_param()))
       output_ << dim.dim_param();
     else
       printQuoted(dim.dim_param());
-  } else
+  } else {
     output_ << "?";
+  }
 }
 
 void ProtoPrinter::print(const TensorShapeProto& shape) {

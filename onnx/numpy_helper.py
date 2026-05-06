@@ -69,7 +69,7 @@ def to_float8e8m0(
         exponent += increment
 
     elif round_mode == "up":
-        has_fraction = (f_bits & 0x4FFFFF) > 0
+        has_fraction = (f_bits & 0x7FFFFF) > 0
         round_up = has_fraction & normal_mask
 
         if saturate:
@@ -110,7 +110,7 @@ def _unpack_4bit(
     array_high >>= np.uint8(4)
     result[0::2] = array_low
     result[1::2] = array_high
-    if result.size == np.prod(dims) + 1:
+    if result.size == np.prod(dims, dtype=np.int64) + 1:
         # handle single-element padding due to odd number of elements
         result = result[:-1]
     result.resize(dims, refcheck=False)
@@ -147,9 +147,9 @@ def _unpack_2bit(
     result[1::4] = (data >> 2) & 0x03
     result[2::4] = (data >> 4) & 0x03
     result[3::4] = (data >> 6) & 0x03
-    if result.size > np.prod(dims):
+    if result.size > np.prod(dims, dtype=np.int64):
         # handle padding due to non multiple of 4 elements
-        result = result[: np.prod(dims)]
+        result = result[: np.prod(dims, dtype=np.int64)]
     result.resize(dims, refcheck=False)
     return result
 
@@ -643,4 +643,4 @@ def saturate_cast(x: np.ndarray, dtype: np.dtype) -> np.ndarray:
     else:
         info = ml_dtypes.finfo(dtype)  # type: ignore[assignment]
 
-    return np.clip(x, info.min, info.max).astype(dtype)
+    return np.clip(x, info.min, info.max).astype(dtype)  # type: ignore[no-any-return]
