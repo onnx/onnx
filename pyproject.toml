@@ -28,7 +28,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Use in reference implementation but not available on Windows x86
 reference = ["Pillow"]
 
 [project.urls]
