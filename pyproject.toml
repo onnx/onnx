@@ -50,6 +50,7 @@ wheel.exclude = ["**.proto3", "**.md", "**/CMakeLists.txt"]
 wheel.py-api = "cp312"
 sdist.include = [
     "LICENSE",
+    "README.md",
     "CMakeLists.txt",
     "VERSION_NUMBER",
     "cmake/**",
