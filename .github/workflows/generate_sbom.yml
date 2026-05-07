@@ -36,11 +36,8 @@ name: Generate SBOM
 on:
   pull_request:
     branches: [main, 'rel-*']
-    paths:
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - 'CMakeLists.txt'
-      - '.github/workflows/generate_sbom.yml'
+  push:
+    branches: [main, 'rel-*']
   workflow_call:
     inputs:
       subject_name:

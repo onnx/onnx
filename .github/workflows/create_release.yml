@@ -57,14 +57,6 @@ on:
           - 'release'
           - 'preview'
         default: 'preview'
-      generate_sbom:
-        description: 'Generate SBOM (always set for publish_pypi_release and publish_testpypi_release)'
-        required: true
-        type: choice
-        options:
-          - 'yes'
-          - 'no'
-        default: 'no'
 
 permissions:
   contents: read
@@ -113,13 +105,7 @@ jobs:
   call-sbom:
     name: Generate SBOM
     needs: [call-linux, call-mac, call-win, call-pyodide, call-sdist]
-    if: |
-      (!contains(join(needs.*.result, ' '), 'skipped')) &&
-      (
-        github.event.inputs.publish_pypi_release == 'yes' ||
-        github.event.inputs.publish_testpypi_release == 'yes' ||
-        github.event.inputs.generate_sbom == 'yes'
-      )
+    if: ${{ !contains(join(needs.*.result, ' '), 'skipped') }}
     uses: ./.github/workflows/generate_sbom.yml
     with:
       subject_name: ${{ (github.event_name == 'pull_request' || github.event.inputs.build_mode == 'preview') && 'onnx-weekly' || 'onnx' }}
