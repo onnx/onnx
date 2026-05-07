@@ -7,6 +7,7 @@ import numpy as np
 
 import onnx
 from onnx.reference.op_run import OpRun
+from onnx.reference.ops.op_matmul import numpy_matmul
 
 
 def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
@@ -99,6 +100,9 @@ def _compute_attention(
         q_head_size = Q.shape[3]
         scale = 1 / np.sqrt(q_head_size)
     scale = np.sqrt(scale)
+    # Cast scale to input type to match the expanded function's
+    # ScaleFactorF = Cast(ScaleFactorSqrt, to=T1)
+    scale = Q.dtype.type(scale)
 
     # Update key and value cache
     if past_key is not None:
@@ -201,7 +205,7 @@ def _compute_attention(
     #                    |
     #                    Y
     k_transpose = np.transpose(K, (0, 1, 3, 2))
-    qk_matmul_output = np.matmul(Q * scale, k_transpose * scale)
+    qk_matmul_output = numpy_matmul(Q * scale, k_transpose * scale)
 
     # Apply softcap before mask/bias addition.
     # Softcap must be applied before mask so that -inf mask values remain -inf
@@ -224,8 +228,11 @@ def _compute_attention(
     if qk_matmul_output_mode == 3:
         qk_matmul_output = qk_softmax
     qk_matmul_output = qk_matmul_output.astype(Q.dtype)
+    # Cast softmax output back to input type before final MatMul,
+    # matching the expanded function's SoftmaxOut = Cast(..., to=T1).
+    qk_softmax = qk_softmax.astype(Q.dtype)
 
-    output = np.matmul(qk_softmax, V).astype(Q.dtype)
+    output = numpy_matmul(qk_softmax, V)
     if input_shape_len == 3:
         output = np.transpose(output, (0, 2, 1, 3))
         output = np.reshape(output, (output.shape[0], output.shape[1], -1))
