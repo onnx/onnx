@@ -13,7 +13,8 @@
 
 namespace ONNX_NAMESPACE {
 
-// Represents the most recent release version. Updated with every release.
+// Represents the current ONNX version string for this build.
+// This may be a development or release-candidate version, not necessarily the most recent release.
 constexpr const char* LAST_RELEASE_VERSION = ONNX_VERSION_STRING;
 
 } // namespace ONNX_NAMESPACE
