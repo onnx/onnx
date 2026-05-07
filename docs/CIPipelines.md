@@ -26,7 +26,7 @@ SPDX-License-Identifier: Apache-2.0
 | [WindowsRelease](/.github/workflows/release_win.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package (2)(3) |
 | [LinuxRelease](/.github/workflows/release_linux.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package |
 | [MacRelease](/.github/workflows/release_mac.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package; tests source distribution build |
-| [PyodideRelease](/.github/workflows/release_pyodide.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `pyodide-build`, a host `protoc`, and a wasm protobuf library; validates wheel contents and publish-ready artifacts |
+| [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `pyodide-build`, a host `protoc`, and a wasm protobuf library; validates wheel contents and publish-ready artifacts |
 | [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 
 ## Security and Supply Chain
@@ -43,7 +43,7 @@ SPDX-License-Identifier: Apache-2.0
 | Workflow | When it runs | What it does |
 |---|---|---|
 | [Pages](/.github/workflows/pages.yml) | PRs to main, push to main | Builds and publishes ONNX documentation to GitHub Pages |
-| [Pixi CI](/.github/workflows/pixi_build.yml) | Weekly (Sunday 23:59 UTC) and on PRs | Builds and tests with the [pixi](https://pixi.sh/) environment manager on Linux, macOS, and Windows; opens an issue on failure when scheduled |
+| [Pixi CI](/.github/workflows/pixi_build.yml) | Weekly (Sunday 23:59 UTC) and on PRs | Builds, lints, and tests with the [pixi](https://pixi.sh/) environment manager on Linux, macOS, and Windows; opens an issue on failure when scheduled |
 | [Check URLs](/.github/workflows/check_urls.yml) | Push to main/rel-\*, monthly | Checks for broken URLs in the codebase |
 | [Stale](/.github/workflows/stale.yml) | Daily | Warns and eventually closes stale issues and PRs |
 | [Dependabot](/.github/dependabot.yml) | Monthly | Creates PRs for updated dependency versions |

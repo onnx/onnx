@@ -28,7 +28,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Use in reference implementation but not available on Windows x86
 reference = ["Pillow"]
 
 [project.urls]
@@ -48,6 +47,17 @@ cmake.build-type = "Release"
 wheel.packages = ["onnx"]
 wheel.exclude = ["**.proto3", "**.md", "**/CMakeLists.txt"]
 wheel.py-api = "cp312"
+sdist.include = [
+    "LICENSE",
+    "README.md",
+    "CMakeLists.txt",
+    "VERSION_NUMBER",
+    "cmake/**",
+    "tools/**",
+    "onnx/**",
+    "pyproject.toml",
+]
+sdist.exclude = ["*"]
 
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"
