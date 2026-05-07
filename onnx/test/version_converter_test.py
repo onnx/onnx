@@ -2625,6 +2625,119 @@ class TestVersionConverter(unittest.TestCase):
         converted = self._converted(graph, helper.make_operatorsetid("", 18), 17)
         checker.check_model(converted)
 
+    # raw_data INT64 initializers + dims/raw byte-length mismatch guard.
+
+    def test_split_13_12_raw_data_initializer(self) -> None:
+        split_init = helper.make_tensor(
+            "split", TensorProto.INT64, [2], np.array([1, 3], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0)],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+            initializer=[split_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "split")
+        assert list(attr.ints) == [1, 3]
+
+    def test_reshape_5_4_raw_data_initializer(self) -> None:
+        shape_init = helper.make_tensor(
+            "shape", TensorProto.INT64, [2], np.array([2, 5], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Reshape", ["X", "shape"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (10,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 5))],
+            initializer=[shape_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 5), 4)
+        reshape = next(n for n in converted.graph.node if n.op_type == "Reshape")
+        attr = next(a for a in reshape.attribute if a.name == "shape")
+        assert list(attr.ints) == [2, 5]
+
+    def test_axes_input_to_attr_13_12_raw_data(self) -> None:
+        axes_init = helper.make_tensor(
+            "axes", TensorProto.INT64, [1], np.array([0], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("ReduceSum", ["X", "axes"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5))],
+            initializer=[axes_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "axes")
+        assert list(attr.ints) == [0]
+
+    def test_dft_20_19_raw_data_axis(self) -> None:
+        axis_init = helper.make_tensor(
+            "axis", TensorProto.INT64, [], np.array([1], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("DFT", ["X", "", "axis"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 8, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 8, 2))],
+            initializer=[axis_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 20), 19)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "axis")
+        assert attr.i == 1
+
+    def test_split_13_12_raw_data_dims_mismatch_rejected(self) -> None:
+        # dims=[2] vs 8-byte raw_data fed via a Constant node; old code OOB-read.
+        split_value = TensorProto(
+            data_type=TensorProto.INT64,
+            dims=[2],
+            raw_data=struct.pack("<q", 1),
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Constant", [], ["split"], value=split_value),
+                helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0),
+            ],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+        )
+        # Bypass checker to exercise the converter guard directly.
+        model = helper.make_model(
+            graph, opset_imports=[helper.make_operatorsetid("", 13)]
+        )
+        with self.assertRaises(RuntimeError):
+            onnx.version_converter.convert_version(model, 12)
+
+    def test_split_13_12_raw_data_constant_node(self) -> None:
+        split_value = helper.make_tensor(
+            "", TensorProto.INT64, [2], np.array([1, 3], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Constant", [], ["split"], value=split_value),
+                helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0),
+            ],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        split = next(n for n in converted.graph.node if n.op_type == "Split")
+        attr = next(a for a in split.attribute if a.name == "split")
+        assert list(attr.ints) == [1, 3]
+
 
 if __name__ == "__main__":
     unittest.main()

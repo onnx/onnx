@@ -643,6 +643,9 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    if (kernel_shape.size() != n_input_dims) {
+      return; // weight rank mismatch
+    }
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
@@ -2966,6 +2969,9 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    if (kernel_shape.size() != n_input_dims) {
+      return; // weight rank mismatch
+    }
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
@@ -4211,8 +4217,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "qk_matmul_output_mode",
             "If set to `0`, qk_matmul_output is the output of qk matmul. "
-            "If set to `1`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
-            "If set to `2`, qk_matmul_output is the output after the softcap operation (before mask addition). "
+            "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
+            "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
             "If set to `3`, qk_matmul_output is the output after the softmax operation. "
             "Default value is 0.",
             AttributeProto::INT,
@@ -4485,16 +4491,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
           if (ctx.hasOutput(3)) {
             if (qk_matmul_output_mode == 1) {
-              // Mode 1: QK + bias (after softcap + bias addition)
-              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
-            } else if (qk_matmul_output_mode == 2) {
-              // Mode 2: after softcap (before bias addition)
+              // Mode 1: after softcap (before bias addition)
               if (softcap_val != 0) {
                 builder.Add("qk_matmul_output = Identity(QKAttnSoftcapped)");
               } else {
                 // No softcap applied, same as raw QK
                 builder.Add("qk_matmul_output = Identity(QKAttnCast)");
               }
+            } else if (qk_matmul_output_mode == 2) {
+              // Mode 2: QK + softcap + bias (after softcap + bias addition)
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
             } else if (qk_matmul_output_mode == 3) {
               builder.Add("qk_matmul_output = Identity(AttnWeightSoftmax)");
             } else {
