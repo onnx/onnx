@@ -786,7 +786,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask"],
             outputs=["Y", "", "", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -799,7 +799,7 @@ class Attention(Base):
             K,
             V,
             attn_mask=attn_mask,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -817,7 +817,7 @@ class Attention(Base):
             inputs=["Q", "K", "V", "attn_mask"],
             outputs=["Y", "", "", "qk_matmul_output"],
             softcap=2.0,
-            qk_matmul_output_mode=2,
+            qk_matmul_output_mode=1,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -831,7 +831,7 @@ class Attention(Base):
             V,
             attn_mask=attn_mask,
             softcap=2.0,
-            qk_matmul_output_mode=2,
+            qk_matmul_output_mode=1,
         )
 
         expect(
@@ -878,7 +878,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         past_sequence_length = 12
@@ -896,7 +896,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -913,7 +913,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         past_sequence_length = 12
@@ -931,7 +931,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -948,7 +948,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         past_sequence_length = 12
@@ -966,7 +966,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -983,7 +983,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
             is_causal=1,
         )
 
@@ -1002,7 +1002,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
             is_causal=1,
         )
 
@@ -1020,7 +1020,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
             is_causal=1,
         )
 
@@ -1039,7 +1039,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
             is_causal=1,
         )
 
@@ -1737,7 +1737,7 @@ class Attention(Base):
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         past_sequence_length = 12
@@ -1757,7 +1757,7 @@ class Attention(Base):
             past_value=past_value,
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -1778,7 +1778,7 @@ class Attention(Base):
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
             softcap=2.0,
-            qk_matmul_output_mode=2,
+            qk_matmul_output_mode=1,
         )
 
         past_sequence_length = 12
@@ -1799,7 +1799,7 @@ class Attention(Base):
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
             softcap=2.0,
-            qk_matmul_output_mode=2,
+            qk_matmul_output_mode=1,
         )
 
         expect(

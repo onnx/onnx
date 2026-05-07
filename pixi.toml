@@ -41,9 +41,16 @@ cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
 [tasks.pytest]
 cmd = "pytest"
 
-[tasks.lintrunner-init]
+[feature.lint.tasks.pre-commit-install]
+description = "Install prek hooks"
+cmd = "prek install"
+[feature.lint.tasks.lint]
+description = "Run linters against all files (requires a prior 'install')"
+cmd = "prek run -a"
+
+[feature.lintrunner.tasks.lintrunner-init]
 cmd = "lintrunner init"
-[tasks.lintrunner-run]
+[feature.lintrunner.tasks.lintrunner-run]
 cmd = "lintrunner --all-files"
 
 [feature.docs.tasks.docs-build]
@@ -88,12 +95,17 @@ python = "3.10.*"
 numpy = "==1.23.2"
 
 [feature.lint.dependencies]
-# follows requirements-lintrunner.txt
-ruff = "==0.13.1"
-mypy = "==1.17.1"
-types-protobuf = "==6.30.2.20250516"
-clang-format = ">=20.1.5"
-[feature.lint.pypi-dependencies]
+clang-format = ">=22.1.1"
+mypy = ">=1.19.1"
+prek = ">=0.3.9"
+prettier = ">=3.8.1,<4"
+reuse = ">=5.1.1,<7"
+ruff = ">=0.15.7"
+shellcheck = ">=0.11.0"
+types-protobuf = ">=6.32.1.20260221,<7"
+typos = ">=1.44.0,<2"
+
+[feature.lintrunner.pypi-dependencies]
 lintrunner = ">=0.10.7"
 lintrunner-adapters = ">=0.12.3"
 editorconfig-checker = "==3.2.1"
@@ -127,3 +139,4 @@ oldies = ["dev", "lint", "reference", "oldies"]
 # may introduce upper bounds
 docs = ["dev", "lint", "reference", "docs"]
 link-checker = {features=["link-checker"], no-default-feature=true}
+lintrunner = ["dev", "reference", "lint", "lintrunner"]

@@ -43,7 +43,7 @@ SPDX-License-Identifier: Apache-2.0
 | Workflow | When it runs | What it does |
 |---|---|---|
 | [Pages](/.github/workflows/pages.yml) | PRs to main, push to main | Builds and publishes ONNX documentation to GitHub Pages |
-| [Pixi CI](/.github/workflows/pixi_build.yml) | Weekly (Sunday 23:59 UTC) and on PRs | Builds and tests with the [pixi](https://pixi.sh/) environment manager on Linux, macOS, and Windows; opens an issue on failure when scheduled |
+| [Pixi CI](/.github/workflows/pixi_build.yml) | Weekly (Sunday 23:59 UTC) and on PRs | Builds, lints, and tests with the [pixi](https://pixi.sh/) environment manager on Linux, macOS, and Windows; opens an issue on failure when scheduled |
 | [Check URLs](/.github/workflows/check_urls.yml) | Push to main/rel-\*, monthly | Checks for broken URLs in the codebase |
 | [Stale](/.github/workflows/stale.yml) | Daily | Warns and eventually closes stale issues and PRs |
 | [Dependabot](/.github/dependabot.yml) | Monthly | Creates PRs for updated dependency versions |

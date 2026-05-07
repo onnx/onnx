@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
-import numpy.typing as npt
 import typing_extensions
 
 import onnx
@@ -363,34 +362,6 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
 
 
-def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    odd_sized = size % 2 == 1
-    if odd_sized:
-        array_flat.resize([size + 1], refcheck=False)
-    array_flat &= 0x0F
-    array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]
-
-
-def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    pad_len = size % 4
-    if pad_len:
-        array_flat.resize([size + (4 - pad_len)], refcheck=False)
-    array_flat &= 0x03
-    array_flat[1::4] <<= 2
-    array_flat[2::4] <<= 4
-    array_flat[3::4] <<= 6
-    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]
-
-
 def make_tensor(
     name: str,
     data_type: int,
@@ -496,10 +467,10 @@ def make_tensor(
         vals = vals.view(np.uint8)  # type: ignore[union-attr]
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
-        vals = _pack_4bitx2(vals)  # type: ignore[arg-type]
+        vals = onnx.numpy_helper._pack_4bitx2(vals)  # type: ignore[arg-type]
     elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
         # Convert to packed 2-bit representation
-        vals = _pack_2bitx4(vals)  # type: ignore[arg-type]
+        vals = onnx.numpy_helper._pack_2bitx4(vals)  # type: ignore[arg-type]
     elif data_type == TensorProto.BOOL:
         vals = vals.astype(np.uint8)  # type: ignore[union-attr]
 

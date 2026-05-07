@@ -23,6 +23,11 @@ def scatter_elements(data, indices, updates, axis=0, reduction=None):
         def f(x, y):
             return x + y
 
+    elif reduction == "mul":
+
+        def f(x, y):
+            return x * y
+
     elif reduction == "min":
 
         def f(x, y):

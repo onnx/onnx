@@ -2756,7 +2756,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // Set last dimension based on operation type
               ONNX_ASSERTM(
                   rank == static_cast<int64_t>(new_shape_proto.dim_size()),
-                  "rank should be equal to new_shape_proto.dim_size()");
+                  "rank should be equal to new_shape_proto.dim_size()")
               if (inverse && is_onesided) {
                 // IRFFT: output is real-valued
                 new_shape_proto.mutable_dim(rank - 1)->set_dim_value(1);

@@ -671,7 +671,7 @@ struct InlinerImpl {
     InlinerImpl inliner(model, all_functions, &map, nullptr);
     inliner.ProcessGraph(*model.mutable_graph());
 
-    // Remove all model-local functions. We do not remove functions with a mis-matched
+    // Remove all model-local functions. We do not remove functions with a mismatched
     // opset version. They need to be handled some other way, eg., using a version-adapter.
     auto* local_functions = model.mutable_functions();
     for (auto it = local_functions->begin(); it != local_functions->end();) {
