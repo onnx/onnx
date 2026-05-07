@@ -267,17 +267,19 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
     endif()
   endif()
 endif()
+
+if(ONNX_PYODIDE_BUILD)
+    # Prevent absl from using EM_JS-based symbolize_emscripten.inc which is
+    # incompatible with Emscripten SIDE_MODULE builds (Pyodide).
+    add_compile_definitions(STANDALONE_WASM)
+endif()
+
 if(NOT ONNX_PROTOC_EXECUTABLE)
     set(Build_Protobuf ON)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
 
     include(FetchContent)
     set(ABSL_PROPAGATE_CXX_STD 1)
-    if(ONNX_PYODIDE_BUILD)
-      # Prevent absl from using EM_JS-based symbolize_emscripten.inc which is
-      # incompatible with Emscripten SIDE_MODULE builds (Pyodide).
-      add_compile_definitions(STANDALONE_WASM)
-    endif()
     set(ONNX_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
