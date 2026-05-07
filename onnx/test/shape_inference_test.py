@@ -1325,6 +1325,52 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _check_resize_scale_precision(
+        self,
+        version: int,
+        scales: tuple[float, ...],
+        expected_last_dim: int,
+    ) -> None:
+        # Shared body for #4919 regression tests. Builds a Resize graph whose
+        # last input dim is 16_777_217 (= 2**24 + 1, the smallest int that
+        # float32 cannot represent) and asserts the inferred output last dim.
+        if version >= 11:
+            inputs = [
+                ("x", TensorProto.INT32, (1, 1, 1, 16777217)),
+                ("roi", TensorProto.FLOAT, (8,)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ]
+            node = make_node("Resize", ["x", "roi", "scales"], ["y"])
+        else:
+            inputs = [
+                ("x", TensorProto.INT32, (1, 1, 1, 16777217)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ]
+            node = make_node("Resize", ["x", "scales"], ["y"])
+        graph = self._make_graph(
+            inputs,
+            [node],
+            [],
+            initializer=[make_tensor("scales", TensorProto.FLOAT, (4,), scales)],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.INT32, (1, 1, 1, expected_last_dim)
+                )
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_scale_precision_large_dim(self, _, version) -> None:
+        # Regression for #4919, current-version helper
+        for scale in [1, 2]:
+            self._check_resize_scale_precision(
+                version, (1.0, 1.0, 1.0, float(scale)), 16777217 * scale
+            )
+
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_scale_and_size_but_one_is_empty(self, _, version) -> None:
         self.skipIf(version < 11, "roi input is from Version 11")
