@@ -914,7 +914,7 @@ void ScanInferenceFunction_opset8(InferenceContext& ctx) {
   // The first input to Scan is sequence_lens. We skip that when processing
   // inputs in many places below, so the - 1 in multiple places is due to that.
   auto num_inputs = ctx.getNumInputs();
-  auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
+  auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
   auto num_loop_state_vars = num_inputs - 1 - num_scan_inputs;
 
   std::vector<TypeProto> temporary_type_protos;
@@ -1051,7 +1051,7 @@ static int handle_negative_axis_validate_opset9(const std::string& attrib, int a
 
 static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
+  auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
   auto num_loop_state_vars = num_inputs - num_scan_inputs;
   auto num_outputs = ctx.getNumOutputs();
   auto num_scan_outputs = num_outputs - num_loop_state_vars;

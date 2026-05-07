@@ -11835,6 +11835,51 @@ class TestShapeInference(TestShapeInferenceHelper):
         with self.assertRaises(onnx.checker.ValidationError):
             onnx.shape_inference.infer_shapes(model)
 
+    def test_scan_invalid_num_scan_inputs_does_not_crash(self):
+        # Missing required attribute would null-deref; negative value would
+        # overflow narrow<size_t>. Both must raise InferenceError, not crash.
+        scan_body = (
+            "body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) "
+            "{ so = Identity(si) xo = Identity(xi) }"
+        )
+        for attrs in ("", "num_scan_inputs = -1, "):
+            with self.subTest(attrs=attrs or "missing"):
+                model = onnx.parser.parse_model(
+                    f"""
+                    <ir_version: 8, opset_import: [ "" : 9 ]>
+                    g (float[1] s, float[3,1] x) => (float[1] so, float[3,1] xo) {{
+                        so, xo = Scan <{attrs}{scan_body}> (s, x)
+                    }}
+                    """
+                )
+                with self.assertRaises(onnx.shape_inference.InferenceError):
+                    onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_function_output_count_mismatch_does_not_crash(self):
+        # Function declares 2 outputs; calling node declares 1.
+        # Must raise InferenceError on the second output, not crash.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
+            agraph (float[1] X) => (float[1] Y) { Y = local.F (X) }
+            <opset_import: [ "" : 18 ], domain: "local">
+            F (x) => (y1, y2) { y1 = Identity(x) y2 = Identity(x) }
+            """
+        )
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_conv_transpose_undersized_weight_does_not_crash(self):
+        # Weight rank < input spatial rank → empty kernel_shape would OOB-index later.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 11 ]>
+            g (float[1,1,5] X, float[1,3] W) => (float[1,1,?] Y) { Y = ConvTranspose(X, W) }
+            """
+        )
+        # Graceful return without output shape inference is acceptable; must not crash.
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
     custom_op_type: str = "CustomOp"
