@@ -10,8 +10,11 @@
   "enabledManagers": ["custom.regex"],
   // Disable the Dependency Dashboard issue
   "dependencyDashboard": false,
-  // Apply label to all Renovate PRs to trigger release CI
-  "labels": ["run release CIs"],
+  // Wait one week after a release before creating an update PR
+  "minimumReleaseAge": "7 days",
+  // Apply label to all Renovate PRs to trigger release CI and satisfy the
+  // "Require topic/module label" branch-protection check
+  "labels": ["dependencies", "run release CIs"],
   // Custom managers for dependencies not auto-detected by Renovate
   "customManagers": [
     {
