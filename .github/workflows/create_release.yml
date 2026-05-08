@@ -88,6 +88,13 @@ jobs:
       os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
+  call-pyodide:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_pyodide.yml
+    with:
+      os: "pyodide"
+      build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+
   call-sdist:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_sdist.yml
@@ -99,7 +106,7 @@ jobs:
     name: Check for Publish release build to pypi
     runs-on: ubuntu-latest
 
-    needs: [call-linux, call-mac, call-win, call-sdist]
+    needs: [call-linux, call-mac, call-win, call-pyodide, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_pypi_release == 'yes') && (github.repository_owner == 'onnx') && startsWith(github.ref, 'refs/heads/rel-') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -134,7 +141,7 @@ jobs:
     name: Check for Publish preview build to test.pypi-weekly
     runs-on: ubuntu-latest
 
-    needs: [call-linux, call-mac, call-win,call-sdist]
+    needs: [call-linux, call-mac, call-win, call-pyodide, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.ref == 'refs/heads/main') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -175,7 +182,7 @@ jobs:
         if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
         id: upload_preview_build_to_testpypi_weekly
 
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
@@ -185,7 +192,7 @@ jobs:
     name: Check for Publish release build to test.pypi (rc-candidates)
     runs-on: ubuntu-latest
 
-    needs: [call-linux, call-mac, call-win, call-sdist]
+    needs: [call-linux, call-mac, call-win, call-pyodide, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event.inputs.publish_testpypi_release == 'yes') && startsWith(github.ref, 'refs/heads/rel') && (github.repository_owner == 'onnx') && (github.event_name == 'workflow_dispatch')
 
     steps:
@@ -224,7 +231,7 @@ jobs:
         - name: Upload release build to test.pypi
           id: upload_release_build_to_testpypi
 
-          uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+          uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
           with:
             repository-url: https://test.pypi.org/legacy/
             verbose: true
@@ -235,7 +242,7 @@ jobs:
     name: Check for Publish preview build to pypi-weekly
     runs-on: ubuntu-latest
 
-    needs: [call-linux, call-mac, call-win, call-sdist]
+    needs: [call-linux, call-mac, call-win, call-pyodide, call-sdist]
     if: (!contains(join(needs.*.result, ' '), 'skipped')) && (github.event_name == 'schedule' || github.event.inputs.publish_pypi_weekly == 'yes') && (github.repository_owner == 'onnx')
 
     steps:
@@ -273,7 +280,7 @@ jobs:
       - name: Upload preview_build to pypi-weekly
         id: upload_preview_build_to_pypi_weekly
         if: (github.ref == 'refs/heads/main')
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
         with:
           repository-url: https://upload.pypi.org/legacy/
           verbose: true
@@ -295,12 +302,14 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        if: (github.event_name == 'workflow_dispatch')
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        if: (github.event_name == 'workflow_dispatch')
         with:
           pattern: sdist
           path: dist
@@ -308,7 +317,7 @@ jobs:
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b
         with:
           repository-url: https://upload.pypi.org/legacy/
           verbose: true

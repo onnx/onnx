@@ -17,7 +17,7 @@ namespace defs {
 namespace math {
 namespace utils {
 
-std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types);
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types);
 
 template <typename T>
 T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {

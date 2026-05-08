@@ -18,8 +18,6 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* const GridSample_ver20_doc = kDoc_GridSample_ver20;
-
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
     20,
@@ -94,16 +92,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain grid types to float tensors.")
-        .SetDoc(GridSample_ver20_doc)
+        .SetDoc(kDoc_GridSample_ver20)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
-
-static const char* const Cast_ver24_doc = kDoc_Cast_ver24;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
     24,
     OpSchema()
-        .SetDoc(Cast_ver24_doc)
+        .SetDoc(kDoc_Cast_ver24)
         .Attr(
             "to",
             "The data type to which the elements of the input tensor are cast. "
@@ -512,13 +508,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const CastLike_ver24_doc = kDoc_CastLike_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     24,
     OpSchema()
-        .SetDoc(CastLike_ver24_doc)
+        .SetDoc(kDoc_CastLike_ver24)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -588,13 +582,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* const CastLike_ver23_doc = CastLike_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     23,
     OpSchema()
-        .SetDoc(CastLike_ver23_doc)
+        .SetDoc(kDoc_CastLike_ver24)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -654,14 +646,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             }));
-
-static const char* const CastLike_ver21_doc = CastLike_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     21,
     OpSchema()
-        .SetDoc(CastLike_ver21_doc)
+        .SetDoc(kDoc_CastLike_ver24)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -721,14 +711,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               schema.BuildFunction(functionProto);
               return true;
             }));
-
-static const char* const CastLike_ver19_doc = CastLike_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     19,
     OpSchema()
-        .SetDoc(CastLike_ver19_doc)
+        .SetDoc(kDoc_CastLike_ver24)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -823,13 +811,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* const CastLike_ver15_doc = CastLike_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     15,
     OpSchema()
-        .SetDoc(CastLike_ver15_doc)
+        .SetDoc(kDoc_CastLike_ver24)
         .Input(0, "input", "Input tensor to be cast.", "T1", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -1069,13 +1055,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(GridSample_ver16_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
-static const char* const Reshape_ver24_doc = kDoc_Reshape_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     24,
     OpSchema()
-        .SetDoc(Reshape_ver24_doc)
+        .SetDoc(kDoc_Reshape_ver24)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -1219,13 +1203,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Reshape_ver23_doc = Reshape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     23,
     OpSchema()
-        .SetDoc(Reshape_ver23_doc)
+        .SetDoc(kDoc_Reshape_ver24)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -1369,13 +1351,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Reshape_ver19_doc = Reshape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     21,
     OpSchema()
-        .SetDoc(Reshape_ver19_doc)
+        .SetDoc(kDoc_Reshape_ver24)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -1523,7 +1503,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     19,
     OpSchema()
-        .SetDoc(Reshape_ver19_doc)
+        .SetDoc(kDoc_Reshape_ver24)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -1905,13 +1885,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Shape_ver24_doc = kDoc_Shape_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     24,
     OpSchema()
-        .SetDoc(Shape_ver24_doc)
+        .SetDoc(kDoc_Shape_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -1969,13 +1947,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Shape_ver23_doc = Shape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     23,
     OpSchema()
-        .SetDoc(Shape_ver23_doc)
+        .SetDoc(kDoc_Shape_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -2101,13 +2077,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { ShapeOp13DataPropagator(ctx); }));
 
-static const char* const Size_ver24_doc = kDoc_Size_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     24,
     OpSchema()
-        .SetDoc(Size_ver24_doc)
+        .SetDoc(kDoc_Size_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
@@ -2133,13 +2107,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Size_ver23_doc = Size_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     23,
     OpSchema()
-        .SetDoc(Size_ver23_doc)
+        .SetDoc(kDoc_Size_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
@@ -2165,13 +2137,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Size_ver1_doc = Size_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     1,
     OpSchema()
-        .SetDoc(Size_ver1_doc)
+        .SetDoc(kDoc_Size_ver24)
         .Input(0, "data", "An input tensor.", "T")
         .Output(0, "size", "Total number of elements of the input tensor", "T1")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Input tensor can be of arbitrary type.")
@@ -2713,7 +2683,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // check if every index is valid
             std::vector<bool> seen(shape.dim_size(), false);
             for (int64_t fromDimIndex : perm) {
-              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+              if (fromDimIndex < 0 || fromDimIndex >= shape.dim_size()) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
                 for (size_t i = 1; i != perm.size(); ++i) {
@@ -2778,7 +2748,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // check if every index is valid
             std::vector<bool> seen(shape.dim_size(), false);
             for (int64_t fromDimIndex : perm) {
-              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+              if (fromDimIndex < 0 || fromDimIndex >= shape.dim_size()) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
                 for (size_t i = 1; i != perm.size(); ++i) {
@@ -2843,7 +2813,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // check if every index is valid
             std::vector<bool> seen(shape.dim_size(), false);
             for (int64_t fromDimIndex : perm) {
-              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+              if (fromDimIndex < 0 || fromDimIndex >= shape.dim_size()) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
                 for (size_t i = 1; i != perm.size(); ++i) {
@@ -2907,7 +2877,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // check if every index is valid
             std::vector<bool> seen(shape.dim_size(), false);
             for (int64_t fromDimIndex : perm) {
-              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+              if (fromDimIndex < 0 || fromDimIndex >= shape.dim_size()) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
                 for (size_t i = 1; i != perm.size(); ++i) {
@@ -2970,7 +2940,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // check if every index is valid
             std::vector<bool> seen(shape.dim_size(), false);
             for (int64_t fromDimIndex : perm) {
-              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+              if (fromDimIndex < 0 || fromDimIndex >= shape.dim_size()) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
                 for (size_t i = 1; i != perm.size(); ++i) {
@@ -3677,13 +3647,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Squeeze_ver24_doc = kDoc_Squeeze_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     24,
     OpSchema()
-        .SetDoc(Squeeze_ver24_doc)
+        .SetDoc(kDoc_Squeeze_ver24)
         .Input(
             0,
             "data",
@@ -3775,13 +3743,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const Squeeze_ver23_doc = Squeeze_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     23,
     OpSchema()
-        .SetDoc(Squeeze_ver23_doc)
+        .SetDoc(kDoc_Squeeze_ver24)
         .Input(
             0,
             "data",
@@ -3873,13 +3839,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const Squeeze_ver13_doc = Squeeze_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     21,
     OpSchema()
-        .SetDoc(Squeeze_ver13_doc)
+        .SetDoc(kDoc_Squeeze_ver24)
         .Input(
             0,
             "data",
@@ -3975,7 +3939,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     13,
     OpSchema()
-        .SetDoc(Squeeze_ver13_doc)
+        .SetDoc(kDoc_Squeeze_ver24)
         .Input(
             0,
             "data",
@@ -4126,13 +4090,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Unsqueeze_ver24_doc = kDoc_Unsqueeze_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     24,
     OpSchema()
-        .SetDoc(Unsqueeze_ver24_doc)
+        .SetDoc(kDoc_Unsqueeze_ver24)
         .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -4199,13 +4161,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const Unsqueeze_ver23_doc = Unsqueeze_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     23,
     OpSchema()
-        .SetDoc(Unsqueeze_ver23_doc)
+        .SetDoc(kDoc_Unsqueeze_ver24)
         .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -4272,13 +4232,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const Unsqueeze_ver13_doc = Unsqueeze_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     21,
     OpSchema()
-        .SetDoc(Unsqueeze_ver13_doc)
+        .SetDoc(kDoc_Unsqueeze_ver24)
         .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -4349,7 +4307,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     13,
     OpSchema()
-        .SetDoc(Unsqueeze_ver13_doc)
+        .SetDoc(kDoc_Unsqueeze_ver24)
         .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -4499,14 +4457,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const SpaceToDepth_ver1_doc = kDoc_SpaceToDepth_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
     1,
     OpSchema()
         .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
-        .SetDoc(SpaceToDepth_ver1_doc)
+        .SetDoc(kDoc_SpaceToDepth_ver1)
         .Input(
             0,
             "input",
@@ -4608,13 +4564,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Tile_ver6_doc = kDoc_Tile_ver6;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Tile,
     6,
     OpSchema()
-        .SetDoc(Tile_ver6_doc)
+        .SetDoc(kDoc_Tile_ver6)
         .Input(0, "input", "Input tensor of any shape.", "T")
         .Input(
             1,
@@ -5394,35 +5348,29 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Pad_ver24_doc = kDoc_Pad_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
     24,
     OpSchema().FillUsing(PadDocGenerator(
-        Pad_ver24_doc,
+        kDoc_Pad_ver24,
         "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`",
         OpSchema::all_tensor_types_ir12(),
         "Constrain input and output types to all tensor types up to IRv12.")));
-
-static const char* const Pad_ver23_doc = Pad_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
     23,
     OpSchema().FillUsing(PadDocGenerator(
-        Pad_ver23_doc,
+        kDoc_Pad_ver24,
         "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`",
         OpSchema::all_tensor_types_ir11(),
         "Constrain input and output types to all tensor types up to IRv11.")));
-
-static const char* const Pad_ver19_doc = Pad_ver24_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
     21,
     OpSchema().FillUsing(PadDocGenerator(
-        Pad_ver19_doc,
+        kDoc_Pad_ver24,
         "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`",
         OpSchema::all_tensor_types_ir10(),
         "Constrain input and output types to all tensor types up to IRv10.")));
@@ -5431,7 +5379,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Pad,
     19,
     OpSchema().FillUsing(
-        PadDocGenerator(Pad_ver19_doc, "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`")));
+        PadDocGenerator(kDoc_Pad_ver24, "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`")));
 
 static constexpr const char* Pad_ver11_doc = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
@@ -5933,8 +5881,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output types to bool, int32, int64, float16, float, double tensors.")
         .SetDoc(Upsample_ver1_doc));
 
-static const char* const Upsample_ver7_doc = kDoc_Upsample_ver7;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
     7,
@@ -5952,7 +5898,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "X", "N-D tensor", "T")
         .Output(0, "Y", "N-D tensor after resizing", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
-        .SetDoc(Upsample_ver7_doc)
+        .SetDoc(kDoc_Upsample_ver7)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (!hasNInputShapes(ctx, 1)) {
             return;
@@ -5993,8 +5939,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           } // nullptr != scales
         }));
 
-static const char* const Upsample_ver9_doc = Upsample_ver7_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
     9,
@@ -6013,7 +5957,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(float)")
         .Output(0, "Y", "N-D tensor after resizing", "T")
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Upsample_ver9_doc)
+        .SetDoc(kDoc_Upsample_ver7)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
 static constexpr const char* Resize_ver10_doc = R"DOC(
@@ -6817,13 +6761,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Compress_ver9_doc = kDoc_Compress_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
     9,
     OpSchema()
-        .SetDoc(Compress_ver9_doc)
+        .SetDoc(kDoc_Compress_ver9)
         .Attr(
             "axis",
             "(Optional) Axis along which to take slices. If not specified, "
@@ -7137,13 +7079,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor and sequence types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Where_ver9_doc = kDoc_Where_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
     9,
     OpSchema()
-        .SetDoc(Where_ver9_doc + GenerateBroadcastingDocMul())
+        .SetDoc(kDoc_Where_ver9 + GenerateBroadcastingDocMul())
         .Input(
             0,
             "condition",
@@ -7454,13 +7394,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor, sequence, and optional types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Reshape_ver14_doc = Reshape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     14,
     OpSchema()
-        .SetDoc(Reshape_ver14_doc)
+        .SetDoc(kDoc_Reshape_ver24)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -7604,13 +7542,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Shape_ver19_doc = Shape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     21,
     OpSchema()
-        .SetDoc(Shape_ver19_doc)
+        .SetDoc(kDoc_Shape_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -7668,13 +7604,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Shape_ver15_doc = Shape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     19,
     OpSchema()
-        .SetDoc(Shape_ver15_doc)
+        .SetDoc(kDoc_Shape_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -7736,7 +7670,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     15,
     OpSchema()
-        .SetDoc(Shape_ver15_doc)
+        .SetDoc(kDoc_Shape_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -7794,13 +7728,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Size_ver19_doc = Size_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     21,
     OpSchema()
-        .SetDoc(Size_ver19_doc)
+        .SetDoc(kDoc_Size_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
@@ -7826,13 +7758,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Size_ver13_doc = Size_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     19,
     OpSchema()
-        .SetDoc(Size_ver13_doc)
+        .SetDoc(kDoc_Size_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
@@ -7862,7 +7792,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Size,
     13,
     OpSchema()
-        .SetDoc(Size_ver13_doc)
+        .SetDoc(kDoc_Size_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
