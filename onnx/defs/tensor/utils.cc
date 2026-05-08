@@ -151,6 +151,17 @@ void resizeShapeInferenceHelper(
       } else {
         dim->set_dim_value(dim_value);
       } // dim->has_dim_value()
+    } else if (input_shape.dim(i).has_dim_param()) {
+      // Propagate symbolic dim when the scale is an exact integer
+      auto scale = scales_data[i];
+      auto int_scale = static_cast<int64_t>(scale);
+      if (static_cast<float>(int_scale) == scale && int_scale > 0) {
+        if (int_scale == 1) {
+          *dim = input_shape.dim(i);
+        } else {
+          *dim = input_shape.dim(i) * int_scale;
+        }
+      }
     } // input_shape.dim(i).has_dim_value()
   }
 }
@@ -494,11 +505,13 @@ std::function<void(OpSchema&)> PadDocGenerator(
               " values.");
         }
 
-        // Set default dim values
+        // Set default dim values (propagate symbolic dims too)
         for (int i = 0; i < input_rank; ++i) {
           const auto& input_dim = input_shape.dim(i);
           if (input_dim.has_dim_value()) {
             out_dims[i]->set_dim_value(input_dim.dim_value());
+          } else if (input_dim.has_dim_param()) {
+            out_dims[i]->set_dim_param(input_dim.dim_param());
           }
         }
 
@@ -511,6 +524,8 @@ std::function<void(OpSchema&)> PadDocGenerator(
             out_dim.set_dim_value(input_dim.dim_value() + total_pad);
           } else if (total_pad == 0) {
             out_dim = input_dim;
+          } else if (input_dim.has_dim_param()) {
+            out_dim = input_dim + total_pad;
           }
         }
       }

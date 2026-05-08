@@ -141,14 +141,12 @@ class TestSymbolicShape(unittest.TestCase):
             name="test_graph",
             nodes=[concat1, concat2, cast],
             inputs=[
-                helper.make_tensor_value_info("A", TensorProto.FLOAT, [2, "unk__0"]),
+                helper.make_tensor_value_info("A", TensorProto.FLOAT, [2, "_d0"]),
                 helper.make_tensor_value_info("B", TensorProto.FLOAT, [2, 3]),
-                helper.make_tensor_value_info("D", TensorProto.FLOAT, [2, "unk__1"]),
+                helper.make_tensor_value_info("D", TensorProto.FLOAT, [2, "_d1"]),
             ],
             outputs=[
-                helper.make_tensor_value_info(
-                    "output", TensorProto.FLOAT, [2, "unk__0"]
-                )
+                helper.make_tensor_value_info("output", TensorProto.FLOAT, [2, "_d0"])
             ],
         )
 
@@ -157,9 +155,9 @@ class TestSymbolicShape(unittest.TestCase):
         inferred_model = onnx.shape_inference.infer_shapes(onnx_model, strict_mode=True)
         inferred_count = self._count_unique_dim_param_number(inferred_model)
         # to prevent duplicate so the inferred count will be count + 2
-        # new symbol 'unk__2' and 'unk__3' should be generated
-        # original: {'unk_0', 'unk__1'}
-        # inferred: {'unk_0', 'unk__1', 'unk__2', 'unk__3'}
+        # new symbol '_d2' and '_d3' should be generated
+        # original: {'unk_0', '_d1'}
+        # inferred: {'unk_0', '_d1', '_d2', '_d3'}
         assert inferred_count == original_count + 2, f"{inferred_model}{onnx_model}"
 
     def test_unknown_shape(self) -> None:
@@ -189,7 +187,7 @@ class TestSymbolicShape(unittest.TestCase):
             inferred_model, [make_tensor_value_info("C", TensorProto.FLOAT, (3, -1))]
         )
         # the symbolic shape of C and output should be the same
-        # ('unk__0', 'unk__1')
+        # ('_d0', '_d1')
         assert self._get_shape_from_name(
             inferred_model, "C"
         ) == self._get_shape_from_name(inferred_model, "output")
