@@ -7,6 +7,9 @@ name: Check URLs
 on:
   push:
     branches:  [ "main", rel-* ]
+  pull_request:
+    paths:
+      - "**/*.md"
   schedule:
     # Run every month
     - cron:  '0 0 1 * *'
