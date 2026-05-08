@@ -87,6 +87,17 @@ set(ONNX_ROOT ${onnx_SOURCE_DIR})
 file(READ "${ONNX_ROOT}/VERSION_NUMBER" ONNX_VERSION)
 string(STRIP "${ONNX_VERSION}" ONNX_VERSION)
 
+# Parse version components for version macros (strip any pre-release suffix like "rc1")
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${ONNX_VERSION})
+set(ONNX_VERSION_MAJOR ${CMAKE_MATCH_1})
+set(ONNX_VERSION_MINOR ${CMAKE_MATCH_2})
+set(ONNX_VERSION_PATCH ${CMAKE_MATCH_3})
+
+configure_file(
+  ${ONNX_ROOT}/onnx/common/version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/onnx/common/version.h
+  @ONLY)
+
 if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
