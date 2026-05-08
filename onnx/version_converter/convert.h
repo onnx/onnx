@@ -966,6 +966,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+
+    /******** 26 -> 27 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
+
+    /******** 27 -> 26 ********/
+    // Range v27 added FLOAT16/BFLOAT16; Range v11 (opset 26) does not support them.
+    const std::vector<TensorProto_DataType> range_27_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<TypeRestriction>("Range", OpSetID(27), OpSetID(26), range_27_unallowed_types));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

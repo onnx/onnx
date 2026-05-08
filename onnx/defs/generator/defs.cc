@@ -327,60 +327,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
-static constexpr const char* Range_ver11_doc = R"DOC(
-Generate a tensor containing a sequence of numbers that begin at `start` and extends by increments of `delta`
-up to `limit` (exclusive).
-
-The number of elements in the output of range is computed as below:
-
-```
-number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
-```
-
-The pseudocode determining the contents of the output is shown below:
-
-```
-for(int i=0; i<number_of_elements; ++i) {
-  output[i] =  start + (i * delta);
-}
-```
-
-Example 1
-
-```
-Inputs: start = 3, limit = 9, delta = 3
-Output: [3, 6]
-```
-
-Example 2
-
-```
-Inputs: start = 10, limit = 4, delta = -2
-Output: [10, 8, 6]
-```
-)DOC";
-
-template <typename T>
-static int64_t
-compute_output_dim_for_range(const TensorProto* start, const TensorProto* limit, const TensorProto* delta) {
-  if (!start->dims().empty() || !limit->dims().empty() || !delta->dims().empty()) {
-    fail_shape_inference("Input to 'Range' op should be scalars (Tensor with only one element and shape empty)");
-  }
-
-  const auto start_data = ParseData<T>(start);
-  const auto limit_data = ParseData<T>(limit);
-  const auto delta_data = ParseData<T>(delta);
-
-  int64_t n = static_cast<int64_t>(ceil((1.0 * (limit_data[0] - start_data[0])) / delta_data[0]));
-
-  n = std::max<int64_t>(n, 0);
-
-  return n;
-}
+static const char* const Range_ver11_doc = kDoc_Range_ver11;
 
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
-    11,
+    27,
     OpSchema()
         .SetDoc(Range_ver11_doc)
         .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
@@ -389,7 +340,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated range of values.", "T")
         .TypeConstraint(
             "T",
-            {types::Float, types::Double, types::Int16, types::Int32, types::Int64},
+            {types::Float, types::Double, types::Int16, types::Int32, types::Int64, types::Float16, types::BFloat16},
             "Constrain input types to common numeric type tensors.")
         .FunctionBody(R"ONNX(
           {
@@ -445,7 +396,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               output_dim->set_dim_value(
                   compute_output_dim_for_range<double>(start_initializer, limit_initializer, delta_initializer));
             } else {
-              // 'float16' has no native CPU type -
+              // float16 and bfloat16 have no native CPU type -
               // stop with rank inference, no action here
             }
 
