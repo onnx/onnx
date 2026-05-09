@@ -142,15 +142,21 @@ jobs:
           submodules: true
 
       - name: "WARNING: about to publish to PyPI-release"
+        env:
+          PUBLISH_PYPI_RELEASE: ${{ github.event.inputs.publish_pypi_release }}
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
+          CONFIRM_PUBLISH_RELEASE: ${{ github.event.inputs.confirm_publish_release }}
         run: |
           echo "####################################################################"
           echo "WARNING: This run will publish to pypi-release. Be certain you want to do this."
-          echo "publish_pypi_release=${{ github.event.inputs.publish_pypi_release }}"
-          echo "release_type=${{ github.event.inputs.release_type }}"
-          echo "confirm_publish_release=${{ github.event.inputs.confirm_publish_release }}"
+          echo "publish_pypi_release=${PUBLISH_PYPI_RELEASE}"
+          echo "release_type=${RELEASE_TYPE}"
+          echo "confirm_publish_release=${CONFIRM_PUBLISH_RELEASE}"
           echo "####################################################################"
 
       - name: Check if package_version matches branch
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release_type }}
         run: |
           branch_version=${GITHUB_REF#refs/heads/rel-}
           package_version=$(cat VERSION_NUMBER)
@@ -158,7 +164,7 @@ jobs:
           echo "Package version: $package_version"
 
           # Enforce package version rules depending on selected release_type
-          if [ "${{ github.event.inputs.release_type }}" = "release" ]; then
+          if [ "${RELEASE_TYPE}" = "release" ]; then
             # For a full release the package version must exactly match the branch
             if [ "$package_version" != "$branch_version" ]; then
               echo "Error: For a full release the package version ($package_version) must match the branch version ($branch_version)."
