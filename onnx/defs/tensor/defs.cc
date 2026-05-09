@@ -6,6 +6,9 @@
 #include <cmath>
 #include <numeric>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"
@@ -15,13 +18,11 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* const Cast_ver25_doc = kDoc_Cast_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Cast,
     25,
     OpSchema()
-        .SetDoc(Cast_ver25_doc)
+        .SetDoc(kDoc_Cast_ver24)
         .Attr(
             "to",
             "The data type to which the elements of the input tensor are cast. "
@@ -72,13 +73,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const CastLike_ver25_doc = kDoc_CastLike_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     CastLike,
     25,
     OpSchema()
-        .SetDoc(CastLike_ver25_doc)
+        .SetDoc(kDoc_CastLike_ver24)
         .Attr(
             "saturate",
             "The parameter defines how the conversion behaves if an input value is out of "
@@ -139,20 +138,119 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               auto target_elt_type = target_type->tensor_type().elem_type();
               FunctionBuilder builder(functionProto);
-              builder.Add(
-                  MakeString("output = Cast <to= ", (int64_t)(target_elt_type), ", saturate: int = @saturate> (input)")
-                      .c_str());
+              builder.Add(MakeString(
+                              "output = Cast <to= ",
+                              static_cast<int64_t>(target_elt_type),
+                              ", saturate: int = @saturate> (input)")
+                              .c_str());
               schema.BuildFunction(functionProto);
               return true;
             }));
 
-static const char* const Reshape_ver25_doc = kDoc_Reshape_ver24;
+ONNX_OPERATOR_SET_SCHEMA(
+    BitCast,
+    26,
+    OpSchema()
+        .SetDoc(kDoc_BitCast_ver26)
+        .Attr(
+            "to",
+            "The data type to which the input tensor is bitwise reinterpreted. "
+            "Must be one of the non-string types from DataType enum in TensorProto. "
+            "The target type must have the same bit-width as the input type.",
+            AttributeProto::INT)
+        .Input(0, "input", "Input tensor to be bitcast.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "output",
+            "Output tensor with the same shape as the input.",
+            "T2",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_non_string_tensor_types_ir13(),
+            "Constrain input types. Bitcasting from string is not supported.")
+        .TypeConstraint(
+            "T2",
+            OpSchema::all_non_string_tensor_types_ir13(),
+            "Constrain output types. Bitcasting to string is not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          auto get_bit_size = [](int element_type) -> int {
+            switch (element_type) {
+              case TensorProto::FLOAT:
+              case TensorProto::INT32:
+              case TensorProto::UINT32:
+                return 32;
+              case TensorProto::DOUBLE:
+              case TensorProto::INT64:
+              case TensorProto::UINT64:
+              case TensorProto::COMPLEX64:
+                return 64;
+              case TensorProto::COMPLEX128:
+                return 128;
+              case TensorProto::FLOAT16:
+              case TensorProto::BFLOAT16:
+              case TensorProto::INT16:
+              case TensorProto::UINT16:
+                return 16;
+              case TensorProto::INT8:
+              case TensorProto::UINT8:
+              case TensorProto::BOOL:
+              case TensorProto::FLOAT8E4M3FN:
+              case TensorProto::FLOAT8E4M3FNUZ:
+              case TensorProto::FLOAT8E5M2:
+              case TensorProto::FLOAT8E5M2FNUZ:
+              case TensorProto::FLOAT8E8M0:
+                return 8;
+              case TensorProto::INT4:
+              case TensorProto::UINT4:
+              case TensorProto::FLOAT4E2M1:
+                return 4;
+              case TensorProto::INT2:
+              case TensorProto::UINT2:
+                return 2;
+              default:
+                return 0;
+            }
+          };
+
+          // Validate that input and output types have the same bit-width
+          auto input_type = ctx.getInputType(0);
+          if (input_type && input_type->has_tensor_type()) {
+            auto input_element_type = input_type->tensor_type().elem_type();
+            auto* to_attr = ctx.getAttribute("to");
+            if (to_attr) {
+              auto output_element_type = static_cast<int32_t>(to_attr->i());
+              int input_element_bit_size = get_bit_size(input_element_type);
+              int output_element_bit_size = get_bit_size(output_element_type);
+              if (input_element_bit_size != 0 && output_element_bit_size != 0 &&
+                  input_element_bit_size != output_element_bit_size) {
+                fail_shape_inference(
+                    "BitCast requires input and output types to have the same bit-width, but input type has ",
+                    input_element_bit_size,
+                    " bits and output type has ",
+                    output_element_bit_size,
+                    " bits.");
+              }
+            }
+          }
+
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+
+          // Same bit-width: output shape equals input shape
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        })
+        .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Reshape,
     25,
     OpSchema()
-        .SetDoc(Reshape_ver25_doc)
+        .SetDoc(kDoc_Reshape_ver24)
         .Attr(
             "allowzero",
             "(Optional) By default, when any value in the 'shape' input is equal to zero "
@@ -296,13 +394,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Shape_ver25_doc = kDoc_Shape_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Shape,
     25,
     OpSchema()
-        .SetDoc(Shape_ver25_doc)
+        .SetDoc(kDoc_Shape_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "shape", "Shape of the input tensor", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Attr(
@@ -360,13 +456,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Size_ver25_doc = kDoc_Size_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Size,
     25,
     OpSchema()
-        .SetDoc(Size_ver25_doc)
+        .SetDoc(kDoc_Size_ver24)
         .Input(0, "data", "An input tensor.", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(
             0,
@@ -685,28 +779,32 @@ result = [
 ```
 )DOC";
 
-static void processSliceInputs(const int64_t input_rank, int64_t& start, int64_t& end, int64_t step) {
-  auto clamp = [](int64_t val, int64_t min, int64_t max) -> int64_t {
-    return (val < min) ? min : (val > max) ? max : val;
-  };
+static void processSliceInputs(const int64_t input_dim_size_or_value, int64_t& start, int64_t& end, int64_t step) {
   // process step
   if (step == 0) {
     fail_shape_inference("'step' cannot be 0 for Slice");
   }
+  // Empty dimension: clamp bounds are invalid when dimension size is 0,
+  // so short-circuit to produce a zero-length output.
+  if (input_dim_size_or_value == 0) {
+    start = 0;
+    end = 0;
+    return;
+  }
   // process start
   if (start < 0)
-    start += input_rank;
+    start += input_dim_size_or_value;
   if (step < 0)
-    start = clamp(start, 0, input_rank - 1);
+    start = std::clamp(start, static_cast<int64_t>(0), input_dim_size_or_value - 1);
   else
-    start = clamp(start, 0, input_rank);
+    start = std::clamp(start, static_cast<int64_t>(0), input_dim_size_or_value);
   // process end
   if (end < 0)
-    end += input_rank;
+    end += input_dim_size_or_value;
   if (step < 0)
-    end = clamp(end, -1, input_rank - 1);
+    end = std::clamp(end, static_cast<int64_t>(-1), input_dim_size_or_value - 1);
   else
-    end = clamp(end, 0, input_rank);
+    end = std::clamp(end, static_cast<int64_t>(0), input_dim_size_or_value);
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1002,7 +1100,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // check if every index is valid
             std::vector<bool> seen(shape.dim_size(), false);
             for (int64_t fromDimIndex : perm) {
-              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+              if (fromDimIndex < 0 || fromDimIndex >= shape.dim_size()) {
                 std::ostringstream oss;
                 oss << "Invalid attribute perm {" << perm[0];
                 for (size_t i = 1; i != perm.size(); ++i) {
@@ -1606,13 +1704,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Squeeze_ver25_doc = kDoc_Squeeze_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Squeeze,
     25,
     OpSchema()
-        .SetDoc(Squeeze_ver25_doc)
+        .SetDoc(kDoc_Squeeze_ver24)
         .Input(
             0,
             "data",
@@ -1704,13 +1800,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const Unsqueeze_ver25_doc = kDoc_Unsqueeze_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unsqueeze,
     25,
     OpSchema()
-        .SetDoc(Unsqueeze_ver25_doc)
+        .SetDoc(kDoc_Unsqueeze_ver24)
         .Input(0, "data", "Original tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -1777,14 +1871,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           PropagateShapeDataFromInputToOutput(ctx, 0);
         }));
 
-static const char* const SpaceToDepth_ver13_doc = kDoc_SpaceToDepth_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     SpaceToDepth,
     13,
     OpSchema()
         .Attr("blocksize", "Blocks of [blocksize, blocksize] are moved.", AttributeProto::INT)
-        .SetDoc(SpaceToDepth_ver13_doc)
+        .SetDoc(kDoc_SpaceToDepth_ver1)
         .Input(
             0,
             "input",
@@ -1814,8 +1906,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if H or W is not a
-              // multiple of blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -1895,8 +1985,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() == 4) {
-              // TODO: Clarify what behavior should be if C is not a multiple of
-              // blocksize*blocksize.
               updateOutputShape(
                   ctx,
                   0,
@@ -1910,13 +1998,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Tile_ver13_doc = kDoc_Tile_ver6;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Tile,
     13,
     OpSchema()
-        .SetDoc(Tile_ver13_doc)
+        .SetDoc(kDoc_Tile_ver6)
         .Input(0, "input", "Input tensor of any shape.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Input(
             1,
@@ -1991,8 +2077,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           return;
         }));
 
-static const char* const Upsample_ver10_doc = kDoc_Upsample_ver7;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
     10,
@@ -2013,7 +2097,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Single)
         .Output(0, "Y", "N-D tensor after resizing", "T", OpSchema::Single)
         .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input 'X' and output 'Y' to all tensor types.")
-        .SetDoc(Upsample_ver10_doc)
+        .SetDoc(kDoc_Upsample_ver7)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset7_to_10(ctx); }));
 
 static constexpr const char* Resize_ver19_doc = R"DOC(
@@ -2201,8 +2285,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Resize_ver19_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { resizeShapeInference_opset18_to_19(ctx); }));
 
-static const char* const GridSample_ver22_doc = kDoc_GridSample_ver20;
-
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
     22,
@@ -2274,7 +2356,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types_ir4(),
             "Constrain input `X` and output `Y` types to all tensor types.")
         .TypeConstraint("T2", OpSchema::all_float_types_ir4(), "Constrain grid types to float tensors.")
-        .SetDoc(GridSample_ver22_doc)
+        .SetDoc(kDoc_GridSample_ver20)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { gridSampleShapeInference(ctx); }));
 
 static constexpr const char* AffineGrid_ver20_doc = R"DOC(
@@ -2579,13 +2661,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor, sequence, and optional types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* const Compress_ver11_doc = kDoc_Compress_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
     11,
     OpSchema()
-        .SetDoc(Compress_ver11_doc)
+        .SetDoc(kDoc_Compress_ver9)
         .Attr(
             "axis",
             "(Optional) Axis along which to take slices. If not specified, "
@@ -2740,7 +2820,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference("OneHot node must have three inputs.");
           }
           // Input 'depth' must be a scalar or a single-element vector.
-          // TODO: Ideally to match spec for this input only Scalar should
+          // TODO(ONNX): Ideally to match spec for this input only Scalar should
           // be allowed. Making this change now can affect backward
           // compatibility for this op. Since this does not seem like a good
           // justification to update version for this op, allowing both scalar
@@ -2862,13 +2942,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Where_ver16_doc = kDoc_Where_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Where,
     16,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Where_ver16_doc) + GenerateBroadcastingDocMul()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Where_ver9) + GenerateBroadcastingDocMul()))
         .Input(
             0,
             "condition",
@@ -3419,13 +3497,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Pad_ver25_doc = kDoc_Pad_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Pad,
     25,
     OpSchema().FillUsing(PadDocGenerator(
-        Pad_ver25_doc,
+        kDoc_Pad_ver24,
         "Supported modes: `constant`(default), `reflect`, `edge`, `wrap`",
         OpSchema::all_tensor_types_ir13(),
         "Constrain input and output types to all tensor types up to IRv13.")));

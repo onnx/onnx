@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -17,6 +15,7 @@
 #include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
+namespace {
 
 struct InternedStrings {
   InternedStrings() {
@@ -65,10 +64,12 @@ struct InternedStrings {
   std::mutex mutex_;
 };
 
-static InternedStrings& globalStrings() {
+InternedStrings& globalStrings() {
   static InternedStrings s;
   return s;
 }
+
+} // namespace
 
 const char* Symbol::toString() const {
   return globalStrings().string(*this);

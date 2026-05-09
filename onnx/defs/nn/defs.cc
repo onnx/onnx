@@ -1,8 +1,10 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #include "onnx/common/assertions.h"
 #include "onnx/defs/doc_strings.h"
@@ -73,14 +75,7 @@ ONNX_API void convPoolShapeInference(
     dilations.assign(n_input_dims, 1);
   }
 
-  std::vector<int64_t> strides;
-  if (getRepeatedAttribute(ctx, "strides", strides)) {
-    if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");
-    }
-  } else {
-    strides.assign(n_input_dims, 1);
-  }
+  std::vector<int64_t> strides = defs::nn::utils::getConvPoolStrides(ctx, n_input_dims);
 
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
@@ -457,13 +452,11 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 }
 
-static const char* const MaxUnpool_ver22_doc = kDoc_MaxUnpool_ver11;
-
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
     22,
     OpSchema()
-        .SetDoc(MaxUnpool_ver22_doc)
+        .SetDoc(kDoc_MaxUnpool_ver11)
         .Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS)
         .Attr(
             "strides",
@@ -1134,6 +1127,9 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    if (kernel_shape.size() != n_input_dims) {
+      return; // weight rank mismatch
+    }
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
@@ -1204,7 +1200,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
         if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
-          // TODO: throw exception?
+          // TODO(ONNX): throw exception?
           return; // output shape value cannot be smaller than the input shape
                   // value
         }
@@ -1349,13 +1345,11 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 22, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
-static const char* const DeformConv_ver22_doc = kDoc_DeformConv_ver19;
-
 ONNX_OPERATOR_SET_SCHEMA(
     DeformConv,
     22,
     OpSchema()
-        .SetDoc(DeformConv_ver22_doc)
+        .SetDoc(kDoc_DeformConv_ver19)
         .Input(
             0,
             "X",
@@ -1743,13 +1737,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const InstanceNormalization_ver22_doc = kDoc_InstanceNormalization_ver6;
-
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
     22,
     OpSchema()
-        .SetDoc(InstanceNormalization_ver22_doc)
+        .SetDoc(kDoc_InstanceNormalization_ver6)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Input(
             0,
@@ -1797,8 +1789,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* const LpNormalization_ver22_doc = kDoc_LpNormalization_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
     22,
@@ -1806,7 +1796,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input matrix", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "Matrix after normalization", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
-        .SetDoc(LpNormalization_ver22_doc)
+        .SetDoc(kDoc_LpNormalization_ver1)
         .Attr(
             "axis",
             "The axis on which to apply normalization, -1 mean last axis.",
@@ -1819,13 +1809,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* const Dropout_ver22_doc = kDoc_Dropout_ver13;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Dropout_ver22_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Dropout_ver13) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -1927,13 +1915,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* const Flatten_ver25_doc = kDoc_Flatten_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     25,
     OpSchema()
-        .SetDoc(Flatten_ver25_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -1974,7 +1960,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (axis > rank || axis < 0) {
             fail_shape_inference("Invalid value(", axis, ") for attribute 'axis'");
           }
-          // TODO: is the operation defined for input-rank < 2?
+          // TODO(ONNX): is the operation defined for input-rank < 2?
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
@@ -2758,7 +2744,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("X3D = Reshape (XReshaped, Shape3D)")
 
                   // Calculate statistics
-                  .Const1D("Axes2", (int64_t)2)
+                  .Const1D("Axes2", static_cast<int64_t>(2))
                   .Add("Mean = ReduceMean (X3D, Axes2)")
                   .Add("Square = Mul (X3D, X3D)")
                   .Add("MeanOfSquare = ReduceMean (Square, Axes2)")
@@ -2916,7 +2902,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   axis >= 0 // number of axes that are reduced =
                       ? "PosAxis = Identity (Axis)" // axis: scalar
                       : "PosAxis = Add (Rank, Axis)") // rank + axis : scalar
-              .Const("One", (int64_t)1)
+              .Const("One", static_cast<int64_t>(1))
               .Add("ReduceAxes = Range(PosAxis, Rank, One)")
               .Add("XU = Cast (X)", "to", U);
           builder.Add("XSquared = Mul (XU, XU)")
@@ -3148,9 +3134,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           // NewShape = [batch_size, sequence_length, num_heads, head_size]
 
           // Reshape tensor to 4D if input is 3D
-          builder.Const1D("Zero1D", (int64_t)0)
+          builder.Const1D("Zero1D", static_cast<int64_t>(0))
               .Const1D("NumHeads", num_heads) // num_heads
-              .Const1D("NegOne", (int64_t)(-1)); // head_size, inferred from other dimensions
+              .Const1D("NegOne", static_cast<int64_t>(-1)); // head_size, inferred from other dimensions
 
           if (is_input_4d == 0) {
             builder.Add("NewShape = Concat <axis = 0> (Zero1D, Zero1D, NumHeads, NegOne)")
@@ -3171,7 +3157,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             builder.Add("RotaryEmbedDim = Identity(HeadSize)");
           }
-          builder.Const1D("Two1D", (int64_t)2)
+          builder.Const1D("Two1D", static_cast<int64_t>(2))
               .Add("NoRotateLength = Sub(HeadSize, RotaryEmbedDim)")
               .Add("RotateSplitLengths = Concat <axis = 0> (RotaryEmbedDim, NoRotateLength)");
           // shape of input to rotate = input[:,:,:,:rotary_embedding_dim]
@@ -3233,8 +3219,8 @@ ONNX_OPERATOR_SET_SCHEMA(
                                                                             // input[:,:,:,rotary_embedding_dim/2:rotary_embedding_dim]
           } else {
             // For interleaved rotation, slices are created as follows,
-            builder.Const1D("One1D", (int64_t)1)
-                .Const1D("AxesRotaryDim", (int64_t)3)
+            builder.Const1D("One1D", static_cast<int64_t>(1))
+                .Const1D("AxesRotaryDim", static_cast<int64_t>(3))
                 .Add("RotaryEmbedDimInclusive = Add(RotaryEmbedDim, One1D)")
                 .Add(
                     "X1 = Slice(XToRotate, Zero1D, RotaryEmbedDim, AxesRotaryDim, Two1D)") // shape of X1 =
@@ -3327,9 +3313,9 @@ Q*sqrt(scale) K*sqrt(scale) |
       |          |          |
       ---MatMul---          |
             |               |
- at_mask---Add              |
-            |               |
   softcap (if provided)     |
+            |               |
+ at_mask---Add              |
             |               |
          Softmax            |
             |               |
@@ -3381,8 +3367,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "qk_matmul_output_mode",
             "If set to `0`, qk_matmul_output is the output of qk matmul. "
-            "If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. "
-            "If set to `2`, qk_matmul_output is the output after the softcap operation. "
+            "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
+            "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
             "If set to `3`, qk_matmul_output is the output after the softmax operation. "
             "Default value is 0.",
             AttributeProto::INT,
@@ -3643,9 +3629,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           //      |          |          |
           //      ---MatMul---          |
           //            |               |
-          // at_mask---Add              |
           //  softcap (if provided)     |
           //            |               |
+          // at_mask---Add              |
           //            |               |
           //         Softmax            |
           //            |               |
@@ -3656,20 +3642,23 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("QScaled = Mul(QReshaped, ScaleFactorF)")
               .Add("KScaled = Mul(KTranspose, ScaleFactorF)")
               .Add("QKAttnWeight = MatMul(QScaled, KScaled)")
-              .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1)
-              .Add("QKAttnWeightWithBias = Add(QKAttnCast, AttnBiasT)");
+              .Add("QKAttnCast = Cast (QKAttnWeight)", "to", T1);
 
-          // Apply softcap if provided
+          // Apply softcap before bias/mask addition.
+          // Softcap must come before mask so that -inf mask values remain -inf
+          // (zero probability in softmax). If applied after, -inf maps to
+          // -softcap (finite), leaking probability to masked positions.
           auto softcap_attr = ctx.getAttribute("softcap");
           float softcap_val = (softcap_attr != nullptr) ? softcap_attr->f() : static_cast<float>(0);
           if (softcap_val != 0) {
             builder.Const1D("Softcap", softcap_val)
                 .Add("SoftcapF = Cast (Softcap)", "to", T1)
-                .Add("SoftcapDiv = Div(QKAttnWeightWithBias, SoftcapF)")
+                .Add("SoftcapDiv = Div(QKAttnCast, SoftcapF)")
                 .Add("SoftcapTanh = Tanh(SoftcapDiv)")
-                .Add("QKAttnWeightSoftcap = Mul(SoftcapTanh, SoftcapF)");
+                .Add("QKAttnSoftcapped = Mul(SoftcapTanh, SoftcapF)")
+                .Add("QKAttnWeightSoftcap = Add(QKAttnSoftcapped, AttnBiasT)");
           } else {
-            builder.Add("QKAttnWeightSoftcap = Identity(QKAttnWeightWithBias)");
+            builder.Add("QKAttnWeightSoftcap = Add(QKAttnCast, AttnBiasT)");
           }
           builder.Add("SoftmaxCast = Cast (QKAttnWeightSoftcap)", "to", softmax_precision)
               .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
@@ -3680,8 +3669,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
           if (ctx.hasOutput(3)) {
             if (qk_matmul_output_mode == 1) {
-              builder.Add("qk_matmul_output = Identity(QKAttnWeightWithBias)");
+              // Mode 1: after softcap (before bias addition)
+              if (softcap_val != 0) {
+                builder.Add("qk_matmul_output = Identity(QKAttnSoftcapped)");
+              } else {
+                // No softcap applied, same as raw QK
+                builder.Add("qk_matmul_output = Identity(QKAttnCast)");
+              }
             } else if (qk_matmul_output_mode == 2) {
+              // Mode 2: QK + softcap + bias (after softcap + bias addition)
               builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
             } else if (qk_matmul_output_mode == 3) {
               builder.Add("qk_matmul_output = Identity(AttnWeightSoftmax)");

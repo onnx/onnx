@@ -1,15 +1,13 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+#include <string>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/defs/parser.h"
 #include "onnx/defs/printer.h"
-
-using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -123,6 +121,12 @@ TEST(ParserTest, TypeTest) {
   EXPECT_TRUE(valtype.has_tensor_type());
   EXPECT_EQ(valtype.tensor_type().elem_type(), float_type);
   EXPECT_EQ(valtype.tensor_type().shape().dim_size(), 1);
+
+  // Quoted string as symbolic dimension (non-identifier dim_param):
+  Parse(type, R"(float["M + N"])");
+  EXPECT_TRUE(type.has_tensor_type());
+  EXPECT_EQ(type.tensor_type().shape().dim_size(), 1);
+  EXPECT_EQ(type.tensor_type().shape().dim(0).dim_param(), "M + N");
 }
 
 TEST(ParserTest, TensorProtoTest) {

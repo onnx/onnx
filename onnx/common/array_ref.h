@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
@@ -63,7 +61,7 @@ class ArrayRef {
   /*implicit*/ ArrayRef() : Data(nullptr), Length(0) {}
 
   /// Construct an ArrayRef from a single element.
-  /// NOLINTNEXTLINE(google-explicit-constructor)
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ ArrayRef(const T& OneElt) : Data(&OneElt), Length(1) {}
 
   /// Construct an ArrayRef from a pointer and length.
@@ -74,22 +72,22 @@ class ArrayRef {
 
   /// Construct an ArrayRef from a std::vector.
   template <typename A>
-  /// NOLINTNEXTLINE(google-explicit-constructor)
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ ArrayRef(const std::vector<T, A>& Vec) : Data(Vec.data()), Length(Vec.size()) {}
 
   /// Construct an ArrayRef from a std::array
   template <size_t N>
-  /// NOLINTNEXTLINE(google-explicit-constructor)
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ constexpr ArrayRef(const std::array<T, N>& Arr) : Data(Arr.data()), Length(N) {}
 
   /// Construct an ArrayRef from a C array.
   template <size_t N>
-  /// NOLINTNEXTLINE(google-explicit-constructor, *array*)
+  // NOLINTNEXTLINE(google-explicit-constructor, runtime/explicit)
   /*implicit*/ constexpr ArrayRef(const T (&Arr)[N]) : Data(Arr), Length(N) {}
 
   /// Construct an ArrayRef from a std::initializer_list.
   /*implicit*/ ArrayRef(const std::initializer_list<T>& Vec)
-      : Data(Vec.begin() == Vec.end() ? (T*)nullptr : Vec.begin()), Length(Vec.size()) {}
+      : Data(Vec.begin() == Vec.end() ? static_cast<T*>(nullptr) : Vec.begin()), Length(Vec.size()) {}
 
   /// @}
   /// @name Simple Operations

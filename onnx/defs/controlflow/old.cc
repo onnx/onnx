@@ -1,10 +1,9 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <string>
+#include <vector>
 
 #include "onnx/defs/controlflow/utils.h"
 #include "onnx/defs/doc_strings.h"
@@ -294,13 +293,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
-static const char* const Loop_ver23_doc = kDoc_Loop_ver23;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     24,
     OpSchema()
-        .SetDoc(Loop_ver23_doc)
+        .SetDoc(kDoc_Loop_ver23)
         .Input(
             0,
             "M",
@@ -353,7 +350,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     23,
     OpSchema()
-        .SetDoc(Loop_ver23_doc)
+        .SetDoc(kDoc_Loop_ver23)
         .Input(
             0,
             "M",
@@ -402,13 +399,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* const Loop_ver16_doc = Loop_ver23_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     21,
     OpSchema()
-        .SetDoc(Loop_ver16_doc)
+        .SetDoc(kDoc_Loop_ver23)
         .Input(
             0,
             "M",
@@ -461,7 +456,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     19,
     OpSchema()
-        .SetDoc(Loop_ver16_doc)
+        .SetDoc(kDoc_Loop_ver23)
         .Input(
             0,
             "M",
@@ -514,7 +509,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     16,
     OpSchema()
-        .SetDoc(Loop_ver16_doc)
+        .SetDoc(kDoc_Loop_ver23)
         .Input(
             0,
             "M",
@@ -563,13 +558,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* const scan_24_doc = kDoc_scan_24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     24,
     OpSchema()
-        .SetDoc(scan_24_doc)
+        .SetDoc(kDoc_scan_24)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -633,13 +626,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types_ir12(), "All Tensor types up to IRv12.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
-static const char* const scan_23_doc = scan_24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     23,
     OpSchema()
-        .SetDoc(scan_23_doc)
+        .SetDoc(kDoc_scan_24)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -703,13 +694,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types_ir11(), "All Tensor types up to IRv11.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
-static const char* const scan_16_doc = scan_24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     21,
     OpSchema()
-        .SetDoc(scan_16_doc)
+        .SetDoc(kDoc_scan_24)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -777,7 +766,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     19,
     OpSchema()
-        .SetDoc(scan_16_doc)
+        .SetDoc(kDoc_scan_24)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -845,7 +834,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     16,
     OpSchema()
-        .SetDoc(scan_16_doc)
+        .SetDoc(kDoc_scan_24)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -910,12 +899,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
 // NOLINTNEXTLINE(misc-use-internal-linkage)
-void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
+void ScanInferenceFunction_opset8(InferenceContext& ctx) {
   // NOTE:
   // The first input to Scan is sequence_lens. We skip that when processing
   // inputs in many places below, so the - 1 in multiple places is due to that.
   auto num_inputs = ctx.getNumInputs();
-  auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
+  auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
   auto num_loop_state_vars = num_inputs - 1 - num_scan_inputs;
 
   std::vector<TypeProto> temporary_type_protos;
@@ -1050,9 +1039,9 @@ static int handle_negative_axis_validate_opset9(const std::string& attrib, int a
   return (axis >= 0 ? axis : axis + rank);
 }
 
-static void ScanInferenceFunctionOpset9(InferenceContext& ctx) {
+static void ScanInferenceFunction_opset9(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
+  auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
   auto num_loop_state_vars = num_inputs - num_scan_inputs;
   auto num_outputs = ctx.getNumOutputs();
   auto num_scan_outputs = num_outputs - num_loop_state_vars;
@@ -1384,9 +1373,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset8));
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction_opset8));
 
-static void LoopInferenceFunctionOpset8(InferenceContext& ctx) {
+static void LoopInferenceFunction_opset8(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
@@ -1655,9 +1644,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset8));
+        .TypeAndShapeInferenceFunction(LoopInferenceFunction_opset8));
 
-static void LoopInferenceFunctionOpset11(InferenceContext& ctx) {
+static void LoopInferenceFunction_opset11(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
@@ -1947,15 +1936,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunctionOpset11));
-
-static const char* const scan_9_doc = scan_24_doc;
+        .TypeAndShapeInferenceFunction(LoopInferenceFunction_opset11));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     9,
     OpSchema()
-        .SetDoc(scan_9_doc)
+        .SetDoc(kDoc_scan_24)
         .Input(
             0,
             "initial_state_and_scan_inputs",
@@ -2014,9 +2001,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INTS,
             false)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset9));
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction_opset9));
 
-static void IfInferenceFunction1(InferenceContext& ctx) {
+static void IfInferenceFunction_opset1(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -2110,9 +2097,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction1));
+        .TypeAndShapeInferenceFunction(IfInferenceFunction_opset1));
 
-static void IfInferenceFunction_11(InferenceContext& ctx) {
+static void IfInferenceFunction_opset11(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -2217,9 +2204,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction_11));
+        .TypeAndShapeInferenceFunction(IfInferenceFunction_opset11));
 
-static void IfInferenceFunction_13(InferenceContext& ctx) {
+static void IfInferenceFunction_opset13(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
   std::vector<const TypeProto*> subgraph_input_types; // none
@@ -2317,9 +2304,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             }(),
             "All Tensor and Sequence types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
-        .TypeAndShapeInferenceFunction(IfInferenceFunction_13));
+        .TypeAndShapeInferenceFunction(IfInferenceFunction_opset13));
 
-static void LoopInferenceFunction_13(InferenceContext& ctx) {
+static void LoopInferenceFunction_opset13(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   assert(num_inputs >= 2);
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
@@ -2638,15 +2625,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "All Tensor and Sequence types")
         .TypeConstraint("I", {"tensor(int64)"}, "tensor of int64, which should be a scalar.")
         .TypeConstraint("B", {"tensor(bool)"}, "tensor of bool, which should be a scalar.")
-        .TypeAndShapeInferenceFunction(LoopInferenceFunction_13));
-
-static const char* const scan_11_doc = scan_24_doc;
+        .TypeAndShapeInferenceFunction(LoopInferenceFunction_opset13));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     11,
     OpSchema()
-        .SetDoc(scan_11_doc)
+        .SetDoc(kDoc_scan_24)
         .Input(
             0,
             "initial_state_and_scan_inputs",

@@ -1,8 +1,9 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+#include <string>
+#include <utility>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
@@ -203,7 +204,7 @@ foo (x) => (y)
       ASSERT_TRUE(valueinfo.has_type());
       ASSERT_TRUE(valueinfo.type().has_tensor_type());
       ASSERT_TRUE(valueinfo.type().tensor_type().has_shape());
-      ASSERT_TRUE(valueinfo.type().tensor_type().shape().dim_size() == 1);
+      ASSERT_EQ(valueinfo.type().tensor_type().shape().dim_size(), 1);
       return;
     }
   }

@@ -31,7 +31,7 @@ echo "Build mode: $BUILD_MODE"
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib
 
-declare -A python_map=(["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t" ["3.14"]="cp314-cp314")
+declare -A python_map=(["3.10"]="cp310-cp310" ["3.11"]="cp311-cp311" ["3.12"]="cp312-cp312" ["3.13"]="cp313-cp313" ["3.13t"]="cp313-cp313t" ["3.14"]="cp314-cp314" ["3.14t"]="cp314-cp314t")
 PY_VER=${python_map[$PY_VERSION]}
 PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
 PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
@@ -46,7 +46,7 @@ source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)" "$(pwd)"/prot
 
 # set ONNX build environments
 export ONNX_ML=1
-export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
+export CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON -DONNX_HARDENING=ON"
 
 $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing Python requirements failed."; exit 1; }
 
@@ -68,7 +68,7 @@ fi
 # find -exec does not preserve failed exit codes, so use an output file for failures
 failed_wheels=$PWD/failed-wheels
 rm -f "$failed_wheels"
-find . -type f -iname "*-linux*.whl" -exec sh -c "auditwheel repair '{}' -w \$(dirname '{}') --plat '${PLAT}' || { echo 'Repairing wheels failed.'; auditwheel show '{}' >> '$failed_wheels'; }" \;
+find . -type f -iname "*-linux*.whl" -exec sh -c 'auditwheel repair "$1" -w "$(dirname "$1")" --plat "$2" || { echo "Repairing wheels failed."; auditwheel show "$1" >> "$3"; }' _ {} "${PLAT}" "$failed_wheels" \;
 
 if [[ -f "$failed_wheels" ]]; then
     echo "Repairing wheels failed:"

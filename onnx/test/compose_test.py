@@ -662,6 +662,48 @@ class TestComposeFunctions(unittest.TestCase):
                         ):
                             self.assertEqual(_prefixed(prefix, output_n0), output_n1)
 
+    def test_add_prefix_attribute_multiple_subgraphs(self) -> None:
+        """Tests prefixing attribute's repeated graphs field."""
+        X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [1])
+        Out = helper.make_tensor_value_info("Out", TensorProto.FLOAT, [1])
+
+        g1 = helper.make_graph(
+            [helper.make_node("Identity", ["X"], ["Out"], name="id1")],
+            "g1",
+            [X],
+            [Out],
+        )
+        g2 = helper.make_graph(
+            [helper.make_node("Identity", ["X"], ["Out"], name="id2")],
+            "g2",
+            [X],
+            [Out],
+        )
+        node = helper.make_node(
+            "CustomOp",
+            ["X"],
+            ["Out"],
+            name="custom",
+            bodies=[g1, g2],
+        )
+        graph = helper.make_graph([node], "graph", [X], [Out])
+
+        prefix = "pfx."
+        prefixed = compose.add_prefix_graph(graph, prefix)
+        self.assertEqual(prefixed.node[0].name, _prefixed(prefix, "custom"))
+
+        # Verify both subgraphs in the repeated graphs field are prefixed
+        pfx_graphs = prefixed.node[0].attribute[0].graphs
+        self.assertEqual(len(pfx_graphs), 2)
+        for name in ("id1", "id2"):
+            self.assertTrue(
+                any(
+                    n.name == _prefixed(prefix, name)
+                    for g in pfx_graphs
+                    for n in g.node
+                )
+            )
+
     def test_add_prefix_all(self) -> None:
         """Tests prefixing all names in the graph"""
         self._test_add_prefix(True, True, True, True, True, True)
@@ -1046,7 +1088,44 @@ class TestComposeFunctions(unittest.TestCase):
 
         # Value info 'x' from m1 is removed, because there is no longer an input with that name
         out_m3 = compose.merge_models(m1, m4, prefix1="m1/", io_map=[("y", "x")])
-        self.assertEqual(0, len(out_m3.graph.value_info))
+        value_info_names = {vi.name for vi in out_m3.graph.value_info}
+        self.assertNotIn("x", value_info_names)
+        self.assertEqual({"m1/y"}, value_info_names)
+
+    def test_merge_preserves_mapped_output_value_info(self) -> None:
+        """Mapped outputs should keep their type info as value_info in merged graph."""
+        m1_def = """
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            g1 (float[N, 32] X) => (float[N, 32] Y)
+            {
+                Y = Identity(X)
+            }
+            """
+        m2_def = """
+            <
+                ir_version: 7,
+                opset_import: [ "": 10]
+            >
+            g2 (float[N, 32] X) => (float[N, 32] Z)
+            {
+                Z = Relu(X)
+            }
+            """
+        m1 = _load_model(m1_def)
+        m2 = _load_model(m2_def)
+        merged = compose.merge_models(m1, m2, io_map=[("Y", "X")])
+        output_names = {o.name for o in merged.graph.output}
+        value_info_by_name = {vi.name: vi for vi in merged.graph.value_info}
+
+        self.assertNotIn("Y", output_names)
+        self.assertIn("Y", value_info_by_name)
+        self.assertEqual(
+            m1.graph.output[0].SerializeToString(),
+            value_info_by_name["Y"].SerializeToString(),
+        )
 
 
 if __name__ == "__main__":

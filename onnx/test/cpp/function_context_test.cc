@@ -1,18 +1,17 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
-
-using namespace ONNX_NAMESPACE::checker;
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -113,12 +112,12 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_EQ(fnProto.node_size(), 2);
 
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 12}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(fnProto, checkerCtx, lexicalScope);
+  checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
 // A polymorphic context-dependent function test-case.
@@ -270,12 +269,12 @@ TEST(FunctionAPITest, TypeContextTest) {
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_EQ(fnProto.node_size(), 2);
 
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 12}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(fnProto, checkerCtx, lexicalScope);
+  checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
 } // namespace Test

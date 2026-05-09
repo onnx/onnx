@@ -1,0 +1,56 @@
+# SPDX-FileCopyrightText: ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+[default.extend-words]
+ND = "ND"
+ONNX = "ONNX"
+"np.arange" = "np.arange"
+CNA = "CNA"  # Cloud Native Association
+writeable = "writeable"
+
+[default]
+extend-ignore-re = [
+  "np\\.arange",
+  # Ignore lines that end with a `typos: ignore` comment
+  "(?Rm)^.*(#|//)\\s*typos:\\s*ignore$",
+  # Ignore lines that end with a `reviewdog:ignore[misspell]` comment
+  "(?Rm)^.*(#|//)\\s*reviewdog:ignore\\[misspell\\]",
+]
+
+# The following sets up some additional ignores for specific files.
+# typos does not offer a good option to configur per-file rules.
+# The following works by glob-matching on the file name which is less
+# precise but seems good enough.
+[type.op_roi_align_py]
+extend-glob = ["op_roi_align.py"]
+extend-words = { iy = "iy" }
+
+[type.group_normalization_20_21_h]
+extend-glob = ["group_normalization_20_21.h"]
+extend-words = { kend = "kend" }
+
+[type.doc_strings_cc]
+extend-glob = ["doc_strings.cc"]
+extend-words = { ot = "ot" }
+
+[type.old_cc]
+extend-glob = ["old.cc"]
+extend-words = { ot = "ot" }
+
+[type.operators_md]
+extend-glob = ["Operators.md"]
+extend-words = { ot = "ot" }
+
+[type.op_conv_py]
+extend-glob = ["op_conv.py"]
+extend-words = { iz = "iz" }
+
+[type.changelog_md]
+extend-glob = ["Changelog.md"]
+extend-words = { ot = "ot" }
+extend-ignore-re = ["foward\\)"]  # typo in published spec
+
+[type.lint_yml]
+extend-glob = ["lint.yml"]
+extend-ignore-re = ["foward,"]  # typo in published spec

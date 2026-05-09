@@ -1,11 +1,13 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 #include "onnx/defs/sequence/utils.h"
 
 #include <algorithm>
 #include <numeric>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace defs {
@@ -30,9 +32,9 @@ in 'split' must be equal to the dimension size of input tensor on 'axis'.
 )DOC";
 
 std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
-    const std::vector<std::string>& input_types,
-    const std::vector<std::string>& output_types) {
-  return [=](OpSchema& schema) {
+    std::vector<std::string> input_types,
+    std::vector<std::string> output_types) {
+  return [input_types = std::move(input_types), output_types = std::move(output_types)](OpSchema& schema) {
     schema.Input(0, "input", "The tensor to split", "T")
         .Input(
             1,
