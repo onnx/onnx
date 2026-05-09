@@ -31,7 +31,7 @@ class Attention_24_23 final : public Adapter {
           "which is not supported in opset 23. This conversion cannot be performed.",
           name().c_str(),
           static_cast<int64_t>(initial_version().version()),
-          static_cast<int64_t>(target_version().version()));
+          static_cast<int64_t>(target_version().version()))
     }
   }
 

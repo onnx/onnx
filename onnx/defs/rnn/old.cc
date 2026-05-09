@@ -180,13 +180,11 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
   };
 }
 
-static const char* const GRU_ver14_doc = kDoc_GRU_ver14;
-
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(GRU_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_GRU_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -238,13 +236,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator_opset14("GRU")));
 
-static const char* const LSTM_ver14_doc = kDoc_LSTM_ver14;
-
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(LSTM_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_LSTM_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "
@@ -337,13 +333,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable));
 
-static const char* const RNN_ver14_doc = kDoc_RNN_ver14;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(RNN_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_RNN_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -596,8 +590,12 @@ static void RNNShapeInference_opset1_to_6(InferenceContext& ctx) {
 
   if (hasInputShape(ctx, 0)) {
     const auto& first_input_shape = getInputShape(ctx, 0);
-    seq_length = first_input_shape.dim(0);
-    batch_size = first_input_shape.dim(1);
+    if (first_input_shape.dim_size() != 3) {
+      fail_shape_inference("First input tensor must have rank 3");
+    } else {
+      seq_length = first_input_shape.dim(0);
+      batch_size = first_input_shape.dim(1);
+    }
   }
 
   // The treatment of outputs is a bit complicated because of the combination of
