@@ -393,7 +393,7 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     // Otherwise, gets it from initializer if it exists
     const auto* input_data = allInputData_[index];
     // Only scalar (0D tensor) or 1D tensor can be converted for now
-    // TODO: It should support tensors with more dimension on demand
+    // TODO(ONNX): It should support tensors with more dimension on demand
     if (input_data != nullptr && (input_data->dims_size() == 0 || input_data->dims_size() == 1)) {
       TensorShapeProto tsp;
 
@@ -408,9 +408,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
 
       // Adds this TensorShapeProto from initializer into generatedShapeData
       // for future use
-      auto result = generatedShapeData_.insert({input_name, std::move(tsp)});
-      if (result.second) {
-        return &(result.first->second);
+      auto [it, inserted] = generatedShapeData_.insert({input_name, std::move(tsp)});
+      if (inserted) {
+        return &(it->second);
       }
     }
 
@@ -427,9 +427,9 @@ struct DataPropagationContextImpl : public DataPropagationContext {
           for (int64_t i = 0; i < dim_value; ++i) {
             tsp.add_dim();
           }
-          auto result = generatedShapeData_.insert({input_name, std::move(tsp)});
-          if (result.second) {
-            return &(result.first->second);
+          auto [it, inserted] = generatedShapeData_.insert({input_name, std::move(tsp)});
+          if (inserted) {
+            return &(it->second);
           }
         }
       }
@@ -441,8 +441,8 @@ struct DataPropagationContextImpl : public DataPropagationContext {
     if (index >= outputIndexToNameMap_.size()) {
       ONNX_THROW("Input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds.");
     }
-    auto result = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tsp)});
-    if (!result.second) {
+    auto [_, inserted] = generatedShapeData_.insert({outputIndexToNameMap_.at(index), std::move(tsp)});
+    if (!inserted) {
       fail_shape_inference("Data for input  " + ONNX_NAMESPACE::to_string(index) + " already exists.");
     }
   }

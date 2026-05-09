@@ -786,7 +786,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask"],
             outputs=["Y", "", "", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -799,7 +799,7 @@ class Attention(Base):
             K,
             V,
             attn_mask=attn_mask,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -817,7 +817,7 @@ class Attention(Base):
             inputs=["Q", "K", "V", "attn_mask"],
             outputs=["Y", "", "", "qk_matmul_output"],
             softcap=2.0,
-            qk_matmul_output_mode=2,
+            qk_matmul_output_mode=1,
         )
 
         Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -831,7 +831,7 @@ class Attention(Base):
             V,
             attn_mask=attn_mask,
             softcap=2.0,
-            qk_matmul_output_mode=2,
+            qk_matmul_output_mode=1,
         )
 
         expect(
@@ -878,7 +878,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         past_sequence_length = 12
@@ -896,7 +896,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -913,7 +913,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         past_sequence_length = 12
@@ -931,7 +931,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -948,7 +948,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         past_sequence_length = 12
@@ -966,7 +966,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -983,7 +983,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
             is_causal=1,
         )
 
@@ -1002,7 +1002,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
             is_causal=1,
         )
 
@@ -1020,7 +1020,7 @@ class Attention(Base):
             "Attention",
             inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
             is_causal=1,
         )
 
@@ -1039,7 +1039,7 @@ class Attention(Base):
             attn_mask=attn_mask,
             past_key=past_key,
             past_value=past_value,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
             is_causal=1,
         )
 
@@ -1737,7 +1737,7 @@ class Attention(Base):
             outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         past_sequence_length = 12
@@ -1757,7 +1757,7 @@ class Attention(Base):
             past_value=past_value,
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
-            qk_matmul_output_mode=1,
+            qk_matmul_output_mode=2,
         )
 
         expect(
@@ -1778,7 +1778,7 @@ class Attention(Base):
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
             softcap=2.0,
-            qk_matmul_output_mode=2,
+            qk_matmul_output_mode=1,
         )
 
         past_sequence_length = 12
@@ -1799,7 +1799,7 @@ class Attention(Base):
             q_num_heads=q_num_heads,
             kv_num_heads=kv_num_heads,
             softcap=2.0,
-            qk_matmul_output_mode=2,
+            qk_matmul_output_mode=1,
         )
 
         expect(
@@ -1933,4 +1933,85 @@ class Attention(Base):
             outputs=[Y],
             name="test_attention_4d_diff_heads_mask4d_padded_kv",
             opset_imports=[onnx.helper.make_opsetid("", 24)],
+        )
+
+    @staticmethod
+    def export_attention_softcap_with_neginf_mask() -> None:
+        """Softcap + -inf mask: verifies softcap is applied BEFORE mask/bias.
+
+        If ordering were wrong (mask then softcap), tanh(-inf/softcap) = -1,
+        so softcap * tanh(-inf/softcap) = -softcap (finite).  That leaks
+        probability to masked positions.  With correct ordering (softcap then
+        mask), the -inf mask values survive to softmax and yield zero weight.
+        """
+        np.random.seed(42)
+        B, H, S_q, S_kv, D = 1, 1, 4, 6, 8
+
+        Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+        K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+        V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+
+        # All Q positions are blocked from KV positions 4 and 5.
+        attn_mask = np.zeros((S_q, S_kv), dtype=np.float32)
+        attn_mask[:, 4:] = -np.inf
+
+        softcap = 0.5
+
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask"],
+            outputs=["Y"],
+            softcap=softcap,
+        )
+
+        Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask],
+            outputs=[Y],
+            name="test_attention_4d_softcap_neginf_mask",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
+        )
+
+    @staticmethod
+    def export_attention_softcap_with_neginf_mask_poison() -> None:
+        """Softcap + -inf mask + poison values at masked KV positions.
+
+        V has value 1000 at the masked positions (4 and 5).  With correct
+        ordering the output stays in [0, 1] because the mask zeros out those
+        positions.  With wrong ordering the output explodes (> 50), making
+        the failure obvious even with loose tolerances.
+        """
+        np.random.seed(42)
+        B, H, S_q, S_kv, D = 1, 1, 4, 6, 8
+
+        Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+        K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+        V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+
+        # Block all Q positions from KV positions 4 and 5.
+        attn_mask = np.zeros((S_q, S_kv), dtype=np.float32)
+        attn_mask[:, 4:] = -np.inf
+
+        # Poison: if attention leaks to masked positions, output >> 1.
+        V[:, :, 4:, :] = 1000.0
+
+        softcap = 0.5
+
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask"],
+            outputs=["Y"],
+            softcap=softcap,
+        )
+
+        Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask],
+            outputs=[Y],
+            name="test_attention_4d_softcap_neginf_mask_poison",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
         )

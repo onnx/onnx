@@ -108,7 +108,7 @@ class _ProtobufSerializer(ProtoSerializer):
                         "Please use save_as_external_data to save tensors separately from the model file."
                     ) from e
                 raise
-            return result  # type: ignore
+            return result
         raise TypeError(
             f"No SerializeToString method is detected.\ntype is {type(proto)}"
         )

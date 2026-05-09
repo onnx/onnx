@@ -1,6 +1,6 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -157,18 +157,42 @@ inline bool getRepeatedAttribute(InferenceContext& ctx, const std::string& attr_
   }
 }
 
+// Throws InferenceError if the attribute is missing. Returning by reference
+// prevents callers from accidentally skipping the null check.
+inline const AttributeProto& getRequiredAttribute(const InferenceContext& ctx, const std::string& name) {
+  const auto* attr = ctx.getAttribute(name);
+  if (attr == nullptr) {
+    fail_shape_inference("Required attribute '", name, "' is missing");
+  }
+  return *attr;
+}
+
+inline int64_t getRequiredAttributeInt(const InferenceContext& ctx, const std::string& name) {
+  const auto& attr = getRequiredAttribute(ctx, name);
+  if (!attr.has_i()) {
+    fail_shape_inference("Required attribute '", name, "' must be an integer");
+  }
+  return attr.i();
+}
+
 inline int64_t getAttribute(const InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   const auto* attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
-  return defaultValue;
+  else if (nullptr != attr_proto)
+    return 0; // protobuf default for integers
+  else
+    return defaultValue;
 }
 
 inline int64_t getAttribute(const DataPropagationContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   const auto* attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
     return attr_proto->i();
-  return defaultValue;
+  else if (nullptr != attr_proto)
+    return 0; // protobuf default for integers
+  else
+    return defaultValue;
 }
 
 inline std::string
@@ -176,7 +200,10 @@ getAttribute(const InferenceContext& ctx, const std::string& attributeName, cons
   const auto* attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_s())
     return attr_proto->s();
-  return defaultValue;
+  else if (nullptr != attr_proto)
+    return ""; // protobuf default for strings
+  else
+    return defaultValue;
 }
 
 inline TensorShapeProto::Dimension operator*(
@@ -341,6 +368,9 @@ inline bool hasNInputShapes(const Context& ctx, size_t n) {
 
 inline const TensorShapeProto& getInputShape(const InferenceContext& ctx, size_t n) {
   const auto* input_type = ctx.getInputType(n);
+  if (input_type == nullptr) {
+    fail_type_inference("Input ", n, " is null in ", ctx.getDisplayName(), ".");
+  }
   const auto value_case = input_type->value_case();
   if (value_case != TypeProto::kTensorType && value_case != TypeProto::kSparseTensorType) {
     fail_type_inference("Input ", n, "expected to be a tensor or a sparse tensor type in ", ctx.getDisplayName(), ".");
@@ -781,11 +811,17 @@ inline TypeProto RemoveDimensionsFromShape(const TypeProto& proto, int num_dimen
   return t;
 }
 
-// copied from GSL:
-// https://github.com/microsoft/GSL/blob/main/include/gsl/util
+// Checked narrowing cast — throws InferenceError on lossy conversion
+// (sign change or truncation). Matches gsl::narrow:
+// https://github.com/microsoft/GSL/blob/main/include/gsl/narrow
 template <class T, class U>
-static constexpr T narrow_cast(U&& u) noexcept {
-  return static_cast<T>(std::forward<U>(u));
+static constexpr T narrow(U&& u) {
+  const U original = u;
+  const T result = static_cast<T>(std::forward<U>(u));
+  if (static_cast<U>(result) != original || ((result < T{}) != (original < U{}))) {
+    fail_shape_inference("narrow: value ", original, " cannot be represented in target type");
+  }
+  return result;
 }
 
 inline void checkInputRank(const InferenceContext& ctx, size_t input_index, int expected_rank) {
@@ -825,7 +861,7 @@ inline void unifyDim(const Dim& dim1, const Dim& dim2) {
     checkDimEquality(dim1.dim_value(), dim2.dim_value());
 }
 
-// TODO: The functionality of unifyDim is similar to that of
+// TODO(ONNX): The functionality of unifyDim is similar to that of
 // mergeInDimensionInfo. However, the error messages are different. Leaving this
 // duplication in-place to preserve error message content.
 inline void unifyDim(const Dim& source_dim, Dim& target_dim) {
@@ -875,8 +911,9 @@ inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int d
 inline void unifyDim(Dim& dim, int64_t value) {
   if (dim.has_dim_value()) {
     checkDimEquality(dim.dim_value(), value);
-  } else
+  } else {
     dim.set_dim_value(value);
+  }
 }
 
 // target-shape = Union (target-shape, source_shape)

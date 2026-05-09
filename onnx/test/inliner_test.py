@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import unittest
 
-from onnx import inliner, parser
+from onnx import checker, inliner, parser
 
 
 class InlinerTest(unittest.TestCase):
@@ -110,6 +110,19 @@ class InlinerTest(unittest.TestCase):
         self.assertEqual(len(function_nodes), 2)
         self.assertEqual(function_nodes[0].op_type, "Add")
         self.assertEqual(function_nodes[1].op_type, "Mul")
+
+    def test_inline_rejects_cyclic_function(self):
+        model = parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) { Y = local.foo (X) }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.foo (x) }
+        """
+        )
+        self.assertRaises(
+            checker.ValidationError, inliner.inline_local_functions, model
+        )
 
     def test_schema_function_inlining(self):
         model = parser.parse_model(

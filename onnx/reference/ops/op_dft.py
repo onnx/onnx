@@ -50,35 +50,46 @@ def _cfft(
     return result
 
 
-def _ifft(x: np.ndarray, fft_length: int, axis: int, onesided: bool) -> np.ndarray:
-    signals = np.fft.ifft(x, fft_length, axis=axis)
+def _ifft(x: np.ndarray, fft_length: int, axis: int) -> np.ndarray:
+    """Standard IFFT: complex input -> complex output."""
+    signals = np.fft.ifft(x, n=fft_length, axis=axis)
     real_signals = np.real(signals)
     imaginary_signals = np.imag(signals)
-    merged = np.concatenate(
+    return np.concatenate(
         (real_signals[..., np.newaxis], imaginary_signals[..., np.newaxis]),
         axis=-1,
     )
-    if onesided:
-        slices = [slice(a) for a in merged.shape]
-        slices[axis] = slice(0, merged.shape[axis] // 2 + 1)
-        return merged[tuple(slices)]
-    return merged
+
+
+def _irfft(x: np.ndarray, fft_length: int, axis: int) -> np.ndarray:
+    """IRFFT: one-sided complex input -> full real output."""
+    signals = np.fft.irfft(x, n=fft_length, axis=axis)
+    # Return real-valued output with last dimension = 1
+    return signals[..., np.newaxis]
 
 
 def _cifft(
     x: np.ndarray, fft_length: int, axis: int, onesided: bool = False
 ) -> np.ndarray:
+    """Complex IFFT wrapper that handles both standard IFFT and IRFFT."""
+    # Extract complex values from input
     if x.shape[-1] == 1:
-        frequencies = x
+        # Real input (shouldn't happen for IFFT, but handle it)
+        frequencies = np.squeeze(x, -1)
     else:
-        slices = [slice(0, x) for x in x.shape]
+        # Complex input: interleaved real/imaginary
+        slices = [slice(0, dim) for dim in x.shape]
         slices[-1] = slice(0, x.shape[-1], 2)
         real = x[tuple(slices)]
         slices[-1] = slice(1, x.shape[-1], 2)
         imag = x[tuple(slices)]
-        frequencies = real + 1j * imag
-    complex_frequencies = np.squeeze(frequencies, -1)
-    return _ifft(complex_frequencies, fft_length, axis=axis, onesided=onesided)
+        frequencies = np.squeeze(real, -1) + 1j * np.squeeze(imag, -1)
+
+    if onesided:
+        # IRFFT: one-sided complex input -> full real output
+        return _irfft(frequencies, fft_length, axis=axis)
+    # Standard IFFT: full complex input -> full complex output
+    return _ifft(frequencies, fft_length, axis=axis)
 
 
 class DFT_17(OpRun):
@@ -92,8 +103,15 @@ class DFT_17(OpRun):
     ) -> tuple[np.ndarray]:
         # Convert to positive axis
         axis = axis % len(x.shape)
+
+        # Set default dft_length based on operation type
         if dft_length is None:
-            dft_length = x.shape[axis]
+            if inverse and onesided:
+                # IRFFT: input is one-sided, default to even length
+                dft_length = 2 * (x.shape[axis] - 1)
+            else:
+                dft_length = x.shape[axis]
+
         if inverse:
             result = _cifft(x, dft_length, axis=axis, onesided=onesided)
         else:
@@ -112,8 +130,15 @@ class DFT_20(OpRun):
     ) -> tuple[np.ndarray]:
         # Convert to positive axis
         axis = axis % len(x.shape)
+
+        # Set default dft_length based on operation type
         if dft_length is None:
-            dft_length = x.shape[axis]
+            if inverse and onesided:
+                # IRFFT: input is one-sided, default to even length
+                dft_length = 2 * (x.shape[axis] - 1)
+            else:
+                dft_length = x.shape[axis]
+
         if inverse:
             result = _cifft(x, dft_length, axis=axis, onesided=onesided)
         else:

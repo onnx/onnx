@@ -89,7 +89,7 @@ Each model has the following components:
 |functions|FunctionProto[]|An optional list of functions local to the model.|
 |configuration|DeviceConfigurationProto[]|(IR version >= 11) An optional list of multi-device configurations for distributed execution.|
 
- Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
+ Models SHOULD specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
 __Note: Exploring an ONNX file__
 
@@ -260,7 +260,7 @@ Graphs SHOULD be populated with documentation strings, which MAY be interpreted 
 
 ### Names Within a Graph
 
-All names SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
+All names SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/c/language/identifier).
 
 Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. Please see below for further clarification in the case where a graph contains nested subgraphs (as attribute values).
 
@@ -381,7 +381,7 @@ The dynamic-optional allows for more expressiveness than static-optional.
 
 #### External Tensor Data
 
-The raw data for large constant tensors, such as initializers, MAY be serialised in a separate file. In such a case, the tensor MUST provide the filename relative to the model file and MUST NOT use the value fields. It MAY provide a byte offset and length within that file. It MAY also specify a SHA1 digest of the file. One file MAY contain the data for multiple tensors.
+The raw data for large constant tensors, such as initializers, MAY be serialized in a separate file. In such a case, the tensor MUST provide the filename relative to the model file and MUST NOT use the value fields. It MAY provide a byte offset and length within that file. It MAY also specify a SHA1 digest of the file. One file MAY contain the data for multiple tensors.
 
 More details can be found in [External Data](ExternalData.md).
 
@@ -475,7 +475,7 @@ Each size in the list MAY be expressed as an integral value or as a "dimension v
 
 For example, a NxM matrix would have the shape list [N,M].
 
-The name of each dimension variable SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/w/c/language/identifier).
+The name of each dimension variable SHOULD adhere to [C90 identifier syntax rules](https://en.cppreference.com/c/language/identifier).
 
 Currently, dimension variables are not scoped. A dimension variable "N" represents the same value across the entire graph in a model. For example, if the graph has two inputs X and Y each with shape ["N"], then at runtime the values passed in for X and Y MUST be tensors of rank 1 with the same dimension. Nested sub-graphs currently share the same scope for dimension variables as the main-graph. This allows a model to relate the dimensions of tensors inside the subgraph to the dimensions of tensors in the outer graph.
 
@@ -591,7 +591,7 @@ For tensor parallelism, tensors can be:
 
 Pipeline parallelism is indicated through optional pipeline stage identifiers that suggest how to distribute subgraphs across devices for pipelined execution.
 
-For more detailed information about multi-device execution patterns and examples, see the [Multi-Device Proposal](proposals/ONNXMultiDeviceProposal.md).
+For more detailed information about multi-device execution patterns and examples, see the [Multi-Device Proposal](proposals/0006-ONNXMultiDeviceProposal.md).
 
 ## Other Specification Documents
 

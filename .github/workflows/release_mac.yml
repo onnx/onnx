@@ -25,9 +25,6 @@ on:
 env:
   MACOSX_DEPLOYMENT_TARGET: "12.0"
 
-permissions:
-  contents: read
-
 jobs:
   parse-python-versions:
     runs-on: ubuntu-latest
@@ -58,6 +55,8 @@ jobs:
     if: github.event_name != 'pull_request' || startsWith( github.base_ref, 'rel-') || contains( github.event.pull_request.labels.*.name, 'run release CIs')
     needs: parse-python-versions
     runs-on: macos-14
+    permissions:
+      contents: read
     strategy:
       matrix:
         python-version: ${{ fromJson(needs.parse-python-versions.outputs.build-matrix) }}
@@ -70,7 +69,7 @@ jobs:
           submodules: true
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -106,6 +105,16 @@ jobs:
         fi
         python -m build --wheel
 
+    - name: Validate SBOM
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        pip install -q -r requirements-release_sbom.txt
+        if ls dist/*.cdx.json 1>/dev/null 2>&1; then
+          python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" dist/*.cdx.json
+        else
+          echo "No SBOM files found; skipping validation"
+        fi
+
     - name: Debug Python version and artifact name
       run: |
         echo "PYTHON VERSION: $PYTHON_VERSION"
@@ -118,12 +127,12 @@ jobs:
         PYTHON_VERSION: ${{ matrix.python-version }}
         INPUTS_OS: ${{ inputs.os  }}
 
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-3.12-abi3
         path: dist/*.whl
-    - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.13t' || matrix.python-version == '3.14t')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
@@ -132,6 +141,8 @@ jobs:
   test:
     needs: [build, parse-python-versions]
     runs-on: ${{ (matrix.target-architecture == 'x86_64') && 'macos-15' || 'macos-14' }}
+    permissions:
+      contents: read
     continue-on-error: true
     strategy:
       matrix:
@@ -145,25 +156,30 @@ jobs:
         persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: ${{ matrix.python-version }}
+
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14'
+      with:
+        name: wheels-${{ inputs.os }}-3.12-abi3
+        path: dist
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.13t' || matrix.python-version == '3.14t'
+      with:
+        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
+        path: dist
+
+    - name: Check wheel contents
+      run: |
+        pip install -q check-wheel-contents
+        check-wheel-contents dist/*.whl
 
     - name: Install Python dependencies
       run: |
         arch -${{ matrix.target-architecture }} python -m pip install -q --upgrade pip
         arch -${{ matrix.target-architecture }} python -m pip install -q -r requirements-release_test.txt
-
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-      if: matrix.python-version == '3.12' || matrix.python-version == '3.13' || matrix.python-version == '3.14'
-      with:
-        name: wheels-${{ inputs.os }}-3.12-abi3
-        path: dist
-    - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-      if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.13t' || matrix.python-version == '3.14t'
-      with:
-        name: wheels-${{ inputs.os }}-${{ matrix.python-version }}
-        path: dist
 
     - name: Test the wheel
       run: |

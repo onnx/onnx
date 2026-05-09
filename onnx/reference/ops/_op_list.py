@@ -38,6 +38,7 @@ __all__ = [
     "BatchNormalization_9",
     "BatchNormalization_14",
     "Bernoulli",
+    "BitCast",
     "BitShift",
     "BitwiseAnd",
     "BitwiseNot",
@@ -292,6 +293,7 @@ from onnx.reference.ops.op_batch_normalization import (
     BatchNormalization_14,
 )
 from onnx.reference.ops.op_bernoulli import Bernoulli
+from onnx.reference.ops.op_bitcast import BitCast
 from onnx.reference.ops.op_bitshift import BitShift
 from onnx.reference.ops.op_bitwise_and import BitwiseAnd
 from onnx.reference.ops.op_bitwise_not import BitwiseNot
@@ -576,7 +578,7 @@ def load_op(
             f"and domain {domain!r}, schema.has_function is {has_function}, "
             f"schema.has_context_dependent_function is {has_context_dependent_function}. "
             f"You may either add one or skip the test in "
-            f"'reference_evaluator_bakcend_test.py'. Available implementations:\n{available}"
+            f"'test_backend_reference.py'. Available implementations:\n{available}"
         )
     impl = _registered_operators[op_type]
     if None not in impl:

@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -35,6 +33,20 @@ inline NodeTransformerFunction RemoveAttribute(Symbol attr, int64_t value) {
   return NODE_TRANSFORMER(node) {
     if (node->hasAttribute(attr)) {
       ONNX_ASSERTM(node->i(attr) == value, "Attribute %s must have value %" PRId64, attr.toString(), value)
+      node->removeAttribute(attr);
+    }
+    return node;
+  };
+}
+
+inline NodeTransformerFunction RemoveAttribute(Symbol attr, const std::string& value) {
+  return NODE_TRANSFORMER(node) {
+    if (node->hasAttribute(attr)) {
+      ONNX_ASSERTM(
+          node->s(attr) == value,
+          "Attribute %s must have value %s for this version conversion",
+          attr.toString(),
+          value.c_str())
       node->removeAttribute(attr);
     }
     return node;

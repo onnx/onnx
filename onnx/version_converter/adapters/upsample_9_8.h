@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Upsample in default domain from version 9 to 8
 
@@ -10,6 +8,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "onnx/defs/tensor_proto_util.h"
@@ -53,7 +52,7 @@ struct Upsample_9_8 final : public Adapter {
     }
 
     for (Node* op : graph->nodes()) {
-      if (op->kind() == kConstant && op->outputs()[0]->uniqueName() == scale_input_name) {
+      if (op->kind() == kConstant && op->outputs().size() >= 1 && op->outputs()[0]->uniqueName() == scale_input_name) {
         std::vector<float> value = ParseData<float>(&op->t(kvalue));
         std::vector<double> d_values;
         d_values.reserve(value.size());

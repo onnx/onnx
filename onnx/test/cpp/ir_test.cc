@@ -1,8 +1,9 @@
 // Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+#include <memory>
+#include <string>
 
 #include "gtest/gtest.h"
 #include "onnx/common/ir.h"
@@ -27,7 +28,7 @@ static bool IsValidIdentifier(const std::string& name) {
 }
 
 TEST(IR, ValidIdentifierTest) {
-  Graph* g = new Graph();
+  Graph* g = new Graph(); // NOLINT(cppcoreguidelines-owning-memory)
   g->setName("test");
   Value* x = g->addInput();
   x->setUniqueName("x");

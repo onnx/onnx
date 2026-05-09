@@ -5,14 +5,16 @@
 #include "onnx/defs/printer.h"
 
 #include <iomanip>
+#include <string>
 
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
+namespace {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
-static bool IsValidIdentifier(const std::string& str) {
+bool IsValidIdentifier(const std::string& str) {
   // Check if str is a valid identifier
   const char* next_ = str.c_str();
   const char* end_ = next_ + str.size();
@@ -95,10 +97,10 @@ class ProtoPrinter {
 
   void printQuoted(const std::string& str) {
     output_ << "\"";
-    for (const char* p = str.c_str(); *p; ++p) {
-      if ((*p == '\\') || (*p == '"'))
+    for (char ch : str) {
+      if ((ch == '\\') || (ch == '"'))
         output_ << '\\';
-      output_ << *p;
+      output_ << ch;
     }
     output_ << "\"";
   }
@@ -154,12 +156,16 @@ class ProtoPrinter {
 };
 
 void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
-  if (dim.has_dim_value())
+  if (dim.has_dim_value()) {
     output_ << dim.dim_value();
-  else if (dim.has_dim_param())
-    output_ << dim.dim_param();
-  else
+  } else if (dim.has_dim_param()) {
+    if (IsValidIdentifier(dim.dim_param()))
+      output_ << dim.dim_param();
+    else
+      printQuoted(dim.dim_param());
+  } else {
     output_ << "?";
+  }
 }
 
 void ProtoPrinter::print(const TensorShapeProto& shape) {
@@ -169,10 +175,12 @@ void ProtoPrinter::print(const TensorShapeProto& shape) {
 void ProtoPrinter::print(const TypeProto_Tensor& tensortype) {
   output_ << PrimitiveTypeNameMap::ToString(tensortype.elem_type());
   if (tensortype.has_shape()) {
-    if (tensortype.shape().dim_size() > 0)
+    if (tensortype.shape().dim_size() > 0) {
       print(tensortype.shape());
-  } else
+    }
+  } else {
     output_ << "[]";
+  }
 }
 
 void ProtoPrinter::print(const TypeProto_Sequence& seqType) {
@@ -196,10 +204,12 @@ void ProtoPrinter::print(const TypeProto_Optional& optType) {
 void ProtoPrinter::print(const TypeProto_SparseTensor& sparseType) {
   output_ << "sparse_tensor(" << PrimitiveTypeNameMap::ToString(sparseType.elem_type());
   if (sparseType.has_shape()) {
-    if (sparseType.shape().dim_size() > 0)
+    if (sparseType.shape().dim_size() > 0) {
       print(sparseType.shape());
-  } else
+    }
+  } else {
     output_ << "[]";
+  }
 
   output_ << ")";
 }
@@ -229,7 +239,7 @@ void ProtoPrinter::print(const TensorProto& tensor, bool is_initializer) {
   if (is_initializer) {
     output_ << " = ";
   }
-  // TODO: does not yet handle all types
+  // TODO(ONNX): does not yet handle all types
   if (tensor.has_data_location() && tensor.data_location() == TensorProto_DataLocation_EXTERNAL) {
     print(tensor.external_data());
   } else if (tensor.has_raw_data()) {
@@ -321,12 +331,13 @@ void ProtoPrinter::print(const AttributeProto& attr) {
       printSet("[", ", ", "]", attr.floats());
       break;
     case AttributeProto_AttributeType_STRING:
-      output_ << "\"" << attr.s() << "\"";
+      printQuoted(attr.s());
       break;
     case AttributeProto_AttributeType_STRINGS: {
       const char* sep = "[";
       for (const auto& elt : attr.strings()) {
-        output_ << sep << "\"" << elt << "\"";
+        output_ << sep;
+        printQuoted(elt);
         sep = ", ";
       }
       output_ << "]";
@@ -446,7 +457,8 @@ void ProtoPrinter::print(const ModelProto& model) {
 }
 
 void ProtoPrinter::print(const OperatorSetIdProto& opset) {
-  output_ << "\"" << opset.domain() << "\" : " << opset.version();
+  printQuoted(opset.domain());
+  output_ << " : " << opset.version();
 }
 
 void ProtoPrinter::print(const OpsetIdList& opsets) {
@@ -456,10 +468,15 @@ void ProtoPrinter::print(const OpsetIdList& opsets) {
 void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "<\n";
   output_ << "  "
-          << "domain: \"" << fn.domain() << "\",\n";
-  if (!fn.overload().empty())
+          << "domain: ";
+  printQuoted(fn.domain());
+  output_ << ",\n";
+  if (!fn.overload().empty()) {
     output_ << "  "
-            << "overload: \"" << fn.overload() << "\",\n";
+            << "overload: ";
+    printQuoted(fn.overload());
+    output_ << ",\n";
+  }
 
   output_ << "  "
           << "opset_import: ";
@@ -475,6 +492,8 @@ void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "\n";
   print(fn.node());
 }
+
+} // namespace
 
 #define DEF_OP(T)                                              \
   std::ostream& operator<<(std::ostream& os, const T& proto) { \

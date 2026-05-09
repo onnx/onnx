@@ -1,0 +1,95 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Dependencies are centrally managed by Pixi. Using Pixi is the
+# recommended way to obtain linter-results that match what runs on
+# CI. A fall-back that looks for the tools in PATH is provided, but
+# not recommended.
+#
+# The fall-back logic hinges on the assumption that every supported
+# system provides a `python3` interpreter in PATH. The executed script
+# then looks for Pixi. If found the hooks are executed through its
+# default environment. Otherwise, they are looked for in PATH directly
+# (user-managed).
+repos:
+  - repo: builtin
+    hooks:
+      - id: trailing-whitespace
+        exclude: "^docs/docsgen/source/_static/diff2html"
+      # TODO: Enable this step which creates some churn
+      # - id: end-of-file-fixer
+      #   exclude: "^docs/docsgen/source/_static/diff2html"
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-added-large-files
+
+  - repo: local
+    hooks:
+      - id: ruff-lint
+        name: ruff lint
+        entry: python3 tools/pixi-shim.py ruff check --force-exclude --fix
+        language: system
+        types_or: [python, pyi]
+        exclude: '(_pb2|\.setuptools-cmake-build/|^docs/)'
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff format
+        entry: python3 tools/pixi-shim.py ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
+        exclude: '(_pb2|\.setuptools-cmake-build/|^cmake/|^docs/)'
+        require_serial: true
+
+      - id: mypy
+        name: mypy
+        entry: python3 tools/pixi-shim.py mypy --config-file=pyproject.toml
+        language: system
+        types: [python]
+        files: "^(onnx|tools)/"
+        exclude: '(^onnx/backend/test/|^onnx/reference/ops/|^onnx/test/|^onnx/reference/reference_evaluator\.py)'
+        require_serial: true
+
+      - id: clang-format
+        name: clang-format
+        entry: python3 tools/pixi-shim.py clang-format -i
+        language: system
+        types_or: [c, c++]
+        files: "^onnx/"
+
+      - id: namespace-check
+        name: namespace check (no hardcoded onnx namespace)
+        entry: python3 tools/pixi-shim.py python tools/check_namespace.py
+        language: system
+        types_or: [c, c++]
+        exclude: "^third_party/"
+
+      # TODO: Enable this step which creates some churn
+      # - id: prettier
+      #   name: prettier
+      #   entry: pixi run prettier --write --list-different
+      #   language: system
+      #   types: [text]
+      #   files: \.(md|yml|yaml)$
+
+      - id: typos
+        name: typos
+        entry: python3 tools/pixi-shim.py typos --force-exclude
+        language: system
+        types: [text]
+        require_serial: true
+        exclude: "^docs/docsgen/"
+
+      # REUSE license compliance
+      - id: reuse
+        name: reuse lint
+        entry: python3 tools/pixi-shim.py reuse lint
+        language: system
+        pass_filenames: false
+
+      - id: shellcheck
+        name: shellcheck
+        entry: python3 tools/pixi-shim.py shellcheck
+        language: system
+        types: [shell]

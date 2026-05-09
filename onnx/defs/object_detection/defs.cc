@@ -1,20 +1,19 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#include <string>
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
-using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
-
-static const char* const RoiAlign_ver22_doc = kDoc_RoiAlign_ver16;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     22,
     OpSchema()
-        .SetDoc(RoiAlign_ver22_doc)
+        .SetDoc(kDoc_RoiAlign_ver16)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -110,8 +109,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static const char* const NonMaxSuppression_ver11_doc = kDoc_NonMaxSuppression_ver10;
-
 ONNX_OPERATOR_SET_SCHEMA(
     NonMaxSuppression,
     11,
@@ -131,7 +128,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             3,
             "iou_threshold",
-            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. It is scalar. Value range [0, 1]. Default to 0.",
+            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Boxes with IoU strictly greater than this threshold are suppressed. It is scalar. Value range [0, 1]. Default to 0.",
             "tensor(float)",
             OpSchema::Optional)
         .Input(
@@ -153,7 +150,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(NonMaxSuppression_ver11_doc)
+        .SetDoc(kDoc_NonMaxSuppression_ver10)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference - Output is always of type INT64
           auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
