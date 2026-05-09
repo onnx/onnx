@@ -161,6 +161,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      attestations: write
 
     steps:
 
@@ -177,6 +178,20 @@ jobs:
           pattern: sdist
           path: dist
           merge-multiple: true
+
+      - name: Generate SLSA Build Provenance attestations
+        if: hashFiles('dist/**') != ''
+        id: attest
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: dist/**
+
+      - name: Upload attestation bundle
+        if: hashFiles('dist/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attestation-bundle-testpypi-weekly
+          path: ${{ steps.attest.outputs.bundle-path }}
 
       - name: Upload preview build to test.pypi
         if: (github.ref == 'refs/heads/main') && (github.event.inputs.publish_testpypi_weekly == 'yes') && (github.repository_owner == 'onnx')
@@ -211,6 +226,7 @@ jobs:
       permissions:
         contents: read
         id-token: write
+        attestations: write
 
       steps:
 
@@ -227,6 +243,20 @@ jobs:
             pattern: sdist
             path: dist
             merge-multiple: true
+
+        - name: Generate SLSA Build Provenance attestations
+          if: hashFiles('dist/**') != ''
+          id: attest
+          uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+          with:
+            subject-path: dist/**
+
+        - name: Upload attestation bundle
+          if: hashFiles('dist/**') != ''
+          uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+          with:
+            name: attestation-bundle-testpypi-release
+            path: ${{ steps.attest.outputs.bundle-path }}
 
         - name: Upload release build to test.pypi
           id: upload_release_build_to_testpypi
@@ -261,6 +291,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      attestations: write
 
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -276,6 +307,20 @@ jobs:
           pattern: sdist
           path: dist
           merge-multiple: true
+
+      - name: Generate SLSA Build Provenance attestations
+        if: hashFiles('dist/**') != ''
+        id: attest
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: dist/**
+
+      - name: Upload attestation bundle
+        if: hashFiles('dist/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attestation-bundle-weekly
+          path: ${{ steps.attest.outputs.bundle-path }}
 
       - name: Upload preview_build to pypi-weekly
         id: upload_preview_build_to_pypi_weekly
@@ -299,6 +344,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      attestations: write
 
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
@@ -314,6 +360,20 @@ jobs:
           pattern: sdist
           path: dist
           merge-multiple: true
+
+      - name: Generate SLSA Build Provenance attestations
+        if: hashFiles('dist/**') != ''
+        id: attest
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        with:
+          subject-path: dist/**
+
+      - name: Upload attestation bundle
+        if: hashFiles('dist/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attestation-bundle-release
+          path: ${{ steps.attest.outputs.bundle-path }}
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
