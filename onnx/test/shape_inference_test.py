@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
-
+from pathlib import Path
 import contextlib
 import itertools
 import unittest
@@ -12197,3 +12197,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+    
+def test_infer_shapes_pathlike_error():
+    with pytest.raises(TypeError,match="infer_shapes_path"):
+        onnx.shape_inference.infer_shapes(Path("model.onnx"))
