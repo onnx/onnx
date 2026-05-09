@@ -145,8 +145,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* const DequantizeLinear_ver24_doc = kDoc_DequantizeLinear_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
     24,
@@ -212,7 +210,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)", "tensor(float8e8m0)"},
             "The type of the input 'x_scale'.")
         .TypeConstraint("T3", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "The type of the output 'y'.")
-        .SetDoc(DequantizeLinear_ver24_doc)
+        .SetDoc(kDoc_DequantizeLinear_ver24)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto const output_dtype =
               static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
@@ -338,8 +336,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, input_shape);
         }));
 
-static const char* const DequantizeLinear_ver23_doc = DequantizeLinear_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     DequantizeLinear,
     23,
@@ -405,7 +401,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
             "The type of the input 'x_scale'.")
         .TypeConstraint("T3", {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"}, "The type of the output 'y'.")
-        .SetDoc(DequantizeLinear_ver23_doc)
+        .SetDoc(kDoc_DequantizeLinear_ver24)
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto const output_dtype =
               static_cast<TensorProto_DataType>(getAttribute(ctx, "output_dtype", TensorProto::UNDEFINED));
