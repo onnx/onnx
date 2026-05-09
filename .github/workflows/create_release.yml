@@ -180,6 +180,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate SLSA Build Provenance attestations
+        if: hashFiles('dist/**') != ''
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: dist/**
@@ -236,6 +237,7 @@ jobs:
             merge-multiple: true
 
         - name: Generate SLSA Build Provenance attestations
+          if: hashFiles('dist/**') != ''
           uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
           with:
             subject-path: dist/**
@@ -291,6 +293,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate SLSA Build Provenance attestations
+        if: hashFiles('dist/**') != ''
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: dist/**
@@ -333,6 +336,7 @@ jobs:
           merge-multiple: true
 
       - name: Generate SLSA Build Provenance attestations
+        if: hashFiles('dist/**') != ''
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: dist/**
