@@ -45,8 +45,8 @@ pip download onnx --no-deps -d ./dist
 gh attestation verify ./dist/onnx-*.whl --owner onnx
 ```
 
-A successful verification confirms that the artifact was built from the `onnx/onnx` repository on GitHub-hosted runners and has not been tampered with since it was built.
+A successful verification confirms that the artifact was built by GitHub Actions in the `onnx/onnx` repository and has not been tampered with since it was built.
 
 ### Software Bill of Materials (SBOM)
 
-Each wheel also embeds a [CycloneDX 1.7](https://cyclonedx.org/) SBOM (`.cdx.json`) describing the build-time dependencies included in the artifact.
+Each wheel also embeds a [CycloneDX 1.7](https://cyclonedx.org/) SBOM (`.cdx.json`) listing the bundled third-party components shipped inside the wheel (e.g. statically linked C++ libraries).
