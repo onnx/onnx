@@ -54,7 +54,7 @@ jobs:
         target-architecture: ['arm64']
 
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         persist-credentials: false
         submodules: true
@@ -88,12 +88,10 @@ jobs:
         ONNX_SCIENTIFIC_PYTHON_BUILD=1 python -m build --sdist
 
     - name: Build source distribution (for release)
-      if: ${{ env.BUILD_MODE == 'release' }}
+      if: ${{ inputs.build_mode == 'release' }}
       run: |
         git clean -xdf
         python -m build --sdist
-      env:
-        BUILD_MODE: ${{ inputs.build_mode }}
 
     - name: Upload sdist
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f

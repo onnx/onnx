@@ -34,7 +34,7 @@ concurrency:
 jobs:
 
   call-linux:
-    uses: andife/onnx/.github/workflows/release_linux.yml@scientific
+    uses: ./.github/workflows/release_linux.yml
     with:
       os: "linux"
       build_mode: 'scientific'
@@ -42,7 +42,7 @@ jobs:
       test_python_versions: '3.14,3.13,3.12'
 
   call-win:
-    uses: andife/onnx/.github/workflows/release_win.yml@scientific
+    uses: ./.github/workflows/release_win.yml
     with:
       os: "win"
       build_mode: 'scientific'
@@ -50,7 +50,7 @@ jobs:
       test_python_versions: '3.14,3.13,3.12'
 
   call-mac:
-    uses: andife/onnx/.github/workflows/release_mac.yml@scientific
+    uses: ./.github/workflows/release_mac.yml
     with:
       os: "macos"
       build_mode: 'scientific'
@@ -58,7 +58,7 @@ jobs:
       test_python_versions: '3.14,3.13,3.12'
 
   call-sdist:
-    uses: andife/onnx/.github/workflows/release_sdist.yml@scientific
+    uses: ./.github/workflows/release_sdist.yml
     with:
       os: "macos"
       build_mode: 'scientific'
@@ -74,21 +74,20 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v4.1.8
         with:
           pattern: wheels*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v4.1.8
         with:
           pattern: sdist
           path: dist
           merge-multiple: true
 
-      # - name: Upload to scientific-python nightly channel
-      #   uses: scientific-python/upload-nightly-action@5748273c71e2d8d3a61f3a11a16421c8954f9ecf # 0.6.3
-      #   with:
-      #     artifacts_path: dist
-      #     anaconda_nightly_upload_token: ${{secrets.UPLOAD_TOKEN}}
-
+      - name: Upload to scientific-python nightly channel
+        uses: scientific-python/upload-nightly-action@5748273c71e2d8d3a61f3a11a16421c8954f9ecf # 0.6.3
+        with:
+          artifacts_path: dist
+          anaconda_nightly_upload_token: ${{ secrets.SCIENTIFIC_PYTHON_NIGHTLY_UPLOAD_TOKEN }}

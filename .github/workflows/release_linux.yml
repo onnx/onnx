@@ -71,7 +71,7 @@ jobs:
     runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
 
     steps:
-    - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         persist-credentials: true
         submodules: true
@@ -103,7 +103,7 @@ jobs:
     - name: Build wheel for x86_64
       if: matrix.architecture == 'x64'
       id: build_wheel_x86
-      uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.10.10-1
+      uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_x86_64 ${{ inputs.build_mode }} ${{ steps.set_vars.outputs.SOURCE_DATE_EPOCH }} ${{ steps.set_vars.outputs.GIT_HASH }}
@@ -111,7 +111,7 @@ jobs:
     - name: Build wheel for arm64
       if: matrix.architecture == 'arm64'
       id: build_wheel_arm64
-      uses: docker://quay.io/pypa/manylinux_2_28_aarch64:2025.10.10-1
+      uses: docker://quay.io/pypa/manylinux_2_28_aarch64:2026.05.07-2
       with:
         entrypoint: bash
         args: .github/workflows/manylinux/entrypoint.sh ${{ matrix.python-version }} manylinux_2_28_aarch64 ${{ inputs.build_mode }} ${{ steps.set_vars.outputs.SOURCE_DATE_EPOCH }} ${{ steps.set_vars.outputs.GIT_HASH }}
@@ -143,7 +143,7 @@ jobs:
 
   test:
     needs: [build, parse-python-versions]
-    runs-on: ${{ matrix.python-version == '3.12' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ matrix.architecture == 'x64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     env:
       MANYLINUX_WHEEL_X64: "manylinux_2_28_x86_64"
       MANYLINUX_WHEEL_ARM64: "manylinux_2_28_aarch64"
@@ -153,7 +153,7 @@ jobs:
         architecture: ['x64', 'arm64']
       fail-fast: false
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: true
           submodules: true
@@ -167,11 +167,6 @@ jobs:
         with:
           name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
           path: ./dist
-      - uses: actions/setup-python@v6.1.0
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: ${{ matrix.architecture }}
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
         with:
