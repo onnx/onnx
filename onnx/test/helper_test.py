@@ -11,7 +11,6 @@ from typing import Any
 
 import ml_dtypes
 import numpy as np
-import numpy.typing as npt
 import parameterized
 import pytest
 
@@ -21,6 +20,7 @@ from onnx import (
     ModelProto,
     OptionalProto,
     SequenceProto,
+    SparseTensorProto,
     TensorProto,
     TypeProto,
     checker,
@@ -28,19 +28,8 @@ from onnx import (
     helper,
     numpy_helper,
 )
-
-
-def _pack_4bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    odd_sized = size % 2 == 1
-    if odd_sized:
-        array_flat.resize([size + 1], refcheck=False)
-    array_flat &= 0x0F
-    array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]
+from onnx.numpy_helper import _pack_2bitx4 as _pack_2bit
+from onnx.numpy_helper import _pack_4bitx2 as _pack_4bit
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -146,63 +135,50 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.tensors), tensors)
         checker.check_attribute(attr)
 
-    def test_attr_sparse_tensor_proto(self) -> None:
-        dense_shape = [3, 3]
-        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
+    @staticmethod
+    def _make_sparse_tensor() -> SparseTensorProto:
         values_tensor = helper.make_tensor(
             name="sparse_values",
             data_type=TensorProto.FLOAT,
-            dims=[len(sparse_values)],
-            vals=np.array(sparse_values).astype(np.float32),
+            dims=[3],
+            vals=np.array(
+                [1.764052391052246, 0.40015721321105957, 0.978738009929657],
+                dtype=np.float32,
+            ),
             raw=False,
         )
-
-        linear_indices = [2, 3, 5]
         indices_tensor = helper.make_tensor(
             name="indices",
             data_type=TensorProto.INT64,
-            dims=[len(linear_indices)],
-            vals=np.array(linear_indices).astype(np.int64),
+            dims=[3],
+            vals=np.array([2, 3, 5], dtype=np.int64),
             raw=False,
         )
-        sparse_tensor = helper.make_sparse_tensor(
-            values_tensor, indices_tensor, dense_shape
-        )
+        return helper.make_sparse_tensor(values_tensor, indices_tensor, [3, 3])
 
+    def test_attr_sparse_tensor_proto(self) -> None:
+        sparse_tensor = self._make_sparse_tensor()
         attr = helper.make_attribute("sparse_attr", sparse_tensor)
         self.assertEqual(attr.name, "sparse_attr")
         checker.check_sparse_tensor(helper.get_attribute_value(attr))
         checker.check_attribute(attr)
 
     def test_attr_sparse_tensor_repeated_protos(self) -> None:
-        dense_shape = [3, 3]
-        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
-        values_tensor = helper.make_tensor(
-            name="sparse_values",
-            data_type=TensorProto.FLOAT,
-            dims=[len(sparse_values)],
-            vals=np.array(sparse_values).astype(np.float32),
-            raw=False,
-        )
-
-        linear_indices = [2, 3, 5]
-        indices_tensor = helper.make_tensor(
-            name="indices",
-            data_type=TensorProto.INT64,
-            dims=[len(linear_indices)],
-            vals=np.array(linear_indices).astype(np.int64),
-            raw=False,
-        )
-        sparse_tensor = helper.make_sparse_tensor(
-            values_tensor, indices_tensor, dense_shape
-        )
-
-        repeated_sparse = [sparse_tensor, sparse_tensor]
-        attr = helper.make_attribute("sparse_attrs", repeated_sparse)
+        sparse_tensor = self._make_sparse_tensor()
+        attr = helper.make_attribute("sparse_attrs", [sparse_tensor, sparse_tensor])
         self.assertEqual(attr.name, "sparse_attrs")
         checker.check_attribute(attr)
         for s in helper.get_attribute_value(attr):
             checker.check_sparse_tensor(s)
+
+    def test_printable_attribute_sparse_tensor(self) -> None:
+        sparse_tensor = self._make_sparse_tensor()
+
+        attr = helper.make_attribute("st", sparse_tensor)
+        self.assertIn("<Sparse Tensor>", helper.printable_attribute(attr))
+
+        attr = helper.make_attribute("sts", [sparse_tensor, sparse_tensor])
+        self.assertIn("[<Sparse Tensor>, ...]", helper.printable_attribute(attr))
 
     def test_attr_repeated_graph_proto(self) -> None:
         graphs = [GraphProto(), GraphProto()]
@@ -423,6 +399,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 22)], 10)
         test([("", 23)], 11)
         test([("", 24)], 12)
+        test([("", 25)], 13)
+        test([("", 26)], 13)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
@@ -690,6 +668,63 @@ class TestHelperTensorFunctions(unittest.TestCase):
         ynp = numpy_helper.to_array(y)
         np.testing.assert_equal(ynp.view(np.uint8), expected)
 
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT2, TensorProto.INT2),
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    def test_make_2bit_tensor(self, dtype, dims) -> None:
+        type_range = {
+            TensorProto.UINT2: (0, 3),
+            TensorProto.INT2: (-2, 1),
+        }
+        data = np.random.randint(
+            type_range[dtype][0], high=type_range[dtype][1] + 1, size=dims
+        )
+        y = helper.make_tensor("y", dtype, data.shape, data)
+
+        # Check the expected size of int32_data in bytes
+        expected_data_size = math.ceil(np.prod(data.shape) / 4.0)
+        actual_data_size = len(bytes(y.int32_data))
+        np.testing.assert_equal(actual_data_size, expected_data_size)
+
+        # Check the expected data values.
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(ynp, data)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            ((5, 4, 6), (4, 6, 5), (3, 3), (1,), (2**10,)),
+        )
+    )
+    def test_2bit_tensor_size(self, dims) -> None:
+        # A bug caused negative int2 values to inflate tensor size.
+        # So, test negative values here.
+        num_elems = np.prod(dims)
+        data = np.array([-2] * num_elems, dtype=np.int8).reshape(dims)
+        y = helper.make_tensor("y", TensorProto.INT2, data.shape, data)
+
+        # Check the expected size of int32_data in bytes
+        expected_data_size = math.ceil(num_elems / 4.0)
+        actual_data_size = len(bytes(y.int32_data))
+        np.testing.assert_equal(actual_data_size, expected_data_size)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT2, TensorProto.INT2), ((5, 4, 6), (4, 6, 5), (3, 3), (1,))
+        )
+    )
+    def test_make_2bit_raw_tensor(self, dtype, dims) -> None:
+        data = np.random.randint(0, high=4, size=dims, dtype=np.uint8)
+        packed_data = _pack_2bit(data)
+
+        y = helper.make_tensor(
+            "packed_int2", dtype, dims, packed_data.tobytes(), raw=True
+        )
+        ynp = numpy_helper.to_array(y)
+        np.testing.assert_equal(ynp.view(np.uint8), data)
+
     def test_make_float4e2m1_tensor(self) -> None:
         y = helper.make_tensor(
             "zero_point",
@@ -888,7 +923,7 @@ class TestPrintableGraph(unittest.TestCase):
 @pytest.mark.parametrize(
     "tensor_dtype",
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
-    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
+    ids=helper.tensor_dtype_to_string,
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
     np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
@@ -928,7 +963,7 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
 @pytest.mark.parametrize(
     "tensor_dtype",
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
-    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
+    ids=helper.tensor_dtype_to_string,
 )
 @pytest.mark.parametrize(
     "vals_as_bytes",
@@ -959,6 +994,11 @@ def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
             TensorProto.UINT4,
         }:
             np_array_intermediate = _pack_4bit(np_array)
+        if tensor_dtype in {
+            TensorProto.INT2,
+            TensorProto.UINT2,
+        }:
+            np_array_intermediate = _pack_2bit(np_array)
 
         vals = numpy_helper.tobytes_little_endian(np_array_intermediate)
     else:

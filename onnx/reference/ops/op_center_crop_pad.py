@@ -21,7 +21,7 @@ class CenterCropPad(OpRun):
         new_shape = list(input_data.shape)
         for a, sh in zip(axes, shape, strict=False):
             dim = input_data.shape[a]
-            if sh == a:
+            if sh == dim:
                 pass
             elif sh < dim:
                 new_shape[a] = sh

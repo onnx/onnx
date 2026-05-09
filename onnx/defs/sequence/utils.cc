@@ -1,11 +1,13 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 #include "onnx/defs/sequence/utils.h"
 
 #include <algorithm>
 #include <numeric>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace ONNX_NAMESPACE {
 namespace defs {
@@ -30,9 +32,9 @@ in 'split' must be equal to the dimension size of input tensor on 'axis'.
 )DOC";
 
 std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
-    const std::vector<std::string>& input_types,
-    const std::vector<std::string>& output_types) {
-  return [=](OpSchema& schema) {
+    std::vector<std::string> input_types,
+    std::vector<std::string> output_types) {
+  return [input_types = std::move(input_types), output_types = std::move(output_types)](OpSchema& schema) {
     schema.Input(0, "input", "The tensor to split", "T")
         .Input(
             1,
@@ -59,7 +61,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
             static_cast<int64_t>(1))
         .SetDoc(SplitToSequence_ver11_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          const auto input0_type = ctx.getInputType(0);
+          const auto* const input0_type = ctx.getInputType(0);
           if (nullptr == input0_type) {
             fail_type_inference("Input type for input at index 0 is null. Type info is expected.")
           }
@@ -86,7 +88,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
           int64_t keepdims = 1;
           if (num_inputs == 1) {
             // input split is omitted, default to split by 1.
-            auto attr_proto = ctx.getAttribute("keepdims");
+            const auto* const attr_proto = ctx.getAttribute("keepdims");
             if (attr_proto) {
               keepdims = attr_proto->i();
             }

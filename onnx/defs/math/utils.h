@@ -1,10 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
@@ -16,7 +17,7 @@ namespace defs {
 namespace math {
 namespace utils {
 
-std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types);
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types);
 
 template <typename T>
 T GetScalarValueFromTensor(const ONNX_NAMESPACE::TensorProto* t) {

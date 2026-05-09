@@ -1,8 +1,6 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 // Adapter for Softmax and LogSoftmax in default domain from version 13 to 12
 
@@ -22,6 +20,7 @@ class Softmax_13_12 final : public Adapter {
 
   void adapt_softmax_13_12(const std::shared_ptr<Graph>& graph, Node* node) const {
     (void)graph; // Suppress unused parameter warning
+    ONNX_ASSERTM(node->inputs().size() >= 1, "Softmax node must have at least 1 input")
 
     int new_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : -1;
 
@@ -40,7 +39,8 @@ class Softmax_13_12 final : public Adapter {
     // Check for Flatten node before Softmax and Reshape node after Softmax
     if (node->inputs()[0]->node()->kind() == kFlatten) {
       Node* flatten = node->inputs()[0]->node();
-      const auto flatten_input = flatten->inputs()[0];
+      ONNX_ASSERTM(flatten->inputs().size() >= 1, "Flatten node must have at least 1 input")
+      auto* const flatten_input = flatten->inputs()[0];
       node->replaceInput(0, flatten_input);
       flatten->destroy();
     }
@@ -48,7 +48,7 @@ class Softmax_13_12 final : public Adapter {
     for (Use u : node->output()->uses()) {
       if (u.user->kind() == kReshape) {
         Node* reshape = u.user;
-        const auto reshape_output = reshape->outputs()[0];
+        auto* const reshape_output = reshape->outputs()[0];
         node->output()->replaceAllUsesWith(reshape_output);
         reshape->destroy();
         break;

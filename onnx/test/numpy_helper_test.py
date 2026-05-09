@@ -172,6 +172,8 @@ class TestNumpyHelper(unittest.TestCase):
             ("FLOAT8E8M0", onnx.TensorProto.FLOAT8E8M0),
             ("UINT4", onnx.TensorProto.UINT4),
             ("INT4", onnx.TensorProto.INT4),
+            ("UINT2", onnx.TensorProto.UINT2),
+            ("INT2", onnx.TensorProto.INT2),
             ("FLOAT4E2M1", onnx.TensorProto.FLOAT4E2M1),
         ]
     )
@@ -180,6 +182,96 @@ class TestNumpyHelper(unittest.TestCase):
 
     def test_to_array_from_array_string(self):
         self._to_array_from_array(onnx.TensorProto.STRING, False)
+
+    def test_to_float8e8m0_round_modes(self) -> None:
+        # Inputs in [1.0, 2.0): 1.125 has only mantissa bit 20 set, 1.25 only
+        # bit 21, 1.375 bits 20+21, 1.5 bit 22, 1.75 bits 21+22.
+        x = np.array([1.0, 1.125, 1.25, 1.375, 1.5, 1.75], dtype=np.float32)
+
+        # "up": any non-zero mantissa rounds up to the next power of 2.
+        # Regression: a previous mask of 0x4FFFFF missed bits 20 and 21,
+        # so 1.125 / 1.25 / 1.375 were not rounded up.
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(x, round_mode="up").view(np.uint8),
+            [127, 128, 128, 128, 128, 128],
+        )
+        # "down" truncates: every value in [1.0, 2.0) keeps exponent 127.
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(x, round_mode="down").view(np.uint8),
+            [127, 127, 127, 127, 127, 127],
+        )
+        # "nearest" rounds at bit 22 (i.e., at 1.5), independent of bits 0-21.
+        np.testing.assert_array_equal(
+            numpy_helper.to_float8e8m0(x, round_mode="nearest").view(np.uint8),
+            [127, 127, 127, 127, 128, 128],
+        )
+        # Unknown round_mode is a programming error.
+        with self.assertRaises(ValueError):
+            numpy_helper.to_float8e8m0(
+                np.array([1.0], dtype=np.float32), round_mode="bogus"
+            )
+
+    def test_to_float8e8m0_extreme_values(self) -> None:
+        # NaN/Inf inputs (exponent byte 0xFF) survive every mode/saturate combo.
+        special = np.array([np.nan, np.inf, -np.inf], dtype=np.float32)
+        for mode in ("up", "down", "nearest"):
+            for saturate in (True, False):
+                out = numpy_helper.to_float8e8m0(
+                    special, saturate=saturate, round_mode=mode
+                )
+                np.testing.assert_array_equal(
+                    out.view(np.uint8),
+                    [0xFF, 0xFF, 0xFF],
+                    err_msg=f"mode={mode}, saturate={saturate}",
+                )
+
+        # 1.5 * 2**127 has exponent 0xFE with a non-zero mantissa. Under
+        # round_mode="up", saturate=True caps at 0xFE; saturate=False lets
+        # the exponent roll into 0xFF (the NaN slot).
+        near_max = np.array([1.5 * 2.0**127], dtype=np.float32)
+        self.assertEqual(
+            numpy_helper.to_float8e8m0(near_max, saturate=True, round_mode="up").view(
+                np.uint8
+            )[0],
+            0xFE,
+        )
+        self.assertEqual(
+            numpy_helper.to_float8e8m0(near_max, saturate=False, round_mode="up").view(
+                np.uint8
+            )[0],
+            0xFF,
+        )
+
+    def test_from_array_object_invalid_type(self) -> None:
+        a = np.array([42], dtype=object)
+        with self.assertRaises(NotImplementedError) as cm:
+            numpy_helper.from_array(a)
+        self.assertIn("int", str(cm.exception))
+
+    def test_from_list_explicit_dtype(self) -> None:
+        # Verify explicit dtype is honored, not auto-detected
+        seq = numpy_helper.from_list([], dtype=onnx.SequenceProto.MAP)
+        self.assertEqual(seq.elem_type, onnx.SequenceProto.MAP)
+        # Without dtype, empty list defaults to TENSOR
+        seq2 = numpy_helper.from_list([])
+        self.assertEqual(seq2.elem_type, onnx.SequenceProto.TENSOR)
+
+    def test_to_dict_mismatched_lengths(self) -> None:
+        # Build a valid map then add an extra key to create a mismatch
+        m = numpy_helper.from_dict({1: np.array(1.0), 2: np.array(2.0)})
+        m.keys.append(3)
+        with self.assertRaises(IndexError) as cm:
+            numpy_helper.to_dict(m)
+        self.assertIn("not the same", str(cm.exception))
+
+    def test_from_dict_empty(self) -> None:
+        with self.assertRaises(ValueError):
+            numpy_helper.from_dict({})
+
+    def test_from_dict_unsupported_key_type(self) -> None:
+        with self.assertRaises(TypeError) as cm:
+            numpy_helper.from_dict({1.5: np.array(1), 2.5: np.array(2)})
+        self.assertIn("Unsupported map key type", str(cm.exception))
 
 
 if __name__ == "__main__":

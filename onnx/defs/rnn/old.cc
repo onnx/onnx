@@ -1,7 +1,11 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
 
+#include <string>
+#include <vector>
+
+#include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
@@ -23,7 +27,7 @@ static void RNNShapeInference_opset14(InferenceContext& ctx) {
   auto layout_value = getAttribute(ctx, "layout", 0);
 
   if (hasInputShape(ctx, 0)) {
-    auto& first_input_shape = getInputShape(ctx, 0);
+    const auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
@@ -176,60 +180,11 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
   };
 }
 
-static constexpr const char* GRU_ver14_doc = R"DOC(
-Computes an one-layer GRU. This operator is usually supported via some custom
-implementation such as CuDNN.
-
-Notations:
-
-* `X` - input tensor
-* `z` - update gate
-* `r` - reset gate
-* `h` - hidden gate
-* `t` - time step (t-1 means previous time step)
-* `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-* `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-* `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-* `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-* `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-* `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-* `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-* `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-* `H` - Hidden state
-* `num_directions` - 2 if direction == bidirectional else 1
-
-Activation functions:
-
-* Relu(x)                - max(0, x)
-* Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-* Sigmoid(x)             - 1/(1 + e^{-x})
-
-NOTE:
-  Below are optional
-
-* Affine(x)              - alpha * x + beta
-* LeakyRelu(x)           - x if x >= 0 else alpha * x
-* ThresholdedRelu(x)     - x if x >= alpha else 0
-* ScaledTanh(x)          - alpha * Tanh(beta * x)
-* HardSigmoid(x)         - min(max(alpha * x + beta, 0), 1)
-* Elu(x)                 - x if x >= 0 else alpha * (e^x - 1)
-* Softsign(x)            - x/(1 + |x|)
-* Softplus(x)            - log(1 + e^x)
-
-Equations (Default: f=Sigmoid, g=Tanh):
-
-* zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
-* rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
-* ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
-* ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
-* Ht = (1 - zt) (.) ht + zt (.) Ht-1
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(GRU_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_GRU_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -281,63 +236,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator_opset14("GRU")));
 
-static constexpr const char* LSTM_ver14_doc = R"DOC(
-Computes an one-layer LSTM. This operator is usually supported via some
-custom implementation such as CuDNN.
-
-Notations:
-
-* `X` - input tensor
-* `i` - input gate
-* `o` - output gate
-* `f` - forget gate
-* `c` - cell gate
-* `t` - time step (t-1 means previous time step)
-* `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
-* `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
-* `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
-* `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-* `P[iof]`  - P peephole weight vector for input, output, and forget gates
-* `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
-* `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
-* `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
-* `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-* `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-* `H` - Hidden state
-* `num_directions` - 2 if direction == bidirectional else 1
-
-Activation functions:
-
-* Relu(x)                - max(0, x)
-* Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-* Sigmoid(x)             - 1/(1 + e^{-x})
-
-NOTE: Below are optional
-
-* Affine(x)              - alpha*x + beta
-* LeakyRelu(x)           - x if x >= 0 else alpha * x
-* ThresholdedRelu(x)     - x if x >= alpha else 0
-* ScaledTanh(x)          - alpha*Tanh(beta*x)
-* HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-* Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-* Softsign(x)            - x/(1 + |x|)
-* Softplus(x)            - log(1 + e^x)
-
-Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
-
-* it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
-* ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
-* ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
-* Ct = ft (.) Ct-1 + it (.) ct
-* ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
-* Ht = ot (.) h(Ct)
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(LSTM_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_LSTM_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "
@@ -430,53 +333,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable));
 
-static constexpr const char* RNN_ver14_doc = R"DOC(
-Computes an one-layer simple RNN. This operator is usually supported
-via some custom implementation such as CuDNN.
-
-Notations:
-
-* `X` - input tensor
-* `i` - input gate
-* `t` - time step (t-1 means previous time step)
-* `Wi` - W parameter weight matrix for input gate
-* `Ri` - R recurrence weight matrix for input gate
-* `Wbi` - W parameter bias vector for input gate
-* `Rbi` - R parameter bias vector for input gate
-* `WBi` - W parameter weight matrix for backward input gate
-* `RBi` - R recurrence weight matrix for backward input gate
-* `WBbi` - WR bias vectors for backward input gate
-* `RBbi` - RR bias vectors for backward input gate
-* `H` - Hidden state
-* `num_directions` - 2 if direction == bidirectional else 1
-
-Activation functions:
-
-* Relu(x)                - max(0, x)
-* Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-* Sigmoid(x)             - 1/(1 + e^{-x})
-
-NOTE: Below are optional
-
-* Affine(x)              - alpha*x + beta
-* LeakyRelu(x)           - x if x >= 0 else alpha * x
-* ThresholdedRelu(x)     - x if x >= alpha else 0
-* ScaledTanh(x)          - alpha*Tanh(beta*x)
-* HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-* Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-* Softsign(x)            - x/(1 + |x|)
-* Softplus(x)            - log(1 + e^x)
-
-Equations (Default: f=Tanh):
-
-* Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
     14,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(RNN_ver14_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_RNN_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -527,7 +388,7 @@ static std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "Specify if the RNN is forward, reverse, or bidirectional. "
         "Must be one of forward (default), reverse, or bidirectional.",
         AttributeProto::STRING,
-        std::string("foward"));
+        std::string("foward")); // reviewdog:ignore[misspell], don't fix that typo, it's fixed in newer versions
     schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL_VALUE);
     schema.Attr(
         "activation_alpha",
@@ -713,7 +574,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 // Versions 1 to 6 of RNN/LSTM and versions 3 to 6 of GRU:
 
-static void RNNShapeInference1(InferenceContext& ctx) {
+static void RNNShapeInference_opset1_to_6(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
@@ -728,9 +589,13 @@ static void RNNShapeInference1(InferenceContext& ctx) {
     hidden_size.set_dim_value(hidden_size_value);
 
   if (hasInputShape(ctx, 0)) {
-    auto& first_input_shape = getInputShape(ctx, 0);
-    seq_length = first_input_shape.dim(0);
-    batch_size = first_input_shape.dim(1);
+    const auto& first_input_shape = getInputShape(ctx, 0);
+    if (first_input_shape.dim_size() != 3) {
+      fail_shape_inference("First input tensor must have rank 3");
+    } else {
+      seq_length = first_input_shape.dim(0);
+      batch_size = first_input_shape.dim(1);
+    }
   }
 
   // The treatment of outputs is a bit complicated because of the combination of
@@ -764,7 +629,7 @@ static void RNNShapeInference1(InferenceContext& ctx) {
   }
 }
 
-static std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGenerator_opset1_to_6(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",
@@ -841,7 +706,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
-    schema.TypeAndShapeInferenceFunction(RNNShapeInference1);
+    schema.TypeAndShapeInferenceFunction(RNNShapeInference_opset1_to_6);
   };
 }
 
@@ -943,82 +808,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "to be 0.",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator1("RNN")));
+        .FillUsing(RNNDocGenerator_opset1_to_6("RNN")));
 
-static constexpr const char* GRU_ver3_doc = R"DOC(
-Computes an one-layer GRU. This operator is usually supported via some custom
-implementation such as CuDNN.
-
-Notations:
-
-`X` - input tensor
-
-`z` - update gate
-
-`r` - reset gate
-
-`h` - hidden gate
-
-`t` - time step (t-1 means previous time step)
-
-`W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
-
-`R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
-
-`Wb[zrh]` - W bias vectors for update, reset, and hidden gates
-
-`Rb[zrh]` - R bias vectors for update, reset, and hidden gates
-
-`WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
-
-`RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
-
-`WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
-
-`RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-
-`H` - Hidden state
-
-`num_directions` - 2 if direction == bidirectional else 1
-
-Activation functions:
-
-  Relu(x)                - max(0, x)
-
-  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
-
-  Sigmoid(x)             - 1/(1 + e^{-x})
-
-  (NOTE: Below are optional)
-
-  Affine(x)              - alpha*x + beta
-
-  LeakyRelu(x)           - x if x >= 0 else alpha * x
-
-  ThresholdedRelu(x)     - x if x >= alpha else 0
-
-  ScaledTanh(x)          - alpha*Tanh(beta*x)
-
-  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
-
-  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
-
-  Softsign(x)            - x/(1 + |x|)
-
-  Softplus(x)            - log(1 + e^x)
-
-Equations (Default: f=Sigmoid, g=Tanh):
-
-  - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
-
-  - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
-
-  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
-
-  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
-
-  - Ht = (1 - zt) (.) ht + zt (.) Ht-1
-)DOC";
+static const char* const GRU_ver3_doc = GRU_ver1_doc;
 
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
@@ -1063,7 +855,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "- assumed to be 0",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator1("GRU")));
+        .FillUsing(RNNDocGenerator_opset1_to_6("GRU")));
 
 static constexpr const char* LSTM_ver1_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
@@ -1205,7 +997,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "assumed to be 0.",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator1("LSTM"))
+        .FillUsing(RNNDocGenerator_opset1_to_6("LSTM"))
         .Output(
             2,
             "Y_c",
@@ -1219,7 +1011,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 // Versions 7 to 13 of RNN/LSTM/GRU
 
 namespace ONNX_NAMESPACE {
-static void RNNShapeInference2(InferenceContext& ctx) {
+static void RNNShapeInference_opset7_to_13(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
@@ -1234,7 +1026,7 @@ static void RNNShapeInference2(InferenceContext& ctx) {
     hidden_size.set_dim_value(hidden_size_value);
 
   if (hasInputShape(ctx, 0)) {
-    auto& first_input_shape = getInputShape(ctx, 0);
+    const auto& first_input_shape = getInputShape(ctx, 0);
     if (first_input_shape.dim_size() != 3) {
       fail_shape_inference("First input tensor must have rank 3");
     }
@@ -1263,7 +1055,7 @@ static void RNNShapeInference2(InferenceContext& ctx) {
   }
 }
 
-static std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
+static std::function<void(OpSchema&)> RNNDocGenerator_opset7_to_13(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",
@@ -1334,7 +1126,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator2(const char* /*name*/) {
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
-    schema.TypeAndShapeInferenceFunction(RNNShapeInference2);
+    schema.TypeAndShapeInferenceFunction(RNNShapeInference_opset7_to_13);
   };
 }
 
@@ -1436,7 +1228,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "to be 0.",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator2("RNN")));
+        .FillUsing(RNNDocGenerator_opset7_to_13("RNN")));
 
 static constexpr const char* GRU_ver7_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
@@ -1556,7 +1348,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "- assumed to be 0",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator2("GRU")));
+        .FillUsing(RNNDocGenerator_opset7_to_13("GRU")));
 
 static constexpr const char* LSTM_ver7_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
@@ -1694,7 +1486,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "assumed to be 0.",
             "T",
             OpSchema::Optional)
-        .FillUsing(RNNDocGenerator2("LSTM"))
+        .FillUsing(RNNDocGenerator_opset7_to_13("LSTM"))
         .Output(
             2,
             "Y_c",

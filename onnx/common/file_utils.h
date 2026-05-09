@@ -1,12 +1,10 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include <filesystem>
+#include <filesystem> // NOLINT(build/c++17)
 #include <fstream>
 #include <string>
 
@@ -20,7 +18,7 @@ namespace ONNX_NAMESPACE {
 template <typename T>
 void LoadProtoFromPath(const std::string& proto_path, T& proto) {
 #ifdef _WIN32
-  std::filesystem::path proto_u8_path(utf8str_to_wstring(proto_path, true));
+  std::filesystem::path proto_u8_path(utf8str_to_wstring(proto_path));
 #else
   std::filesystem::path proto_u8_path(proto_path);
 #endif

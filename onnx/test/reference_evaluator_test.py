@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# type: ignore
+# mypy: ignore-errors
 
 """You can run a specific test by using the following syntax.
 
@@ -421,6 +421,31 @@ class TestReferenceEvaluator(unittest.TestCase):
                 """
             ).lstrip("\n")
             self.assertEqual(log, out)
+
+    def test_reference_evaluator_empty_array_verbose(self):
+        input_tensor = make_tensor_value_info("input", TensorProto.FLOAT, [None, 3])
+        output_tensor = make_tensor_value_info("output", TensorProto.FLOAT, [None, 3])
+
+        node = make_node("Identity", ["input"], ["output"])
+        graph = make_graph([node], "test_empty_array", [input_tensor], [output_tensor])
+        model = make_model(graph)
+
+        for verbose_level in [2, 3, 4, 15]:
+            with self.subTest(level=verbose_level):
+                sess = ReferenceEvaluator(model, verbose=verbose_level)
+
+                empty_input = np.array([], dtype=np.float32).reshape(0, 3)
+
+                stdout = StringIO()
+                with redirect_stdout(stdout):
+                    result = sess.run(None, {"input": empty_input})
+
+                expected = empty_input
+                assert_allclose(result[0], expected)
+                self.assertEqual(result[0].shape, (0, 3))
+
+                out = stdout.getvalue()
+                self.assertIn("Identity", out)
 
     def test_reference_evaluator_lr(self):
         lr, f = TestReferenceEvaluator._linear_regression()
@@ -2503,18 +2528,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             c_out = complex_out[0:onesided_length]
             expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
 
-        # import torch
-        # correspondence with torch
-        # hop_length = frame_step
-        # window = np.ones((frame_length,), dtype=np.float32)
-        # ex = torch.stft(
-        #      torch.Tensor(feeds["signal"][:, :, 0]),
-        #      n_fft=frame_length, window=torch.Tensor(window),
-        #      hop_length=hop_length, win_length=frame_length,
-        #      onesided=True, return_complex=True, center=False,
-        #      normalized=False)
-        # ex = np.transpose(ex.numpy(), [0, 2, 1])
-
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
         assert_allclose(got1[0], expected)
@@ -2557,16 +2570,6 @@ class TestReferenceEvaluator(unittest.TestCase):
             ]
             c_out = complex_out[0:onesided_length]
             expected[0, i] = np.stack((c_out.real, c_out.imag), axis=1)
-
-        # import torch
-        # hop_length = frame_step
-        # ex = torch.stft(
-        #      torch.Tensor(feeds["signal"][:, :, 0]),
-        #      n_fft=frame_length, window=torch.Tensor(window),
-        #      hop_length=hop_length, win_length=frame_length,
-        #      onesided=True, return_complex=True, center=False,
-        #      normalized=False)
-        # ex = np.transpose(ex.numpy(), [0, 2, 1])
 
         ref1 = ReferenceEvaluator(onnx_model)
         got1 = ref1.run(None, feeds)
@@ -5608,6 +5611,113 @@ class TestReferenceEvaluator(unittest.TestCase):
     @parameterized.parameterized.expand(
         [
             (
+                TensorProto.UINT2,
+                [-1, 0, 1.5, 2, 3.3, 10, 20, 40],
+                [0, 0, 2, 2, 4, 6, 6, 6],
+            ),
+            (TensorProto.UINT2, [-1, 0, 1.5, 2, 3.3, 10, 40], [0, 0, 2, 2, 4, 6, 6]),
+            (TensorProto.UINT2, [0], [0]),
+            (
+                TensorProto.INT2,
+                [-20, -14.5, 0, 1.5, 2, 3.3, 10, 20],
+                [-4, -4, 0, 2, 2, 2, 2, 2],
+            ),
+            (
+                TensorProto.INT2,
+                [-20, -14.5, 0, 1.5, 2, 3.3, 10],
+                [-4, -4, 0, 2, 2, 2, 2],
+            ),
+            (TensorProto.INT2, [0], [0]),
+        ]
+    )
+    def test_quantize_linear_int2(self, qtype, data, expected):
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node(
+                        "Constant",
+                        [],
+                        ["scale"],
+                        value=make_tensor("scale", TensorProto.FLOAT, [1], [2.0]),
+                    ),
+                    make_node(
+                        "Constant",
+                        [],
+                        ["zero"],
+                        value=make_tensor("zero", qtype, [1], [0]),
+                    ),
+                    make_node("QuantizeLinear", ["X", "scale", "zero"], ["T"]),
+                    make_node("DequantizeLinear", ["T", "scale"], ["Y"], axis=0),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        got = ref.run(None, {"X": np.asarray(data)})
+        assert_allclose(got[0], expected)
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.FLOAT, TensorProto.FLOAT16),
+            (TensorProto.UINT2, TensorProto.INT2),
+        )
+    )
+    def test_cast_int2_output(self, cast_from, cast_to):
+        X = make_tensor_value_info("X", cast_from, [None])
+        Y = make_tensor_value_info("Y", cast_to, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Y"], to=cast_to),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array(
+            [0, 1, 2.4, 2.6, 4, 10],
+            dtype=onnx.helper.tensor_dtype_to_np_dtype(cast_from),
+        )
+        expected = data.astype(onnx.helper.tensor_dtype_to_np_dtype(cast_to))
+        got = ref.run(None, {"X": data})
+        self.assertEqual(got[0].tolist(), expected.tolist())
+
+    @parameterized.parameterized.expand(
+        itertools.product(
+            (TensorProto.UINT2, TensorProto.INT2),
+            (TensorProto.FLOAT, TensorProto.FLOAT16),
+        )
+    )
+    def test_cast_int2_input(
+        self, cast_from: TensorProto.DataType, cast_to: TensorProto.DataType
+    ):
+        X = make_tensor_value_info("X", cast_from, [None])
+        Y = make_tensor_value_info("Y", cast_to, [None])
+        model = make_model(
+            make_graph(
+                [
+                    make_node("Cast", ["X"], ["Y"], to=TensorProto.FLOAT),
+                ],
+                "g",
+                [X],
+                [Y],
+            )
+        )
+        ref = ReferenceEvaluator(model)
+        data = np.array(range(2), dtype=np.float32)
+        expected = data.astype(onnx.helper.tensor_dtype_to_np_dtype(cast_from))
+        got = ref.run(None, {"X": data})
+        np.testing.assert_array_equal(got[0], expected)
+
+    @parameterized.parameterized.expand(
+        [
+            (
                 TensorProto.UINT4,
                 [-1, 0, 1.5, 2, 3.3, 10, 20, 40],
                 [0, 0, 2, 2, 4, 10, 20, 30],
@@ -5998,6 +6108,8 @@ class TestReferenceEvaluator(unittest.TestCase):
             ("FLOAT8E5M2FNUZ",),
             ("INT4",),
             ("UINT4",),
+            ("INT2",),
+            ("UINT2",),
         ]
     )
     def test_cmp_custom_dtype(self, stype):
@@ -6127,6 +6239,30 @@ class TestReferenceEvaluator(unittest.TestCase):
             ),
             m,
         )
+
+    def test_center_crop_pad_no_change_when_shape_equals_dim(self):
+        """Test CenterCropPad when target shape equals current dimension.
+
+        Validates the fix where comparison should be 'if sh == dim' not 'if sh == a'.
+        Uses input (5, 5, 1) with target [1, 1, 1] to test axis 2 where dim=1, sh=1, a=2.
+        """
+        X = make_tensor_value_info("X", TensorProto.FLOAT, [None, None, None])
+        shape = make_tensor_value_info("shape", TensorProto.INT64, [3])
+        Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None, None, None])
+        node = make_node("CenterCropPad", ["X", "shape"], ["Y"])
+        graph = make_graph([node], "g", [X, shape], [Y])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 18)])
+        check_model(onnx_model)
+
+        x = np.arange(25).reshape((5, 5, 1)).astype(np.float32)
+        target_shape = np.array([1, 1, 1], dtype=np.int64)
+        expected = x[2:3, 2:3, :]
+
+        sess = ReferenceEvaluator(onnx_model)
+        got = sess.run(None, {"X": x, "shape": target_shape})[0]
+
+        assert_allclose(got, expected)
+        self.assertEqual(got.shape, (1, 1, 1))
 
 
 if __name__ == "__main__":

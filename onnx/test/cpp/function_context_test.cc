@@ -1,18 +1,17 @@
 // Copyright (c) ONNX Project Contributors
-
-/*
- * SPDX-License-Identifier: Apache-2.0
- */
+//
+// SPDX-License-Identifier: Apache-2.0
 
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
-
-using namespace ONNX_NAMESPACE::checker;
 
 namespace ONNX_NAMESPACE {
 namespace Test {
@@ -24,7 +23,7 @@ static TensorProto ToTensor(double value, TensorProto_DataType elem_type) {
   t.set_data_type(elem_type);
   switch (elem_type) {
     case TensorProto_DataType::TensorProto_DataType_FLOAT:
-      t.add_float_data((float)value);
+      t.add_float_data(static_cast<float>(value));
       break;
     case TensorProto_DataType::TensorProto_DataType_DOUBLE:
       t.add_double_data(value);
@@ -98,7 +97,7 @@ static void RegisterCustomFuncFloatSchema() {
 TEST(FunctionAPITest, ContextDependentFunctionTest) {
   RegisterCustomFuncFloatSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
+  const auto* const schema = OpSchemaRegistry::Schema("CustomFuncFloat", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
@@ -113,12 +112,12 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_EQ(fnProto.node_size(), 2);
 
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 12}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(fnProto, checkerCtx, lexicalScope);
+  checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
 // A polymorphic context-dependent function test-case.
@@ -126,10 +125,10 @@ TEST(FunctionAPITest, ContextDependentFunctionTest) {
 static bool
 BuildFunctionBody(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   // Create a scalar-tensor constant 2.0 of input-type:
-  auto* tp = ctx.getInputType(0);
+  const auto* const tp = ctx.getInputType(0);
   if ((tp == nullptr) || (!tp->has_tensor_type()))
     return false;
-  auto elem_type = (TensorProto_DataType)tp->tensor_type().elem_type();
+  auto elem_type = static_cast<TensorProto_DataType>(tp->tensor_type().elem_type());
   auto two_as_tensor = ToTensor(2.0, elem_type);
 
   std::vector<FunctionBodyHelper::NodeDef> body{
@@ -217,7 +216,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
   ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce unused9(schema_ver9);
   (void)unused9;
 
-  const auto* schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
+  const auto* const schema2 = OpSchemaRegistry::Schema("MySub", 2, ONNX_DOMAIN);
   EXPECT_TRUE(schema2);
   for (int model_opset_import = 2; model_opset_import < 9; model_opset_import++) {
     ONNX_TRY {
@@ -235,7 +234,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
     }
   }
 
-  const auto* schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
+  const auto* const schema9 = OpSchemaRegistry::Schema("MySub", 9, ONNX_DOMAIN);
   EXPECT_TRUE(schema9);
   for (int model_opset_import = 9; model_opset_import < 10; model_opset_import++) {
     ONNX_TRY {
@@ -252,7 +251,7 @@ TEST(FunctionAPITest, VersionedFunctionBodyTest) {
 TEST(FunctionAPITest, TypeContextTest) {
   RegisterCustomFunctionSchema();
 
-  const auto* schema = OpSchemaRegistry::Schema("CustomFunction", 12, ONNX_DOMAIN);
+  const auto* const schema = OpSchemaRegistry::Schema("CustomFunction", 12, ONNX_DOMAIN);
   EXPECT_TRUE(schema);
   EXPECT_FALSE(schema->HasFunction());
   EXPECT_TRUE(schema->HasContextDependentFunction());
@@ -270,12 +269,12 @@ TEST(FunctionAPITest, TypeContextTest) {
   EXPECT_TRUE(schema->BuildContextDependentFunction(ctx, fnProto));
   EXPECT_EQ(fnProto.node_size(), 2);
 
-  LexicalScopeContext lexicalScope;
-  CheckerContext checkerCtx;
+  checker::LexicalScopeContext lexicalScope;
+  checker::CheckerContext checkerCtx;
   std::unordered_map<std::string, int> opset_imports({{ONNX_DOMAIN, 12}});
   checkerCtx.set_opset_imports(opset_imports);
   checkerCtx.set_ir_version(7);
-  check_function(fnProto, checkerCtx, lexicalScope);
+  checker::check_function(fnProto, checkerCtx, lexicalScope);
 }
 
 } // namespace Test

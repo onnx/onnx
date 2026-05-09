@@ -13,7 +13,6 @@ if(TARGET GTest::gtest)
 else()
   target_link_libraries(${UT_NAME} PRIVATE gtest)
 endif()
-
 set(TEST_ARGS)
 if(ONNX_GENERATE_TEST_REPORTS)
   # generate a report file next to the test program

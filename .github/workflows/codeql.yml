@@ -1,24 +1,19 @@
-# For most projects, this workflow file will not need changing; you simply need
-# to commit it to your repository.
-#
-# You may wish to alter this file to override the set of languages analyzed,
-# or to provide custom queries or build logic.
-#
-# ******** NOTE ********
-# We have attempted to detect the languages in your repository. Please check
-# the `language` matrix defined below to confirm you have the correct set of
-# supported CodeQL languages.
-#
 name: "CodeQL"
 
 on:
   push:
-    branches: [ "main", rel-* ]
+    branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ "main", rel-* ]
+    branches: [ "main" ]
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
   schedule:
     - cron: '33 6 * * 5'
+  workflow_dispatch:
 
 permissions:  # set top-level default permissions as security best practice
   contents: read
@@ -39,58 +34,57 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'cpp', 'python' ]
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+        language: [ 'actions', 'cpp', 'python' ]
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        submodules: recursive
         persist-credentials: false
 
     - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      if: matrix.language != 'actions'
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
+    - name: Upgrade pip
+      if: matrix.language != 'actions'
+      run: python -m pip install --upgrade pip
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@0499de31b99561a6d14a36a5f662c2a54f91beee # v3.29.5
+      uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
       with:
         languages: ${{ matrix.language }}
-        queries: security-extended,security-and-quality
-        # If you wish to specify custom queries, you can do so here or in a config file.
-        # By default, queries listed here will override any specified in a config file.
-        # Prefix the list here with "+" to use these queries and those in the config file.
-
-        # Details on CodeQL's query packs refer to : https://docs.github.com/en/code-security/code-scanning/automatically-scanning-your-code-for-vulnerabilities-and-errors/configuring-code-scanning#using-queries-in-ql-packs
-        config-file: ./.github/codeql/codeql-config.yml
+        config: |
+          queries:
+            - uses: security-extended
+            - uses: security-and-quality
+          paths-ignore:
+            - '.setuptools-cmake-build/**'
+            - 'build/**'
+            - 'onnx/**/*_pb2.py'
+            - 'onnx/**/*_pb2.pyi'
+            - '**/*.pb.cc'
+            - '**/*.pb.h'
+            - 'onnx/backend/test/data/**'
+          query-filters:
+            - exclude:
+                id: py/import-and-import-from
 
     # Install onnx so that it is found by the linters
     - name: Install ONNX
+      if: matrix.language != 'actions'
       run: |
         source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
         python -m pip install --quiet -r requirements-release_build.txt
-        git submodule update --init --recursive
         export ONNX_ML=1
+        export ONNX_BUILD_TESTS=1
         pip install .
 
-    # ℹ️ Command-line programs to run using the OS shell.
-    # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
-
-    #   If the Autobuild fails above, remove it and uncomment the following three lines.
-    #   modify them (or add more) to build your code if your project, please refer to the EXAMPLE below for guidance.
-
-    # - run: |
-    #   echo "Run, Build Application using script"
-    #   ./location_of_script_within_repo/buildscript.sh
-
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@0499de31b99561a6d14a36a5f662c2a54f91beee # v3.29.5
+      uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
       with:
         category: "/language:${{matrix.language}}"
