@@ -157,6 +157,24 @@ inline bool getRepeatedAttribute(InferenceContext& ctx, const std::string& attr_
   }
 }
 
+// Throws InferenceError if the attribute is missing. Returning by reference
+// prevents callers from accidentally skipping the null check.
+inline const AttributeProto& getRequiredAttribute(const InferenceContext& ctx, const std::string& name) {
+  const auto* attr = ctx.getAttribute(name);
+  if (attr == nullptr) {
+    fail_shape_inference("Required attribute '", name, "' is missing");
+  }
+  return *attr;
+}
+
+inline int64_t getRequiredAttributeInt(const InferenceContext& ctx, const std::string& name) {
+  const auto& attr = getRequiredAttribute(ctx, name);
+  if (!attr.has_i()) {
+    fail_shape_inference("Required attribute '", name, "' must be an integer");
+  }
+  return attr.i();
+}
+
 inline int64_t getAttribute(const InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
   const auto* attr_proto = ctx.getAttribute(attributeName);
   if ((nullptr != attr_proto) && attr_proto->has_i())
@@ -793,11 +811,17 @@ inline TypeProto RemoveDimensionsFromShape(const TypeProto& proto, int num_dimen
   return t;
 }
 
-// copied from GSL:
-// https://github.com/microsoft/GSL/blob/main/include/gsl/util
+// Checked narrowing cast — throws InferenceError on lossy conversion
+// (sign change or truncation). Matches gsl::narrow:
+// https://github.com/microsoft/GSL/blob/main/include/gsl/narrow
 template <class T, class U>
-static constexpr T narrow_cast(U&& u) noexcept {
-  return static_cast<T>(std::forward<U>(u));
+static constexpr T narrow(U&& u) {
+  const U original = u;
+  const T result = static_cast<T>(std::forward<U>(u));
+  if (static_cast<U>(result) != original || ((result < T{}) != (original < U{}))) {
+    fail_shape_inference("narrow: value ", original, " cannot be represented in target type");
+  }
+  return result;
 }
 
 inline void checkInputRank(const InferenceContext& ctx, size_t input_index, int expected_rank) {

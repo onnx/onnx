@@ -14,7 +14,7 @@ cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-dep
 [tasks.install.env]
 ONNX_ML="1"
 ONNX_BUILD_TESTS="1"
-CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_HARDENING=ON"
+CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_HARDENING=ON -DONNX_WERROR=ON"
 
 [tasks.gen-docs]
 cmd = "python onnx/defs/gen_doc.py"
@@ -40,6 +40,24 @@ cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
 
 [tasks.pytest]
 cmd = "pytest"
+
+[feature.clang-tools.tasks.run-clang-tidy]
+description = "Run clang-tidy on the entire project"
+# Requires `.setuptools-cmake-build/compile_commands.json` which is produced in the build task.
+# The `-extra-arg=-Wno-unknown-warning-option` is needed in cases
+# where the compiler_commands.json file was created by/for gcc
+cmd = [
+  'python',
+  'tools/pretty_clang_tidy.py',
+  'run-clang-tidy',
+  '-p=.setuptools-cmake-build',
+  '-warnings-as-errors="*"',
+  '-extra-arg=-Wno-unknown-warning-option',
+  '-source-filter="{{ pixi.init_cwd }}/onnx"',
+  '-hide-progress',
+  '-quiet',
+  '-use-color',
+]
 
 [feature.lint.tasks.pre-commit-install]
 description = "Install prek hooks"
@@ -110,6 +128,15 @@ lintrunner = ">=0.10.7"
 lintrunner-adapters = ">=0.12.3"
 editorconfig-checker = "==3.2.1"
 
+[feature.clang-tools.dependencies]
+# We want to use a clang-tidy/clang-format version that is possibly
+# newer than the one provided by the default macos cxx-compiler
+# package. We thus install this into a separate environment.
+clang = ">=22"
+clang-tools = "*"
+clang-format = "*"
+python = "*"
+
 [feature.docs.dependencies]
 furo = "*"
 markupsafe = "*"
@@ -138,5 +165,6 @@ oldies = ["dev", "lint", "reference", "oldies"]
 # Keep a separate docs environment since some of those dependencies
 # may introduce upper bounds
 docs = ["dev", "lint", "reference", "docs"]
+clang-tools = {features=["clang-tools"], no-default-feature=true}
 link-checker = {features=["link-checker"], no-default-feature=true}
 lintrunner = ["dev", "reference", "lint", "lintrunner"]

@@ -1325,6 +1325,52 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _check_resize_scale_precision(
+        self,
+        version: int,
+        scales: tuple[float, ...],
+        expected_last_dim: int,
+    ) -> None:
+        # Shared body for #4919 regression tests. Builds a Resize graph whose
+        # last input dim is 16_777_217 (= 2**24 + 1, the smallest int that
+        # float32 cannot represent) and asserts the inferred output last dim.
+        if version >= 11:
+            inputs = [
+                ("x", TensorProto.INT32, (1, 1, 1, 16777217)),
+                ("roi", TensorProto.FLOAT, (8,)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ]
+            node = make_node("Resize", ["x", "roi", "scales"], ["y"])
+        else:
+            inputs = [
+                ("x", TensorProto.INT32, (1, 1, 1, 16777217)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ]
+            node = make_node("Resize", ["x", "scales"], ["y"])
+        graph = self._make_graph(
+            inputs,
+            [node],
+            [],
+            initializer=[make_tensor("scales", TensorProto.FLOAT, (4,), scales)],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.INT32, (1, 1, 1, expected_last_dim)
+                )
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_scale_precision_large_dim(self, _, version) -> None:
+        # Regression for #4919, current-version helper
+        for scale in [1, 2]:
+            self._check_resize_scale_precision(
+                version, (1.0, 1.0, 1.0, float(scale)), 16777217 * scale
+            )
+
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_scale_and_size_but_one_is_empty(self, _, version) -> None:
         self.skipIf(version < 11, "roi input is from Version 11")
@@ -11834,6 +11880,51 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         with self.assertRaises(onnx.checker.ValidationError):
             onnx.shape_inference.infer_shapes(model)
+
+    def test_scan_invalid_num_scan_inputs_does_not_crash(self):
+        # Missing required attribute would null-deref; negative value would
+        # overflow narrow<size_t>. Both must raise InferenceError, not crash.
+        scan_body = (
+            "body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) "
+            "{ so = Identity(si) xo = Identity(xi) }"
+        )
+        for attrs in ("", "num_scan_inputs = -1, "):
+            with self.subTest(attrs=attrs or "missing"):
+                model = onnx.parser.parse_model(
+                    f"""
+                    <ir_version: 8, opset_import: [ "" : 9 ]>
+                    g (float[1] s, float[3,1] x) => (float[1] so, float[3,1] xo) {{
+                        so, xo = Scan <{attrs}{scan_body}> (s, x)
+                    }}
+                    """
+                )
+                with self.assertRaises(onnx.shape_inference.InferenceError):
+                    onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_function_output_count_mismatch_does_not_crash(self):
+        # Function declares 2 outputs; calling node declares 1.
+        # Must raise InferenceError on the second output, not crash.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
+            agraph (float[1] X) => (float[1] Y) { Y = local.F (X) }
+            <opset_import: [ "" : 18 ], domain: "local">
+            F (x) => (y1, y2) { y1 = Identity(x) y2 = Identity(x) }
+            """
+        )
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_conv_transpose_undersized_weight_does_not_crash(self):
+        # Weight rank < input spatial rank → empty kernel_shape would OOB-index later.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 11 ]>
+            g (float[1,1,5] X, float[1,3] W) => (float[1,1,?] Y) { Y = ConvTranspose(X, W) }
+            """
+        )
+        # Graceful return without output shape inference is acceptable; must not crash.
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):

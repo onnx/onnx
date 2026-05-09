@@ -135,8 +135,8 @@ void resizeShapeInferenceHelper(
     // If input_shape has dim_value, we calculate the scaled result
     // If input_shape doesn's have one, we leave it here
     if (input_shape.dim(i).has_dim_value()) {
-      int64_t dim_value =
-          static_cast<int64_t>(std::floor(static_cast<float>(input_shape.dim(i).dim_value()) * scales_data[i]));
+      int64_t dim_value = static_cast<int64_t>(
+          std::floor(static_cast<double>(input_shape.dim(i).dim_value()) * static_cast<double>(scales_data[i])));
       // If output_shape has dim_value, we validate the calculated result
       // If output_shape doesn's have one, we set it to the scaled result
       if (dim->has_dim_value()) {
@@ -334,8 +334,8 @@ void resizeShapeInferenceHelper_opset7_to_10(
     // If input_shape has dim_value, we calculate the scaled result
     // If input_shape doesn's have one, we leave it here
     if (input_shape.dim(i).has_dim_value()) {
-      int64_t dim_value =
-          static_cast<int64_t>(std::floor(static_cast<float>(input_shape.dim(i).dim_value()) * scales_data[i]));
+      int64_t dim_value = static_cast<int64_t>(
+          std::floor(static_cast<double>(input_shape.dim(i).dim_value()) * static_cast<double>(scales_data[i])));
       // If output_shape has dim_value, we validate the calculated result
       // If output_shape doesn's have one, we set it to the scaled result
       if (dim->has_dim_value()) {
@@ -395,9 +395,10 @@ void resizeShapeInference_opset7_to_10(InferenceContext& ctx) {
 std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,
     const char* mode_description,
-    const std::vector<std::string>& op_schema,
-    const std::string& op_schema_description) {
-  return [=](OpSchema& schema) {
+    std::vector<std::string> op_schema,
+    std::string op_schema_description) {
+  return [=, op_schema = std::move(op_schema), op_schema_description = std::move(op_schema_description)](
+             OpSchema& schema) {
     schema.SetDoc(description);
     schema.Attr("mode", mode_description, AttributeProto::STRING, std::string("constant"));
     schema.Input(0, "data", "Input tensor.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
