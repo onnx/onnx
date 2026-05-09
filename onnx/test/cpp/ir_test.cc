@@ -28,7 +28,7 @@ static bool IsValidIdentifier(const std::string& name) {
 }
 
 TEST(IR, ValidIdentifierTest) {
-  Graph* g = new Graph();
+  Graph* g = new Graph(); // NOLINT(cppcoreguidelines-owning-memory)
   g->setName("test");
   Value* x = g->addInput();
   x->setUniqueName("x");

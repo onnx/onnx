@@ -17,9 +17,7 @@
 
 namespace fs = std::filesystem;
 
-using ONNX_NAMESPACE::path_to_utf8;
 using ONNX_NAMESPACE::ScopedFd;
-using ONNX_NAMESPACE::utf8_to_path;
 
 namespace ONNX_NAMESPACE {
 namespace Test {

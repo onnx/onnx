@@ -452,13 +452,11 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 }
 
-static const char* const MaxUnpool_ver22_doc = kDoc_MaxUnpool_ver11;
-
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
     22,
     OpSchema()
-        .SetDoc(MaxUnpool_ver22_doc)
+        .SetDoc(kDoc_MaxUnpool_ver11)
         .Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS)
         .Attr(
             "strides",
@@ -1129,6 +1127,9 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    if (kernel_shape.size() != n_input_dims) {
+      return; // weight rank mismatch
+    }
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
@@ -1344,13 +1345,11 @@ output_shape can also be explicitly specified in which case pads values are auto
 
 ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 22, OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
-static const char* const DeformConv_ver22_doc = kDoc_DeformConv_ver19;
-
 ONNX_OPERATOR_SET_SCHEMA(
     DeformConv,
     22,
     OpSchema()
-        .SetDoc(DeformConv_ver22_doc)
+        .SetDoc(kDoc_DeformConv_ver19)
         .Input(
             0,
             "X",
@@ -1738,13 +1737,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const InstanceNormalization_ver22_doc = kDoc_InstanceNormalization_ver6;
-
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
     22,
     OpSchema()
-        .SetDoc(InstanceNormalization_ver22_doc)
+        .SetDoc(kDoc_InstanceNormalization_ver6)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Input(
             0,
@@ -1792,8 +1789,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* const LpNormalization_ver22_doc = kDoc_LpNormalization_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
     22,
@@ -1801,7 +1796,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(0, "input", "Input matrix", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(0, "output", "Matrix after normalization", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
-        .SetDoc(LpNormalization_ver22_doc)
+        .SetDoc(kDoc_LpNormalization_ver1)
         .Attr(
             "axis",
             "The axis on which to apply normalization, -1 mean last axis.",
@@ -1814,13 +1809,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* const Dropout_ver22_doc = kDoc_Dropout_ver13;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Dropout_ver22_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Dropout_ver13) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -1922,13 +1915,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX",
             18));
 
-static const char* const Flatten_ver25_doc = kDoc_Flatten_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     25,
     OpSchema()
-        .SetDoc(Flatten_ver25_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -3376,8 +3367,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "qk_matmul_output_mode",
             "If set to `0`, qk_matmul_output is the output of qk matmul. "
-            "If set to `1`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
-            "If set to `2`, qk_matmul_output is the output after the softcap operation (before mask addition). "
+            "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
+            "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
             "If set to `3`, qk_matmul_output is the output after the softmax operation. "
             "Default value is 0.",
             AttributeProto::INT,
@@ -3678,16 +3669,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
           if (ctx.hasOutput(3)) {
             if (qk_matmul_output_mode == 1) {
-              // Mode 1: QK + bias (after softcap + bias addition)
-              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
-            } else if (qk_matmul_output_mode == 2) {
-              // Mode 2: after softcap (before bias addition)
+              // Mode 1: after softcap (before bias addition)
               if (softcap_val != 0) {
                 builder.Add("qk_matmul_output = Identity(QKAttnSoftcapped)");
               } else {
                 // No softcap applied, same as raw QK
                 builder.Add("qk_matmul_output = Identity(QKAttnCast)");
               }
+            } else if (qk_matmul_output_mode == 2) {
+              // Mode 2: QK + softcap + bias (after softcap + bias addition)
+              builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
             } else if (qk_matmul_output_mode == 3) {
               builder.Add("qk_matmul_output = Identity(AttnWeightSoftmax)");
             } else {

@@ -11,13 +11,11 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-static const char* const Constant_ver25_doc = kDoc_Constant_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     25,
     OpSchema()
-        .SetDoc(Constant_ver25_doc)
+        .SetDoc(kDoc_Constant_ver24)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -58,13 +56,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir13(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* const ConstantOfShape_ver25_doc = kDoc_ConstantOfShape_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     25,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver25_doc)
+        .SetDoc(kDoc_ConstantOfShape_ver24)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -126,13 +122,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const EyeLike_ver22_doc = kDoc_EyeLike_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     EyeLike,
     22,
     OpSchema()
-        .SetDoc(EyeLike_ver22_doc)
+        .SetDoc(kDoc_EyeLike_ver9)
         .Attr(
             "k",
             "(Optional) Index of the diagonal to be populated with ones. Default is 0."
@@ -171,13 +165,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const RandomUniform_ver22_doc = kDoc_RandomUniform_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniform,
     22,
     OpSchema()
-        .SetDoc(RandomUniform_ver22_doc)
+        .SetDoc(kDoc_RandomUniform_ver1)
         .Attr("low", "Lower boundary of the output values.", AttributeProto::FLOAT, 0.0f)
         .Attr("high", "Upper boundary of the output values.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -199,13 +191,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* const RandomNormal_ver22_doc = kDoc_RandomNormal_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormal,
     22,
     OpSchema()
-        .SetDoc(RandomNormal_ver22_doc)
+        .SetDoc(kDoc_RandomNormal_ver1)
         .Attr("mean", "The mean of the normal distribution.", AttributeProto::FLOAT, 0.0f)
         .Attr("scale", "The standard deviation of the normal distribution.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -227,13 +217,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* const RandomUniformLike_ver22_doc = kDoc_RandomUniformLike_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniformLike,
     22,
     OpSchema()
-        .SetDoc(RandomUniformLike_ver22_doc)
+        .SetDoc(kDoc_RandomUniformLike_ver1)
         .Attr("low", "Lower boundary of the output values.", AttributeProto::FLOAT, 0.0f)
         .Attr("high", "Upper boundary of the output values.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -266,13 +254,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const RandomNormalLike_ver22_doc = kDoc_RandomNormalLike_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormalLike,
     22,
     OpSchema()
-        .SetDoc(RandomNormalLike_ver22_doc)
+        .SetDoc(kDoc_RandomNormalLike_ver1)
         .Attr("mean", "The mean of the normal distribution.", AttributeProto::FLOAT, 0.0f)
         .Attr("scale", "The standard deviation of the normal distribution.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -305,13 +291,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const Multinomial_ver22_doc = kDoc_Multinomial_ver7;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Multinomial,
     22,
     OpSchema()
-        .SetDoc(Multinomial_ver22_doc)
+        .SetDoc(kDoc_Multinomial_ver7)
         .Attr("sample_size", "Number of times to sample.", AttributeProto::INT, static_cast<int64_t>(1))
         .Attr(
             "seed",
@@ -486,13 +470,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Bernoulli_ver22_doc = kDoc_Bernoulli_ver15;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Bernoulli,
     22,
     OpSchema()
-        .SetDoc(Bernoulli_ver22_doc)
+        .SetDoc(kDoc_Bernoulli_ver15)
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",

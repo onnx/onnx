@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+import unittest.mock
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -301,6 +302,36 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name="test")
 
         checker.check_model(model.SerializeToString())
+
+    def test_check_model_protobuf_size_boundary(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        serialized = model.SerializeToString()
+
+        with unittest.mock.patch.object(checker, "MAXIMUM_PROTOBUF", len(serialized)):
+            checker.check_model(serialized)
+
+    def test_check_model_protobuf_size_over_limit_raises(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        serialized = model.SerializeToString()
+
+        with unittest.mock.patch.object(
+            checker, "MAXIMUM_PROTOBUF", len(serialized) - 1
+        ):
+            self.assertRaises(ValueError, checker.check_model, serialized)
 
     def test_check_old_model(self) -> None:
         node = helper.make_node("Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
