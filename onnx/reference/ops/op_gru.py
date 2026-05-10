@@ -81,7 +81,7 @@ class CommonGRU(OpRun):
         activation_beta=None,  # noqa: ARG002
         activations=None,  # noqa: ARG002
         clip=None,  # noqa: ARG002
-        direction=None,  # noqa: ARG002
+        direction=None,
         hidden_size=None,
         layout=None,
         linear_before_reset=None,  # noqa: ARG002
@@ -100,9 +100,9 @@ class CommonGRU(OpRun):
                 initial_h = np.squeeze(initial_h, axis=0)
 
             hidden_size = R.shape[-1]
-            batch_size = X.shape[1]
 
             X = X if layout == 0 else np.swapaxes(X, 0, 1)
+            batch_size = X.shape[1]
             b = (
                 B
                 if B is not None
