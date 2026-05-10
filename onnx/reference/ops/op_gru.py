@@ -36,7 +36,9 @@ class CommonGRU(OpRun):
         gates_b = np.add(np.concatenate((w_bz, w_br)), np.concatenate((r_bz, r_br)))
 
         H_t = H_0
-        assert direction in {"forward", "reverse"}, f"Invalid value for direction: {direction}"
+        assert direction in {"forward", "reverse"}, (
+            f"Invalid value for direction: {direction}"
+        )
         X_iter = X if self.direction == "forward" else np.flip(X, axis=0)
         for x in np.split(X_iter, seq_length, axis=0):
             gates = np.dot(x, gates_w) + np.dot(H_t, gates_r) + gates_b

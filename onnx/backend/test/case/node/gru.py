@@ -303,4 +303,3 @@ class GRU(Base):
             outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
             name="test_gru_reverse",
         )
-
