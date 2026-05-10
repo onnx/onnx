@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
+
 from pathlib import Path
 import contextlib
 import itertools
@@ -11925,7 +11926,13 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         # Graceful return without output shape inference is acceptable; must not crash.
         onnx.shape_inference.infer_shapes(model, strict_mode=True)
-
+    
+    def test_infer_shapes_pathlike_error(self) -> None:
+        with self.assertRaisesRegex(
+            TypeError,
+r"For Model paths \(str or os.PathLike\), use infer_shapes_path\(\)\.",
+        ):
+            onnx.shape_inference.infer_shapes(Path("model.onnx"))
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
     custom_op_type: str = "CustomOp"
@@ -12193,11 +12200,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
         # clean up
         onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
-
+        
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
-    
-def test_infer_shapes_pathlike_error():
-    with pytest.raises(TypeError,match="infer_shapes_path"):
-        onnx.shape_inference.infer_shapes(Path("model.onnx"))
