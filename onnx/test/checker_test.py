@@ -1191,6 +1191,12 @@ class TestChecker(unittest.TestCase):
         tensor2.name = "t"
         tensor2.raw_data = b"\x00" * 16
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor2)
+        # Zero dim: empty tensors are valid and must be accepted.
+        tensor3 = TensorProto()
+        tensor3.data_type = TensorProto.FLOAT
+        tensor3.dims.extend([0])
+        tensor3.name = "t"
+        checker.check_tensor(tensor3)
 
 
 if __name__ == "__main__":

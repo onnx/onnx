@@ -25,7 +25,6 @@ static void checked_mul_into(int64_t& accumulator, int64_t value) {
   }
 }
 
-
 ONNX_OPERATOR_SET_SCHEMA(
     GridSample,
     20,

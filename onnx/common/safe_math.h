@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -12,13 +13,15 @@
 namespace ONNX_NAMESPACE {
 
 // Returns true on overflow. Uses __builtin on GCC/Clang, manual check on MSVC.
-// Both a and b must be non-negative; safe_dim_product enforces this by checking
-// each dim before calling, and the accumulated result stays non-negative because
-// we abort on overflow.
+// Precondition: a and b must be non-negative. The MSVC fallback only handles
+// non-negative inputs correctly; passing a negative value can silently overflow.
+// safe_dim_product enforces this by checking each dim before calling, and the
+// accumulated result stays non-negative because we abort on overflow.
 inline bool checked_mul_overflow(int64_t a, int64_t b, int64_t* result) {
 #if defined(__GNUC__) || defined(__clang__)
   return __builtin_mul_overflow(a, b, result);
 #else
+  assert(a >= 0 && b >= 0 && "checked_mul_overflow requires non-negative inputs on MSVC");
   if (a > 0 && b > std::numeric_limits<int64_t>::max() / a) {
     return true;
   }

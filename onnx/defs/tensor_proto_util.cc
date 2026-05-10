@@ -124,8 +124,8 @@ namespace ONNX_NAMESPACE {
     /* We need to copy the raw_data.c_str()/bytes as byte instead of  */                                             \
     /* copying as the underlying type, otherwise we may hit memory   */                                              \
     /* misalignment issues on certain platforms, such as arm32-v7a */                                                \
-    res.resize(num_elements);                                                                                        \
-    memcpy(reinterpret_cast<char*>(res.data()), bytes, required_bytes);                                              \
+    res.resize(required_bytes_sz / element_size);                                                                    \
+    memcpy(reinterpret_cast<char*>(res.data()), bytes, required_bytes_sz);                                           \
     return res;                                                                                                      \
   }
 
