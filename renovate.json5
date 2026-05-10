@@ -56,16 +56,51 @@
       "extractVersionTemplate": "^v(?<version>.*)$"
     },
     {
-      // Detect googletest release tarball and SHA256 hash in cmake/external/googletest.cmake
+      // Detect CycloneDX CLI binary URL in generate_sbom.yml.
+      // Renovate updates the URL (and version embedded in it); CDX_SHA256 must be
+      // updated manually in the Renovate PR — no official checksums are published.
+      // Example:
+      //   CDX_URL: "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.27.1/cyclonedx-linux-x64"
+      "customType": "regex",
+      "fileMatch": ["^\\.github/workflows/generate_sbom\\.yml$"],
+      "matchStrings": [
+        "CDX_URL: \"https://github\\.com/CycloneDX/cyclonedx-cli/releases/download/v(?<currentValue>[\\d.]+)/cyclonedx-linux-x64\""
+      ],
+      "autoReplaceStringTemplate": "CDX_URL: \"https://github.com/CycloneDX/cyclonedx-cli/releases/download/v{{{newValue}}}/cyclonedx-linux-x64\"",
+      "depNameTemplate": "CycloneDX/cyclonedx-cli",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      // Detect sbomqs release tarball URL in generate_sbom.yml.
+      // Renovate updates the URL (and version embedded in it); SBOMQS_SHA256 must be
+      // updated manually in the Renovate PR using the official checksums.txt from the release.
+      // Example:
+      //   SBOMQS_URL: "https://github.com/interlynk-io/sbomqs/releases/download/v2.0.5/sbomqs_2.0.5_Linux_x86_64.tar.gz"
+      "customType": "regex",
+      "fileMatch": ["^\\.github/workflows/generate_sbom\\.yml$"],
+      "matchStrings": [
+        "SBOMQS_URL: \"https://github\\.com/interlynk-io/sbomqs/releases/download/v(?<currentValue>[\\d.]+)/sbomqs_[\\d.]+_Linux_x86_64\\.tar\\.gz\""
+      ],
+      "autoReplaceStringTemplate": "SBOMQS_URL: \"https://github.com/interlynk-io/sbomqs/releases/download/v{{{newValue}}}/sbomqs_{{{newValue}}}_Linux_x86_64.tar.gz\"",
+      "depNameTemplate": "interlynk-io/sbomqs",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      // Detect googletest release tarball URL in cmake/external/googletest.cmake.
+      // Renovate updates the URL (and version embedded in it); URL_HASH must be
+      // updated manually in the Renovate PR — github-releases digest is a git SHA,
+      // not the tarball SHA256 that CMake FetchContent requires.
       // Example:
       //   URL https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
       //   URL_HASH SHA256=65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
       "customType": "regex",
       "fileMatch": ["^cmake/external/googletest\\.cmake$"],
       "matchStrings": [
-        "URL\\s+https://github\\.com/google/googletest/releases/download/v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)/googletest-[0-9]+\\.[0-9]+\\.[0-9]+\\.tar\\.gz\\n\\s+URL_HASH\\s+SHA256=(?<currentDigest>[a-f0-9]+)"
+        "URL\\s+https://github\\.com/google/googletest/releases/download/v(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)/googletest-[0-9]+\\.[0-9]+\\.[0-9]+\\.tar\\.gz"
       ],
-      "autoReplaceStringTemplate": "URL https://github.com/google/googletest/releases/download/v{{{newValue}}}/googletest-{{{newValue}}}.tar.gz\n  URL_HASH SHA256={{{newDigest}}}",
+      "autoReplaceStringTemplate": "URL https://github.com/google/googletest/releases/download/v{{{newValue}}}/googletest-{{{newValue}}}.tar.gz",
       "depNameTemplate": "google/googletest",
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v(?<version>.*)$"
