@@ -16,6 +16,7 @@
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/common/proto_util.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/common/scoped_resource.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"
@@ -347,9 +348,9 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 static void
 check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
   int dense_rank = sparse_tensor_proto.dims_size();
-  int64_t dense_size = 1;
-  for (int i = 0; i < dense_rank; ++i)
-    dense_size *= sparse_tensor_proto.dims(i);
+  int64_t dense_size = safe_dim_product(
+      sparse_tensor_proto.dims(),
+      [&](const char* msg) { fail_check(msg, " (sparse tensor '", indices.name(), "')"); });
   if (static_cast<size_t>(indices.dims(0)) != nnz) {
     fail_check("Sparse tensor indices (", indices.name(), ") has ", indices.dims(0), " values, but NNZ is ", nnz);
   }
@@ -391,6 +392,13 @@ check_sparse_tensor_indices_2(const TensorProto& indices, const SparseTensorProt
   if (indices.dims(1) != dense_rank) {
     fail_check("Sparse tensor indices (", indices.name(), ") second dimension size does not match rank of tensor.");
   }
+
+  // Guard against overflow in the linearised sort-order accumulator below.
+  // If the total dense size overflows int64_t, curr_index would wrap and the
+  // lexicographic order check would produce incorrect results.
+  safe_dim_product(
+      sparse_tensor_proto.dims(),
+      [&](const char* msg) { fail_check(msg, " (sparse tensor '", indices.name(), "')"); });
 
   // Check if indices appear in ascending order, and if they have valid
   // values.
