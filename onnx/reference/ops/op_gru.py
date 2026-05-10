@@ -20,7 +20,7 @@ class CommonGRU(OpRun):
     def g(self, x):
         return np.tanh(x)
 
-    def _step(self, X, R, B, W, H_0, num_directions, direction):
+    def _step(self, X, R, B, W, H_0, num_directions):
         seq_length = X.shape[0]
         hidden_size = H_0.shape[-1]
         batch_size = X.shape[1]
@@ -36,8 +36,8 @@ class CommonGRU(OpRun):
         gates_b = np.add(np.concatenate((w_bz, w_br)), np.concatenate((r_bz, r_br)))
 
         H_t = H_0
-        assert direction in {"forward", "reverse"}, (
-            f"Invalid value for direction: {direction}"
+        assert self.direction in {"forward", "reverse"}, (
+            f"Invalid value for direction: {self.direction}"
         )
         X_iter = X if self.direction == "forward" else np.flip(X, axis=0)
         for x in np.split(X_iter, seq_length, axis=0):
@@ -86,7 +86,7 @@ class CommonGRU(OpRun):
         activation_beta=None,  # noqa: ARG002
         activations=None,  # noqa: ARG002
         clip=None,  # noqa: ARG002
-        direction=None,
+        direction=None,  # noqa: ARG002
         hidden_size=None,
         layout=None,
         linear_before_reset=None,  # noqa: ARG002
@@ -127,15 +127,7 @@ class CommonGRU(OpRun):
                 f"{self.__class__.__name__!r}."
             )
 
-        Y, Y_h = self._step(
-            X,
-            R,
-            B,
-            W,
-            H_0,
-            num_directions=num_directions,
-            direction=direction,
-        )
+        Y, Y_h = self._step(X, R, B, W, H_0, num_directions=num_directions)
         Y = Y.astype(X.dtype)
         return (Y,) if self.n_outputs == 1 else (Y, Y_h.astype(X.dtype))
 
