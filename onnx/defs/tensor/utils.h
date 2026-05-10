@@ -55,6 +55,6 @@ extern const char* Transpose_doc;
 std::function<void(OpSchema&)> PadDocGenerator(
     const char* description,
     const char* mode_description,
-    const std::vector<std::string>& op_schema = OpSchema::all_tensor_types_ir4(),
-    const std::string& op_schema_description = "Constrain input and output types to all tensor types.");
+    std::vector<std::string> op_schema = OpSchema::all_tensor_types_ir4(),
+    std::string op_schema_description = "Constrain input and output types to all tensor types.");
 } // namespace ONNX_NAMESPACE

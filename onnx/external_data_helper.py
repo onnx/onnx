@@ -183,9 +183,7 @@ def set_external_data(
 ) -> None:
     if not tensor.HasField("raw_data"):
         raise ValueError(
-            "Tensor "
-            + tensor.name
-            + " does not have raw_data field. Cannot set external data for this tensor."
+            f"Tensor {tensor.name} does not have raw_data field. Cannot set external data for this tensor."
         )
 
     del tensor.external_data[:]

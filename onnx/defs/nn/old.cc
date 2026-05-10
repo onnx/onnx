@@ -271,13 +271,11 @@ static void convPoolShapeInference_opset19(
   }
 }
 
-static const char* const Dropout_ver13_doc = kDoc_Dropout_ver13;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     13,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Dropout_ver13_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Dropout_ver13) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -347,8 +345,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const LpNormalization_ver1_doc = kDoc_LpNormalization_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
     1,
@@ -359,7 +355,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .SetDoc(LpNormalization_ver1_doc)
+        .SetDoc(kDoc_LpNormalization_ver1)
         .Attr(
             "axis",
             "The axis on which to apply normalization, -1 mean last axis.",
@@ -372,13 +368,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(2))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* const InstanceNormalization_ver6_doc = kDoc_InstanceNormalization_ver6;
-
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
     6,
     OpSchema()
-        .SetDoc(InstanceNormalization_ver6_doc)
+        .SetDoc(kDoc_InstanceNormalization_ver6)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Input(
             0,
@@ -739,13 +733,11 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   }
 }
 
-static const char* const DeformConv_ver19_doc = kDoc_DeformConv_ver19;
-
 ONNX_OPERATOR_SET_SCHEMA(
     DeformConv,
     19,
     OpSchema()
-        .SetDoc(DeformConv_ver19_doc)
+        .SetDoc(kDoc_DeformConv_ver19)
         .Input(
             0,
             "X",
@@ -1254,13 +1246,11 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset18(const char
 
 ONNX_OPERATOR_SET_SCHEMA(LpPool, 18, OpSchema().FillUsing(LpPoolOpSchemaGenerator_opset18("LpPool")));
 
-static const char* const MaxUnpool_ver11_doc = kDoc_MaxUnpool_ver11;
-
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
     11,
     OpSchema()
-        .SetDoc(MaxUnpool_ver11_doc)
+        .SetDoc(kDoc_MaxUnpool_ver11)
         .Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS)
         .Attr(
             "strides",
@@ -1509,13 +1499,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
 
-static const char* const Dropout_ver12_doc = Dropout_ver13_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Dropout,
     12,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(Dropout_ver12_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Dropout_ver13) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -1579,13 +1567,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Flatten_ver24_doc = kDoc_Flatten_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     24,
     OpSchema()
-        .SetDoc(Flatten_ver24_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -1629,13 +1615,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* const Flatten_ver23_doc = Flatten_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     23,
     OpSchema()
-        .SetDoc(Flatten_ver23_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -1679,13 +1663,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* const Flatten_ver21_doc = Flatten_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     21,
     OpSchema()
-        .SetDoc(Flatten_ver21_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -1733,7 +1715,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     13,
     OpSchema()
-        .SetDoc(Flatten_ver21_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
         .Output(
             0,
@@ -1778,7 +1760,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     11,
     OpSchema()
-        .SetDoc(Flatten_ver21_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T")
         .Output(
             0,
@@ -2613,13 +2595,11 @@ static void maxUnpoolShapeInference_opset9(InferenceContext& ctx) {
   }
 }
 
-static const char* const MaxUnpool_ver9_doc = MaxUnpool_ver11_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     MaxUnpool,
     9,
     OpSchema()
-        .SetDoc(MaxUnpool_ver9_doc)
+        .SetDoc(kDoc_MaxUnpool_ver11)
         .Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS)
         .Attr("strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr("pads", pads_doc2, AttributeProto::INTS, OPTIONAL_VALUE)
@@ -3571,13 +3551,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const InstanceNormalization_ver1_doc = InstanceNormalization_ver6_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     InstanceNormalization,
     1,
     OpSchema()
-        .SetDoc(InstanceNormalization_ver1_doc)
+        .SetDoc(kDoc_InstanceNormalization_ver6)
         // This attribute was added via AllowConsumed API in OpSchema.
         // After removing the API, we're now using the Attr API to simulate the
         // old definition.
@@ -3821,13 +3799,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
 
-static const char* const Flatten_ver1_doc = Flatten_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     1,
     OpSchema()
-        .SetDoc(Flatten_ver1_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T")
         .Output(
             0,
@@ -3863,13 +3839,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {multiplyDims(input_shape, 0, axis), multiplyDims(input_shape, axis, rank)});
         }));
 
-static const char* const Flatten_ver9_doc = Flatten_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
     9,
     OpSchema()
-        .SetDoc(Flatten_ver9_doc)
+        .SetDoc(kDoc_Flatten_ver24)
         .Input(0, "input", "A tensor of rank >= axis.", "T")
         .Output(
             0,
