@@ -271,7 +271,8 @@ class GRU(Base):
     @staticmethod
     def export_reverse() -> None:
         """Test case for direction=reverse attribute."""
-        input = np.array([[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]]).astype(np.float32)
+        # seq_length=3, batch=1, input_size=2
+        input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
 
         input_size = 2
         hidden_size = 5
