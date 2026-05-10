@@ -347,7 +347,6 @@ void check_map(const MapProto& map, const CheckerContext& ctx) {
 // linearized index value for the i-th nonzero value.
 static void
 check_sparse_tensor_indices_1(const TensorProto& indices, const SparseTensorProto& sparse_tensor_proto, size_t nnz) {
-  int dense_rank = sparse_tensor_proto.dims_size();
   int64_t dense_size = safe_dim_product(
       sparse_tensor_proto.dims(),
       [&](const char* msg) { fail_check(msg, " (sparse tensor '", indices.name(), "')"); });
