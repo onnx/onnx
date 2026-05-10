@@ -27,10 +27,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 ## Create Release Branch
 
 * In `main` branch, before creating the release branch:
-    1. Bump the `LAST_RELEASE_VERSION` in [version.h](/onnx/common/version.h).
-        * Set to X.Y.Z, which is same as the release branch you are currently creating.
-        * After the release branch is cut, `VERSION_NUMBER` in `main` will be increased to the next future version.
-    1. Make sure the release version, IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/onnx/test/helper_test.py).
+    1. Make sure the release version ([/VERSION_NUMBER](/VERSION_NUMBER)), IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/onnx/test/helper_test.py).
 
 * Create a release branch
     1. Click "New branch" from [branches](https://github.com/onnx/onnx/branches) and choose `main` as Source.

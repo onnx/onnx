@@ -877,7 +877,7 @@ const FunctionProto* OpSchema::GetFunction(int requested_opset_version, bool val
   auto it = opset_version_to_function_body_.upper_bound(requested_opset_version);
   if (it != opset_version_to_function_body_.begin()) {
     --it;
-    auto& [function_since_version, func_ptr] = *it;
+    const auto& [function_since_version, func_ptr] = *it;
     const FunctionProto* function = func_ptr.get();
     if (!validate || ValidateReferencedOpsInFunction(function, requested_opset_version, function_since_version)) {
       return function;

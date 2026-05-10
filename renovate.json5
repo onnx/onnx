@@ -10,8 +10,18 @@
   "enabledManagers": ["custom.regex"],
   // Disable the Dependency Dashboard issue
   "dependencyDashboard": false,
-  // Apply label to all Renovate PRs to trigger release CI
-  "labels": ["run release CIs"],
+  // Wait one week after a release before creating an update PR
+  "minimumReleaseAge": "7 days",
+  // Apply labels to all Renovate PRs:
+  // - "module: dependencies" satisfies the "Require topic/module label" branch-protection check
+  // - "run release CIs" triggers release CI
+  "labels": ["module: dependencies", "run release CIs"],
+  // Add a note to every Renovate PR body explaining the update context
+  "prBodyNotes": [
+    "This PR was automatically created by [Renovate Bot](https://renovateapp.com/) to keep build dependencies up to date.",
+    "Renovate manages dependencies **not** handled by Dependabot: manylinux Docker images, nanobind (via CMake FetchContent), and googletest (release tarball + SHA256).",
+    "Please review the linked changelog/release notes before merging. A one-week stabilization period (`minimumReleaseAge`) has already elapsed since the new version was published."
+  ],
   // Custom managers for dependencies not auto-detected by Renovate
   "customManagers": [
     {

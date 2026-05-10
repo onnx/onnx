@@ -40,7 +40,7 @@ std::string barf(const char* fmt, ...);
 #endif
 
 #define ONNX_ASSERT(cond)                                                                                 \
-  if (_ONNX_EXPECT(!(cond), 0)) {                                                                         \
+  if (_ONNX_EXPECT(!(cond), 0)) { /* NOLINT(readability-simplify-boolean-expr) */                         \
     std::string error_msg =                                                                               \
         ::ONNX_NAMESPACE::barf("%s:%u: %s: Assertion `%s` failed.", __FILE__, __LINE__, __func__, #cond); \
     throw_assert_error(error_msg);                                                                        \
