@@ -36,6 +36,13 @@ PY_VER=${python_map[$PY_VERSION]}
 PIP_INSTALL_COMMAND="/opt/python/${PY_VER}/bin/pip install --no-cache-dir -q"
 PYTHON_COMMAND="/opt/python/${PY_VER}/bin/python"
 
+if [[ ! -x "$PYTHON_COMMAND" ]]; then
+    echo "ERROR: Python interpreter not found: $PYTHON_COMMAND" >&2
+    echo "Available interpreters in /opt/python/:" >&2
+    ls /opt/python/ >&2
+    exit 1
+fi
+
 # Update pip
 $PIP_INSTALL_COMMAND --upgrade pip
 $PIP_INSTALL_COMMAND cmake
