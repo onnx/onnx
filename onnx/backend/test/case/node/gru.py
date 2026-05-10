@@ -20,6 +20,7 @@ class GRUHelper:
         R = "R"
         B = "B"
         H_0 = "initial_h"
+        DIRECTION = "direction"
         LBR = "linear_before_reset"
         LAYOUT = "layout"
         number_of_gates = 3
@@ -29,6 +30,7 @@ class GRUHelper:
             assert i in params, f"Missing Required Input: {i}"
 
         self.num_directions = params[W].shape[0]
+        self.direction = params.get(DIRECTION, "forward")
 
         if self.num_directions == 1:
             for k, v in params.items():
@@ -36,11 +38,11 @@ class GRUHelper:
                     params[k] = np.squeeze(v, axis=0)
 
             hidden_size = params[R].shape[-1]
-            batch_size = params[X].shape[1]
 
             layout = params.get(LAYOUT, 0)
             x = params[X]
             x = x if layout == 0 else np.swapaxes(x, 0, 1)
+            batch_size = x.shape[1]
             b = (
                 params[B]
                 if B in params
@@ -82,7 +84,9 @@ class GRUHelper:
         gates_b = np.add(np.concatenate((w_bz, w_br)), np.concatenate((r_bz, r_br)))
 
         H_t = self.H_0
-        for x in np.split(self.X, self.X.shape[0], axis=0):
+        assert self.direction in {"forward", "reverse"}
+        X_iter = self.X if self.direction == "forward" else np.flip(self.X, axis=0)
+        for x in np.split(X_iter, seq_length, axis=0):
             gates = np.dot(x, gates_w) + np.dot(H_t, gates_r) + gates_b
             z, r = np.split(gates, 2, -1)
             z = self.f(z)
@@ -103,15 +107,16 @@ class GRUHelper:
             h_list.append(H)
             H_t = H
 
+        if self.direction == "reverse":
+            h_list.reverse()
         concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
             Y[:, 0, :, :] = concatenated
 
-        if self.LAYOUT == 0:
-            Y_h = Y[-1]
-        else:
+        Y_h = H_t
+        if self.LAYOUT:
             Y = np.transpose(Y, [2, 0, 1, 3])
-            Y_h = Y[:, :, -1, :]
+            Y_h = np.transpose(Y_h, [1, 0, 2])
 
         return Y, Y_h
 
@@ -262,3 +267,39 @@ class GRU(Base):
             outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
             name="test_gru_batchwise",
         )
+
+    @staticmethod
+    def export_reverse() -> None:
+        """Test case for direction=reverse attribute."""
+        input = np.array([[[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 5
+        weight_scale = 0.1
+        number_of_gates = 3
+
+        node = onnx.helper.make_node(
+            "GRU",
+            inputs=["X", "W", "R"],
+            # Output Y to check ordering.
+            outputs=["Y", "Y_h"],
+            hidden_size=hidden_size,
+            direction="reverse",
+        )
+
+        W = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
+
+        gru = GRUHelper(X=input, W=W, R=R, direction="reverse")
+        Y, Y_h = gru.step()
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+            name="test_gru_reverse",
+        )
+
