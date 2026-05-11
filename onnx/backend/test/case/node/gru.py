@@ -64,11 +64,6 @@ class GRUHelper:
         Assumes that the num_directions axis has been squeezed out of the
         inputs. (And returns Y, Yh without it.)
         """
-        seq_length = X.shape[0]
-        hidden_size = H_0.shape[-1]
-        batch_size = X.shape[1]
-
-        Y = np.empty([seq_length, batch_size, hidden_size])
         h_list = []
 
         [w_z, w_r, w_h] = np.split(W, 3)
@@ -345,7 +340,7 @@ class GRU(Base):
 
         input_size = 2
         hidden_size = 5
-        weight_scales = np.array([[[0.5]], [[2.0]]])
+        weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
         number_of_gates = 3
 
         node = onnx.helper.make_node(
