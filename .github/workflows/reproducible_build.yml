@@ -58,11 +58,14 @@ jobs:
       # -----------------------------------------------------------------------
       # Clean all artifacts produced inside the workspace by build 1 so that
       # build 2 starts from the same state as build 1 did.
+      # The Docker container runs as root, so files it creates are root-owned
+      # and cannot be removed by the runner user without sudo.
       # -----------------------------------------------------------------------
       - name: Clean workspace between builds
-        run: |
-          rm -rf dist/ build/ .setuptools-cmake-build/ protobuf/
-          find . -maxdepth 2 -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+        uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2
+        with:
+          entrypoint: bash
+          args: -c "rm -rf dist/ build/ .setuptools-cmake-build/ protobuf/ && find . -maxdepth 2 -name '*.egg-info' -type d -exec rm -rf {} +"
 
       # -----------------------------------------------------------------------
       # Second build — identical inputs, identical SOURCE_DATE_EPOCH
