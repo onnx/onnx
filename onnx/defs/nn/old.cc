@@ -3992,7 +3992,6 @@ ONNX_OPERATOR_SET_SCHEMA(
     GroupNormalization,
     18,
     OpSchema()
-        .Deprecate()
         .SetDoc(GroupNormalization_ver18_doc)
         .Attr("epsilon", "The epsilon value to use to avoid division by zero.", AttributeProto::FLOAT, 1e-5f)
         .Attr(
