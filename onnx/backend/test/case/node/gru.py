@@ -107,22 +107,43 @@ class GRUHelper:
         if self.direction == "forward":
             Y, Y_h = self._run_forward(
                 self.X,
-                np.squeeze(self.R, axis=0),
-                np.squeeze(self.B, axis=0),
-                np.squeeze(self.W, axis=0),
-                np.squeeze(self.H_0, axis=0),
+                self.R[0],
+                self.B[0],
+                self.W[0],
+                self.H_0[0],
             )
+            Y = np.expand_dims(Y, 1)
+            Y_h = np.expand_dims(Y_h, 0)
         elif self.direction == "reverse":
             Y, Y_h = self._run_forward(
                 np.flip(self.X, axis=0),
-                np.squeeze(self.R, axis=0),
-                np.squeeze(self.B, axis=0),
-                np.squeeze(self.W, axis=0),
-                np.squeeze(self.H_0, axis=0),
+                self.R[0],
+                self.B[0],
+                self.W[0],
+                self.H_0[0],
             )
             Y = np.flip(Y, axis=0)
-        Y = np.expand_dims(Y, 1)
-        Y_h = np.expand_dims(Y_h, 0)
+            Y = np.expand_dims(Y, 1)
+            Y_h = np.expand_dims(Y_h, 0)
+        else:
+            assert self.direction == "bidirectional"
+            Yf, Yf_h = self._run_forward(
+                self.X,
+                self.R[0],
+                self.B[0],
+                self.W[0],
+                self.H_0[0],
+            )
+            Yb, Yb_h = self._run_forward(
+                np.flip(self.X, axis=0),
+                self.R[1],
+                self.B[1],
+                self.W[1],
+                self.H_0[1],
+            )
+            Yb = np.flip(Yb, axis=0)
+            Y = np.stack([Yf, Yb], axis=1)
+            Y_h = np.stack([Yf_h, Yb_h], axis=0)
 
         if self.LAYOUT:
             Y = np.transpose(Y, [2, 0, 1, 3])
@@ -312,4 +333,41 @@ class GRU(Base):
             inputs=[input, W, R],
             outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
             name="test_gru_reverse",
+        )
+
+    @staticmethod
+    def export_bidirectional() -> None:
+        """Test case for direction=bidirectional attribute."""
+        # seq_length=3, batch=1, input_size=2
+        input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 5
+        weight_scales = np.array([[[0.5]], [[2.0]]])
+        number_of_gates = 3
+
+        node = onnx.helper.make_node(
+            "GRU",
+            inputs=["X", "W", "R"],
+            outputs=["Y", "Y_h"],
+            hidden_size=hidden_size,
+            direction="bidirectional",
+        )
+
+        # Multiply broadcasts in num_directions axis, to have different W & R
+        # in each direction
+        W = weight_scales * np.ones(
+            (1, number_of_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = weight_scales * np.ones(
+            (1, number_of_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
+
+        gru = GRUHelper(X=input, W=W, R=R, direction="bidirectional")
+        Y, Y_h = gru.step()
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+            name="test_gru_bidirectional",
         )
