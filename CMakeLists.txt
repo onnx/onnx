@@ -295,10 +295,9 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    # Fetch Abseil via URL tarball so protobuf doesn't fall back to git clone,
-    # which fails in restricted environments (e.g. piwheels).
-    set(AbseilURL https://github.com/abseil/abseil-cpp/releases/download/20250127.0/abseil-cpp-20250127.0.tar.gz)
-    set(AbseilSHA256 16242f394245627e508ec6bb296b433c90f8d914f73b9c026fddb905e27276e8)
+    # Read dependency URLs/hashes from sbom.cdx.json (single source of truth).
+    sbom_get_dep("abseil-cpp" _absl)
+    sbom_get_dep("protobuf" _protobuf)
     if(NOT DEFINED ABSL_ENABLE_INSTALL)
       if(ONNX_BUILD_PYTHON)
         set(ABSL_ENABLE_INSTALL OFF CACHE BOOL "Enable installation of Abseil targets")
@@ -308,16 +307,14 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     endif()
     FetchContent_Declare(
       absl
-      URL ${AbseilURL}
-      URL_HASH SHA256=${AbseilSHA256}
+      URL ${_absl_URL}
+      URL_HASH SHA256=${_absl_SHA256}
     )
     FetchContent_MakeAvailable(absl)
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz)
-    set(ProtobufSHA256 16498d7dc7967e9b100632138babd4b86b61592beeccdd556f67539d9c231355)
     FetchContent_Declare(
       Protobuf
-      URL ${ProtobufURL}
-      URL_HASH SHA256=${ProtobufSHA256}
+      URL ${_protobuf_URL}
+      URL_HASH SHA256=${_protobuf_SHA256}
     )
     if(NOT DEFINED protobuf_BUILD_TESTS)
       set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests")
@@ -333,7 +330,7 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     if(ONNX_BUILD_PYTHON)
       set(protobuf_INSTALL OFF CACHE BOOL "Skip protobuf install rules")
     endif()
-    message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+    message(STATUS "Download and build Protobuf from ${_protobuf_URL}")
     FetchContent_MakeAvailable(Protobuf)
     # utf8_validity.h is included by protobuf headers but its include dir
     # is only added via include_directories() inside protobuf's directory scope.
@@ -546,11 +543,11 @@ if(ONNX_BUILD_PYTHON)
         "FetchContent dependency provider for first-run offline builds.")
     endif()
     include(FetchContent)
-
+    sbom_get_dep("nanobind" _nanobind)
     FetchContent_Declare(
       nanobind
-      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      GIT_TAG v2.12.0
+      GIT_REPOSITORY ${_nanobind_URL}
+      GIT_TAG v${_nanobind_VERSION}
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
@@ -656,6 +653,10 @@ endif()
 if(ONNX_BUILD_PYTHON)
   install(TARGETS onnx_cpp2py_export LIBRARY DESTINATION onnx)
   install(FILES ${ONNX_PROTO_PY_FILES} DESTINATION onnx)
+  # PEP 770: embed SBOM in dist-info/sboms/ inside the wheel.
+  if(DEFINED SKBUILD_METADATA_DIR)
+    install(FILES "${CMAKE_SOURCE_DIR}/sbom.cdx.json" DESTINATION "${SKBUILD_METADATA_DIR}/sboms")
+  endif()
 endif()
 
 if(ONNX_BUILD_TESTS)

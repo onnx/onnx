@@ -234,3 +234,9 @@ path = [".agents/**", ".claude/**", "uv.lock"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "sbom.cdx.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
+SPDX-License-Identifier = "Apache-2.0"
