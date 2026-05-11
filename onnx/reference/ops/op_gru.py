@@ -119,7 +119,7 @@ class CommonGRU(OpRun):
         W,
         R,
         B=None,
-        sequence_lens=None,
+        sequence_lens=None,  # noqa: ARG002
         initial_h=None,
         activation_alpha=None,  # noqa: ARG002
         activation_beta=None,  # noqa: ARG002
@@ -140,7 +140,9 @@ class CommonGRU(OpRun):
         b = (
             B
             if B is not None
-            else np.zeros((num_directions, 2 * self.number_of_gates * hidden_size), dtype=X.dtype)
+            else np.zeros(
+                (num_directions, 2 * self.number_of_gates * hidden_size), dtype=X.dtype
+            )
         )
         h_0 = (
             initial_h
