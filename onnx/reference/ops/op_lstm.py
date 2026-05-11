@@ -32,11 +32,11 @@ class CommonLSTM(OpRun):
         P: np.ndarray,
         H_0: np.ndarray,
         C_0: np.ndarray,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Run a forward pass of the LSTM.
 
         Assumes that the num_directions axis has been squeezed out of the
-        inputs. (And returns Y, Yh without it.)
+        inputs. (And returns Y, Yh, Yc without it.)
         """
         h_list = []
 
@@ -62,7 +62,8 @@ class CommonLSTM(OpRun):
 
         Y = np.stack(h_list, axis=0)
         Y_h = H_t
-        return Y, Y_h
+        Y_c = C_t
+        return Y, Y_h, Y_c
 
     def _step(
         self,
@@ -74,10 +75,10 @@ class CommonLSTM(OpRun):
         C_0: np.ndarray,
         P: np.ndarray,
         num_directions: int,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if self.direction == "forward":
             assert num_directions == 1
-            Y, Y_h = self._run_forward(
+            Y, Y_h, Y_c = self._run_forward(
                 X,
                 W[0],
                 R[0],
@@ -89,9 +90,10 @@ class CommonLSTM(OpRun):
             # Add num_directions axis to outputs
             Y = np.expand_dims(Y, 1)
             Y_h = np.expand_dims(Y_h, 0)
+            Y_c = np.expand_dims(Y_c, 0)
         elif self.direction == "reverse":
             assert num_directions == 1
-            Y, Y_h = self._run_forward(
+            Y, Y_h, Y_c = self._run_forward(
                 np.flip(X, axis=0),
                 W[0],
                 R[0],
@@ -103,10 +105,11 @@ class CommonLSTM(OpRun):
             Y = np.flip(Y, axis=0)
             Y = np.expand_dims(Y, 1)
             Y_h = np.expand_dims(Y_h, 0)
+            Y_c = np.expand_dims(Y_c, 0)
         else:
             assert self.direction == "bidirectional"
             assert num_directions == 2
-            Yf, Yf_h = self._run_forward(
+            Yf, Yf_h, Yf_c = self._run_forward(
                 X,
                 W[0],
                 R[0],
@@ -115,7 +118,7 @@ class CommonLSTM(OpRun):
                 H_0[0],
                 C_0[0],
             )
-            Yb, Yb_h = self._run_forward(
+            Yb, Yb_h, Yb_c = self._run_forward(
                 np.flip(X, axis=0),
                 W[1],
                 R[1],
@@ -127,12 +130,14 @@ class CommonLSTM(OpRun):
             Yb = np.flip(Yb, axis=0)
             Y = np.stack([Yf, Yb], axis=1)
             Y_h = np.stack([Yf_h, Yb_h], axis=0)
+            Y_c = np.stack([Yf_c, Yb_c], axis=0)
 
         if self.layout:
             Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = np.transpose(Y_h, [1, 0, 2])
+            Y_c = np.transpose(Y_c, [1, 0, 2])
 
-        return Y, Y_h
+        return Y, Y_h, Y_c
 
     def _run(
         self,
@@ -179,11 +184,18 @@ class CommonLSTM(OpRun):
                 (num_directions, batch_size, hidden_size), dtype=X.dtype
             )
 
-        Y, Y_h = self._step(
+        Y, Y_h, Y_c = self._step(
             X, R, B, W, initial_h, initial_c, P, num_directions=num_directions
         )
         Y = Y.astype(X.dtype)
-        return (Y,) if self.n_outputs == 1 else (Y, Y_h.astype(X.dtype))
+
+        if self.n_outputs == 1:
+            return (Y,)
+        elif self.n_outputs == 2:
+            return (Y, Y_h.astype(X.dtype))
+        else:
+            assert self.n_outputs == 3, f"Invalid # outputs: {self.n_outputs}"
+            return (Y, Y_h.astype(X.dtype), Y_c.astype(X.dtype))
 
 
 class LSTM(CommonLSTM):

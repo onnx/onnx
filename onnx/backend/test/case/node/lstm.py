@@ -82,11 +82,20 @@ class LSTMHelper:
     def h(self, x: np.ndarray) -> np.ndarray:
         return np.tanh(x)
 
-    def _run_forward(self, X, W, R, B, P, H_0, C_0):
+    def _run_forward(
+        self,
+        X: np.ndarray,
+        W: np.ndarray,
+        R: np.ndarray,
+        B: np.ndarray,
+        P: np.ndarray,
+        H_0: np.ndarray,
+        C_0: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Run a forward pass of the LSTM.
 
         Assumes that the num_directions axis has been squeezed out of the
-        inputs. (And returns Y, Yh without it.)
+        inputs. (And returns Y, Yh, Yc without it.)
         """
         h_list = []
 
@@ -112,11 +121,12 @@ class LSTMHelper:
 
         Y = np.stack(h_list, axis=0)
         Y_h = H_t
-        return Y, Y_h
+        Y_c = C_t
+        return Y, Y_h, Y_c
 
-    def step(self) -> tuple[np.ndarray, np.ndarray]:
+    def step(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if self.direction == "forward":
-            Y, Y_h = self._run_forward(
+            Y, Y_h, Y_c = self._run_forward(
                 self.X,
                 self.W[0],
                 self.R[0],
@@ -125,10 +135,12 @@ class LSTMHelper:
                 self.H_0[0],
                 self.C_0[0],
             )
+            # Add num_directions axis to outputs
             Y = np.expand_dims(Y, 1)
             Y_h = np.expand_dims(Y_h, 0)
+            Y_c = np.expand_dims(Y_c, 0)
         elif self.direction == "reverse":
-            Y, Y_h = self._run_forward(
+            Y, Y_h, Y_c = self._run_forward(
                 np.flip(self.X, axis=0),
                 self.W[0],
                 self.R[0],
@@ -140,9 +152,10 @@ class LSTMHelper:
             Y = np.flip(Y, axis=0)
             Y = np.expand_dims(Y, 1)
             Y_h = np.expand_dims(Y_h, 0)
+            Y_c = np.expand_dims(Y_c, 0)
         else:
             assert self.direction == "bidirectional"
-            Yf, Yf_h = self._run_forward(
+            Yf, Yf_h, Yf_c = self._run_forward(
                 self.X,
                 self.W[0],
                 self.R[0],
@@ -151,7 +164,7 @@ class LSTMHelper:
                 self.H_0[0],
                 self.C_0[0],
             )
-            Yb, Yb_h = self._run_forward(
+            Yb, Yb_h, Yb_c = self._run_forward(
                 np.flip(self.X, axis=0),
                 self.W[1],
                 self.R[1],
@@ -163,12 +176,14 @@ class LSTMHelper:
             Yb = np.flip(Yb, axis=0)
             Y = np.stack([Yf, Yb], axis=1)
             Y_h = np.stack([Yf_h, Yb_h], axis=0)
+            Y_c = np.stack([Yf_c, Yb_c], axis=0)
 
         if self.LAYOUT:
             Y = np.transpose(Y, [2, 0, 1, 3])
             Y_h = np.transpose(Y_h, [1, 0, 2])
+            Y_c = np.transpose(Y_c, [1, 0, 2])
 
-        return Y, Y_h
+        return Y, Y_h, Y_c
 
 
 class LSTM(Base):
@@ -193,7 +208,7 @@ class LSTM(Base):
         ).astype(np.float32)
 
         lstm = LSTMHelper(X=input, W=W, R=R)
-        _, Y_h = lstm.step()
+        _, Y_h, _ = lstm.step()
         expect(
             node,
             inputs=[input, W, R],
@@ -235,7 +250,7 @@ class LSTM(Base):
         B = np.concatenate((W_B, R_B), 1)
 
         lstm = LSTMHelper(X=input, W=W, R=R, B=B)
-        _, Y_h = lstm.step()
+        _, Y_h, _ = lstm.step()
         expect(
             node,
             inputs=[input, W, R, B],
@@ -280,7 +295,7 @@ class LSTM(Base):
         lstm = LSTMHelper(
             X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
         )
-        _, Y_h = lstm.step()
+        _, Y_h, _ = lstm.step()
         expect(
             node,
             inputs=[input, W, R, B, seq_lens, init_h, init_c, P],
@@ -314,7 +329,7 @@ class LSTM(Base):
         ).astype(np.float32)
 
         lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
-        Y, Y_h = lstm.step()
+        Y, Y_h, _ = lstm.step()
         expect(
             node,
             inputs=[input, W, R],
@@ -335,7 +350,7 @@ class LSTM(Base):
         node = onnx.helper.make_node(
             "LSTM",
             inputs=["X", "W", "R"],
-            outputs=["", "Y_h"],
+            outputs=["", "Y_h", "Y_c"],
             hidden_size=hidden_size,
             direction="reverse",
         )
@@ -348,11 +363,11 @@ class LSTM(Base):
         ).astype(np.float32)
 
         lstm = LSTMHelper(X=input, W=W, R=R, direction="reverse")
-        _, Y_h = lstm.step()
+        _, Y_h, Y_c = lstm.step()
         expect(
             node,
             inputs=[input, W, R],
-            outputs=[Y_h.astype(np.float32)],
+            outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
             name="test_lstm_reverse",
         )
 
@@ -369,7 +384,7 @@ class LSTM(Base):
         node = onnx.helper.make_node(
             "LSTM",
             inputs=["X", "W", "R"],
-            outputs=["", "Y_h"],
+            outputs=["", "Y_h", "Y_c"],
             hidden_size=hidden_size,
             direction="bidirectional",
         )
@@ -384,10 +399,10 @@ class LSTM(Base):
         ).astype(np.float32)
 
         lstm = LSTMHelper(X=input, W=W, R=R, direction="bidirectional")
-        _, Y_h = lstm.step()
+        _, Y_h, Y_c = lstm.step()
         expect(
             node,
             inputs=[input, W, R],
-            outputs=[Y_h.astype(np.float32)],
+            outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
             name="test_lstm_bidirectional",
         )
