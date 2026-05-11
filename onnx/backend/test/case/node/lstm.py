@@ -303,3 +303,73 @@ class LSTM(Base):
             outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
             name="test_lstm_batchwise",
         )
+
+    @staticmethod
+    def export_reverse() -> None:
+        # seq_length = 3, batch_size=1, input_size=2
+        input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 3
+        weight_scale = 0.1
+        number_of_gates = 4
+
+        node = onnx.helper.make_node(
+            "LSTM",
+            inputs=["X", "W", "R"],
+            outputs=["", "Y_h"],
+            hidden_size=hidden_size,
+            direction="reverse",
+        )
+
+        W = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = weight_scale * np.ones(
+            (1, number_of_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
+
+        lstm = LSTMHelper(X=input, W=W, R=R, direction="reverse")
+        _, Y_h = lstm.step()
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y_h.astype(np.float32)],
+            name="test_lstm_reverse",
+        )
+
+    @staticmethod
+    def export_bidirectional() -> None:
+        # seq_length = 3, batch_size=1, input_size=2
+        input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+        input_size = 2
+        hidden_size = 3
+        weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+        number_of_gates = 4
+
+        node = onnx.helper.make_node(
+            "LSTM",
+            inputs=["X", "W", "R"],
+            outputs=["", "Y_h"],
+            hidden_size=hidden_size,
+            direction="bidirectional",
+        )
+
+        # Multiply broadcasts in num_directions axis, to have different W & R
+        # in each direction
+        W = weight_scales * np.ones(
+            (1, number_of_gates * hidden_size, input_size)
+        ).astype(np.float32)
+        R = weight_scales * np.ones(
+            (1, number_of_gates * hidden_size, hidden_size)
+        ).astype(np.float32)
+
+        lstm = LSTMHelper(X=input, W=W, R=R, direction="bidirectional")
+        _, Y_h = lstm.step()
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y_h.astype(np.float32)],
+            name="test_lstm_bidirectional",
+        )
