@@ -90,9 +90,9 @@ jobs:
 
   call-pyodide:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
-    uses: ./.github/workflows/release_pyodide.yml
+    uses: ./.github/workflows/release_pyodide_cibw.yml
     with:
-      os: "pyodide"
+      protobuf_version: "33.6"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-sdist:

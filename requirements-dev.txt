@@ -11,4 +11,4 @@ lintrunner>=0.13.0
 lintrunner-adapters>=0.13.0
 # Edit additional linter dependencies in requirements-lintrunner.txt
 # Dependencies for the reference implementation.
--r requirements-reference.txt
+Pillow

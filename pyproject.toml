@@ -3,13 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["setuptools>=77", "protobuf>=4.25.1"]
-backend-path = ["."]
-build-backend = "backend"
+requires = ["scikit-build-core>=0.11", "protobuf>=4.25.1"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "onnx"
-dynamic = ["version", "dependencies", "optional-dependencies"]
+dynamic = ["version"]
 description = "Open Neural Network Exchange"
 readme = "README.md"
 authors = [
@@ -19,7 +18,17 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 license = "Apache-2.0"
+# scikit-build-core expects dependencies here rather than in a requirements.txt file
 requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.23.2",
+    "protobuf>=4.25.1",
+    "typing_extensions>=4.15.0",
+    "ml_dtypes>=0.5.4",
+]
+
+[project.optional-dependencies]
+reference = ["Pillow"]
 
 [project.urls]
 Homepage = "https://onnx.ai/"
@@ -30,25 +39,61 @@ backend-test-tools = "onnx.backend.test.cmd_tools:main"
 check-model = "onnx.bin.checker:check_model"
 check-node = "onnx.bin.checker:check_node"
 
-[tool.setuptools.dynamic]
-dependencies = {file = "requirements.txt"}
-
-[tool.setuptools.dynamic.optional-dependencies]
-reference = {file = "requirements-reference.txt"}
-
-[tool.setuptools.packages.find]
-include = ["onnx*"]
-
-[tool.setuptools.package-data]
-onnx = [
-    "**/*.c",
-    "**/*.cc",
-    "**/*.h",
-    "**/*.proto",
-    "**/*.pyi",
-    "backend/test/data/**/*",
-    "py.typed",
+[tool.scikit-build]
+# using `.setuptools-cmake-build` for historical reasons.
+build-dir = ".setuptools-cmake-build"
+cmake.version = ">=3.26"
+cmake.build-type = "Release"
+wheel.packages = ["onnx"]
+wheel.exclude = ["**.proto3", "**.md", "**/CMakeLists.txt"]
+wheel.py-api = "cp312"
+sdist.include = [
+    "LICENSE",
+    "README.md",
+    "CMakeLists.txt",
+    "VERSION_NUMBER",
+    "cmake/**",
+    "tools/**",
+    "onnx/**",
+    "pyproject.toml",
 ]
+sdist.exclude = ["*"]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "VERSION_NUMBER"
+regex = '(?P<value>\S+)'
+
+[tool.scikit-build.cmake.define]
+ONNX_BUILD_PYTHON = "ON"
+ONNX_INSTALL = "OFF"
+ONNX_ML = {env = "ONNX_ML", default = "ON"}
+ONNX_NAMESPACE = {env = "ONNX_NAMESPACE", default = "onnx"}
+ONNX_BUILD_TESTS = {env = "ONNX_BUILD_TESTS", default = "OFF"}
+ONNX_VERIFY_PROTO3 = {env = "ONNX_VERIFY_PROTO3", default = "OFF"}
+ONNX_DISABLE_EXCEPTIONS = {env = "ONNX_DISABLE_EXCEPTIONS", default = "OFF"}
+ONNX_DISABLE_STATIC_REGISTRATION = {env = "ONNX_DISABLE_STATIC_REGISTRATION", default = "OFF"}
+ONNX_USE_MSVC_STATIC_RUNTIME = {env = "USE_MSVC_STATIC_RUNTIME", default = "OFF"}
+
+# Disable stable ABI on FreeBSD (not supported)
+[[tool.scikit-build.overrides]]
+if.platform-system = "freebsd"
+wheel.py-api = ""
+
+# Use Debug build type when DEBUG or COVERAGE is set
+[[tool.scikit-build.overrides]]
+if.env.DEBUG = "1"
+cmake.build-type = "Debug"
+
+[[tool.scikit-build.overrides]]
+if.env.COVERAGE = "1"
+cmake.build-type = "Debug"
+cmake.define.ONNX_COVERAGE = "ON"
+
+[tool.cibuildwheel.pyodide]
+# We can't use cp312 because that would pick an older version of
+# pyodide[-build] which does not ship with ml_dtypes.
+build = "cp313-pyodide_wasm32"
 
 [tool.check-wheel-contents]
 ignore = ["W002"]

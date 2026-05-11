@@ -60,7 +60,7 @@ $PIP_INSTALL_COMMAND -v -r requirements-release_build.txt || { echo "Installing 
 if [[ "$BUILD_MODE" != "release" ]]; then
     echo "Building preview wheels..."
     sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-    export ONNX_PREVIEW_BUILD=1
+    echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
 else
     echo "Building release wheels..."
 fi
