@@ -4201,35 +4201,36 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("DkDim = Div (QLastDim, HqConst)")
               .Add("DvDim = Div (VLastDim, HkvConst)");
 
+          // State and scale are kept in float32 inside the body to match the
+          // Python reference's fp32 accumulation. `present_state` is cast back
+          // to S (past_state's dtype, or query's dtype when past_state is
+          // absent) after the Scan; `output` is cast back to T inside the body.
           if (ctx.hasInput(3)) {
-            // past_state already has shape (B, H_kv, d_k, d_v).
-            builder.Add("State0 = Identity (past_state)");
+            // past_state has shape (B, H_kv, d_k, d_v) and dtype S.
+            // Upcast to float32 for accumulation regardless of S.
+            builder.Add("State0 = Cast <to = 1> (past_state)");
           } else {
-            // Build a zero-initialized state and cast to query's element type.
-            // TODO(review): proposal allows S != T (e.g., float32 state with
-            // float16 activations). Without past_state we have no S anchor, so
-            // we default S to T here.
+            // ConstantOfShape with default value yields float32 already; no
+            // cast required. S anchor for the post-Scan cast defaults to T
+            // (query's dtype) in this case.
             builder
                 .Add("StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)")
-                .Add("ZeroState = ConstantOfShape (StateShape)")
-                .Add("State0 = CastLike (ZeroState, query)");
+                .Add("State0 = ConstantOfShape (StateShape)");
           }
 
-          // --- Step 4: Compute scale factor (scalar, query's dtype) ---
+          // --- Step 4: Compute scale factor (scalar, float32) ---
           // If `scale` attribute is non-zero, use it directly; otherwise
-          // derive 1/sqrt(d_k) from query's last dim. ScaleFactor is a
-          // rank-0 tensor that broadcasts cleanly inside the Scan body.
+          // derive 1/sqrt(d_k) from query's last dim. ScaleFactor stays in
+          // float32 to multiply against the float32 read result inside the
+          // body; the body casts the final output back to T.
           if (scale != 0.0f) {
-            builder
-                .Const("ScaleConst", scale)
-                .Add("ScaleFactor = CastLike (ScaleConst, query)");
+            builder.Const("ScaleFactor", scale);
           } else {
             builder
                 .Add("DkScalar = Squeeze (DkDim)")
                 .Add("DkFloat = Cast <to = 1> (DkScalar)")
                 .Add("SqrtDk = Sqrt (DkFloat)")
-                .Add("InvSqrtDk = Reciprocal (SqrtDk)")
-                .Add("ScaleFactor = CastLike (InvSqrtDk, query)");
+                .Add("ScaleFactor = Reciprocal (SqrtDk)");
           }
 
           // --- Step 4b: Precompute GQA expand/read shapes (only when group_size > 1) ---
@@ -4259,9 +4260,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           //     enter as body inputs and are echoed unchanged as body
           //     outputs each step.
           //
-          // TODO(review): The body assumes state and activation dtypes
-          // match (S == T). Mixed-precision (e.g., float32 state with
-          // float16 activations) would require explicit Cast nodes.
+          // The body always accumulates in float32 to match the Python
+          // reference: each sliced T-typed input (q_t/k_t/v_t/decay_t/beta_t)
+          // is cast to float32 at body entry; state_in/state_out/scale_in stay
+          // in float32 throughout; output_t is cast back to T (anchored on
+          // q_t) before being emitted as a per-step Scan output. The post-
+          // Scan code casts FinalState back to S.
 
           // Inlined axis constants used inside the body for
           // Unsqueeze/Squeeze/Expand. Kept distinct from the outer-scope
@@ -4273,9 +4277,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             body_constants += "                Two = Constant <value_ints = [2]>()\n";
           }
 
+          // Cast all sliced T-typed inputs to float32 at body entry. The
+          // remainder of the body operates exclusively on the `_f` variants;
+          // q_t is preserved as the T-typed dtype anchor for the final
+          // CastLike on output_t.
+          std::string body_cast_inputs =
+              "                q_t_f = Cast <to = 1> (q_t)\n"
+              "                k_t_f = Cast <to = 1> (k_t)\n"
+              "                v_t_f = Cast <to = 1> (v_t)\n";
+          if (has_decay) {
+            body_cast_inputs += "                decay_t_f = Cast <to = 1> (decay_t)\n";
+          }
+          if (has_beta) {
+            body_cast_inputs += "                beta_t_f = Cast <to = 1> (beta_t)\n";
+          }
+
           // Common decay block (gated, gated_delta): produces DecayedState.
           const std::string decay_block = R"ONNX(
-                DecayExp = Exp (decay_t)
+                DecayExp = Exp (decay_t_f)
                 DecayExpUnsq = Unsqueeze (DecayExp, NegOne)
                 DecayedState = Mul (state_in, DecayExpUnsq)
               )ONNX";
@@ -4286,9 +4305,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           const bool delta_correction = (update_rule == "delta" || update_rule == "gated_delta");
           const std::string state_basis = gating ? "DecayedState" : "state_in";
 
-          // Always-needed: KtCol = (B, H, d_k, 1).
+          // Always-needed: KtCol = (B, H, d_k, 1) in float32.
           const std::string ktcol_block = R"ONNX(
-                KtCol = Unsqueeze (k_t, NegOne)
+                KtCol = Unsqueeze (k_t_f, NegOne)
               )ONNX";
 
           // Delta-rule retrieval block: produces RetrievedSq = (B, H, d_v).
@@ -4296,7 +4315,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           //   Retrieved = MatMul(StateT, KtCol)
           //   RetrievedSq = Squeeze(Retrieved, axes=[-1])
           // Then Diff/Delta computed; "WriteVec" feeds into Outer.
-          // For non-delta rules, WriteVec is just v_t.
+          // For non-delta rules, WriteVec is just v_t_f.
           std::string retrieve_and_writevec_block;
           std::string write_vec_name;
           if (delta_correction) {
@@ -4304,11 +4323,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 "                StateT = Transpose <perm = [0, 1, 3, 2]> (" + state_basis + ")\n"
                 "                Retrieved = MatMul (StateT, KtCol)\n"
                 "                RetrievedSq = Squeeze (Retrieved, NegOne)\n"
-                "                Diff = Sub (v_t, RetrievedSq)\n"
-                "                Delta = Mul (beta_t, Diff)\n";
+                "                Diff = Sub (v_t_f, RetrievedSq)\n"
+                "                Delta = Mul (beta_t_f, Diff)\n";
             write_vec_name = "Delta";
           } else {
-            write_vec_name = "v_t";
+            write_vec_name = "v_t_f";
           }
 
           // Write block: Outer = KtCol @ row(write_vec); state_out = basis + Outer.
@@ -4323,22 +4342,27 @@ ONNX_OPERATOR_SET_SCHEMA(
           // each KV head. We use the same Unsqueeze + Expand + Reshape
           // pattern as the standard Attention op. `expand_shape_in` and
           // `read_shape_in` are carried Scan state (1D int64 shape tensors).
+          // The read computes in float32 (using q_t_f and the float32 state),
+          // then casts the per-step output back to T (anchored on the
+          // T-typed q_t) so the Scan accumulates a T-typed output tensor.
           std::string read_block;
           if (group_size > 1) {
             read_block =
                 "                StateUnsq = Unsqueeze (state_out, Two)\n"
                 "                StateExpanded = Expand (StateUnsq, expand_shape_in)\n"
                 "                StateForRead = Reshape (StateExpanded, read_shape_in)\n"
-                "                QtRow = Unsqueeze (q_t, NegTwo)\n"
+                "                QtRow = Unsqueeze (q_t_f, NegTwo)\n"
                 "                ReadOut = MatMul (QtRow, StateForRead)\n"
                 "                ReadSq = Squeeze (ReadOut, NegTwo)\n"
-                "                output_t = Mul (scale_in, ReadSq)\n";
+                "                output_t_f = Mul (scale_in, ReadSq)\n"
+                "                output_t = CastLike (output_t_f, q_t)\n";
           } else {
             read_block = R"ONNX(
-                QtRow = Unsqueeze (q_t, NegTwo)
+                QtRow = Unsqueeze (q_t_f, NegTwo)
                 ReadOut = MatMul (QtRow, state_out)
                 ReadSq = Squeeze (ReadOut, NegTwo)
-                output_t = Mul (scale_in, ReadSq)
+                output_t_f = Mul (scale_in, ReadSq)
+                output_t = CastLike (output_t_f, q_t)
               )ONNX";
           }
 
@@ -4385,6 +4409,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               "  num_scan_inputs = " + std::to_string(num_scan_inputs) + ",\n"
               "  body = linear_attn_step (" + body_inputs + ") => (" + body_outputs + ") {\n";
           scan_text += body_constants;
+          scan_text += body_cast_inputs;
           if (gating) scan_text += decay_block;
           scan_text += ktcol_block;
           scan_text += retrieve_and_writevec_block;
@@ -4399,13 +4424,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // --- Step 6: Post-Scan 4D -> 3D reshape and present_state ---
           // OutputAccum: (T, B, H_q, d_v) -> Transpose to (B, T, H_q, d_v)
-          // -> Reshape to (B, T, H_q * d_v).
-          // present_state: keep FinalState as-is (B, H_kv, d_k, d_v).
+          // -> Reshape to (B, T, H_q * d_v). Already T-typed (cast inside body).
+          // present_state: cast FinalState (float32) back to S.
+          //   * With past_state: anchor on past_state's dtype.
+          //   * Without past_state: default S to T (query's dtype).
           builder
               .Add("OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)")
               .Add("OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)")
-              .Add("output = Reshape (OutputTransposed, OutputShape3D)")
-              .Add("present_state = Identity (FinalState)");
+              .Add("output = Reshape (OutputTransposed, OutputShape3D)");
+          if (ctx.hasInput(3)) {
+            builder.Add("present_state = CastLike (FinalState, past_state)");
+          } else {
+            builder.Add("present_state = CastLike (FinalState, query)");
+          }
 
           schema.BuildFunction(functionProto);
           return true;
