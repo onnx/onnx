@@ -7,6 +7,7 @@ from __future__ import annotations
 import contextlib
 import itertools
 import unittest
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -11925,6 +11926,13 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         # Graceful return without output shape inference is acceptable; must not crash.
         onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_infer_shapes_pathlike_error(self) -> None:
+        with self.assertRaisesRegex(
+            TypeError,
+            r"For Model paths \(str or os.PathLike\), use infer_shapes_path\(\)\.",
+        ):
+            onnx.shape_inference.infer_shapes(Path("model.onnx"))
 
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
