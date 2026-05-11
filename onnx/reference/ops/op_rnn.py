@@ -75,7 +75,14 @@ class CommonRNN(OpRun):
     def _f_tanh(self, x):
         return np.tanh(x)
 
-    def _run_forward(self, X, R, B, W, H_0):
+    def _run_forward(
+        self,
+        X: np.ndarray,
+        R: np.ndarray,
+        B: np.ndarray,
+        W: np.ndarray,
+        H_0: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Run a forward pass of the RNN.
 
         Assumes that the num_directions axis has been squeezed out of the

@@ -20,7 +20,14 @@ class CommonGRU(OpRun):
     def g(self, x):
         return np.tanh(x)
 
-    def _run_forward(self, X, R, B, W, H_0):
+    def _run_forward(
+        self,
+        X: np.ndarray,
+        R: np.ndarray,
+        B: np.ndarray,
+        W: np.ndarray,
+        H_0: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Run a single forward pass of the GRU.
 
         Assumes that the num_directions axis has been squeezed out of the
@@ -62,7 +69,15 @@ class CommonGRU(OpRun):
         Y_h = H_t
         return Y, Y_h
 
-    def _step(self, X, R, B, W, H_0, num_directions):
+    def _step(
+        self,
+        X: np.ndarray,
+        R: np.ndarray,
+        B: np.ndarray,
+        W: np.ndarray,
+        H_0: np.ndarray,
+        num_directions: int,
+    ) -> tuple[np.ndarray, np.ndarray]:
         if self.direction == "forward":
             assert num_directions == 1
             Y, Y_h = self._run_forward(
