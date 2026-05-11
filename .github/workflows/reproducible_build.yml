@@ -1,0 +1,119 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# Verifies that two successive builds from identical source produce bit-for-bit
+# identical wheels (reproducible builds).  When they differ, diffoscope is used
+# to pinpoint exactly which files or metadata changed.
+
+name: ReproducibleBuild
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+
+    env:
+      PYTHON_VERSION: "3.12"
+      PLATFORM: "manylinux_2_28_x86_64"
+      MANYLINUX_IMAGE: "quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2"
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: true
+
+      - name: Set SOURCE_DATE_EPOCH
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
+      # -----------------------------------------------------------------------
+      # First build
+      # -----------------------------------------------------------------------
+      - name: Build wheel (run 1)
+        uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2
+        with:
+          entrypoint: bash
+          args: .github/workflows/manylinux/entrypoint.sh ${{ env.PYTHON_VERSION }} ${{ env.PLATFORM }} release ${{ env.SOURCE_DATE_EPOCH }}
+
+      - name: Save build-1 wheel and checksum
+        run: |
+          mkdir -p /tmp/build1
+          cp dist/*.whl /tmp/build1/
+          sha256sum dist/*.whl | tee /tmp/build1/sha256.txt
+
+      # -----------------------------------------------------------------------
+      # Clean all artifacts produced inside the workspace by build 1 so that
+      # build 2 starts from the same state as build 1 did.
+      # -----------------------------------------------------------------------
+      - name: Clean workspace between builds
+        run: |
+          rm -rf dist/ build/ .setuptools-cmake-build/ protobuf/
+          find . -maxdepth 2 -name "*.egg-info" -type d -exec rm -rf {} + 2>/dev/null || true
+
+      # -----------------------------------------------------------------------
+      # Second build — identical inputs, identical SOURCE_DATE_EPOCH
+      # -----------------------------------------------------------------------
+      - name: Build wheel (run 2)
+        uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2
+        with:
+          entrypoint: bash
+          args: .github/workflows/manylinux/entrypoint.sh ${{ env.PYTHON_VERSION }} ${{ env.PLATFORM }} release ${{ env.SOURCE_DATE_EPOCH }}
+
+      # -----------------------------------------------------------------------
+      # Compare
+      # -----------------------------------------------------------------------
+      - name: Compare checksums
+        run: |
+          wheel1=$(ls /tmp/build1/*.whl | head -1)
+          wheel2=$(ls dist/*.whl | head -1)
+
+          h1=$(sha256sum "$wheel1" | cut -d' ' -f1)
+          h2=$(sha256sum "$wheel2" | cut -d' ' -f1)
+
+          echo "Build 1: $(basename "$wheel1")  →  $h1"
+          echo "Build 2: $(basename "$wheel2")  →  $h2"
+
+          if [ "$h1" = "$h2" ]; then
+            echo "Reproducible build confirmed — both wheels have SHA-256 $h1"
+          else
+            echo "Non-reproducible build — SHA-256 mismatch"
+            exit 1
+          fi
+
+      # -----------------------------------------------------------------------
+      # On failure: run diffoscope to show exactly what changed
+      # -----------------------------------------------------------------------
+      - name: Install diffoscope
+        if: failure()
+        run: sudo apt-get install -y --no-install-recommends diffoscope
+
+      - name: Run diffoscope
+        if: failure()
+        run: |
+          wheel1=$(ls /tmp/build1/*.whl | head -1)
+          wheel2=$(ls dist/*.whl | head -1)
+          diffoscope "$wheel1" "$wheel2" \
+            --text /tmp/diffoscope.txt \
+            --html /tmp/diffoscope.html \
+            --max-text-report-size 10000000 \
+            || true
+          echo "--- diffoscope summary (first 100 lines) ---"
+          head -100 /tmp/diffoscope.txt || true
+
+      - name: Upload diffoscope report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: diffoscope-report
+          path: |
+            /tmp/diffoscope.html
+            /tmp/diffoscope.txt
+          retention-days: 30
