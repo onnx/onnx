@@ -292,8 +292,8 @@ class CausalConvWithState(Base):
         )
 
         batch_size, channels, length, k = 2, 4, 8, 4
-        input_ = np.random.randn(batch_size, channels, length).astype(np.float16)
-        weight = np.random.randn(channels, 1, k).astype(np.float16)
+        input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+        weight = np.random.rand(channels, 1, k).astype(np.float16)
 
         output, present_state = _compute(input_, weight)
 
