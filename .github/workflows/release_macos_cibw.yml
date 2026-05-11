@@ -55,7 +55,7 @@ jobs:
         if: inputs.build_mode != 'release'
         shell: bash
         run: |
-          sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
+          sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
 
       - name: Install cibuildwheel
