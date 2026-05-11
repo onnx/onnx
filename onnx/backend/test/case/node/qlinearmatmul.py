@@ -155,3 +155,151 @@ class QLinearMatMul(Base):
                     outputs=[output],
                     name=f"test_qlinearmatmul_3D_{quant_type_name}_{dtype_name}",
                 )
+
+    @staticmethod
+    def export_overflow() -> None:
+        """Test clipping behavior when matmul result exceeds output dtype max for uint8 and int8 cases."""
+        node = onnx.helper.make_node(
+            "QLinearMatMul",
+            inputs=[
+                "a",
+                "a_scale",
+                "a_zero_point",
+                "b",
+                "b_scale",
+                "b_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ],
+            outputs=["y"],
+        )
+
+        # uint8 overflow case
+        a = np.array([[100]], dtype=np.uint8)
+        b = np.array([[100]], dtype=np.uint8)
+        a_scale = np.array([1.0], dtype=np.float32)
+        a_zero_point = np.array([0], dtype=np.uint8)
+        b_scale = np.array([1.0], dtype=np.float32)
+        b_zero_point = np.array([0], dtype=np.uint8)
+        y_scale = np.array([0.2], dtype=np.float32)
+        y_zero_point = np.array([0], dtype=np.uint8)
+        # 100 * 100 / 0.2 = 50000 → clipped to 255
+        expected = np.array([[255]], dtype=np.uint8)
+
+        expect(
+            node,
+            inputs=[
+                a,
+                a_scale,
+                a_zero_point,
+                b,
+                b_scale,
+                b_zero_point,
+                y_scale,
+                y_zero_point,
+            ],
+            outputs=[expected],
+            name="test_qlinearmatmul_overflow_uint8",
+        )
+
+        # int8 overflow case
+        a = np.array([[100]], dtype=np.int8)
+        b = np.array([[100]], dtype=np.int8)
+        a_scale = np.array([1.0], dtype=np.float32)
+        a_zero_point = np.array([0], dtype=np.int8)
+        b_scale = np.array([1.0], dtype=np.float32)
+        b_zero_point = np.array([0], dtype=np.int8)
+        y_scale = np.array([0.5], dtype=np.float32)
+        y_zero_point = np.array([0], dtype=np.int8)
+        # 100 * 100 / 0.5 = 20000 → clipped to 127
+        expected = np.array([[127]], dtype=np.int8)
+
+        expect(
+            node,
+            inputs=[
+                a,
+                a_scale,
+                a_zero_point,
+                b,
+                b_scale,
+                b_zero_point,
+                y_scale,
+                y_zero_point,
+            ],
+            outputs=[expected],
+            name="test_qlinearmatmul_overflow_int8",
+        )
+
+    @staticmethod
+    def export_underflow() -> None:
+        """Test clipping behavior when matmul result falls below output dtype min for uint8 and int8 cases."""
+        node = onnx.helper.make_node(
+            "QLinearMatMul",
+            inputs=[
+                "a",
+                "a_scale",
+                "a_zero_point",
+                "b",
+                "b_scale",
+                "b_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ],
+            outputs=["y"],
+        )
+
+        # uint8 underflow case
+        a = np.array([[-100]], dtype=np.uint8)
+        b = np.array([[100]], dtype=np.uint8)
+        a_scale = np.array([1.0], dtype=np.float32)
+        a_zero_point = np.array([0], dtype=np.uint8)
+        b_scale = np.array([1.0], dtype=np.float32)
+        b_zero_point = np.array([0], dtype=np.uint8)
+        y_scale = np.array([1.0], dtype=np.float32)
+        y_zero_point = np.array([0], dtype=np.uint8)
+        # D = -100 * 100 = -10000 → clipped to 0
+        expected = np.array([[0]], dtype=np.uint8)
+
+        expect(
+            node,
+            inputs=[
+                a,
+                a_scale,
+                a_zero_point,
+                b,
+                b_scale,
+                b_zero_point,
+                y_scale,
+                y_zero_point,
+            ],
+            outputs=[expected],
+            name="test_qlinearmatmul_underflow_uint8",
+        )
+
+        # int8 underflow: -100*100 = -10000, scaled with y_scale=0.5 gives -20000 → clips to -128
+        a = np.array([[-100]], dtype=np.int8)
+        b = np.array([[100]], dtype=np.int8)
+        a_scale = np.array([1.0], dtype=np.float32)
+        a_zero_point = np.array([0], dtype=np.int8)
+        b_scale = np.array([1.0], dtype=np.float32)
+        b_zero_point = np.array([0], dtype=np.int8)
+        y_scale = np.array([0.5], dtype=np.float32)
+        y_zero_point = np.array([0], dtype=np.int8)
+        # -100 * 100 / 0.5 = -20000 → clipped to -128
+        expected = np.array([[-128]], dtype=np.int8)
+
+        expect(
+            node,
+            inputs=[
+                a,
+                a_scale,
+                a_zero_point,
+                b,
+                b_scale,
+                b_zero_point,
+                y_scale,
+                y_zero_point,
+            ],
+            outputs=[expected],
+            name="test_qlinearmatmul_underflow_int8",
+        )
