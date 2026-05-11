@@ -84,6 +84,7 @@ RC-Candidates
         * https://github.com/onnx/onnxmltools
             * Example: https://github.com/onnx/onnxmltools/issues/685
         * https://github.com/Quantco/spox
+        * https://github.com/openvinotoolkit/openvino
         * https://github.com/conda-forge/onnx-feedstock
 
  * If issues are found, the bugs are to be fixed in the onnx `main` branch and then cherry-picked into the release branch.
