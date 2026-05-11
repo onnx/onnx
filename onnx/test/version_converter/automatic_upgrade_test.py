@@ -1950,6 +1950,45 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"to": TensorProto.INT32},
         )
 
+    def test_CausalConvWithState_basic(self) -> None:
+        # input [B=2, C=4, L=8] with kernel size 4: output preserves L,
+        # present_state last dim is kernel_size - 1 = 3.
+        self._test_op_upgrade(
+            "CausalConvWithState",
+            25,
+            [[2, 4, 8], [4, 1, 4]],
+            [[2, 4, 8], [2, 4, 3]],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+        )
+
+    def test_CausalConvWithState_with_bias_and_past_state(self) -> None:
+        # Exercises all four inputs (input, weight, bias, past_state).
+        self._test_op_upgrade(
+            "CausalConvWithState",
+            25,
+            [[2, 4, 8], [4, 1, 4], [4], [2, 4, 3]],
+            [[2, 4, 8], [2, 4, 3]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+            ],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+        )
+
+    def test_CausalConvWithState_kernel_one(self) -> None:
+        # Edge case: kernel_size == 1 -> present_state last dim == 0.
+        self._test_op_upgrade(
+            "CausalConvWithState",
+            25,
+            [[2, 4, 8], [4, 1, 1]],
+            [[2, 4, 8], [2, 4, 0]],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+        )
+
     def test_LinearAttention_basic_mha(self) -> None:
         # H_q == H_kv == 4, d_k == d_v == 16. update_rule="linear" with no
         # optional inputs: baseline shape/dtype plumbing on the no-op upgrade.
