@@ -38,9 +38,16 @@ class LSTMHelper:
 
         layout = params.get(LAYOUT, 0)
         x = params[X]
-        x = x if layout == 0 else np.swapaxes(x, 0, 1)
-        batch_size = x.shape[1]
+        h_0 = params.get(H_0)
+        c_0 = params.get(C_0)
+        if layout == 1:
+            x = np.swapaxes(x, 0, 1)
+            if h_0 is not None:
+                h_0 = np.swapaxes(h_0, 0, 1)
+            if c_0 is not None:
+                c_0 = np.swapaxes(c_0, 0, 1)
 
+        batch_size = x.shape[1]
         b = params.get(
             B,
             np.zeros(
@@ -55,14 +62,14 @@ class LSTMHelper:
                 dtype=np.float32,
             ),
         )
-        h_0 = params.get(
-            H_0,
-            np.zeros((self.num_directions, batch_size, hidden_size), dtype=np.float32),
-        )
-        c_0 = params.get(
-            C_0,
-            np.zeros((self.num_directions, batch_size, hidden_size), dtype=np.float32),
-        )
+        if h_0 is None:
+            h_0 = np.zeros(
+                (self.num_directions, batch_size, hidden_size), dtype=np.float32
+            )
+        if c_0 is None:
+            c_0 = np.zeros(
+                (self.num_directions, batch_size, hidden_size), dtype=np.float32
+            )
 
         self.X = x
         self.W = params[W]

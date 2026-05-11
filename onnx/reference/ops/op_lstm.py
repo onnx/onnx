@@ -168,6 +168,11 @@ class CommonLSTM(OpRun):
 
         if self.layout != 0:
             X = np.swapaxes(X, 0, 1)
+            if initial_h is not None:
+                initial_h = np.swapaxes(initial_h, 0, 1)
+            if initial_c is not None:
+                initial_c = np.swapaxes(initial_c, 0, 1)
+
         batch_size = X.shape[1]
         if B is None:
             B = np.zeros((num_directions, 2 * n_gates * hidden_size), dtype=X.dtype)

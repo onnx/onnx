@@ -121,9 +121,13 @@ class CommonRNN(OpRun):
         self.num_directions = W.shape[0]
 
         hidden_size = R.shape[-1]
-        X = X if layout == 0 else np.swapaxes(X, 0, 1)
-        batch_size = X.shape[1]
 
+        if layout == 1:
+            X = np.swapaxes(X, 0, 1)
+            if initial_h is not None:
+                initial_h = np.swapaxes(initial_h, 0, 1)
+
+        batch_size = X.shape[1]
         if B is None:
             B = np.zeros((self.num_directions, 2 * hidden_size), dtype=X.dtype)
         H_0 = (
