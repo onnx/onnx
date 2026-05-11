@@ -532,7 +532,7 @@ std::pair<int, int> getAttributeProtoElemTypeAndLength(const AttributeProto* att
       fail_type_inference(
           "Attribute ", attr_proto->name(), " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
     }
-    return {attr_proto->t().data_type(), attr_proto->t().dims(0)};
+    return {attr_proto->t().data_type(), static_cast<int>(attr_proto->t().dims(0))};
   }
   return {TensorProto::UNDEFINED, 0};
 }
