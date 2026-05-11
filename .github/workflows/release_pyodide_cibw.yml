@@ -1,0 +1,84 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Pyodide Build
+
+on:
+  workflow_call:
+    inputs:
+      build_mode:
+        required: false
+        type: string
+        default: "release"
+      protobuf_version:
+        required: false
+        type: string
+        default: "33.6"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    env:
+      PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Set preview version
+        if: inputs.build_mode != 'release'
+        shell: bash
+        run: |
+          sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
+          echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
+
+      - name: Install cibuildwheel
+        run: python -m pip install -q cibuildwheel>=2.21
+
+      - name: Download protoc for host
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip" -o protoc.zip
+          unzip -q protoc.zip -d protoc-host
+          chmod +x protoc-host/bin/protoc
+
+      - name: Download protobuf source
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          tar -xf protobuf.tar.gz
+
+      - name: Build Pyodide wheel
+        run: cibuildwheel --platform pyodide --output-dir dist/
+        env:
+          CIBW_TEST_COMMAND: >-
+            python -c "from onnx import NodeProto; n = NodeProto(); n.op_type = 'Add'; print(n)"
+          CIBW_ENVIRONMENT: >-
+            ONNX_ML=1
+            CMAKE_ARGS="
+            -DONNX_PYODIDE_BUILD=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
+            "
+
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: wheels-pyodide
+          path: dist/*.whl

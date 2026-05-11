@@ -9,13 +9,11 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* const Bernoulli_ver15_doc = kDoc_Bernoulli_ver15;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Bernoulli,
     15,
     OpSchema()
-        .SetDoc(Bernoulli_ver15_doc)
+        .SetDoc(kDoc_Bernoulli_ver15)
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -80,13 +78,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               return true;
             }));
 
-static const char* const Multinomial_ver7_doc = kDoc_Multinomial_ver7;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Multinomial,
     7,
     OpSchema()
-        .SetDoc(Multinomial_ver7_doc)
+        .SetDoc(kDoc_Multinomial_ver7)
         .Attr("sample_size", "Number of times to sample.", AttributeProto::INT, static_cast<int64_t>(1))
         .Attr(
             "seed",
@@ -138,13 +134,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
-static const char* const RandomNormalLike_ver1_doc = kDoc_RandomNormalLike_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormalLike,
     1,
     OpSchema()
-        .SetDoc(RandomNormalLike_ver1_doc)
+        .SetDoc(kDoc_RandomNormalLike_ver1)
         .Attr("mean", "The mean of the normal distribution.", AttributeProto::FLOAT, 0.0f)
         .Attr("scale", "The standard deviation of the normal distribution.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -180,13 +174,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const RandomUniformLike_ver1_doc = kDoc_RandomUniformLike_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniformLike,
     1,
     OpSchema()
-        .SetDoc(RandomUniformLike_ver1_doc)
+        .SetDoc(kDoc_RandomUniformLike_ver1)
         .Attr("low", "Lower boundary of the output values.", AttributeProto::FLOAT, 0.0f)
         .Attr("high", "Upper boundary of the output values.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -222,13 +214,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const RandomNormal_ver1_doc = kDoc_RandomNormal_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormal,
     1,
     OpSchema()
-        .SetDoc(RandomNormal_ver1_doc)
+        .SetDoc(kDoc_RandomNormal_ver1)
         .Attr("mean", "The mean of the normal distribution.", AttributeProto::FLOAT, 0.0f)
         .Attr("scale", "The standard deviation of the normal distribution.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -253,13 +243,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* const RandomUniform_ver1_doc = kDoc_RandomUniform_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniform,
     1,
     OpSchema()
-        .SetDoc(RandomUniform_ver1_doc)
+        .SetDoc(kDoc_RandomUniform_ver1)
         .Attr("low", "Lower boundary of the output values.", AttributeProto::FLOAT, 0.0f)
         .Attr("high", "Upper boundary of the output values.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -284,13 +272,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* const EyeLike_ver9_doc = kDoc_EyeLike_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     EyeLike,
     9,
     OpSchema()
-        .SetDoc(EyeLike_ver9_doc)
+        .SetDoc(kDoc_EyeLike_ver9)
         .Attr(
             "k",
             "(Optional) Index of the diagonal to be populated with ones. Default is 0."
@@ -352,13 +338,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const Constant_ver24_doc = kDoc_Constant_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     24,
     OpSchema()
-        .SetDoc(Constant_ver24_doc)
+        .SetDoc(kDoc_Constant_ver24)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -399,13 +383,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir12(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* const Constant_ver23_doc = Constant_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     23,
     OpSchema()
-        .SetDoc(Constant_ver23_doc)
+        .SetDoc(kDoc_Constant_ver24)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -446,13 +428,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir11(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* const Constant_ver19_doc = Constant_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     21,
     OpSchema()
-        .SetDoc(Constant_ver19_doc)
+        .SetDoc(kDoc_Constant_ver24)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -497,7 +477,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     19,
     OpSchema()
-        .SetDoc(Constant_ver19_doc)
+        .SetDoc(kDoc_Constant_ver24)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -538,13 +518,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir9(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* const Constant_ver13_doc = Constant_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     13,
     OpSchema()
-        .SetDoc(Constant_ver13_doc)
+        .SetDoc(kDoc_Constant_ver24)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -585,13 +563,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* const Constant_ver12_doc = Constant_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     12,
     OpSchema()
-        .SetDoc(Constant_ver12_doc)
+        .SetDoc(kDoc_Constant_ver24)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -725,13 +701,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               "One of the attributes 'value' or 'sparse_value' must be specified for a Constant node.");
         }));
 
-static const char* const ConstantOfShape_ver24_doc = kDoc_ConstantOfShape_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     24,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver24_doc)
+        .SetDoc(kDoc_ConstantOfShape_ver24)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -776,13 +750,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const ConstantOfShape_ver23_doc = ConstantOfShape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     23,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver23_doc)
+        .SetDoc(kDoc_ConstantOfShape_ver24)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -826,13 +798,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const ConstantOfShape_ver20_doc = ConstantOfShape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     21,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver20_doc)
+        .SetDoc(kDoc_ConstantOfShape_ver24)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -894,7 +864,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     20,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver20_doc)
+        .SetDoc(kDoc_ConstantOfShape_ver24)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -950,13 +920,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const ConstantOfShape_ver9_doc = ConstantOfShape_ver24_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     9,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver9_doc)
+        .SetDoc(kDoc_ConstantOfShape_ver24)
         .Attr(
             "value",
             "(Optional) The value of the output elements."

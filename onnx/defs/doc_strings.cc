@@ -783,7 +783,7 @@ const char kDoc_Pad_ver24[] = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
-The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
 1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 

@@ -1,5 +1,36 @@
 # SPDX-License-Identifier: Apache-2.0
-#
+
+# Look up a dependency by name in sbom.cdx.json and set URL, SHA256, and VERSION
+# variables in the caller's scope. For example:
+#   sbom_get_dep("abseil-cpp" _absl)
+# sets _absl_URL, _absl_SHA256, _absl_VERSION.
+function(sbom_get_dep dep_name prefix)
+  file(READ "${CMAKE_SOURCE_DIR}/sbom.cdx.json" _sbom)
+  string(JSON _count LENGTH "${_sbom}" "components")
+  foreach(_i RANGE 0 ${_count})
+    if(_i EQUAL _count)
+      break()
+    endif()
+    string(JSON _name GET "${_sbom}" "components" ${_i} "name")
+    if(_name STREQUAL "${dep_name}")
+      string(JSON _url GET "${_sbom}" "components" ${_i} "externalReferences" 0 "url")
+      string(JSON _version GET "${_sbom}" "components" ${_i} "version")
+      set(${prefix}_URL "${_url}" PARENT_SCOPE)
+      set(${prefix}_VERSION "${_version}" PARENT_SCOPE)
+      # SHA256 is optional (e.g. git-only deps like nanobind).
+      string(JSON _hash_count ERROR_VARIABLE _err LENGTH "${_sbom}" "components" ${_i} "hashes")
+      if(_hash_count AND _hash_count GREATER 0)
+        string(JSON _sha256 GET "${_sbom}" "components" ${_i} "hashes" 0 "content")
+        set(${prefix}_SHA256 "${_sha256}" PARENT_SCOPE)
+      else()
+        set(${prefix}_SHA256 "" PARENT_SCOPE)
+      endif()
+      return()
+    endif()
+  endforeach()
+  message(FATAL_ERROR "Dependency '${dep_name}' not found in sbom.cdx.json")
+endfunction()
+
 # Compiler hardening flags based on OpenSSF guidelines:
 # https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html
 function(add_onnx_hardening_flags target)
@@ -8,11 +39,22 @@ function(add_onnx_hardening_flags target)
   endif()
 
   if(MSVC)
-    # MSVC hardening flags
+    # MSVC hardening compile flags
+    target_compile_options(${target} PRIVATE
+      /GS        # Buffer security checks
+      /guard:cf  # Control Flow Guard
+      /sdl       # Security Development Lifecycle checks
+    )
+    # MSVC hardening linker flags
     target_link_options(${target} PRIVATE
       /DYNAMICBASE  # ASLR
-      /NXCOMPAT     # Data Execution Prevention      
+      /NXCOMPAT     # Data Execution Prevention
+      /guard:cf     # Control Flow Guard (linker side)
     )
+    # CET shadow stack requires VS 2019 (MSVC 19.20+) and is x86/x64 only
+    if(MSVC_VERSION GREATER_EQUAL 1920 AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86|x64|X86|AMD64")
+      target_link_options(${target} PRIVATE /CETCOMPAT)
+    endif()
   else()
     # GCC/Clang hardening compile flags
     target_compile_options(${target} PRIVATE
@@ -21,7 +63,17 @@ function(add_onnx_hardening_flags target)
       -Wimplicit-fallthrough
       -Werror=format-security
       -fstack-protector-strong
+      -fno-delete-null-pointer-checks
+      -fno-strict-overflow
+      -fno-strict-aliasing
     )
+
+    # Zero-initialize uninitialized stack variables (requires compiler support)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag(-ftrivial-auto-var-init=zero COMPILER_SUPPORTS_AUTO_VAR_INIT)
+    if(COMPILER_SUPPORTS_AUTO_VAR_INIT)
+      target_compile_options(${target} PRIVATE -ftrivial-auto-var-init=zero)
+    endif()
 
     # _FORTIFY_SOURCE requires optimization and conflicts with sanitizers
     if(NOT ONNX_USE_ASAN)
@@ -147,9 +199,13 @@ function(add_onnx_compile_options target)
     PUBLIC $<BUILD_INTERFACE:${ONNX_ROOT}> $<INSTALL_INTERFACE:include>
            $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
   target_link_libraries(${target} PUBLIC ${LINKED_PROTOBUF_TARGET})
+  get_target_property(_onnx_linked_protobuf_is_imported ${LINKED_PROTOBUF_TARGET} IMPORTED)
   foreach(ABSL_USED_TARGET IN LISTS protobuf_ABSL_USED_TARGETS)
     if(TARGET ${ABSL_USED_TARGET})
       target_link_libraries(${target} PUBLIC ${ABSL_USED_TARGET})
+      if(NOT _onnx_linked_protobuf_is_imported)
+        add_dependencies(${LINKED_PROTOBUF_TARGET} ${ABSL_USED_TARGET})
+      endif()
     endif()
   endforeach()
   # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"

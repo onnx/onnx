@@ -62,6 +62,21 @@ The choice in such cases will be made based on the complexity of such a generali
 
 Once the criteria of proposing new operator/function has been satisfied, you will need to submit a PR for the new operator/function. Here the expectation of what the PR should include. The reviewer is expected to verify the completeness of the PR before signoff.
 
+#### Files to modify
+
+| Component | File location |
+|-----------|--------------|
+| Schema definition | `onnx/defs/<domain>/defs.cc` |
+| Operator set registration | `onnx/defs/operator_sets.h` |
+| Type/shape inference | Inline in schema via `.TypeAndShapeInferenceFunction(...)` |
+| Function body (if applicable) | Inline in schema via `.FunctionBody(...)` — see [AddFunctionBody.md](AddFunctionBody.md) |
+| Reference implementation | `onnx/reference/ops/op_<lowercase_name>.py` |
+| Node tests | `onnx/backend/test/case/node/<lowercase_name>.py` |
+| Shape inference tests | `onnx/test/shape_inference_test.py` |
+| Upgrade/downgrade tests | `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` |
+
+Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`, `reduction/`, `rnn/`, `sequence/`, `image/`, `text/`, `quantization/`, `controlflow/`, `optional/`, `traditionalml/`, `training/`
+
 1. Description:
     1. Write a detailed description about the operator, and its expected behavior. Pretty much, the description should be clear enough to avoid confusion between implementors.
     2. Add an example in the description to illustrate the usage.
@@ -87,6 +102,10 @@ to update the doc and generate the test data.
 rank inference at the very least (adding right amount of dimensions to the output shape)
     3. Shape inference functions must be accompanied by unit tests ([onnx/test/shape_inference_test.py](/onnx/test/shape_inference_test.py)).
     4. You can refer to the shape inference function for the `TopK` operator while implementing your own function ([onnx/defs/math/defs.cc](/onnx/defs/math/defs.cc))
+    5. See [ShapeInference.md](ShapeInference.md) for details on the shape inference API and utility functions.
+8. Function body (if applicable)
+    1. If the operator can be expressed in terms of other ONNX operators, provide a function body definition.
+    2. See [AddFunctionBody.md](AddFunctionBody.md) for the full guide on defining function bodies.
 
 #### Example to Follow
 
@@ -107,6 +126,33 @@ Once the PR is reviewed and signed off by the Operators SIG, it will be merged. 
 ## Updating an existing operator
 
 The definition of an existing operator may need to be updated when e.g. there are new scenarios or input types to support. The process is largely similar to that for creating a new operator.
+
+### Steps for updating
+
+1. **Move the current schema** from `onnx/defs/<domain>/defs.cc` to `onnx/defs/<domain>/old.cc`. This preserves the previous version for the version converter.
+2. **Create the new version** in `defs.cc` using `ONNX_OPERATOR_SET_SCHEMA(OpName, NEW_VERSION, ...)` with the new opset version number.
+3. **Update operator set registration** in `onnx/defs/operator_sets.h` to reference the new version.
+4. **Add a version converter adapter** if the behavior or signature changed (see `onnx/version_converter/adapters/` for examples).
+5. **Update the reference implementation** in `onnx/reference/ops/op_<name>.py` if behavior changed.
+6. **Add upgrade/downgrade tests** using `_test_op_upgrade` and `_test_op_downgrade`.
+7. **Regenerate documentation** by running `python onnx/defs/gen_doc.py`.
+
+### Avoiding duplication between defs.cc and old.cc
+
+When moving an operator schema to `old.cc`, avoid significant duplication of code or documentation between the old and new versions. Use these strategies:
+
+- **Shared utility functions**: Extract common logic (e.g., doc strings, type constraint lists, shape inference helpers) into shared functions in the domain's `utils.cc`/`utils.h` or a `defs.h` header.
+- **Parameterized functions**: When the old and new versions differ only slightly (e.g., an expanded type list or an additional optional input), use parameterized helper functions that accept the differences as arguments.
+- **Use judgment**: Some duplication is acceptable when the alternative would be overly complicated shared logic. If sharing the code makes it harder to understand either version independently, prefer clarity over DRY.
+
+### Additional files for updates
+
+| Component | File location |
+|-----------|--------------|
+| Previous schema version | `onnx/defs/<domain>/old.cc` |
+| Version converter adapter | `onnx/version_converter/adapters/<name>_<from>_<to>.h` |
+| Upgrade tests | `onnx/test/version_converter/automatic_upgrade_test.py` |
+| Downgrade tests | `onnx/test/version_converter/automatic_downgrade_test.py` |
 
 ### Checklist
 

@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+import unittest.mock
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -301,6 +302,36 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name="test")
 
         checker.check_model(model.SerializeToString())
+
+    def test_check_model_protobuf_size_boundary(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        serialized = model.SerializeToString()
+
+        with unittest.mock.patch.object(checker, "MAXIMUM_PROTOBUF", len(serialized)):
+            checker.check_model(serialized)
+
+    def test_check_model_protobuf_size_over_limit_raises(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        serialized = model.SerializeToString()
+
+        with unittest.mock.patch.object(
+            checker, "MAXIMUM_PROTOBUF", len(serialized) - 1
+        ):
+            self.assertRaises(ValueError, checker.check_model, serialized)
 
     def test_check_old_model(self) -> None:
         node = helper.make_node("Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
@@ -1112,6 +1143,34 @@ class TestChecker(unittest.TestCase):
             # Error: sum/prod are accessible inside if-then-else branches, but cannot
             # be used as outputs of the then/else branch implicitly.
             # An explicit "Identity(sum)" must be used to return sum as output.
+        """
+        )
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
+
+    def test_check_model_rejects_self_recursive_function(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.foo (x) }
+        """
+        )
+        self.assertRaises(checker.ValidationError, checker.check_model, model)
+
+    def test_check_model_rejects_indirect_cycle(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) {
+                Y = local.foo (X)
+            }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.bar (x) }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            bar (x) => (y) { y = local.foo (x) }
         """
         )
         self.assertRaises(checker.ValidationError, checker.check_model, model)

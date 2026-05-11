@@ -22,17 +22,9 @@ if(NOT isMultiConfig AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 # https://reproducible-builds.org/docs/source-date-epoch/
-if(DEFINED ENV{SOURCE_DATE_EPOCH})
-  execute_process(
-    COMMAND "date" "-u" "-d" "@$ENV{SOURCE_DATE_EPOCH}" "+%Y-%m-%d"
-    OUTPUT_VARIABLE BUILD_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-else()
-  execute_process(
-    COMMAND "date" "+%Y-%m-%d"
-    OUTPUT_VARIABLE BUILD_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
+# cmake's string(TIMESTAMP ...) command reads SOURCE_DATE_EPOCH automatically,
+# which avoids shelling out to `date` (whose flags differ between GNU and BSD).
+string(TIMESTAMP BUILD_DATE "%Y-%m-%d" UTC)
 
 if(NOT BUILD_SHARED_LIBS)
   # by default, cmake builds static libraries
@@ -53,6 +45,7 @@ option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNX_DISABLE_EXCEPTIONS "Disable exception handling." OFF)
 option(ONNX_DISABLE_STATIC_REGISTRATION "Disable static registration for ONNX operator schemas." OFF)
 option(ONNX_USE_UNITY_BUILD "Enable Unity (Jumbo) build for" OFF)
+option(ONNX_PYODIDE_BUILD "Build ONNX for Pyodide/Emscripten (wasm32)." OFF)
 option(ONNX_INSTALL "Install ONNX targets, headers, and CMake config files" ON)
 if(WIN32)
   option(ONNX_USE_MSVC_STATIC_RUNTIME "Build with MSVC static runtime. Ignored if CMAKE_MSVC_RUNTIME_LIBRARY is defined." OFF)
@@ -94,6 +87,17 @@ set(ONNX_ROOT ${onnx_SOURCE_DIR})
 file(READ "${ONNX_ROOT}/VERSION_NUMBER" ONNX_VERSION)
 string(STRIP "${ONNX_VERSION}" ONNX_VERSION)
 
+# Parse version components for version macros (strip any pre-release suffix like "rc1")
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ ${ONNX_VERSION})
+set(ONNX_VERSION_MAJOR ${CMAKE_MATCH_1})
+set(ONNX_VERSION_MINOR ${CMAKE_MATCH_2})
+set(ONNX_VERSION_PATCH ${CMAKE_MATCH_3})
+
+configure_file(
+  ${ONNX_ROOT}/onnx/common/version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/onnx/common/version.h
+  @ONLY)
+
 if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
@@ -129,6 +133,12 @@ if(ONNX_DISABLE_EXCEPTIONS)
   else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables")
   endif()
+endif()
+
+if(ONNX_BUILD_PYTHON AND ONNX_DISABLE_EXCEPTIONS)
+  message(FATAL_ERROR
+    "ONNX_DISABLE_EXCEPTIONS=ON is incompatible with ONNX_BUILD_PYTHON=ON. "
+    "The Python binding requires exceptions to be enabled.")
 endif()
 
 if(ONNX_BUILD_PYTHON)
@@ -268,6 +278,13 @@ if(NOT ONNX_BUILD_CUSTOM_PROTOBUF)
     endif()
   endif()
 endif()
+
+if(ONNX_PYODIDE_BUILD)
+    # Prevent absl from using EM_JS-based symbolize_emscripten.inc which is
+    # incompatible with Emscripten SIDE_MODULE builds (Pyodide).
+    add_compile_definitions(STANDALONE_WASM)
+endif()
+
 if(NOT ONNX_PROTOC_EXECUTABLE)
     set(Build_Protobuf ON)
     set(protobuf_MSVC_STATIC_RUNTIME ${ONNX_USE_MSVC_STATIC_RUNTIME})
@@ -278,18 +295,71 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     set(ONNX_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     # Use this setting to build third-party libs.
     set(BUILD_SHARED_LIBS ${ONNX_USE_PROTOBUF_SHARED_LIBS})
-    set(ProtobufURL https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz)
-    set(ProtobufSHA1 da10aaa3bf779735a8a9acde1256a47ce5d148be)
+    # Read dependency URLs/hashes from sbom.cdx.json (single source of truth).
+    sbom_get_dep("abseil-cpp" _absl)
+    sbom_get_dep("protobuf" _protobuf)
+    if(NOT DEFINED ABSL_ENABLE_INSTALL)
+      if(ONNX_BUILD_PYTHON)
+        set(ABSL_ENABLE_INSTALL OFF CACHE BOOL "Enable installation of Abseil targets")
+      else()
+        set(ABSL_ENABLE_INSTALL ON CACHE BOOL "Enable installation of Abseil targets")
+      endif()
+    endif()
+    FetchContent_Declare(
+      absl
+      URL ${_absl_URL}
+      URL_HASH SHA256=${_absl_SHA256}
+    )
+    FetchContent_MakeAvailable(absl)
     FetchContent_Declare(
       Protobuf
-      URL ${ProtobufURL}
-      URL_HASH SHA1=${ProtobufSHA1}
+      URL ${_protobuf_URL}
+      URL_HASH SHA256=${_protobuf_SHA256}
     )
-    set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests" FORCE)
-    message(STATUS "Download and build Protobuf from ${ProtobufURL}")
+    if(NOT DEFINED protobuf_BUILD_TESTS)
+      set(protobuf_BUILD_TESTS OFF CACHE BOOL "Build protobuf tests")
+    endif()
+    if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+      # We already have a host protoc binary; skip building libprotoc and protoc
+      # (saves compiling code generators for Java, C#, Kotlin, ObjC, etc.)
+      set(protobuf_BUILD_PROTOC_BINARIES OFF CACHE BOOL "Skip building protoc")
+      # libupb is only needed by protoc's code generators; skip it too.
+      set(protobuf_BUILD_LIBUPB OFF CACHE BOOL "Skip building libupb")
+    endif()
+    set(protobuf_WITH_ZLIB OFF CACHE BOOL "Skip zlib support")
+    if(ONNX_BUILD_PYTHON)
+      set(protobuf_INSTALL OFF CACHE BOOL "Skip protobuf install rules")
+    endif()
+    message(STATUS "Download and build Protobuf from ${_protobuf_URL}")
     FetchContent_MakeAvailable(Protobuf)
-    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
-    set(Protobuf_VERSION "6.31.1")
+    # utf8_validity.h is included by protobuf headers but its include dir
+    # is only added via include_directories() inside protobuf's directory scope.
+    # Attach it to the protobuf target so ONNX targets can compile .pb.cc files
+    # without introducing a global include path.
+    if(EXISTS "${protobuf_SOURCE_DIR}/third_party/utf8_range")
+      # protobuf::libprotobuf and protobuf::libprotobuf-lite are ALIAS targets
+      # and CMake does not allow target_include_directories on aliases;
+      # resolve to the real targets before adding the utf8_range include path.
+      foreach(_pb_alias libprotobuf libprotobuf-lite)
+        if(TARGET protobuf::${_pb_alias})
+          get_target_property(_pb_real protobuf::${_pb_alias} ALIASED_TARGET)
+          if(NOT _pb_real)
+            set(_pb_real protobuf::${_pb_alias})
+          endif()
+          target_include_directories(
+            ${_pb_real}
+            INTERFACE
+              $<BUILD_INTERFACE:${protobuf_SOURCE_DIR}/third_party/utf8_range>
+          )
+        endif()
+      endforeach()
+    endif()
+    if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+      set(ONNX_PROTOC_EXECUTABLE ${ONNX_CUSTOM_PROTOC_EXECUTABLE})
+    else()
+      set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+    endif()
+    set(Protobuf_VERSION "6.33.6")  # TODO: Remove this hard coded version when updating protobuf
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -297,10 +367,10 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
 endif()
 message(STATUS "ONNX_PROTOC_EXECUTABLE: ${ONNX_PROTOC_EXECUTABLE}")
 
-# function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
-# b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
-# orflow/contrib/cmake/tf_core_framework.cmake to solve the problem that
-# customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
+# function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from
+# https://github.com/tensorflow/tensorflow/blob/d2c3b873/tensorflow/contrib/cmake/tf_core_framework.cmake
+# to solve the problem that customized dir can't be specified when
+# calling PROTOBUF_GENERATE_CPP.
 function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   if(NOT ARGN)
     message(
@@ -311,6 +381,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
   endif()
 
   set(${SRCS})
+  set(_py_files)
 
   set(GEN_PROTO_PY "${ONNX_ROOT}/onnx/gen_proto.py")
   set(GENERATED_FILES)
@@ -364,9 +435,22 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
     endif()
 
     # Use add_custom_command to avoid re-generate of PROTO files
-    add_custom_command(OUTPUT "${GENERATED_PROTO}"
+    set(deps ${INFILE})
+    if(TARGET protobuf::protoc)
+      list(APPEND deps protobuf::protoc)
+    endif()
+    set(_gen_proto_outputs "${GENERATED_PROTO}")
+    if(ONNX_BUILD_PYTHON)
+      # gen_proto.py also produces a _pb.py re-export wrapper
+      string(REPLACE "-" "_" _stem_py "${FILE_WE}")
+      set(_pb_py "${OUTPUT_PROTO_DIR}/${_stem_py}_pb.py")
+      list(APPEND _gen_proto_outputs "${_pb_py}")
+      list(APPEND _py_files "${_pb_py}")
+    endif()
+
+    add_custom_command(OUTPUT ${_gen_proto_outputs}
         COMMAND ${ONNX_PYTHON_INTERPRETER} "${GEN_PROTO_PY}" ${GEN_PROTO_ARGS}
-        DEPENDS ${INFILE}
+        DEPENDS ${deps}
         COMMENT "Running gen_proto.py on ${INFILE}")
     message("Generated: ${GENERATED_PROTO}")
 
@@ -385,13 +469,28 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
       endif()
     endif()
     list(APPEND GENERATED_FILES "${GENERATED_PROTO}")
-    add_custom_command(OUTPUT "${OUTPUT_PB_SRC}"
+
+    set(_protoc_outputs "${OUTPUT_PB_SRC}")
+    if(ONNX_BUILD_PYTHON)
+      string(REPLACE "-" "_" _py_stem "${GENERATED_FILE_WE}")
+      set(_pb2_py "${OUTPUT_PROTO_DIR}/${_py_stem}_pb2.py")
+      list(APPEND _protoc_outputs "${_pb2_py}")
+      list(APPEND _py_files "${_pb2_py}")
+      if(ONNX_GEN_PB_TYPE_STUBS)
+        set(_pb2_pyi "${OUTPUT_PROTO_DIR}/${_py_stem}_pb2.pyi")
+        list(APPEND _protoc_outputs "${_pb2_pyi}")
+        list(APPEND _py_files "${_pb2_pyi}")
+      endif()
+    endif()
+
+    add_custom_command(OUTPUT ${_protoc_outputs}
         COMMAND "${ONNX_PROTOC_EXECUTABLE}" ${PROTOC_ARGS}
         DEPENDS ${GENERATED_FILES}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}")
   endforeach()
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
+  set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
 endfunction()
 
 relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
@@ -426,7 +525,7 @@ if(ONNX_BUILD_PYTHON)
   # find system nanobind
   if(NOT DEFINED nanobind_DIR OR "${nanobind_DIR}" STREQUAL "")
     execute_process(
-      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake-dir
+      COMMAND ${Python_EXECUTABLE} -m nanobind --cmake_dir
       RESULT_VARIABLE NANOBIND_CMAKE_RESULT
       OUTPUT_VARIABLE NANOBIND_CMAKE_DIR
       OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -444,11 +543,11 @@ if(ONNX_BUILD_PYTHON)
         "FetchContent dependency provider for first-run offline builds.")
     endif()
     include(FetchContent)
-
+    sbom_get_dep("nanobind" _nanobind)
     FetchContent_Declare(
       nanobind
-      GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-      GIT_TAG v2.10.2
+      GIT_REPOSITORY ${_nanobind_URL}
+      GIT_TAG v${_nanobind_VERSION}
       GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(nanobind)
@@ -549,6 +648,15 @@ if(ONNX_INSTALL)
     DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ONNX"
     NAMESPACE ONNX::
   )
+endif()
+
+if(ONNX_BUILD_PYTHON)
+  install(TARGETS onnx_cpp2py_export LIBRARY DESTINATION onnx)
+  install(FILES ${ONNX_PROTO_PY_FILES} DESTINATION onnx)
+  # PEP 770: embed SBOM in dist-info/sboms/ inside the wheel.
+  if(DEFINED SKBUILD_METADATA_DIR)
+    install(FILES "${CMAKE_SOURCE_DIR}/sbom.cdx.json" DESTINATION "${SKBUILD_METADATA_DIR}/sboms")
+  endif()
 endif()
 
 if(ONNX_BUILD_TESTS)
