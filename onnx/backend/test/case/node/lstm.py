@@ -41,10 +41,28 @@ class LSTMHelper:
         x = x if layout == 0 else np.swapaxes(x, 0, 1)
         batch_size = x.shape[1]
 
-        b = params.get(B, np.zeros((self.num_directions, 2 * number_of_gates * hidden_size), dtype=np.float32))
-        p = params.get(P, np.zeros((self.num_directions, number_of_peepholes * hidden_size), dtype=np.float32))
-        h_0 = params.get(H_0, np.zeros((self.num_directions, batch_size, hidden_size), dtype=np.float32))
-        c_0 = params.get(C_0, np.zeros((self.num_directions, batch_size, hidden_size), dtype=np.float32))
+        b = params.get(
+            B,
+            np.zeros(
+                (self.num_directions, 2 * number_of_gates * hidden_size),
+                dtype=np.float32,
+            ),
+        )
+        p = params.get(
+            P,
+            np.zeros(
+                (self.num_directions, number_of_peepholes * hidden_size),
+                dtype=np.float32,
+            ),
+        )
+        h_0 = params.get(
+            H_0,
+            np.zeros((self.num_directions, batch_size, hidden_size), dtype=np.float32),
+        )
+        c_0 = params.get(
+            C_0,
+            np.zeros((self.num_directions, batch_size, hidden_size), dtype=np.float32),
+        )
 
         self.X = x
         self.W = params[W]

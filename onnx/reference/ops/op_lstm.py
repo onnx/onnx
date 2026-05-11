@@ -167,11 +167,17 @@ class CommonLSTM(OpRun):
         if B is None:
             B = np.zeros((num_directions, 2 * n_gates * hidden_size), dtype=X.dtype)
         if P is None:
-            P = np.zeros((num_directions, number_of_peepholes * hidden_size), dtype=X.dtype)
+            P = np.zeros(
+                (num_directions, number_of_peepholes * hidden_size), dtype=X.dtype
+            )
         if initial_h is None:
-            initial_h = np.zeros((num_directions, batch_size, hidden_size), dtype=X.dtype)
+            initial_h = np.zeros(
+                (num_directions, batch_size, hidden_size), dtype=X.dtype
+            )
         if initial_c is None:
-            initial_c = np.zeros((num_directions, batch_size, hidden_size), dtype=X.dtype)
+            initial_c = np.zeros(
+                (num_directions, batch_size, hidden_size), dtype=X.dtype
+            )
 
         Y, Y_h = self._step(
             X, R, B, W, initial_h, initial_c, P, num_directions=num_directions
