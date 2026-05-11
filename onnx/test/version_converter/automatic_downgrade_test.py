@@ -101,6 +101,19 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_LinearAttention_downgrade_fails(self) -> None:
+        self._test_model_conversion_fails(
+            to_opset=24,
+            model="""
+            <ir_version: 10, opset_import: [ "" : 25]>
+            linear_attention (float[2, 4, 64] Q, float[2, 4, 64] K, float[2, 4, 64] V)
+                => (float[2, 4, 64] output, float[2, 4, 16, 16] present_state)
+            {
+                output, present_state = LinearAttention <q_num_heads = 4, kv_num_heads = 4, update_rule = "linear"> (Q, K, V)
+            }
+        """,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
