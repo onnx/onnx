@@ -14,7 +14,7 @@ on:
       protobuf_version:
         required: false
         type: string
-        default: "25.1"
+        default: "33.6"
   workflow_dispatch:
 
 permissions:

@@ -51,10 +51,7 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
           return false;                                                                           \
         }                                                                                         \
         auto serialized = nanobind::cast<nanobind::bytes>(py_proto.attr("SerializeToString")());  \
-        if (!ParseProtoFromPyBytes(&value, serialized)) {                                         \
-          return false;                                                                           \
-        }                                                                                         \
-        return true;                                                                              \
+        return ParseProtoFromPyBytes(&value, serialized);                                         \
       } catch (const nanobind::python_error&) {                                                   \
         return false;                                                                             \
       }                                                                                           \
@@ -209,7 +206,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
   defs.doc() = "Schema submodule";
-  nb::exception<SchemaError>(defs, "SchemaError");
+  nb::exception<SchemaError>(defs, "SchemaError"); // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
 
   nb::class_<OpSchema> op_schema(defs, "OpSchema", "Schema of an operator.");
 
@@ -469,7 +466,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             if (op->HasContextDependentFunction()) {
               std::vector<TypeProto> input_types;
               input_types.reserve(input_types_bytes.size());
-              for (auto& type_bytes : input_types_bytes) {
+              for (const auto& type_bytes : input_types_bytes) {
                 TypeProto type_proto{};
                 ParseProtoFromPyBytes(&type_proto, type_bytes);
                 input_types.push_back(type_proto);
@@ -491,7 +488,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
             if (op->HasContextDependentFunctionWithOpsetVersion(opset_version)) {
               std::vector<TypeProto> input_types;
               input_types.reserve(input_types_bytes.size());
-              for (auto& type_bytes : input_types_bytes) {
+              for (const auto& type_bytes : input_types_bytes) {
                 TypeProto type_proto{};
                 ParseProtoFromPyBytes(&type_proto, type_bytes);
                 input_types.push_back(type_proto);
@@ -535,7 +532,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(
           "get_schema",
           [](const std::string& op_type, const int max_inclusive_version, const std::string& domain) -> OpSchema {
-            const auto schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
+            const auto* const schema = OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
             if (!schema) {
               fail_schema(
                   "No schema registered for '" + op_type + "' version '" + std::to_string(max_inclusive_version) +
@@ -550,7 +547,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def(
           "get_schema",
           [](const std::string& op_type, const std::string& domain) -> OpSchema {
-            const auto schema = OpSchemaRegistry::Schema(op_type, domain);
+            const auto* const schema = OpSchemaRegistry::Schema(op_type, domain);
             if (!schema) {
               fail_schema("No schema registered for '" + op_type + "' and domain '" + domain + "'!");
             }
@@ -561,11 +558,11 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "Return the schema of the operator *op_type* and for a specific version.")
       .def(
           "get_all_schemas",
-          []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); },
+          []() -> std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas(); },
           "Return the schema of all existing operators for the latest version.")
       .def(
           "get_all_schemas_with_history",
-          []() -> const std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
+          []() -> std::vector<OpSchema> { return OpSchemaRegistry::get_all_schemas_with_history(); },
           "Return the schema of all existing operators and all versions.")
       .def(
           "set_domain_to_version",
@@ -608,7 +605,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   nb::class_<checker::LexicalScopeContext> lexical_scope_context(checker, "LexicalScopeContext");
   lexical_scope_context.def(nb::init<>());
 
-  nb::exception<checker::ValidationError>(checker, "ValidationError");
+  nb::exception<checker::ValidationError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+      checker,
+      "ValidationError");
 
   checker.def("check_value_info", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     ValueInfoProto proto{};
@@ -696,7 +695,9 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
   version_converter.doc() = "VersionConverter submodule";
-  nb::exception<ConvertError>(version_converter, "ConvertError");
+  nb::exception<ConvertError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+      version_converter,
+      "ConvertError");
 
   version_converter.def("convert_version", [](const nb::bytes& bytes, int target) {
     ModelProto proto{};
@@ -751,12 +752,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Submodule `shape_inference`
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
-  nb::exception<InferenceError>(shape_inference, "InferenceError");
+  nb::exception<InferenceError>( // NOLINT(bugprone-unused-raii,bugprone-throw-keyword-missing)
+      shape_inference,
+      "InferenceError");
 
   nb::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
   inference_context.def("get_attribute", [](InferenceContext& self, const std::string& name) -> nb::object {
-    const auto attr = self.getAttribute(name);
+    const auto* const attr = self.getAttribute(name);
     if (attr == nullptr) {
       return nb::none();
     }
@@ -764,7 +767,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
   inference_context.def("get_num_inputs", &InferenceContext::getNumInputs);
   inference_context.def("get_input_type", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto type = self.getInputType(idx);
+    const auto* const type = self.getInputType(idx);
     if (type == nullptr) {
       return nb::none();
     }
@@ -772,7 +775,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
   inference_context.def("has_input", &InferenceContext::hasInput);
   inference_context.def("get_input_data", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto tensor = self.getInputData(idx);
+    const auto* const tensor = self.getInputData(idx);
     if (tensor == nullptr) {
       return nb::none();
     }
@@ -780,14 +783,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
   inference_context.def("get_num_outputs", &InferenceContext::getNumOutputs);
   inference_context.def("get_output_type", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto type = self.getOutputType(idx);
+    auto* const type = self.getOutputType(idx);
     if (type == nullptr) {
       return nb::none();
     }
     return nb::cast(*type);
   });
   inference_context.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
-    auto dst = self.getOutputType(idx);
+    auto* dst = self.getOutputType(idx);
     if (dst == nullptr) {
       return false;
     }
@@ -800,14 +803,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       &InferenceContext::getGraphAttributeInferencer,
       nb::rv_policy::reference_internal);
   inference_context.def("get_input_sparse_data", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto sparse = self.getInputSparseData(idx);
+    const auto* const sparse = self.getInputSparseData(idx);
     if (sparse == nullptr) {
       return nb::none();
     }
     return nb::cast(*sparse);
   });
   inference_context.def("get_symbolic_input", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto shape = self.getSymbolicInput(idx);
+    const auto* const shape = self.getSymbolicInput(idx);
     if (shape == nullptr) {
       return nb::none();
     }

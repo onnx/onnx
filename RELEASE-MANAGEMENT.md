@@ -36,13 +36,21 @@ Release Compatibility Matrix
 Changes are discussed in the community. Please do not hesitate to contact us if you have any requests.
 Planned changes for future releases as listed in the table below are subject to change.
 
-|ONNX version	| Python wheels | C++ | Min Cmake Version | Min Protobuf | manylinux |
+|ONNX version	| Python wheels | C++ | Min CMake Version | Min Protobuf | manylinux |
 | --- | --- | --- | --- | --- | --- |
-| 1.18 | 3.9-3.13, 3.13t (win, mac) | --- | 3.18 | v25.1 | manylinux2014 |
-| 1.19 | 3.9-3.13, 3.13t (win, mac, linux) | --- | 3.24 | v25.1 | manylinux2014 |
-| 1.19.1 | 3.9-3.13, 3.13t (win, mac, linux) | --- | 3.24 | v25.1 | manylinux2014 |
-| 1.20 | 3.10-3.13, 3.13t (win, mac, linux), 3.14 | 3.26 | --- | v25.1 | manylinux2_28 |
-| 1.21 | | 3.26 | | | manylinux2_28 |
+| 1.10 | 3.6-3.9 | 11 | 3.1 | --- | manylinux2010 |
+| 1.11 | 3.6-3.9 | 11 | 3.1 | 3.12.2 | manylinux2010 |
+| 1.12 | 3.7-3.10 | 11 | 3.1 | 3.12.2 | manylinux2014 |
+| 1.13 | 3.7-3.11 | 11 | 3.1 | 3.20.2 | manylinux2014 |
+| 1.14 | 3.7-3.11 | 11 | 3.1 | 3.20.2 | manylinux2014 |
+| 1.15 | 3.8-3.11 | 14 | 3.1 | 3.20.2 | manylinux2014 |
+| 1.16 | 3.8-3.12 | 17 | 3.1 | 3.20.2 | manylinux2014 |
+| 1.17 | 3.8-3.12 | 17 | 3.14 | 3.20.2 | manylinux2014 |
+| 1.18 | 3.9-3.13, 3.13t (win, mac) | 17 | 3.18 | v25.1 | manylinux2014 |
+| 1.19 | 3.9-3.13, 3.13t (win, mac, linux) | 17 | 3.24 | v25.1 | manylinux2014 |
+| 1.19.1 | 3.9-3.13, 3.13t (win, mac, linux) | 17 | 3.24 | v25.1 | manylinux2014 |
+| 1.20 | 3.10-3.13, 3.13t (win, mac, linux), 3.14 (mac) | 17 | 3.26 | v25.1 | manylinux_2_28 |
+| 1.21 | 3.10-3.13, 3.13t, 3.14, 3.14t | 17 | 3.26 | v25.1 | manylinux_2_28 |
 
 Releases
 --------

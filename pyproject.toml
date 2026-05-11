@@ -62,7 +62,7 @@ sdist.exclude = ["*"]
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"
 input = "VERSION_NUMBER"
-regex = '(?P<value>.+)'
+regex = '(?P<value>\S+)'
 
 [tool.scikit-build.cmake.define]
 ONNX_BUILD_PYTHON = "ON"

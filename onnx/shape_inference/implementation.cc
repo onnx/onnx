@@ -271,9 +271,10 @@ static std::string GetFunctionIdentifier(const NodeProto& node) {
   return node.domain() + ":" + node.op_type() + ":" + overload;
 }
 
+namespace {
 // Either ModelProto or FunctionProto
 template <class T>
-static std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
+std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : proto.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
@@ -310,7 +311,7 @@ class InferredTypes {
 };
 
 // Initialize a DataValueMap for a called function from the DataValueMap of the caller
-static void BindValuesOnCall(
+void BindValuesOnCall(
     const DataValueMap& caller_map,
     const NodeProto& caller,
     DataValueMap& callee_map,
@@ -329,7 +330,7 @@ static void BindValuesOnCall(
 }
 
 // Update a DataValueMap for a calling function from the DataValueMap of the callee
-static void BindValuesOnReturn(
+void BindValuesOnReturn(
     const DataValueMap& callee_map,
     const FunctionProto& callee,
     DataValueMap& caller_map,
@@ -760,7 +761,7 @@ class ShapeInferenceImplBase {
   bool reuse_constant_tensors = true;
 };
 
-static void InferShapesImpl(
+void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
@@ -788,6 +789,8 @@ static void InferShapesImpl(
   base.Process(*g);
   base.FinalizeShapeInference();
 }
+
+} // namespace
 
 void InferShapes(
     GraphProto* g,
@@ -947,6 +950,8 @@ void InferShapeForFunctionNode(
       nullptr);
 }
 
+namespace {
+
 struct FunctionInferenceContext : public InferenceContext {
   FunctionInferenceContext(
       const FunctionProto& func_proto,
@@ -1038,6 +1043,8 @@ struct FunctionInferenceContext : public InferenceContext {
   ShapeInferenceOptions options_;
   const FunctionProto* func_proto_;
 };
+
+} // namespace
 
 std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,
