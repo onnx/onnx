@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-sdist
+  group: sdist-release-${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   build:
