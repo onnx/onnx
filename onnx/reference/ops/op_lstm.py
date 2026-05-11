@@ -191,11 +191,10 @@ class CommonLSTM(OpRun):
 
         if self.n_outputs == 1:
             return (Y,)
-        elif self.n_outputs == 2:
+        if self.n_outputs == 2:
             return (Y, Y_h.astype(X.dtype))
-        else:
-            assert self.n_outputs == 3, f"Invalid # outputs: {self.n_outputs}"
-            return (Y, Y_h.astype(X.dtype), Y_c.astype(X.dtype))
+        assert self.n_outputs == 3, f"Invalid # outputs: {self.n_outputs}"
+        return (Y, Y_h.astype(X.dtype), Y_c.astype(X.dtype))
 
 
 class LSTM(CommonLSTM):
