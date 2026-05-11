@@ -38,8 +38,10 @@ class GRUHelper:
         x = params[X]
         x = x if layout == 0 else np.swapaxes(x, 0, 1)
         batch_size = x.shape[1]
-        b = params.get(B, np.zeros((self.num_directions, 2 * number_of_gates * hidden_size)))
-        h_0 = params.get(H_0,  np.zeros((self.num_directions, batch_size, hidden_size)))
+        b = params.get(
+            B, np.zeros((self.num_directions, 2 * number_of_gates * hidden_size))
+        )
+        h_0 = params.get(H_0, np.zeros((self.num_directions, batch_size, hidden_size)))
         lbr = params.get(LBR, 0)
 
         self.X = x
