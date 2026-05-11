@@ -502,6 +502,13 @@ class ReferenceEvaluator:
                 f"is only implemented for the main opset. Remove operator "
                 f"{node.domain},{node.op_type} from the list of inlined operator."
             )
+        if node.domain == "ai.onnx.preview":
+            from onnx.reference.ops.aionnx_preview import (  # noqa: PLC0415
+                load_op as load_op_pt,
+            )
+
+            return load_op_pt(node.domain, node.op_type, version)
+
         if node.domain == "ai.onnx.preview.training":
             from onnx.reference.ops.aionnx_preview_training import (  # noqa: PLC0415
                 load_op as load_op_pt,

@@ -17,13 +17,9 @@ import onnx
 onnx_model = onnx.load("path/to/the/model.onnx")
 ```
 
-Runnable IPython notebooks:
-
-- [load_model.ipynb](/examples/load_model.ipynb)
-
 ## Loading an ONNX Model with External Data
 
-* [Default] If the external data is under the same directory of the model, simply use `onnx.load()`
+* If the external data is under the same directory of the model, simply use `onnx.load()`
 
 ```python
 import onnx
@@ -66,10 +62,6 @@ onnx_model = ...
 onnx.save(onnx_model, "path/to/the/model.onnx")
 ```
 
-Runnable IPython notebooks:
-
-- [save_model.ipynb](/examples/save_model.ipynb)
-
 ## Converting and Saving an ONNX Model to External Data
 
 ```python
@@ -83,112 +75,105 @@ onnx.save_model(onnx_model, "path/to/save/the/model.onnx", save_as_external_data
 
 ## Manipulating TensorProto and Numpy Array
 
-```python
-import numpy
-import onnx
-from onnx import numpy_helper
+```{eval-rst}
+.. exec_code::
 
-# Preprocessing: create a Numpy array
-numpy_array = numpy.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=float)
-print(f"Original Numpy array:\n{numpy_array}\n")
+    import numpy
+    import onnx
+    from onnx import numpy_helper
 
-# Convert the Numpy array to a TensorProto
-tensor = numpy_helper.from_array(numpy_array)
-print(f"TensorProto:\n{tensor}")
+    # Preprocessing: create a Numpy array
+    numpy_array = numpy.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], dtype=float)
+    print(f"Original Numpy array:\n{numpy_array}\n")
 
-# Convert the TensorProto to a Numpy array
-new_array = numpy_helper.to_array(tensor)
-print(f"After round trip, Numpy array:\n{new_array}\n")
+    # Convert the Numpy array to a TensorProto
+    tensor = numpy_helper.from_array(numpy_array)
+    print(f"TensorProto:\n{tensor}")
 
-# Save the TensorProto
-with open("tensor.pb", "wb") as f:
-    f.write(tensor.SerializeToString())
+    # Convert the TensorProto to a Numpy array
+    new_array = numpy_helper.to_array(tensor)
+    print(f"After round trip, Numpy array:\n{new_array}\n")
 
-# Load a TensorProto
-new_tensor = onnx.TensorProto()
-with open("tensor.pb", "rb") as f:
-    new_tensor.ParseFromString(f.read())
-print(f"After saving and loading, new TensorProto:\n{new_tensor}")
+    # Save the TensorProto
+    with open("tensor.pb", "wb") as f:
+        f.write(tensor.SerializeToString())
 
-from onnx import TensorProto, helper
+    # Load a TensorProto
+    new_tensor = onnx.TensorProto()
+    with open("tensor.pb", "rb") as f:
+        new_tensor.ParseFromString(f.read())
+    print(f"After saving and loading, new TensorProto:\n{new_tensor}")
 
-# Conversion utilities for mapping attributes in ONNX IR
-# The functions below are available after ONNX 1.13
-np_dtype = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
-print(f"The converted numpy dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
-storage_dtype = helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.FLOAT)
-print(f"The storage dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {helper.tensor_dtype_to_string(storage_dtype)}.")
-field_name = helper.tensor_dtype_to_field(TensorProto.FLOAT)
-print(f"The field name for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {field_name}.")
-tensor_dtype = helper.np_dtype_to_tensor_dtype(np_dtype)
-print(f"The tensor data type for numpy dtype: {np_dtype} is {helper.tensor_dtype_to_string(tensor_dtype)}.")
+    from onnx import TensorProto, helper
 
-for tensor_dtype in helper.get_all_tensor_dtypes():
-    print(helper.tensor_dtype_to_string(tensor_dtype))
+    # Conversion utilities for mapping attributes in ONNX IR
+    # The functions below are available after ONNX 1.13
+    np_dtype = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
+    print(f"The converted numpy dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
+    storage_dtype = helper.tensor_dtype_to_storage_tensor_dtype(TensorProto.FLOAT)
+    print(f"The storage dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {helper.tensor_dtype_to_string(storage_dtype)}.")
+    field_name = helper.tensor_dtype_to_field(TensorProto.FLOAT)
+    print(f"The field name for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {field_name}.")
+    tensor_dtype = helper.np_dtype_to_tensor_dtype(np_dtype)
+    print(f"The tensor data type for numpy dtype: {np_dtype} is {helper.tensor_dtype_to_string(tensor_dtype)}.")
 
+    for tensor_dtype in helper.get_all_tensor_dtypes():
+        print(helper.tensor_dtype_to_string(tensor_dtype))
 ```
-
-Runnable IPython notebooks:
-
-- [np_array_tensorproto.ipynb](/examples/np_array_tensorproto.ipynb)
 
 ## Creating an ONNX Model Using Helper Functions
 
-```python
-import onnx
-from onnx import helper, AttributeProto, TensorProto, GraphProto
+```{eval-rst}
+.. exec_code::
 
-# Create inputs and output value info
-X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 2])
-pads = helper.make_tensor_value_info("pads", TensorProto.INT64, [8])  # pads is INT64
-Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [5, 4])
+    import onnx
+    from onnx import helper, TensorProto
 
-# Create Pad node with 'value' attribute (not input)
-node_def = helper.make_node(
-    "Pad",
-    inputs=["X", "pads"],  # Inputs: X and pads (INT64)
-    outputs=["Y"],
-    mode="constant",       # Attribute for padding mode
-    value=0.0              # Attribute for fill value
-)
+    # Create inputs and output value info
+    X = helper.make_tensor_value_info("X", TensorProto.FLOAT, [3, 2])
+    pads = helper.make_tensor_value_info("pads", TensorProto.INT64, [4])
+    Y = helper.make_tensor_value_info("Y", TensorProto.FLOAT, [5, 4])
 
-# Build graph and model
-graph_def = helper.make_graph(
-    [node_def],
-    "test-model",
-    [X, pads],
-    [Y],
-)
-model_def = helper.make_model(
-    graph_def,
-    producer_name="onnx-example",
-    opset_imports=[helper.make_opsetid("", 11)]  # OPSET 11 required
-)
+    # Create Pad node
+    node_def = helper.make_node(
+        "Pad",
+        inputs=["X", "pads"],
+        outputs=["Y"],
+        mode="constant",
+    )
 
-# Validate the model
-onnx.checker.check_model(model_def)
-print("Model is valid!")
+    # Build graph and model
+    graph_def = helper.make_graph(
+        [node_def],
+        "test-model",
+        [X, pads],
+        [Y],
+    )
+    model_def = helper.make_model(
+        graph_def,
+        producer_name="onnx-example",
+        opset_imports=[helper.make_opsetid("", 11)]
+    )
 
-
+    # Validate the model
+    onnx.checker.check_model(model_def)
+    print("Model is valid!")
 ```
-
-Runnable IPython notebooks:
-
-- [make_model.ipynb](/examples/make_model.ipynb)
-- [Protobufs.ipynb](/examples/Protobufs.ipynb)
 
 ## Conversion utilities for mapping attributes in ONNX IR
 
-```python
-from onnx import TensorProto, helper
+```{eval-rst}
+.. exec_code::
 
-np_dtype = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
-print(f"The converted numpy dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
+    from onnx import TensorProto, helper
 
-field_name = helper.tensor_dtype_to_field(TensorProto.FLOAT)
-print(f"The field name for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {field_name}.")
+    np_dtype = helper.tensor_dtype_to_np_dtype(TensorProto.FLOAT)
+    print(f"The converted numpy dtype for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {np_dtype}.")
 
-# There are other useful conversion utilities. Please check onnx.helper
+    field_name = helper.tensor_dtype_to_field(TensorProto.FLOAT)
+    print(f"The field name for {helper.tensor_dtype_to_string(TensorProto.FLOAT)} is {field_name}.")
+
+    # There are other useful conversion utilities. Please check onnx.helper
 ```
 
 ## Checking an ONNX Model
@@ -211,10 +196,6 @@ else:
     print("The model is valid!")
 ```
 
-Runnable IPython notebooks:
-
-- [check_model.ipynb](/examples/check_model.ipynb)
-
 ### Checking a Large ONNX Model >2GB
 
 Current checker supports checking models with external data, but for those models larger than 2GB, please use the model path for onnx.checker and the external data needs to be under the same directory.
@@ -228,40 +209,37 @@ onnx.checker.check_model("path/to/the/model.onnx")
 
 ## Running Shape Inference on an ONNX Model
 
-```python
-import onnx
-from onnx import helper, shape_inference
-from onnx import TensorProto
+```{eval-rst}
+.. exec_code::
 
+    import onnx
+    from onnx import helper, shape_inference
+    from onnx import TensorProto
 
-# Preprocessing: create a model with two nodes, Y"s shape is unknown
-node1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
-node2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[1, 0, 2])
+    # Preprocessing: create a model with two nodes, Y's shape is unknown
+    node1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
+    node2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[1, 0, 2])
 
-graph = helper.make_graph(
-    [node1, node2],
-    "two-transposes",
-    [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
-    [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (2, 3, 4))],
-)
+    graph = helper.make_graph(
+        [node1, node2],
+        "two-transposes",
+        [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+        [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (2, 3, 4))],
+    )
 
-original_model = helper.make_model(graph, producer_name="onnx-examples")
+    original_model = helper.make_model(graph, producer_name="onnx-examples")
 
-# Check the model and print Y"s shape information
-onnx.checker.check_model(original_model)
-print(f"Before shape inference, the shape info of Y is:\n{original_model.graph.value_info}")
+    # Check the model and print Y's shape information
+    onnx.checker.check_model(original_model)
+    print(f"Before shape inference, the shape info of Y is:\n{original_model.graph.value_info}")
 
-# Apply shape inference on the model
-inferred_model = shape_inference.infer_shapes(original_model)
+    # Apply shape inference on the model
+    inferred_model = shape_inference.infer_shapes(original_model)
 
-# Check the model and print Y"s shape information
-onnx.checker.check_model(inferred_model)
-print(f"After shape inference, the shape info of Y is:\n{inferred_model.graph.value_info}")
+    # Check the model and print Y's shape information
+    onnx.checker.check_model(inferred_model)
+    print(f"After shape inference, the shape info of Y is:\n{inferred_model.graph.value_info}")
 ```
-
-Runnable IPython notebooks:
-
-- [shape_inference.ipynb](/examples/shape_inference.ipynb)
 
 ### Shape inference a Large ONNX Model >2GB
 
@@ -281,30 +259,32 @@ onnx.shape_inference.infer_shapes_path("path/to/the/model.onnx", "output/inferre
 
 ## Running Type Inference on an ONNX Function
 
-```python
-import onnx
-import onnx.helper
-import onnx.parser
-import onnx.shape_inference
+```{eval-rst}
+.. exec_code::
 
-function_text = """
-    <opset_import: [ "" : 18 ], domain: "local">
-    CastTo <dtype> (x) => (y) {
-        y = Cast <to : int = @dtype> (x)
-    }
-"""
-function = onnx.parser.parse_function(function_text)
+    import onnx
+    import onnx.helper
+    import onnx.parser
+    import onnx.shape_inference
 
-# The function above has one input-parameter x, and one attribute-parameter dtype.
-# To apply type-and-shape-inference to this function, we must supply the type of
-# input-parameter and an attribute value for the attribute-parameter as below:
+    function_text = """
+        <opset_import: [ "" : 18 ], domain: "local">
+        CastTo <dtype> (x) => (y) {
+            y = Cast <to : int = @dtype> (x)
+        }
+    """
+    function = onnx.parser.parse_function(function_text)
 
-float_type_ = onnx.helper.make_tensor_type_proto(1, None)
-dtype_6 = onnx.helper.make_attribute("dtype", 6)
-result = onnx.shape_inference.infer_function_output_types(
-    function, [float_type_], [dtype_6]
-)
-print(result) # a list containing the (single) output type
+    # The function above has one input-parameter x, and one attribute-parameter dtype.
+    # To apply type-and-shape-inference to this function, we must supply the type of
+    # input-parameter and an attribute value for the attribute-parameter as below:
+
+    float_type_ = onnx.helper.make_tensor_type_proto(1, None)
+    dtype_6 = onnx.helper.make_attribute("dtype", 6)
+    result = onnx.shape_inference.infer_function_output_types(
+        function, [float_type_], [dtype_6]
+    )
+    print(result)  # a list containing the (single) output type
 ```
 
 ## Converting Version of an ONNX Model within Default Domain (""/"ai.onnx")
@@ -470,31 +450,38 @@ Functions `onnx.parser.parse_model` and `onnx.parser.parse_graph` can be used to
 or graph from a textual representation as shown below. See [Language Syntax](Syntax.md) for more details
 about the language syntax.
 
-```python
-input = """
-   agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
-   {
-        T = MatMul(X, W)
-        S = Add(T, B)
-        C = Softmax(S)
-   }
-"""
-graph = onnx.parser.parse_graph(input)
+```{eval-rst}
+.. exec_code::
 
-input = """
-   <
-     ir_version: 7,
-     opset_import: ["" : 10]
-   >
-   agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
-   {
-      T = MatMul(X, W)
-      S = Add(T, B)
-      C = Softmax(S)
-   }
-"""
-model = onnx.parser.parse_model(input)
+    import onnx
 
+    input = """
+       agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
+       {
+            T = MatMul(X, W)
+            S = Add(T, B)
+            C = Softmax(S)
+       }
+    """
+    graph = onnx.parser.parse_graph(input)
+    print(f"Graph name: {graph.name}")
+    print(f"Graph nodes: {[n.op_type for n in graph.node]}")
+
+    input = """
+       <
+         ir_version: 7,
+         opset_import: ["" : 10]
+       >
+       agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N, 10] C)
+       {
+          T = MatMul(X, W)
+          S = Add(T, B)
+          C = Softmax(S)
+       }
+    """
+    model = onnx.parser.parse_model(input)
+    print(f"Model IR version: {model.ir_version}")
+    print(f"Model graph: {model.graph.name}")
 ```
 
 ## ONNX Inliner

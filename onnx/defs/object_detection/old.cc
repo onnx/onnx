@@ -9,13 +9,11 @@
 
 namespace ONNX_NAMESPACE {
 
-static const char* const RoiAlign_ver16_doc = kDoc_RoiAlign_ver16;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     16,
     OpSchema()
-        .SetDoc(RoiAlign_ver16_doc)
+        .SetDoc(kDoc_RoiAlign_ver16)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -114,13 +112,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static const char* const RoiAlign_ver10_doc = RoiAlign_ver16_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     10,
     OpSchema()
-        .SetDoc(RoiAlign_ver10_doc)
+        .SetDoc(kDoc_RoiAlign_ver16)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -211,8 +207,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static const char* const NonMaxSuppression_ver10_doc = kDoc_NonMaxSuppression_ver10;
-
 ONNX_OPERATOR_SET_SCHEMA(
     NonMaxSuppression,
     10,
@@ -254,7 +248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(NonMaxSuppression_ver10_doc)
+        .SetDoc(kDoc_NonMaxSuppression_ver10)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
           selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);
