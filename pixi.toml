@@ -10,7 +10,14 @@ name = "onnx"
 platforms = ["osx-arm64", "linux-64", "linux-aarch64", "win-64"]
 
 [tasks.install]
-cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation --editable .'
+# the compilation auto-generates .pyi files for the protobuf files
+# which are not checked into git/found in 'onnx/'. mypy adds the CWD
+# to the search pass meaning that it searches the 'onnx/' folder first
+# for the repecitive .py[i] files. When they are not found there, mypy
+# will complain. The proper fix would be to use to have a 'src' folder
+# structure. Until then, we simply copy the interface files to the
+# source directory after the build.
+cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation --force --editable . && cp .setuptools-cmake-build/onnx/onnx_pb.py .setuptools-cmake-build/onnx/*_pb2.pyi onnx/'
 [tasks.install.env]
 ONNX_ML="1"
 ONNX_BUILD_TESTS="1"
@@ -85,6 +92,7 @@ ninja = "*"
 packaging = ">=24.1"
 pip = ">=25.0"
 python = ">=3.10"
+scikit-build-core = ">=0.12.1"
 
 [feature.dev.dependencies]
 c-compiler = ">=1.8.0"
