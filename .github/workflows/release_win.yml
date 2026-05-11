@@ -109,19 +109,29 @@ jobs:
           Get-ChildItem -Path dist/*.whl | foreach { python -m pip install --upgrade $_.fullname }
         }
 
-    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version == '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-3.12-abi3
         path: |
             ./dist/*.whl
 
-    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: steps.build_wheel.outcome == 'success' && (matrix.python-version != '3.12')
       with:
         name: wheels-${{ inputs.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
         path: |
             ./dist/*.whl
+
+    - name: Install wheel validation dependencies
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        python -m pip install -q abi3audit check-wheel-contents
+
+    - name: Check wheel contents
+      if: steps.build_wheel.outcome == 'success'
+      run: |
+        Get-ChildItem -Path dist\*.whl | foreach { check-wheel-contents $_.FullName }
 
     - name: Check abi3 compatibility with abi3audit
       if: steps.build_wheel.outcome == 'success'
@@ -133,10 +143,20 @@ jobs:
         fi
         for whl in dist/*.whl; do
           echo "Checking abi3 compatibility for $whl"
-          python -m pip install -q abi3audit
           python -m abi3audit -v "$whl"
         done
       shell: bash
+
+    - name: Validate SBOM
+      if: steps.build_wheel.outcome == 'success'
+      shell: bash
+      run: |
+        python -m pip install -q -r requirements-release_sbom.txt
+        if ls dist/*.cdx.json 1>/dev/null 2>&1; then
+          python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" dist/*.cdx.json
+        else
+          echo "No SBOM files found; skipping validation"
+        fi
 
     - name: Test the installed wheel
       if: steps.build_wheel.outcome == 'success' &&

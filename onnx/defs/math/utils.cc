@@ -5,6 +5,7 @@
 #include "onnx/defs/math/utils.h"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ONNX_NAMESPACE {
@@ -30,8 +31,8 @@ Given two equivalent values, this operator uses the indices along the axis as
 a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
-std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types) {
-  return [=](OpSchema& schema) {
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types) {
+  return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
     schema.SetDoc(TopK_ver11_doc)
         .Input(
             0,

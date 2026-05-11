@@ -6,9 +6,14 @@
 # Set the environment variable `ONNX_PREVIEW_BUILD=1` to build the dev preview release.
 from __future__ import annotations
 
+import base64
 import contextlib
+import csv
 import datetime
 import glob
+import hashlib
+import io
+import json
 import logging
 import multiprocessing
 import os
@@ -18,8 +23,15 @@ import shutil
 import subprocess
 import sys
 import sysconfig
+import tempfile
 import textwrap
+import zipfile
 from typing import ClassVar
+
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+except ImportError:
+    _bdist_wheel = None
 
 import setuptools
 import setuptools.command.build_ext
@@ -27,7 +39,13 @@ import setuptools.command.build_py
 import setuptools.command.develop
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
-CMAKE_BUILD_DIR = os.path.join(TOP_DIR, ".setuptools-cmake-build")
+_onnx_cmake_build_dir = os.getenv("ONNX_CMAKE_BUILD_DIR")
+CMAKE_BUILD_DIR = os.path.join(
+    TOP_DIR,
+    _onnx_cmake_build_dir.strip()
+    if _onnx_cmake_build_dir and _onnx_cmake_build_dir.strip()
+    else ".setuptools-cmake-build",
+)
 
 WINDOWS = os.name == "nt"
 
@@ -315,12 +333,184 @@ class BuildExt(setuptools.command.build_ext.build_ext):
             self.copy_file(src, dst)
 
 
+def _annotate_sbom_occurrences(sbom_data: bytes, binary_paths: list[str]) -> bytes:
+    """Patch each component in the SBOM with evidence.occurrences listing the
+    compiled binary files inside the wheel that contain the bundled code.
+    """
+    if not binary_paths:
+        return sbom_data
+    bom = json.loads(sbom_data)
+    occurrences = [{"location": p} for p in sorted(binary_paths)]
+    for comp in bom.get("components", []):
+        comp["evidence"] = {"occurrences": occurrences}
+    return json.dumps(bom, indent=2).encode("utf-8")
+
+
+def _inject_sboms_into_wheel(wheel_path: str, sbom_dir: str) -> None:
+    """Rewrite a wheel to add CycloneDX SBOMs into its dist-info/sboms/ directory.
+
+    The RECORD file is updated with the correct hashes so pip can verify the
+    wheel normally.  The original wheel file is replaced atomically.
+    """
+    sbom_files = sorted(glob.glob(os.path.join(sbom_dir, "*.cdx.json")))
+    if not sbom_files:
+        return
+
+    wheel_basename = os.path.basename(wheel_path)
+    tmp_path = wheel_path + ".tmp"
+    try:
+        with (
+            zipfile.ZipFile(wheel_path, "r") as src_zf,
+            zipfile.ZipFile(tmp_path, "w", compression=zipfile.ZIP_DEFLATED) as dst_zf,
+        ):
+            all_infos = src_zf.infolist()
+            record_paths = [
+                info.filename
+                for info in all_infos
+                if info.filename.endswith(".dist-info/RECORD")
+            ]
+            if len(record_paths) != 1:
+                raise ValueError(  # noqa: TRY301
+                    f"Expected exactly one .dist-info/RECORD in {wheel_basename}, "
+                    f"found {len(record_paths)}"
+                )
+            record_arcname = record_paths[0]
+            dist_info_prefix = record_arcname.rsplit("/", 1)[0]
+            record_bytes = src_zf.read(record_arcname)
+
+            # Discover compiled extension modules (.so / .pyd) present in the wheel.
+            # These are the files that physically contain the statically linked C++ code.
+            binary_paths = [
+                info.filename
+                for info in all_infos
+                if info.filename.endswith((".so", ".pyd"))
+            ]
+
+            # Parse RECORD, dropping the self-referential row for RECORD itself
+            record_rows = [
+                row
+                for row in csv.reader(io.StringIO(record_bytes.decode("utf-8")))
+                if row and row[0] != record_arcname
+            ]
+
+            # Prepare SBOM data and compute RECORD entries for them
+            sbom_entries: list[tuple[str, bytes]] = []
+            for sbom_path in sbom_files:
+                with open(sbom_path, "rb") as f:
+                    data = f.read()
+                data = _annotate_sbom_occurrences(data, binary_paths)
+                digest = (
+                    base64.urlsafe_b64encode(hashlib.sha256(data).digest())
+                    .rstrip(b"=")
+                    .decode()
+                )
+                arcname = f"{dist_info_prefix}/sboms/{os.path.basename(sbom_path)}"
+                record_rows.append([arcname, f"sha256={digest}", str(len(data))])
+                sbom_entries.append((arcname, data))
+                logging.info(  # noqa: LOG015
+                    "SBOM to embed: %s (%d bytes)",
+                    os.path.basename(sbom_path),
+                    len(data),
+                )
+
+            # Build updated RECORD content (RECORD entry itself always has empty hash/size)
+            record_buf = io.StringIO()
+            csv.writer(record_buf, lineterminator="\n").writerows(record_rows)
+            record_buf.write(f"{record_arcname},,\n")
+            record_content = record_buf.getvalue().encode("utf-8")
+
+            for info in all_infos:
+                if info.filename == record_arcname:
+                    continue
+                dst_zf.writestr(info, src_zf.read(info.filename))
+            for arcname, data in sbom_entries:
+                dst_zf.writestr(arcname, data)
+            dst_zf.writestr(record_arcname, record_content)
+
+        shutil.move(tmp_path, wheel_path)
+        logging.info("Embedded SBOMs into %s", wheel_basename)  # noqa: LOG015
+
+    except Exception:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
+
+
+if _bdist_wheel is not None:
+
+    class BdistWheelWithSBOM(_bdist_wheel):  # type: ignore[misc,valid-type]
+        """bdist_wheel subclass that embeds a CycloneDX SBOM into the dist-info directory.
+
+        The SBOM describes the C++ libraries (protobuf, abseil-cpp, nanobind)
+        that are compiled into onnx_cpp2py_export and bundled inside the wheel,
+        per PEP 770 / the dist-info/sboms/ specification.
+
+        If SBOM generation fails for any reason the wheel is built normally
+        without SBOMs, so the build is never blocked.
+        """
+
+        def run(self) -> None:
+            existing = set(glob.glob(os.path.join(self.dist_dir, "*.whl")))
+            sbom_dir = self._try_generate_sboms()
+            super().run()
+            if sbom_dir is not None:
+                try:
+                    new_wheels = sorted(
+                        set(glob.glob(os.path.join(self.dist_dir, "*.whl"))) - existing
+                    )
+                    for wheel_path in new_wheels:
+                        _inject_sboms_into_wheel(wheel_path, sbom_dir)
+                    sbom_output_dir = os.path.join(TOP_DIR, "dist")
+                    os.makedirs(sbom_output_dir, exist_ok=True)
+                    for sbom_path in sorted(
+                        glob.glob(os.path.join(sbom_dir, "*.cdx.json"))
+                    ):
+                        shutil.copy2(sbom_path, sbom_output_dir)
+                finally:
+                    shutil.rmtree(sbom_dir, ignore_errors=True)
+
+        def _try_generate_sboms(self) -> str | None:
+            """Return path to a temp dir containing the generated SBOM, or None on failure."""
+            tmp = tempfile.mkdtemp(prefix="onnx-sbom-")
+            try:
+                self._generate_sboms(tmp)
+            except Exception as exc:  # noqa: BLE001 — any failure must not block the build
+                logging.warning(  # noqa: LOG015
+                    "SBOM generation failed (%s); wheel will be built without SBOMs",
+                    exc,
+                )
+                shutil.rmtree(tmp, ignore_errors=True)
+                return None
+            else:
+                return tmp
+
+        def _generate_sboms(self, tmp_dir: str) -> None:
+            subject_name = "onnx-weekly" if ONNX_PREVIEW_BUILD else "onnx"
+            subject_version = VERSION_INFO["version"]
+            subprocess.check_call(  # noqa: S603 — all args are controlled internal values
+                [
+                    sys.executable,
+                    os.path.join(TOP_DIR, "tools", "extract_cmake_fetchcontent.py"),
+                    "--cmake",
+                    os.path.join(TOP_DIR, "CMakeLists.txt"),
+                    "--output",
+                    os.path.join(tmp_dir, "onnx-bundled.cdx.json"),
+                    "--subject-name",
+                    subject_name,
+                    "--subject-version",
+                    subject_version,
+                ]
+            )
+
+
 CMD_CLASS = {
     "cmake_build": CmakeBuild,
     "build_py": BuildPy,
     "build_ext": BuildExt,
     "develop": Develop,
 }
+if _bdist_wheel is not None:
+    CMD_CLASS["bdist_wheel"] = BdistWheelWithSBOM
 
 ################################################################################
 # Extensions
