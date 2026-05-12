@@ -502,7 +502,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           })
       .def(
           "set_type_and_shape_inference_function",
-          [](OpSchema& op, const std::function<void(InferenceContext*)>& func) -> OpSchema& {
+          [](OpSchema& op, const nb::callable& func) -> OpSchema& {
             auto wrapper = [=](InferenceContext& ctx) { func(&ctx); };
             return op.TypeAndShapeInferenceFunction(wrapper);
           },
