@@ -327,13 +327,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
-static const char* const Range_ver27_doc = kDoc_Range_ver11;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
     27,
     OpSchema()
-        .SetDoc(Range_ver27_doc)
+        .SetDoc(kDoc_Range_ver11)
         .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
         .Input(1, "limit", "Scalar. Exclusive upper limit for the range of output values.", "T")
         .Input(2, "delta", "Scalar. Value to step by.", "T")

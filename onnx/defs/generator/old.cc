@@ -956,13 +956,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Range_ver11_doc = kDoc_Range_ver11;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
     11,
     OpSchema()
-        .SetDoc(Range_ver11_doc)
+        .SetDoc(kDoc_Range_ver11)
         .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
         .Input(1, "limit", "Scalar. Exclusive upper limit for the range of output values.", "T")
         .Input(2, "delta", "Scalar. Value to step by.", "T")
