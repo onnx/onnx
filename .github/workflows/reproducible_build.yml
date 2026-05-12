@@ -3,15 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Verifies that two successive builds from identical source produce bit-for-bit
-# identical wheels (reproducible builds).  When they differ, diffoscope is used
-# to pinpoint exactly which files or metadata changed.
+# identical wheels (reproducible builds).  Calls the same release_linux.yml
+# callable workflow twice with a minimal matrix, then compares wheel checksums.
+# On mismatch, diffoscope pinpoints exactly which files or metadata differ.
 
 name: ReproducibleBuild
 
 on:
-  push:
-    branches:
-      - ci/reproducible-build-check  # temporary: remove before merge
   pull_request:
     types: [labeled, opened, synchronize, reopened]
   schedule:
@@ -22,67 +20,47 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  build1:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_linux.yml
+    with:
+      os: linux
+      build_mode: release
+      python_versions: '["3.12"]'
+      architectures: '["x64"]'
+      run_tests: false
+      artifact_name_prefix: repro-build1-wheels
+
+  build2:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
+    uses: ./.github/workflows/release_linux.yml
+    with:
+      os: linux
+      build_mode: release
+      python_versions: '["3.12"]'
+      architectures: '["x64"]'
+      run_tests: false
+      artifact_name_prefix: repro-build2-wheels
+
+  compare:
+    needs: [build1, build2]
     runs-on: ubuntu-24.04
 
-    env:
-      PYTHON_VERSION: "3.12"
-      PLATFORM: "manylinux_2_28_x86_64"
-      MANYLINUX_IMAGE: "quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2"
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          persist-credentials: false
-          submodules: true
+          name: repro-build1-wheels-linux-x64-3.12-abi3
+          path: /tmp/build1
 
-      - name: Set SOURCE_DATE_EPOCH
-        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
-
-      # -----------------------------------------------------------------------
-      # First build
-      # -----------------------------------------------------------------------
-      - name: Build wheel (run 1)
-        uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          entrypoint: bash
-          args: .github/workflows/manylinux/entrypoint.sh ${{ env.PYTHON_VERSION }} ${{ env.PLATFORM }} release ${{ env.SOURCE_DATE_EPOCH }}
+          name: repro-build2-wheels-linux-x64-3.12-abi3
+          path: /tmp/build2
 
-      - name: Save build-1 wheel and checksum
-        run: |
-          mkdir -p /tmp/build1
-          cp dist/*.whl /tmp/build1/
-          sha256sum dist/*.whl | tee /tmp/build1/sha256.txt
-
-      # -----------------------------------------------------------------------
-      # Clean all artifacts produced inside the workspace by build 1 so that
-      # build 2 starts from the same state as build 1 did.
-      # The Docker container runs as root, so files it creates are root-owned
-      # and cannot be removed by the runner user without sudo.
-      # -----------------------------------------------------------------------
-      - name: Clean workspace between builds
-        uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2
-        with:
-          entrypoint: bash
-          args: -c "rm -rf dist/ build/ .setuptools-cmake-build/ protobuf/ && find . -maxdepth 2 -name '*.egg-info' -type d -exec rm -rf {} +"
-
-      # -----------------------------------------------------------------------
-      # Second build — identical inputs, identical SOURCE_DATE_EPOCH
-      # -----------------------------------------------------------------------
-      - name: Build wheel (run 2)
-        uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2026.05.07-2
-        with:
-          entrypoint: bash
-          args: .github/workflows/manylinux/entrypoint.sh ${{ env.PYTHON_VERSION }} ${{ env.PLATFORM }} release ${{ env.SOURCE_DATE_EPOCH }}
-
-      # -----------------------------------------------------------------------
-      # Compare
-      # -----------------------------------------------------------------------
       - name: Compare checksums
         run: |
           wheel1=$(ls /tmp/build1/*.whl | head -1)
-          wheel2=$(ls dist/*.whl | head -1)
+          wheel2=$(ls /tmp/build2/*.whl | head -1)
 
           h1=$(sha256sum "$wheel1" | cut -d' ' -f1)
           h2=$(sha256sum "$wheel2" | cut -d' ' -f1)
@@ -97,9 +75,6 @@ jobs:
             exit 1
           fi
 
-      # -----------------------------------------------------------------------
-      # On failure: run diffoscope to show exactly what changed
-      # -----------------------------------------------------------------------
       - name: Install diffoscope
         if: failure()
         run: sudo apt-get install -y --no-install-recommends diffoscope
@@ -108,7 +83,7 @@ jobs:
         if: failure()
         run: |
           wheel1=$(ls /tmp/build1/*.whl | head -1)
-          wheel2=$(ls dist/*.whl | head -1)
+          wheel2=$(ls /tmp/build2/*.whl | head -1)
           diffoscope "$wheel1" "$wheel2" \
             --text /tmp/diffoscope.txt \
             --html /tmp/diffoscope.html \
