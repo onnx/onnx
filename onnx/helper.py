@@ -472,6 +472,22 @@ def make_tensor(
     elif data_type == TensorProto.BOOL:
         vals = vals.astype(np.uint8)  # type: ignore[union-attr]
 
+    expected_elements = math.prod(dims) if dims else 1
+
+    if data_type not in {
+        TensorProto.COMPLEX64,
+        TensorProto.COMPLEX128,
+        TensorProto.UINT4,
+        TensorProto.INT4,
+        TensorProto.FLOAT4E2M1,
+        TensorProto.UINT2,
+        TensorProto.INT2,
+    }:
+        if len(vals) != expected_elements:
+            raise ValueError(
+                f"Number of values ({len(vals)}) does not match tensor "
+                f"dimensions requiring {expected_elements} elements."
+            )
     field = tensor_dtype_to_field(data_type)
     getattr(tensor, field).extend(vals)
     return tensor

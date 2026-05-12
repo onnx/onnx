@@ -769,6 +769,18 @@ class TestHelperTensorFunctions(unittest.TestCase):
         vi = helper.make_sparse_tensor_value_info("Y", TensorProto.FLOAT, ())
         checker.check_value_info(vi)
 
+    def test_make_tensor_mismatched_dims_raises_error(self) -> None:
+        with self.assertRaises(ValueError) as context:
+            helper.make_tensor(
+                name="mismatch_test",
+                data_type=TensorProto.FLOAT,
+                dims=(2, 2),  # Expects 4 elements
+                vals=[1.0, 2.0, 3.0],  # Only 3 elements provided
+                raw=False,
+            )
+        self.assertIn("Number of values", str(context.exception))
+        self.assertIn("does not match tensor dimensions", str(context.exception))
+
 
 class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
     def test_make_optional(self) -> None:
