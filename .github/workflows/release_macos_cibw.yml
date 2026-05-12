@@ -85,6 +85,11 @@ jobs:
             -DONNX_WERROR=ON
             "
 
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: wheels-macos-${{ matrix.build }}
+          path: dist/*.whl
+
       - name: Validate wheel
         run: |
           python -m pip install -q abi3audit check-wheel-contents
@@ -93,8 +98,3 @@ jobs:
             check-wheel-contents "$whl"
             python -m abi3audit -v "$whl"
           done
-
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: wheels-macos-${{ matrix.build }}
-          path: dist/*.whl
