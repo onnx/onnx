@@ -61,6 +61,12 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertEqual(list(node2.output), ["C"])
         self.assertEqual(list(node2.input), ["S"])
 
+    def test_to_text_unsupported_type_raises(self) -> None:
+        # to_text dispatches on proto type and raises TypeError for unsupported
+        # arguments. Use a proto type outside the supported set.
+        with self.assertRaises(TypeError):
+            printer.to_text(onnx.AttributeProto())
+
 
 if __name__ == "__main__":
     unittest.main()
