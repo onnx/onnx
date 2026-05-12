@@ -20,7 +20,7 @@ def _unpack_3d_to_4d(x: np.ndarray, num_heads: int) -> np.ndarray:
 
 
 class LinearAttention(OpRun):
-    def _run(  # noqa: PLR0915
+    def _run(
         self,
         query,
         key,
@@ -82,9 +82,7 @@ class LinearAttention(OpRun):
         # --- Step 3: unpack decay (broadcastable to (B, H_kv, T, d_k)) ---
         if decay is not None:
             if decay.ndim != 3:
-                raise ValueError(
-                    f"decay must be rank 3, got shape {decay.shape}."
-                )
+                raise ValueError(f"decay must be rank 3, got shape {decay.shape}.")
             decay_last = decay.shape[-1]
             if decay_last == kv_num_heads:
                 # Per-head scalar: (B, T, H_kv) -> (B, H_kv, T, 1)

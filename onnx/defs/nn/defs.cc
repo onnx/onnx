@@ -3803,8 +3803,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           // --- Type inference ---
           // All inputs and outputs share the same type T.
           // Propagate element type from input to both outputs.
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);  // input -> output
-          propagateElemTypeFromInputToOutput(ctx, 0, 1);  // input -> present_state
+          propagateElemTypeFromInputToOutput(ctx, 0, 0); // input -> output
+          propagateElemTypeFromInputToOutput(ctx, 0, 1); // input -> present_state
 
           // --- Output 0: same shape as input (B, C, L) ---
           propagateShapeFromInputToOutput(ctx, 0, 0);
@@ -3815,17 +3815,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto& input_shape = getInputShape(ctx, 0);
             if (input_shape.dim_size() != 3) {
               fail_shape_inference(
-                  "Input tensor must be rank 3 (batch_size, channels, length), got rank ",
-                  input_shape.dim_size());
+                  "Input tensor must be rank 3 (batch_size, channels, length), got rank ", input_shape.dim_size());
             }
           }
 
           if (hasInputShape(ctx, 1)) {
             auto& weight_shape = getInputShape(ctx, 1);
             if (weight_shape.dim_size() != 3) {
-              fail_shape_inference(
-                  "Weight tensor must be rank 3 (channels, 1, k), got rank ",
-                  weight_shape.dim_size());
+              fail_shape_inference("Weight tensor must be rank 3 (channels, 1, k), got rank ", weight_shape.dim_size());
             }
           }
 
@@ -3838,8 +3835,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto state_shape;
 
             // Batch and channel dims come from the input.
-            *state_shape.add_dim() = input_shape.dim(0);  // B
-            *state_shape.add_dim() = input_shape.dim(1);  // C
+            *state_shape.add_dim() = input_shape.dim(0); // B
+            *state_shape.add_dim() = input_shape.dim(1); // C
 
             // Causal dim: kernel_size - 1.
             // Only compute if weight dim 2 (k) has a concrete value.
@@ -3850,103 +3847,95 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               state_shape.add_dim()->set_dim_value(k - 1);
             } else {
-              state_shape.add_dim();  // unknown causal dim
+              state_shape.add_dim(); // unknown causal dim
             }
 
             updateOutputShape(ctx, 1, state_shape);
           }
         })
-        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
-                                                   const OpSchema& schema,
-                                                   FunctionProto& functionProto) {
-          // CausalConvWithState <activation> (input, weight, bias?, past_state?)
-          //   => (output, present_state)
-          //
-          // Reference decomposition:
-          //   1. Left-pad input with past_state (or zeros if absent) along axis 2
-          //   2. Depthwise Conv1d (group=C, no padding) on the padded input
-          //   3. Optional SiLU/Swish activation
-          //   4. Slice last (k-1) positions from padded input as present_state
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // CausalConvWithState <activation> (input, weight, bias?, past_state?)
+              //   => (output, present_state)
+              //
+              // Reference decomposition:
+              //   1. Left-pad input with past_state (or zeros if absent) along axis 2
+              //   2. Depthwise Conv1d (group=C, no padding) on the padded input
+              //   3. Optional SiLU/Swish activation
+              //   4. Slice last (k-1) positions from padded input as present_state
 
-          // --- Step 1: Extract static channel count for Conv group attribute ---
-          // Conv's group attribute must be a compile-time integer.
-          // TODO(review): If C is unknown at build time, we cannot construct the
-          // function body. Weights are typically initializers so C should be available.
-          auto* input_type = ctx.getInputType(0);
-          if (input_type == nullptr || !input_type->has_tensor_type() ||
-              !input_type->tensor_type().has_shape() ||
-              input_type->tensor_type().shape().dim_size() < 2 ||
-              !input_type->tensor_type().shape().dim(1).has_dim_value()) {
-            return false;
-          }
-          int64_t C = input_type->tensor_type().shape().dim(1).dim_value();
+              // --- Step 1: Extract static channel count for Conv group attribute ---
+              // Conv's group attribute must be a compile-time integer.
+              // TODO(review): If C is unknown at build time, we cannot construct the
+              // function body. Weights are typically initializers so C should be available.
+              auto* input_type = ctx.getInputType(0);
+              if (input_type == nullptr || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape() ||
+                  input_type->tensor_type().shape().dim_size() < 2 ||
+                  !input_type->tensor_type().shape().dim(1).has_dim_value()) {
+                return false;
+              }
+              int64_t C = input_type->tensor_type().shape().dim(1).dim_value();
 
-          // Read the activation attribute (default: "none")
-          auto* activation_attr = ctx.getAttribute("activation");
-          std::string activation = (activation_attr != nullptr && activation_attr->has_s())
-              ? activation_attr->s() : "none";
+              // Read the activation attribute (default: "none")
+              auto* activation_attr = ctx.getAttribute("activation");
+              std::string activation =
+                  (activation_attr != nullptr && activation_attr->has_s()) ? activation_attr->s() : "none";
 
-          FunctionBuilder builder(functionProto);
+              FunctionBuilder builder(functionProto);
 
-          // --- Shared kernel-size helpers (used by Step 2 zero-pad and Step 5 slice) ---
-          builder
-              .Const1D("One1D", static_cast<int64_t>(1))
-              .Add("KernelSize = Shape <start = 2, end = 3> (weight)")
-              .Add("Km1 = Sub (KernelSize, One1D)");
+              // --- Shared kernel-size helpers (used by Step 2 zero-pad and Step 5 slice) ---
+              builder.Const1D("One1D", static_cast<int64_t>(1))
+                  .Add("KernelSize = Shape <start = 2, end = 3> (weight)")
+                  .Add("Km1 = Sub (KernelSize, One1D)");
 
-          // --- Step 2: Build the left-padded input (B, C, L+k-1) ---
-          if (ctx.hasInput(3)) {
-            // past_state is provided: concat it on the left along axis 2
-            builder.Add("PaddedInput = Concat <axis = 2> (past_state, input)");
-          } else {
-            // No past_state: zero-pad on the left by (k-1)
-            builder
-                .Add("BatchDim = Shape <start = 0, end = 1> (input)")
-                .Add("ChannelDim = Shape <start = 1, end = 2> (input)")
-                .Add("ZeroPadShape = Concat <axis = 0> (BatchDim, ChannelDim, Km1)")
-                .Add("ZeroPad = ConstantOfShape (ZeroPadShape)")
-                .Add("ZeroPadCast = CastLike (ZeroPad, input)")
-                .Add("PaddedInput = Concat <axis = 2> (ZeroPadCast, input)");
-          }
+              // --- Step 2: Build the left-padded input (B, C, L+k-1) ---
+              if (ctx.hasInput(3)) {
+                // past_state is provided: concat it on the left along axis 2
+                builder.Add("PaddedInput = Concat <axis = 2> (past_state, input)");
+              } else {
+                // No past_state: zero-pad on the left by (k-1)
+                builder.Add("BatchDim = Shape <start = 0, end = 1> (input)")
+                    .Add("ChannelDim = Shape <start = 1, end = 2> (input)")
+                    .Add("ZeroPadShape = Concat <axis = 0> (BatchDim, ChannelDim, Km1)")
+                    .Add("ZeroPad = ConstantOfShape (ZeroPadShape)")
+                    .Add("ZeroPadCast = CastLike (ZeroPad, input)")
+                    .Add("PaddedInput = Concat <axis = 2> (ZeroPadCast, input)");
+              }
 
-          // --- Step 3: Depthwise Conv1d (group=C, valid padding) ---
-          if (ctx.hasInput(2)) {
-            // Bias provided: pass directly to Conv
-            builder.Add("ConvOut = Conv (PaddedInput, weight, bias)", "group", C);
-          } else {
-            // No bias
-            builder.Add("ConvOut = Conv (PaddedInput, weight)", "group", C);
-          }
+              // --- Step 3: Depthwise Conv1d (group=C, valid padding) ---
+              if (ctx.hasInput(2)) {
+                // Bias provided: pass directly to Conv
+                builder.Add("ConvOut = Conv (PaddedInput, weight, bias)", "group", C);
+              } else {
+                // No bias
+                builder.Add("ConvOut = Conv (PaddedInput, weight)", "group", C);
+              }
 
-          // --- Step 4: Optional fused activation ---
-          if (activation == "silu" || activation == "swish") {
-            builder
-                .Add("ConvSigmoid = Sigmoid (ConvOut)")
-                .Add("output = Mul (ConvOut, ConvSigmoid)");
-          } else {
-            builder.Add("output = Identity (ConvOut)");
-          }
+              // --- Step 4: Optional fused activation ---
+              if (activation == "silu" || activation == "swish") {
+                builder.Add("ConvSigmoid = Sigmoid (ConvOut)").Add("output = Mul (ConvOut, ConvSigmoid)");
+              } else {
+                builder.Add("output = Identity (ConvOut)");
+              }
 
-          // --- Step 5: Slice last (k-1) positions from PaddedInput as present_state ---
-          // present_state = PaddedInput[:, :, L : L+(k-1)]
-          // Compute start/end from PaddedInput's actual length so the k=1 (Km1=0)
-          // edge case yields an empty (B, C, 0) slice. A negative start index
-          // would not work here because Slice treats -0 as 0, returning the full
-          // padded sequence instead of an empty tensor.
-          builder
-              .Add("PadLen = Shape <start = 2, end = 3> (PaddedInput)")
-              .Add("StartIdx = Sub (PadLen, Km1)")
-              .Const("SliceAxes", std::vector<int64_t>{2})
-              .Add("present_state = Slice (PaddedInput, StartIdx, PadLen, SliceAxes)");
+              // --- Step 5: Slice last (k-1) positions from PaddedInput as present_state ---
+              // present_state = PaddedInput[:, :, L : L+(k-1)]
+              // Compute start/end from PaddedInput's actual length so the k=1 (Km1=0)
+              // edge case yields an empty (B, C, 0) slice. A negative start index
+              // would not work here because Slice treats -0 as 0, returning the full
+              // padded sequence instead of an empty tensor.
+              builder.Add("PadLen = Shape <start = 2, end = 3> (PaddedInput)")
+                  .Add("StartIdx = Sub (PadLen, Km1)")
+                  .Const("SliceAxes", std::vector<int64_t>{2})
+                  .Add("present_state = Slice (PaddedInput, StartIdx, PadLen, SliceAxes)");
 
-          schema.BuildFunction(functionProto);
-          return true;
-        })
+              schema.BuildFunction(functionProto);
+              return true;
+            })
         .TypeConstraint(
             "T",
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
-            "Constrain input and output types to float tensors.")
-  );
+            "Constrain input and output types to float tensors."));
 
 static constexpr const char* LinearAttention_ver25_doc = R"DOC(
   
@@ -3991,14 +3980,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "and uses 1/sqrt(d_k). Set explicitly to override.",
             AttributeProto::FLOAT,
             0.0f)
-        .Attr(
-            "q_num_heads",
-            "Number of query heads. Always required.",
-            AttributeProto::INT)
-        .Attr(
-            "kv_num_heads",
-            "Number of key/value heads. Always required.",
-            AttributeProto::INT)
+        .Attr("q_num_heads", "Number of query heads. Always required.", AttributeProto::INT)
+        .Attr("kv_num_heads", "Number of key/value heads. Always required.", AttributeProto::INT)
         .Attr(
             "chunk_size",
             "Chunk size for the chunk-parallel WY decomposition during prefill (T>1). "
@@ -4115,8 +4098,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
           auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
-          if (q_num_heads_attr == nullptr || !q_num_heads_attr->has_i() ||
-              kv_num_heads_attr == nullptr || !kv_num_heads_attr->has_i()) {
+          if (q_num_heads_attr == nullptr || !q_num_heads_attr->has_i() || kv_num_heads_attr == nullptr ||
+              !kv_num_heads_attr->has_i()) {
             return false;
           }
           int64_t q_num_heads = q_num_heads_attr->i();
@@ -4147,8 +4130,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // --- Step 2: Pre-Scan 3D -> 4D reshape and transpose ---
           // Inputs arrive packed as (B, T, H*D). Reshape to (B, T, H, D) then
           // transpose to (B, H, T, D) so the Scan iterates along the T axis.
-          builder
-              .Const1D("NegOne1D", static_cast<int64_t>(-1))
+          builder.Const1D("NegOne1D", static_cast<int64_t>(-1))
               .Const1D("One1D", static_cast<int64_t>(1))
               .Const1D("HqConst", q_num_heads)
               .Const1D("HkvConst", kv_num_heads)
@@ -4160,16 +4142,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           // only supports scan_input_axes=0 in the ONNX reference runtime).
 
           // Query: (B, T, H_q*d_k) -> (B, T, H_q, d_k) -> (T, B, H_q, d_k)
-          builder
-              .Add("QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)")
+          builder.Add("QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)")
               .Add("QReshaped = Reshape (query, QShape4D)")
               .Add("Q4D = Transpose <perm = [1, 0, 2, 3]> (QReshaped)");
 
           // Key/Value/Decay all share H_kv as the head dimension; -1 absorbs
           // d_k (key/decay) or d_v (value), and degenerates to 1 for per-head
           // scalar decay of shape (B, T, H_kv).
-          builder
-              .Add("KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)")
+          builder.Add("KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)")
               .Add("KReshaped = Reshape (key, KVShape4D)")
               .Add("K4D = Transpose <perm = [1, 0, 2, 3]> (KReshaped)")
               .Add("VReshaped = Reshape (value, KVShape4D)")
@@ -4178,16 +4158,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (has_decay) {
             // Decay: (B, T, H_kv*d_k) -> (T, B, H_kv, d_k), or
             //        (B, T, H_kv)      -> (T, B, H_kv, 1)   [broadcastable].
-            builder
-                .Add("DecayReshaped = Reshape (decay, KVShape4D)")
+            builder.Add("DecayReshaped = Reshape (decay, KVShape4D)")
                 .Add("Decay4D = Transpose <perm = [1, 0, 2, 3]> (DecayReshaped)");
           }
 
           if (has_beta) {
             // Beta: (B, T, H_kv) or (B, T, 1) -> reshape (B, T, -1, 1)
             //       -> transpose (T, B, H_kv_or_1, 1) [broadcastable head dim].
-            builder
-                .Add("BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)")
+            builder.Add("BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)")
                 .Add("BetaReshaped = Reshape (beta, BetaShape4D)")
                 .Add("Beta4D = Transpose <perm = [1, 0, 2, 3]> (BetaReshaped)");
           }
@@ -4195,8 +4173,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // --- Step 3: Initialize recurrence state (B, H_kv, d_k, d_v) ---
           // Compute d_k and d_v as 1D shape tensors for downstream use
           // (state shape here, scale factor in Step 4).
-          builder
-              .Add("QLastDim = Shape <start = 2, end = 3> (query)")
+          builder.Add("QLastDim = Shape <start = 2, end = 3> (query)")
               .Add("VLastDim = Shape <start = 2, end = 3> (value)")
               .Add("DkDim = Div (QLastDim, HqConst)")
               .Add("DvDim = Div (VLastDim, HkvConst)");
@@ -4213,8 +4190,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             // ConstantOfShape with default value yields float32 already; no
             // cast required. S anchor for the post-Scan cast defaults to T
             // (query's dtype) in this case.
-            builder
-                .Add("StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)")
+            builder.Add("StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)")
                 .Add("State0 = ConstantOfShape (StateShape)");
           }
 
@@ -4226,8 +4202,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (scale != 0.0f) {
             builder.Const("ScaleFactor", scale);
           } else {
-            builder
-                .Add("DkScalar = Squeeze (DkDim)")
+            builder.Add("DkScalar = Squeeze (DkDim)")
                 .Add("DkFloat = Cast <to = 1> (DkScalar)")
                 .Add("SqrtDk = Sqrt (DkFloat)")
                 .Add("ScaleFactor = Reciprocal (SqrtDk)");
@@ -4241,8 +4216,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shapes are computed once outside the Scan body and captured inside
           // by name.
           if (group_size > 1) {
-            builder
-                .Const1D("GroupSize", group_size)
+            builder.Const1D("GroupSize", group_size)
                 .Const1D("Two1D", static_cast<int64_t>(2))
                 .Add("StateExpandShape = Concat <axis = 0> (BatchDim, HkvConst, GroupSize, DkDim, DvDim)")
                 .Add("StateReadShape = Concat <axis = 0> (BatchDim, HqConst, DkDim, DvDim)");
@@ -4319,8 +4293,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::string retrieve_and_writevec_block;
           std::string write_vec_name;
           if (delta_correction) {
-            retrieve_and_writevec_block =
-                "                StateT = Transpose <perm = [0, 1, 3, 2]> (" + state_basis + ")\n"
+            retrieve_and_writevec_block = "                StateT = Transpose <perm = [0, 1, 3, 2]> (" + state_basis +
+                ")\n"
                 "                Retrieved = MatMul (StateT, KtCol)\n"
                 "                RetrievedSq = Squeeze (Retrieved, NegOne)\n"
                 "                Diff = Sub (v_t_f, RetrievedSq)\n"
@@ -4331,10 +4305,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Write block: Outer = KtCol @ row(write_vec); state_out = basis + Outer.
-          const std::string write_block =
-              "                WriteRow = Unsqueeze (" + write_vec_name + ", NegTwo)\n"
+          const std::string write_block = "                WriteRow = Unsqueeze (" + write_vec_name +
+              ", NegTwo)\n"
               "                Outer = MatMul (KtCol, WriteRow)\n"
-              "                state_out = Add (" + state_basis + ", Outer)\n";
+              "                state_out = Add (" +
+              state_basis + ", Outer)\n";
 
           // Read block (always): output_t = scale_in * (q_t^T @ state_out).
           // For GQA (group_size > 1) the per-KV-head state must first be
@@ -4404,13 +4379,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Assemble Scan node text. Body name is arbitrary. We omit
           // scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
           // were already pre-transposed so the T axis is the leading dim.
-          std::string scan_text =
-              scan_outputs + " = Scan <\n"
-              "  num_scan_inputs = " + std::to_string(num_scan_inputs) + ",\n"
-              "  body = linear_attn_step (" + body_inputs + ") => (" + body_outputs + ") {\n";
+          std::string scan_text = scan_outputs +
+              " = Scan <\n"
+              "  num_scan_inputs = " +
+              std::to_string(num_scan_inputs) +
+              ",\n"
+              "  body = linear_attn_step (" +
+              body_inputs + ") => (" + body_outputs + ") {\n";
           scan_text += body_constants;
           scan_text += body_cast_inputs;
-          if (gating) scan_text += decay_block;
+          if (gating)
+            scan_text += decay_block;
           scan_text += ktcol_block;
           scan_text += retrieve_and_writevec_block;
           scan_text += write_block;
@@ -4418,7 +4397,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           scan_text += state_passthrough;
           scan_text +=
               "              }\n"
-              "> (" + scan_inputs + ")";
+              "> (" +
+              scan_inputs + ")";
 
           builder.Add(scan_text.c_str());
 
@@ -4428,8 +4408,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // present_state: cast FinalState (float32) back to S.
           //   * With past_state: anchor on past_state's dtype.
           //   * Without past_state: default S to T (query's dtype).
-          builder
-              .Add("OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)")
+          builder.Add("OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)")
               .Add("OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)")
               .Add("output = Reshape (OutputTransposed, OutputShape3D)");
           if (ctx.hasInput(3)) {
@@ -4464,10 +4443,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Validate update_rule value
           // TODO: See if needed
-          if (update_rule != "linear" && update_rule != "gated" && update_rule != "delta" && update_rule != "gated_delta") {
+          if (update_rule != "linear" && update_rule != "gated" && update_rule != "delta" &&
+              update_rule != "gated_delta") {
             fail_type_inference("update_rule must be one of: 'linear', 'gated', 'delta', 'gated_delta'");
           }
-
 
           // Validate update_rule vs optional inputs (decay=input 4, beta=input 5).
           bool has_decay = ctx.getNumInputs() > 4 && ctx.getInputType(4) != nullptr &&
@@ -4522,10 +4501,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Propagate types and shapes
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);  // output gets type T from query
-          if (ctx.getNumInputs() > 3 && ctx.getInputType(3) != nullptr &&
-              ctx.getInputType(3)->has_tensor_type()) {
-            propagateElemTypeFromInputToOutput(ctx, 3, 1);  // present_state gets type S from past_state
+          propagateElemTypeFromInputToOutput(ctx, 0, 0); // output gets type T from query
+          if (ctx.getNumInputs() > 3 && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type()) {
+            propagateElemTypeFromInputToOutput(ctx, 3, 1); // present_state gets type S from past_state
           } else {
             // TODO: Proposal says S must be float32 or same as T, but does not specify
             // how to infer S when past_state is omitted. Defaulting to T for now.
@@ -4537,14 +4515,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto& query_shape = getInputShape(ctx, 0);
             auto& value_shape = getInputShape(ctx, 2);
             TensorShapeProto output_shape;
-            *output_shape.add_dim() = query_shape.dim(0);  // B
-            *output_shape.add_dim() = query_shape.dim(1);  // T
+            *output_shape.add_dim() = query_shape.dim(0); // B
+            *output_shape.add_dim() = query_shape.dim(1); // T
             // H_q * d_v: d_v = value.dim(2) / kv_num_heads, then H_q * d_v
             if (value_shape.dim(2).has_dim_value()) {
               int64_t d_v = value_shape.dim(2).dim_value() / kv_num_heads;
               output_shape.add_dim()->set_dim_value(q_num_heads * d_v);
             } else {
-              output_shape.add_dim();  // unknown
+              output_shape.add_dim(); // unknown
             }
             updateOutputShape(ctx, 0, output_shape);
           } else {
@@ -4562,8 +4540,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto& query_shape = getInputShape(ctx, 0);
             auto& value_shape = getInputShape(ctx, 2);
             TensorShapeProto state_shape;
-            *state_shape.add_dim() = query_shape.dim(0);         // B
-            state_shape.add_dim()->set_dim_value(kv_num_heads);  // H_kv
+            *state_shape.add_dim() = query_shape.dim(0); // B
+            state_shape.add_dim()->set_dim_value(kv_num_heads); // H_kv
             // d_k = query.dim(2) / q_num_heads
             if (query_shape.dim(2).has_dim_value()) {
               state_shape.add_dim()->set_dim_value(query_shape.dim(2).dim_value() / q_num_heads);

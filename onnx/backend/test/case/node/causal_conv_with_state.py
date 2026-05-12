@@ -8,12 +8,14 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.reference.ops.op_causal_conv_with_state import CausalConvWithState as _RefCausalConvWithState
+from onnx.reference.ops.op_causal_conv_with_state import (
+    CausalConvWithState as _RefCausalConvWithState,
+)
 
 
 def _compute(input_, weight, bias=None, past_state=None, activation="none"):
     op = _RefCausalConvWithState.__new__(_RefCausalConvWithState)
-    return op._run(  # noqa: SLF001
+    return op._run(
         input_,
         weight,
         bias=bias,
@@ -151,7 +153,9 @@ class CausalConvWithState(Base):
         bias = np.random.randn(channels).astype(np.float32)
         past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
 
-        output, present_state = _compute(input_, weight, bias=bias, past_state=past_state)
+        output, present_state = _compute(
+            input_, weight, bias=bias, past_state=past_state
+        )
 
         expect(
             node,

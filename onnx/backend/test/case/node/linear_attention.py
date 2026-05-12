@@ -8,7 +8,9 @@ import numpy as np
 import onnx
 from onnx.backend.test.case.base import Base
 from onnx.backend.test.case.node import expect
-from onnx.reference.ops.op_linear_attention import LinearAttention as _RefLinearAttention
+from onnx.reference.ops.op_linear_attention import (
+    LinearAttention as _RefLinearAttention,
+)
 
 _OPSET = [onnx.helper.make_opsetid("", 25)]
 
@@ -28,7 +30,7 @@ def _compute(
     chunk_size=64,
 ):
     op = _RefLinearAttention.__new__(_RefLinearAttention)
-    return op._run(  # noqa: SLF001
+    return op._run(
         query,
         key,
         value,
@@ -73,8 +75,12 @@ class LinearAttention(Base):
         value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value,
-            q_num_heads=h_q, kv_num_heads=h_kv, update_rule="linear",
+            query,
+            key,
+            value,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
+            update_rule="linear",
         )
         expect(
             node,
@@ -102,8 +108,13 @@ class LinearAttention(Base):
         decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 
         output, present_state = _compute(
-            query, key, value, decay=decay,
-            q_num_heads=h_q, kv_num_heads=h_kv, update_rule="gated",
+            query,
+            key,
+            value,
+            decay=decay,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
+            update_rule="gated",
         )
         expect(
             node,
@@ -131,8 +142,13 @@ class LinearAttention(Base):
         decay = -np.abs(np.random.randn(b, t, h_kv)).astype(np.float32) * 0.1
 
         output, present_state = _compute(
-            query, key, value, decay=decay,
-            q_num_heads=h_q, kv_num_heads=h_kv, update_rule="gated",
+            query,
+            key,
+            value,
+            decay=decay,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
+            update_rule="gated",
         )
         expect(
             node,
@@ -159,8 +175,13 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv, update_rule="delta",
+            query,
+            key,
+            value,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
+            update_rule="delta",
         )
         expect(
             node,
@@ -187,8 +208,13 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv,
+            query,
+            key,
+            value,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
         )
         expect(
             node,
@@ -215,8 +241,13 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, 1).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv,
+            query,
+            key,
+            value,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
         )
         expect(
             node,
@@ -246,8 +277,13 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv,
+            query,
+            key,
+            value,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
         )
         expect(
             node,
@@ -274,8 +310,13 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv,
+            query,
+            key,
+            value,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
         )
         expect(
             node,
@@ -306,8 +347,14 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, past_state=past_state, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv,
+            query,
+            key,
+            value,
+            past_state=past_state,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
         )
         expect(
             node,
@@ -335,8 +382,14 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, past_state=past_state, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv,
+            query,
+            key,
+            value,
+            past_state=past_state,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
         )
         expect(
             node,
@@ -364,8 +417,14 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, past_state=past_state, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv,
+            query,
+            key,
+            value,
+            past_state=past_state,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
         )
         expect(
             node,
@@ -397,8 +456,14 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv, scale=scale,
+            query,
+            key,
+            value,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
+            scale=scale,
         )
         expect(
             node,
@@ -425,8 +490,13 @@ class LinearAttention(Base):
         beta = np.random.rand(b, t, h_kv).astype(np.float16)
 
         output, present_state = _compute(
-            query, key, value, decay=decay, beta=beta,
-            q_num_heads=h_q, kv_num_heads=h_kv,
+            query,
+            key,
+            value,
+            decay=decay,
+            beta=beta,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
         )
         expect(
             node,
@@ -455,8 +525,12 @@ class LinearAttention(Base):
         value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
 
         output, present_state = _compute(
-            query, key, value,
-            q_num_heads=h_q, kv_num_heads=h_kv, update_rule="linear",
+            query,
+            key,
+            value,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
+            update_rule="linear",
         )
         expect(
             node,
