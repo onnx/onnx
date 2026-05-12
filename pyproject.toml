@@ -96,7 +96,6 @@ cmake.define.ONNX_COVERAGE = "ON"
 build = "cp313-pyodide_wasm32"
 
 [tool.cibuildwheel]
-enable = ["cpython-freethreading"]
 test-command = "pytest {project}/onnx/test"
 test-requires = ["pytest", "parameterized", "nbval", "ruamel.yaml", "Pillow"]
 
@@ -112,7 +111,6 @@ environment = { MACOSX_DEPLOYMENT_TARGET = "12.0" }
 ignore = ["W002"]
 
 [tool.pytest.ini_options]
-
 addopts = "--tb=short --color=yes"
 testpaths = [
     "onnx/test",
