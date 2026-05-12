@@ -13,7 +13,6 @@ SPDX-License-Identifier: Apache-2.0
 | [CI](/.github/workflows/main.yml) | Every PR, merge_group, push to main, daily (midnight UTC) | C++ and Python tests across Linux, Windows, macOS; Python 3.10–3.14 (including free-threading variants); doc generation; proto generation; node test generation; daily run reports code coverage to Codecov |
 | [Windows\_No\_Exception\_CI](/.github/workflows/win_no_exception_ci.yml) | Push and PR to main and rel-\* | C++ tests compiled without exceptions; selective schema loading |
 | [Lint / Enforce style](/.github/workflows/lint.yml) | Every PR | Required — runs lintrunner (ruff, mypy, clang-format, etc.) and verifies auto-generated files are up to date |
-| [Reuse](/.github/workflows/reuse.yml) | Every PR | Checks copyright and license headers; see [https://reuse.software/](https://reuse.software/). Files without a recognized license must be configured in `REUSE.toml`. |
 | [Require label](/.github/workflows/check_pr_label.yml) | Every PR | Requires at least one `topic:` or `module:` label (skipped for Dependabot PRs) |
 | [DCO](/.github/workflows/dco_merge_group.yml) | merge\_group | Placeholder DCO job required to enable the GitHub merge queue |
 
@@ -34,7 +33,6 @@ SPDX-License-Identifier: Apache-2.0
 |---|---|---|
 | [CodeQL](/.github/workflows/codeql.yml) | Every PR, push to main/rel-\*, weekly (Friday) | Static analysis of C++ and Python for security vulnerabilities |
 | [Scorecard](/.github/workflows/scorecard.yml) | Push to main, weekly (Saturday) | OpenSSF supply-chain security scorecard; publishes results to code-scanning dashboard |
-| [Zizmor](/.github/workflows/zizmor.yml) | Every PR, push to main | Security analysis of GitHub Actions workflow files |
 | [Dependency Review](/.github/workflows/dependency-review.yml) | Every PR | Flags vulnerable or license-incompatible dependencies introduced by a PR |
 
 ## Documentation and Maintenance
