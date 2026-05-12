@@ -275,7 +275,7 @@ def _tar_members_filter(
         member_path = os.path.join(base, member.name)
         abs_base = os.path.abspath(base)
         abs_member = os.path.abspath(member_path)
-        if not abs_member.startswith(abs_base):
+        if not abs_member.startswith(abs_base + os.sep) and abs_member != abs_base:
             raise RuntimeError(
                 f"The tarball member {member_path} in downloading model contains "
                 f"directory traversal sequence which may contain harmful payload."
