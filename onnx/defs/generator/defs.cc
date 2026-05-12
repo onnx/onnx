@@ -367,16 +367,16 @@ static bool BuildFunctionBodyRange27(
         .Add("output = Cast (output_s)", "to", T);
   } else {
     builder.Add("sub_result = Sub (limit, start)")
-        .Add("sub_result_f = Cast (sub_result)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
-        .Add("delta_f = Cast (delta)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
-        .Add("div_result = Div (sub_result_f, delta_f)")
+        .Add("sub_result_casted = Cast (sub_result)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
+        .Add("delta_casted = Cast (delta)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
+        .Add("div_result = Div (sub_result_casted, delta_casted)")
         .Add("ceil_result = Ceil (div_result)")
-        .Add("ceil_relu = Relu (ceil_result)")
-        .Add("n = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_INT64))
-        .Add("loop_cond = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_BOOL))
-        .Add(R"ONNX(variadic_output, output = Loop (n, loop_cond, start)
-          <body = loop_body (int64 i, bool cond_in, prev) => (cond_out, current, range) {
-            cond_out = Identity (cond_in)
+        .Add("ceil_result_relu = Relu (ceil_result)")
+        .Add("ceil_result_relu_int = Cast (ceil_result_relu)", "to", static_cast<int64_t>(TensorProto_DataType_INT64))
+        .Add("ceil_result_relu_bool = Cast (ceil_result_relu)", "to", static_cast<int64_t>(TensorProto_DataType_BOOL))
+        .Add(R"ONNX(variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
+          <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
+            cond_out = Identity (cond)
             current = Add (prev, delta)
             range = Identity (prev)
           }>)ONNX");
