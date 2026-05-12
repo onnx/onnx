@@ -10,8 +10,6 @@
 name: ReproducibleBuild
 
 on:
-  pull_request:
-    types: [labeled, opened, synchronize, reopened]
   schedule:
     - cron: '0 6 * * 1'  # every Monday 06:00 UTC
   workflow_dispatch:
@@ -21,7 +19,6 @@ permissions:
 
 jobs:
   build1:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux.yml
     with:
       os: linux
@@ -32,7 +29,6 @@ jobs:
       artifact_name_prefix: repro-build1-wheels
 
   build2:
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs')
     uses: ./.github/workflows/release_linux.yml
     with:
       os: linux
