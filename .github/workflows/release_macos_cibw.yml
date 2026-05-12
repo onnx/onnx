@@ -10,7 +10,7 @@ on:
       build_mode:
         required: false
         type: string
-        default: "release"
+        default: "preview"
       protobuf_version:
         required: false
         type: string
