@@ -327,11 +327,80 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
+static bool BuildFunctionBodyRange27(
+    const FunctionBodyBuildContext& ctx,
+    const OpSchema& schema,
+    FunctionProto& functionProto) {
+  if (ctx.getInputType(0) == nullptr) {
+    return false;
+  }
+  int64_t T = ctx.getInputType(0)->tensor_type().elem_type();
+  bool needs_stash =
+      (T == static_cast<int64_t>(TensorProto_DataType_FLOAT16) ||
+       T == static_cast<int64_t>(TensorProto_DataType_BFLOAT16));
+
+  int64_t stash_type = T;
+  if (needs_stash) {
+    const auto* stash_attr = ctx.getAttribute("stash_type");
+    stash_type = (stash_attr != nullptr) ? stash_attr->i()
+                                         : static_cast<int64_t>(TensorProto_DataType_FLOAT);
+  }
+
+  FunctionBuilder builder(functionProto);
+  if (needs_stash && stash_type != T) {
+    // Cast inputs to stash_type for higher-precision loop accumulation,
+    // then cast the collected output back to T.
+    builder
+        .Add("start_s = Cast (start)", "to", stash_type)
+        .Add("limit_s = Cast (limit)", "to", stash_type)
+        .Add("delta_s = Cast (delta)", "to", stash_type)
+        .Add("sub_result = Sub (limit_s, start_s)")
+        .Add("sub_result_f = Cast (sub_result)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
+        .Add("delta_f = Cast (delta_s)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
+        .Add("div_result = Div (sub_result_f, delta_f)")
+        .Add("ceil_result = Ceil (div_result)")
+        .Add("ceil_relu = Relu (ceil_result)")
+        .Add("n = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_INT64))
+        .Add("loop_cond = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_BOOL))
+        .Add(R"ONNX(variadic_output, output_s = Loop (n, loop_cond, start_s)
+          <body = loop_body (int64 i, bool cond_in, prev) => (cond_out, current, range) {
+            cond_out = Identity (cond_in)
+            current = Add (prev, delta_s)
+            range = Identity (prev)
+          }>)ONNX")
+        .Add("output = Cast (output_s)", "to", T);
+  } else {
+    builder
+        .Add("sub_result = Sub (limit, start)")
+        .Add("sub_result_f = Cast (sub_result)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
+        .Add("delta_f = Cast (delta)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
+        .Add("div_result = Div (sub_result_f, delta_f)")
+        .Add("ceil_result = Ceil (div_result)")
+        .Add("ceil_relu = Relu (ceil_result)")
+        .Add("n = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_INT64))
+        .Add("loop_cond = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_BOOL))
+        .Add(R"ONNX(variadic_output, output = Loop (n, loop_cond, start)
+          <body = loop_body (int64 i, bool cond_in, prev) => (cond_out, current, range) {
+            cond_out = Identity (cond_in)
+            current = Add (prev, delta)
+            range = Identity (prev)
+          }>)ONNX");
+  }
+  schema.BuildFunction(functionProto);
+  return true;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     Range,
     27,
     OpSchema()
-        .SetDoc(kDoc_Range_ver11)
+        .SetDoc(kDoc_Range_ver27)
+        .Attr(
+            "stash_type",
+            "The data type used for intermediate computation when T is float16 or bfloat16. "
+            "Defaults to 1 (float). Has no effect for other types.",
+            AttributeProto::INT,
+            static_cast<int64_t>(TensorProto_DataType_FLOAT))
         .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
         .Input(1, "limit", "Scalar. Exclusive upper limit for the range of output values.", "T")
         .Input(2, "delta", "Scalar. Value to step by.", "T")
@@ -340,24 +409,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float, types::Double, types::Int16, types::Int32, types::Int64, types::Float16, types::BFloat16},
             "Constrain input types to common numeric type tensors.")
-        .FunctionBody(R"ONNX(
-          {
-            sub_result = Sub (limit, start)
-            sub_result_casted = Cast <to = 1> (sub_result)
-            delta_casted = Cast <to = 1> (delta)
-            div_result = Div (sub_result_casted, delta_casted)
-            ceil_result = Ceil (div_result)
-            ceil_result_relu = Relu (ceil_result)
-            ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
-            ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
-            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
-              <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
-                cond_out = Identity (cond)
-                current = Add (prev, delta)
-                range = Identity (prev)
-              }>
-          }
-        )ONNX")
+        .SetContextDependentFunctionBodyBuilder(BuildFunctionBodyRange27)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
