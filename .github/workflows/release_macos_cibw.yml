@@ -33,7 +33,6 @@ jobs:
           - "cp310-macosx_universal2"
           - "cp311-macosx_universal2"
           - "cp312-macosx_universal2"
-          - "cp313t-macosx_universal2"
           - "cp314t-macosx_universal2"
 
     runs-on: macos-14
@@ -45,7 +44,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: true
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -57,9 +55,6 @@ jobs:
         run: |
           sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
-
-      - name: Install cibuildwheel
-        run: python -m pip install -q cibuildwheel>=2.21
 
       - name: Download protoc
         run: |
@@ -75,18 +70,19 @@ jobs:
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
-      - name: Build wheel
-        run: cibuildwheel --only ${{ matrix.build }} --output-dir dist/
+      - name: Build wheels
+        uses: pypa/cibuildwheel8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        with:
+          output-dir: dist/
+          only: ${{ matrix.build }}
         env:
           CIBW_ENVIRONMENT: >-
-            MACOSX_DEPLOYMENT_TARGET=12.0
             CMAKE_ARGS="
-            -DONNX_USE_LITE_PROTO=ON
-            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
-            -DONNX_WERROR=ON
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
             -DONNX_HARDENING=ON
-            -DCMAKE_OSX_ARCHITECTURES=arm64;x86_64
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
             "
 
       - name: Validate wheel

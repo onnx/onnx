@@ -38,8 +38,6 @@ jobs:
           - "cp312-win_amd64"
           - "cp312-win32"
           - "cp312-win_arm64"
-          - "cp313t-win_amd64"
-          - "cp313t-win_arm64"
           - "cp314t-win_amd64"
           - "cp314t-win_arm64"
     runs-on: ${{ contains(matrix.build, 'arm64') && 'windows-11-arm' || 'windows-2022' }}
@@ -51,7 +49,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: true
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -63,9 +60,6 @@ jobs:
         run: |
           sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
-
-      - name: Install cibuildwheel
-        run: python -m pip install -q cibuildwheel>=2.21
 
       - name: Download protoc
         run: |
@@ -87,16 +81,19 @@ jobs:
         shell: bash
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
-      - name: Build wheel
-        run: cibuildwheel --only ${{ matrix.build }} --output-dir dist/
+      - name: Build wheels
+        uses: pypa/cibuildwheel8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         env:
+          with:
+            output-dir: dist/
+            only: ${{ matrix.build }}
           CIBW_ENVIRONMENT: >-
             CMAKE_ARGS="
-            -DONNX_USE_LITE_PROTO=ON
-            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ env.PROTOC_PATH }}
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ env.PROTOBUF_SRC }}
-            -DONNX_WERROR=ON
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ env.PROTOC_PATH }}
             -DONNX_HARDENING=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
             "
 
       - name: Validate wheel
