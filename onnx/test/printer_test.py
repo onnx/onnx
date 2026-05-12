@@ -47,6 +47,20 @@ class TestBasicFunctions(unittest.TestCase):
         # Verify that "M + N" is preserved as a quoted string in the printed output
         self.assertIn('"M + N"', text1)
 
+    def test_parse_node_roundtrip(self) -> None:
+        # Regression test for #7944: parse_node accepts NodeProto text but
+        # printer.to_text(NodeProto) raised TypeError because NodeProto was
+        # not handled in the dispatch.
+        text0 = "C = Softmax(S)"
+        node1 = parser.parse_node(text0)
+        text1 = printer.to_text(node1)
+        node2 = parser.parse_node(text1)
+        text2 = printer.to_text(node2)
+        self.assertEqual(text1, text2)
+        self.assertEqual(node2.op_type, "Softmax")
+        self.assertEqual(list(node2.output), ["C"])
+        self.assertEqual(list(node2.input), ["S"])
+
 
 if __name__ == "__main__":
     unittest.main()
