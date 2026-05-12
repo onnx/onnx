@@ -109,6 +109,7 @@ pytest-xdist = ">=3.6.1"
 setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
 "ruamel.yaml" = ">=0.19.1"
+zizmor = ">=1.24.1,<2"
 
 [feature.reference.dependencies]
 # follows requirements-reference.txt
