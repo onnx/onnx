@@ -2821,9 +2821,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info(
-                    "output", TensorProto.FLOAT, (None, None, None)
-                ),
+                make_tensor_value_info("output", TensorProto.FLOAT, (None, None, None)),
                 make_tensor_value_info(
                     "present_state", TensorProto.FLOAT, (2, 4, 16, 16)
                 ),
@@ -3054,7 +3052,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, ("B", "C", "L")),
-                make_tensor_value_info("present_state", TensorProto.FLOAT, ("B", "C", 3)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, ("B", "C", 3)
+                ),
             ],
         )
 
@@ -3077,7 +3077,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
-                make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, None)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 4, None)
+                ),
             ],
         )
 
