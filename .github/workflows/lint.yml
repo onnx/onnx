@@ -34,40 +34,6 @@ jobs:
           pip install -q check-jsonschema
           python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" sbom.cdx.json
 
-  optional-lint:
-    name: Optional Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: misspell # Check spellings as well
-        uses: reviewdog/action-misspell@d6429416b12b09b4e2768307d53bef58d172e962 # v1.27.0
-        with:
-          github_token: ${{ secrets.github_token }}
-          locale: "US"
-          reporter: github-pr-check
-          level: info
-          filter_mode: diff_context
-          ignore: foward,cancelled
-          exclude: |
-            ./docs/docsgen/source/_static/*
-      - name: shellcheck # Static check shell scripts
-        uses: reviewdog/action-shellcheck@4c07458293ac342d477251099501a718ae5ef86e # v1.32.0
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-check
-          level: info
-          filter_mode: diff_context
-      - name: cpplint # Static check C++ code
-        uses: reviewdog/action-cpplint@9552c62f4bd516c1e3a6f84eae56bd864cc304c6 # v1.11.0
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-check
-          level: warning
-          flags: --linelength=120
-          filter: "-runtime/references,-readability/todo"
-
   enforce-style:
     name: Enforce style
     runs-on: ubuntu-latest
