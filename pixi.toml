@@ -126,7 +126,6 @@ clang-format = ">=22.1.1"
 mypy = ">=1.19.1"
 prek = ">=0.3.9"
 prettier = ">=3.8.1,<4"
-reuse = ">=5.1.1,<7"
 ruff = ">=0.15.7"
 shellcheck = ">=0.11.0"
 types-protobuf = ">=6.32.1.20260221,<7"
@@ -167,6 +166,12 @@ lychee = ">=0.23.0"
 [feature.link-checker.tasks.link-checker]
 cmd = "pixi exec lychee --root-dir . ."
 
+[feature.reuse.dependencies]
+# Isolate REUSE since it does not play nice with `pip check` in the
+# default environment.
+reuse = ">=5.1.1,<7"
+[feature.reuse.tasks.reuse]
+cmd = "reuse"
 
 [environments]
 default = ["dev", "lint", "reference"]
@@ -177,3 +182,4 @@ docs = ["dev", "lint", "reference", "docs"]
 clang-tools = {features=["clang-tools"], no-default-feature=true}
 link-checker = {features=["link-checker"], no-default-feature=true}
 lintrunner = ["dev", "reference", "lint", "lintrunner"]
+reuse = {features=["reuse"], no-default-feature=true}
