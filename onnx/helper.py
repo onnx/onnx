@@ -449,7 +449,7 @@ def make_tensor(
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
-    expected_elements = math.prod(dims)  # if len(dims) != 0 else 1
+    expected_elements = math.prod(dims)
     if len(vals) != expected_elements:
         raise ValueError(
             f"Number of values ({len(vals)}) does not match tensor "
