@@ -60,7 +60,7 @@ jobs:
           wheel2=$(ls /tmp/build2/*.whl 2>/dev/null | wc -l)
           [ "$wheel1" -eq 1 ] || { echo "ERROR: Expected 1 wheel in /tmp/build1, found $wheel1"; exit 1; }
           [ "$wheel2" -eq 1 ] || { echo "ERROR: Expected 1 wheel in /tmp/build2, found $wheel2"; exit 1; }
-          
+
           WHEEL1=$(ls /tmp/build1/*.whl)
           WHEEL2=$(ls /tmp/build2/*.whl)
 
@@ -77,7 +77,7 @@ jobs:
             exit 1
           fi
         shell: bash
-      
+
       - name: Install diffoscope
         if: failure()
         run: sudo apt-get install -y --no-install-recommends diffoscope
