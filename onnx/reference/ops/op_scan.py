@@ -53,7 +53,7 @@ class Scan(OpRun):
 
     def _common_run_shape(self, *args):
         num_loop_state_vars = len(args) - self.num_scan_inputs
-        num_scan_outputs = len(args) - num_loop_state_vars
+        num_scan_outputs = len(self.output_names) - num_loop_state_vars
 
         output_directions = [
             (
