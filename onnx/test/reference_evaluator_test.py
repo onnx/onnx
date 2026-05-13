@@ -1460,55 +1460,35 @@ class TestReferenceEvaluator(unittest.TestCase):
         d0 = 2
         d1 = 4
 
-        # Body subgraph: state passes through unchanged; scan output is the
-        # per-iteration scan input multiplied by 2 (rank 2, shape [d0, d1]).
-        state_in = make_tensor_value_info("state_in", TensorProto.FLOAT, [d0])
-        scan_in = make_tensor_value_info("scan_in", TensorProto.FLOAT, [d0, d1])
-        state_out = make_tensor_value_info("state_out", TensorProto.FLOAT, [d0])
-        scan_out = make_tensor_value_info("scan_out", TensorProto.FLOAT, [d0, d1])
-        two = from_array(np.array(2.0, dtype=np.float32), name="two")
-        body = make_graph(
-            [
-                make_node("Identity", ["state_in"], ["state_out"]),
-                make_node("Mul", ["scan_in", "two"], ["scan_out"]),
-            ],
-            "scan_var_len_body",
-            [state_in, scan_in],
-            [state_out, scan_out],
-            initializer=[two],
-        )
-
-        # Outer graph: omit the optional output_lengths input by passing an
-        # empty input name ("") in that position.
-        outer_state_in = make_tensor_value_info(
-            "outer_state_in", TensorProto.FLOAT, [d0]
-        )
-        outer_scan_in = make_tensor_value_info(
-            "outer_scan_in", TensorProto.FLOAT, [sequence_length, d0, d1]
-        )
-        outer_state_out = make_tensor_value_info(
-            "outer_state_out", TensorProto.FLOAT, [d0]
-        )
+        # Body: state passes through unchanged; scan output is the per-iteration
+        # scan input multiplied by 2 (rank 2, shape [d0, d1]).
+        # Outer graph omits the optional output_lengths input by passing "".
         # Concat axis (axis 1) total size = sequence_length * d1 = 12 here, but
-        # the schema infers this as unknown so we declare it as None.
-        outer_scan_out = make_tensor_value_info(
-            "outer_scan_out", TensorProto.FLOAT, [d0, None]
+        # the schema infers this as unknown so the outer scan output dim is "?".
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[{d0}] outer_state_in,
+               float[{sequence_length}, {d0}, {d1}] outer_scan_in)
+                => (float[{d0}] outer_state_out,
+                    float[{d0}, ?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen <
+                    num_scan_inputs = 1,
+                    scan_output_axes = [1],
+                    body = b (float[{d0}] state_in,
+                              float[{d0}, {d1}] scan_in)
+                        => (float[{d0}] state_out,
+                            float[{d0}, {d1}] scan_out)
+                        <float two = {{2.0}}>
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Mul(scan_in, two)
+                    }}
+                > ("", outer_state_in, outer_scan_in)
+            }}
+            """
         )
-        scan_var_len_node = make_node(
-            "ScanVarLen",
-            ["", "outer_state_in", "outer_scan_in"],
-            ["outer_state_out", "outer_scan_out"],
-            body=body,
-            num_scan_inputs=1,
-            scan_output_axes=[1],
-        )
-        graph = make_graph(
-            [scan_var_len_node],
-            "scan_var_len_graph",
-            [outer_state_in, outer_scan_in],
-            [outer_state_out, outer_scan_out],
-        )
-        model = make_model(graph, opset_imports=[make_opsetid("", 27)])
         check_model(model)
 
         state_value = np.array([100.0, 200.0], dtype=np.float32)
@@ -1540,49 +1520,29 @@ class TestReferenceEvaluator(unittest.TestCase):
         sequence_length = 3
         feature = 2
 
-        state_in = make_tensor_value_info("state_in", TensorProto.FLOAT, [feature])
-        scan_in = make_tensor_value_info("scan_in", TensorProto.FLOAT, [feature])
-        state_out = make_tensor_value_info("state_out", TensorProto.FLOAT, [feature])
-        scan_out = make_tensor_value_info("scan_out", TensorProto.FLOAT, [feature])
-        body = make_graph(
-            [
-                make_node("Identity", ["state_in"], ["state_out"]),
-                make_node("Identity", ["scan_in"], ["scan_out"]),
-            ],
-            "scan_var_len_mismatch_body",
-            [state_in, scan_in],
-            [state_out, scan_out],
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (int64[1] output_lengths,
+               float[{feature}] outer_state_in,
+               float[{sequence_length}, {feature}] outer_scan_in)
+                => (float[{feature}] outer_state_out,
+                    float[?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen <
+                    num_scan_inputs = 1,
+                    body = b (float[{feature}] state_in,
+                              float[{feature}] scan_in)
+                        => (float[{feature}] state_out,
+                            float[{feature}] scan_out)
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Identity(scan_in)
+                    }}
+                > (output_lengths, outer_state_in, outer_scan_in)
+            }}
+            """
         )
-
-        output_lengths_in = make_tensor_value_info(
-            "output_lengths", TensorProto.INT64, [1]
-        )
-        outer_state_in = make_tensor_value_info(
-            "outer_state_in", TensorProto.FLOAT, [feature]
-        )
-        outer_scan_in = make_tensor_value_info(
-            "outer_scan_in", TensorProto.FLOAT, [sequence_length, feature]
-        )
-        outer_state_out = make_tensor_value_info(
-            "outer_state_out", TensorProto.FLOAT, [feature]
-        )
-        outer_scan_out = make_tensor_value_info(
-            "outer_scan_out", TensorProto.FLOAT, [None]
-        )
-        scan_node = make_node(
-            "ScanVarLen",
-            ["output_lengths", "outer_state_in", "outer_scan_in"],
-            ["outer_state_out", "outer_scan_out"],
-            body=body,
-            num_scan_inputs=1,
-        )
-        graph = make_graph(
-            [scan_node],
-            "scan_var_len_mismatch",
-            [output_lengths_in, outer_state_in, outer_scan_in],
-            [outer_state_out, outer_scan_out],
-        )
-        model = make_model(graph, opset_imports=[make_opsetid("", 27)])
         check_model(model)
 
         # Actual concat-axis total is sequence_length * feature = 6, but
