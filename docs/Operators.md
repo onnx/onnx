@@ -32189,7 +32189,27 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 # Given an input sequence [x1, ..., xN], sum up its elements using a scan
 # returning the final state (x1+x2+...+xN) as well the scan_output
 # [x1, x1+x2, ..., x1+x2+...+xN]
-scan_body = _make_sum_scan_body([2])
+sum_in = onnx.helper.make_tensor_value_info(
+    "sum_in", onnx.TensorProto.FLOAT, [2]
+)
+next_ = onnx.helper.make_tensor_value_info(
+    "next", onnx.TensorProto.FLOAT, [2]
+)
+sum_out = onnx.helper.make_tensor_value_info(
+    "sum_out", onnx.TensorProto.FLOAT, [2]
+)
+scan_out = onnx.helper.make_tensor_value_info(
+    "scan_out", onnx.TensorProto.FLOAT, [2]
+)
+add_node = onnx.helper.make_node(
+    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
+)
+id_node = onnx.helper.make_node(
+    "Identity", inputs=["sum_out"], outputs=["scan_out"]
+)
+scan_body = onnx.helper.make_graph(
+    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
+)
 # create scan op node
 no_sequence_lens = ""  # optional input, not supplied
 node = onnx.helper.make_node(
@@ -32226,7 +32246,27 @@ expect(
 # Given an input sequence [x1, ..., xN], sum up its elements using a scan
 # returning the final state (x1+x2+...+xN) as well the scan_output
 # [x1, x1+x2, ..., x1+x2+...+xN]
-scan_body = _make_sum_scan_body([2])
+sum_in = onnx.helper.make_tensor_value_info(
+    "sum_in", onnx.TensorProto.FLOAT, [2]
+)
+next_ = onnx.helper.make_tensor_value_info(
+    "next", onnx.TensorProto.FLOAT, [2]
+)
+sum_out = onnx.helper.make_tensor_value_info(
+    "sum_out", onnx.TensorProto.FLOAT, [2]
+)
+scan_out = onnx.helper.make_tensor_value_info(
+    "scan_out", onnx.TensorProto.FLOAT, [2]
+)
+add_node = onnx.helper.make_node(
+    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
+)
+id_node = onnx.helper.make_node(
+    "Identity", inputs=["sum_out"], outputs=["scan_out"]
+)
+scan_body = onnx.helper.make_graph(
+    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
+)
 # create scan op node
 node = onnx.helper.make_node(
     "Scan",
@@ -32332,7 +32372,27 @@ expect(
 ```python
 # Scan with scalar state and scan output to verify that output
 # shapes are not distorted (e.g. (T,) not (T, 1)).
-scan_body = _make_sum_scan_body([])
+sum_in = onnx.helper.make_tensor_value_info(
+    "sum_in", onnx.TensorProto.FLOAT, []
+)
+next_ = onnx.helper.make_tensor_value_info(
+    "next", onnx.TensorProto.FLOAT, []
+)
+sum_out = onnx.helper.make_tensor_value_info(
+    "sum_out", onnx.TensorProto.FLOAT, []
+)
+scan_out = onnx.helper.make_tensor_value_info(
+    "scan_out", onnx.TensorProto.FLOAT, []
+)
+add_node = onnx.helper.make_node(
+    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
+)
+id_node = onnx.helper.make_node(
+    "Identity", inputs=["sum_out"], outputs=["scan_out"]
+)
+scan_body = onnx.helper.make_graph(
+    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
+)
 node = onnx.helper.make_node(
     "Scan",
     inputs=["initial", "x"],
