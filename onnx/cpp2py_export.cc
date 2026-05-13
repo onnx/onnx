@@ -912,6 +912,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   printer.def("model_to_text", ProtoBytesToText<ModelProto>);
   printer.def("function_to_text", ProtoBytesToText<FunctionProto>);
   printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
+  printer.def("node_to_text", ProtoBytesToText<NodeProto>);
 }
 
 } // namespace ONNX_NAMESPACE
