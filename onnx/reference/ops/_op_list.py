@@ -193,6 +193,7 @@ __all__ = [
     "RotaryEmbedding",
     "Round",
     "Scan",
+    "ScanVarLen",
     "ScatterElements",
     "ScatterND",
     "Selu",
@@ -438,6 +439,7 @@ from onnx.reference.ops.op_roi_align import RoiAlign
 from onnx.reference.ops.op_rotary_embedding import RotaryEmbedding
 from onnx.reference.ops.op_round import Round
 from onnx.reference.ops.op_scan import Scan
+from onnx.reference.ops.op_scan_var_len import ScanVarLen
 from onnx.reference.ops.op_scatter_elements import ScatterElements
 from onnx.reference.ops.op_scatternd import ScatterND
 from onnx.reference.ops.op_selu import Selu
