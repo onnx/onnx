@@ -6,6 +6,7 @@ from __future__ import annotations
 import numpy as np
 
 from onnx.reference.op_run import OpRun
+from onnx.reference.op_run import tensor_dtype_to_np_dtype
 
 
 class Scan(OpRun):
@@ -182,14 +183,10 @@ class Scan(OpRun):
         # Resolve dtype, preferring the body's declared element type.
         dtype = None
         if type_proto is not None and type_proto.tensor_type.elem_type:
-            from onnx.helper import tensor_dtype_to_np_dtype
-
             dtype = tensor_dtype_to_np_dtype(type_proto.tensor_type.elem_type)
         if dtype is None:
             if scan_values:
-                dtype = scan_values[
-                    min(scan_output_index, len(scan_values) - 1)
-                ].dtype
+                dtype = scan_values[min(scan_output_index, len(scan_values) - 1)].dtype
             else:
                 dtype = np.float32
 
