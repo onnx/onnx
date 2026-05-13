@@ -64,7 +64,7 @@ class Scan(OpRun):
             )
             for i in range(num_scan_outputs)
         ]
-        max_dir_out = max(output_directions)
+        max_dir_out = max(output_directions) if output_directions else 0
         if max_dir_out != 0:
             raise RuntimeError(
                 "Scan is not implemented for other output output_direction than 0."
@@ -77,7 +77,7 @@ class Scan(OpRun):
             )
             for i in range(num_scan_outputs)
         ]
-        max_axe_out = max(output_axes)
+        max_axe_out = max(output_axes) if output_axes else 0
         if max_axe_out != 0:
             raise RuntimeError("Scan is not implemented for other output axes than 0.")
 
