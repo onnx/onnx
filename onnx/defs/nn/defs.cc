@@ -2058,7 +2058,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Input(0, "X", "Input for n-gram extraction", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "Ngram results", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .TypeConstraint("T", {types::String, types::Int32, types::Int64}, "Input is ether string UTF-8 or int32/int64")
+        .TypeConstraint("T", {types::String, types::Int32, types::Int64}, "Input is either string UTF-8 or int32/int64")
         .TypeConstraint("T1", {types::Float}, "1-D tensor of floats")
         .Attr(
             "max_gram_length",
