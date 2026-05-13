@@ -6324,6 +6324,148 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(got, expected)
         self.assertEqual(got.shape, (1, 1, 1))
 
+    def test_scan_zero_scan_outputs(self):
+        # Regression test: a Scan node with K=0 scan outputs (only loop-state
+        # variables threaded through, no per-iteration accumulated outputs) is
+        # spec-legal and must not crash the reference evaluator with
+        # `ValueError: max() arg is an empty sequence` from _common_run_shape.
+        # Body: takes (state, scan_in_elt) -> (state + scan_in_elt). N=1, K=0.
+        body_state_in = make_tensor_value_info("s_in", TensorProto.FLOAT, [2])
+        body_scan_in = make_tensor_value_info("x_in", TensorProto.FLOAT, [2])
+        body_state_out = make_tensor_value_info("s_out", TensorProto.FLOAT, [2])
+        body = make_graph(
+            [make_node("Add", ["s_in", "x_in"], ["s_out"])],
+            "scan_body",
+            [body_state_in, body_scan_in],
+            [body_state_out],
+        )
+
+        init_state = make_tensor_value_info("init_state", TensorProto.FLOAT, [2])
+        scan_input = make_tensor_value_info("scan_input", TensorProto.FLOAT, [3, 2])
+        final_state = make_tensor_value_info("final_state", TensorProto.FLOAT, [2])
+        scan_node = make_node(
+            "Scan",
+            ["init_state", "scan_input"],
+            ["final_state"],
+            num_scan_inputs=1,
+            body=body,
+        )
+        graph = make_graph([scan_node], "g", [init_state, scan_input], [final_state])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        xs = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+        (got,) = sess.run(None, {"init_state": init, "scan_input": xs})
+
+        assert_allclose(got, xs.sum(axis=0))
+
+    def test_scan_max_iter_zero(self):
+        # Regression test: when max_iter == 0 (zero-length scan input along the
+        # iteration axis) the scan output must preserve the per-iteration shape
+        # declared by the body, i.e. shape == (0, *body_out_shape), not (0,).
+        body = make_graph(
+            [
+                make_node("Add", ["s_in", "x_in"], ["s_out"]),
+                make_node("Identity", ["s_out"], ["scan_out"]),
+            ],
+            "scan_body",
+            [
+                make_tensor_value_info("s_in", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("x_in", TensorProto.FLOAT, [2]),
+            ],
+            [
+                make_tensor_value_info("s_out", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("scan_out", TensorProto.FLOAT, [2]),
+            ],
+        )
+        graph = make_graph(
+            [
+                make_node(
+                    "Scan",
+                    ["init", "xs"],
+                    ["final", "ys"],
+                    num_scan_inputs=1,
+                    body=body,
+                )
+            ],
+            "g",
+            [
+                make_tensor_value_info("init", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("xs", TensorProto.FLOAT, [None, 2]),
+            ],
+            [
+                make_tensor_value_info("final", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("ys", TensorProto.FLOAT, [None, 2]),
+            ],
+        )
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        xs = np.zeros((0, 2), dtype=np.float32)
+        final, ys = sess.run(None, {"init": init, "xs": xs})
+
+        assert_allclose(final, init)
+        self.assertEqual(ys.shape, (0, 2))
+        self.assertEqual(ys.dtype, np.float32)
+
+    def test_scan_k_neq_m(self):
+        # Regression test for the original `num_scan_outputs = len(args) - N`
+        # bug, which incorrectly forced K == M. Here M=1 scan input but K=2
+        # scan outputs, so the body has 1 + 2 = 3 outputs.
+        body = make_graph(
+            [
+                make_node("Add", ["s_in", "x_in"], ["s_out"]),
+                make_node("Identity", ["s_out"], ["scan_out_a"]),
+                make_node("Mul", ["x_in", "x_in"], ["scan_out_b"]),
+            ],
+            "scan_body",
+            [
+                make_tensor_value_info("s_in", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("x_in", TensorProto.FLOAT, [2]),
+            ],
+            [
+                make_tensor_value_info("s_out", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("scan_out_a", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("scan_out_b", TensorProto.FLOAT, [2]),
+            ],
+        )
+        graph = make_graph(
+            [
+                make_node(
+                    "Scan",
+                    ["init", "xs"],
+                    ["final", "ys_a", "ys_b"],
+                    num_scan_inputs=1,
+                    body=body,
+                )
+            ],
+            "g",
+            [
+                make_tensor_value_info("init", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("xs", TensorProto.FLOAT, [3, 2]),
+            ],
+            [
+                make_tensor_value_info("final", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("ys_a", TensorProto.FLOAT, [3, 2]),
+                make_tensor_value_info("ys_b", TensorProto.FLOAT, [3, 2]),
+            ],
+        )
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        xs = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+        final, ys_a, ys_b = sess.run(None, {"init": init, "xs": xs})
+
+        assert_allclose(final, xs.sum(axis=0))
+        assert_allclose(ys_a, np.cumsum(xs, axis=0))
+        assert_allclose(ys_b, xs * xs)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
