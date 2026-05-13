@@ -3938,7 +3938,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors."));
 
 static constexpr const char* LinearAttention_ver25_doc = R"DOC(
-  
 Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
 
 All inputs use 3D packed format [B, T, H*D]; q_num_heads and kv_num_heads are always
