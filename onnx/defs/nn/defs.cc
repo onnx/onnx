@@ -362,12 +362,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The indices are computed as flatten 1-D tensor, "
             "and the indices do not consider padding. "
             "So the values in indices are in [0, N x C x D1 x ... x Dn).",
-            "I",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,
-            OpSchema::NonDifferentiable)
-        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64"));
+            OpSchema::NonDifferentiable));
 
 static void maxUnpoolShapeInference(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
@@ -842,7 +841,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "x_scale",
             "Scale tensor for input 'x'. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)")
+            types::Float)
         .Input(
             2,
             "x_zero_point",
@@ -870,7 +869,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             4,
             "w_scale",
             "Scale tensor for input 'w'. It could be a scalar or a 1-D tensor, which means a per-tensor/layer or per output channel quantization. If it's a 1-D tensor, its number of elements should be equal to the number of output channels (M).",
-            "tensor(float)")
+            types::Float)
         .Input(
             5,
             "w_zero_point",
@@ -880,7 +879,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             6,
             "y_scale",
             "Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)")
+            types::Float)
         .Input(
             7,
             "y_zero_point",
@@ -891,7 +890,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "B",
             "Optional 1D bias to be added to the convolution, has size of M. "
             "Bias must be quantized using scale = x_scale * w_scale and zero_point = 0",
-            "T4",
+            types::Int32,
             OpSchema::Optional)
         .Output(
             0,
@@ -903,7 +902,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", {types::Int8, types::UInt8}, "Constrain input type to 8-bit integer tensor.")
         .TypeConstraint("T2", {types::Int8, types::UInt8}, "Constrain filter type to 8-bit integer tensor.")
         .TypeConstraint("T3", {types::Int8, types::UInt8}, "Constrain output type to 8-bit integer tensor.")
-        .TypeConstraint("T4", {types::Int32}, "Constrain bias type to 32-bit integer tensor.")
         .Attr("auto_pad", conv_auto_pad_doc, AttributeProto::STRING, std::string("NOTSET"))
         .Attr(
             "kernel_shape",
@@ -1023,7 +1021,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Output data tensor that contains the result of the "
             "convolution. The output dimensions are functions "
             "of the kernel size, stride size, and pad lengths.",
-            "T3")
+            types::Int32)
         .TypeConstraint(
             "T1",
             {types::Int8, types::UInt8},
@@ -1032,7 +1030,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {types::Int8, types::UInt8},
             "Constrain input w and its zero point data type to 8-bit integer tensor.")
-        .TypeConstraint("T3", {types::Int32}, "Constrain output y data type to 32-bit integer tensor.")
         .Attr("auto_pad", conv_auto_pad_doc, AttributeProto::STRING, std::string("NOTSET"))
         .Attr(
             "kernel_shape",
@@ -2057,9 +2054,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .Input(0, "X", "Input for n-gram extraction", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .Output(0, "Y", "Ngram results", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Output(0, "Y", "Ngram results", types::Float, OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T", {types::String, types::Int32, types::Int64}, "Input is either string UTF-8 or int32/int64")
-        .TypeConstraint("T1", {types::Float}, "1-D tensor of floats")
         .Attr(
             "max_gram_length",
             "Maximum n-gram length. If this value is 3, 3-grams will be used to generate the output.",
@@ -2357,7 +2353,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The shape of the spatial dimensions of the image after rearranging the column blocks."
             "This is a 1-dimensional tensor with size of at least 2, containing the value [H_img, W_img] "
             " for a 2-D image or [dim_i1, dim_i2, ..., dim_iN] for a N-D image.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -2369,7 +2365,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "This is a 1-dimensional tensor of size of at least 2, containing the value [H_block, W_block] "
             " for a 2-D image or [dim_b1, dim_b2, ..., dim_bN] for a N-D block."
             "This is the block-shape before dilation is applied to it.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -3068,14 +3064,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "position_ids",
             "The position indices for the tokens. 2D tensor with shape `(batch_size, sequence_length)`",
-            "M",
+            types::Int64,
             OpSchema::Optional)
         .Output(0, "Y", "Tensor with same shape as input.", "T")
         .TypeConstraint(
             "T",
             {types::Float, types::Float16, types::BFloat16},
             "Constrain input and output types to float tensors.")
-        .TypeConstraint("M", {types::Int64}, "Constrain input and output types to integer tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           propagateShapeFromInputToOutput(ctx, 0, 0);
@@ -3422,7 +3417,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tokens in each sample. A padding mask can be derived from this. This should not be used together with "
             "`past_key` and `past_value` inputs or `present_key` and `present_value` outputs "
             "(See the KV cache use cases in the operator description).",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional)
         .Output(
             0,

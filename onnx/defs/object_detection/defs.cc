@@ -70,7 +70,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "batch_indices",
             "1-D tensor of shape (num_rois,) with each element denoting "
             "the index of the corresponding image in the batch.",
-            "T2")
+            types::Int64)
         .Output(
             0,
             "Y",
@@ -79,7 +79,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain types to float tensors.")
-        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -118,31 +117,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "boxes",
             "An input tensor with shape [num_batches, spatial_dimension, 4]. The single box data format is indicated by center_point_box.",
-            "tensor(float)")
-        .Input(1, "scores", "An input tensor with shape [num_batches, num_classes, spatial_dimension]", "tensor(float)")
+            types::Float)
+        .Input(1, "scores", "An input tensor with shape [num_batches, num_classes, spatial_dimension]", types::Float)
         .Input(
             2,
             "max_output_boxes_per_class",
             "Integer representing the maximum number of boxes to be selected per batch per class. It is a scalar. Default to 0, which means no output.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional)
         .Input(
             3,
             "iou_threshold",
             "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Boxes with IoU strictly greater than this threshold are suppressed. It is scalar. Value range [0, 1]. Default to 0.",
-            "tensor(float)",
+            types::Float,
             OpSchema::Optional)
         .Input(
             4,
             "score_threshold",
             "Float representing the threshold for deciding when to remove boxes based on score. It is a scalar.",
-            "tensor(float)",
+            types::Float,
             OpSchema::Optional)
         .Output(
             0,
             "selected_indices",
             "selected indices from the boxes tensor. [num_selected_indices, 3], the selected index format is [batch_index, class_index, box_index].",
-            "tensor(int64)")
+            types::Int64)
         .Attr(
             "center_point_box",
             "Integer indicate the format of the box data. The default is 0. "

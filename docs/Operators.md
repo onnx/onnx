@@ -561,7 +561,7 @@ This version of the operator has been available since version 20 of the default 
 <dl>
 <dt><tt>theta</tt> (non-differentiable) : T1</dt>
 <dd>input batch of affine matrices with shape (N, 2, 3) for 2D or (N, 3, 4) for 3D</dd>
-<dt><tt>size</tt> (non-differentiable) : T2</dt>
+<dt><tt>size</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>the target output image size (N, C, H, W) for 2D or (N, C, D, H, W) for 3D</dd>
 </dl>
 
@@ -577,8 +577,6 @@ This version of the operator has been available since version 20 of the default 
 <dl>
 <dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain grid types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain size's type to int64 tensors.</dd>
 </dl>
 
 
@@ -673,7 +671,7 @@ Other versions of this operator: <a href="Changelog.md#And-1">1</a>
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -682,8 +680,6 @@ Other versions of this operator: <a href="Changelog.md#And-1">1</a>
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
 <dd>Constrain input to boolean tensor.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 
@@ -8074,7 +8070,7 @@ Other versions of this operator: <a href="Changelog.md#Compress-9">9</a>
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>condition</tt> (non-differentiable) : T1</dt>
+<dt><tt>condition</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length along the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
 </dl>
 
@@ -8090,8 +8086,6 @@ Other versions of this operator: <a href="Changelog.md#Compress-9">9</a>
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain to boolean tensors.</dd>
 </dl>
 
 
@@ -8433,7 +8427,7 @@ Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>,
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T1</dt>
+<dt><tt>input</tt> : tensor(int64)</dt>
 <dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar. All values must be >= 0.</dd>
 </dl>
 
@@ -8447,8 +8441,6 @@ Other versions of this operator: <a href="Changelog.md#ConstantOfShape-9">9</a>,
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(uint4), tensor(int4), tensor(bool), tensor(bfloat16), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
 <dd>Constrain output types to be numerics or boolean.</dd>
 </dl>
@@ -8887,7 +8879,7 @@ This version of the operator has been available since version 10 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>y</tt> : T3</dt>
+<dt><tt>y</tt> : tensor(int32)</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
 </dl>
 
@@ -8898,8 +8890,6 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input x and its zero point data type to 8-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input w and its zero point data type to 8-bit integer tensor.</dd>
-<dt><tt>T3</tt> : tensor(int32)</dt>
-<dd>Constrain output y data type to 32-bit integer tensor.</dd>
 </dl>
 
 
@@ -11878,7 +11868,7 @@ This version of the operator has been available since version 11 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>x</tt> : T1</dt>
+<dt><tt>x</tt> : tensor(float)</dt>
 <dd>Input tensor</dd>
 </dl>
 
@@ -11896,8 +11886,6 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float)</dt>
-<dd>Constrain 'x' to float tensor.</dd>
 <dt><tt>T2</tt> : tensor(uint8)</dt>
 <dd>Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.</dd>
 </dl>
@@ -12248,7 +12236,7 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -12257,8 +12245,6 @@ Other versions of this operator: <a href="Changelog.md#Equal-1">1</a>, <a href="
 <dl>
 <dt><tt>T</tt> : tensor(bool), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16), tensor(string)</dt>
 <dd>Constrain input types to all (non-complex) tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 
@@ -12962,7 +12948,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 <dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
-<dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
+<dt><tt>sequence_lens</tt> (optional, non-differentiable) : tensor(int32)</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
@@ -12982,8 +12968,6 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">1</a>, <a href="Ch
 <dl>
 <dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(int32)</dt>
-<dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
 
@@ -14335,7 +14319,7 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">1</a>, <a href
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -14344,8 +14328,6 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">1</a>, <a href
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input types to all numeric tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 
@@ -14512,7 +14494,7 @@ Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -14521,8 +14503,6 @@ Other versions of this operator: <a href="Changelog.md#GreaterOrEqual-12">12</a>
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input types to all numeric tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 
@@ -15944,7 +15924,7 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 #### Inputs
 
 <dl>
-<dt><tt>cond</tt> : B</dt>
+<dt><tt>cond</tt> : tensor(bool)</dt>
 <dd>Condition for the if. The tensor must contain a single element.</dd>
 </dl>
 
@@ -15960,8 +15940,6 @@ Other versions of this operator: <a href="Changelog.md#If-1">1</a>, <a href="Cha
 <dl>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), seq(tensor(float8e8m0)), seq(tensor(uint2)), seq(tensor(int2)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1)), optional(tensor(float8e8m0)), optional(tensor(uint2)), optional(tensor(int2))</dt>
 <dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.</dd>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Only bool</dd>
 </dl>
 
 
@@ -16217,25 +16195,19 @@ This version of the operator has been available since version 20 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>encoded_stream</tt> (non-differentiable) : T1</dt>
+<dt><tt>encoded_stream</tt> (non-differentiable) : tensor(uint8)</dt>
 <dd>Encoded stream</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>image</tt> (non-differentiable) : T2</dt>
+<dt><tt>image</tt> (non-differentiable) : tensor(uint8)</dt>
 <dd>Decoded image</dd>
 </dl>
 
 #### Type Constraints
 
-<dl>
-<dt><tt>T1</tt> : tensor(uint8)</dt>
-<dd>Constrain input types to 8-bit unsigned integer tensor.</dd>
-<dt><tt>T2</tt> : tensor(uint8)</dt>
-<dd>Constrain output types to 8-bit unsigned integer tensor.</dd>
-</dl>
 
 
 #### Examples
@@ -16596,7 +16568,7 @@ Other versions of this operator: <a href="Changelog.md#IsInf-10">10</a>
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dt><tt>Y</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>output</dd>
 </dl>
 
@@ -16605,8 +16577,6 @@ Other versions of this operator: <a href="Changelog.md#IsInf-10">10</a>
 <dl>
 <dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(bool)</dt>
-<dd>Constrain output types to boolean tensors.</dd>
 </dl>
 
 
@@ -16700,7 +16670,7 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>, <a href="
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dt><tt>Y</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>output</dd>
 </dl>
 
@@ -16709,8 +16679,6 @@ Other versions of this operator: <a href="Changelog.md#IsNaN-9">9</a>, <a href="
 <dl>
 <dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz)</dt>
 <dd>Constrain input types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(bool)</dt>
-<dd>Constrain output types to boolean tensors.</dd>
 </dl>
 
 
@@ -16967,7 +16935,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
+<dt><tt>sequence_lens</tt> (optional, non-differentiable) : tensor(int32)</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
@@ -16993,8 +16961,6 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dl>
 <dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(int32)</dt>
-<dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
 
@@ -17508,7 +17474,7 @@ Other versions of this operator: <a href="Changelog.md#Less-1">1</a>, <a href="C
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -17517,8 +17483,6 @@ Other versions of this operator: <a href="Changelog.md#Less-1">1</a>, <a href="C
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input types to all numeric tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 
@@ -17685,7 +17649,7 @@ Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -17694,8 +17658,6 @@ Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input types to all numeric tensors.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 
@@ -18045,9 +18007,9 @@ Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="C
 #### Inputs (2 - &#8734;)
 
 <dl>
-<dt><tt>M</tt> (optional) : I</dt>
+<dt><tt>M</tt> (optional) : tensor(int64)</dt>
 <dd>A maximum trip-count for the loop specified at runtime. Optional. Pass empty string to skip.</dd>
-<dt><tt>cond</tt> (optional) : B</dt>
+<dt><tt>cond</tt> (optional) : tensor(bool)</dt>
 <dd>A boolean termination condition. Optional. Pass empty string to skip.</dd>
 <dt><tt>v_initial</tt> (variadic, heterogeneous) : V</dt>
 <dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
@@ -18065,10 +18027,6 @@ Other versions of this operator: <a href="Changelog.md#Loop-1">1</a>, <a href="C
 <dl>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(bfloat16)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128)), seq(tensor(float8e4m3fn)), seq(tensor(float8e4m3fnuz)), seq(tensor(float8e5m2)), seq(tensor(float8e5m2fnuz)), seq(tensor(uint4)), seq(tensor(int4)), seq(tensor(float4e2m1)), seq(tensor(float8e8m0)), seq(tensor(uint2)), seq(tensor(int2)), optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(bfloat16))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(bfloat16)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), optional(tensor(float8e4m3fn)), optional(tensor(float8e4m3fnuz)), optional(tensor(float8e5m2)), optional(tensor(float8e5m2fnuz)), optional(tensor(uint4)), optional(tensor(int4)), optional(tensor(float4e2m1)), optional(tensor(float8e8m0)), optional(tensor(uint2)), optional(tensor(int2))</dt>
 <dd>All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.</dd>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>tensor of int64, which should be a scalar.</dd>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
 
@@ -19199,7 +19157,7 @@ This version of the operator has been available since version 10 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (non-differentiable) : T3</dt>
+<dt><tt>Y</tt> (non-differentiable) : tensor(int32)</dt>
 <dd>Matrix multiply results from A * B</dd>
 </dl>
 
@@ -19210,8 +19168,6 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain input A data type to 8-bit integer tensor.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input B data type to 8-bit integer tensor.</dd>
-<dt><tt>T3</tt> : tensor(int32)</dt>
-<dd>Constrain output Y data type as 32-bit integer tensor.</dd>
 </dl>
 
 
@@ -19444,7 +19400,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href
 <dl>
 <dt><tt>Y</tt> (differentiable) : T</dt>
 <dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
-<dt><tt>Indices</tt> (optional, non-differentiable) : I</dt>
+<dt><tt>Indices</tt> (optional, non-differentiable) : tensor(int64)</dt>
 <dd>Indices tensor from max pooling across the input tensor. The dimensions of indices are the same as output tensor. The values in indices of are the indices of the selected values during pooling. The indices are computed as flatten 1-D tensor, and the indices do not consider padding. So the values in indices are in [0, N x C x D1 x ... x Dn).</dd>
 </dl>
 
@@ -19453,8 +19409,6 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">1</a>, <a href
 <dl>
 <dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input and output types to float and 8 bit tensors.</dd>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Constrain index tensor to int64</dd>
 </dl>
 
 
@@ -23186,7 +23140,7 @@ Other versions of this operator: <a href="Changelog.md#OptionalHasElement-15">15
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : B</dt>
+<dt><tt>output</tt> : tensor(bool)</dt>
 <dd>A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.</dd>
 </dl>
 
@@ -23195,8 +23149,6 @@ Other versions of this operator: <a href="Changelog.md#OptionalHasElement-15">15
 <dl>
 <dt><tt>O</tt> : optional(seq(tensor(uint8))), optional(seq(tensor(uint16))), optional(seq(tensor(uint32))), optional(seq(tensor(uint64))), optional(seq(tensor(int8))), optional(seq(tensor(int16))), optional(seq(tensor(int32))), optional(seq(tensor(int64))), optional(seq(tensor(float16))), optional(seq(tensor(float))), optional(seq(tensor(double))), optional(seq(tensor(string))), optional(seq(tensor(bool))), optional(seq(tensor(complex64))), optional(seq(tensor(complex128))), optional(tensor(uint8)), optional(tensor(uint16)), optional(tensor(uint32)), optional(tensor(uint64)), optional(tensor(int8)), optional(tensor(int16)), optional(tensor(int32)), optional(tensor(int64)), optional(tensor(float16)), optional(tensor(float)), optional(tensor(double)), optional(tensor(string)), optional(tensor(bool)), optional(tensor(complex64)), optional(tensor(complex128)), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain input type to optional tensor and optional sequence types.</dd>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Constrain output to a boolean tensor.</dd>
 </dl>
 
 
@@ -23385,7 +23337,7 @@ Other versions of this operator: <a href="Changelog.md#Or-1">1</a>
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -23394,8 +23346,6 @@ Other versions of this operator: <a href="Changelog.md#Or-1">1</a>
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
 <dd>Constrain input to boolean tensor.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 
@@ -24007,7 +23957,7 @@ This version of the operator has been available since version 10 of the default 
 <dd>Scale tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
 <dt><tt>y_zero_point</tt> : T3</dt>
 <dd>Zero point tensor for output 'y'. It's a scalar, which means a per-tensor/layer quantization.</dd>
-<dt><tt>B</tt> (optional) : T4</dt>
+<dt><tt>B</tt> (optional) : tensor(int32)</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M. Bias must be quantized using scale = x_scale * w_scale and zero_point = 0</dd>
 </dl>
 
@@ -24027,8 +23977,6 @@ This version of the operator has been available since version 10 of the default 
 <dd>Constrain filter type to 8-bit integer tensor.</dd>
 <dt><tt>T3</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain output type to 8-bit integer tensor.</dd>
-<dt><tt>T4</tt> : tensor(int32)</dt>
-<dd>Constrain bias type to 32-bit integer tensor.</dd>
 </dl>
 
 
@@ -25256,7 +25204,7 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Ch
 <dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional, differentiable) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>sequence_lens</tt> (optional, non-differentiable) : T1</dt>
+<dt><tt>sequence_lens</tt> (optional, non-differentiable) : tensor(int32)</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
@@ -25276,8 +25224,6 @@ Other versions of this operator: <a href="Changelog.md#RNN-1">1</a>, <a href="Ch
 <dl>
 <dt><tt>T</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(int32)</dt>
-<dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
 
@@ -28507,25 +28453,19 @@ This version of the operator has been available since version 20 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dt><tt>X</tt> (non-differentiable) : tensor(string)</dt>
 <dd>Tensor with strings to match on.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dt><tt>Y</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Tensor of bools indicating if each input string fully matches the regex pattern specified.</dd>
 </dl>
 
 #### Type Constraints
 
-<dl>
-<dt><tt>T1</tt> : tensor(string)</dt>
-<dd>Inputs must be UTF-8 strings</dd>
-<dt><tt>T2</tt> : tensor(bool)</dt>
-<dd>Outputs are bools and are True where there is a full regex match and False otherwise.</dd>
-</dl>
 
 
 #### Examples
@@ -31049,7 +30989,7 @@ Other versions of this operator: <a href="Changelog.md#RoiAlign-10">10</a>, <a h
 <dd>Input data tensor from the previous operator; 4-D feature map of shape (N, C, H, W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
 <dt><tt>rois</tt> : T1</dt>
 <dd>RoIs (Regions of Interest) to pool over; rois is 2-D input of shape (num_rois, 4) given as [[x1, y1, x2, y2], ...]. The RoIs' coordinates are in the coordinate system of the input image. Each coordinate set has a 1:1 correspondence with the 'batch_indices' input.</dd>
-<dt><tt>batch_indices</tt> : T2</dt>
+<dt><tt>batch_indices</tt> : tensor(int64)</dt>
 <dd>1-D tensor of shape (num_rois,) with each element denoting the index of the corresponding image in the batch.</dd>
 </dl>
 
@@ -31065,8 +31005,6 @@ Other versions of this operator: <a href="Changelog.md#RoiAlign-10">10</a>, <a h
 <dl>
 <dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain types to int tensors.</dd>
 </dl>
 
 
@@ -31516,7 +31454,7 @@ This version of the operator has been available since version 23 of the default 
 <dd>The cosine values for the rotation. 2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
 <dt><tt>sin_cache</tt> : T</dt>
 <dd>The sine values for the rotation. 2D tensor with shape `(max_position_id_plus_1, head_size / 2)` for full rotation or `(max_position_id_plus_1, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are provided. 3D tensor with shape `(batch_size, sequence_length, head_size / 2)` for full rotation or `(batch_size, sequence_length, rotary_embedding_dim / 2)` for partial rotation when `position_ids` are not provided. `max_position_id_plus_1` is a parameter to the model.</dd>
-<dt><tt>position_ids</tt> (optional) : M</dt>
+<dt><tt>position_ids</tt> (optional) : tensor(int64)</dt>
 <dd>The position indices for the tokens. 2D tensor with shape `(batch_size, sequence_length)`</dd>
 </dl>
 
@@ -31532,8 +31470,6 @@ This version of the operator has been available since version 23 of the default 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>M</tt> : tensor(int64)</dt>
-<dd>Constrain input and output types to integer tensors.</dd>
 </dl>
 
 
@@ -33441,7 +33377,7 @@ This version of the operator has been available since version 11 of the default 
 #### Outputs
 
 <dl>
-<dt><tt>length</tt> : I</dt>
+<dt><tt>length</tt> : tensor(int64)</dt>
 <dd>Length of input sequence. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
@@ -33450,8 +33386,6 @@ This version of the operator has been available since version 11 of the default 
 <dl>
 <dt><tt>S</tt> : seq(tensor(uint8)), seq(tensor(uint16)), seq(tensor(uint32)), seq(tensor(uint64)), seq(tensor(int8)), seq(tensor(int16)), seq(tensor(int32)), seq(tensor(int64)), seq(tensor(float16)), seq(tensor(float)), seq(tensor(double)), seq(tensor(string)), seq(tensor(bool)), seq(tensor(complex64)), seq(tensor(complex128))</dt>
 <dd>Constrain to any tensor type.</dd>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Constrain output to integral tensor. It must be a scalar(tensor of empty shape).</dd>
 </dl>
 
 
@@ -33905,7 +33839,7 @@ Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="
 #### Outputs
 
 <dl>
-<dt><tt>shape</tt> (non-differentiable) : T1</dt>
+<dt><tt>shape</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Shape of the input tensor</dd>
 </dl>
 
@@ -33914,8 +33848,6 @@ Other versions of this operator: <a href="Changelog.md#Shape-1">1</a>, <a href="
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
-<dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrain output to int64 tensor.</dd>
 </dl>
 
 
@@ -34285,7 +34217,7 @@ Other versions of this operator: <a href="Changelog.md#Size-1">1</a>, <a href="C
 #### Outputs
 
 <dl>
-<dt><tt>size</tt> (non-differentiable) : T1</dt>
+<dt><tt>size</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Total number of elements of the input tensor</dd>
 </dl>
 
@@ -34294,8 +34226,6 @@ Other versions of this operator: <a href="Changelog.md#Size-1">1</a>, <a href="C
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
-<dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 
@@ -37460,29 +37390,21 @@ This version of the operator has been available since version 20 of the default 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> (non-differentiable) : T1</dt>
+<dt><tt>X</tt> (non-differentiable) : tensor(string)</dt>
 <dd>Tensor of strings to split.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (non-differentiable) : T2</dt>
+<dt><tt>Y</tt> (non-differentiable) : tensor(string)</dt>
 <dd>Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.</dd>
-<dt><tt>Z</tt> (non-differentiable) : T3</dt>
+<dt><tt>Z</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>The number of substrings generated for each input element.</dd>
 </dl>
 
 #### Type Constraints
 
-<dl>
-<dt><tt>T1</tt> : tensor(string)</dt>
-<dd>The input must be a UTF-8 string tensor</dd>
-<dt><tt>T2</tt> : tensor(string)</dt>
-<dd>Tensor of substrings.</dd>
-<dt><tt>T3</tt> : tensor(int64)</dt>
-<dd>The number of substrings generated.</dd>
-</dl>
 
 
 #### Examples
@@ -38341,7 +38263,7 @@ This version of the operator has been available since version 9 of the default O
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> (non-differentiable) : T1</dt>
+<dt><tt>Y</tt> (non-differentiable) : tensor(float)</dt>
 <dd>Ngram results</dd>
 </dl>
 
@@ -38350,8 +38272,6 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
 <dd>Input is ether string UTF-8 or int32/int64</dd>
-<dt><tt>T1</tt> : tensor(float)</dt>
-<dd>1-D tensor of floats</dd>
 </dl>
 
 
@@ -38702,7 +38622,7 @@ Other versions of this operator: <a href="Changelog.md#Tile-1">1</a>, <a href="C
 <dl>
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor of any shape.</dd>
-<dt><tt>repeats</tt> (non-differentiable) : T1</dt>
+<dt><tt>repeats</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies along input's dimensions.</dd>
 </dl>
 
@@ -38718,8 +38638,6 @@ Other versions of this operator: <a href="Changelog.md#Tile-1">1</a>, <a href="C
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
-<dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
 
 
@@ -38812,7 +38730,7 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 <dl>
 <dt><tt>Values</tt> (differentiable) : T</dt>
 <dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing top K values from the input tensor</dd>
-<dt><tt>Indices</tt> (non-differentiable) : I</dt>
+<dt><tt>Indices</tt> (non-differentiable) : tensor(int64)</dt>
 <dd>Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
@@ -38821,8 +38739,6 @@ Other versions of this operator: <a href="Changelog.md#TopK-1">1</a>, <a href="C
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(bfloat16)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Constrain index tensor to int64</dd>
 </dl>
 
 
@@ -40420,7 +40336,7 @@ Other versions of this operator: <a href="Changelog.md#Where-9">9</a>
 #### Inputs
 
 <dl>
-<dt><tt>condition</tt> (non-differentiable) : B</dt>
+<dt><tt>condition</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>When True (nonzero), yield X, otherwise yield Y</dd>
 <dt><tt>X</tt> (differentiable) : T</dt>
 <dd>values selected at indices where condition is True</dd>
@@ -40438,8 +40354,6 @@ Other versions of this operator: <a href="Changelog.md#Where-9">9</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>B</tt> : tensor(bool)</dt>
-<dd>Constrain to boolean tensors.</dd>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types (including bfloat).</dd>
 </dl>
@@ -40514,7 +40428,7 @@ Other versions of this operator: <a href="Changelog.md#Xor-1">1</a>
 #### Outputs
 
 <dl>
-<dt><tt>C</tt> (non-differentiable) : T1</dt>
+<dt><tt>C</tt> (non-differentiable) : tensor(bool)</dt>
 <dd>Result tensor.</dd>
 </dl>
 
@@ -40523,8 +40437,6 @@ Other versions of this operator: <a href="Changelog.md#Xor-1">1</a>
 <dl>
 <dt><tt>T</tt> : tensor(bool)</dt>
 <dd>Constrain input to boolean tensor.</dd>
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrain output to boolean tensor.</dd>
 </dl>
 
 
@@ -41227,7 +41139,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>R</tt> : T1</dt>
 <dd>The initial learning rate.</dd>
-<dt><tt>T</tt> : T2</dt>
+<dt><tt>T</tt> : tensor(int64)</dt>
 <dd>The update count of "X". It should be a scalar.</dd>
 <dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
 <dd>The current values of optimized tensors, followed by their respective gradients, followed by their respective accumulated squared gradients.For example, if two tensor "X_1" and "X_2" are optimized, The input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
@@ -41245,8 +41157,6 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain input types to 64-bit integer scalars.</dd>
 <dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
@@ -41443,7 +41353,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>R</tt> : T1</dt>
 <dd>The initial learning rate.</dd>
-<dt><tt>T</tt> : T2</dt>
+<dt><tt>T</tt> : tensor(int64)</dt>
 <dd>The update count of "X". It should be a scalar.</dd>
 <dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
 <dd>The tensors to be optimized, followed by their respective gradients, followed by their respective accumulated gradients (aka momentum), followed by their respective accumulated squared gradients. For example, to optimize tensors "X_1" and "X_2,", the input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", accumulated gradient of "X_1", accumulated gradient of "X_2", accumulated squared gradient of "X_1", accumulated squared gradient of "X_2"].</dd>
@@ -41461,8 +41371,6 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain input types to 64-bit integer scalars.</dd>
 <dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
@@ -41939,7 +41847,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>R</tt> : T1</dt>
 <dd>The learning rate.</dd>
-<dt><tt>T</tt> : T2</dt>
+<dt><tt>T</tt> : tensor(int64)</dt>
 <dd>Update count of "X". It should be a scalar.</dd>
 <dt><tt>inputs</tt> (variadic, heterogeneous) : T3</dt>
 <dd>It sequentially contains the current values of optimized tensors, then their gradient tensors, and finally their momentum tensors. For example, if two tensors "X_1" and "X_2" are optimized, The expected input list would be ["X_1", "X_2", gradient of "X_1", gradient of "X_2", momentum of "X_1", momentum of "X_2"].</dd>
@@ -41957,8 +41865,6 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float scalars.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd>Constrain input types to 64-bit integer scalars.</dd>
 <dt><tt>T3</tt> : tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 </dl>

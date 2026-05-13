@@ -28,7 +28,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     25,
     OpSchema()
         .SetDoc("If conditional")
-        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", "B")
+        .Input(0, "cond", "Condition for the if. The tensor must contain a single element.", types::Bool)
         .Output(
             0,
             "outputs",
@@ -67,7 +67,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             control_flow_types_ir13(),
             "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.")
-        .TypeConstraint("B", {types::Bool}, "Only bool")
         .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -80,13 +79,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "M",
             "A maximum trip-count for the loop specified at runtime. Optional."
             " Pass empty string to skip.",
-            "I",
+            types::Int64,
             OpSchema::Optional)
         .Input(
             1,
             "cond",
             "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
+            types::Bool,
             OpSchema::Optional)
         .Input(
             2,
@@ -119,8 +118,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "V",
             control_flow_types_ir13(),
             "All Tensor, Sequence(Tensor), Optional(Tensor), and Optional(Sequence(Tensor)) types up to IRv13.")
-        .TypeConstraint("I", {types::Int64}, "tensor of int64, which should be a scalar.")
-        .TypeConstraint("B", {types::Bool}, "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
 ONNX_OPERATOR_SET_SCHEMA(

@@ -268,19 +268,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     11,
     OpSchema()
         .SetDoc(DynamicQuantizeLinear_ver11_doc)
-        .Input(0, "x", "Input tensor", "T1")
+        .Input(0, "x", "Input tensor", types::Float)
         .Output(0, "y", "Quantized output tensor", "T2")
-        .Output(
-            1,
-            "y_scale",
-            "Output scale. It's a scalar, which means a per-tensor/layer quantization.",
-            "tensor(float)")
+        .Output(1, "y_scale", "Output scale. It's a scalar, which means a per-tensor/layer quantization.", types::Float)
         .Output(
             2,
             "y_zero_point",
             "Output zero point. It's a scalar, which means a per-tensor/layer quantization.",
             "T2")
-        .TypeConstraint("T1", {types::Float}, "Constrain 'x' to float tensor.")
         .TypeConstraint("T2", {types::UInt8}, "Constrain 'y_zero_point' and 'y' to 8-bit unsigned integer tensor.")
         .FunctionBody(R"ONNX(
         {
