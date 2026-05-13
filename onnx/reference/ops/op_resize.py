@@ -452,7 +452,9 @@ def _interpolate_1d_along_axis(
         coeffs = coeffs / coeff_sum
 
     # Edge-padding is equivalent to clamping indices into the valid range.
-    clamped = np.clip(neighbor_idxes, 0, input_width - 1)
+    # Cast to intp so np.take works on 32-bit platforms, where the default
+    # integer dtype is int32 and a safe cast from int64 would be rejected.
+    clamped = np.clip(neighbor_idxes, 0, input_width - 1).astype(np.intp)
     gathered = np.take(data, clamped, axis=axis)
 
     coeff_shape = (1,) * axis + coeffs.shape + (1,) * (data.ndim - axis - 1)
