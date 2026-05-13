@@ -20,4 +20,6 @@ void LoopInferenceFunction(InferenceContext& ctx);
 
 void ScanInferenceFunction(InferenceContext& ctx);
 
+void ScanVarLenInferenceFunction(InferenceContext& ctx);
+
 } // namespace ONNX_NAMESPACE

@@ -190,4 +190,88 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types_ir13(), "All Tensor types up to IRv13.")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction)); // Shares same shape inference as opset 11
 
+ONNX_OPERATOR_SET_SCHEMA(
+    ScanVarLen,
+    27,
+    OpSchema()
+        .SetDoc(kDoc_ScanVarLen_ver27)
+        .Input(
+            0,
+            "output_lengths",
+            "Optional 1-D int64 tensor with K entries (one per scan output). "
+            "When provided, output_lengths[i] specifies the total size of the concatenation axis "
+            "(scan_output_axes[i], default 0) of the i-th scan output, summed over all iterations. "
+            "Conforming implementations may use this value to pre-allocate output buffers. "
+            "It is a runtime error if the actual sum of per-iteration concat-axis sizes "
+            "does not equal output_lengths[i].",
+            "I",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            1,
+            "initial_state_and_scan_inputs",
+            "Initial values of the loop's N state variables followed by M scan_inputs.",
+            "V",
+            OpSchema::Variadic,
+            false,
+            1,
+            OpSchema::NonDifferentiable)
+        .Output(
+            0,
+            "final_state_and_scan_outputs",
+            "Final values of the loop's N state variables followed by K scan_outputs. "
+            "Each scan_output is produced by concatenating the corresponding body subgraph "
+            "output along the axis specified by scan_output_axes (default 0). Per-iteration "
+            "contributions may have different sizes along this axis (including zero); the "
+            "final scan output's size along that axis is the sum of the per-iteration sizes. "
+            "All other dimensions must match across iterations.",
+            "V",
+            OpSchema::Variadic,
+            false,
+            1,
+            OpSchema::NonDifferentiable)
+        .Attr(
+            "body",
+            "The graph run each iteration. It has N+M inputs: "
+            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
+            "(loop state variables..., scan_output_elts...). Each scan_output is created "
+            "by concatenating the corresponding scan_output_elt along the axis specified by "
+            "scan_output_axes (default 0) across all iterations. Unlike Scan, the per-iteration "
+            "scan_output_elt may have a different size along the concatenation axis from "
+            "iteration to iteration (the dimension already exists in the body output).",
+            AttributeProto::GRAPH,
+            true)
+        .Attr("num_scan_inputs", "An attribute specifying the number of scan_inputs M.", AttributeProto::INT, true)
+        .Attr(
+            "scan_input_directions",
+            "An optional list of M flags. The i-th element of the list specifies the direction "
+            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
+            "indicates reverse direction. "
+            "If omitted, all scan_input tensors will be scanned in the forward direction.",
+            AttributeProto::INTS,
+            false)
+        .Attr(
+            "scan_input_axes",
+            "An optional list of M flags. The i-th element of the list specifies the axis "
+            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
+            "be used as the scan axis for every scan_input. Negative value for an axis means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r = rank(input).",
+            AttributeProto::INTS,
+            false)
+        .Attr(
+            "scan_output_axes",
+            "An optional list of K flags. The i-th element of the list specifies the axis "
+            "along which the i-th scan_output is concatenated. This axis must already exist "
+            "in the corresponding body subgraph output. If omitted, 0 will be used as the "
+            "concatenation axis for every scan_output. Negative value for an axis means "
+            "counting dimensions from the back. Accepted range is [-r, r-1] where r is the "
+            "rank of the body subgraph's corresponding output.",
+            AttributeProto::INTS,
+            false)
+        .TypeConstraint("V", OpSchema::all_tensor_types_ir13(), "All Tensor types up to IRv13.")
+        .TypeConstraint("I", {"tensor(int64)"}, "1-D int64 tensor for output_lengths.")
+        .TypeAndShapeInferenceFunction(ScanVarLenInferenceFunction));
+
 } // namespace ONNX_NAMESPACE

@@ -356,4 +356,200 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   }
 }
 
+void ScanVarLenInferenceFunction(InferenceContext& ctx) {
+  // ScanVarLen has an optional non-variadic input `output_lengths` at index 0,
+  // followed by a variadic input `initial_state_and_scan_inputs` starting at index 1.
+  constexpr size_t kInputOffset = 1;
+
+  auto num_total_inputs = ctx.getNumInputs();
+  if (num_total_inputs < kInputOffset) {
+    fail_shape_inference("ScanVarLen requires the output_lengths input slot.");
+  }
+  auto num_variadic_inputs = num_total_inputs - kInputOffset;
+
+  auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
+  if (num_scan_inputs > num_variadic_inputs) {
+    fail_shape_inference(
+        "ScanVarLen num_scan_inputs (",
+        num_scan_inputs,
+        ") exceeds number of variadic inputs (",
+        num_variadic_inputs,
+        ").");
+  }
+  auto num_loop_state_vars = num_variadic_inputs - num_scan_inputs;
+  auto num_outputs = ctx.getNumOutputs();
+  if (num_outputs < num_loop_state_vars) {
+    fail_shape_inference(
+        "ScanVarLen number of outputs (",
+        num_outputs,
+        ") is less than number of loop state variables (",
+        num_loop_state_vars,
+        ").");
+  }
+  auto num_scan_outputs = num_outputs - num_loop_state_vars;
+
+  // Validate the optional output_lengths input when present.
+  if (ctx.hasInput(0)) {
+    const auto* output_lengths_type = ctx.getInputType(0);
+    if (!output_lengths_type || !output_lengths_type->has_tensor_type() ||
+        output_lengths_type->tensor_type().elem_type() != TensorProto::INT64) {
+      fail_type_inference("ScanVarLen 'output_lengths' must be a tensor(int64).");
+    }
+    if (output_lengths_type->tensor_type().has_shape()) {
+      const auto& output_lengths_shape = output_lengths_type->tensor_type().shape();
+      if (output_lengths_shape.dim_size() != 1) {
+        fail_shape_inference(
+            "ScanVarLen 'output_lengths' must be a 1-D tensor; got rank ", output_lengths_shape.dim_size(), ".");
+      }
+      const auto& length_dim = output_lengths_shape.dim(0);
+      if (length_dim.has_dim_value() && static_cast<size_t>(length_dim.dim_value()) != num_scan_outputs) {
+        fail_shape_inference(
+            "ScanVarLen 'output_lengths' has length ",
+            length_dim.dim_value(),
+            "; expected number of scan outputs (",
+            num_scan_outputs,
+            ").");
+      }
+    }
+  }
+
+  std::vector<int64_t> axes, output_axes;
+  if (getRepeatedAttribute(ctx, "scan_input_axes", axes)) {
+    if (axes.size() != num_scan_inputs) {
+      fail_shape_inference(
+          "Number of scan input axes specified (",
+          axes.size(),
+          ") is not equal to number of scan inputs (",
+          num_scan_inputs,
+          ").");
+    }
+  } else {
+    axes.insert(axes.end(), num_scan_inputs, 0);
+  }
+
+  if (getRepeatedAttribute(ctx, "scan_output_axes", output_axes)) {
+    if (output_axes.size() != num_scan_outputs) {
+      fail_shape_inference(
+          "Number of scan output axes specified (",
+          output_axes.size(),
+          ") is not equal to number of scan outputs (",
+          num_scan_outputs,
+          ").");
+    }
+  } else {
+    output_axes.insert(output_axes.end(), num_scan_outputs, 0);
+  }
+
+  std::vector<TypeProto> temporary_type_protos;
+  temporary_type_protos.reserve(num_variadic_inputs);
+
+  std::vector<const TypeProto*> subgraph_input_types;
+  subgraph_input_types.reserve(num_variadic_inputs);
+
+  TensorShapeProto_Dimension sequence_len_dim;
+
+  for (size_t i = 0; i < num_variadic_inputs; ++i) {
+    const size_t input_idx = i + kInputOffset;
+    const bool is_loop_state_var = i < num_loop_state_vars;
+    const bool has_shape = hasInputShape(ctx, input_idx);
+    const auto* const input_type = ctx.getInputType(input_idx);
+
+    if (!input_type || !input_type->has_tensor_type()) {
+      fail_type_inference("ScanVarLen input ", input_idx, " was not a tensor.");
+    }
+
+    if (is_loop_state_var) {
+      // Loop state variables propagate type and shape 1:1 from input to the
+      // matching ScanVarLen output, and pass type/shape unchanged to the body subgraph.
+      propagateElemTypeFromInputToOutput(ctx, input_idx, i);
+      if (has_shape) {
+        propagateShapeFromInputToOutput(ctx, input_idx, i);
+      }
+      subgraph_input_types.push_back(input_type);
+    } else {
+      // Scan inputs: strip the sequence axis before passing to the body subgraph
+      // and merge the sequence length dim across all scan inputs.
+      if (has_shape) {
+        const auto& shape = input_type->tensor_type().shape();
+        int axis = static_cast<int>(axes[i - num_loop_state_vars]);
+        axis = handle_negative_axis_validate("scan_input_axes", axis, shape.dim_size());
+
+        const auto& dims = shape.dim();
+        mergeInDimensionInfo(dims.Get(axis), sequence_len_dim, 1);
+
+        temporary_type_protos.emplace_back(RemoveIthDimensionFromShape(*input_type, axis));
+        subgraph_input_types.emplace_back(&temporary_type_protos.back());
+      } else {
+        subgraph_input_types.push_back(input_type);
+      }
+    }
+  }
+
+  // Run inferencing on the body subgraph.
+  std::vector<const TypeProto*> output_types;
+
+  GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
+  if (graphInferencer) {
+    // The inputs to ScanVarLen do not represent inputs to the body subgraph
+    // (scan inputs are sliced per-iteration), so pass nullptr for each.
+    std::vector<const TensorProto*> input_data(num_variadic_inputs, nullptr);
+    output_types = graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  // If empty(), assume inferencing was skipped.
+  if (!output_types.empty()) {
+    if (output_types.size() != num_outputs) {
+      fail_type_inference(
+          "Graph attribute inferencing returned type information for ",
+          output_types.size(),
+          " outputs. Expected ",
+          num_outputs);
+    }
+
+    for (size_t i = 0; i < num_outputs; ++i) {
+      const bool is_loop_state_var = i < num_loop_state_vars;
+      const auto* const subgraph_output_type = output_types[i];
+      auto* op_output_type = ctx.getOutputType(i);
+      auto* mutable_op_output_tensor_type = op_output_type->mutable_tensor_type();
+
+      if (!subgraph_output_type->has_tensor_type()) {
+        fail_type_inference("ScanVarLen 'body' subgraph outputs should all be tensors but output ", i, " was not.");
+      }
+      const auto& subgraph_output_tensor_type = subgraph_output_type->tensor_type();
+
+      if (is_loop_state_var) {
+        // Type has been propagated already; merge shape from the subgraph output.
+        mergeInShapeInfo(subgraph_output_tensor_type, *mutable_op_output_tensor_type);
+      } else {
+        mutable_op_output_tensor_type->set_elem_type(subgraph_output_tensor_type.elem_type());
+
+        if (subgraph_output_tensor_type.has_shape()) {
+          // Unlike Scan, ScanVarLen does NOT insert a new sequence dimension.
+          // Instead, the concatenation axis already exists in the body subgraph's
+          // output, and its size in the final output is the sum of per-iteration
+          // sizes (data-dependent across iterations). Replace that axis's
+          // dimension with an unknown (free) dimension while keeping every other
+          // dimension propagated as-is from the subgraph output.
+          const TensorShapeProto& subgraph_output_shape = subgraph_output_tensor_type.shape();
+          const int subgraph_output_rank = subgraph_output_shape.dim_size();
+          int output_axis = static_cast<int>(output_axes[i - num_loop_state_vars]);
+          output_axis = handle_negative_axis_validate("scan_output_axes", output_axis, subgraph_output_rank);
+
+          TensorShapeProto inferred_shape;
+          for (int j = 0; j < subgraph_output_rank; ++j) {
+            if (j == output_axis) {
+              // Unknown dimension: total concat-axis size is data-dependent.
+              inferred_shape.add_dim();
+            } else {
+              *inferred_shape.add_dim() = subgraph_output_shape.dim(j);
+            }
+          }
+
+          mergeInShapeInfo(inferred_shape, *mutable_op_output_tensor_type);
+        }
+      }
+    }
+  }
+}
+
 } // namespace ONNX_NAMESPACE

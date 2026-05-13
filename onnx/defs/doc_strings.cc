@@ -779,6 +779,115 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 )DOC";
 
+const char kDoc_ScanVarLen_ver27[] = R"DOC(
+ScanVarLen is a variable-length variant of Scan, designed for computations over batches
+of ragged (variable-length) sequences. It iterates a body subgraph over one or more
+scan_input tensors and produces zero or more scan_output tensors whose contributions per
+iteration may have different sizes along the concatenation axis.
+
+Like Scan, ScanVarLen combines ideas from general recurrences and functional constructs
+such as scan, fold, map and zip. The body subgraph is executed once per iteration and
+produces (updated) values for the loop state variables and per-iteration values for each
+scan output. Loop state variables are propagated from iteration to iteration unchanged in
+type and shape (subject to the body subgraph's shape contract). The per-iteration values
+of each scan output are concatenated to form the final scan output.
+
+The differences from Scan are:
+
+1. ScanVarLen has an additional optional input `output_lengths` at position 0.
+   `output_lengths` is a 1-D int64 tensor with one entry per scan output. When provided,
+   `output_lengths[i]` MUST equal the total size of the concatenation axis
+   (`scan_output_axes[i]`, default 0) of scan output `i`, summed across all iterations.
+   Conforming implementations may use this value to pre-allocate the output buffer.
+   It is a runtime error if `output_lengths[i]` does not match the actual concatenation
+   size produced by the loop. When `output_lengths` is omitted, no pre-allocation hint
+   is supplied and implementations compute the total size dynamically.
+
+2. The concatenation axis specified by `scan_output_axes[i]` is an axis that ALREADY
+   EXISTS in the body subgraph's i-th scan output. Each iteration's body output may have
+   a different size along this axis (including 0). The final scan output is the
+   concatenation along that axis, so the final size is the SUM of the per-iteration sizes
+   (which need not be 1, unlike Scan).
+
+   In contrast, standard Scan inserts a NEW dimension of size 1 at `scan_output_axes[i]`
+   for each iteration and stacks the per-iteration outputs along that new dimension.
+
+3. ScanVarLen has no `scan_output_directions` attribute; scan outputs are always
+   produced by appending the per-iteration values (forward direction).
+
+The attribute `body` specifies the subgraph executed each iteration. It takes as input
+the current values of the loop state variables and the current iterated element of the
+scan inputs. It must return the (updated) values of the loop state variables and the
+per-iteration value of each scan output. Unlike Scan, the body subgraph's scan outputs
+are NOT required to have the same shape across iterations along the concatenation axis;
+all other dimensions must match across iterations.
+
+The iterated element passed to the body subgraph does not have a sequence axis. It has
+rank one less than the corresponding scan input (the dimension at `scan_input_axes[i]`
+is stripped).
+
+Because of the ONNX restriction that only the last parameter of an operator can be
+variadic, the initial-states and scan-inputs are listed together as one variadic input,
+following the optional `output_lengths` input. Similarly, the final-states and scan-outputs
+are listed together as one variadic output. The attribute `num_scan_inputs` indicates the
+number M of scan-inputs, so the first N = (num_variadic_inputs - M) variadic inputs are the
+initial loop state variables and the next M are the scan inputs.
+
+The behavior of
+
+    ScanVarLen <
+        num_scan_inputs = m,
+        body = loop-body,
+        scan_input_axes = [axis_1, ..., axis_m],
+        scan_output_axes = [out_axis_1, ..., out_axis_k]
+    > (output_lengths, init_1, ..., init_n, scan_1, ..., scan_m)
+
+is equivalent to the following pseudo-code:
+
+    // scan_i.shape[axis_i] denotes the sequence-length of scan_i and is required
+    // to be equal across all scan inputs.
+    sequence_length = scan_1.shape[axis_1];
+
+    // initialize state-variables
+    st_1 = init_1; ... ; st_n = init_n;
+    // initialize scan-output accumulators: each is empty along its concat axis.
+    scan_out_1 = []; ... ; scan_out_k = [];
+
+    for (int t = 0; t < sequence_length; ++t) {
+        // strip the sequence axis from each scan input
+        si_1 = scan_1<axis=axis_1>[t]; ... ; si_m = scan_m<axis=axis_m>[t];
+        // execute the body subgraph
+        st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m);
+        // concatenate per-iteration scan-output contributions along the
+        // designated axis (which already exists in so_i).
+        scan_out_1 = Concat<axis=out_axis_1>(scan_out_1, so_1);
+        ...
+        scan_out_k = Concat<axis=out_axis_k>(scan_out_k, so_k);
+    }
+
+    // If output_lengths was provided, the concatenation-axis size of each
+    // scan_out_i is required to equal output_lengths[i]; otherwise a runtime
+    // error is raised.
+
+    return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
+
+If `sequence_length` is 0, each scan output has size 0 along its concatenation axis
+(and the body subgraph is not executed); shape inference still propagates the body
+subgraph's output shapes (with the concat-axis dimension left unknown).
+
+Each iteration's per-output concat-axis size may be 0 (zero-size contributions are
+allowed and contribute nothing to the final concatenation).
+
+*Sample usage: PackedAttention-like processing of variable-length sequences*
+
+A batch of B variable-length sequences whose total length is L can be packed as a
+single tensor X of shape [L, D]. Each sequence's length is given by a scalar lookup at
+iteration t. The body can index into X using the running offset (carried as a state
+variable) and the per-iteration length to produce a per-iteration output of shape
+[len_t, D]. With `scan_output_axes=[0]`, ScanVarLen concatenates these to produce a
+final output of shape [L, D], where L = sum(len_t).
+)DOC";
+
 const char kDoc_Pad_ver24[] = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
@@ -1315,6 +1424,7 @@ const char kDoc_Sqrt_ver6[] = "";
 const char kDoc_Asin_ver7[] = "";
 const char kDoc_Expand_ver8[] = "";
 const char kDoc_scan_24[] = "";
+const char kDoc_ScanVarLen_ver27[] = "";
 const char kDoc_Pad_ver24[] = "";
 const char kDoc_Cos_ver7[] = "";
 const char kDoc_HardSwish_ver14[] = "";
