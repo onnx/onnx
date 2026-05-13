@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -309,6 +310,163 @@ def _get_all_coords(data: np.ndarray) -> np.ndarray:
     )
 
 
+def _compute_x_ori(
+    coordinate_transformation_mode: str,
+    y: np.ndarray,
+    scale_factor: float,
+    input_width: int,
+    output_width: float,
+    output_width_int: int,
+    roi: np.ndarray | list[float] | None,
+) -> tuple[np.ndarray, np.ndarray | None]:
+    """Map output indices ``y`` to source coordinates per the chosen mode.
+
+    Returns ``(x_ori, is_extrapolated)``. ``is_extrapolated`` is ``None`` for
+    every mode except ``tf_crop_and_resize``, where it flags output positions
+    whose source coordinate falls outside the input range.
+    """
+    is_extrapolated: np.ndarray | None = None
+    if coordinate_transformation_mode == "align_corners":
+        x_ori = (
+            np.zeros(output_width_int, dtype=np.float64)
+            if output_width == 1
+            else y * (input_width - 1) / (output_width - 1)
+        )
+    elif coordinate_transformation_mode == "asymmetric":
+        x_ori = y / scale_factor
+    elif coordinate_transformation_mode == "tf_crop_and_resize":
+        if roi is None:
+            raise ValueError("roi cannot be None.")
+        if output_width == 1:
+            x_ori = np.full(
+                output_width_int,
+                (roi[1] - roi[0]) * (input_width - 1) / 2,
+                dtype=np.float64,
+            )
+        else:
+            x_ori = y * (roi[1] - roi[0]) * (input_width - 1) / (output_width - 1)
+        x_ori = x_ori + roi[0] * (input_width - 1)
+        is_extrapolated = (x_ori < 0) | (x_ori > input_width - 1)
+    elif coordinate_transformation_mode == "pytorch_half_pixel":
+        x_ori = (
+            np.full(output_width_int, -0.5, dtype=np.float64)
+            if output_width == 1
+            else (y + 0.5) / scale_factor - 0.5
+        )
+    elif coordinate_transformation_mode == "half_pixel":
+        x_ori = (y + 0.5) / scale_factor - 0.5
+    elif coordinate_transformation_mode == "half_pixel_symmetric":
+        adjustment = output_width_int / output_width
+        center = input_width / 2
+        offset = center * (1 - adjustment)
+        x_ori = offset + (y + 0.5) / scale_factor - 0.5
+    else:
+        raise ValueError(
+            f"Invalid coordinate_transformation_mode: {coordinate_transformation_mode!r}."
+        )
+    return x_ori, is_extrapolated
+
+
+def _interpolate_1d_along_axis(
+    data: np.ndarray,
+    axis: int,
+    scale_factor: float,
+    output_width_int: int,
+    get_coeffs: Callable[[float, float], np.ndarray],
+    roi: np.ndarray | list[float] | None = None,
+    extrapolation_value: float = 0.0,
+    coordinate_transformation_mode: str = "half_pixel",
+    exclude_outside: bool = False,
+) -> np.ndarray:
+    """Vectorized 1-D resize along a single axis.
+
+    Computes the same result as calling :func:`_interpolate_1d_with_x` for
+    every output coordinate along ``axis``, but in a single batched numpy
+    operation. Resize interpolation is separable along axes, so resizing an
+    N-D tensor reduces to applying this routine once per axis.
+    """
+    if output_width_int == 0:
+        # Zero-sized output along this axis — nothing to interpolate, but
+        # downstream code indexes ratios[0] / coeffs[0], so bail out early.
+        empty_shape = list(data.shape)
+        empty_shape[axis] = 0
+        return np.empty(empty_shape, dtype=data.dtype)
+
+    input_width = data.shape[axis]
+    output_width = scale_factor * input_width
+    y = np.arange(output_width_int, dtype=np.float64)
+
+    x_ori, is_extrapolated = _compute_x_ori(
+        coordinate_transformation_mode,
+        y,
+        scale_factor,
+        input_width,
+        output_width,
+        output_width_int,
+        roi,
+    )
+
+    x_ori_int = np.floor(x_ori).astype(np.int64)
+    # Match the scalar code: prefer the pixel on the left of x_ori by
+    # forcing ratio = 1 when x_ori is an exact integer.
+    integer_mask = x_ori == x_ori_int
+    ratios = np.where(integer_mask, 1.0, x_ori - x_ori_int)
+
+    # Kernel size is fixed per axis: for non-antialias modes it doesn't
+    # depend on ratio at all, and for antialias modes it depends only on
+    # scale. Compute coefficients per output position.
+    sample_coeffs = np.asarray(get_coeffs(float(ratios[0]), scale_factor))
+    n = len(sample_coeffs)
+    coeffs = np.empty((output_width_int, n), dtype=np.float64)
+    coeffs[0] = sample_coeffs
+    for i in range(1, output_width_int):
+        coeffs[i] = get_coeffs(float(ratios[i]), scale_factor)
+
+    # Replicate _get_neighbor_idxes semantics: take the n indices closest to
+    # x_ori (in padded-edge coordinates) with ties broken by smaller index.
+    pad_width = int(np.ceil(n / 2))
+    x_padded = x_ori + pad_width
+    p_padded = np.floor(x_padded).astype(np.int64)
+    frac = x_padded - p_padded
+
+    if n % 2 == 0:
+        # Even kernel: window centers are half-integers. At an integer
+        # x_padded, the tie between p-0.5 and p+0.5 goes to the smaller
+        # center (p-0.5), so the window starts at p - n/2.
+        offset_from_p = np.where(frac == 0, -(n // 2), -(n // 2) + 1)
+    else:
+        # Odd kernel: window centered on the nearest integer. Ties
+        # (frac == 0.5) go to the smaller center.
+        base = -((n - 1) // 2)
+        offset_from_p = np.where(frac <= 0.5, base, base + 1)
+
+    start_padded = p_padded + offset_from_p
+    neighbor_idxes = start_padded[:, None] + np.arange(n)[None, :] - pad_width
+
+    if exclude_outside:
+        outside_mask = (neighbor_idxes < 0) | (neighbor_idxes >= input_width)
+        coeffs = np.where(outside_mask, 0.0, coeffs)
+        coeff_sum = coeffs.sum(axis=-1, keepdims=True)
+        # Guard against rows where every coefficient is zero.
+        coeff_sum = np.where(coeff_sum == 0, 1.0, coeff_sum)
+        coeffs = coeffs / coeff_sum
+
+    # Edge-padding is equivalent to clamping indices into the valid range.
+    clamped = np.clip(neighbor_idxes, 0, input_width - 1)
+    gathered = np.take(data, clamped, axis=axis)
+
+    coeff_shape = (1,) * axis + coeffs.shape + (1,) * (data.ndim - axis - 1)
+    weighted = gathered * coeffs.reshape(coeff_shape)
+    result = weighted.sum(axis=axis + 1)
+
+    if is_extrapolated is not None and is_extrapolated.any():
+        mask_shape = (1,) * axis + (output_width_int,) + (1,) * (data.ndim - axis - 1)
+        mask = is_extrapolated.reshape(mask_shape)
+        result = np.where(mask, extrapolation_value, result)
+
+    return result  # type: ignore[no-any-return]
+
+
 def _interpolate_nd(
     data: np.ndarray,
     get_coeffs: Callable[[float, float], np.ndarray],
@@ -322,6 +480,12 @@ def _interpolate_nd(
 ) -> np.ndarray:
     if output_size is None and scale_factors is None:
         raise ValueError("output_size is None and scale_factors is None.")
+
+    # roi is only meaningful for tf_crop_and_resize; for other modes it may
+    # arrive as an empty tensor. Normalize to None so downstream indexing
+    # (roi[axis], roi[axis + r]) doesn't fault on an empty array.
+    if roi is not None and np.asarray(roi).size == 0:
+        roi = None
 
     r = len(data.shape)
     if axes is not None:
@@ -377,20 +541,38 @@ def _interpolate_nd(
     if output_size is None:
         raise ValueError("output_size is None.")
 
-    ret = np.zeros(output_size)
-    for x in _get_all_coords(ret):
-        ret[tuple(x)] = _interpolate_nd_with_x(
-            data,
-            len(data.shape),
-            scale_factors,
-            output_size,
-            x,
+    # Separable interpolation: resize one axis at a time. This avoids the
+    # O(prod(output_shape)) scan of the old implementation, which called the
+    # recursive _interpolate_nd_with_x once per output element.
+    result = data if data.dtype == np.float64 else data.astype(np.float64)
+    for axis in axes:
+        axis_scale = float(scale_factors[axis])
+        axis_output = int(output_size[axis])
+        if (
+            math.isclose(axis_scale, 1.0)
+            and axis_output == result.shape[axis]
+            and (
+                roi is None
+                or (
+                    math.isclose(float(roi[axis]), 0.0)
+                    and math.isclose(float(roi[axis + r]), 1.0)
+                )
+            )
+        ):
+            # Identity along this axis — skip to avoid unnecessary work.
+            continue
+        axis_roi = None if roi is None else [roi[axis], roi[axis + r]]
+        result = _interpolate_1d_along_axis(
+            result,
+            axis,
+            axis_scale,
+            axis_output,
             get_coeffs,
-            roi=roi,
+            roi=axis_roi,
             exclude_outside=exclude_outside,
             **kwargs,
         )
-    return ret
+    return result
 
 
 class Resize(OpRun):

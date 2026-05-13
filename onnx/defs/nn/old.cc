@@ -1025,7 +1025,7 @@ computes the output.)DOC";
         OpSchema::Differentiable);
     schema.TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float16)", "tensor(float)", "tensor(double)"},
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.Attr(
         "kernel_shape",

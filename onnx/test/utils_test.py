@@ -3,8 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import io
 import os
 import shutil
+import tarfile
 import tempfile
 import unittest
 
@@ -58,6 +60,23 @@ class TestUtilityFunctions(unittest.TestCase):
         self.assertEqual(m1.graph.output[0], C0)
         self.assertEqual(m1.graph.output[1], C1)
         shutil.rmtree(tdir, ignore_errors=True)
+
+    def test_tar_members_filter_rejects_sibling_prefix_escape(self) -> None:
+        with tempfile.TemporaryDirectory() as tdir:
+            base = os.path.join(tdir, "model")
+            os.mkdir(base)
+            tar_path = os.path.join(tdir, "payload.tar")
+
+            with tarfile.open(tar_path, "w") as tar:
+                payload = b"outside extraction root"
+                info = tarfile.TarInfo("../model_evil/pwned.txt")
+                info.size = len(payload)
+                tar.addfile(info, io.BytesIO(payload))
+
+            with tarfile.open(tar_path) as tar, self.assertRaisesRegex(
+                RuntimeError, "directory traversal"
+            ):
+                onnx.utils._tar_members_filter(tar, base)
 
 
 if __name__ == "__main__":
