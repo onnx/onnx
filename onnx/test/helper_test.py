@@ -769,6 +769,70 @@ class TestHelperTensorFunctions(unittest.TestCase):
         vi = helper.make_sparse_tensor_value_info("Y", TensorProto.FLOAT, ())
         checker.check_value_info(vi)
 
+    def test_make_tensor_mismatched_dims_raises_error(self) -> None:
+        with self.assertRaises(ValueError) as context:
+            helper.make_tensor(
+                name="mismatch_test",
+                data_type=TensorProto.FLOAT,
+                dims=(2, 2),  # Expects 4 elements
+                vals=[1.0, 2.0, 3.0],  # Only 3 elements provided
+                raw=False,
+            )
+        self.assertIn("Number of values", str(context.exception))
+        self.assertIn("does not match tensor dimensions", str(context.exception))
+
+    def test_make_tensor_too_many_values_raises_error(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="too_many_test",
+                data_type=TensorProto.FLOAT,
+                dims=(2,),
+                vals=[1.0, 2.0, 3.0],
+                raw=False,
+            )
+
+    def test_make_tensor_scalar_dims(self) -> None:
+        tensor = helper.make_tensor(
+            name="scalar_test",
+            data_type=TensorProto.FLOAT,
+            dims=(),
+            vals=[42.0],
+            raw=False,
+        )
+        self.assertEqual(tensor.dims, [])
+        self.assertEqual(tensor.float_data, [42.0])
+
+    def test_make_tensor_zero_dims(self) -> None:
+        tensor = helper.make_tensor(
+            name="zero_dim_test",
+            data_type=TensorProto.FLOAT,
+            dims=(0,),
+            vals=[],
+            raw=False,
+        )
+        self.assertEqual(tensor.dims, [0])
+        self.assertEqual(len(tensor.float_data), 0)
+
+    def test_make_tensor_mismatched_dims_int4(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="mismatch_int4",
+                data_type=TensorProto.INT4,
+                dims=(2,),
+                vals=[1],  # Expects 2
+                raw=False,
+            )
+
+    def test_make_tensor_mismatched_dims_complex(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="mismatch_complex",
+                data_type=TensorProto.COMPLEX64,
+                dims=(2,),
+                vals=[1.0 + 2.0j],  # Expects 2
+                raw=False,
+            )
+
 
 class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
     def test_make_optional(self) -> None:
