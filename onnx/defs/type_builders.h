@@ -19,16 +19,20 @@ namespace ONNX_NAMESPACE::types {
 // drop into the existing string-based OpSchema API. Output is byte-identical
 // to hand-written strings.
 
+namespace internal {
+// Element-type name as it appears inside tensor(...) / sparse_tensor(...) /
+// map(...). Propagates std::invalid_argument if `e` is an unknown enum.
 inline std::string ElemStr(TensorProto::DataType e) {
   return Utils::DataTypeUtils::ToDataTypeString(static_cast<int32_t>(e));
 }
+} // namespace internal
 
 inline std::string Tensor(TensorProto::DataType e) {
-  return "tensor(" + ElemStr(e) + ")";
+  return "tensor(" + internal::ElemStr(e) + ")";
 }
 
 inline std::string SparseTensor(TensorProto::DataType e) {
-  return "sparse_tensor(" + ElemStr(e) + ")";
+  return "sparse_tensor(" + internal::ElemStr(e) + ")";
 }
 
 inline std::string Sequence(std::string inner) {
@@ -49,7 +53,7 @@ inline std::string Map(std::string value) {
           Key == TensorProto::UINT64 || Key == TensorProto::STRING,
       "invalid ONNX map key type — must be an integer type or STRING");
   // Space after the comma matches existing hand-written schema sources.
-  return "map(" + ElemStr(Key) + ", " + std::move(value) + ")";
+  return "map(" + internal::ElemStr(Key) + ", " + std::move(value) + ")";
 }
 
 // Prebuilt "tensor(<elem>)" strings — one per element type.

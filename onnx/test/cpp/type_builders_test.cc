@@ -28,6 +28,18 @@ TEST(TypeBuildersTest, MapConvention) {
 //   t::Map<TensorProto::FLOAT>(t::Int64);
 //   t::Map<TensorProto::BOOL>(t::Int64);
 
+TEST(TypeBuildersTest, VectorHelpers) {
+  EXPECT_EQ(
+      t::Tensors({TensorProto::FLOAT, TensorProto::INT64}),
+      (std::vector<std::string>{"tensor(float)", "tensor(int64)"}));
+  EXPECT_EQ(t::SparseTensors({TensorProto::FLOAT}), (std::vector<std::string>{"sparse_tensor(float)"}));
+  EXPECT_EQ(
+      t::Sequence(std::vector<std::string>{t::Float, t::Int64}),
+      (std::vector<std::string>{"seq(tensor(float))", "seq(tensor(int64))"}));
+  EXPECT_EQ(t::Optional(std::vector<std::string>{t::Bool}), (std::vector<std::string>{"optional(tensor(bool))"}));
+  EXPECT_EQ(t::Concat(std::vector<std::string>{"a", "b"}, {"c"}), (std::vector<std::string>{"a", "b", "c"}));
+}
+
 TEST(TypeBuildersTest, DropsIntoOpSchema) {
   OpSchema schema;
   schema.TypeConstraint("T", {t::Float, t::Sequence(t::Float), t::Optional(t::Int64)}, "test");
