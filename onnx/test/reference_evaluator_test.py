@@ -1449,6 +1449,89 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = oinf.run(None, inputs)
         assert_allclose(got[0], expected)
 
+    def test_scan_var_len(self):
+        # End-to-end ScanVarLen reference execution exercising non-default
+        # scan_output_axes (variant #4 from the implementation map): each
+        # iteration's scan output contribution is concatenated along axis 1
+        # rather than the default axis 0. Verifies that ReferenceEvaluator
+        # routes ScanVarLen through op_scan_var_len.ScanVarLen and produces
+        # numerically correct outputs.
+        sequence_length = 3
+        d0 = 2
+        d1 = 4
+
+        # Body subgraph: state passes through unchanged; scan output is the
+        # per-iteration scan input multiplied by 2 (rank 2, shape [d0, d1]).
+        state_in = make_tensor_value_info("state_in", TensorProto.FLOAT, [d0])
+        scan_in = make_tensor_value_info("scan_in", TensorProto.FLOAT, [d0, d1])
+        state_out = make_tensor_value_info("state_out", TensorProto.FLOAT, [d0])
+        scan_out = make_tensor_value_info("scan_out", TensorProto.FLOAT, [d0, d1])
+        two = from_array(np.array(2.0, dtype=np.float32), name="two")
+        body = make_graph(
+            [
+                make_node("Identity", ["state_in"], ["state_out"]),
+                make_node("Mul", ["scan_in", "two"], ["scan_out"]),
+            ],
+            "scan_var_len_body",
+            [state_in, scan_in],
+            [state_out, scan_out],
+            initializer=[two],
+        )
+
+        # Outer graph: omit the optional output_lengths input by passing an
+        # empty input name ("") in that position.
+        outer_state_in = make_tensor_value_info(
+            "outer_state_in", TensorProto.FLOAT, [d0]
+        )
+        outer_scan_in = make_tensor_value_info(
+            "outer_scan_in", TensorProto.FLOAT, [sequence_length, d0, d1]
+        )
+        outer_state_out = make_tensor_value_info(
+            "outer_state_out", TensorProto.FLOAT, [d0]
+        )
+        # Concat axis (axis 1) total size = sequence_length * d1 = 12 here, but
+        # the schema infers this as unknown so we declare it as None.
+        outer_scan_out = make_tensor_value_info(
+            "outer_scan_out", TensorProto.FLOAT, [d0, None]
+        )
+        scan_var_len_node = make_node(
+            "ScanVarLen",
+            ["", "outer_state_in", "outer_scan_in"],
+            ["outer_state_out", "outer_scan_out"],
+            body=body,
+            num_scan_inputs=1,
+            scan_output_axes=[1],
+        )
+        graph = make_graph(
+            [scan_var_len_node],
+            "scan_var_len_graph",
+            [outer_state_in, outer_scan_in],
+            [outer_state_out, outer_scan_out],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 27)])
+        check_model(model)
+
+        state_value = np.array([100.0, 200.0], dtype=np.float32)
+        scan_value = np.arange(sequence_length * d0 * d1, dtype=np.float32).reshape(
+            sequence_length, d0, d1
+        )
+
+        sess = ReferenceEvaluator(model)
+        state_result, scan_result = sess.run(
+            None,
+            {"outer_state_in": state_value, "outer_scan_in": scan_value},
+        )
+
+        # Expected: state passes through; scan output is (2 * scan_value)
+        # reordered so axis 0 (iteration) is concatenated into axis 1 of the
+        # per-iteration shape [d0, d1] -> final shape [d0, sequence_length * d1].
+        expected_scan = (2.0 * np.transpose(scan_value, (1, 0, 2))).reshape(
+            d0, sequence_length * d1
+        )
+        assert_allclose(state_result, state_value)
+        assert_allclose(scan_result, expected_scan)
+        self.assertEqual(scan_result.shape, (d0, sequence_length * d1))
+
     def test_onnxt_runtime_bernoulli(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])

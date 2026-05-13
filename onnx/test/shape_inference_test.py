@@ -5320,6 +5320,279 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
         )
 
+    def _make_scan_var_len_subgraph(
+        self,
+        state_in_name: str = "loop_state_in",
+        state_out_name: str = "loop_state_out",
+        scan_in_name: str = "scan_in",
+        scan_out_name: str = "scan_out",
+    ) -> GraphProto:
+        # Subgraph used by the ScanVarLen tests: state variable is passed through
+        # unchanged (Identity), and the per-iteration scan output is also a copy
+        # of the per-iteration scan input. The exact computation does not matter
+        # for shape inference: only the body's output shapes drive the inference
+        # of ScanVarLen's outputs.
+        input_value_infos = [
+            make_tensor_value_info(state_in_name, TensorProto.UNDEFINED, None),
+            make_tensor_value_info(scan_in_name, TensorProto.UNDEFINED, None),
+        ]
+        output_value_infos = [
+            make_tensor_value_info(state_out_name, TensorProto.UNDEFINED, None),
+            make_tensor_value_info(scan_out_name, TensorProto.UNDEFINED, None),
+        ]
+        return helper.make_graph(
+            [
+                make_node("Identity", [state_in_name], [state_out_name]),
+                make_node("Identity", [scan_in_name], [scan_out_name]),
+            ],
+            "scan_var_len_subgraph",
+            input_value_infos,
+            output_value_infos,
+        )
+
+    def test_ScanVarLen_basic(self) -> None:
+        # Default axes: scan_input_axes=[0], scan_output_axes=[0].
+        # State variables pass through unchanged. ScanVarLen *replaces* (does
+        # not insert) the dimension at scan_output_axes[i] of the body output;
+        # the body subgraph's per-iteration input shape is the scan input with
+        # the sequence axis stripped (i.e. (feature,)), so the scan output is
+        # rank 1 with axis 0 unknown.
+        seq_len = 4
+        feature = 2
+        loop_state_size = 3
+        subgraph = self._make_scan_var_len_subgraph()
+
+        graph = self._make_graph(
+            [
+                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
+                ("scan_input", TensorProto.FLOAT, (seq_len, feature)),
+            ],
+            [
+                make_node(
+                    "ScanVarLen",
+                    ["", "loop_state_orig", "scan_input"],
+                    ["loop_state_final", "scan_output"],
+                    num_scan_inputs=1,
+                    body=subgraph,
+                )
+            ],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
+                ),
+                # Body emits scan output of shape (feature,); ScanVarLen
+                # replaces axis 0 -> shape (None,).
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None,)),
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 27)],
+        )
+
+    def test_ScanVarLen_scan_output_axes(self) -> None:
+        # scan_output_axes=[1]: the unknown dimension is placed at axis 1 of
+        # the scan output rather than axis 0.
+        seq_len = 4
+        feature_a = 3
+        feature_b = 2
+        loop_state_size = 3
+        subgraph = self._make_scan_var_len_subgraph()
+
+        graph = self._make_graph(
+            [
+                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
+                # Body sees per-iteration scan input shape [feature_a, feature_b];
+                # body emits a same-shaped scan output. With scan_output_axes=[1]
+                # the inferred final shape is [feature_a, None].
+                (
+                    "scan_input",
+                    TensorProto.FLOAT,
+                    (seq_len, feature_a, feature_b),
+                ),
+            ],
+            [
+                make_node(
+                    "ScanVarLen",
+                    ["", "loop_state_orig", "scan_input"],
+                    ["loop_state_final", "scan_output"],
+                    num_scan_inputs=1,
+                    body=subgraph,
+                    scan_output_axes=[1],
+                )
+            ],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
+                ),
+                make_tensor_value_info(
+                    "scan_output", TensorProto.FLOAT, (feature_a, None)
+                ),
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 27)],
+        )
+
+    def test_ScanVarLen_scan_input_axes(self) -> None:
+        # scan_input_axes=[1]: the sequence axis is at position 1 of the scan
+        # input rather than position 0. Body sees [axis0, feature]; with
+        # default scan_output_axes=[0], the output is (None, feature).
+        axis0 = 5
+        seq_len = "sequence"
+        feature = 2
+        loop_state_size = 3
+        subgraph = self._make_scan_var_len_subgraph()
+
+        graph = self._make_graph(
+            [
+                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
+                ("scan_input", TensorProto.FLOAT, (axis0, seq_len, feature)),
+            ],
+            [
+                make_node(
+                    "ScanVarLen",
+                    ["", "loop_state_orig", "scan_input"],
+                    ["loop_state_final", "scan_output"],
+                    num_scan_inputs=1,
+                    body=subgraph,
+                    scan_input_axes=[1],
+                )
+            ],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
+                ),
+                # Per-iteration body input shape is (axis0, feature); body emits
+                # same shape; default scan_output_axes=[0] -> axis 0 unknown.
+                make_tensor_value_info(
+                    "scan_output", TensorProto.FLOAT, (None, feature)
+                ),
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 27)],
+        )
+
+    def test_ScanVarLen_output_lengths_present(self) -> None:
+        # Optional output_lengths input supplied as an int64[K] tensor.
+        # Inference should accept it and produce the same shapes as the basic
+        # case (output_lengths is purely a pre-allocation hint).
+        seq_len = 4
+        feature = 2
+        loop_state_size = 3
+        subgraph = self._make_scan_var_len_subgraph()
+
+        graph = self._make_graph(
+            [
+                ("output_lengths", TensorProto.INT64, (1,)),
+                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
+                ("scan_input", TensorProto.FLOAT, (seq_len, feature)),
+            ],
+            [
+                make_node(
+                    "ScanVarLen",
+                    ["output_lengths", "loop_state_orig", "scan_input"],
+                    ["loop_state_final", "scan_output"],
+                    num_scan_inputs=1,
+                    body=subgraph,
+                )
+            ],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
+                ),
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None,)),
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 27)],
+        )
+
+    def test_ScanVarLen_multiple_scan_outputs_different_axes(self) -> None:
+        # Two scan outputs with different concat axes. Body emits both outputs
+        # with the same per-iteration shape (2, 3); scan_output_axes=[0, 1]
+        # produces final shapes (None, 3) and (2, None) respectively.
+        seq_len = 4
+        feature_a = 2
+        feature_b = 3
+        loop_state_size = 3
+
+        body_state_in = make_tensor_value_info(
+            "loop_state_in", TensorProto.UNDEFINED, None
+        )
+        body_scan_in = make_tensor_value_info("scan_in", TensorProto.UNDEFINED, None)
+        body_state_out = make_tensor_value_info(
+            "loop_state_out", TensorProto.UNDEFINED, None
+        )
+        body_scan_out_a = make_tensor_value_info(
+            "scan_out_a", TensorProto.UNDEFINED, None
+        )
+        body_scan_out_b = make_tensor_value_info(
+            "scan_out_b", TensorProto.UNDEFINED, None
+        )
+        subgraph = helper.make_graph(
+            [
+                make_node("Identity", ["loop_state_in"], ["loop_state_out"]),
+                make_node("Identity", ["scan_in"], ["scan_out_a"]),
+                make_node("Identity", ["scan_in"], ["scan_out_b"]),
+            ],
+            "scan_var_len_two_outputs",
+            [body_state_in, body_scan_in],
+            [body_state_out, body_scan_out_a, body_scan_out_b],
+        )
+
+        graph = self._make_graph(
+            [
+                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
+                (
+                    "scan_input",
+                    TensorProto.FLOAT,
+                    (seq_len, feature_a, feature_b),
+                ),
+            ],
+            [
+                make_node(
+                    "ScanVarLen",
+                    ["", "loop_state_orig", "scan_input"],
+                    ["loop_state_final", "scan_output_a", "scan_output_b"],
+                    num_scan_inputs=1,
+                    body=subgraph,
+                    scan_output_axes=[0, 1],
+                )
+            ],
+            [],
+        )
+
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
+                ),
+                # Body scan output shape = per-iteration scan input shape = (feature_a, feature_b);
+                # axis 0 of scan_output_a is unknown; axis 1 of scan_output_b is unknown.
+                make_tensor_value_info(
+                    "scan_output_a", TensorProto.FLOAT, (None, feature_b)
+                ),
+                make_tensor_value_info(
+                    "scan_output_b", TensorProto.FLOAT, (feature_a, None)
+                ),
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 27)],
+        )
+
     def test_if_ver1(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.

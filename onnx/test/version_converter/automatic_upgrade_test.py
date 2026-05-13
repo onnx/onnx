@@ -1362,6 +1362,47 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             attrs={"body": body, "num_scan_inputs": 1},
         )
 
+    def test_ScanVarLen(self) -> None:
+        # ScanVarLen is new in opset 27 with no prior version, so there is no
+        # adapter to exercise; the test simply verifies that a model containing
+        # a ScanVarLen node passes checker + shape inference at the latest
+        # opset (the "no-op upgrade" pattern used by other new ops such as
+        # BitCast and CumProd).
+        sum_in = onnx.helper.make_tensor_value_info(
+            "sum_in", onnx.TensorProto.FLOAT, [2]
+        )
+        next_in = onnx.helper.make_tensor_value_info(
+            "next_in", onnx.TensorProto.FLOAT, [2]
+        )
+        sum_out = onnx.helper.make_tensor_value_info(
+            "sum_out", onnx.TensorProto.FLOAT, [2]
+        )
+        scan_out = onnx.helper.make_tensor_value_info(
+            "scan_out", onnx.TensorProto.FLOAT, [2]
+        )
+        add_node = onnx.helper.make_node(
+            "Add", inputs=["sum_in", "next_in"], outputs=["sum_out"]
+        )
+        id_node = onnx.helper.make_node(
+            "Identity", inputs=["sum_out"], outputs=["scan_out"]
+        )
+        body = onnx.helper.make_graph(
+            [add_node, id_node],
+            "scan_var_len_body",
+            [sum_in, next_in],
+            [sum_out, scan_out],
+        )
+        self._test_op_upgrade(
+            "ScanVarLen",
+            27,
+            # Inputs: output_lengths (omitted), initial state [2], scan input [3, 2].
+            ["", [2], [3, 2]],
+            # Outputs: final state [2]; scan output's concat axis is unknown
+            # (declared as None to match what shape inference will infer).
+            [[2], [None]],
+            attrs={"body": body, "num_scan_inputs": 1},
+        )
+
     def test_Selu(self) -> None:
         self._test_op_upgrade("Selu", 1, attrs={"consumed_inputs": [0]})
 
