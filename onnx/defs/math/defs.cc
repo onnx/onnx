@@ -1422,7 +1422,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "shape",
             "A 1-D tensor indicates the shape you want to expand to, following the broadcast rule",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -1705,14 +1705,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "Y",
             "Matrix multiply results from A * B",
-            "T3",
+            types::Int32,
             OpSchema::Single,
             true,
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T1", {types::Int8, types::UInt8}, "Constrain input A data type to 8-bit integer tensor.")
         .TypeConstraint("T2", {types::Int8, types::UInt8}, "Constrain input B data type to 8-bit integer tensor.")
-        .TypeConstraint("T3", {types::Int32}, "Constrain output Y data type as 32-bit integer tensor.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           auto a_type = ctx.getInputType(0);
           auto b_type = ctx.getInputType(1);
@@ -2605,7 +2604,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The axis as a scalar on which to perform the DFT. Default is `-2` (last signal axis). "
             "Negative value means counting dimensions from the back. Accepted range is $[-r, -2] \\cup [0, r-2]$ where `r = rank(input)`. "
             "The last dimension is for representing complex numbers and thus is an invalid axis.",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Optional,
             true,
             1,

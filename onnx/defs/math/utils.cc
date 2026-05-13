@@ -49,7 +49,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
             1,
             "K",
             "A 1-D tensor containing a single positive value corresponding to the number of top elements to retrieve",
-            "tensor(int64)",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
@@ -70,13 +70,12 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
             "Tensor of shape [a_0, a_1, ..., a_{axis-1}, k, a_{axis+1}, ... a_{n-1}] "
             "containing the corresponding input tensor indices for the top K "
             "values.",
-            "I",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", allowed_types, "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64")
         .Attr(
             "axis",
             "Dimension on which to do the sort. Negative value means counting dimensions "

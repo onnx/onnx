@@ -249,7 +249,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(Adagrad_ver1_doc)
         .Input(0, "R", "The initial learning rate.", "T1")
-        .Input(1, "T", "The update count of \"X\". It should be a scalar.", "T2")
+        .Input(1, "T", "The update count of \"X\". It should be a scalar.", types::Int64)
         .Input(
             2,
             "inputs",
@@ -292,7 +292,6 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             0.0f)
         .TypeConstraint("T1", {types::Float, types::Double}, "Constrain input types to float scalars.")
-        .TypeConstraint("T2", {types::Int64}, "Constrain input types to 64-bit integer scalars.")
         .TypeConstraint("T3", {types::Float, types::Double}, "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // In comments below, we assume that the input list is
@@ -385,7 +384,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(Momentum_ver1_doc)
         .Input(0, "R", "The learning rate.", "T1")
-        .Input(1, "T", "Update count of \"X\". It should be a scalar.", "T2")
+        .Input(1, "T", "Update count of \"X\". It should be a scalar.", types::Int64)
         .Input(
             2,
             "inputs",
@@ -419,7 +418,6 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "using standard momentum",
             AttributeProto::STRING)
         .TypeConstraint("T1", {types::Float, types::Double}, "Constrain input types to float scalars.")
-        .TypeConstraint("T2", {types::Int64}, "Constrain input types to 64-bit integer scalars.")
         .TypeConstraint("T3", {types::Float, types::Double}, "Constrain input types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2] and
@@ -522,7 +520,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(Adam_ver1_doc)
         .Input(0, "R", "The initial learning rate.", "T1")
-        .Input(1, "T", "The update count of \"X\". It should be a scalar.", "T2")
+        .Input(1, "T", "The update count of \"X\". It should be a scalar.", types::Int64)
         .Input(
             2,
             "inputs",
@@ -577,7 +575,6 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             0.0f)
         .Attr("epsilon", "Small scalar to avoid dividing by zero.", AttributeProto::FLOAT, 1e-6f)
         .TypeConstraint("T1", {types::Float, types::Double}, "Constrain input types to float scalars.")
-        .TypeConstraint("T2", {types::Int64}, "Constrain input types to 64-bit integer scalars.")
         .TypeConstraint("T3", {types::Float, types::Double}, "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2, H1, H2] and

@@ -245,12 +245,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(SequenceLength_ver11_doc)
         .Input(0, "input_sequence", "Input sequence.", "S")
-        .Output(0, "length", "Length of input sequence. It must be a scalar(tensor of empty shape).", "I")
+        .Output(0, "length", "Length of input sequence. It must be a scalar(tensor of empty shape).", types::Int64)
         .TypeConstraint("S", OpSchema::all_tensor_sequence_types(), "Constrain to any tensor type.")
-        .TypeConstraint(
-            "I",
-            {types::Int64},
-            "Constrain output to integral tensor. It must be a scalar(tensor of empty shape).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto output_tensor_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_tensor_type->set_elem_type(TensorProto::INT64);

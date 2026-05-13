@@ -42,22 +42,25 @@ ONNX_OPERATOR_SET_SCHEMA(
     RegexFullMatch,
     20,
     OpSchema()
-        .Input(0, "X", "Tensor with strings to match on.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(
+            0,
+            "X",
+            "Tensor with strings to match on.",
+            types::String,
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Attr("pattern", "Regex pattern to match on. This must be valid RE2 syntax.", AttributeProto::STRING, false)
         .Output(
             0,
             "Y",
             "Tensor of bools indicating if each input string fully matches the regex pattern specified.",
-            "T2",
+            types::Bool,
             OpSchema::Single,
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", {types::String}, "Inputs must be UTF-8 strings")
-        .TypeConstraint(
-            "T2",
-            {types::Bool},
-            "Outputs are bools and are True where there is a full regex match and False otherwise.")
         .SetDoc(RegexFullMatch_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           updateOutputElemType(ctx, 0, TensorProto::BOOL);
@@ -75,7 +78,15 @@ ONNX_OPERATOR_SET_SCHEMA(
     StringSplit,
     20,
     OpSchema()
-        .Input(0, "X", "Tensor of strings to split.", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
+        .Input(
+            0,
+            "X",
+            "Tensor of strings to split.",
+            types::String,
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
         .Attr(
             "delimiter",
             "Delimiter to split on. If left unset or set to the empty string (\"\"), the input is split on consecutive whitespace.",
@@ -90,7 +101,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "Y",
             "Tensor of substrings representing the outcome of splitting the strings in the input on the delimiter. Note that to ensure the same number of elements are present in the final rank, this tensor will pad any necessary empty strings.",
-            "T2",
+            types::String,
             OpSchema::Single,
             true,
             1,
@@ -99,14 +110,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "Z",
             "The number of substrings generated for each input element.",
-            "T3",
+            types::Int64,
             OpSchema::Single,
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", {types::String}, "The input must be a UTF-8 string tensor")
-        .TypeConstraint("T2", {types::String}, "Tensor of substrings.")
-        .TypeConstraint("T3", {types::Int64}, "The number of substrings generated.")
         .SetDoc(StringSplit_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (!hasInputShape(ctx, 0)) {
@@ -147,8 +155,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     StringNormalizer,
     10,
     OpSchema()
-        .Input(0, "X", "UTF-8 strings to normalize", "tensor(string)")
-        .Output(0, "Y", "UTF-8 Normalized strings", "tensor(string)")
+        .Input(0, "X", "UTF-8 strings to normalize", types::String)
+        .Output(0, "Y", "UTF-8 Normalized strings", types::String)
         .Attr(
             std::string("case_change_action"),
             std::string(

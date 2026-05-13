@@ -86,12 +86,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "A scalar boolean tensor. If true, it indicates that optional-type input contains an element. Otherwise, it is empty.",
-            "B")
+            types::Bool)
         .TypeConstraint(
             "O",
             optional_and_tensor_types(),
             "Constrain input type to optional tensor and optional sequence types.")
-        .TypeConstraint("B", {types::Bool}, "Constrain output to a boolean tensor.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           const size_t numInputs = ctx.getNumInputs();
           if (numInputs != 0 && numInputs != 1) {

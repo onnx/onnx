@@ -137,7 +137,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         "Optional tensor specifying lengths of the sequences in a batch. "
         "If not specified - assumed all sequences in the batch to have "
         "length `seq_length`. It has shape `[batch_size]`.",
-        "T1",
+        types::Int32,
         OpSchema::Optional,
         true,
         1,
@@ -173,7 +173,6 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         1,
         OpSchema::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
-    schema.TypeConstraint("T1", {types::Int32}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
   };
 }
