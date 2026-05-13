@@ -1532,6 +1532,78 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(scan_result, expected_scan)
         self.assertEqual(scan_result.shape, (d0, sequence_length * d1))
 
+    def test_scan_var_len_output_lengths_mismatch(self):
+        # When output_lengths is supplied, it must match the actual concat-axis
+        # total size of each scan output. The reference implementation raises
+        # ValueError with a message naming output_lengths and both the
+        # declared and actual sizes.
+        sequence_length = 3
+        feature = 2
+
+        state_in = make_tensor_value_info("state_in", TensorProto.FLOAT, [feature])
+        scan_in = make_tensor_value_info("scan_in", TensorProto.FLOAT, [feature])
+        state_out = make_tensor_value_info("state_out", TensorProto.FLOAT, [feature])
+        scan_out = make_tensor_value_info("scan_out", TensorProto.FLOAT, [feature])
+        body = make_graph(
+            [
+                make_node("Identity", ["state_in"], ["state_out"]),
+                make_node("Identity", ["scan_in"], ["scan_out"]),
+            ],
+            "scan_var_len_mismatch_body",
+            [state_in, scan_in],
+            [state_out, scan_out],
+        )
+
+        output_lengths_in = make_tensor_value_info(
+            "output_lengths", TensorProto.INT64, [1]
+        )
+        outer_state_in = make_tensor_value_info(
+            "outer_state_in", TensorProto.FLOAT, [feature]
+        )
+        outer_scan_in = make_tensor_value_info(
+            "outer_scan_in", TensorProto.FLOAT, [sequence_length, feature]
+        )
+        outer_state_out = make_tensor_value_info(
+            "outer_state_out", TensorProto.FLOAT, [feature]
+        )
+        outer_scan_out = make_tensor_value_info(
+            "outer_scan_out", TensorProto.FLOAT, [None]
+        )
+        scan_node = make_node(
+            "ScanVarLen",
+            ["output_lengths", "outer_state_in", "outer_scan_in"],
+            ["outer_state_out", "outer_scan_out"],
+            body=body,
+            num_scan_inputs=1,
+        )
+        graph = make_graph(
+            [scan_node],
+            "scan_var_len_mismatch",
+            [output_lengths_in, outer_state_in, outer_scan_in],
+            [outer_state_out, outer_scan_out],
+        )
+        model = make_model(graph, opset_imports=[make_opsetid("", 27)])
+        check_model(model)
+
+        # Actual concat-axis total is sequence_length * feature = 6, but
+        # output_lengths claims 99.
+        wrong_output_lengths = np.array([99], dtype=np.int64)
+        state_value = np.zeros(feature, dtype=np.float32)
+        scan_value = np.arange(sequence_length * feature, dtype=np.float32).reshape(
+            sequence_length, feature
+        )
+
+        sess = ReferenceEvaluator(model)
+        with self.assertRaisesRegex(ValueError, "output_lengths"):
+            sess.run(
+                None,
+                {
+                    "output_lengths": wrong_output_lengths,
+                    "outer_state_in": state_value,
+                    "outer_scan_in": scan_value,
+                },
+            )
+
     def test_onnxt_runtime_bernoulli(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])
