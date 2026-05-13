@@ -32822,7 +32822,8 @@ This version of the operator has been available since version 26 of the default 
   The differences from Scan are:
 
   1. ScanVarLen has an additional optional input `output_lengths` at position 0.
-     `output_lengths` is a 1-D int64 tensor with one entry per scan output. When provided,
+     `output_lengths` is a 1-D int64 tensor with one entry per scan output — that is,
+     K values total, one per-output, NOT one per-iteration. When provided,
      `output_lengths[i]` MUST equal the total size of the concatenation axis
      (`scan_output_axes[i]`, default 0) of scan output `i`, summed across all iterations.
      Conforming implementations may use this value to pre-allocate the output buffer.
@@ -32838,6 +32839,10 @@ This version of the operator has been available since version 26 of the default 
 
      In contrast, standard Scan inserts a NEW dimension of size 1 at `scan_output_axes[i]`
      for each iteration and stacks the per-iteration outputs along that new dimension.
+
+     As a consequence, ScanVarLen is RANK-PRESERVING: the rank of each scan output equals
+     the rank of the corresponding body subgraph output. No new sequence dimension is
+     introduced.
 
   3. ScanVarLen has no `scan_output_directions` attribute; scan outputs are always
      produced by appending the per-iteration values (forward direction).
@@ -32898,9 +32903,12 @@ This version of the operator has been available since version 26 of the default 
 
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
-  If `sequence_length` is 0, each scan output has size 0 along its concatenation axis
-  (and the body subgraph is not executed); shape inference still propagates the body
-  subgraph's output shapes (with the concat-axis dimension left unknown).
+  If `sequence_length` is 0, each scan output has a 0-sized dimension at
+  `scan_output_axes[i]`. Conforming implementations may or may not execute the body
+  subgraph in this case (implementation-defined); the output shape is determined by the
+  body's output shape with the concat-axis dimension set to 0. Shape inference still runs
+  the body's shape inference and propagates the resulting shapes (with the concat-axis
+  dimension left unknown).
 
   Each iteration's per-output concat-axis size may be 0 (zero-size contributions are
   allowed and contribute nothing to the final concatenation).
@@ -32938,14 +32946,14 @@ This version of the operator has been available since version 27 of the default 
 <dl>
 <dt><tt>output_lengths</tt> (optional, non-differentiable) : I</dt>
 <dd>Optional 1-D int64 tensor with K entries (one per scan output). When provided, output_lengths[i] specifies the total size of the concatenation axis (scan_output_axes[i], default 0) of the i-th scan output, summed over all iterations. Conforming implementations may use this value to pre-allocate output buffers. It is a runtime error if the actual sum of per-iteration concat-axis sizes does not equal output_lengths[i].</dd>
-<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous, non-differentiable) : V</dt>
+<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Initial values of the loop's N state variables followed by M scan_inputs.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous, non-differentiable) : V</dt>
+<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Final values of the loop's N state variables followed by K scan_outputs. Each scan_output is produced by concatenating the corresponding body subgraph output along the axis specified by scan_output_axes (default 0). Per-iteration contributions may have different sizes along this axis (including zero); the final scan output's size along that axis is the sum of the per-iteration sizes. All other dimensions must match across iterations.</dd>
 </dl>
 

@@ -32321,7 +32321,8 @@ expect(
   The differences from Scan are:
 
   1. ScanVarLen has an additional optional input `output_lengths` at position 0.
-     `output_lengths` is a 1-D int64 tensor with one entry per scan output. When provided,
+     `output_lengths` is a 1-D int64 tensor with one entry per scan output — that is,
+     K values total, one per-output, NOT one per-iteration. When provided,
      `output_lengths[i]` MUST equal the total size of the concatenation axis
      (`scan_output_axes[i]`, default 0) of scan output `i`, summed across all iterations.
      Conforming implementations may use this value to pre-allocate the output buffer.
@@ -32337,6 +32338,10 @@ expect(
 
      In contrast, standard Scan inserts a NEW dimension of size 1 at `scan_output_axes[i]`
      for each iteration and stacks the per-iteration outputs along that new dimension.
+
+     As a consequence, ScanVarLen is RANK-PRESERVING: the rank of each scan output equals
+     the rank of the corresponding body subgraph output. No new sequence dimension is
+     introduced.
 
   3. ScanVarLen has no `scan_output_directions` attribute; scan outputs are always
      produced by appending the per-iteration values (forward direction).
@@ -32397,9 +32402,12 @@ expect(
 
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
-  If `sequence_length` is 0, each scan output has size 0 along its concatenation axis
-  (and the body subgraph is not executed); shape inference still propagates the body
-  subgraph's output shapes (with the concat-axis dimension left unknown).
+  If `sequence_length` is 0, each scan output has a 0-sized dimension at
+  `scan_output_axes[i]`. Conforming implementations may or may not execute the body
+  subgraph in this case (implementation-defined); the output shape is determined by the
+  body's output shape with the concat-axis dimension set to 0. Shape inference still runs
+  the body's shape inference and propagates the resulting shapes (with the concat-axis
+  dimension left unknown).
 
   Each iteration's per-output concat-axis size may be 0 (zero-size contributions are
   allowed and contribute nothing to the final concatenation).
@@ -32437,14 +32445,14 @@ This version of the operator has been available since version 27 of the default 
 <dl>
 <dt><tt>output_lengths</tt> (optional, non-differentiable) : I</dt>
 <dd>Optional 1-D int64 tensor with K entries (one per scan output). When provided, output_lengths[i] specifies the total size of the concatenation axis (scan_output_axes[i], default 0) of the i-th scan output, summed over all iterations. Conforming implementations may use this value to pre-allocate output buffers. It is a runtime error if the actual sum of per-iteration concat-axis sizes does not equal output_lengths[i].</dd>
-<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous, non-differentiable) : V</dt>
+<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Initial values of the loop's N state variables followed by M scan_inputs.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous, non-differentiable) : V</dt>
+<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Final values of the loop's N state variables followed by K scan_outputs. Each scan_output is produced by concatenating the corresponding body subgraph output along the axis specified by scan_output_axes (default 0). Per-iteration contributions may have different sizes along this axis (including zero); the final scan output's size along that axis is the sum of the per-iteration sizes. All other dimensions must match across iterations.</dd>
 </dl>
 
@@ -32596,6 +32604,78 @@ expect(
 
 
 <details>
+<summary>scan_var_len_ragged</summary>
+
+```python
+"""Body produces variable-sized per-iteration outputs along the concat
+axis. This is the test that actually exercises the 'VarLen' part:
+each iteration slices a different prefix length of its per-iter data
+input, driven by a second scan input that supplies the length.
+
+The final concatenated scan output has length 1 + 2 + 3 = 6, which is
+also asserted via the optional ``output_lengths`` input.
+"""
+# Body inputs: data of shape [4] (fixed) and length of shape [1]
+# (int64). Body output: Slice(data, [0], length, [0]) — a 1-D tensor
+# of dynamic length.
+data_in_vi = onnx.helper.make_tensor_value_info(
+    "data_in", onnx.TensorProto.FLOAT, [4]
+)
+length_in_vi = onnx.helper.make_tensor_value_info(
+    "length_in", onnx.TensorProto.INT64, [1]
+)
+# Use [None] to declare a 1-D output of unknown length.
+scan_out_vi = onnx.helper.make_tensor_value_info(
+    "scan_out", onnx.TensorProto.FLOAT, [None]
+)
+starts_init = onnx.helper.make_tensor(
+    "starts", onnx.TensorProto.INT64, [1], [0]
+)
+axes_init = onnx.helper.make_tensor(
+    "slice_axes", onnx.TensorProto.INT64, [1], [0]
+)
+slice_node = onnx.helper.make_node(
+    "Slice",
+    inputs=["data_in", "starts", "length_in", "slice_axes"],
+    outputs=["scan_out"],
+)
+body = onnx.helper.make_graph(
+    [slice_node],
+    "scan_var_len_ragged_body",
+    [data_in_vi, length_in_vi],
+    [scan_out_vi],
+    initializer=[starts_init, axes_init],
+)
+node = onnx.helper.make_node(
+    "ScanVarLen",
+    inputs=["output_lengths", "data", "lengths"],
+    outputs=["scan_output"],
+    num_scan_inputs=2,
+    body=body,
+)
+output_lengths = np.array([6], dtype=np.int64)
+data = np.array(
+    [[10, 11, 12, 13], [20, 21, 22, 23], [30, 31, 32, 33]],
+    dtype=np.float32,
+)
+lengths = np.array([[1], [2], [3]], dtype=np.int64)
+# Iter t slices data[t, 0:lengths[t]]; concat along axis 0 yields
+# [10] + [20, 21] + [30, 31, 32] = length 6.
+scan_output = np.array([10, 20, 21, 30, 31, 32], dtype=np.float32)
+
+expect(
+    node,
+    inputs=[output_lengths, data, lengths],
+    outputs=[scan_output],
+    name="test_scan_var_len_ragged",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
 <summary>scan_var_len_reverse</summary>
 
 ```python
@@ -32688,6 +32768,45 @@ expect(
     inputs=[initial_state, scan_input],
     outputs=[final_state, scan_output],
     name="test_scan_var_len_state",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
+<summary>scan_var_len_zero_iterations</summary>
+
+```python
+"""Scan input has sequence_length=0 along the sequence axis. The ref
+impl must do a body 'dry run' to recover the non-concat dims and
+emit a shape-correct empty output (size 0 along the concat axis).
+"""
+body = _identity_body(
+    body_name="scan_var_len_zero_iterations_body",
+    scan_in_name="scan_in",
+    scan_out_name="scan_out",
+    shape=[4],
+)
+node = onnx.helper.make_node(
+    "ScanVarLen",
+    inputs=["", "scan_input"],
+    outputs=["scan_output"],
+    num_scan_inputs=1,
+    body=body,
+)
+# Zero iterations: sequence axis (default 0) has length 0.
+scan_input = np.zeros((0, 4), dtype=np.float32)
+# With identity body producing per-iter shape [4] and default
+# scan_output_axes=[0], 0 iterations yield a length-0 1-D output.
+scan_output = np.zeros((0,), dtype=np.float32)
+
+expect(
+    node,
+    inputs=[scan_input],
+    outputs=[scan_output],
+    name="test_scan_var_len_zero_iterations",
     opset_imports=_OPSET_IMPORTS,
 )
 ```
