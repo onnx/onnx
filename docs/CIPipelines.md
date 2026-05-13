@@ -12,9 +12,7 @@ SPDX-License-Identifier: Apache-2.0
 |---|---|---|
 | [CI](/.github/workflows/main.yml) | Every PR, merge_group, push to main, daily (midnight UTC) | C++ and Python tests across Linux, Windows, macOS; Python 3.10–3.14 (including free-threading variants); doc generation; proto generation; node test generation; daily run reports code coverage to Codecov |
 | [Windows\_No\_Exception\_CI](/.github/workflows/win_no_exception_ci.yml) | Push and PR to main and rel-\* | C++ tests compiled without exceptions; selective schema loading |
-| [Lint / Optional Lint](/.github/workflows/lint.yml) | Every PR | Not required — posts misspell, shellcheck, and cpplint suggestions as PR review comments |
 | [Lint / Enforce style](/.github/workflows/lint.yml) | Every PR | Required — runs lintrunner (ruff, mypy, clang-format, etc.) and verifies auto-generated files are up to date |
-| [Reuse](/.github/workflows/reuse.yml) | Every PR | Checks copyright and license headers; see [https://reuse.software/](https://reuse.software/). Files without a recognized license must be configured in `REUSE.toml`. |
 | [Require label](/.github/workflows/check_pr_label.yml) | Every PR | Requires at least one `topic:` or `module:` label (skipped for Dependabot PRs) |
 | [DCO](/.github/workflows/dco_merge_group.yml) | merge\_group | Placeholder DCO job required to enable the GitHub merge queue |
 
@@ -26,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0
 | [WindowsRelease](/.github/workflows/release_win.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package (2)(3) |
 | [LinuxRelease](/.github/workflows/release_linux.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package |
 | [MacRelease](/.github/workflows/release_mac.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package; tests source distribution build |
-| [PyodideRelease](/.github/workflows/release_pyodide.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `pyodide-build`, a host `protoc`, and a wasm protobuf library; validates wheel contents and publish-ready artifacts |
+| [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `cibuildwheel` with a pre-downloaded host `protoc` and protobuf source; runs a basic import test |
 | [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 
 ## Security and Supply Chain
@@ -35,7 +33,6 @@ SPDX-License-Identifier: Apache-2.0
 |---|---|---|
 | [CodeQL](/.github/workflows/codeql.yml) | Every PR, push to main/rel-\*, weekly (Friday) | Static analysis of C++ and Python for security vulnerabilities |
 | [Scorecard](/.github/workflows/scorecard.yml) | Push to main, weekly (Saturday) | OpenSSF supply-chain security scorecard; publishes results to code-scanning dashboard |
-| [Zizmor](/.github/workflows/zizmor.yml) | Every PR, push to main | Security analysis of GitHub Actions workflow files |
 | [Dependency Review](/.github/workflows/dependency-review.yml) | Every PR | Flags vulnerable or license-incompatible dependencies introduced by a PR |
 
 ## Documentation and Maintenance
@@ -57,4 +54,4 @@ SPDX-License-Identifier: Apache-2.0
   * Any PR labeled "run release CIs" (maintainers only)
   * Manually via workflow\_dispatch
 
-* **(2)** Minimum supported dependency versions are listed in [requirements.txt](/requirements.txt).
+* **(2)** Minimum supported dependency versions are listed in `[project.dependencies]` in [pyproject.toml](/pyproject.toml).

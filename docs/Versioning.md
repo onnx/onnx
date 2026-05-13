@@ -202,4 +202,4 @@ ONNX version|IR version|Opset version ai.onnx|Opset version ai.onnx.ml|Opset ver
 1.21.0|13|26|5|1
 
 The version number is centrally defined in [VERSION_NUMBER](../VERSION_NUMBER).
-Programmatically accessible version information is available from [onnx/helper.py](../onnx/helper.py), [version.h](../onnx/common/version.h) and [onnx/defs/schema.h](../onnx/defs/schema.h).
+Programmatically accessible version information is available from [onnx/helper.py](../onnx/helper.py), `onnx/common/version.h` (auto-generated) and [onnx/defs/schema.h](../onnx/defs/schema.h).

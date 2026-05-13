@@ -210,16 +210,20 @@ jobs:
           ./.setuptools-cmake-build/onnx_gtests
 
       - name: Run C++ extension test
-        if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'Internal'
+        if: (startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest') && matrix.debug_build == 0 && matrix.protobuf_type == 'External'
         run: |
-          cd ./.setuptools-cmake-build/
-          sudo cmake --build . --target install
-          cd .././onnx/test/cmake
-          mkdir build
-          cd build
-          cmake -DONNX_ML=${{ matrix.onnx_ml }} ..
-          cmake --build .
-          ./main
+          cmake -S . -B build_for_install \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DONNX_ML=${{ matrix.onnx_ml }} \
+            -DONNX_USE_PROTOBUF_SHARED_LIBS=ON
+          cmake --build build_for_install --parallel
+          sudo cmake --install build_for_install
+
+          cmake -S onnx/test/cmake -B onnx/test/cmake/build \
+            -DONNX_ML=${{ matrix.onnx_ml }}
+          cmake --build onnx/test/cmake/build
+          ./onnx/test/cmake/build/main
 
       - name: Upload coverage to Codecov
         if: github.repository_owner == 'onnx'
