@@ -7,6 +7,10 @@ ScanVarLen is a generalization of :class:`Scan` introduced in ai.onnx opset
 27. Each iteration's contribution to a scan output may have a variable size
 along ``scan_output_axes[i]``; the per-iteration outputs are concatenated
 (not stacked) along that axis after the loop.
+
+Body subgraphs are expressed using :func:`onnx.parser.parse_graph` for
+readability; the outer ``ScanVarLen`` node is built with the standard
+``helper.make_node`` + :func:`expect` pattern used elsewhere in node tests.
 """
 
 from __future__ import annotations
@@ -20,26 +24,17 @@ from onnx.backend.test.case.node import expect
 _OPSET_IMPORTS = [onnx.helper.make_opsetid("", 27)]
 
 
-def _identity_body(
-    body_name: str,
-    scan_in_name: str,
-    scan_out_name: str,
-    shape: list[int],
-) -> onnx.GraphProto:
-    """Build a body subgraph with a single scan input that is passed through
-    unchanged as a single scan output, no loop-state variables.
+def _identity_body(body_name: str) -> onnx.GraphProto:
+    """Body subgraph with a single length-4 scan input passed through
+    unchanged as a single scan output; no loop-state variables.
     """
-    scan_in_vi = onnx.helper.make_tensor_value_info(
-        scan_in_name, onnx.TensorProto.FLOAT, shape
-    )
-    scan_out_vi = onnx.helper.make_tensor_value_info(
-        scan_out_name, onnx.TensorProto.FLOAT, shape
-    )
-    identity_node = onnx.helper.make_node(
-        "Identity", inputs=[scan_in_name], outputs=[scan_out_name]
-    )
-    return onnx.helper.make_graph(
-        [identity_node], body_name, [scan_in_vi], [scan_out_vi]
+    return onnx.parser.parse_graph(
+        f"""
+        {body_name} (float[4] scan_in) => (float[4] scan_out)
+        {{
+            scan_out = Identity(scan_in)
+        }}
+        """
     )
 
 
@@ -51,12 +46,7 @@ class ScanVarLen(Base):
         iterations each contributing a length-4 slice yield a length-12
         output along the default concat axis 0.
         """
-        body = _identity_body(
-            body_name="scan_var_len_basic_body",
-            scan_in_name="scan_in",
-            scan_out_name="scan_out",
-            shape=[4],
-        )
+        body = _identity_body("scan_var_len_basic_body")
         node = onnx.helper.make_node(
             "ScanVarLen",
             inputs=["", "scan_input"],  # "" = omitted optional output_lengths
@@ -83,12 +73,7 @@ class ScanVarLen(Base):
         input. The supplied length must equal the total concat-axis size of
         the scan output.
         """
-        body = _identity_body(
-            body_name="scan_var_len_output_lengths_body",
-            scan_in_name="scan_in",
-            scan_out_name="scan_out",
-            shape=[4],
-        )
+        body = _identity_body("scan_var_len_output_lengths_body")
         node = onnx.helper.make_node(
             "ScanVarLen",
             inputs=["output_lengths", "scan_input"],
@@ -115,12 +100,7 @@ class ScanVarLen(Base):
         iteration order, so the final concat output is the reversed input
         along axis 0.
         """
-        body = _identity_body(
-            body_name="scan_var_len_reverse_body",
-            scan_in_name="scan_in",
-            scan_out_name="scan_out",
-            shape=[4],
-        )
+        body = _identity_body("scan_var_len_reverse_body")
         node = onnx.helper.make_node(
             "ScanVarLen",
             inputs=["", "scan_input"],
@@ -153,24 +133,14 @@ class ScanVarLen(Base):
         """
         # Body: input shape [3] (axis-1 slice of a [3, 4] tensor); output
         # shape [3, 1] (unsqueeze a length-1 concat axis at position 1).
-        scan_in_vi = onnx.helper.make_tensor_value_info(
-            "scan_in", onnx.TensorProto.FLOAT, [3]
-        )
-        scan_out_vi = onnx.helper.make_tensor_value_info(
-            "scan_out", onnx.TensorProto.FLOAT, [3, 1]
-        )
-        axes_init = onnx.helper.make_tensor(
-            "unsqueeze_axes", onnx.TensorProto.INT64, [1], [1]
-        )
-        unsqueeze_node = onnx.helper.make_node(
-            "Unsqueeze", inputs=["scan_in", "unsqueeze_axes"], outputs=["scan_out"]
-        )
-        body = onnx.helper.make_graph(
-            [unsqueeze_node],
-            "scan_var_len_axes_body",
-            [scan_in_vi],
-            [scan_out_vi],
-            initializer=[axes_init],
+        body = onnx.parser.parse_graph(
+            """
+            scan_var_len_axes_body (float[3] scan_in) => (float[3, 1] scan_out)
+            <int64[1] unsqueeze_axes = {1}>
+            {
+                scan_out = Unsqueeze(scan_in, unsqueeze_axes)
+            }
+            """
         )
         node = onnx.helper.make_node(
             "ScanVarLen",
@@ -202,29 +172,16 @@ class ScanVarLen(Base):
         ScanVarLen concat semantics (each iter contributes a length-2
         slice, concatenated to a length-6 output).
         """
-        state_in_vi = onnx.helper.make_tensor_value_info(
-            "state_in", onnx.TensorProto.FLOAT, [2]
-        )
-        scan_in_vi = onnx.helper.make_tensor_value_info(
-            "scan_in", onnx.TensorProto.FLOAT, [2]
-        )
-        state_out_vi = onnx.helper.make_tensor_value_info(
-            "state_out", onnx.TensorProto.FLOAT, [2]
-        )
-        scan_out_vi = onnx.helper.make_tensor_value_info(
-            "scan_out", onnx.TensorProto.FLOAT, [2]
-        )
-        add_node = onnx.helper.make_node(
-            "Add", inputs=["state_in", "scan_in"], outputs=["state_out"]
-        )
-        id_node = onnx.helper.make_node(
-            "Identity", inputs=["state_out"], outputs=["scan_out"]
-        )
-        body = onnx.helper.make_graph(
-            [add_node, id_node],
-            "scan_var_len_state_body",
-            [state_in_vi, scan_in_vi],
-            [state_out_vi, scan_out_vi],
+        body = onnx.parser.parse_graph(
+            """
+            scan_var_len_state_body
+                (float[2] state_in, float[2] scan_in)
+                => (float[2] state_out, float[2] scan_out)
+            {
+                state_out = Add(state_in, scan_in)
+                scan_out = Identity(state_out)
+            }
+            """
         )
         node = onnx.helper.make_node(
             "ScanVarLen",
@@ -261,34 +218,17 @@ class ScanVarLen(Base):
         """
         # Body inputs: data of shape [4] (fixed) and length of shape [1]
         # (int64). Body output: Slice(data, [0], length, [0]) — a 1-D tensor
-        # of dynamic length.
-        data_in_vi = onnx.helper.make_tensor_value_info(
-            "data_in", onnx.TensorProto.FLOAT, [4]
-        )
-        length_in_vi = onnx.helper.make_tensor_value_info(
-            "length_in", onnx.TensorProto.INT64, [1]
-        )
-        # Use [None] to declare a 1-D output of unknown length.
-        scan_out_vi = onnx.helper.make_tensor_value_info(
-            "scan_out", onnx.TensorProto.FLOAT, [None]
-        )
-        starts_init = onnx.helper.make_tensor(
-            "starts", onnx.TensorProto.INT64, [1], [0]
-        )
-        axes_init = onnx.helper.make_tensor(
-            "slice_axes", onnx.TensorProto.INT64, [1], [0]
-        )
-        slice_node = onnx.helper.make_node(
-            "Slice",
-            inputs=["data_in", "starts", "length_in", "slice_axes"],
-            outputs=["scan_out"],
-        )
-        body = onnx.helper.make_graph(
-            [slice_node],
-            "scan_var_len_ragged_body",
-            [data_in_vi, length_in_vi],
-            [scan_out_vi],
-            initializer=[starts_init, axes_init],
+        # of dynamic length (``float[?]``).
+        body = onnx.parser.parse_graph(
+            """
+            scan_var_len_ragged_body
+                (float[4] data_in, int64[1] length_in)
+                => (float[?] scan_out)
+            <int64[1] starts = {0}, int64[1] slice_axes = {0}>
+            {
+                scan_out = Slice(data_in, starts, length_in, slice_axes)
+            }
+            """
         )
         node = onnx.helper.make_node(
             "ScanVarLen",
@@ -321,12 +261,7 @@ class ScanVarLen(Base):
         impl must do a body 'dry run' to recover the non-concat dims and
         emit a shape-correct empty output (size 0 along the concat axis).
         """
-        body = _identity_body(
-            body_name="scan_var_len_zero_iterations_body",
-            scan_in_name="scan_in",
-            scan_out_name="scan_out",
-            shape=[4],
-        )
+        body = _identity_body("scan_var_len_zero_iterations_body")
         node = onnx.helper.make_node(
             "ScanVarLen",
             inputs=["", "scan_input"],
