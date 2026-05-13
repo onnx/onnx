@@ -8,15 +8,17 @@ import numpy as np
 from onnx.reference.op_run import OpRun
 
 
-def _resolve_output_axis(axis: int, rank: int, output_index: int) -> int:
-    """Normalize a (possibly negative) ``scan_output_axes`` value and validate
-    it falls within ``[0, rank)`` for the corresponding scan output.
+def _resolve_axis(axis: int, rank: int, attr_name: str, index: int) -> int:
+    """Normalize a (possibly negative) axis attribute and validate it falls
+    within ``[0, rank)``.
+
+    Used for both ``scan_input_axes`` (against each scan input's rank) and
+    ``scan_output_axes`` (against each scan output's rank).
     """
     normalized = axis + rank if axis < 0 else axis
     if not 0 <= normalized < rank:
         raise ValueError(
-            f"ScanVarLen: scan_output_axes[{output_index}]={axis} is out of range "
-            f"for scan output {output_index} of rank {rank}."
+            f"ScanVarLen: {attr_name}[{index}]={axis} is out of range for rank {rank}."
         )
     return normalized
 
@@ -61,14 +63,13 @@ class ScanVarLen(OpRun):
     def _run(  # type: ignore[override]
         self,
         *args,
-        body=None,
+        body=None,  # noqa: ARG002  # The bound subgraph runner lives on self.body.
         num_scan_inputs=None,
         scan_input_axes=None,
         scan_input_directions=None,
         scan_output_axes=None,
         attributes=None,  # noqa: ARG002
     ):
-        del body  # The subgraph is accessed via ``self.body``/``self._run_body``.
         if not args:
             raise RuntimeError(
                 "ScanVarLen requires at least the optional 'output_lengths' input slot "
@@ -92,24 +93,27 @@ class ScanVarLen(OpRun):
         states = list(rest[:num_loop_state_vars])
         scan_values = list(rest[num_loop_state_vars:])
 
-        body = self.body
-        state_names_in = body.input_names[:num_loop_state_vars]
-        scan_names_in = body.input_names[num_loop_state_vars:]
-        state_names_out = body.output_names[:num_loop_state_vars]
-        scan_names_out = body.output_names[num_loop_state_vars:]
+        # self.body is the bound subgraph runner; the homonymous kwarg above
+        # (the raw GraphProto attribute) is unused here.
+        body_runner = self.body
+        state_names_in = body_runner.input_names[:num_loop_state_vars]
+        scan_names_in = body_runner.input_names[num_loop_state_vars:]
+        state_names_out = body_runner.output_names[:num_loop_state_vars]
+        scan_names_out = body_runner.output_names[num_loop_state_vars:]
         num_scan_outputs = len(scan_names_out)
         expected_body_inputs = num_loop_state_vars + num_scan_inputs_value
-        if len(body.input_names) != expected_body_inputs:
+        if len(body_runner.input_names) != expected_body_inputs:
             raise ValueError(
-                f"ScanVarLen body subgraph has {len(body.input_names)} input(s) but "
-                f"expected {expected_body_inputs} "
+                f"ScanVarLen body subgraph has {len(body_runner.input_names)} input(s) "
+                f"but expected {expected_body_inputs} "
                 f"(num_loop_state_vars={num_loop_state_vars} + "
                 f"num_scan_inputs={num_scan_inputs_value})."
             )
-        if len(body.output_names) < num_loop_state_vars:
+        if len(body_runner.output_names) < num_loop_state_vars:
             raise ValueError(
-                f"ScanVarLen body subgraph has {len(body.output_names)} output(s) but "
-                f"expected at least {num_loop_state_vars} (one per loop state variable)."
+                f"ScanVarLen body subgraph has {len(body_runner.output_names)} "
+                f"output(s) but expected at least {num_loop_state_vars} "
+                f"(one per loop state variable)."
             )
 
         # Resolve per-input axes/directions; normalize and validate negative axes
@@ -127,14 +131,9 @@ class ScanVarLen(OpRun):
             for i in range(num_scan_inputs_value)
         ]
         for i, axis in enumerate(input_axes):
-            rank = scan_values[i].ndim
-            normalized = axis + rank if axis < 0 else axis
-            if not 0 <= normalized < rank:
-                raise ValueError(
-                    f"ScanVarLen: scan_input_axes[{i}]={axis} is out of range for "
-                    f"scan input {i} of rank {rank}."
-                )
-            input_axes[i] = normalized
+            input_axes[i] = _resolve_axis(
+                axis, scan_values[i].ndim, "scan_input_axes", i
+            )
         input_directions = [
             (
                 0
@@ -184,7 +183,7 @@ class ScanVarLen(OpRun):
                 raise TypeError(
                     f"Unable to call 'run' for type '{type(self.body)}'."
                 ) from e
-            outputs = dict(zip(body.output_names, outputs_list, strict=False))
+            outputs = dict(zip(body_runner.output_names, outputs_list, strict=False))
             states = [outputs[name] for name in state_names_out]
             for i, name in enumerate(scan_names_out):
                 per_iter_outputs[i].append(outputs[name])
@@ -208,10 +207,14 @@ class ScanVarLen(OpRun):
                 raise TypeError(
                     f"Unable to call 'run' for type '{type(self.body)}'."
                 ) from e
-            dry_outputs = dict(zip(body.output_names, dry_outputs_list, strict=False))
+            dry_outputs = dict(
+                zip(body_runner.output_names, dry_outputs_list, strict=False)
+            )
             for i, name in enumerate(scan_names_out):
                 prototype = np.asarray(dry_outputs[name])
-                axis = _resolve_output_axis(output_axes_attr[i], prototype.ndim, i)
+                axis = _resolve_axis(
+                    output_axes_attr[i], prototype.ndim, "scan_output_axes", i
+                )
                 resolved_output_axes.append(axis)
                 shape = list(prototype.shape)
                 shape[axis] = 0
@@ -221,8 +224,36 @@ class ScanVarLen(OpRun):
                 chunks = per_iter_outputs[i]
                 # The ONNX schema requires consistent ranks across iterations,
                 # so normalizing against the first chunk's rank is sufficient.
-                axis = _resolve_output_axis(output_axes_attr[i], chunks[0].ndim, i)
+                axis = _resolve_axis(
+                    output_axes_attr[i], chunks[0].ndim, "scan_output_axes", i
+                )
                 resolved_output_axes.append(axis)
+                # Defensive: verify rank and non-concat dims are consistent
+                # across iterations before concatenating. np.concatenate would
+                # raise on mismatch but with a less specific message.
+                base_rank = chunks[0].ndim
+                base_other_dims = tuple(
+                    d for k, d in enumerate(chunks[0].shape) if k != axis
+                )
+                for t, chunk in enumerate(chunks[1:], start=1):
+                    if chunk.ndim != base_rank:
+                        raise ValueError(
+                            f"ScanVarLen: scan output {i} has inconsistent ranks "
+                            f"across iterations (iteration 0 produced rank "
+                            f"{base_rank}, iteration {t} produced rank "
+                            f"{chunk.ndim})."
+                        )
+                    other_dims = tuple(
+                        d for k, d in enumerate(chunk.shape) if k != axis
+                    )
+                    if other_dims != base_other_dims:
+                        raise ValueError(
+                            f"ScanVarLen: scan output {i} has inconsistent "
+                            f"non-concat dimensions across iterations "
+                            f"(iteration 0 shape {tuple(chunks[0].shape)}, "
+                            f"iteration {t} shape {tuple(chunk.shape)}, "
+                            f"concat axis {axis})."
+                        )
                 final_scan_outputs.append(np.concatenate(chunks, axis=axis))
 
         if output_lengths is not None:

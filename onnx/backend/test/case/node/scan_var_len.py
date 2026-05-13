@@ -248,3 +248,102 @@ class ScanVarLen(Base):
             name="test_scan_var_len_state",
             opset_imports=_OPSET_IMPORTS,
         )
+
+    @staticmethod
+    def export_scan_var_len_ragged() -> None:
+        """Body produces variable-sized per-iteration outputs along the concat
+        axis. This is the test that actually exercises the 'VarLen' part:
+        each iteration slices a different prefix length of its per-iter data
+        input, driven by a second scan input that supplies the length.
+
+        The final concatenated scan output has length 1 + 2 + 3 = 6, which is
+        also asserted via the optional ``output_lengths`` input.
+        """
+        # Body inputs: data of shape [4] (fixed) and length of shape [1]
+        # (int64). Body output: Slice(data, [0], length, [0]) — a 1-D tensor
+        # of dynamic length.
+        data_in_vi = onnx.helper.make_tensor_value_info(
+            "data_in", onnx.TensorProto.FLOAT, [4]
+        )
+        length_in_vi = onnx.helper.make_tensor_value_info(
+            "length_in", onnx.TensorProto.INT64, [1]
+        )
+        # Use [None] to declare a 1-D output of unknown length.
+        scan_out_vi = onnx.helper.make_tensor_value_info(
+            "scan_out", onnx.TensorProto.FLOAT, [None]
+        )
+        starts_init = onnx.helper.make_tensor(
+            "starts", onnx.TensorProto.INT64, [1], [0]
+        )
+        axes_init = onnx.helper.make_tensor(
+            "slice_axes", onnx.TensorProto.INT64, [1], [0]
+        )
+        slice_node = onnx.helper.make_node(
+            "Slice",
+            inputs=["data_in", "starts", "length_in", "slice_axes"],
+            outputs=["scan_out"],
+        )
+        body = onnx.helper.make_graph(
+            [slice_node],
+            "scan_var_len_ragged_body",
+            [data_in_vi, length_in_vi],
+            [scan_out_vi],
+            initializer=[starts_init, axes_init],
+        )
+        node = onnx.helper.make_node(
+            "ScanVarLen",
+            inputs=["output_lengths", "data", "lengths"],
+            outputs=["scan_output"],
+            num_scan_inputs=2,
+            body=body,
+        )
+        output_lengths = np.array([6], dtype=np.int64)
+        data = np.array(
+            [[10, 11, 12, 13], [20, 21, 22, 23], [30, 31, 32, 33]],
+            dtype=np.float32,
+        )
+        lengths = np.array([[1], [2], [3]], dtype=np.int64)
+        # Iter t slices data[t, 0:lengths[t]]; concat along axis 0 yields
+        # [10] + [20, 21] + [30, 31, 32] = length 6.
+        scan_output = np.array([10, 20, 21, 30, 31, 32], dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[output_lengths, data, lengths],
+            outputs=[scan_output],
+            name="test_scan_var_len_ragged",
+            opset_imports=_OPSET_IMPORTS,
+        )
+
+    @staticmethod
+    def export_scan_var_len_zero_iterations() -> None:
+        """Scan input has sequence_length=0 along the sequence axis. The ref
+        impl must do a body 'dry run' to recover the non-concat dims and
+        emit a shape-correct empty output (size 0 along the concat axis).
+        """
+        body = _identity_body(
+            body_name="scan_var_len_zero_iterations_body",
+            scan_in_name="scan_in",
+            scan_out_name="scan_out",
+            shape=[4],
+        )
+        node = onnx.helper.make_node(
+            "ScanVarLen",
+            inputs=["", "scan_input"],
+            outputs=["scan_output"],
+            num_scan_inputs=1,
+            body=body,
+        )
+        # Zero iterations: sequence axis (default 0) has length 0.
+        scan_input = np.zeros((0, 4), dtype=np.float32)
+        # With identity body producing per-iter shape [4] and default
+        # scan_output_axes=[0], 0 iterations yield a length-0 1-D output.
+        scan_output = np.zeros((0,), dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[scan_input],
+            outputs=[scan_output],
+            name="test_scan_var_len_zero_iterations",
+            opset_imports=_OPSET_IMPORTS,
+        )
