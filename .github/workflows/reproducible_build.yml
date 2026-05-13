@@ -55,14 +55,20 @@ jobs:
 
       - name: Compare checksums
         run: |
-          wheel1=$(ls /tmp/build1/*.whl | head -1)
-          wheel2=$(ls /tmp/build2/*.whl | head -1)
+          # Ensure exactly one wheel per artifact
+          wheel1=$(ls /tmp/build1/*.whl 2>/dev/null | wc -l)
+          wheel2=$(ls /tmp/build2/*.whl 2>/dev/null | wc -l)
+          [ "$wheel1" -eq 1 ] || { echo "ERROR: Expected 1 wheel in /tmp/build1, found $wheel1"; exit 1; }
+          [ "$wheel2" -eq 1 ] || { echo "ERROR: Expected 1 wheel in /tmp/build2, found $wheel2"; exit 1; }
+          
+          WHEEL1=$(ls /tmp/build1/*.whl)
+          WHEEL2=$(ls /tmp/build2/*.whl)
 
-          h1=$(sha256sum "$wheel1" | cut -d' ' -f1)
-          h2=$(sha256sum "$wheel2" | cut -d' ' -f1)
+          h1=$(sha256sum "$WHEEL1" | cut -d' ' -f1)
+          h2=$(sha256sum "$WHEEL2" | cut -d' ' -f1)
 
-          echo "Build 1: $(basename "$wheel1")  →  $h1"
-          echo "Build 2: $(basename "$wheel2")  →  $h2"
+          echo "Build 1: $(basename "$WHEEL1")  →  $h1"
+          echo "Build 2: $(basename "$WHEEL2")  →  $h2"
 
           if [ "$h1" = "$h2" ]; then
             echo "Reproducible build confirmed — both wheels have SHA-256 $h1"
@@ -70,7 +76,8 @@ jobs:
             echo "Non-reproducible build — SHA-256 mismatch"
             exit 1
           fi
-
+        shell: bash
+      
       - name: Install diffoscope
         if: failure()
         run: sudo apt-get install -y --no-install-recommends diffoscope
@@ -78,9 +85,10 @@ jobs:
       - name: Run diffoscope
         if: failure()
         run: |
-          wheel1=$(ls /tmp/build1/*.whl | head -1)
-          wheel2=$(ls /tmp/build2/*.whl | head -1)
-          diffoscope "$wheel1" "$wheel2" \
+          # Use the same wheels identified in Compare checksums step
+          WHEEL1=$(ls /tmp/build1/*.whl)
+          WHEEL2=$(ls /tmp/build2/*.whl)
+          diffoscope "$WHEEL1" "$WHEEL2" \
             --text /tmp/diffoscope.txt \
             --html /tmp/diffoscope.html \
             --max-text-report-size 10000000 \
