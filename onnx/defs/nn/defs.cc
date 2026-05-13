@@ -1120,6 +1120,9 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   int64_t group = getAttribute(ctx, "group", 1);
+  if (group <= 0) {
+    fail_shape_inference("Attribute group must be > 0 for ConvTranspose. group=", group, ".");
+  }
 
   auto validate_input_channels_for_group = [](const TensorShapeProto& input_shape_proto, int64_t channel_group) {
     if (input_shape_proto.dim_size() < 2) {
@@ -1127,8 +1130,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     }
 
     const auto& input_channels_dim = input_shape_proto.dim(1);
-    if (input_channels_dim.has_dim_value() && channel_group > 0 &&
-        input_channels_dim.dim_value() % channel_group != 0) {
+    if (input_channels_dim.has_dim_value() && input_channels_dim.dim_value() % channel_group != 0) {
       fail_shape_inference(
           "Input channels C must be divisible by group for ConvTranspose. C=",
           input_channels_dim.dim_value(),

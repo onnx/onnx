@@ -1296,14 +1296,22 @@ class TestChecker(unittest.TestCase):
                 ),
                 helper.make_tensor_value_info("W", TensorProto.FLOAT, [32, 64, 3, 3]),
             ],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            [
+                helper.make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ["N", None, None, None]
+                )
+            ],
         )
         model = helper.make_model(
             graph, opset_imports=[helper.make_opsetid("", 17)], ir_version=7
         )
 
-        with self.assertRaises(checker.ValidationError):
+        with self.assertRaisesRegex(
+            shape_inference.InferenceError,
+            r"Input channels C must be divisible by group for ConvTranspose",
+        ):
             checker.check_model(model, full_check=True)
+
 
 if __name__ == "__main__":
     unittest.main()
