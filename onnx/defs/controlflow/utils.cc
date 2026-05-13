@@ -368,6 +368,9 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
   auto num_variadic_inputs = num_total_inputs - kInputOffset;
 
   auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
+  if (num_scan_inputs < 1) {
+    fail_shape_inference("ScanVarLen requires num_scan_inputs >= 1; got ", num_scan_inputs, ".");
+  }
   if (num_scan_inputs > num_variadic_inputs) {
     fail_shape_inference(
         "ScanVarLen num_scan_inputs (",
@@ -402,13 +405,18 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
             "ScanVarLen 'output_lengths' must be a 1-D tensor; got rank ", output_lengths_shape.dim_size(), ".");
       }
       const auto& length_dim = output_lengths_shape.dim(0);
-      if (length_dim.has_dim_value() && static_cast<size_t>(length_dim.dim_value()) != num_scan_outputs) {
-        fail_shape_inference(
-            "ScanVarLen 'output_lengths' has length ",
-            length_dim.dim_value(),
-            "; expected number of scan outputs (",
-            num_scan_outputs,
-            ").");
+      if (length_dim.has_dim_value()) {
+        if (length_dim.dim_value() < 0) {
+          fail_shape_inference("ScanVarLen 'output_lengths' has invalid negative length ", length_dim.dim_value(), ".");
+        }
+        if (static_cast<size_t>(length_dim.dim_value()) != num_scan_outputs) {
+          fail_shape_inference(
+              "ScanVarLen 'output_lengths' has length ",
+              length_dim.dim_value(),
+              "; expected number of scan outputs (",
+              num_scan_outputs,
+              ").");
+        }
       }
     }
   }

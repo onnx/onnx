@@ -215,9 +215,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Initial values of the loop's N state variables followed by M scan_inputs.",
             "V",
             OpSchema::Variadic,
-            false,
-            1,
-            OpSchema::NonDifferentiable)
+            false)
         .Output(
             0,
             "final_state_and_scan_outputs",
@@ -229,9 +227,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "All other dimensions must match across iterations.",
             "V",
             OpSchema::Variadic,
-            false,
-            1,
-            OpSchema::NonDifferentiable)
+            false)
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "

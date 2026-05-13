@@ -795,7 +795,8 @@ of each scan output are concatenated to form the final scan output.
 The differences from Scan are:
 
 1. ScanVarLen has an additional optional input `output_lengths` at position 0.
-   `output_lengths` is a 1-D int64 tensor with one entry per scan output. When provided,
+   `output_lengths` is a 1-D int64 tensor with one entry per scan output — that is,
+   K values total, one per-output, NOT one per-iteration. When provided,
    `output_lengths[i]` MUST equal the total size of the concatenation axis
    (`scan_output_axes[i]`, default 0) of scan output `i`, summed across all iterations.
    Conforming implementations may use this value to pre-allocate the output buffer.
@@ -811,6 +812,10 @@ The differences from Scan are:
 
    In contrast, standard Scan inserts a NEW dimension of size 1 at `scan_output_axes[i]`
    for each iteration and stacks the per-iteration outputs along that new dimension.
+
+   As a consequence, ScanVarLen is RANK-PRESERVING: the rank of each scan output equals
+   the rank of the corresponding body subgraph output. No new sequence dimension is
+   introduced.
 
 3. ScanVarLen has no `scan_output_directions` attribute; scan outputs are always
    produced by appending the per-iteration values (forward direction).
@@ -871,9 +876,12 @@ is equivalent to the following pseudo-code:
 
     return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
-If `sequence_length` is 0, each scan output has size 0 along its concatenation axis
-(and the body subgraph is not executed); shape inference still propagates the body
-subgraph's output shapes (with the concat-axis dimension left unknown).
+If `sequence_length` is 0, each scan output has a 0-sized dimension at
+`scan_output_axes[i]`. Conforming implementations may or may not execute the body
+subgraph in this case (implementation-defined); the output shape is determined by the
+body's output shape with the concat-axis dimension set to 0. Shape inference still runs
+the body's shape inference and propagates the resulting shapes (with the concat-axis
+dimension left unknown).
 
 Each iteration's per-output concat-axis size may be 0 (zero-size contributions are
 allowed and contribute nothing to the final concatenation).
