@@ -84,11 +84,12 @@ VersionMapType = dict[tuple[str, int], int]
 def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
-
-    def process(release_version: str, ir_version: int, *args: Any) -> None:
-        del release_version  # Unused
+    for row in table:
+        ir_version = row[1]
         for pair in zip(
-            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args, strict=False
+            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"],
+            row[2:],
+            strict=False,
         ):
             if pair not in result:
                 result[pair] = ir_version
@@ -96,9 +97,6 @@ def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
                     result["ai.onnx.preview", pair[1]] = ir_version
                 if pair[0] == "ai.onnx.training":
                     result["ai.onnx.preview.training", pair[1]] = ir_version
-
-    for row in table:
-        process(*row)
     return result
 
 
@@ -451,6 +449,12 @@ def make_tensor(
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
+    expected_elements = math.prod(dims)
+    if len(vals) != expected_elements:
+        raise ValueError(
+            f"Number of values ({len(vals)}) does not match tensor "
+            f"dimensions requiring {expected_elements} elements."
+        )
     if data_type == TensorProto.COMPLEX128:
         vals = vals.view(np.float64)  # type: ignore[union-attr]
     elif data_type == TensorProto.COMPLEX64:
@@ -1009,6 +1013,8 @@ def printable_attribute(
         graphs.append(attr.g)
     elif attr.HasField("tp"):
         content.append(f"<Type Proto {attr.tp}>")
+    elif attr.HasField("sparse_tensor"):
+        content.append("<Sparse Tensor>")
     elif attr.floats:
         content.append(str_list(str_float, attr.floats))
     elif attr.ints:
@@ -1018,6 +1024,8 @@ def printable_attribute(
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
+    elif attr.sparse_tensors:
+        content.append("[<Sparse Tensor>, ...]")
     elif attr.type_protos:
         content.append("[")
         for i, tp in enumerate(attr.type_protos):

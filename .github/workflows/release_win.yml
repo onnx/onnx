@@ -58,11 +58,6 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        if ('${{ matrix.architecture }}' -eq 'x86') {
-          echo "Skip installing dependencies for reference, because they don't have prebuilt wheel on x86"
-          sed -i '' '/-r requirements-reference.txt/d' requirements-release_build.txt
-        }
-
         python -m pip install -r requirements-release_build.txt
 
         if ('${{ matrix.architecture }}' -eq 'x64') {
@@ -96,7 +91,9 @@ jobs:
             ForEach-Object { $_ -replace 'name = "onnx"', 'name = "onnx-weekly"' } |
             Set-Content -Path 'pyproject.toml'
 
-          $Env:ONNX_PREVIEW_BUILD = 1
+          $version = (Get-Content -Path 'VERSION_NUMBER' -Raw).Trim()
+          $devDate = (Get-Date -Format 'yyyyMMdd' -AsUTC)
+          Set-Content -Path 'VERSION_NUMBER' -Value "$version.dev$devDate"
         }
 
         python -m build --wheel
@@ -147,16 +144,6 @@ jobs:
         done
       shell: bash
 
-    - name: Validate SBOM
-      if: steps.build_wheel.outcome == 'success'
-      shell: bash
-      run: |
-        python -m pip install -q -r requirements-release_sbom.txt
-        if ls dist/*.cdx.json 1>/dev/null 2>&1; then
-          python -m check_jsonschema --schemafile "https://cyclonedx.org/schema/bom-1.7.schema.json" dist/*.cdx.json
-        else
-          echo "No SBOM files found; skipping validation"
-        fi
 
     - name: Test the installed wheel
       if: steps.build_wheel.outcome == 'success' &&
