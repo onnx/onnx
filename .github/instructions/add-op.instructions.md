@@ -129,7 +129,7 @@ Body-graph attributes (Scan / Loop / If) embed inline inside the `<...>` attribu
 so, xo = Scan(s, x) <num_scan_inputs=1, body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) { so = Identity(si) xo = Identity(xi) }>
 ```
 
-**Convention**: put **inputs `(...)` before attributes `<...>`** in call sites — `Op(inputs)<attrs>` reads more naturally than `Op<attrs>(inputs)`.
+**Argument order**: for ops with simple scalar/tensor attributes, the conventional `Op<attrs>(inputs)` form reads well — e.g. `Y = Transpose<perm=[2,0,1]>(X)`. For ops with subgraph attributes (`Scan`, `Loop`, `If`, `ScanVarLen`, …) the body spans multiple lines, and putting it after the inputs keeps them visible — prefer `Op(inputs)<body = ... { ... }>` as shown in the Scan example above. PR #7962 (ScanVarLen) settled on this convention.
 
 **Exception**: helper-driven harnesses such as `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` (the `_test_op_upgrade` / `_test_op_downgrade` convention) should keep their established style — do not rewrite them with the parser.
 

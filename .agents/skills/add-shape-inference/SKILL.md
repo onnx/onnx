@@ -112,12 +112,12 @@ self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (4,
 # After: text fixture
 model = onnx.parser.parse_model("""
     <ir_version: 8, opset_import: ["" : 18]>
-    g (float[2,3,4] X) => (float[4,2,3] Y) { Y = Transpose(X)<perm=[2,0,1]> }
+    g (float[2,3,4] X) => (float[4,2,3] Y) { Y = Transpose<perm=[2,0,1]>(X) }
 """)
 inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
 ```
 
-Body-graph attributes embed inline (note: **inputs `(...)` before attributes `<...>`** reads more naturally):
+**Argument order**: for ops with simple scalar/tensor attributes the conventional `Op<attrs>(inputs)` form (as above) reads well. For ops with subgraph attributes — where the body spans multiple lines — prefer `Op(inputs)<body = ... { ... }>` so the inputs aren't visually buried after the multi-line attribute block:
 
 ```
 so, xo = Scan(s, x) <num_scan_inputs=1, body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) { so = Identity(si) xo = Identity(xi) }>
