@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Verifies that two successive builds from identical source produce bit-for-bit
-# identical wheels (reproducible builds).  Calls the same release_linux.yml
-# callable workflow twice with a minimal matrix, then compares wheel checksums.
+# identical wheels (reproducible builds).  Calls each platform cibw workflow
+# twice with a minimal single-target matrix, then compares wheel checksums.
 # On mismatch, diffoscope pinpoints exactly which files or metadata differ.
 
 name: ReproducibleBuild
@@ -18,65 +18,103 @@ permissions:
   contents: read
 
 jobs:
-  build1:
-    uses: ./.github/workflows/release_linux.yml
+  linux-build1:
+    uses: ./.github/workflows/release_linux_cibw.yml
     with:
-      os: linux
       build_mode: release
-      python_versions: '["3.12"]'
-      architectures: '["x64"]'
-      run_tests: false
-      artifact_name_prefix: repro-build1-wheels
+      builds: '["cp312-manylinux_x86_64"]'
+      artifact_name_prefix: repro-build1
 
-  build2:
-    uses: ./.github/workflows/release_linux.yml
+  linux-build2:
+    uses: ./.github/workflows/release_linux_cibw.yml
     with:
-      os: linux
       build_mode: release
-      python_versions: '["3.12"]'
-      architectures: '["x64"]'
-      run_tests: false
-      artifact_name_prefix: repro-build2-wheels
+      builds: '["cp312-manylinux_x86_64"]'
+      artifact_name_prefix: repro-build2
+
+  macos-build1:
+    uses: ./.github/workflows/release_macos_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-macosx_universal2"]'
+      artifact_name_prefix: repro-build1
+
+  macos-build2:
+    uses: ./.github/workflows/release_macos_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-macosx_universal2"]'
+      artifact_name_prefix: repro-build2
+
+  windows-build1:
+    uses: ./.github/workflows/release_windows_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-win_amd64"]'
+      artifact_name_prefix: repro-build1
+
+  windows-build2:
+    uses: ./.github/workflows/release_windows_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-win_amd64"]'
+      artifact_name_prefix: repro-build2
 
   compare:
-    needs: [build1, build2]
+    needs: [linux-build1, linux-build2, macos-build1, macos-build2, windows-build1, windows-build2]
     runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: repro-build1-wheels-linux-x64-3.12-abi3
-          path: /tmp/build1
+          name: repro-build1-linux-cp312-manylinux_x86_64
+          path: /tmp/linux-build1
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: repro-build2-wheels-linux-x64-3.12-abi3
-          path: /tmp/build2
+          name: repro-build2-linux-cp312-manylinux_x86_64
+          path: /tmp/linux-build2
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build1-macos-cp312-macosx_universal2
+          path: /tmp/macos-build1
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build2-macos-cp312-macosx_universal2
+          path: /tmp/macos-build2
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build1-windows-cp312-win_amd64
+          path: /tmp/windows-build1
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: repro-build2-windows-cp312-win_amd64
+          path: /tmp/windows-build2
 
       - name: Compare checksums
-        run: |
-          # Ensure exactly one wheel per artifact
-          wheel1=$(ls /tmp/build1/*.whl 2>/dev/null | wc -l)
-          wheel2=$(ls /tmp/build2/*.whl 2>/dev/null | wc -l)
-          [ "$wheel1" -eq 1 ] || { echo "ERROR: Expected 1 wheel in /tmp/build1, found $wheel1"; exit 1; }
-          [ "$wheel2" -eq 1 ] || { echo "ERROR: Expected 1 wheel in /tmp/build2, found $wheel2"; exit 1; }
-
-          WHEEL1=$(ls /tmp/build1/*.whl)
-          WHEEL2=$(ls /tmp/build2/*.whl)
-
-          h1=$(sha256sum "$WHEEL1" | cut -d' ' -f1)
-          h2=$(sha256sum "$WHEEL2" | cut -d' ' -f1)
-
-          echo "Build 1: $(basename "$WHEEL1")  →  $h1"
-          echo "Build 2: $(basename "$WHEEL2")  →  $h2"
-
-          if [ "$h1" = "$h2" ]; then
-            echo "Reproducible build confirmed — both wheels have SHA-256 $h1"
-          else
-            echo "Non-reproducible build — SHA-256 mismatch"
-            exit 1
-          fi
+        id: compare
         shell: bash
+        run: |
+          fail=0
+          for platform in linux macos windows; do
+            b1=$(ls /tmp/${platform}-build1/*.whl | head -1)
+            b2=$(ls /tmp/${platform}-build2/*.whl | head -1)
+            h1=$(sha256sum "$b1" | cut -d' ' -f1)
+            h2=$(sha256sum "$b2" | cut -d' ' -f1)
+            echo "[$platform] Build 1: $(basename "$b1")  →  $h1"
+            echo "[$platform] Build 2: $(basename "$b2")  →  $h2"
+            if [ "$h1" = "$h2" ]; then
+              echo "[$platform] Reproducible build confirmed — SHA-256 $h1"
+            else
+              echo "[$platform] Non-reproducible build — SHA-256 mismatch"
+              fail=1
+            fi
+          done
+          exit $fail
 
       - name: Install diffoscope
         if: failure()
@@ -84,24 +122,29 @@ jobs:
 
       - name: Run diffoscope
         if: failure()
+        shell: bash
         run: |
-          # Use the same wheels identified in Compare checksums step
-          WHEEL1=$(ls /tmp/build1/*.whl)
-          WHEEL2=$(ls /tmp/build2/*.whl)
-          diffoscope "$WHEEL1" "$WHEEL2" \
-            --text /tmp/diffoscope.txt \
-            --html /tmp/diffoscope.html \
-            --max-text-report-size 10000000 \
-            || true
-          echo "--- diffoscope summary (first 100 lines) ---"
-          head -100 /tmp/diffoscope.txt || true
+          for platform in linux macos windows; do
+            b1=$(ls /tmp/${platform}-build1/*.whl 2>/dev/null | head -1)
+            b2=$(ls /tmp/${platform}-build2/*.whl 2>/dev/null | head -1)
+            [ -z "$b1" ] || [ -z "$b2" ] && continue
+            h1=$(sha256sum "$b1" | cut -d' ' -f1)
+            h2=$(sha256sum "$b2" | cut -d' ' -f1)
+            [ "$h1" = "$h2" ] && continue
+            echo "=== diffoscope: $platform ==="
+            diffoscope "$b1" "$b2" \
+              --text /tmp/diffoscope-${platform}.txt \
+              --html /tmp/diffoscope-${platform}.html \
+              --max-text-report-size 10000000 \
+              || true
+            echo "--- first 100 lines ---"
+            head -100 /tmp/diffoscope-${platform}.txt || true
+          done
 
       - name: Upload diffoscope report
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: diffoscope-report
-          path: |
-            /tmp/diffoscope.html
-            /tmp/diffoscope.txt
+          path: /tmp/diffoscope-*.{html,txt}
           retention-days: 30

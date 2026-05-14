@@ -11,13 +11,25 @@ on:
         required: false
         type: string
         default: "preview"
+      artifact_name_prefix:
+        required: false
+        type: string
+        default: "wheels"
+      builds:
+        required: false
+        type: string
+        default: >-
+          ["cp310-win_amd64","cp310-win32",
+           "cp311-win_amd64","cp311-win32","cp311-win_arm64",
+           "cp312-win_amd64","cp312-win32","cp312-win_arm64",
+           "cp314t-win_amd64","cp314t-win_arm64"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: windows-release-${{ github.workflow }}-${{ github.ref }}
+  group: windows-release-${{ github.workflow }}-${{ github.ref }}-${{ inputs.artifact_name_prefix }}
   cancel-in-progress: true
 
 jobs:
@@ -25,17 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build:
-          - "cp310-win_amd64"
-          - "cp310-win32"
-          - "cp311-win_amd64"
-          - "cp311-win32"
-          - "cp311-win_arm64"
-          - "cp312-win_amd64"
-          - "cp312-win32"
-          - "cp312-win_arm64"
-          - "cp314t-win_amd64"
-          - "cp314t-win_arm64"
+        build: ${{ fromJSON(inputs.builds) }}
     runs-on: ${{ contains(matrix.build, 'arm64') && 'windows-11-arm' || 'windows-2022' }}
 
     steps:
@@ -95,7 +97,7 @@ jobs:
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: wheels-windows-${{ matrix.build }}
+          name: ${{ inputs.artifact_name_prefix }}-windows-${{ matrix.build }}
           path: dist/*.whl
 
       - name: Validate wheel
