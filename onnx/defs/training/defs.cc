@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -186,7 +187,7 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T1", OpSchema::all_tensor_types(), "Allow outputs to be any kind of tensor.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {types::Float16, types::Float, types::Double},
             "Allow inputs to be any kind of floating-point tensor."));
 
 static constexpr const char* Adagrad_ver1_doc = R"DOC(
@@ -290,9 +291,9 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "which means no regularization.",
             AttributeProto::FLOAT,
             0.0f)
-        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
-        .TypeConstraint("T3", {"tensor(float)", "tensor(double)"}, "Constrain input and output types to float tensors.")
+        .TypeConstraint("T1", {types::Float, types::Double}, "Constrain input types to float scalars.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain input types to 64-bit integer scalars.")
+        .TypeConstraint("T3", {types::Float, types::Double}, "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // In comments below, we assume that the input list is
           // [R, T, X1, X2, G1, G2, H1, H2] and the output list is
@@ -417,9 +418,9 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             "to the use of Nesterov's momentum while \"standard\" invokes stochastic gradient method "
             "using standard momentum",
             AttributeProto::STRING)
-        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
-        .TypeConstraint("T3", {"tensor(float)", "tensor(double)"}, "Constrain input types to float tensors.")
+        .TypeConstraint("T1", {types::Float, types::Double}, "Constrain input types to float scalars.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain input types to 64-bit integer scalars.")
+        .TypeConstraint("T3", {types::Float, types::Double}, "Constrain input types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2] and
           // output list is [X1_new, X2_new, V1_new, V2_new] for explaining
@@ -575,9 +576,9 @@ ONNX_PREVIEW_TRAINING_OPERATOR_SET_SCHEMA(
             AttributeProto::FLOAT,
             0.0f)
         .Attr("epsilon", "Small scalar to avoid dividing by zero.", AttributeProto::FLOAT, 1e-6f)
-        .TypeConstraint("T1", {"tensor(float)", "tensor(double)"}, "Constrain input types to float scalars.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain input types to 64-bit integer scalars.")
-        .TypeConstraint("T3", {"tensor(float)", "tensor(double)"}, "Constrain input and output types to float tensors.")
+        .TypeConstraint("T1", {types::Float, types::Double}, "Constrain input types to float scalars.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain input types to 64-bit integer scalars.")
+        .TypeConstraint("T3", {types::Float, types::Double}, "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Assume that the input list is [R, T, X1, X2, G1, G2, V1, V2, H1, H2] and
           // output list is [X1_new, X2_new, V1_new, V2_new, H1_new, H2_new] for explaining

@@ -6,6 +6,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -27,25 +28,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL_VALUE)
         .Input(0, "input", "All values in input have to be in the range:[0, 1].", "T1")
         .Output(0, "output", "The returned output tensor only has values 0 or 1, same shape as input tensor.", "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
+        .TypeConstraint("T1", {types::Float16, types::Float, types::Double}, "Constrain input types to float tensors.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(bfloat16)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(bool)"},
+            {types::Float16,
+             types::Float,
+             types::Double,
+             types::BFloat16,
+             types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64,
+             types::Bool},
             "Constrain output types to all numeric tensors and bool tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr)
@@ -104,11 +102,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output",
             "Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.",
             "T2")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain output types to integral tensors.")
+        .TypeConstraint("T1", {types::Float16, types::Float, types::Double}, "Constrain input types to float tensors.")
+        .TypeConstraint("T2", {types::Int32, types::Int64}, "Constrain output types to integral tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto dtype = ctx.getAttribute("dtype");
@@ -158,10 +153,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1",
             OpSchema::all_tensor_types(),
             "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+        .TypeConstraint("T2", {types::Float16, types::Float, types::Double}, "Constrain output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr)
@@ -198,10 +190,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1",
             OpSchema::all_tensor_types(),
             "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+        .TypeConstraint("T2", {types::Float16, types::Float, types::Double}, "Constrain output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr)
@@ -233,10 +222,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(TensorProto::FLOAT))
         .Attr("shape", "The shape of the output tensor.", AttributeProto::INTS)
         .Output(0, "output", "Output tensor of random values drawn from normal distribution", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+        .TypeConstraint("T", {types::Float16, types::Float, types::Double}, "Constrain output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
@@ -262,10 +248,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(TensorProto::FLOAT))
         .Attr("shape", "The shape of the output tensor.", AttributeProto::INTS)
         .Output(0, "output", "Output tensor of random values drawn from uniform distribution", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors.")
+        .TypeConstraint("T", {types::Float16, types::Float, types::Double}, "Constrain output types to float tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
@@ -295,33 +278,33 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor, same shape as input tensor T1.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)"},
+            {types::Float16,
+             types::Float,
+             types::Double,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64,
+             types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::Bool},
             "Constrain input types. Strings and complex are not supported.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)"},
+            {types::Float16,
+             types::Float,
+             types::Double,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64,
+             types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::Bool},
             "Constrain output types. Strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr) {
@@ -619,7 +602,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "Output tensor containing the same value of the provided tensor.", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            {types::Float16, types::Float, types::Double},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto attr_proto = ctx.getAttribute("value");
@@ -726,15 +709,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",        "tensor(float)",      "tensor(double)",         "tensor(int8)",
-             "tensor(int16)",          "tensor(int32)",      "tensor(int64)",          "tensor(uint8)",
-             "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",         "tensor(uint4)",
-             "tensor(int4)",           "tensor(bool)",       "tensor(bfloat16)",       "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(float4e2m1)",
-             "tensor(float8e8m0)"},
+            {types::Float16,      types::Float,          types::Double,     types::Int8,           types::Int16,
+             types::Int32,        types::Int64,          types::UInt8,      types::UInt16,         types::UInt32,
+             types::UInt64,       types::UInt4,          types::Int4,       types::Bool,           types::BFloat16,
+             types::Float8E4M3FN, types::Float8E4M3FNUZ, types::Float8E5M2, types::Float8E5M2FNUZ, types::Float4E2M1,
+             types::Float8E8M0},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
@@ -775,14 +757,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",        "tensor(float)",      "tensor(double)",         "tensor(int8)",
-             "tensor(int16)",          "tensor(int32)",      "tensor(int64)",          "tensor(uint8)",
-             "tensor(uint16)",         "tensor(uint32)",     "tensor(uint64)",         "tensor(uint4)",
-             "tensor(int4)",           "tensor(bool)",       "tensor(bfloat16)",       "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)", "tensor(float8e5m2)", "tensor(float8e5m2fnuz)", "tensor(float4e2m1)"},
+            {types::Float16,      types::Float,          types::Double,     types::Int8,           types::Int16,
+             types::Int32,        types::Int64,          types::UInt8,      types::UInt16,         types::UInt32,
+             types::UInt64,       types::UInt4,          types::Int4,       types::Bool,           types::BFloat16,
+             types::Float8E4M3FN, types::Float8E4M3FNUZ, types::Float8E5M2, types::Float8E5M2FNUZ, types::Float4E2M1},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
@@ -823,28 +804,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(uint4)",
-             "tensor(int4)",
-             "tensor(bool)",
-             "tensor(bfloat16)",
-             "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)"},
+            {types::Float16,
+             types::Float,
+             types::Double,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64,
+             types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::UInt4,
+             types::Int4,
+             types::Bool,
+             types::BFloat16,
+             types::Float8E4M3FN,
+             types::Float8E4M3FNUZ,
+             types::Float8E5M2,
+             types::Float8E5M2FNUZ},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
@@ -885,26 +866,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)",
-             "tensor(bfloat16)",
-             "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)"},
+            {types::Float16,
+             types::Float,
+             types::Double,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64,
+             types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::Bool,
+             types::BFloat16,
+             types::Float8E4M3FN,
+             types::Float8E4M3FNUZ,
+             types::Float8E5M2,
+             types::Float8E5M2FNUZ},
             "Constrain output types to be numerics.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
@@ -945,21 +926,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(bool)"},
+            {types::Float16,
+             types::Float,
+             types::Double,
+             types::Int8,
+             types::Int16,
+             types::Int32,
+             types::Int64,
+             types::UInt8,
+             types::UInt16,
+             types::UInt32,
+             types::UInt64,
+             types::Bool},
             "Constrain output types to be numerics.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {

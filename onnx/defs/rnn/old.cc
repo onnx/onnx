@@ -7,6 +7,7 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -172,10 +173,8 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset14(const char* /*name
         1,
         OpSchema::Differentiable);
     schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
-    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+        "T", {types::Float16, types::Float, types::Double}, "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T1", {types::Int32}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference_opset14);
   };
 }
@@ -452,10 +451,8 @@ static std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
         "`[num_directions, batch_size, hidden_size]`.",
         "T");
     schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
-    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+        "T", {types::Float16, types::Float, types::Double}, "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T1", {types::Int32}, "Constrain seq_lens to integer tensor.");
   };
 }
 
@@ -702,10 +699,8 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset1_to_6(const char* /*
         "T",
         OpSchema::Optional);
     schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
-    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+        "T", {types::Float16, types::Float, types::Double}, "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T1", {types::Int32}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference_opset1_to_6);
   };
 }
@@ -1122,10 +1117,8 @@ static std::function<void(OpSchema&)> RNNDocGenerator_opset7_to_13(const char* /
         "T",
         OpSchema::Optional);
     schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
-    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+        "T", {types::Float16, types::Float, types::Double}, "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T1", {types::Int32}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference_opset7_to_13);
   };
 }
