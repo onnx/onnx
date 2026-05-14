@@ -4461,19 +4461,17 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // Validate input ranks
-          for (int i = 0; i < 3; ++i) {
-            if (hasInputShape(ctx, i) && getInputShape(ctx, i).dim_size() != 3) {
-              fail_shape_inference("Input ", i, " (query/key/value) must be rank 3 (3D packed format)");
-            }
+          // query/key/value: 3D packed (B, T, H * d); past_state: 4D (B, H_kv, d_k, d_v);
+          // decay/beta: 3D packed when present.
+          checkInputRank(ctx, 0, 3);
+          checkInputRank(ctx, 1, 3);
+          checkInputRank(ctx, 2, 3);
+          checkInputRank(ctx, 3, 4);
+          if (has_decay) {
+            checkInputRank(ctx, 4, 3);
           }
-          if (hasInputShape(ctx, 3) && getInputShape(ctx, 3).dim_size() != 4) {
-            fail_shape_inference("Input 3 (past_state) must be rank 4");
-          }
-          if (has_decay && hasInputShape(ctx, 4) && getInputShape(ctx, 4).dim_size() != 3) {
-            fail_shape_inference("Input 4 (decay) must be rank 3 (3D packed format)");
-          }
-          if (has_beta && hasInputShape(ctx, 5) && getInputShape(ctx, 5).dim_size() != 3) {
-            fail_shape_inference("Input 5 (beta) must be rank 3 (3D packed format)");
+          if (has_beta) {
+            checkInputRank(ctx, 5, 3);
           }
 
           // Propagate types and shapes
