@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Pyodide Build
+name: macOS Release
 
 on:
   workflow_call:
@@ -21,12 +21,21 @@ permissions:
   contents: read
 
 concurrency:
-  group: pyodide-release-${{ github.workflow }}-${{ github.ref }}
+  group: macos-release-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - "cp310-macosx_universal2"
+          - "cp311-macosx_universal2"
+          - "cp312-macosx_universal2"
+          - "cp314t-macosx_universal2"
+
+    runs-on: macos-14
 
     env:
       PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
@@ -36,8 +45,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
 
@@ -45,15 +53,12 @@ jobs:
         if: inputs.build_mode != 'release'
         shell: bash
         run: |
-          sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
+          sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
 
-      - name: Install cibuildwheel
-        run: python -m pip install -q cibuildwheel>=2.21
-
-      - name: Download protoc for host
+      - name: Download protoc
         run: |
-          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip" -o protoc.zip
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-osx-universal_binary.zip" -o protoc.zip
           unzip -q protoc.zip -d protoc-host
           chmod +x protoc-host/bin/protoc
 
@@ -69,22 +74,53 @@ jobs:
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
         with:
           output-dir: dist/
+          only: ${{ matrix.build }}
         env:
-          CIBW_PLATFORM: pyodide
-          CIBW_TEST_COMMAND: >-
-            python -c "from onnx import NodeProto; n = NodeProto(); n.op_type = 'Add'; print(n)"
           CIBW_ENVIRONMENT: >-
+            MACOSX_DEPLOYMENT_TARGET=12.0
             CMAKE_ARGS="
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
             -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
             -DONNX_HARDENING=ON
-            -DONNX_PYODIDE_BUILD=ON
             -DONNX_USE_LITE_PROTO=ON
             -DONNX_WERROR=ON
-            -DCMAKE_CXX_FLAGS='-Wno-error=deprecated-builtins'
             "
 
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: wheels-pyodide
+          name: wheels-macos-${{ matrix.build }}
           path: dist/*.whl
+
+      - name: Validate wheel
+        run: |
+          python -m pip install -q abi3audit check-wheel-contents
+          for whl in dist/*.whl; do
+            echo "Checking $whl"
+            check-wheel-contents "$whl"
+            python -m abi3audit -v "$whl"
+          done
+
+  test-min-deps:
+    needs: build
+    if: github.event_name == 'schedule'
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wheels-macos-cp312-macosx_universal2
+          path: dist
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Verify with minimum supported packages
+        run: |
+          python -m pip install -q pytest
+          python -m pip install -q dist/*.whl
+          python -m pip install -q -r requirements-min.txt
+          pytest

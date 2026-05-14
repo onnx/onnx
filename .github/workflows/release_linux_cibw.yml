@@ -1,0 +1,130 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Linux Release
+
+on:
+  workflow_call:
+    inputs:
+      build_mode:
+        required: false
+        type: string
+        default: "preview"
+      protobuf_version:
+        required: false
+        type: string
+        default: "33.6"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - "cp310-manylinux_x86_64"
+          - "cp310-manylinux_aarch64"
+          - "cp311-manylinux_x86_64"
+          - "cp311-manylinux_aarch64"
+          - "cp312-manylinux_x86_64"
+          - "cp312-manylinux_aarch64"
+          - "cp314t-manylinux_x86_64"
+          - "cp314t-manylinux_aarch64"
+
+    runs-on: ${{ contains(matrix.build, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+
+    env:
+      PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Set preview version
+        if: inputs.build_mode != 'release'
+        shell: bash
+        run: |
+          sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
+          echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
+
+      - name: Download protoc
+        run: |
+          ARCH=${{ contains(matrix.build, 'aarch64') && 'aarch_64' || 'x86_64' }}
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-${ARCH}.zip" -o protoc.zip
+          unzip -q protoc.zip -d protoc-host
+          chmod +x protoc-host/bin/protoc
+
+      - name: Download protobuf source
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          tar -xf protobuf.tar.gz
+
+      - name: Set SOURCE_DATE_EPOCH for reproducible builds
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        with:
+          output-dir: dist/
+          only: ${{ matrix.build }}
+        env:
+          CIBW_ENVIRONMENT: >-
+            CMAKE_ARGS="
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=/project/protobuf-${{ env.PROTOBUF_VERSION }}
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=/project/protoc-host/bin/protoc
+            -DONNX_HARDENING=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
+            "
+
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: wheels-linux-${{ matrix.build }}
+          path: dist/*.whl
+
+      - name: Validate wheel
+        run: |
+          python -m pip install -q abi3audit check-wheel-contents
+          for whl in dist/*.whl; do
+            echo "Checking $whl"
+            check-wheel-contents "$whl"
+            python -m abi3audit -v "$whl"
+          done
+
+  test-min-deps:
+    needs: build
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wheels-linux-cp312-manylinux_x86_64
+          path: dist
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Verify with minimum supported packages
+        run: |
+          python -m pip install -q pytest
+          python -m pip install -q dist/*.whl
+          python -m pip install -q -r requirements-min.txt
+          pytest

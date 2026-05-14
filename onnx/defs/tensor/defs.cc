@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/common/safe_math.h"
 #include "onnx/defs/data_propagators.h"
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/function.h"
@@ -341,7 +342,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                     if (dataInputTensorType.shape().dim(i).has_dim_value()) {
                       const auto& input_dim_value = dataInputTensorType.shape().dim(i).dim_value();
                       new_dim->set_dim_value(input_dim_value);
-                      outputProduct *= input_dim_value;
+                      if (checked_mul_overflow(outputProduct, input_dim_value, &outputProduct)) {
+                        fail_shape_inference("Dimension product overflow in Reshape");
+                      }
                       unresolvedZeros[i] = false;
                     } else if (dataInputTensorType.shape().dim(i).has_dim_param()) {
                       new_dim->set_dim_param(dataInputTensorType.shape().dim(i).dim_param());
@@ -349,12 +352,16 @@ ONNX_OPERATOR_SET_SCHEMA(
                   }
                 } else {
                   new_dim->set_dim_value(dim_value);
-                  outputProduct *= dim_value;
+                  if (checked_mul_overflow(outputProduct, dim_value, &outputProduct)) {
+                    fail_shape_inference("Dimension product overflow in Reshape");
+                  }
                 }
               } else if (dim_value > 0) {
                 // Set the dimension value to dim_value
                 new_dim->set_dim_value(dim_value);
-                outputProduct *= dim_value;
+                if (checked_mul_overflow(outputProduct, dim_value, &outputProduct)) {
+                  fail_shape_inference("Dimension product overflow in Reshape");
+                }
               } else {
                 // Check if value is less than -1; fail if so
                 fail_shape_inference("Invalid dimension value: ", dim_value);
@@ -379,7 +386,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             } else {
               for (int i = 0; i < dataInputTensorType.shape().dim_size(); ++i) {
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
-                  inputProduct *= dataInputTensorType.shape().dim(i).dim_value();
+                  if (checked_mul_overflow(
+                          inputProduct, dataInputTensorType.shape().dim(i).dim_value(), &inputProduct)) {
+                    fail_shape_inference("Dimension product overflow in Reshape");
+                  }
                 } else if (i >= static_cast<int>(unresolvedZeros.size()) || !unresolvedZeros[i]) {
                   inputProductValid = false;
                   break;

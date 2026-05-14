@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "onnx/common/safe_math.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/traditionalml/utils.h"
 #include "onnx/defs/type_builders.h"
@@ -51,7 +52,9 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
               std::string single_symbolic_dim;
               for (int i = 0; i < indices_shape.dim_size(); i++) {
                 if (indices_shape.dim(i).has_dim_value()) {
-                  num_indices *= indices_shape.dim(i).dim_value();
+                  if (checked_mul_overflow(num_indices, indices_shape.dim(i).dim_value(), &num_indices)) {
+                    fail_shape_inference("Dimension product overflow in ArrayFeatureExtractor");
+                  }
                 } else if (indices_shape.dim(i).has_dim_param()) {
                   if (single_symbolic_dim.empty()) {
                     // it is possible to set symbolic dimension param if the rest dim values are all
