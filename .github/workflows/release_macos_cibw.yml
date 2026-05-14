@@ -77,6 +77,7 @@ jobs:
           only: ${{ matrix.build }}
         env:
           CIBW_ENVIRONMENT: >-
+            MACOSX_DEPLOYMENT_TARGET=12.0
             CMAKE_ARGS="
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
             -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
