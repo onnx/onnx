@@ -44,7 +44,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_basic",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -67,7 +67,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight, bias],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_with_bias",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -90,7 +90,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight, past_state],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_with_past_state",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -113,7 +113,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_silu",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -136,7 +136,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_swish_alias",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -162,7 +162,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight, bias, past_state],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_decode_step",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -184,7 +184,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_kernel_size_one",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -211,7 +211,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight, bias, past_state],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_with_bias_and_past_state",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -238,7 +238,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight, past_state],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_silu_with_past_state",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -261,7 +261,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_b1_c1_degenerate",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -284,7 +284,7 @@ class CausalConvWithState(Base):
             inputs=[input_, weight],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_short_input_no_past_state",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )
 
     @staticmethod
@@ -306,5 +306,5 @@ class CausalConvWithState(Base):
             inputs=[input_, weight],
             outputs=[output, present_state],
             name="test_causal_conv_with_state_fp16",
-            opset_imports=[onnx.helper.make_opsetid("", 25)],
+            opset_imports=[onnx.helper.make_opsetid("", 27)],
         )

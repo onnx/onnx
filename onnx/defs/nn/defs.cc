@@ -3700,7 +3700,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           return true;
         }));
 
-static constexpr const char* CausalConvWithState_ver25_doc = R"DOC(
+static constexpr const char* CausalConvWithState_ver27_doc = R"DOC(
 
 Stateful causal 1D depthwise convolution.
 
@@ -3723,9 +3723,9 @@ The optional activation attribute supports fused SiLU/Swish activation.
 
 ONNX_OPERATOR_SET_SCHEMA(
     CausalConvWithState,
-    25,
+    27,
     OpSchema()
-        .SetDoc(CausalConvWithState_ver25_doc)
+        .SetDoc(CausalConvWithState_ver27_doc)
         .Attr(
             "activation",
             "Fused activation function. One of: 'silu', 'swish', 'none'. "
@@ -3926,7 +3926,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
             "Constrain input and output types to float tensors."));
 
-static constexpr const char* LinearAttention_ver25_doc = R"DOC(
+static constexpr const char* LinearAttention_ver27_doc = R"DOC(
 Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
 
 All inputs use 3D packed format [B, T, H*D]; q_num_heads and kv_num_heads are always
@@ -3953,9 +3953,9 @@ but may be implemented using chunk-parallel algorithms for GPU efficiency.
 
 ONNX_OPERATOR_SET_SCHEMA(
     LinearAttention,
-    25,
+    27,
     OpSchema()
-        .SetDoc(LinearAttention_ver25_doc)
+        .SetDoc(LinearAttention_ver27_doc)
         .Attr(
             "update_rule",
             "The update rule for the linear attention recurrence. "
