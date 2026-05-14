@@ -572,7 +572,7 @@ TEST(ShapeInferenceTest, ScanVarLen27_BasicTest) {
 >
 agraph (float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen <
+  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
     num_scan_inputs = 1,
     body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
            => (float[3] loop_state_out, float[4] scan_out_per_iter)
@@ -580,7 +580,7 @@ agraph (float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
       loop_state_out = Identity(loop_state_in)
       scan_out_per_iter = Identity(scan_in_per_iter)
     }
-  > ("", state_in, scan_in_full)
+  >
 }
 )ONNX";
 
@@ -616,7 +616,7 @@ TEST(ShapeInferenceTest, ScanVarLen27_ScanOutputAxesNonZero) {
 >
 agraph (float[3] state_in, float[5, 4, 6] scan_in_full) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen <
+  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
     num_scan_inputs = 1,
     scan_output_axes = [1],
     body = scan_var_len_body (float[3] loop_state_in, float[4, 6] scan_in_per_iter)
@@ -625,7 +625,7 @@ agraph (float[3] state_in, float[5, 4, 6] scan_in_full) => (state_out, scan_out)
       loop_state_out = Identity(loop_state_in)
       scan_out_per_iter = Identity(scan_in_per_iter)
     }
-  > ("", state_in, scan_in_full)
+  >
 }
 )ONNX";
 
@@ -661,7 +661,7 @@ TEST(ShapeInferenceTest, ScanVarLen27_WithOutputLengths) {
 >
 agraph (int64[1] output_lengths, float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen <
+  state_out, scan_out = ScanVarLen (output_lengths, state_in, scan_in_full) <
     num_scan_inputs = 1,
     body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
            => (float[3] loop_state_out, float[4] scan_out_per_iter)
@@ -669,7 +669,7 @@ agraph (int64[1] output_lengths, float[3] state_in, float[5, 4] scan_in_full) =>
       loop_state_out = Identity(loop_state_in)
       scan_out_per_iter = Identity(scan_in_per_iter)
     }
-  > (output_lengths, state_in, scan_in_full)
+  >
 }
 )ONNX";
 
@@ -704,7 +704,7 @@ TEST(ShapeInferenceTest, ScanVarLen27_ScanOutputElemTypeFromBody) {
 >
 agraph (float[3] state_in, int32[5, 4] scan_in_full) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen <
+  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
     num_scan_inputs = 1,
     body = scan_var_len_body (float[3] loop_state_in, int32[4] scan_in_per_iter)
            => (float[3] loop_state_out, int32[4] scan_out_per_iter)
@@ -712,7 +712,7 @@ agraph (float[3] state_in, int32[5, 4] scan_in_full) => (state_out, scan_out)
       loop_state_out = Identity(loop_state_in)
       scan_out_per_iter = Identity(scan_in_per_iter)
     }
-  > ("", state_in, scan_in_full)
+  >
 }
 )ONNX";
 

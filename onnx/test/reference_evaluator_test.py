@@ -1473,7 +1473,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 => (float[{d0}] outer_state_out,
                     float[{d0}, ?] outer_scan_out)
             {{
-                outer_state_out, outer_scan_out = ScanVarLen <
+                outer_state_out, outer_scan_out = ScanVarLen ("", outer_state_in, outer_scan_in) <
                     num_scan_inputs = 1,
                     scan_output_axes = [1],
                     body = b (float[{d0}] state_in,
@@ -1485,7 +1485,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                         state_out = Identity(state_in)
                         scan_out = Mul(scan_in, two)
                     }}
-                > ("", outer_state_in, outer_scan_in)
+                >
             }}
             """
         )
@@ -1529,7 +1529,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                 => (float[{feature}] outer_state_out,
                     float[?] outer_scan_out)
             {{
-                outer_state_out, outer_scan_out = ScanVarLen <
+                outer_state_out, outer_scan_out = ScanVarLen (output_lengths, outer_state_in, outer_scan_in) <
                     num_scan_inputs = 1,
                     body = b (float[{feature}] state_in,
                               float[{feature}] scan_in)
@@ -1539,7 +1539,7 @@ class TestReferenceEvaluator(unittest.TestCase):
                         state_out = Identity(state_in)
                         scan_out = Identity(scan_in)
                     }}
-                > (output_lengths, outer_state_in, outer_scan_in)
+                >
             }}
             """
         )

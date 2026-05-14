@@ -5345,9 +5345,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[4, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen <
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
-                > ("", loop_state_orig, scan_input)
+                >
             }}
             """
         )
@@ -5373,11 +5373,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[4, 3, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen <
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     scan_output_axes = [1],
                     {self._SCAN_VAR_LEN_BODY}
-                > ("", loop_state_orig, scan_input)
+                >
             }}
             """
         )
@@ -5400,11 +5400,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[5, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen <
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     scan_input_axes = [1],
                     {self._SCAN_VAR_LEN_BODY}
-                > ("", loop_state_orig, scan_input)
+                >
             }}
             """
         )
@@ -5429,9 +5429,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (int64[1] output_lengths, float[3] loop_state_orig,
                float[4, 2] scan_input) => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen <
+                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
-                > (output_lengths, loop_state_orig, scan_input)
+                >
             }}
             """
         )
@@ -5454,7 +5454,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[4, 2, 3] scan_input)
                 => (loop_state_final, scan_output_a, scan_output_b)
             {
-                loop_state_final, scan_output_a, scan_output_b = ScanVarLen <
+                loop_state_final, scan_output_a, scan_output_b = ScanVarLen ("", loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     scan_output_axes = [0, 1],
                     body = b (state_in, scan_in) => (state_out, scan_out_a, scan_out_b) {
@@ -5462,7 +5462,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                         scan_out_a = Identity(scan_in)
                         scan_out_b = Identity(scan_in)
                     }
-                > ("", loop_state_orig, scan_input)
+                >
             }
             """
         )
@@ -5491,12 +5491,12 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen <
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     scan_input_axes = [-2],
                     scan_output_axes = [-2],
                     {self._SCAN_VAR_LEN_BODY}
-                > ("", loop_state_orig, scan_input)
+                >
             }}
             """
         )
@@ -5521,9 +5521,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[1] output_lengths, float[3] loop_state_orig,
                float[4, 2] scan_input) => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen <
+                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
-                > (output_lengths, loop_state_orig, scan_input)
+                >
             }}
             """
         )
@@ -5539,9 +5539,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (int64[2, 3] output_lengths, float[3] loop_state_orig,
                float[4, 2] scan_input) => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen <
+                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
-                > (output_lengths, loop_state_orig, scan_input)
+                >
             }}
             """
         )
@@ -5557,9 +5557,9 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (int64[2] output_lengths, float[3] loop_state_orig,
                float[4, 2] scan_input) => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen <
+                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
-                > (output_lengths, loop_state_orig, scan_input)
+                >
             }}
             """
         )
