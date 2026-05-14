@@ -125,6 +125,6 @@ jobs:
       - name: Verify with minimum supported packages
         run: |
           python -m pip install -q pytest
-          python -m pip install -q -r requirements-min.txt
           python -m pip install -q dist/*.whl
+          python -m pip install -q -r requirements-min.txt
           pytest

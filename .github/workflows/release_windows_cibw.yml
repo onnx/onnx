@@ -131,6 +131,6 @@ jobs:
       - name: Verify with minimum supported packages
         run: |
           python -m pip install -q pytest
-          python -m pip install -q -r requirements-min.txt
           python -m pip install -q (Get-ChildItem dist/*.whl).FullName
+          python -m pip install -q -r requirements-min.txt
           pytest
