@@ -98,7 +98,13 @@ agraph (float[N] x, float[N] y) => (float[N] z) {
 Body-graph attributes (Scan / Loop / If) are embedded inline:
 
 ```
-out, state_out = Scan(state, x) <num_scan_inputs=1, body = b (float[1] s, float[1] xi) => (float[1] so, float[1] xo) { so = Identity(s) xo = Identity(xi) }>
+out, state_out = Scan (state, x) <
+    num_scan_inputs = 1,
+    body = b (float[1] s, float[1] xi) => (float[1] so, float[1] xo) {
+        so = Identity(s)
+        xo = Identity(xi)
+    }
+>
 ```
 
 **Argument order**: For ops with simple scalar/tensor attributes, the conventional `Op<attrs>(inputs)` form reads well. For ops with subgraph attributes (`Scan`, `Loop`, `If`, …) — where the subgraph body spans multiple lines — prefer `Op(inputs)<body = ... { ... }>` so the inputs aren't visually buried after the multi-line attribute block (this is what PR #7962 settled on for ScanVarLen).

@@ -177,7 +177,13 @@ inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
 **Argument order**: for ops with simple scalar/tensor attributes, the conventional `Op<attrs>(inputs)` form reads well (as in the Transpose snippet above). For ops with subgraph attributes (`Scan`, `Loop`, `If`, …) the body spans multiple lines — prefer `Op(inputs)<body = ... { ... }>` so the inputs aren't visually buried after the multi-line attribute block:
 
 ```
-so, xo = Scan(s, x) <num_scan_inputs=1, body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) { so = Identity(si) xo = Identity(xi) }>
+so, xo = Scan (s, x) <
+    num_scan_inputs = 1,
+    body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) {
+        so = Identity(si)
+        xo = Identity(xi)
+    }
+>
 ```
 
 For C++ shape-inference tests in `onnx/test/cpp/shape_inference_test.cc`, prefer the C++ `OnnxParser` (declared in `onnx/defs/parser.h`): parse a full text model, then call `shape_inference::InferShapes`. This replaces hand-building `NodeProto` / `GraphProto` and an `InferenceContextImpl` with a few lines.

@@ -126,7 +126,13 @@ For C++ tests in `onnx/test/cpp/shape_inference_test.cc`, prefer the C++ `OnnxPa
 Body-graph attributes (Scan / Loop / If) embed inline inside the `<...>` attribute list:
 
 ```
-so, xo = Scan(s, x) <num_scan_inputs=1, body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) { so = Identity(si) xo = Identity(xi) }>
+so, xo = Scan (s, x) <
+    num_scan_inputs = 1,
+    body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) {
+        so = Identity(si)
+        xo = Identity(xi)
+    }
+>
 ```
 
 **Argument order**: for ops with simple scalar/tensor attributes, the conventional `Op<attrs>(inputs)` form reads well — e.g. `Y = Transpose<perm=[2,0,1]>(X)`. For ops with subgraph attributes (`Scan`, `Loop`, `If`, `ScanVarLen`, …) the body spans multiple lines, and putting it after the inputs keeps them visible — prefer `Op(inputs)<body = ... { ... }>` as shown in the Scan example above. PR #7962 (ScanVarLen) settled on this convention.

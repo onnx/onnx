@@ -120,7 +120,13 @@ inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
 **Argument order**: for ops with simple scalar/tensor attributes the conventional `Op<attrs>(inputs)` form (as above) reads well. For ops with subgraph attributes — where the body spans multiple lines — prefer `Op(inputs)<body = ... { ... }>` so the inputs aren't visually buried after the multi-line attribute block:
 
 ```
-so, xo = Scan(s, x) <num_scan_inputs=1, body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) { so = Identity(si) xo = Identity(xi) }>
+so, xo = Scan (s, x) <
+    num_scan_inputs = 1,
+    body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) {
+        so = Identity(si)
+        xo = Identity(xi)
+    }
+>
 ```
 
 ### C++: `OnnxParser` (`onnx/defs/parser.h`)
