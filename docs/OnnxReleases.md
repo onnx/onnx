@@ -18,7 +18,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
         * The new branch will be `rel-1.16.0`
             * Branch protections rules are automatically applied to branches following this format.
         * The new tag will be `v1.16.0`
-* Create new page for the release in [Release logistics wiki](https://github.com/onnx/onnx/wiki)
+* Create new page for the release in [Release logistics wiki](https://github.com/onnx/onnx/wiki) (Add the release manager to the ONNX organization, if not already seen, so that the manager has write permissions in the wiki.)
 * Before creating a release branch, it is highly recommended to have in mind to compile **preliminary release notes** — ideally maintained in a shared location such as the **release wiki page**. These notes should include a clear summary of the **new features**, a list of **bug fixes**, any **known issues**, and especially any **deprecations or removals**, with links to relevant tickets or documentation where applicable. Having this information ready ensures that the team can confidently and promptly create a `rc1` (release candidate 1) immediately after the branch is cut, without delays. Acting quickly at this stage also helps to **reduce the need for parallel work on both the main and release branches**, minimizing merge conflicts, duplicated effort, and coordination overhead. This practice supports a smoother, more transparent release process.
    * To generate good release notes, it is helpful if pull requests have meaningful names and corresponding labels. Labels can also be added retrospectively to PRs that have already been merged.
    * The labels used can be found [here](https://github.com/onnx/onnx/blob/main/.github/release.yml)
@@ -27,10 +27,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 ## Create Release Branch
 
 * In `main` branch, before creating the release branch:
-    1. Bump the `LAST_RELEASE_VERSION` in [version.h](/onnx/common/version.h).
-        * Set to X.Y.Z, which is same as the release branch you are currently creating.
-        * After the release branch is cut, `VERSION_NUMBER` in `main` will be increased to the next future version.
-    1. Make sure the release version, IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/onnx/test/helper_test.py).
+    1. Make sure the release version ([/VERSION_NUMBER](/VERSION_NUMBER)), IR version, ai.onnx opset version, ai.onnx.ml opset version, and ai.onnx.training opset version are correct for the new release in [ONNX proto files](/onnx/onnx.in.proto), [Versioning.md](Versioning.md), [schema.h](/onnx/defs/schema.h), [helper.py](/onnx/helper.py), and [helper_test.py](/onnx/test/helper_test.py).
 
 * Create a release branch
     1. Click "New branch" from [branches](https://github.com/onnx/onnx/branches) and choose `main` as Source.
@@ -69,10 +66,6 @@ RC-Candidates
 **Partner Validation**
 
  * User should install the rc-packages with `pip install onnx=={rc version}`
- * Test with onnxruntime package:
-     * Run the test script from [test_with_ort.py](/onnx/test/test_with_ort.py) with installed onnxruntime package.
-        * The scripts tests ONNX functions like `load`, `checker.check_model`, and `shape_inference.infer_shapes`, with onnxruntime functions like `InferenceSession` and `InferenceSession.run` on certain example ONNX model.
-
  * Open Issues for external repos:
      * Create GitHub issues in converters' repos to provide them the package links and oppuruntity to test the release before it goes public.
         * https://github.com/microsoft/onnxruntime
@@ -91,6 +84,7 @@ RC-Candidates
         * https://github.com/onnx/onnxmltools
             * Example: https://github.com/onnx/onnxmltools/issues/685
         * https://github.com/Quantco/spox
+        * https://github.com/openvinotoolkit/openvino
         * https://github.com/conda-forge/onnx-feedstock
 
  * If issues are found, the bugs are to be fixed in the onnx `main` branch and then cherry-picked into the release branch.

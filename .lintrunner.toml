@@ -132,7 +132,7 @@ is_formatter = true
 [[linter]]
 code = 'NAMESPACE'
 include_patterns = ['**/*.cc', '**/*.h']
-exclude_patterns = ['third_party/**']
+exclude_patterns = []
 command = [
     'python',
     '-m',

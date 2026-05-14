@@ -1,3 +1,7 @@
+// Copyright (c) ONNX Project Contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #include "onnx/defs/doc_strings.h"
 
 namespace ONNX_NAMESPACE {
@@ -779,7 +783,7 @@ const char kDoc_Pad_ver24[] = R"DOC(
 Given a tensor containing the data to be padded (`data`), a tensor containing the number of start and end pad values for axis (`pads`), (optionally) a `mode`, and (optionally) `constant_value`,
 a padded tensor (`output`) is generated.
 
-The three supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
+The four supported `modes` are (similar to corresponding modes supported by `numpy.pad`):
 
 1) `constant`(default) - pads with a given constant value as specified by `constant_value` (which defaults to 0, empty string, or False)
 
@@ -1239,6 +1243,17 @@ Neg takes one input data (Tensor<T>) and produces one output data
 the tensor elementwise.
 )DOC";
 
+const char kDoc_BitCast_ver26[] = R"DOC(
+Reinterprets the binary representation of a tensor as a different data type,
+specified by the 'to' attribute. Unlike Cast, BitCast preserves the exact bit
+pattern without any value conversion.
+
+The target data type must have the same bit-width as the input data type.
+The output tensor has the same shape as the input tensor.
+All types except string are supported. Implementations must treat the
+underlying bytes as little endian.
+)DOC";
+
 #else
 const char kDoc_GRU_ver14[] = "";
 const char kDoc_Squeeze_ver24[] = "";
@@ -1315,5 +1330,6 @@ const char kDoc_Reshape_ver24[] = "";
 const char kDoc_Compress_ver9[] = "";
 const char kDoc_PRelu_ver7[] = "";
 const char kDoc_Neg_ver6[] = "";
+const char kDoc_BitCast_ver26[] = "";
 #endif
 } // namespace ONNX_NAMESPACE

@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 
 # SPDX-License-Identifier: Apache-2.0
-# type: ignore
+# mypy: ignore-errors
 from __future__ import annotations
 
 import unittest
@@ -19,8 +19,8 @@ def create_model():
 
     .. code-block:: python
 
-        from onnx importonnx.TensorProto
-        from onnx.helper import oh.make_tensor
+        from onnx import TensorProto
+        from onnx.helper import make_tensor
 
         from onnxscript import script
         from onnxscript.onnx_opset import opset15 as op

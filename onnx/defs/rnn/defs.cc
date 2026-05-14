@@ -7,6 +7,7 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 ONNX_API void RNNShapeInference(InferenceContext& ctx) {
@@ -172,18 +173,16 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         1,
         OpSchema::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
-    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+    schema.TypeConstraint("T1", {types::Int32}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
   };
 }
-
-static const char* const RNN_ver22_doc = kDoc_RNN_ver14;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
     22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(RNN_ver22_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_RNN_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -227,13 +226,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* const GRU_ver22_doc = kDoc_GRU_ver14;
-
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
     22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(GRU_ver22_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_GRU_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -285,13 +282,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* const LSTM_ver22_doc = kDoc_LSTM_ver14;
-
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
     22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(LSTM_ver22_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_LSTM_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "

@@ -39,6 +39,20 @@ inline NodeTransformerFunction RemoveAttribute(Symbol attr, int64_t value) {
   };
 }
 
+inline NodeTransformerFunction RemoveAttribute(Symbol attr, const std::string& value) {
+  return NODE_TRANSFORMER(node) {
+    if (node->hasAttribute(attr)) {
+      ONNX_ASSERTM(
+          node->s(attr) == value,
+          "Attribute %s must have value %s for this version conversion",
+          attr.toString(),
+          value.c_str())
+      node->removeAttribute(attr);
+    }
+    return node;
+  };
+}
+
 inline NodeTransformerFunction RemoveAttributeNotEq(Symbol attr, int64_t value) {
   return NODE_TRANSFORMER(node) {
     if (node->hasAttribute(attr)) {

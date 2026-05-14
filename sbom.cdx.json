@@ -1,0 +1,75 @@
+{
+  "$schema": "https://cyclonedx.org/schema/bom-1.7.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.7",
+  "version": 1,
+  "metadata": {
+    "lifecycles": [{"phase": "build"}],
+    "component": {
+      "type": "library",
+      "name": "onnx",
+      "description": "Open Neural Network Exchange — open format for AI/ML models",
+      "purl": "pkg:pypi/onnx",
+      "bom-ref": "onnx"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "abseil-cpp",
+      "version": "20250127.0",
+      "bom-ref": "abseil-cpp",
+      "purl": "pkg:github/abseil/abseil-cpp@v20250127.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/abseil/abseil-cpp/releases/download/20250127.0/abseil-cpp-20250127.0.tar.gz"
+        }
+      ],
+      "hashes": [
+        {"alg": "SHA-256", "content": "16242f394245627e508ec6bb296b433c90f8d914f73b9c026fddb905e27276e8"}
+      ],
+      "licenses": [{"license": {"id": "Apache-2.0"}}]
+    },
+    {
+      "type": "library",
+      "name": "protobuf",
+      "version": "33.6",
+      "bom-ref": "protobuf",
+      "purl": "pkg:github/protocolbuffers/protobuf@v33.6",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz"
+        }
+      ],
+      "hashes": [
+        {"alg": "SHA-256", "content": "16498d7dc7967e9b100632138babd4b86b61592beeccdd556f67539d9c231355"}
+      ],
+      "licenses": [{"license": {"id": "BSD-3-Clause"}}]
+    },
+    {
+      "type": "library",
+      "name": "nanobind",
+      "version": "2.12.0",
+      "bom-ref": "nanobind",
+      "purl": "pkg:github/wjakob/nanobind@v2.12.0",
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/wjakob/nanobind.git"
+        }
+      ],
+      "licenses": [{"license": {"id": "BSD-3-Clause"}}]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "onnx",
+      "dependsOn": ["abseil-cpp", "protobuf", "nanobind"]
+    },
+    {"ref": "abseil-cpp"},
+    {"ref": "protobuf"},
+    {"ref": "nanobind"}
+  ]
+}

@@ -121,6 +121,12 @@ TEST(ParserTest, TypeTest) {
   EXPECT_TRUE(valtype.has_tensor_type());
   EXPECT_EQ(valtype.tensor_type().elem_type(), float_type);
   EXPECT_EQ(valtype.tensor_type().shape().dim_size(), 1);
+
+  // Quoted string as symbolic dimension (non-identifier dim_param):
+  Parse(type, R"(float["M + N"])");
+  EXPECT_TRUE(type.has_tensor_type());
+  EXPECT_EQ(type.tensor_type().shape().dim_size(), 1);
+  EXPECT_EQ(type.tensor_type().shape().dim(0).dim_param(), "M + N");
 }
 
 TEST(ParserTest, TensorProtoTest) {

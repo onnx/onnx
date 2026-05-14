@@ -11,7 +11,6 @@ from typing import Any
 
 import ml_dtypes
 import numpy as np
-import numpy.typing as npt
 import parameterized
 import pytest
 
@@ -21,6 +20,7 @@ from onnx import (
     ModelProto,
     OptionalProto,
     SequenceProto,
+    SparseTensorProto,
     TensorProto,
     TypeProto,
     checker,
@@ -28,34 +28,8 @@ from onnx import (
     helper,
     numpy_helper,
 )
-
-
-def _pack_4bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    odd_sized = size % 2 == 1
-    if odd_sized:
-        array_flat.resize([size + 1], refcheck=False)
-    array_flat &= 0x0F
-    array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]
-
-
-def _pack_2bit(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    pad_len = size % 4
-    if pad_len:
-        array_flat.resize([size + (4 - pad_len)], refcheck=False)
-    array_flat &= 0x03
-    array_flat[1::4] <<= 2
-    array_flat[2::4] <<= 4
-    array_flat[3::4] <<= 6
-    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
+from onnx.numpy_helper import _pack_2bitx4 as _pack_2bit
+from onnx.numpy_helper import _pack_4bitx2 as _pack_4bit
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
@@ -161,63 +135,50 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.tensors), tensors)
         checker.check_attribute(attr)
 
-    def test_attr_sparse_tensor_proto(self) -> None:
-        dense_shape = [3, 3]
-        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
+    @staticmethod
+    def _make_sparse_tensor() -> SparseTensorProto:
         values_tensor = helper.make_tensor(
             name="sparse_values",
             data_type=TensorProto.FLOAT,
-            dims=[len(sparse_values)],
-            vals=np.array(sparse_values).astype(np.float32),
+            dims=[3],
+            vals=np.array(
+                [1.764052391052246, 0.40015721321105957, 0.978738009929657],
+                dtype=np.float32,
+            ),
             raw=False,
         )
-
-        linear_indices = [2, 3, 5]
         indices_tensor = helper.make_tensor(
             name="indices",
             data_type=TensorProto.INT64,
-            dims=[len(linear_indices)],
-            vals=np.array(linear_indices).astype(np.int64),
+            dims=[3],
+            vals=np.array([2, 3, 5], dtype=np.int64),
             raw=False,
         )
-        sparse_tensor = helper.make_sparse_tensor(
-            values_tensor, indices_tensor, dense_shape
-        )
+        return helper.make_sparse_tensor(values_tensor, indices_tensor, [3, 3])
 
+    def test_attr_sparse_tensor_proto(self) -> None:
+        sparse_tensor = self._make_sparse_tensor()
         attr = helper.make_attribute("sparse_attr", sparse_tensor)
         self.assertEqual(attr.name, "sparse_attr")
         checker.check_sparse_tensor(helper.get_attribute_value(attr))
         checker.check_attribute(attr)
 
     def test_attr_sparse_tensor_repeated_protos(self) -> None:
-        dense_shape = [3, 3]
-        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
-        values_tensor = helper.make_tensor(
-            name="sparse_values",
-            data_type=TensorProto.FLOAT,
-            dims=[len(sparse_values)],
-            vals=np.array(sparse_values).astype(np.float32),
-            raw=False,
-        )
-
-        linear_indices = [2, 3, 5]
-        indices_tensor = helper.make_tensor(
-            name="indices",
-            data_type=TensorProto.INT64,
-            dims=[len(linear_indices)],
-            vals=np.array(linear_indices).astype(np.int64),
-            raw=False,
-        )
-        sparse_tensor = helper.make_sparse_tensor(
-            values_tensor, indices_tensor, dense_shape
-        )
-
-        repeated_sparse = [sparse_tensor, sparse_tensor]
-        attr = helper.make_attribute("sparse_attrs", repeated_sparse)
+        sparse_tensor = self._make_sparse_tensor()
+        attr = helper.make_attribute("sparse_attrs", [sparse_tensor, sparse_tensor])
         self.assertEqual(attr.name, "sparse_attrs")
         checker.check_attribute(attr)
         for s in helper.get_attribute_value(attr):
             checker.check_sparse_tensor(s)
+
+    def test_printable_attribute_sparse_tensor(self) -> None:
+        sparse_tensor = self._make_sparse_tensor()
+
+        attr = helper.make_attribute("st", sparse_tensor)
+        self.assertIn("<Sparse Tensor>", helper.printable_attribute(attr))
+
+        attr = helper.make_attribute("sts", [sparse_tensor, sparse_tensor])
+        self.assertIn("[<Sparse Tensor>, ...]", helper.printable_attribute(attr))
 
     def test_attr_repeated_graph_proto(self) -> None:
         graphs = [GraphProto(), GraphProto()]
@@ -438,6 +399,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         test([("", 22)], 10)
         test([("", 23)], 11)
         test([("", 24)], 12)
+        test([("", 25)], 13)
+        test([("", 26)], 13)
         # standard opset can be referred to using empty-string or "ai.onnx"
         test([("ai.onnx", 9)], 4)
         test([("ai.onnx.ml", 2)], 6)
@@ -806,6 +769,70 @@ class TestHelperTensorFunctions(unittest.TestCase):
         vi = helper.make_sparse_tensor_value_info("Y", TensorProto.FLOAT, ())
         checker.check_value_info(vi)
 
+    def test_make_tensor_mismatched_dims_raises_error(self) -> None:
+        with self.assertRaises(ValueError) as context:
+            helper.make_tensor(
+                name="mismatch_test",
+                data_type=TensorProto.FLOAT,
+                dims=(2, 2),  # Expects 4 elements
+                vals=[1.0, 2.0, 3.0],  # Only 3 elements provided
+                raw=False,
+            )
+        self.assertIn("Number of values", str(context.exception))
+        self.assertIn("does not match tensor dimensions", str(context.exception))
+
+    def test_make_tensor_too_many_values_raises_error(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="too_many_test",
+                data_type=TensorProto.FLOAT,
+                dims=(2,),
+                vals=[1.0, 2.0, 3.0],
+                raw=False,
+            )
+
+    def test_make_tensor_scalar_dims(self) -> None:
+        tensor = helper.make_tensor(
+            name="scalar_test",
+            data_type=TensorProto.FLOAT,
+            dims=(),
+            vals=[42.0],
+            raw=False,
+        )
+        self.assertEqual(tensor.dims, [])
+        self.assertEqual(tensor.float_data, [42.0])
+
+    def test_make_tensor_zero_dims(self) -> None:
+        tensor = helper.make_tensor(
+            name="zero_dim_test",
+            data_type=TensorProto.FLOAT,
+            dims=(0,),
+            vals=[],
+            raw=False,
+        )
+        self.assertEqual(tensor.dims, [0])
+        self.assertEqual(len(tensor.float_data), 0)
+
+    def test_make_tensor_mismatched_dims_int4(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="mismatch_int4",
+                data_type=TensorProto.INT4,
+                dims=(2,),
+                vals=[1],  # Expects 2
+                raw=False,
+            )
+
+    def test_make_tensor_mismatched_dims_complex(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="mismatch_complex",
+                data_type=TensorProto.COMPLEX64,
+                dims=(2,),
+                vals=[1.0 + 2.0j],  # Expects 2
+                raw=False,
+            )
+
 
 class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
     def test_make_optional(self) -> None:
@@ -960,7 +987,7 @@ class TestPrintableGraph(unittest.TestCase):
 @pytest.mark.parametrize(
     "tensor_dtype",
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
-    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
+    ids=helper.tensor_dtype_to_string,
 )
 def test_make_tensor_vals(tensor_dtype: int) -> None:
     np_type = helper.tensor_dtype_to_np_dtype(tensor_dtype)
@@ -1000,7 +1027,7 @@ def test_make_tensor_vals(tensor_dtype: int) -> None:
 @pytest.mark.parametrize(
     "tensor_dtype",
     [t for t in helper.get_all_tensor_dtypes() if t != TensorProto.STRING],
-    ids=lambda tensor_dtype: helper.tensor_dtype_to_string(tensor_dtype),
+    ids=helper.tensor_dtype_to_string,
 )
 @pytest.mark.parametrize(
     "vals_as_bytes",

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
-#include "onnx/common/common.h"
 #include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
@@ -45,23 +44,19 @@ struct Visitor {
     }
   }
 
-  virtual bool ProcessGraph(const GraphProto& graph) {
-    ONNX_UNUSED_PARAMETER(graph);
+  virtual bool ProcessGraph(const GraphProto& graph [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessFunction(const FunctionProto& function) {
-    ONNX_UNUSED_PARAMETER(function);
+  virtual bool ProcessFunction(const FunctionProto& function [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessNode(const NodeProto& node) {
-    ONNX_UNUSED_PARAMETER(node);
+  virtual bool ProcessNode(const NodeProto& node [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessAttribute(const AttributeProto& attr) {
-    ONNX_UNUSED_PARAMETER(attr);
+  virtual bool ProcessAttribute(const AttributeProto& attr [[maybe_unused]]) {
     return true;
   }
 
@@ -100,23 +95,19 @@ struct MutableVisitor {
     }
   }
 
-  virtual bool ProcessGraph(GraphProto* graph) {
-    ONNX_UNUSED_PARAMETER(graph);
+  virtual bool ProcessGraph(GraphProto* graph [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessFunction(FunctionProto* function) {
-    ONNX_UNUSED_PARAMETER(function);
+  virtual bool ProcessFunction(FunctionProto* function [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessNode(NodeProto* node) {
-    ONNX_UNUSED_PARAMETER(node);
+  virtual bool ProcessNode(NodeProto* node [[maybe_unused]]) {
     return true;
   }
 
-  virtual bool ProcessAttribute(AttributeProto* attr) {
-    ONNX_UNUSED_PARAMETER(attr);
+  virtual bool ProcessAttribute(AttributeProto* attr [[maybe_unused]]) {
     return true;
   }
 

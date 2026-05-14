@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 import google.protobuf.message
 import numpy as np
-import numpy.typing as npt
 import typing_extensions
 
 import onnx
@@ -75,6 +74,8 @@ VERSION_TABLE: VersionTableType = [
     ("1.19.0", 12, 24, 5, 1),
     ("1.19.1", 12, 24, 5, 1),
     ("1.20.0", 13, 25, 5, 1),
+    ("1.20.1", 13, 25, 5, 1),
+    ("1.21.0", 13, 26, 5, 1),
 ]
 
 VersionMapType = dict[tuple[str, int], int]
@@ -83,19 +84,19 @@ VersionMapType = dict[tuple[str, int], int]
 def _create_op_set_id_version_map(table: VersionTableType) -> VersionMapType:
     """Create a map from (opset-domain, opset-version) to ir-version from above table."""
     result: VersionMapType = {}
-
-    def process(release_version: str, ir_version: int, *args: Any) -> None:
-        del release_version  # Unused
+    for row in table:
+        ir_version = row[1]
         for pair in zip(
-            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"], args, strict=False
+            ["ai.onnx", "ai.onnx.ml", "ai.onnx.training"],
+            row[2:],
+            strict=False,
         ):
             if pair not in result:
                 result[pair] = ir_version
+                if pair[0] == "ai.onnx":
+                    result["ai.onnx.preview", pair[1]] = ir_version
                 if pair[0] == "ai.onnx.training":
                     result["ai.onnx.preview.training", pair[1]] = ir_version
-
-    for row in table:
-        process(*row)
     return result
 
 
@@ -359,34 +360,6 @@ def set_model_props(model: ModelProto, dict_value: dict[str, str]) -> None:
     set_metadata_props(model, dict_value)
 
 
-def _pack_4bitx2(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int4/uint4. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    odd_sized = size % 2 == 1
-    if odd_sized:
-        array_flat.resize([size + 1], refcheck=False)
-    array_flat &= 0x0F
-    array_flat[1::2] <<= 4
-    return array_flat[0::2] | array_flat[1::2]  # type: ignore[return-type]
-
-
-def _pack_2bitx4(array: np.ndarray) -> npt.NDArray[np.uint8]:
-    """Convert a numpy array to flatten, packed int2/uint2. Elements must be in the correct range."""
-    # Create a 1D copy
-    array_flat = array.ravel().view(np.uint8).copy()
-    size = array.size
-    pad_len = size % 4
-    if pad_len:
-        array_flat.resize([size + (4 - pad_len)], refcheck=False)
-    array_flat &= 0x03
-    array_flat[1::4] <<= 2
-    array_flat[2::4] <<= 4
-    array_flat[3::4] <<= 6
-    return array_flat[0::4] | array_flat[1::4] | array_flat[2::4] | array_flat[3::4]  # type: ignore[return-type]
-
-
 def make_tensor(
     name: str,
     data_type: int,
@@ -476,6 +449,12 @@ def make_tensor(
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
+    expected_elements = math.prod(dims)
+    if len(vals) != expected_elements:
+        raise ValueError(
+            f"Number of values ({len(vals)}) does not match tensor "
+            f"dimensions requiring {expected_elements} elements."
+        )
     if data_type == TensorProto.COMPLEX128:
         vals = vals.view(np.float64)  # type: ignore[union-attr]
     elif data_type == TensorProto.COMPLEX64:
@@ -492,10 +471,10 @@ def make_tensor(
         vals = vals.view(np.uint8)  # type: ignore[union-attr]
     elif data_type in {TensorProto.UINT4, TensorProto.INT4, TensorProto.FLOAT4E2M1}:
         # Convert to packed 4-bit representation
-        vals = _pack_4bitx2(vals)  # type: ignore[union-attr,arg-type]
+        vals = onnx.numpy_helper._pack_4bitx2(vals)  # type: ignore[arg-type]
     elif data_type in {TensorProto.UINT2, TensorProto.INT2}:
         # Convert to packed 2-bit representation
-        vals = _pack_2bitx4(vals)  # type: ignore[union-attr,arg-type]
+        vals = onnx.numpy_helper._pack_2bitx4(vals)  # type: ignore[arg-type]
     elif data_type == TensorProto.BOOL:
         vals = vals.astype(np.uint8)  # type: ignore[union-attr]
 
@@ -532,7 +511,7 @@ def make_sequence(
     """Make a Sequence with specified value arguments."""
     sequence = SequenceProto()
     sequence.name = name
-    sequence.elem_type = elem_type
+    sequence.elem_type = elem_type  # type: ignore[assignment]
 
     if elem_type == SequenceProto.UNDEFINED:
         return sequence
@@ -594,7 +573,7 @@ def make_optional(
     """Make an Optional with specified value arguments."""
     optional = OptionalProto()
     optional.name = name
-    optional.elem_type = elem_type
+    optional.elem_type = elem_type  # type: ignore[assignment]
 
     if elem_type == OptionalProto.UNDEFINED:
         return optional
@@ -677,7 +656,7 @@ def make_attribute(
                 (GraphProto, AttributeProto.GRAPHS),
                 (TypeProto, AttributeProto.TYPE_PROTOS),
             ):
-                if all(issubclass(t, exp_t) for t in types):  # type: ignore[arg-type]
+                if all(issubclass(t, exp_t) for t in types):
                     attr_type = exp_enum
                     break
             if attr_type is None:
@@ -707,7 +686,7 @@ def make_attribute(
             attr.type_protos.extend(value)
             attr.type = AttributeProto.TYPE_PROTOS
         else:
-            raise AssertionError()  # Should not reach since `ValueError` must be raised in attr_type checking
+            raise AssertionError  # Should not reach since `ValueError` must be raised in attr_type checking
     else:
         raise TypeError(f"'{value}' is not an accepted attribute value.")
 
@@ -724,7 +703,7 @@ def make_attribute_ref(
     """Make an AttributeProto holding a reference to the parent function's attribute of given name and type."""
     attr = AttributeProto()
     attr.name = name
-    attr.type = attr_type
+    attr.type = attr_type  # type: ignore[assignment]
     if doc_string:
         attr.doc_string = doc_string
     return attr
@@ -1034,6 +1013,8 @@ def printable_attribute(
         graphs.append(attr.g)
     elif attr.HasField("tp"):
         content.append(f"<Type Proto {attr.tp}>")
+    elif attr.HasField("sparse_tensor"):
+        content.append("<Sparse Tensor>")
     elif attr.floats:
         content.append(str_list(str_float, attr.floats))
     elif attr.ints:
@@ -1043,6 +1024,8 @@ def printable_attribute(
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
+    elif attr.sparse_tensors:
+        content.append("[<Sparse Tensor>, ...]")
     elif attr.type_protos:
         content.append("[")
         for i, tp in enumerate(attr.type_protos):
@@ -1072,7 +1055,7 @@ def printable_dim(dim: TensorShapeProto.Dimension) -> str:
 
 def printable_type(t: TypeProto) -> str:
     if t.WhichOneof("value") == "tensor_type":
-        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)  # type: ignore[attr-defined]
+        s: str = TensorProto.DataType.Name(t.tensor_type.elem_type)  # type: ignore[arg-type]
         if t.tensor_type.HasField("shape"):
             if len(t.tensor_type.shape.dim):
                 s += str(", " + "x".join(map(printable_dim, t.tensor_type.shape.dim)))
@@ -1093,7 +1076,7 @@ def printable_value_info(v: ValueInfoProto) -> str:
 
 def printable_tensor_proto(t: TensorProto) -> str:
     s = f"%{t.name}["
-    s += TensorProto.DataType.Name(t.data_type)  # type: ignore[attr-defined]
+    s += TensorProto.DataType.Name(t.data_type)  # type: ignore[arg-type]
     if t.dims is not None:
         if len(t.dims):
             s += str(", " + "x".join(map(str, t.dims)))
@@ -1339,7 +1322,7 @@ def np_dtype_to_tensor_dtype(np_dtype: np.dtype) -> TensorProto.DataType:
     if np_dtype in _np_dtype_to_tensor_dtype:
         return typing.cast("TensorProto.DataType", _np_dtype_to_tensor_dtype[np_dtype])
     if np.issubdtype(np_dtype, np.str_):
-        return TensorProto.STRING  # type: ignore[no-any-return]
+        return TensorProto.STRING  # type: ignore[return-value]
 
     raise ValueError(
         f"Unable to convert type {np_dtype!r} into TensorProto element type."
@@ -1356,8 +1339,7 @@ def get_all_tensor_dtypes() -> KeysView[int]:
 
 
 _ATTRIBUTE_TYPE_TO_STR: dict[int, str] = {
-    k: v
-    for v, k in AttributeProto.AttributeType.items()  # type: ignore[attr-defined]
+    k: v for v, k in AttributeProto.AttributeType.items()
 }
 
 
@@ -1370,6 +1352,6 @@ def _attr_type_to_str(attr_type: int) -> str:
     Returns:
         String representing the supplied attr_type.
     """
-    if attr_type in AttributeProto.AttributeType.values():  # type: ignore[attr-defined]
+    if attr_type in AttributeProto.AttributeType.values():
         return _ATTRIBUTE_TYPE_TO_STR[attr_type]
-    return AttributeProto.AttributeType.keys()[0]  # type: ignore
+    return AttributeProto.AttributeType.keys()[0]

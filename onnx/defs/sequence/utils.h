@@ -18,8 +18,8 @@ namespace sequence {
 namespace utils {
 
 std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
-    const std::vector<std::string>& input_types,
-    const std::vector<std::string>& output_types);
+    std::vector<std::string> input_types,
+    std::vector<std::string> output_types);
 
 }
 } // namespace sequence
