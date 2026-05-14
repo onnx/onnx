@@ -7,6 +7,7 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 ONNX_API void RNNShapeInference(InferenceContext& ctx) {
@@ -172,7 +173,7 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         1,
         OpSchema::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
-    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+    schema.TypeConstraint("T1", {types::Int32}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
   };
 }
