@@ -88,7 +88,7 @@ class OpName(Base):
 
 ### Body subgraphs: prefer `onnx.parser.parse_graph`
 
-When the op takes a graph attribute (`Scan`, `Loop`, `If`, `ScanVarLen`, …), keep the outer `helper.make_node` + `expect(...)` call as shown above (it drives the test-data generation pipeline), but build the body subgraph with `onnx.parser.parse_graph` instead of a chain of `helper.make_node` / `helper.make_tensor_value_info` / `helper.make_graph` calls. The text format is dramatically more compact:
+When the op takes a graph attribute (`Scan`, `Loop`, `If`, …), keep the outer `helper.make_node` + `expect(...)` (it drives data generation), but build the body with `onnx.parser.parse_graph` instead of `helper.make_*` chains:
 
 ```python
 body = onnx.parser.parse_graph("""
@@ -102,26 +102,9 @@ node = onnx.helper.make_node("Scan", ["s", "x"], ["so", "xo"], body=body, num_sc
 
 ## Test Authoring with `onnx.parser`
 
-For Python tests outside the node-test harness — primarily `onnx/test/shape_inference_test.py` and `onnx/test/reference_evaluator_test.py` — prefer `onnx.parser.parse_model` over chains of `helper.make_*` calls. The ONNX text format is far more compact and the resulting test fixture reads as one self-contained block.
+For Python tests outside the node-test harness — primarily `onnx/test/shape_inference_test.py` and `onnx/test/reference_evaluator_test.py` — prefer `onnx.parser.parse_model` over chains of `helper.make_*` calls. PR #7962 (ScanVarLen) cut ~58–70% of test LOC across three files this way.
 
-```python
-# Before: helper.make_* chain
-node = helper.make_node("Add", ["x", "y"], ["z"])
-graph = helper.make_graph(
-    [node], "g",
-    [helper.make_tensor_value_info("x", TensorProto.FLOAT, [None]),
-     helper.make_tensor_value_info("y", TensorProto.FLOAT, [None])],
-    [helper.make_tensor_value_info("z", TensorProto.FLOAT, [None])])
-model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 18)])
-
-# After: text fixture
-model = onnx.parser.parse_model("""
-    <ir_version: 8, opset_import: ["" : 18]>
-    g (float[N] x, float[N] y) => (float[N] z) { z = Add(x, y) }
-""")
-```
-
-For C++ tests in `onnx/test/cpp/shape_inference_test.cc`, prefer the C++ `OnnxParser` (`onnx/defs/parser.h`): express the whole model as text, parse with `OnnxParser::Parse(model_proto, text)`, then run `shape_inference::InferShapes`. This replaces hand-building `NodeProto` / `GraphProto` and an `InferenceContextImpl` with a few lines.
+For C++ tests in `onnx/test/cpp/shape_inference_test.cc`, use the C++ `OnnxParser` (`onnx/defs/parser.h`): parse a text model with `OnnxParser::Parse(model_proto, text)`, then run `shape_inference::InferShapes`.
 
 Body-graph attributes (Scan / Loop / If) embed inline inside the `<...>` attribute list:
 
@@ -135,11 +118,9 @@ so, xo = Scan (s, x) <
 >
 ```
 
-**Argument order**: for ops with simple scalar/tensor attributes, the conventional `Op<attrs>(inputs)` form reads well — e.g. `Y = Transpose<perm=[2,0,1]>(X)`. For ops with subgraph attributes (`Scan`, `Loop`, `If`, `ScanVarLen`, …) the body spans multiple lines, and putting it after the inputs keeps them visible — prefer `Op(inputs)<body = ... { ... }>` as shown in the Scan example above. PR #7962 (ScanVarLen) settled on this convention.
+**Argument order**: simple scalar/tensor attributes read well as `Op<attrs>(inputs)` — e.g. `Y = Transpose<perm=[2,0,1]>(X)`. For ops with subgraph attributes whose body spans multiple lines, prefer `Op(inputs)<body = ... { ... }>` so the inputs stay visible (PR #7962 convention).
 
-**Exception**: helper-driven harnesses such as `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` (the `_test_op_upgrade` / `_test_op_downgrade` convention) should keep their established style — do not rewrite them with the parser.
-
-Concrete reference: PR #7962 (ScanVarLen) rewrote shape-inference, reference-evaluator, and node-test fixtures using this approach and reduced LOC by ~58–70% across the three files.
+**Exception**: helper-driven harnesses (`automatic_upgrade_test.py`, `automatic_downgrade_test.py`, the `_test_op_upgrade` / `_test_op_downgrade` style) should keep their established style — do not rewrite.
 
 ## After Making Changes
 

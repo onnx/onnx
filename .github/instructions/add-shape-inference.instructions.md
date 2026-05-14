@@ -164,7 +164,7 @@ def test_opname(self, _, version) -> None:
     )
 ```
 
-The `_make_graph` / `_assert_inferred` helpers above are right for parameterized op-version sweeps. For one-off fixtures — anything with attributes, body subgraphs, or non-trivial type info — prefer the ONNX text format via `onnx.parser`. The result reads as one self-contained block:
+The `_make_graph` / `_assert_inferred` helpers are right for parameterized op-version sweeps. For one-off fixtures — anything with attributes, body subgraphs, or non-trivial type info — prefer the ONNX text format via `onnx.parser`. PR #7962 (ScanVarLen) cut ~58–70% of test LOC this way.
 
 ```python
 model = onnx.parser.parse_model("""
@@ -174,7 +174,7 @@ model = onnx.parser.parse_model("""
 inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
 ```
 
-**Argument order**: for ops with simple scalar/tensor attributes, the conventional `Op<attrs>(inputs)` form reads well (as in the Transpose snippet above). For ops with subgraph attributes (`Scan`, `Loop`, `If`, …) the body spans multiple lines — prefer `Op(inputs)<body = ... { ... }>` so the inputs aren't visually buried after the multi-line attribute block:
+**Argument order**: simple attributes read well as `Op<attrs>(inputs)` (above). For ops with subgraph attributes whose body spans multiple lines, prefer `Op(inputs)<body = ... { ... }>`:
 
 ```
 so, xo = Scan (s, x) <
@@ -186,11 +186,9 @@ so, xo = Scan (s, x) <
 >
 ```
 
-For C++ shape-inference tests in `onnx/test/cpp/shape_inference_test.cc`, prefer the C++ `OnnxParser` (declared in `onnx/defs/parser.h`): parse a full text model, then call `shape_inference::InferShapes`. This replaces hand-building `NodeProto` / `GraphProto` and an `InferenceContextImpl` with a few lines.
+**C++** (`onnx/test/cpp/shape_inference_test.cc`): use `OnnxParser` (`onnx/defs/parser.h`) to parse a text model, then call `shape_inference::InferShapes`.
 
-**C++ gotcha — `unk__*` materialization**: under full `shape_inference::InferShapes`, unset output dims are materialized by `MaterializeSymbolicShape` into `dim_param` names like `unk__0`, `unk__1`, etc. Assertions about free output dimensions must accept **either** an unset dim **or** a `unk__*` placeholder. The `ExpectFreeDim` helper in `shape_inference_test.cc` encapsulates this — use it rather than asserting `!has_dim_value() && !has_dim_param()` directly.
-
-Concrete reference: PR #7962 (ScanVarLen) rewrote its shape-inference fixtures (Python and C++) using this approach and reduced LOC by ~58–70%.
+**C++ gotcha — `unk__*` materialization**: under `InferShapes`, unset output dims are materialized by `MaterializeSymbolicShape` into `dim_param` names like `unk__0`. Assertions on free dims must accept either an unset dim or an `unk__*` placeholder — use the `ExpectFreeDim` helper in `shape_inference_test.cc`.
 
 ### Test Cases to Cover
 
