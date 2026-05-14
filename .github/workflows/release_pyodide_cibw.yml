@@ -81,6 +81,7 @@ jobs:
             -DONNX_PYODIDE_BUILD=ON
             -DONNX_USE_LITE_PROTO=ON
             -DONNX_WERROR=ON
+            -DCMAKE_CXX_FLAGS='-Wno-error=deprecated-builtins'
             "
 
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
