@@ -83,10 +83,10 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        with:
+          output-dir: dist/
+          only: ${{ matrix.build }}
         env:
-          with:
-            output-dir: dist/
-            only: ${{ matrix.build }}
           CIBW_ENVIRONMENT: >-
             CMAKE_ARGS="
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ env.PROTOBUF_SRC }}
