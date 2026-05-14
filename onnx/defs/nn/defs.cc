@@ -3800,20 +3800,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // --- Input rank validation ---
           // All tensors are rank-3 for this 1D-only operator.
-          if (hasInputShape(ctx, 0)) {
-            auto& input_shape = getInputShape(ctx, 0);
-            if (input_shape.dim_size() != 3) {
-              fail_shape_inference(
-                  "Input tensor must be rank 3 (batch_size, channels, length), got rank ", input_shape.dim_size());
-            }
-          }
-
-          if (hasInputShape(ctx, 1)) {
-            auto& weight_shape = getInputShape(ctx, 1);
-            if (weight_shape.dim_size() != 3) {
-              fail_shape_inference("Weight tensor must be rank 3 (channels, 1, k), got rank ", weight_shape.dim_size());
-            }
-          }
+          checkInputRank(ctx, 0, 3);
+          checkInputRank(ctx, 1, 3);
 
           // --- Output 1: present_state shape (B, C, k-1) ---
           // The carry state stores the last (k-1) input positions for
