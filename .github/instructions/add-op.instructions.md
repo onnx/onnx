@@ -86,6 +86,55 @@ class OpName(Base):
         expect(node, inputs=[x], outputs=[y], name="test_opname")
 ```
 
+### Body subgraphs: prefer `onnx.parser.parse_graph`
+
+When the op takes a graph attribute (`Scan`, `Loop`, `If`, `ScanVarLen`, …), keep the outer `helper.make_node` + `expect(...)` call as shown above (it drives the test-data generation pipeline), but build the body subgraph with `onnx.parser.parse_graph` instead of a chain of `helper.make_node` / `helper.make_tensor_value_info` / `helper.make_graph` calls. The text format is dramatically more compact:
+
+```python
+body = onnx.parser.parse_graph("""
+    b (float[1] s, float[1] xi) => (float[1] so, float[1] xo) {
+        so = Identity(s)
+        xo = Identity(xi)
+    }
+""")
+node = onnx.helper.make_node("Scan", ["s", "x"], ["so", "xo"], body=body, num_scan_inputs=1)
+```
+
+## Test Authoring with `onnx.parser`
+
+For Python tests outside the node-test harness — primarily `onnx/test/shape_inference_test.py` and `onnx/test/reference_evaluator_test.py` — prefer `onnx.parser.parse_model` over chains of `helper.make_*` calls. The ONNX text format is far more compact and the resulting test fixture reads as one self-contained block.
+
+```python
+# Before: helper.make_* chain
+node = helper.make_node("Add", ["x", "y"], ["z"])
+graph = helper.make_graph(
+    [node], "g",
+    [helper.make_tensor_value_info("x", TensorProto.FLOAT, [None]),
+     helper.make_tensor_value_info("y", TensorProto.FLOAT, [None])],
+    [helper.make_tensor_value_info("z", TensorProto.FLOAT, [None])])
+model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 18)])
+
+# After: text fixture
+model = onnx.parser.parse_model("""
+    <ir_version: 8, opset_import: ["" : 18]>
+    g (float[N] x, float[N] y) => (float[N] z) { z = Add(x, y) }
+""")
+```
+
+For C++ tests in `onnx/test/cpp/shape_inference_test.cc`, prefer the C++ `OnnxParser` (`onnx/defs/parser.h`): express the whole model as text, parse with `OnnxParser::Parse(model_proto, text)`, then run `shape_inference::InferShapes`. This replaces hand-building `NodeProto` / `GraphProto` and an `InferenceContextImpl` with a few lines.
+
+Body-graph attributes (Scan / Loop / If) embed inline inside the `<...>` attribute list:
+
+```
+so, xo = Scan(s, x) <num_scan_inputs=1, body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) { so = Identity(si) xo = Identity(xi) }>
+```
+
+**Convention**: put **inputs `(...)` before attributes `<...>`** in call sites — `Op(inputs)<attrs>` reads more naturally than `Op<attrs>(inputs)`.
+
+**Exception**: helper-driven harnesses such as `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` (the `_test_op_upgrade` / `_test_op_downgrade` convention) should keep their established style — do not rewrite them with the parser.
+
+Concrete reference: PR #7962 (ScanVarLen) rewrote shape-inference, reference-evaluator, and node-test fixtures using this approach and reduced LOC by ~58–70% across the three files.
+
 ## After Making Changes
 
 ```bash
