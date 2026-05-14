@@ -1,0 +1,50 @@
+# Copyright (c) ONNX Project Contributors
+# SPDX-License-Identifier: Apache-2.0
+
+target_sources(onnx_core PRIVATE
+    adapter.h
+    Attention_24_23.h
+    axes_attribute_to_input.h
+    axes_input_to_attribute.h
+    axis_attribute_to_input.h
+    axis_input_to_attribute.h
+    batch_normalization_13_14.h
+    broadcast_backward_compatibility.h
+    broadcast_forward_compatibility.h
+    cast_9_8.h
+    clip_10_11.h
+    compatible.h
+    dropout_11_12.h
+    extend_supported_types.h
+    gemm_6_7.h
+    gemm_7_6.h
+    gridsample_19_20.h
+    group_normalization_20_21.h
+    maxpool_8_7.h
+    no_previous_version.h
+    pad_10_11.h
+    q_dq_21_20.h
+    remove_consumed_inputs.h
+    reshape_4_5.h
+    reshape_5_4.h
+    resize_10_11.h
+    scan_8_9.h
+    scan_9_8.h
+    scatter_10_11.h
+    scatter_16_15.h
+    scatter_18_17.h
+    slice_9_10.h
+    softmax_12_13.h
+    softmax_13_12.h
+    split_12_13.h
+    split_13_12.h
+    split_17_18.h
+    sum_8_7.h
+    topk_9_10.h
+    transformers.h
+    type_restriction.h
+    upsample_6_7.h
+    upsample_8_9.h
+    upsample_9_10.h
+    upsample_9_8.h
+)

@@ -1,0 +1,136 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Windows Release
+
+on:
+  workflow_call:
+    inputs:
+      build_mode:
+        required: false
+        type: string
+        default: "preview"
+      protobuf_version:
+        required: false
+        type: string
+        default: "33.6"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - "cp310-win_amd64"
+          - "cp310-win32"
+          - "cp311-win_amd64"
+          - "cp311-win32"
+          - "cp311-win_arm64"
+          - "cp312-win_amd64"
+          - "cp312-win32"
+          - "cp312-win_arm64"
+          - "cp314t-win_amd64"
+          - "cp314t-win_arm64"
+    runs-on: ${{ contains(matrix.build, 'arm64') && 'windows-11-arm' || 'windows-2022' }}
+
+    env:
+      PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Set preview version
+        if: inputs.build_mode != 'release'
+        shell: bash
+        run: |
+          sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
+          echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
+
+      - name: Download protoc
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protoc-${env:PROTOBUF_VERSION}-win64.zip" -o protoc.zip
+          Expand-Archive protoc.zip -DestinationPath protoc-host
+
+      - name: Download protobuf source
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protobuf-${env:PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          tar -xf protobuf.tar.gz
+
+      - name: Set paths
+        shell: bash
+        run: |
+          echo "PROTOC_PATH=$(cygpath -m "${{ github.workspace }}/protoc-host/bin/protoc.exe")" >> $GITHUB_ENV
+          echo "PROTOBUF_SRC=$(cygpath -m "${{ github.workspace }}/protobuf-${PROTOBUF_VERSION}")" >> $GITHUB_ENV
+
+      - name: Set SOURCE_DATE_EPOCH for reproducible builds
+        shell: bash
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        with:
+          output-dir: dist/
+          only: ${{ matrix.build }}
+        env:
+          CIBW_ENVIRONMENT: >-
+            CMAKE_ARGS="
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ env.PROTOBUF_SRC }}
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ env.PROTOC_PATH }}
+            -DONNX_HARDENING=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
+            "
+
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: wheels-windows-${{ matrix.build }}
+          path: dist/*.whl
+
+      - name: Validate wheel
+        run: |
+          python -m pip install -q abi3audit check-wheel-contents
+          Get-ChildItem -Path dist/*.whl | ForEach-Object {
+            echo "Checking $($_.Name)"
+            check-wheel-contents $_.FullName
+            python -m abi3audit -v $_.FullName
+          }
+
+  test-min-deps:
+    needs: build
+    if: github.event_name == 'schedule'
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: wheels-windows-cp312-win_amd64
+          path: dist
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Verify with minimum supported packages
+        run: |
+          python -m pip install -q pytest
+          python -m pip install -q (Get-ChildItem dist/*.whl).FullName
+          python -m pip install -q -r requirements-min.txt
+          pytest

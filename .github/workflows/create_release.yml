@@ -69,23 +69,20 @@ jobs:
 
   call-linux:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
-    uses: ./.github/workflows/release_linux.yml
+    uses: ./.github/workflows/release_linux_cibw.yml
     with:
-      os: "linux"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
-    uses: ./.github/workflows/release_win.yml
+    uses: ./.github/workflows/release_windows_cibw.yml
     with:
-      os: "win"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
-    uses: ./.github/workflows/release_mac.yml
+    uses: ./.github/workflows/release_macos_cibw.yml
     with:
-      os: "macos"
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
 
   call-pyodide:
