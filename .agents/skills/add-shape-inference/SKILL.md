@@ -96,24 +96,40 @@ Dim multiplyDims(const TensorShapeProto& shape, int from, int upto);
 
 ## Writing Tests
 
-```python
-# In onnx/test/shape_inference_test.py
+The `_make_graph` / `_assert_inferred` helpers remain the right tool for parameterized op-version sweeps. For one-off fixtures — especially anything with attributes, body subgraphs, or non-trivial type info — prefer the ONNX text format via `onnx.parser`. It is much more compact and readable. PR #7962 (ScanVarLen) reduced shape-inference test LOC by ~58–70% with this rewrite.
 
-@parameterized.expand(all_versions_for("OpName"))
-def test_opname(self, _, version) -> None:
-    graph = self._make_graph(
-        [("X", TensorProto.FLOAT, (2, 3, 4))],
-        [make_node("OpName", ["X"], ["Y"], attr_name=value)],
-        [],
-    )
-    self._assert_inferred(
-        graph,
-        [make_tensor_value_info("Y", TensorProto.FLOAT, (expected_shape))],
-        opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-    )
+### Python: `onnx.parser.parse_model`
+
+```python
+# Before: helper.make_* chain
+graph = self._make_graph(
+    [("X", TensorProto.FLOAT, (2, 3, 4))],
+    [make_node("Transpose", ["X"], ["Y"], perm=[2, 0, 1])],
+    [],
+)
+self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (4, 2, 3))])
+
+# After: text fixture
+model = onnx.parser.parse_model("""
+    <ir_version: 8, opset_import: ["" : 18]>
+    g (float[2,3,4] X) => (float[4,2,3] Y) { Y = Transpose(X)<perm=[2,0,1]> }
+""")
+inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
 ```
 
-Cover: known shapes, partial shapes (None), rank inference, error cases, broadcasting, attribute-dependent shapes.
+Body-graph attributes embed inline (note: **inputs `(...)` before attributes `<...>`** reads more naturally):
+
+```
+so, xo = Scan(s, x) <num_scan_inputs=1, body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) { so = Identity(si) xo = Identity(xi) }>
+```
+
+### C++: `OnnxParser` (`onnx/defs/parser.h`)
+
+For `onnx/test/cpp/shape_inference_test.cc`, prefer parsing a full text model and calling `shape_inference::InferShapes` over hand-building `NodeProto`/`GraphProto` + `InferenceContextImpl`.
+
+Gotcha: under full `InferShapes`, unset output dims are materialized by `MaterializeSymbolicShape` into `dim_param` names like `unk__0`. Assertions on free dims should accept **either** an unset dim **or** a `unk__*` placeholder (see `ExpectFreeDim` in `shape_inference_test.cc`).
+
+Cover: known shapes, partial shapes (`None`), rank inference, error cases, broadcasting, attribute-dependent shapes.
 
 ## Code Style: Prefer Named Functions
 
