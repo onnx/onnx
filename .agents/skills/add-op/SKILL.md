@@ -76,26 +76,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ## Writing Tests: Prefer `onnx.parser` for Model Fixtures
 
-The ONNX text format is far more compact and readable than chains of `helper.make_*` calls. Use it wherever you are hand-constructing a model or subgraph for a test. For a concrete before/after example see PR #7962 (ScanVarLen), where parser-based rewrites reduced test LOC by roughly 58–70% across three files.
+Hand-constructed test models are far more compact in ONNX text format than as chains of `helper.make_*` calls. PR #7962 (ScanVarLen) cut ~58–70% of test LOC by switching.
 
 | Test file | Recommendation |
 |-----------|----------------|
-| `onnx/test/shape_inference_test.py` | Prefer `onnx.parser.parse_model` for the model fixture. |
-| `onnx/test/reference_evaluator_test.py` | Prefer `onnx.parser.parse_model`. |
-| `onnx/backend/test/case/node/<op>.py` | Keep the outer `helper.make_node` + `expect(...)` (it drives data generation). When the op takes a graph attribute (`Scan`, `Loop`, `If`, …), build the body subgraph with `onnx.parser.parse_graph` instead of `helper.make_graph` + a chain of `make_node` / `make_tensor_value_info` calls. |
-| `onnx/test/cpp/shape_inference_test.cc` | Prefer the C++ `OnnxParser` (`onnx/defs/parser.h`): express the model as text, `ParseModel`, then `shape_inference::InferShapes`. |
-| `onnx/test/version_converter/automatic_upgrade_test.py` and similar helper-driven harnesses | Keep the established convention (e.g. `_test_op_upgrade`). Do not rewrite. |
+| `onnx/test/shape_inference_test.py`, `onnx/test/reference_evaluator_test.py` | Use `onnx.parser.parse_model`. |
+| `onnx/backend/test/case/node/<op>.py` | Keep the outer `helper.make_node` + `expect(...)` (it drives data generation). For ops with a graph attribute (`Scan`, `Loop`, `If`, …), build the body with `onnx.parser.parse_graph`. |
+| `onnx/test/cpp/shape_inference_test.cc` | Use the C++ `OnnxParser` (`onnx/defs/parser.h`): parse text, then `shape_inference::InferShapes`. |
+| `onnx/test/version_converter/automatic_upgrade_test.py` and similar harnesses | Keep the established `_test_op_upgrade` style — do not rewrite. |
 
-### Text-format cheat sheet
-
-```
-<ir_version: 8, opset_import: ["" : 18]>
-agraph (float[N] x, float[N] y) => (float[N] z) {
-    z = Add(x, y)
-}
-```
-
-Body-graph attributes (Scan / Loop / If) are embedded inline:
+Text-format example with a body-graph attribute (Scan / Loop / If):
 
 ```
 out, state_out = Scan (state, x) <
@@ -107,26 +97,7 @@ out, state_out = Scan (state, x) <
 >
 ```
 
-**Argument order**: For ops with simple scalar/tensor attributes, the conventional `Op<attrs>(inputs)` form reads well. For ops with subgraph attributes (`Scan`, `Loop`, `If`, …) — where the subgraph body spans multiple lines — prefer `Op(inputs)<body = ... { ... }>` so the inputs aren't visually buried after the multi-line attribute block (this is what PR #7962 settled on for ScanVarLen).
-
-### Before / after (illustrative)
-
-```python
-# Before: chain of helper.make_* calls
-node = helper.make_node("Add", ["x", "y"], ["z"])
-graph = helper.make_graph(
-    [node], "g",
-    [helper.make_tensor_value_info("x", TensorProto.FLOAT, [None]),
-     helper.make_tensor_value_info("y", TensorProto.FLOAT, [None])],
-    [helper.make_tensor_value_info("z", TensorProto.FLOAT, [None])])
-model = helper.make_model(graph, opset_imports=[helper.make_opsetid("", 18)])
-
-# After: single text fixture
-model = onnx.parser.parse_model("""
-    <ir_version: 8, opset_import: ["" : 18]>
-    g (float[N] x, float[N] y) => (float[N] z) { z = Add(x, y) }
-""")
-```
+**Argument order**: simple scalar/tensor attributes read well as `Op<attrs>(inputs)` (e.g. `Transpose<perm=[2,0,1]>(X)`). For ops with subgraph attributes whose body spans multiple lines, prefer `Op(inputs)<body = ... { ... }>` so the inputs aren't buried after the body.
 
 ## After Making Changes
 
