@@ -3,9 +3,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Verifies that two successive builds from identical source produce bit-for-bit
-# identical wheels (reproducible builds).  Calls release_linux_cibw.yml twice
-# with a minimal single-target matrix, then compares wheel checksums.
-# On mismatch, diffoscope pinpoints exactly which files or metadata differ.
+# identical wheels (reproducible builds).  Calls the release cibw workflows
+# twice each with a minimal single-target matrix, then compares wheel checksums
+# across all three platforms.  On mismatch, diffoscope pinpoints exactly which
+# files or metadata differ.
 
 name: ReproducibleBuild
 
@@ -18,53 +19,97 @@ permissions:
   contents: read
 
 jobs:
-  build1:
+  linux-build1:
     uses: ./.github/workflows/release_linux_cibw.yml
     with:
       build_mode: release
       builds: '["cp312-manylinux_x86_64"]'
       artifact_name_prefix: repro-build1
 
-  build2:
+  linux-build2:
     uses: ./.github/workflows/release_linux_cibw.yml
     with:
       build_mode: release
       builds: '["cp312-manylinux_x86_64"]'
       artifact_name_prefix: repro-build2
 
+  mac-build1:
+    uses: ./.github/workflows/release_macos_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-macosx_universal2"]'
+      artifact_name_prefix: repro-build1
+
+  mac-build2:
+    uses: ./.github/workflows/release_macos_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-macosx_universal2"]'
+      artifact_name_prefix: repro-build2
+
+  windows-build1:
+    uses: ./.github/workflows/release_windows_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-win_amd64"]'
+      artifact_name_prefix: repro-build1
+
+  windows-build2:
+    uses: ./.github/workflows/release_windows_cibw.yml
+    with:
+      build_mode: release
+      builds: '["cp312-win_amd64"]'
+      artifact_name_prefix: repro-build2
+
   compare:
-    needs: [build1, build2]
+    needs: [linux-build1, linux-build2, mac-build1, mac-build2, windows-build1, windows-build2]
     runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: repro-build1-linux-cp312-manylinux_x86_64
+          pattern: repro-build1-*
           path: /tmp/build1
+          merge-multiple: true
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: repro-build2-linux-cp312-manylinux_x86_64
+          pattern: repro-build2-*
           path: /tmp/build2
+          merge-multiple: true
 
       - name: Compare checksums
         run: |
-          [ "$(ls /tmp/build1/*.whl 2>/dev/null | wc -l)" -eq 1 ] || { echo "ERROR: Expected 1 wheel in /tmp/build1"; exit 1; }
-          [ "$(ls /tmp/build2/*.whl 2>/dev/null | wc -l)" -eq 1 ] || { echo "ERROR: Expected 1 wheel in /tmp/build2"; exit 1; }
+          set -euo pipefail
+          failed=0
 
-          WHEEL1=$(ls /tmp/build1/*.whl)
-          WHEEL2=$(ls /tmp/build2/*.whl)
+          for whl1 in /tmp/build1/*.whl; do
+            name=$(basename "$whl1")
+            whl2="/tmp/build2/$name"
 
-          h1=$(sha256sum "$WHEEL1" | cut -d' ' -f1)
-          h2=$(sha256sum "$WHEEL2" | cut -d' ' -f1)
+            if [ ! -f "$whl2" ]; then
+              echo "MISSING in build2: $name"
+              failed=1
+              continue
+            fi
 
-          echo "Build 1: $(basename "$WHEEL1")  →  $h1"
-          echo "Build 2: $(basename "$WHEEL2")  →  $h2"
+            h1=$(sha256sum "$whl1" | cut -d' ' -f1)
+            h2=$(sha256sum "$whl2" | cut -d' ' -f1)
 
-          if [ "$h1" = "$h2" ]; then
-            echo "Reproducible build confirmed — both wheels have SHA-256 $h1"
+            if [ "$h1" = "$h2" ]; then
+              echo "OK  $name  ($h1)"
+            else
+              echo "MISMATCH  $name"
+              echo "  build1: $h1"
+              echo "  build2: $h2"
+              failed=1
+            fi
+          done
+
+          if [ "$failed" -eq 0 ]; then
+            echo "Reproducible build confirmed for all wheels."
           else
-            echo "Non-reproducible build — SHA-256 mismatch"
+            echo "Non-reproducible build detected."
             exit 1
           fi
         shell: bash
@@ -73,25 +118,29 @@ jobs:
         if: failure()
         run: sudo apt-get install -y --no-install-recommends diffoscope
 
-      - name: Run diffoscope
+      - name: Run diffoscope on mismatched wheels
         if: failure()
         run: |
-          WHEEL1=$(ls /tmp/build1/*.whl)
-          WHEEL2=$(ls /tmp/build2/*.whl)
-          diffoscope "$WHEEL1" "$WHEEL2" \
-            --text /tmp/diffoscope.txt \
-            --html /tmp/diffoscope.html \
-            --max-text-report-size 10000000 \
-            || true
-          echo "--- diffoscope summary (first 100 lines) ---"
-          head -100 /tmp/diffoscope.txt || true
+          mkdir -p /tmp/diffoscope
+          for whl1 in /tmp/build1/*.whl; do
+            name=$(basename "$whl1")
+            whl2="/tmp/build2/$name"
+            [ -f "$whl2" ] || continue
+            [ "$(sha256sum "$whl1" | cut -d' ' -f1)" != "$(sha256sum "$whl2" | cut -d' ' -f1)" ] || continue
+            echo "=== diffoscope: $name ==="
+            diffoscope "$whl1" "$whl2" \
+              --text /tmp/diffoscope/${name}.txt \
+              --html /tmp/diffoscope/${name}.html \
+              --max-text-report-size 10000000 \
+              || true
+            head -100 /tmp/diffoscope/${name}.txt || true
+          done
+        shell: bash
 
       - name: Upload diffoscope report
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: diffoscope-report
-          path: |
-            /tmp/diffoscope.html
-            /tmp/diffoscope.txt
+          path: /tmp/diffoscope/
           retention-days: 30
