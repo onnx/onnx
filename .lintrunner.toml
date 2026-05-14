@@ -76,6 +76,7 @@ exclude_patterns = [
     'onnx/reference/ops/**',  # FIXME: Enable this once typing is fixed
     'onnx/test/**',  # Disable mypy for tests
     'onnx/reference/reference_evaluator.py',
+    'tools/spec_to_yaml_test.py',  # Disable mypy for tests
 ]
 command = [
     'python',

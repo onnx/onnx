@@ -12,3 +12,5 @@ lintrunner-adapters>=0.13.0
 # Edit additional linter dependencies in requirements-lintrunner.txt
 # Dependencies for the reference implementation.
 Pillow
+# Required by tools/spec_to_yaml.py (maintainer-only) and its tests.
+ruamel.yaml

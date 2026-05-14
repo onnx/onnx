@@ -115,7 +115,12 @@ addopts = "--tb=short --color=yes"
 testpaths = [
     "onnx/test",
     "onnx/examples",
+    "tools",
 ]
+# Make tools/*.py importable by their sibling tests without sys.path
+# manipulation. tools/ is a maintainer scratch area, not a package, so it is
+# not exposed via wheel.packages.
+pythonpath = ["tools"]
 
 [tool.mypy]
 follow_imports = "silent"
