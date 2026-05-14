@@ -118,9 +118,20 @@ Validation steps must be completed before this point! This is the point of new r
 
 ## Upload to Official PyPI
 
-* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action" -> "Create releases" (see above). Use the following config for official release:
+> **Prerequisite:** The GitHub Release for `vX.Y.Z` must be **published** (not just drafted) before running this workflow. The workflow will fail with a clear error if the release tag does not exist. Publishing the release also creates the git tag that the build workflow uses to derive the version number.
+
+* Starting with the release of 1.19, the final release will also be pushed to pypi via Github “Action” -> “Create releases” (see above). Use the following config for official release:
 
 <img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
+
+### What the workflow uploads to the GitHub Release
+
+The final publish workflow makes the GitHub Release the **immutable, self-contained archive** for each ONNX version. For every wheel and the sdist it uploads:
+
+1. **The artifact itself** (`.whl` / `.tar.gz`) — making the GitHub Release a complete, PyPI-independent distribution point.
+2. **A per-artifact SLSA provenance bundle** (`<filename>.sigstore.bundle`) — enabling consumers to run `gh attestation verify <file> --repo onnx/onnx` and satisfying the [OpenSSF Scorecard Signed-Releases](https://github.com/ossf/scorecard/blob/main/docs/checks.md#signed-releases) check.
+
+This ensures that the GitHub Release is the authoritative, verifiable source of truth for the release, independent of PyPI availability.
 
 ### NOTES:
 
