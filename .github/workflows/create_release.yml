@@ -423,6 +423,37 @@ jobs:
           name: attestation-bundle-release
           path: ${{ steps.attest.outputs.bundle-path }}
 
+      - name: Download per-artifact attestation bundles
+        if: hashFiles('dist/**') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p attestation-bundles
+          for file in dist/*.whl dist/*.tar.gz; do
+            [ -f "$file" ] || continue
+            filename=$(basename "$file")
+            abs_file="$(realpath "$file")"
+            # gh attestation download writes to CWD; use a per-artifact tmpdir
+            # so the digest-named output file can be renamed unambiguously.
+            tmpdir=$(mktemp -d)
+            (cd "$tmpdir" && gh attestation download "$abs_file" \
+              --repo "${{ github.repository }}")
+            bundle=$(ls "$tmpdir"/*.sigstore.bundle 2>/dev/null | head -1)
+            if [ -n "$bundle" ]; then
+              mv "$bundle" "attestation-bundles/${filename}.sigstore.bundle"
+            else
+              echo "ERROR: no bundle produced for $filename" && exit 1
+            fi
+            rm -rf "$tmpdir"
+          done
+
+      - name: Upload per-artifact attestation bundles
+        if: hashFiles('attestation-bundles/**') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attestation-bundles-release
+          path: attestation-bundles/
+
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b

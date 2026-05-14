@@ -122,6 +122,18 @@ Validation steps must be completed before this point! This is the point of new r
 
 <img width="548" height="749" alt="RunWorkflow_Final" src="https://github.com/user-attachments/assets/d836d0b8-b033-4317-aa21-2aeed3c74d05" />
 
+### Attach per-artifact attestation bundles to the GitHub Release
+
+The final publish workflow automatically generates per-artifact SLSA provenance bundles and makes them available as a **workflow artifact** named `attestation-bundles-release`. These files (one `<filename>.sigstore.bundle` per wheel and sdist) must be manually attached to the GitHub Release so that:
+
+* `gh attestation verify <file> --repo onnx/onnx` succeeds (fetches from the GitHub attestation store).
+* The [OpenSSF Scorecard Signed-Releases](https://github.com/ossf/scorecard/blob/main/docs/checks.md#signed-releases) check detects the signatures (it only inspects files physically attached to the GitHub Release).
+
+Steps:
+1. Open the completed "Create Releases" workflow run in GitHub Actions.
+2. Download the `attestation-bundles-release` artifact (a zip containing one `.sigstore.bundle` per file).
+3. Unzip and run `gh release upload vX.Y.Z *.sigstore.bundle --clobber --repo onnx/onnx` to attach them to the GitHub Release.
+
 ### NOTES:
 
 * Once the packages are uploaded to PyPI, **you cannot overwrite it on the same PyPI instance**.
