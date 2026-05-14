@@ -2593,26 +2593,20 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_linear_attention_basic_mha(self) -> None:
         # update_rule="linear" with no optional inputs: baseline shape/dtype plumbing.
         # H_q == H_kv == 4, d_k == d_v == 16. Output is 3D packed; state is 4D.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 64)),
-                ("K", TensorProto.FLOAT, (2, 4, 64)),
-                ("V", TensorProto.FLOAT, (2, 4, 64)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 64)),
                 make_tensor_value_info(
@@ -2623,28 +2617,21 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_linear_attention_gated_delta(self) -> None:
         # Default update_rule with both decay (per-keydim) and beta required.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 64)),
-                ("K", TensorProto.FLOAT, (2, 4, 64)),
-                ("V", TensorProto.FLOAT, (2, 4, 64)),
-                ("decay", TensorProto.FLOAT, (2, 4, 64)),
-                ("beta", TensorProto.FLOAT, (2, 4, 4)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "", "decay", "beta"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="gated_delta",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,64] decay, float[2,4,4] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, "", decay, beta)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 64)),
                 make_tensor_value_info(
@@ -2657,26 +2644,21 @@ class TestShapeInference(TestShapeInferenceHelper):
         # H_q=8, H_kv=2 (4 query heads share each KV head). Output last dim must
         # be H_q * d_v while present_state's H dim must be H_kv. This is the
         # highest-risk regression for confusing q vs kv head counts.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 128)),  # 8 * 16
-                ("K", TensorProto.FLOAT, (2, 4, 32)),  # 2 * 16
-                ("V", TensorProto.FLOAT, (2, 4, 32)),  # 2 * 16
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V"],
-                    ["output", "present_state"],
-                    q_num_heads=8,
-                    kv_num_heads=2,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        # Q: 8 * 16 = 128. K, V: 2 * 16 = 32.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,128] Q, float[2,4,32] K, float[2,4,32] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=8, kv_num_heads=2, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 128)),
                 make_tensor_value_info(
@@ -2687,26 +2669,21 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_linear_attention_mqa(self) -> None:
         # Multi-query attention: kv_num_heads == 1.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 64)),  # 4 * 16
-                ("K", TensorProto.FLOAT, (2, 4, 16)),  # 1 * 16
-                ("V", TensorProto.FLOAT, (2, 4, 16)),  # 1 * 16
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=1,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        # Q: 4 * 16 = 64. K, V: 1 * 16 = 16.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,16] K, float[2,4,16] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=1, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 64)),
                 make_tensor_value_info(
@@ -2718,29 +2695,22 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_linear_attention_with_past_state(self) -> None:
         # past_state has dtype S (FLOAT16) different from T (FLOAT). present_state
         # must inherit dtype from past_state, not from query.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 1, 64)),
-                ("K", TensorProto.FLOAT, (2, 1, 64)),
-                ("V", TensorProto.FLOAT, (2, 1, 64)),
-                ("past_state", TensorProto.FLOAT16, (2, 4, 16, 16)),
-                ("decay", TensorProto.FLOAT, (2, 1, 64)),
-                ("beta", TensorProto.FLOAT, (2, 1, 4)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "past_state", "decay", "beta"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="gated_delta",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,1,64] Q, float[2,1,64] K, float[2,1,64] V,
+               float16[2,4,16,16] past_state,
+               float[2,1,64] decay, float[2,1,4] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, past_state, decay, beta)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 1, 64)),
                 make_tensor_value_info(
@@ -2751,27 +2721,21 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_linear_attention_per_head_decay(self) -> None:
         # update_rule="gated" with per-head scalar decay shape (B, T, H_kv).
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 3, 16)),
-                ("K", TensorProto.FLOAT, (2, 3, 16)),
-                ("V", TensorProto.FLOAT, (2, 3, 16)),
-                ("decay", TensorProto.FLOAT, (2, 3, 2)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "", "decay"],
-                    ["output", "present_state"],
-                    q_num_heads=2,
-                    kv_num_heads=2,
-                    update_rule="gated",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,16] Q, float[2,3,16] K, float[2,3,16] V,
+               float[2,3,2] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="gated"
+                > (Q, K, V, "", decay)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 16)),
                 make_tensor_value_info(
@@ -2782,27 +2746,21 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_linear_attention_per_keydim_decay(self) -> None:
         # update_rule="gated" with per-key-dimension decay shape (B, T, H_kv * d_k).
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 3, 16)),
-                ("K", TensorProto.FLOAT, (2, 3, 16)),
-                ("V", TensorProto.FLOAT, (2, 3, 16)),
-                ("decay", TensorProto.FLOAT, (2, 3, 16)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "", "decay"],
-                    ["output", "present_state"],
-                    q_num_heads=2,
-                    kv_num_heads=2,
-                    update_rule="gated",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,16] Q, float[2,3,16] K, float[2,3,16] V,
+               float[2,3,16] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="gated"
+                > (Q, K, V, "", decay)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 16)),
                 make_tensor_value_info(
@@ -2813,26 +2771,20 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_linear_attention_dynamic_T(self) -> None:
         # Symbolic batch and sequence-length dims must propagate to output and state.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, ("B", "T", 64)),
-                ("K", TensorProto.FLOAT, ("B", "T", 64)),
-                ("V", TensorProto.FLOAT, ("B", "T", 64)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[B,T,64] Q, float[B,T,64] K, float[B,T,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, ("B", "T", 64)),
                 make_tensor_value_info(
@@ -2844,26 +2796,20 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_linear_attention_unknown_value_last_dim(self) -> None:
         # value's last dim is symbolic: output last dim and state's d_v are unknown,
         # but rank stays 3/4 and known dims (B, T, H_kv, d_k) are still computed.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 64)),
-                ("K", TensorProto.FLOAT, (2, 4, 64)),
-                ("V", TensorProto.FLOAT, (2, 4, "VLast")),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,VLast] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, None)),
                 make_tensor_value_info(
@@ -2875,6 +2821,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_linear_attention_unknown_qkv_with_past_state(self) -> None:
         # Q/K/V have no shapes; only past_state has a shape. Output falls back
         # to rank-3 unknown; present_state is propagated from past_state.
+        # Uses _make_graph (not onnx.parser) because shapeless graph inputs
+        # are rejected by the model checker; _make_graph wraps them behind a
+        # Reshape so the shape-erasure happens inside the graph.
         graph = self._make_graph(
             [
                 ("Q", TensorProto.FLOAT, None),
@@ -2906,203 +2855,152 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_linear_attention_query_rank_not_3(self) -> None:
         # Query given as rank-4 (internal layout leaked to op boundary).
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 4, 16)),
-                ("K", TensorProto.FLOAT, (2, 4, 64)),
-                ("V", TensorProto.FLOAT, (2, 4, 64)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,4,16] Q, float[2,4,64] K, float[2,4,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_linear_attention_past_state_rank_not_4(self) -> None:
         # past_state must be rank 4.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 1, 64)),
-                ("K", TensorProto.FLOAT, (2, 1, 64)),
-                ("V", TensorProto.FLOAT, (2, 1, 64)),
-                ("past_state", TensorProto.FLOAT, (2, 4, 16)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "past_state"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,1,64] Q, float[2,1,64] K, float[2,1,64] V,
+               float[2,4,16] past_state)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V, past_state)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_linear_attention_decay_rank_not_3(self) -> None:
         # decay must be rank 3 (3D packed).
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 3, 16)),
-                ("K", TensorProto.FLOAT, (2, 3, 16)),
-                ("V", TensorProto.FLOAT, (2, 3, 16)),
-                ("decay", TensorProto.FLOAT, (2, 3)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "", "decay"],
-                    ["output", "present_state"],
-                    q_num_heads=2,
-                    kv_num_heads=2,
-                    update_rule="gated",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,16] Q, float[2,3,16] K, float[2,3,16] V,
+               float[2,3] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="gated"
+                > (Q, K, V, "", decay)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_linear_attention_gqa_indivisible(self) -> None:
         # q_num_heads must be a positive multiple of kv_num_heads.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 96)),  # 6 * 16
-                ("K", TensorProto.FLOAT, (2, 4, 64)),  # 4 * 16
-                ("V", TensorProto.FLOAT, (2, 4, 64)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V"],
-                    ["output", "present_state"],
-                    q_num_heads=6,
-                    kv_num_heads=4,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        # Q: 6 * 16 = 96. K, V: 4 * 16 = 64.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,96] Q, float[2,4,64] K, float[2,4,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=6, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_linear_attention_gated_delta_missing_decay(self) -> None:
         # gated_delta requires decay; only beta provided.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 64)),
-                ("K", TensorProto.FLOAT, (2, 4, 64)),
-                ("V", TensorProto.FLOAT, (2, 4, 64)),
-                ("beta", TensorProto.FLOAT, (2, 4, 4)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "", "", "beta"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="gated_delta",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,4] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, "", "", beta)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_linear_attention_gated_delta_missing_beta(self) -> None:
         # gated_delta requires beta; only decay provided.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 64)),
-                ("K", TensorProto.FLOAT, (2, 4, 64)),
-                ("V", TensorProto.FLOAT, (2, 4, 64)),
-                ("decay", TensorProto.FLOAT, (2, 4, 64)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "", "decay"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="gated_delta",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,64] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, "", decay)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_linear_attention_linear_with_decay(self) -> None:
         # update_rule="linear" forbids decay.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 64)),
-                ("K", TensorProto.FLOAT, (2, 4, 64)),
-                ("V", TensorProto.FLOAT, (2, 4, 64)),
-                ("decay", TensorProto.FLOAT, (2, 4, 64)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "", "decay"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,64] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V, "", decay)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_linear_attention_linear_with_beta(self) -> None:
         # update_rule="linear" forbids beta.
-        graph = self._make_graph(
-            [
-                ("Q", TensorProto.FLOAT, (2, 4, 64)),
-                ("K", TensorProto.FLOAT, (2, 4, 64)),
-                ("V", TensorProto.FLOAT, (2, 4, 64)),
-                ("beta", TensorProto.FLOAT, (2, 4, 4)),
-            ],
-            [
-                make_node(
-                    "LinearAttention",
-                    ["Q", "K", "V", "", "", "beta"],
-                    ["output", "present_state"],
-                    q_num_heads=4,
-                    kv_num_heads=4,
-                    update_rule="linear",
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,4] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V, "", "", beta)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_causal_conv_with_state_static(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT, (2, 4, 8)),
-                ("weight", TensorProto.FLOAT, (4, 1, 4)),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight"],
-                    ["output", "present_state"],
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
                 make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 3)),
@@ -3110,22 +3008,18 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_causal_conv_with_state_dynamic_length(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT, ("B", "C", "L")),
-                ("weight", TensorProto.FLOAT, ("C", 1, 4)),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight"],
-                    ["output", "present_state"],
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[B,C,L] input, float[C,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, ("B", "C", "L")),
                 make_tensor_value_info(
@@ -3135,22 +3029,18 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_causal_conv_with_state_dynamic_kernel(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT, (2, 4, 8)),
-                ("weight", TensorProto.FLOAT, (4, 1, "k")),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight"],
-                    ["output", "present_state"],
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,k] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
                 make_tensor_value_info(
@@ -3160,73 +3050,57 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_causal_conv_with_state_input_rank2_fails(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT, (2, 4)),
-                ("weight", TensorProto.FLOAT, (4, 1, 4)),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight"],
-                    ["output", "present_state"],
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4] input, float[4,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_causal_conv_with_state_kernel_zero_fails(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT, (2, 4, 8)),
-                ("weight", TensorProto.FLOAT, (4, 1, 0)),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight"],
-                    ["output", "present_state"],
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,0] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_causal_conv_with_state_weight_rank2_fails(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT, (2, 4, 8)),
-                ("weight", TensorProto.FLOAT, (4, 4)),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight"],
-                    ["output", "present_state"],
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_causal_conv_with_state_kernel_size_one(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT, (2, 4, 8)),
-                ("weight", TensorProto.FLOAT, (4, 1, 1)),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight"],
-                    ["output", "present_state"],
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,1] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
                 make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 0)),
@@ -3234,22 +3108,18 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_causal_conv_with_state_fp16_type_propagation(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT16, (2, 4, 8)),
-                ("weight", TensorProto.FLOAT16, (4, 1, 4)),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight"],
-                    ["output", "present_state"],
-                )
-            ],
-            [],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float16[2,4,8] input, float16[4,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT16, (2, 4, 8)),
                 make_tensor_value_info("present_state", TensorProto.FLOAT16, (2, 4, 3)),
@@ -3257,24 +3127,21 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_causal_conv_with_state_all_optional_inputs(self) -> None:
-        graph = self._make_graph(
-            [
-                ("input", TensorProto.FLOAT, (2, 4, 8)),
-                ("weight", TensorProto.FLOAT, (4, 1, 4)),
-                ("bias", TensorProto.FLOAT, (4,)),
-                ("past_state", TensorProto.FLOAT, (2, 4, 3)),
-            ],
-            [
-                make_node(
-                    "CausalConvWithState",
-                    ["input", "weight", "bias", "past_state"],
-                    ["output", "present_state"],
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,4] weight,
+               float[4] bias, float[2,4,3] past_state)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (
+                    input, weight, bias, past_state
                 )
-            ],
-            [],
+            }
+            """
         )
         self._assert_inferred(
-            graph,
+            model,
             [
                 make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
                 make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 3)),
