@@ -8,6 +8,7 @@
 
 #include "onnx/defs/schema.h"
 #include "onnx/defs/traditionalml/utils.h"
+#include "onnx/defs/type_builders.h"
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
@@ -73,7 +74,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         })
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)", "tensor(string)"},
+            {types::Float, types::Double, types::Int64, types::Int32, types::String},
             "The input must be a tensor of a numeric type or string. The output will be of the same tensor type."));
 
 static constexpr const char* Binarizer_ver1_doc = R"DOC(
@@ -89,7 +90,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Binarized output data", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input must be a tensor of a numeric type. The output will be of the same tensor type.")
         .Attr("threshold", "Values greater than this are mapped to 1, others to 0.", AttributeProto::FLOAT, 0.f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { propagateShapeAndTypeFromFirstInput(ctx); }));
@@ -109,11 +110,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "A tensor representing the same data as the input map, ordered by their keys", "T2")
         .TypeConstraint(
             "T1",
-            {"map(int64, string)", "map(int64, float)"},
+            {types::Map<TensorProto::INT64>("string"), types::Map<TensorProto::INT64>("float")},
             "The input must be an integer map to either string or float.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(float)", "tensor(int64)"},
+            {types::String, types::Float, types::Int64},
             "The output is a 1-D tensor of string, float, or integer.")
         .Attr(
             "cast_to",
@@ -169,11 +170,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output data. If strings are input, the output values are integers, and vice versa.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The input must be a tensor of strings or integers, either [N,C] or [C].")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output is a tensor of strings or integers. Its shape will be the same as the input shape.")
         .Attr(
             "cats_strings",
@@ -246,17 +247,17 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "A 1-D tensor holding values from the input dictionary.", "T2")
         .TypeConstraint(
             "T1",
-            {"map(string, int64)",
-             "map(int64, string)",
-             "map(int64, float)",
-             "map(int64, double)",
-             "map(string, float)",
-             "map(string, double)"},
+            {types::Map<TensorProto::STRING>("int64"),
+             types::Map<TensorProto::INT64>("string"),
+             types::Map<TensorProto::INT64>("float"),
+             types::Map<TensorProto::INT64>("double"),
+             types::Map<TensorProto::STRING>("float"),
+             types::Map<TensorProto::STRING>("double")},
             "The input must be a map from strings or integers to either strings or a numeric type. The key and value "
             "types cannot be the same.")
         .TypeConstraint(
             "T2",
-            {"tensor(int64)", "tensor(float)", "tensor(double)", "tensor(string)"},
+            {types::Int64, types::Float, types::Double, types::String},
             "The output will be a tensor of the value type of the input map. It's shape will be [1,C], where C is the "
             "length of the input dictionary.")
         .Attr(
@@ -291,7 +292,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "The output array, elements ordered as the inputs.", "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(int32)", "tensor(int64)", "tensor(float)", "tensor(double)"},
+            {types::Int32, types::Int64, types::Float, types::Double},
             "The input type must be a tensor of a numeric type.")
         .Attr("inputdimensions", "The size of each input in the input list", AttributeProto::INTS, OPTIONAL_VALUE));
 
@@ -315,7 +316,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Imputed output data", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type, either [N,C] or [C]. The output type will be of the "
             "same tensor type and shape.")
         .Attr("imputed_value_floats", "Value(s) to change to", AttributeProto::FLOATS, OPTIONAL_VALUE)
@@ -354,11 +355,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output data. This tensor's element type is based on the values_* attribute set.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(string)", "tensor(int64)", "tensor(float)", "tensor(int32)", "tensor(int16)", "tensor(double)"},
+            {types::String, types::Int64, types::Float, types::Int32, types::Int16, types::Double},
             "The input type is a tensor of any shape.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)", "tensor(float)", "tensor(int32)", "tensor(int16)", "tensor(double)"},
+            {types::String, types::Int64, types::Float, types::Int32, types::Int16, types::Double},
             "Output type is determined by the specified 'values_*' attribute.")
         .Attr(
             "keys_tensor",
@@ -450,13 +451,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(1, "Z", "Classification scores ([N,E] - one score for each class and example", "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input must be a tensor of a numeric type, and of shape [N,C] or [C]. In the latter case, it will be "
             "treated as [1,C]")
-        .TypeConstraint(
-            "T2",
-            {"tensor(string)", "tensor(int64)"},
-            "The output will be a tensor of strings or integers.")
+        .TypeConstraint("T2", {types::String, types::Int64}, "The output will be a tensor of strings or integers.")
         .Attr("coefficients", "A collection of weights of the model(s).", AttributeProto::FLOATS)
         .Attr("intercepts", "A collection of intercepts.", AttributeProto::FLOATS, OPTIONAL_VALUE)
         .Attr(
@@ -551,7 +549,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Regression outputs (one per target, per example).", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input must be a tensor of a numeric type.")
         .Attr(
             "post_transform",
@@ -589,7 +587,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Encoded output data", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input must be a tensor of a numeric type.")
         .Attr("norm", "One of 'MAX,' 'L1,' 'L2'", AttributeProto::STRING, std::string("MAX")));
 
@@ -613,7 +611,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Encoded output data, having one more dimension than X.", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(string)", "tensor(int64)", "tensor(int32)", "tensor(float)", "tensor(double)"},
+            {types::String, types::Int64, types::Int32, types::Float, types::Double},
             "The input must be a tensor of a numeric type.")
         .Attr(
             "cats_int64s",
@@ -665,7 +663,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Scaled output data.", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input must be a tensor of a numeric type.")
         .Attr(
             "offset",
@@ -699,11 +697,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input must be a tensor of a numeric type, either [C] or [N,C].")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
             "attributes is used. Its size will match the batch size of the input.")
         .Attr(
@@ -770,7 +768,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Regression outputs (one score per target per example).", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type, either [C] or [N,C].")
         .Attr(
             "kernel_type",
@@ -826,11 +824,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(1, "Z", "The class score for each class, for each point, a tensor of shape [N,E].", "tensor(float)")
         .TypeConstraint(
             "T1",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
+            {types::String, types::Int64},
             "The output type will be a tensor of strings or integers, depending on which of the classlabels_* "
             "attributes is used.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
@@ -942,7 +940,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "N classes", "tensor(float)")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+            {types::Float, types::Double, types::Int64, types::Int32},
             "The input type must be a tensor of a numeric type.")
         .Attr("nodes_treeids", "Tree id for each node.", AttributeProto::INTS, OPTIONAL_VALUE)
         .Attr(
@@ -1041,7 +1039,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output of shape [Batch Size, Number of targets]", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(float16)"},
+            {types::Float, types::Double, types::Float16},
             "The input type must be a tensor of a numeric type.")
         .Attr("nodes_featureids", "Feature id for each node.", AttributeProto::INTS, true)
         .Attr(
@@ -1233,7 +1231,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Output(0, "Z", "The output map", "T")
         .TypeConstraint(
             "T",
-            {"seq(map(string, float))", "seq(map(int64, float))"},
+            {types::Sequence(types::Map<TensorProto::STRING>("float")),
+             types::Sequence(types::Map<TensorProto::INT64>("float"))},
             "The output will be a sequence of string or integer maps to float.")
         .Attr(
             "classlabels_strings",
