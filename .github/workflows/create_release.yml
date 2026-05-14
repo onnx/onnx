@@ -224,7 +224,7 @@ jobs:
         url: https://test.pypi.org/p/onnx
 
       permissions:
-        contents: read
+        contents: write
         id-token: write
         attestations: write
 
@@ -257,6 +257,21 @@ jobs:
           with:
             name: attestation-bundle-testpypi-release
             path: ${{ steps.attest.outputs.bundle-path }}
+
+        - name: Upload per-artifact attestations to GitHub Release
+          if: hashFiles('dist/**') != ''
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            version="${GITHUB_REF_NAME#rel-}"
+            for file in dist/*.whl dist/*.tar.gz; do
+              [ -f "$file" ] || continue
+              filename=$(basename "$file")
+              gh attestation download "$file" \
+                --repo "${{ github.repository }}" \
+                -o "${filename}.sigstore.bundle"
+              gh release upload "v${version}" "${filename}.sigstore.bundle" --clobber
+            done
 
         - name: Upload release build to test.pypi
           id: upload_release_build_to_testpypi
@@ -342,7 +357,7 @@ jobs:
       url: https://pypi.org/p/onnx
 
     permissions:
-      contents: read
+      contents: write
       id-token: write
       attestations: write
 
@@ -374,6 +389,21 @@ jobs:
         with:
           name: attestation-bundle-release
           path: ${{ steps.attest.outputs.bundle-path }}
+
+      - name: Upload per-artifact attestations to GitHub Release
+        if: hashFiles('dist/**') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${GITHUB_REF_NAME#rel-}"
+          for file in dist/*.whl dist/*.tar.gz; do
+            [ -f "$file" ] || continue
+            filename=$(basename "$file")
+            gh attestation download "$file" \
+              --repo "${{ github.repository }}" \
+              -o "${filename}.sigstore.bundle"
+            gh release upload "v${version}" "${filename}.sigstore.bundle" --clobber
+          done
 
       - name: Publish release_build to pypi
         if: (github.repository_owner == 'onnx')
