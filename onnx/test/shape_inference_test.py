@@ -7,6 +7,7 @@ from __future__ import annotations
 import contextlib
 import itertools
 import unittest
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -31,6 +32,7 @@ from onnx import (
     numpy_helper,
 )
 from onnx.defs import (
+    AI_ONNX_PREVIEW_DOMAIN,
     AI_ONNX_PREVIEW_TRAINING_DOMAIN,
     ONNX_DOMAIN,
     ONNX_ML_DOMAIN,
@@ -1324,6 +1326,52 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _check_resize_scale_precision(
+        self,
+        version: int,
+        scales: tuple[float, ...],
+        expected_last_dim: int,
+    ) -> None:
+        # Shared body for #4919 regression tests. Builds a Resize graph whose
+        # last input dim is 16_777_217 (= 2**24 + 1, the smallest int that
+        # float32 cannot represent) and asserts the inferred output last dim.
+        if version >= 11:
+            inputs = [
+                ("x", TensorProto.INT32, (1, 1, 1, 16777217)),
+                ("roi", TensorProto.FLOAT, (8,)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ]
+            node = make_node("Resize", ["x", "roi", "scales"], ["y"])
+        else:
+            inputs = [
+                ("x", TensorProto.INT32, (1, 1, 1, 16777217)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ]
+            node = make_node("Resize", ["x", "scales"], ["y"])
+        graph = self._make_graph(
+            inputs,
+            [node],
+            [],
+            initializer=[make_tensor("scales", TensorProto.FLOAT, (4,), scales)],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.INT32, (1, 1, 1, expected_last_dim)
+                )
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_scale_precision_large_dim(self, _, version) -> None:
+        # Regression for #4919, current-version helper
+        for scale in [1, 2]:
+            self._check_resize_scale_precision(
+                version, (1.0, 1.0, 1.0, float(scale)), 16777217 * scale
+            )
+
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_scale_and_size_but_one_is_empty(self, _, version) -> None:
         self.skipIf(version < 11, "roi input is from Version 11")
@@ -2142,6 +2190,82 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("y", TensorProto.DOUBLE, (2, 2))]
         )
 
+    def test_slice_empty_dim_positive_step(self) -> None:
+        """Slice on empty dimension with positive step should produce dim_value=0."""
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (0, 6)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
+        )
+
+    def test_slice_empty_dim_negative_step(self) -> None:
+        """Regression test for issue #7735: std::clamp UB on empty dim with step=-1."""
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (0, 6)),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [make_node("Slice", ["x", "starts", "ends", "axes", "steps"], "y")],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (1,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (-1,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("y", TensorProto.FLOAT, (0, 6))]
+        )
+
+    def test_slice_scalar_shape_output(self) -> None:
+        """Shape(scalar) produces 0-length output; Slice on it should not crash."""
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, ()),
+                ("starts", TensorProto.INT64, (1,)),
+                ("ends", TensorProto.INT64, (1,)),
+                ("axes", TensorProto.INT64, (1,)),
+                ("steps", TensorProto.INT64, (1,)),
+            ],
+            [
+                make_node("Shape", ["x"], ["shape"]),
+                make_node("Slice", ["shape", "starts", "ends", "axes", "steps"], ["y"]),
+            ],
+            [],
+            initializer=[
+                make_tensor("starts", TensorProto.INT64, (1,), (0,)),
+                make_tensor("ends", TensorProto.INT64, (1,), (0,)),
+                make_tensor("axes", TensorProto.INT64, (1,), (0,)),
+                make_tensor("steps", TensorProto.INT64, (1,), (1,)),
+            ],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("shape", TensorProto.INT64, (0,)),
+                make_tensor_value_info("y", TensorProto.INT64, (0,)),
+            ],
+        )
+
     def test_conv(self) -> None:
         graph = self._make_graph(
             [
@@ -2201,6 +2325,40 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, (30, 50, 6, 3, 2))]
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_zero_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", strides=[0, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", strides=[-1, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_conv_pads(self) -> None:
@@ -2353,6 +2511,540 @@ class TestShapeInference(TestShapeInferenceHelper):
                     TensorProto.FLOAT,
                     ("B", "q_num_heads", "q_seq_length", "v_head_size"),
                 )
+            ],
+        )
+
+    def test_flex_attention_basic(self) -> None:
+        """Test FlexAttention basic shape inference with symbolic dimensions."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, ("B", "Hq", "L", "Dqk")),
+                ("K", TensorProto.FLOAT, ("B", "Hkv", "S", "Dqk")),
+                ("V", TensorProto.FLOAT, ("B", "Hkv", "S", "Dv")),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, ("B", "Hq", "L", "Dv"))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_concrete_dims(self) -> None:
+        """Test FlexAttention shape inference with concrete dimensions."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_different_v_head_size(self) -> None:
+        """Test FlexAttention with different head sizes for Q/K vs V."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 8, 256, 128)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 128))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_gqa_enabled(self) -> None:
+        """Test FlexAttention with Grouped Query Attention."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 2, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 2, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_float16(self) -> None:
+        """Test FlexAttention shape inference with FLOAT16 type."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT16, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT16, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT16, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT16, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_bfloat16(self) -> None:
+        """Test FlexAttention shape inference with BFLOAT16 type."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.BFLOAT16, (2, 8, 128, 64)),
+                ("K", TensorProto.BFLOAT16, (2, 8, 256, 64)),
+                ("V", TensorProto.BFLOAT16, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.BFLOAT16, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_double(self) -> None:
+        """Test FlexAttention shape inference with DOUBLE type."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.DOUBLE, (2, 8, 128, 64)),
+                ("K", TensorProto.DOUBLE, (2, 8, 256, 64)),
+                ("V", TensorProto.DOUBLE, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.DOUBLE, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_with_scale(self) -> None:
+        """Test FlexAttention with explicit scale attribute."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    scale=0.125,
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_with_score_mod(self) -> None:
+        """Test FlexAttention with score_mod subgraph."""
+        # Create score_mod subgraph: (scores) -> scores_out
+        score_mod_graph = helper.make_graph(
+            [make_node("Identity", ["scores"], ["scores_out"])],
+            "score_mod",
+            [
+                make_tensor_value_info(
+                    "scores", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                ),
+            ],
+            [
+                make_tensor_value_info(
+                    "scores_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                )
+            ],
+        )
+
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    score_mod=score_mod_graph,
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_with_prob_mod(self) -> None:
+        """Test FlexAttention with prob_mod subgraph."""
+        # Create prob_mod subgraph: (probs) -> probs_out
+        prob_mod_graph = helper.make_graph(
+            [make_node("Identity", ["probs"], ["probs_out"])],
+            "prob_mod",
+            [
+                make_tensor_value_info(
+                    "probs", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                ),
+            ],
+            [
+                make_tensor_value_info(
+                    "probs_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                )
+            ],
+        )
+
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    prob_mod=prob_mod_graph,
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_with_all_modifiers(self) -> None:
+        """Test FlexAttention with all modifier subgraphs."""
+        # Create score_mod subgraph
+        score_mod_graph = helper.make_graph(
+            [make_node("Identity", ["scores"], ["scores_out"])],
+            "score_mod",
+            [
+                make_tensor_value_info(
+                    "scores", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                ),
+            ],
+            [
+                make_tensor_value_info(
+                    "scores_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                )
+            ],
+        )
+
+        # Create prob_mod subgraph
+        prob_mod_graph = helper.make_graph(
+            [make_node("Identity", ["probs"], ["probs_out"])],
+            "prob_mod",
+            [
+                make_tensor_value_info(
+                    "probs", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                ),
+            ],
+            [
+                make_tensor_value_info(
+                    "probs_out", TensorProto.FLOAT, ("B", "Hq", "L", "S")
+                )
+            ],
+        )
+
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    score_mod=score_mod_graph,
+                    prob_mod=prob_mod_graph,
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 8, 128, 64))],
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_rank_not_4_fails(self) -> None:
+        """Test FlexAttention fails when input rank is not 4."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 64)),  # rank 3 instead of 4
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_mismatched_elem_type_fails(self) -> None:
+        """Test FlexAttention fails when Q, K, V have different element types."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT16, (2, 8, 256, 64)),  # different type
+                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_gqa_not_divisible_fails(self) -> None:
+        """Test FlexAttention fails when Hq is not divisible by Hkv."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 3, 256, 64)),  # 8 % 3 != 0
+                ("V", TensorProto.FLOAT, (2, 3, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_mismatched_kv_seq_len_fails(self) -> None:
+        """Test FlexAttention fails when K and V have different sequence lengths."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 8, 512, 64)),  # S_v=512 != S_k=256
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_mismatched_kv_heads_fails(self) -> None:
+        """Test FlexAttention fails when K and V have different head counts."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 64)),
+                ("V", TensorProto.FLOAT, (2, 4, 256, 64)),  # H_v=4 != H_k=8
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+            ],
+        )
+
+    def test_flex_attention_mismatched_qk_head_size_fails(self) -> None:
+        """Test FlexAttention fails when Q and K have different head sizes."""
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, (2, 8, 128, 64)),
+                ("K", TensorProto.FLOAT, (2, 8, 256, 128)),  # Dqk=128 != 64
+                ("V", TensorProto.FLOAT, (2, 8, 256, 64)),
+            ],
+            [
+                make_node(
+                    "FlexAttention",
+                    ["Q", "K", "V"],
+                    ["Y"],
+                    domain=AI_ONNX_PREVIEW_DOMAIN,
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[
+                make_opsetid(ONNX_DOMAIN, 21),
+                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
             ],
         )
 
@@ -2955,6 +3647,29 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_lstm_forward(self) -> None:
         self._lstm_forward(64, 32, 10, 4)
+
+    def test_rnn_opset1_to_6_invalid_input_rank(self) -> None:
+        # RNNShapeInference_opset1_to_6 must reject non-rank-3 input X and raise
+        # InferenceError rather than accessing dim(0)/dim(1) out-of-bounds.
+        for op, w_shape, r_shape in [
+            ("RNN", (1, 4, 5), (1, 4, 4)),
+            ("GRU", (1, 12, 5), (1, 12, 4)),
+            ("LSTM", (1, 16, 5), (1, 16, 4)),
+        ]:
+            graph = helper.make_graph(
+                [make_node(op, ["x", "w", "r"], [], hidden_size=4)],
+                "test",
+                [
+                    make_tensor_value_info("x", TensorProto.FLOAT, (4, 5)),
+                    make_tensor_value_info("w", TensorProto.FLOAT, w_shape),
+                    make_tensor_value_info("r", TensorProto.FLOAT, r_shape),
+                ],
+                [],
+            )
+            with self.assertRaises(onnx.shape_inference.InferenceError):
+                self._inferred(
+                    graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 6)]
+                )
 
     def test_topk_default_axis(self) -> None:
         graph = self._make_graph(
@@ -3629,6 +4344,50 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
         )
 
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_zero_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[2, 2],
+                    strides=[0, 2],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_negative_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[2, 2],
+                    strides=[-1, 2],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_maxpool_with_floor_mode(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (32, 288, 35, 35))],
@@ -3863,6 +4622,50 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))]
+        )
+
+    @parameterized.expand(all_versions_for("AveragePool"))
+    def test_averagepool_zero_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "AveragePool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[2, 2],
+                    strides=[2, 0],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("AveragePool"))
+    def test_averagepool_negative_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [
+                make_node(
+                    "AveragePool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[2, 2],
+                    strides=[2, -1],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_averagepool_ceil(self) -> None:
@@ -11066,6 +11869,70 @@ class TestShapeInference(TestShapeInferenceHelper):
         """
         model = text_format.Parse(model_text, onnx.ModelProto())
         self._assert_inferred(model, [])
+
+    def test_infer_shapes_rejects_cyclic_function(self):
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 17, "local" : 1 ]>
+            agraph (float[N] X) => (float[N] Y) { Y = local.foo (X) }
+            <opset_import: [ "" : 17, "local" : 1 ], domain: "local">
+            foo (x) => (y) { y = local.foo (x) }
+        """
+        )
+        with self.assertRaises(onnx.checker.ValidationError):
+            onnx.shape_inference.infer_shapes(model)
+
+    def test_scan_invalid_num_scan_inputs_does_not_crash(self):
+        # Missing required attribute would null-deref; negative value would
+        # overflow narrow<size_t>. Both must raise InferenceError, not crash.
+        scan_body = (
+            "body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) "
+            "{ so = Identity(si) xo = Identity(xi) }"
+        )
+        for attrs in ("", "num_scan_inputs = -1, "):
+            with self.subTest(attrs=attrs or "missing"):
+                model = onnx.parser.parse_model(
+                    f"""
+                    <ir_version: 8, opset_import: [ "" : 9 ]>
+                    g (float[1] s, float[3,1] x) => (float[1] so, float[3,1] xo) {{
+                        so, xo = Scan <{attrs}{scan_body}> (s, x)
+                    }}
+                    """
+                )
+                with self.assertRaises(onnx.shape_inference.InferenceError):
+                    onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_function_output_count_mismatch_does_not_crash(self):
+        # Function declares 2 outputs; calling node declares 1.
+        # Must raise InferenceError on the second output, not crash.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 18, "local" : 1 ]>
+            agraph (float[1] X) => (float[1] Y) { Y = local.F (X) }
+            <opset_import: [ "" : 18 ], domain: "local">
+            F (x) => (y1, y2) { y1 = Identity(x) y2 = Identity(x) }
+            """
+        )
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_conv_transpose_undersized_weight_does_not_crash(self):
+        # Weight rank < input spatial rank → empty kernel_shape would OOB-index later.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 11 ]>
+            g (float[1,1,5] X, float[1,3] W) => (float[1,1,?] Y) { Y = ConvTranspose(X, W) }
+            """
+        )
+        # Graceful return without output shape inference is acceptable; must not crash.
+        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_infer_shapes_pathlike_error(self) -> None:
+        with self.assertRaisesRegex(
+            TypeError,
+            r"For Model paths \(str or os.PathLike\), use infer_shapes_path\(\)\.",
+        ):
+            onnx.shape_inference.infer_shapes(Path("model.onnx"))
 
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):

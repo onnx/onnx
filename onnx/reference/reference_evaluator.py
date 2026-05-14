@@ -342,7 +342,7 @@ class ReferenceEvaluator:
     def _log(self, level: int, pattern: str, *args: list[Any]) -> None:
         if level < self.verbose:
             new_args = [self._log_arg(a) for a in args]
-            print(pattern % tuple(new_args))
+            print(pattern % tuple(new_args))  # noqa: T201
 
     @property
     def input_names(self):
@@ -502,6 +502,13 @@ class ReferenceEvaluator:
                 f"is only implemented for the main opset. Remove operator "
                 f"{node.domain},{node.op_type} from the list of inlined operator."
             )
+        if node.domain == "ai.onnx.preview":
+            from onnx.reference.ops.aionnx_preview import (  # noqa: PLC0415
+                load_op as load_op_pt,
+            )
+
+            return load_op_pt(node.domain, node.op_type, version)
+
         if node.domain == "ai.onnx.preview.training":
             from onnx.reference.ops.aionnx_preview_training import (  # noqa: PLC0415
                 load_op as load_op_pt,
@@ -565,7 +572,7 @@ class ReferenceEvaluator:
         if output_names is None:
             output_names = self.output_names
         if isinstance(self.proto_, FunctionProto) and attributes is None:
-            raise TypeError()
+            raise TypeError
 
         # step 1: inputs and initializers
         results = {"": None}  # optional input
