@@ -124,7 +124,7 @@ from onnx.onnx_pb import (
 )
 from onnx.onnx_operators_pb import OperatorProto, OperatorSetProto
 from onnx.onnx_data_pb import MapProto, OptionalProto, SequenceProto
-import onnx.version
+import importlib.metadata
 
 # Import common subpackages so they're available when you 'import onnx'
 from onnx import (
@@ -144,7 +144,13 @@ from onnx import (
 if typing.TYPE_CHECKING:
     from collections.abc import Sequence
 
-__version__ = onnx.version.version
+try:
+    __version__ = importlib.metadata.version("onnx")
+except importlib.metadata.PackageNotFoundError:
+    try:
+        __version__ = importlib.metadata.version("onnx-weekly")
+    except importlib.metadata.PackageNotFoundError:
+        __version__ = "unknown"
 
 # Supported model formats that can be loaded from and saved to
 # The literals are formats with built-in support. But we also allow users to

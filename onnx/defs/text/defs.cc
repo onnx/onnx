@@ -5,6 +5,7 @@
 #include <string>
 
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 static constexpr const char* StringConcat_doc =
@@ -24,7 +25,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .Input(1, "Y", "Tensor to append in concatenation", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Z", "Concatenated string tensor", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .TypeConstraint("T", {"tensor(string)"}, "Inputs and outputs must be UTF-8 strings")
+        .TypeConstraint("T", {types::String}, "Inputs and outputs must be UTF-8 strings")
         .SetDoc(StringConcat_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -52,10 +53,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", {"tensor(string)"}, "Inputs must be UTF-8 strings")
+        .TypeConstraint("T1", {types::String}, "Inputs must be UTF-8 strings")
         .TypeConstraint(
             "T2",
-            {"tensor(bool)"},
+            {types::Bool},
             "Outputs are bools and are True where there is a full regex match and False otherwise.")
         .SetDoc(RegexFullMatch_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -103,9 +104,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("T1", {"tensor(string)"}, "The input must be a UTF-8 string tensor")
-        .TypeConstraint("T2", {"tensor(string)"}, "Tensor of substrings.")
-        .TypeConstraint("T3", {"tensor(int64)"}, "The number of substrings generated.")
+        .TypeConstraint("T1", {types::String}, "The input must be a UTF-8 string tensor")
+        .TypeConstraint("T2", {types::String}, "Tensor of substrings.")
+        .TypeConstraint("T3", {types::Int64}, "The number of substrings generated.")
         .SetDoc(StringSplit_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (!hasInputShape(ctx, 0)) {

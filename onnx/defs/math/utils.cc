@@ -5,7 +5,10 @@
 #include "onnx/defs/math/utils.h"
 
 #include <string>
+#include <utility>
 #include <vector>
+
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 namespace defs {
@@ -30,8 +33,8 @@ Given two equivalent values, this operator uses the indices along the axis as
 a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
 
-std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& allowed_types) {
-  return [=](OpSchema& schema) {
+std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types) {
+  return [allowed_types = std::move(allowed_types)](OpSchema& schema) {
     schema.SetDoc(TopK_ver11_doc)
         .Input(
             0,
@@ -73,7 +76,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(const std::vector<std::string>& a
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", allowed_types, "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
+        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64")
         .Attr(
             "axis",
             "Dimension on which to do the sort. Negative value means counting dimensions "

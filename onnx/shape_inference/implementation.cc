@@ -16,6 +16,8 @@
 #include "onnx/checker.h"
 #include "onnx/common/common.h"
 #include "onnx/common/file_utils.h"
+#include "onnx/common/proto_util.h"
+#include "onnx/common/scoped_resource.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/shape_inference/attribute_binder.h"
 
@@ -391,6 +393,17 @@ static std::string GetFunctionIdentifier(const NodeProto& node) {
   return node.domain() + ":" + node.op_type() + ":" + overload;
 }
 
+namespace {
+// Either ModelProto or FunctionProto
+template <class T>
+std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
+  std::unordered_map<std::string, int> opset_imports;
+  for (const auto& opset_import : proto.opset_import()) {
+    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+  }
+  return opset_imports;
+}
+
 // InferredTypes: abstracts the differences between FunctionProto and GraphProto
 // for inference. For GraphProto, inferred types are stored in the GraphProto
 // but FunctionProto does not have a place to store inferred types. So, we
@@ -420,7 +433,7 @@ class InferredTypes {
 };
 
 // Initialize a DataValueMap for a called function from the DataValueMap of the caller
-static void BindValuesOnCall(
+void BindValuesOnCall(
     const DataValueMap& caller_map,
     const NodeProto& caller,
     DataValueMap& callee_map,
@@ -439,7 +452,7 @@ static void BindValuesOnCall(
 }
 
 // Update a DataValueMap for a calling function from the DataValueMap of the callee
-static void BindValuesOnReturn(
+void BindValuesOnReturn(
     const DataValueMap& callee_map,
     const FunctionProto& callee,
     DataValueMap& caller_map,
@@ -559,17 +572,7 @@ class ShapeInferenceImplBase {
     }
   }
 
-  void ProcessCall(const NodeProto& caller, const FunctionProto& callee, InferenceContext& ctx) {
-    DataValueMap callee_value_map;
-    if (generated_shape_data_by_name != nullptr) {
-      BindValuesOnCall(*generated_shape_data_by_name, caller, callee_value_map, callee);
-    }
-    InferShapeForFunctionNode(
-        callee, schema_registry, ctx, options, model_local_functions_map, symbol_table, &callee_value_map);
-    if (generated_shape_data_by_name != nullptr) {
-      BindValuesOnReturn(callee_value_map, callee, *generated_shape_data_by_name, caller);
-    }
-  }
+  void ProcessCall(const NodeProto& caller, const FunctionProto& callee, InferenceContext& ctx);
 
   void Process(NodeProto& n) {
     // Resolve domain for node
@@ -827,8 +830,8 @@ class ShapeInferenceImplBase {
       const ModelLocalFunctionsMap& model_local_functions_map_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       DataValueMap* generated_shape_data_by_name_in = nullptr,
-      const int ir_version_in = IR_VERSION // default the latest one
-      )
+      const int ir_version_in = IR_VERSION,
+      std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions_in = nullptr)
       : inferred_types(graph),
         value_types_by_name(outer_scope_value_types_by_name_in),
         opset_imports(opset_imports_in),
@@ -838,6 +841,9 @@ class ShapeInferenceImplBase {
         schema_registry(schema_registry_in),
         generated_shape_data_by_name(generated_shape_data_by_name_in),
         ir_version(ir_version_in),
+        active_functions(
+            active_functions_in ? std::move(active_functions_in)
+                                : std::make_shared<std::unordered_set<const FunctionProto*>>()),
         graph_inference_context{
             value_types_by_name,
             opset_imports,
@@ -882,6 +888,7 @@ class ShapeInferenceImplBase {
   const ISchemaRegistry* schema_registry;
   DataValueMap* generated_shape_data_by_name;
   int ir_version;
+  std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions;
   GraphInferenceContext graph_inference_context;
 
   std::unordered_map<std::string, TypeProto*> undefined_value_types_by_name;
@@ -900,7 +907,7 @@ class ShapeInferenceImplBase {
   bool reuse_constant_tensors = true;
 };
 
-static void InferShapesImpl(
+void InferShapesImpl(
     GraphProto* g,
     const std::unordered_map<std::string, TypeProto*>& outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
@@ -929,15 +936,7 @@ static void InferShapesImpl(
   base.FinalizeShapeInference();
 }
 
-// Either ModelProto or FunctionProto
-template <class T>
-static std::unordered_map<std::string, int> GetOpsetImportsFromProto(const T& proto) {
-  std::unordered_map<std::string, int> opset_imports;
-  for (const auto& opset_import : proto.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
-  }
-  return opset_imports;
-}
+} // namespace
 
 void InferShapes(
     GraphProto* g,
@@ -969,6 +968,7 @@ void InferShapes(
   for (const auto& function_proto : m.functions()) {
     model_local_functions_by_id.insert({GetFunctionIdentifier(function_proto), &function_proto});
   }
+  checker::check_function_call_cycles(m);
   InferShapesImpl(
       m.mutable_graph(),
       std::unordered_map<std::string, TypeProto*>(0),
@@ -1003,7 +1003,59 @@ void InferShapes(
   }
 }
 
-// Infer shape for functions
+static void InferShapeForFunctionNodeInternal(
+    const FunctionProto& func_proto,
+    const std::unordered_map<std::string, int>& func_opset_imports,
+    const ISchemaRegistry* schema_registry,
+    InferenceContext& ctx,
+    const ShapeInferenceOptions& options,
+    const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
+    SymbolTable* symbol_table,
+    DataValueMap* generated_shape_data_by_name,
+    std::shared_ptr<std::unordered_set<const FunctionProto*>> active_functions) {
+  ShapeInferenceImplBase base(
+      nullptr, // no graph
+      {}, // outer_scope_value_types_by_name
+      func_opset_imports,
+      options,
+      symbol_table,
+      model_local_functions_map,
+      schema_registry,
+      generated_shape_data_by_name,
+      IR_VERSION,
+      std::move(active_functions));
+  base.Process(func_proto, ctx);
+  base.FinalizeShapeInference();
+}
+
+void ShapeInferenceImplBase::ProcessCall(const NodeProto& caller, const FunctionProto& callee, InferenceContext& ctx) {
+  if (!active_functions->insert(&callee).second) {
+    fail_shape_inference(
+        "Cycle detected in model-local function references: function '",
+        GetFunctionImplId(callee),
+        "' is already being expanded in the current call chain.");
+  }
+  ScopeExit guard([&]() noexcept { active_functions->erase(&callee); });
+
+  DataValueMap callee_value_map;
+  if (generated_shape_data_by_name != nullptr) {
+    BindValuesOnCall(*generated_shape_data_by_name, caller, callee_value_map, callee);
+  }
+  InferShapeForFunctionNodeInternal(
+      callee,
+      GetOpsetImportsFromProto(callee),
+      schema_registry,
+      ctx,
+      options,
+      model_local_functions_map,
+      symbol_table,
+      &callee_value_map,
+      active_functions);
+  if (generated_shape_data_by_name != nullptr) {
+    BindValuesOnReturn(callee_value_map, callee, *generated_shape_data_by_name, caller);
+  }
+}
+
 void InferShapeForFunctionNode(
     const FunctionProto& func_proto,
     const std::unordered_map<std::string, int>& func_opset_imports,
@@ -1013,17 +1065,16 @@ void InferShapeForFunctionNode(
     const std::unordered_map<std::string, const FunctionProto*>& model_local_functions_map,
     SymbolTable* symbol_table,
     DataValueMap* generated_shape_data_by_name) {
-  ShapeInferenceImplBase base(
-      nullptr, // no graph
-      {}, // outer_scope_value_types_by_name
+  InferShapeForFunctionNodeInternal(
+      func_proto,
       func_opset_imports,
-      options,
-      symbol_table,
-      model_local_functions_map,
       schema_registry,
-      generated_shape_data_by_name);
-  base.Process(func_proto, ctx);
-  base.FinalizeShapeInference();
+      ctx,
+      options,
+      model_local_functions_map,
+      symbol_table,
+      generated_shape_data_by_name,
+      nullptr);
 }
 
 void InferShapeForFunctionNode(
@@ -1035,7 +1086,7 @@ void InferShapeForFunctionNode(
     SymbolTable* symbol_table,
     DataValueMap* generated_shape_data_by_name) {
   auto opset_imports = GetOpsetImportsFromProto(function_proto);
-  InferShapeForFunctionNode(
+  InferShapeForFunctionNodeInternal(
       function_proto,
       opset_imports,
       schema_registry,
@@ -1043,8 +1094,11 @@ void InferShapeForFunctionNode(
       options,
       model_local_functions_map,
       symbol_table,
-      generated_shape_data_by_name);
+      generated_shape_data_by_name,
+      nullptr);
 }
+
+namespace {
 
 struct FunctionInferenceContext : public InferenceContext {
   FunctionInferenceContext(
@@ -1137,6 +1191,8 @@ struct FunctionInferenceContext : public InferenceContext {
   ShapeInferenceOptions options_;
   const FunctionProto* func_proto_;
 };
+
+} // namespace
 
 std::vector<TypeProto> InferFunctionOutputTypes(
     const FunctionProto& function_proto,

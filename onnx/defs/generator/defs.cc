@@ -9,15 +9,14 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-static const char* const Constant_ver25_doc = kDoc_Constant_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
     25,
     OpSchema()
-        .SetDoc(Constant_ver25_doc)
+        .SetDoc(kDoc_Constant_ver24)
         .Attr("value", "The value for the elements of the output tensor.", AttributeProto::TENSOR, false)
         .Attr(
             "sparse_value",
@@ -58,13 +57,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("T", OpSchema::all_tensor_types_ir13(), "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(ConstantOpInference));
 
-static const char* const ConstantOfShape_ver25_doc = kDoc_ConstantOfShape_ver24;
-
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantOfShape,
     25,
     OpSchema()
-        .SetDoc(ConstantOfShape_ver25_doc)
+        .SetDoc(kDoc_ConstantOfShape_ver24)
         .Attr(
             "value",
             "(Optional) The value of the output elements."
@@ -85,32 +82,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(uint4)",
-             "tensor(int4)",
-             "tensor(bool)",
-             "tensor(bfloat16)",
-             "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)",
-             "tensor(float4e2m1)",
-             "tensor(float8e8m0)",
-             "tensor(uint2)",
-             "tensor(int2)"},
+            {types::Float16,      types::Float,          types::Double,     types::Int8,           types::Int16,
+             types::Int32,        types::Int64,          types::UInt8,      types::UInt16,         types::UInt32,
+             types::UInt64,       types::UInt4,          types::Int4,       types::Bool,           types::BFloat16,
+             types::Float8E4M3FN, types::Float8E4M3FNUZ, types::Float8E5M2, types::Float8E5M2FNUZ, types::Float4E2M1,
+             types::Float8E8M0,   types::UInt2,          types::Int2},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
@@ -126,13 +105,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const EyeLike_ver22_doc = kDoc_EyeLike_ver9;
-
 ONNX_OPERATOR_SET_SCHEMA(
     EyeLike,
     22,
     OpSchema()
-        .SetDoc(EyeLike_ver22_doc)
+        .SetDoc(kDoc_EyeLike_ver9)
         .Attr(
             "k",
             "(Optional) Index of the diagonal to be populated with ones. Default is 0."
@@ -171,13 +148,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const RandomUniform_ver22_doc = kDoc_RandomUniform_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniform,
     22,
     OpSchema()
-        .SetDoc(RandomUniform_ver22_doc)
+        .SetDoc(kDoc_RandomUniform_ver1)
         .Attr("low", "Lower boundary of the output values.", AttributeProto::FLOAT, 0.0f)
         .Attr("high", "Upper boundary of the output values.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -199,13 +174,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* const RandomNormal_ver22_doc = kDoc_RandomNormal_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormal,
     22,
     OpSchema()
-        .SetDoc(RandomNormal_ver22_doc)
+        .SetDoc(kDoc_RandomNormal_ver1)
         .Attr("mean", "The mean of the normal distribution.", AttributeProto::FLOAT, 0.0f)
         .Attr("scale", "The standard deviation of the normal distribution.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -227,13 +200,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }));
 
-static const char* const RandomUniformLike_ver22_doc = kDoc_RandomUniformLike_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomUniformLike,
     22,
     OpSchema()
-        .SetDoc(RandomUniformLike_ver22_doc)
+        .SetDoc(kDoc_RandomUniformLike_ver1)
         .Attr("low", "Lower boundary of the output values.", AttributeProto::FLOAT, 0.0f)
         .Attr("high", "Upper boundary of the output values.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -266,13 +237,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const RandomNormalLike_ver22_doc = kDoc_RandomNormalLike_ver1;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RandomNormalLike,
     22,
     OpSchema()
-        .SetDoc(RandomNormalLike_ver22_doc)
+        .SetDoc(kDoc_RandomNormalLike_ver1)
         .Attr("mean", "The mean of the normal distribution.", AttributeProto::FLOAT, 0.0f)
         .Attr("scale", "The standard deviation of the normal distribution.", AttributeProto::FLOAT, 1.0f)
         .Attr(
@@ -305,13 +274,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static const char* const Multinomial_ver22_doc = kDoc_Multinomial_ver7;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Multinomial,
     22,
     OpSchema()
-        .SetDoc(Multinomial_ver22_doc)
+        .SetDoc(kDoc_Multinomial_ver7)
         .Attr("sample_size", "Number of times to sample.", AttributeProto::INT, static_cast<int64_t>(1))
         .Attr(
             "seed",
@@ -334,7 +301,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.",
             "T2")
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain output types to integral tensors.")
+        .TypeConstraint("T2", {types::Int32, types::Int64}, "Constrain output types to integral tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto dtype = ctx.getAttribute("dtype");
@@ -422,7 +389,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated range of values.", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)"},
+            {types::Float, types::Double, types::Int16, types::Int32, types::Int64},
             "Constrain input types to common numeric type tensors.")
         .FunctionBody(R"ONNX(
           {
@@ -486,13 +453,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* const Bernoulli_ver22_doc = kDoc_Bernoulli_ver15;
-
 ONNX_OPERATOR_SET_SCHEMA(
     Bernoulli,
     22,
     OpSchema()
-        .SetDoc(Bernoulli_ver22_doc)
+        .SetDoc(kDoc_Bernoulli_ver15)
         .Attr(
             "seed",
             "(Optional) Seed to the random generator, if not specified we will auto generate one.",
