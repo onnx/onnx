@@ -105,7 +105,7 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         self._test_model_conversion_fails(
             to_opset=24,
             model="""
-            <ir_version: 10, opset_import: [ "" : 25]>
+            <ir_version: 10, opset_import: [ "" : 27]>
             linear_attention (float[2, 4, 64] Q, float[2, 4, 64] K, float[2, 4, 64] V)
                 => (float[2, 4, 64] output, float[2, 4, 16, 16] present_state)
             {
@@ -115,13 +115,13 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         )
 
     def test_CausalConvWithState_downgrade_fails(self) -> None:
-        # CausalConvWithState was introduced at opset 25; no decomposition
+        # CausalConvWithState was introduced at opset 27; no decomposition
         # adapter exists for downgrading to opset 24. The version converter
         # must raise.
         self._test_model_conversion_fails(
             to_opset=24,
             model="""
-            <ir_version: 10, opset_import: [ "" : 25]>
+            <ir_version: 10, opset_import: [ "" : 27]>
             causal_conv_with_state (float[2, 4, 8] input, float[4, 1, 4] weight)
                 => (float[2, 4, 8] output, float[2, 4, 3] present_state)
             {

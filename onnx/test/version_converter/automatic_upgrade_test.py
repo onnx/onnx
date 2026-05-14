@@ -1955,7 +1955,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         # present_state last dim is kernel_size - 1 = 3.
         self._test_op_upgrade(
             "CausalConvWithState",
-            25,
+            27,
             [[2, 4, 8], [4, 1, 4]],
             [[2, 4, 8], [2, 4, 3]],
             [TensorProto.FLOAT, TensorProto.FLOAT],
@@ -1966,7 +1966,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         # Exercises all four inputs (input, weight, bias, past_state).
         self._test_op_upgrade(
             "CausalConvWithState",
-            25,
+            27,
             [[2, 4, 8], [4, 1, 4], [4], [2, 4, 3]],
             [[2, 4, 8], [2, 4, 3]],
             [
@@ -1982,7 +1982,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         # Edge case: kernel_size == 1 -> present_state last dim == 0.
         self._test_op_upgrade(
             "CausalConvWithState",
-            25,
+            27,
             [[2, 4, 8], [4, 1, 1]],
             [[2, 4, 8], [2, 4, 0]],
             [TensorProto.FLOAT, TensorProto.FLOAT],
@@ -1994,7 +1994,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         # optional inputs: baseline shape/dtype plumbing on the no-op upgrade.
         self._test_op_upgrade(
             "LinearAttention",
-            25,
+            27,
             [[2, 4, 64], [2, 4, 64], [2, 4, 64]],
             [[2, 4, 64], [2, 4, 16, 16]],
             [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
@@ -2012,7 +2012,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         # confusing q vs kv head counts.
         self._test_op_upgrade(
             "LinearAttention",
-            25,
+            27,
             [[2, 4, 128], [2, 4, 32], [2, 4, 32]],
             [[2, 4, 128], [2, 2, 16, 16]],
             [TensorProto.FLOAT, TensorProto.FLOAT, TensorProto.FLOAT],
@@ -2030,7 +2030,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         # optional past_state (input index 3 left empty).
         self._test_op_upgrade(
             "LinearAttention",
-            25,
+            27,
             [[2, 4, 64], [2, 4, 64], [2, 4, 64], "", [2, 4, 64], [2, 4, 4]],
             [[2, 4, 64], [2, 4, 16, 16]],
             [
@@ -2054,7 +2054,7 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         # present_state must inherit dtype from past_state, not from query.
         self._test_op_upgrade(
             "LinearAttention",
-            25,
+            27,
             [
                 [2, 1, 64],
                 [2, 1, 64],

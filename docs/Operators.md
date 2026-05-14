@@ -174,7 +174,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
-|<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-25">25</a>|25|
+|<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-27">27</a>|27|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|12|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
@@ -190,7 +190,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|17, 18|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
-|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-25">25</a>|25|
+|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
@@ -7106,7 +7106,7 @@ for from_type, to_type in test_cases:
 
 #### Version
 
-This version of the operator has been available since version 25 of the default ONNX operator set.
+This version of the operator has been available since version 27 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7169,7 +7169,7 @@ expect(
     inputs=[input_, weight],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_b1_c1_degenerate",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7197,7 +7197,7 @@ expect(
     inputs=[input_, weight],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_basic",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7220,14 +7220,16 @@ weight = np.random.randn(channels, 1, k).astype(np.float32)
 bias = np.random.randn(channels).astype(np.float32)
 past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
 
-output, present_state = _compute(input_, weight, bias=bias, past_state=past_state)
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
 
 expect(
     node,
     inputs=[input_, weight, bias, past_state],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_decode_step",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7255,7 +7257,7 @@ expect(
     inputs=[input_, weight],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_fp16",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7283,7 +7285,7 @@ expect(
     inputs=[input_, weight],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_kernel_size_one",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7312,7 +7314,7 @@ expect(
     inputs=[input_, weight],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_short_input_no_past_state",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7341,7 +7343,7 @@ expect(
     inputs=[input_, weight],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_silu",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7374,7 +7376,7 @@ expect(
     inputs=[input_, weight, past_state],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_silu_with_past_state",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7403,7 +7405,7 @@ expect(
     inputs=[input_, weight],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_swish_alias",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7432,7 +7434,7 @@ expect(
     inputs=[input_, weight, bias],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_with_bias",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7465,7 +7467,7 @@ expect(
     inputs=[input_, weight, bias, past_state],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_with_bias_and_past_state",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -7494,7 +7496,7 @@ expect(
     inputs=[input_, weight, past_state],
     outputs=[output, present_state],
     name="test_causal_conv_with_state_with_past_state",
-    opset_imports=[onnx.helper.make_opsetid("", 25)],
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
 )
 ```
 
@@ -18145,7 +18147,7 @@ Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
 
 #### Version
 
-This version of the operator has been available since version 25 of the default ONNX operator set.
+This version of the operator has been available since version 27 of the default ONNX operator set.
 
 #### Attributes
 
@@ -18220,8 +18222,14 @@ decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, past_state=past_state, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv,
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
 )
 expect(
     node,
@@ -18254,8 +18262,13 @@ value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
 beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv, update_rule="delta",
+    query,
+    key,
+    value,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="delta",
 )
 expect(
     node,
@@ -18290,8 +18303,14 @@ decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv, scale=scale,
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    scale=scale,
 )
 expect(
     node,
@@ -18324,8 +18343,13 @@ decay = (-np.abs(np.random.randn(b, t, h_kv * d_k)) * 0.1).astype(np.float16)
 beta = np.random.rand(b, t, h_kv).astype(np.float16)
 
 output, present_state = _compute(
-    query, key, value, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv,
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
 )
 expect(
     node,
@@ -18359,8 +18383,13 @@ value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
 decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 
 output, present_state = _compute(
-    query, key, value, decay=decay,
-    q_num_heads=h_q, kv_num_heads=h_kv, update_rule="gated",
+    query,
+    key,
+    value,
+    decay=decay,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="gated",
 )
 expect(
     node,
@@ -18393,8 +18422,13 @@ decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv,
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
 )
 expect(
     node,
@@ -18427,8 +18461,13 @@ decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 beta = np.random.rand(b, t, 1).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv,
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
 )
 expect(
     node,
@@ -18461,8 +18500,13 @@ decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv,
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
 )
 expect(
     node,
@@ -18495,8 +18539,13 @@ decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv,
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
 )
 expect(
     node,
@@ -18530,8 +18579,13 @@ value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
 decay = -np.abs(np.random.randn(b, t, h_kv)).astype(np.float32) * 0.1
 
 output, present_state = _compute(
-    query, key, value, decay=decay,
-    q_num_heads=h_q, kv_num_heads=h_kv, update_rule="gated",
+    query,
+    key,
+    value,
+    decay=decay,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="gated",
 )
 expect(
     node,
@@ -18563,8 +18617,12 @@ key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
 value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value,
-    q_num_heads=h_q, kv_num_heads=h_kv, update_rule="linear",
+    query,
+    key,
+    value,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="linear",
 )
 expect(
     node,
@@ -18596,8 +18654,12 @@ key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
 value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value,
-    q_num_heads=h_q, kv_num_heads=h_kv, update_rule="linear",
+    query,
+    key,
+    value,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="linear",
 )
 expect(
     node,
@@ -18631,8 +18693,14 @@ decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, past_state=past_state, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv,
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
 )
 expect(
     node,
@@ -18666,8 +18734,14 @@ decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
 beta = np.random.rand(b, t, h_kv).astype(np.float32)
 
 output, present_state = _compute(
-    query, key, value, past_state=past_state, decay=decay, beta=beta,
-    q_num_heads=h_q, kv_num_heads=h_kv,
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
 )
 expect(
     node,

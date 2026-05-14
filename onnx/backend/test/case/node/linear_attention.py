@@ -12,7 +12,7 @@ from onnx.reference.ops.op_linear_attention import (
     LinearAttention as _RefLinearAttention,
 )
 
-_OPSET = [onnx.helper.make_opsetid("", 25)]
+_OPSET = [onnx.helper.make_opsetid("", 27)]
 
 
 def _compute(
