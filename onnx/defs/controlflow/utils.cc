@@ -200,7 +200,7 @@ int handle_negative_axis_validate(const std::string& attrib, int axis, int rank)
 
 void ScanInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_scan_inputs = narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
+  auto num_scan_inputs = narrow<size_t>(getRequiredAttributeInt(ctx, "num_scan_inputs"));
   auto num_loop_state_vars = num_inputs - num_scan_inputs;
   auto num_outputs = ctx.getNumOutputs();
   auto num_scan_outputs = num_outputs - num_loop_state_vars;

@@ -1927,7 +1927,7 @@ node = onnx.helper.make_node(
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -1947,7 +1947,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     past_value=past_value,
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -1972,7 +1972,7 @@ node = onnx.helper.make_node(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 past_sequence_length = 12
@@ -1993,7 +1993,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -3054,7 +3054,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3072,7 +3072,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3093,7 +3093,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3111,7 +3111,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3132,7 +3132,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3151,7 +3151,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3173,7 +3173,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3191,7 +3191,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3212,7 +3212,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3231,7 +3231,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3279,7 +3279,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -3292,7 +3292,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     K,
     V,
     attn_mask=attn_mask,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3314,7 +3314,7 @@ node = onnx.helper.make_node(
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -3328,7 +3328,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     V,
     attn_mask=attn_mask,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -17231,7 +17231,7 @@ for quant_type_name in ["uint8", "int8"]:
         )
 
         if quant_type == np.int8:
-            output = np.array([[41, -12, -9], [1, -75, 20]])
+            output = np.array([[41, -12, -9], [1, -75, -128]])
         else:
             output = np.array([[168, 115, 255], [1, 66, 151]])
         output = output.astype(quant_type)
@@ -17287,20 +17287,12 @@ for quant_type_name in ["uint8", "int8"]:
         )
 
         if quant_type == np.int8:
-            if dtype == np.float32:
-                output = np.array(
-                    [
-                        [[-86, 117, 120], [115, 39, -121]],
-                        [[-86, 117, 120], [115, 39, -121]],
-                    ]
-                )
-            else:
-                output = np.array(
-                    [
-                        [[-86, 116, 119], [115, 39, -121]],
-                        [[-86, 116, 119], [115, 39, -121]],
-                    ]
-                )
+            output = np.array(
+                [
+                    [[-86, -128, -128], [115, 39, -121]],
+                    [[-86, -128, -128], [115, 39, -121]],
+                ]
+            )
         else:
             output = np.array(
                 [

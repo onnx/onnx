@@ -93,3 +93,10 @@ repos:
         entry: python3 tools/pixi-shim.py shellcheck
         language: system
         types: [shell]
+
+      - id: zizmor
+        name: zizmor
+        entry: python3 tools/pixi-shim.py zizmor --fix .
+        language: system
+        types: [yaml]
+        pass_filenames: false

@@ -218,12 +218,6 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "CPPLINT.cfg"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
-SPDX-License-Identifier = "Apache-2.0"
-
-[[annotations]]
 path = "docs/docsgen/source/technical/**.png"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
@@ -231,6 +225,12 @@ SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
 path = [".agents/**", ".claude/**", "uv.lock", "tsan.supp"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "sbom.cdx.json"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"

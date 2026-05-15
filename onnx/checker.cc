@@ -16,6 +16,7 @@
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/common/proto_util.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/common/scoped_resource.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"
@@ -162,10 +163,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     }
     return;
   }
-  int64_t nelem = 1;
-  for (auto x : tensor.dims()) {
-    nelem *= x;
-  }
+  int64_t nelem =
+      safe_dim_product(tensor.dims(), [&](const char* msg) { fail_check(msg, " (tensor name: ", tensor.name(), ")"); });
   if (nelem == 0 && num_value_fields != 0) {
     fail_check("TensorProto (tensor name: ", tensor.name(), ") is 0-element but contains data!");
   }
@@ -716,7 +715,11 @@ void check_graph(const GraphProto& graph, const CheckerContext& ctx, const Lexic
     ONNX_CATCH(ValidationError & ex) {
       ONNX_HANDLE_EXCEPTION([&]() {
         ex.AppendContext("Bad node spec for node. Name: " + node.name() + " OpType: " + node.op_type());
-        ONNX_THROW_EX(ex);
+        // Rethrow without copying to avoid triggering
+        // bugprone-exception-copy-constructor-throws.
+        // The in-place AppendContext modification is preserved because
+        // `ex` is a reference to the active exception object.
+        throw;
       });
     }
     // check for SSA form
@@ -906,7 +909,7 @@ void check_function_call_cycles(const ModelProto& model) {
   // Build adjacency list using pointers directly
   CallGraph call_graph;
   for (const auto& entry : func_by_key) {
-    auto* func = entry.second;
+    const auto* func = entry.second;
     auto& callees = call_graph[func];
     for (const auto& node : func->node()) {
       auto it = func_by_key.find(GetCalleeId(node));

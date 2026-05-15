@@ -1,5 +1,36 @@
 # SPDX-License-Identifier: Apache-2.0
-#
+
+# Look up a dependency by name in sbom.cdx.json and set URL, SHA256, and VERSION
+# variables in the caller's scope. For example:
+#   sbom_get_dep("abseil-cpp" _absl)
+# sets _absl_URL, _absl_SHA256, _absl_VERSION.
+function(sbom_get_dep dep_name prefix)
+  file(READ "${CMAKE_SOURCE_DIR}/sbom.cdx.json" _sbom)
+  string(JSON _count LENGTH "${_sbom}" "components")
+  foreach(_i RANGE 0 ${_count})
+    if(_i EQUAL _count)
+      break()
+    endif()
+    string(JSON _name GET "${_sbom}" "components" ${_i} "name")
+    if(_name STREQUAL "${dep_name}")
+      string(JSON _url GET "${_sbom}" "components" ${_i} "externalReferences" 0 "url")
+      string(JSON _version GET "${_sbom}" "components" ${_i} "version")
+      set(${prefix}_URL "${_url}" PARENT_SCOPE)
+      set(${prefix}_VERSION "${_version}" PARENT_SCOPE)
+      # SHA256 is optional (e.g. git-only deps like nanobind).
+      string(JSON _hash_count ERROR_VARIABLE _err LENGTH "${_sbom}" "components" ${_i} "hashes")
+      if(_hash_count AND _hash_count GREATER 0)
+        string(JSON _sha256 GET "${_sbom}" "components" ${_i} "hashes" 0 "content")
+        set(${prefix}_SHA256 "${_sha256}" PARENT_SCOPE)
+      else()
+        set(${prefix}_SHA256 "" PARENT_SCOPE)
+      endif()
+      return()
+    endif()
+  endforeach()
+  message(FATAL_ERROR "Dependency '${dep_name}' not found in sbom.cdx.json")
+endfunction()
+
 # Compiler hardening flags based on OpenSSF guidelines:
 # https://best.openssf.org/Compiler-Hardening-Guides/Compiler-Options-Hardening-Guide-for-C-and-C++.html
 function(add_onnx_hardening_flags target)
@@ -175,9 +206,6 @@ function(add_onnx_compile_options target)
       if(NOT _onnx_linked_protobuf_is_imported)
         add_dependencies(${LINKED_PROTOBUF_TARGET} ${ABSL_USED_TARGET})
       endif()
-    elseif(EXISTS "${ABSL_USED_TARGET}")
-      # Raw path to a static library (e.g. from the Pyodide/Emscripten fallback).
-      target_link_libraries(${target} PUBLIC "${ABSL_USED_TARGET}")
     endif()
   endforeach()
   # Prevent "undefined symbol: _ZNSt10filesystem7__cxx114path14_M_split_cmptsEv"

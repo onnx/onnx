@@ -6,6 +6,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
+import unittest.mock
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -301,6 +302,36 @@ class TestChecker(unittest.TestCase):
         model = helper.make_model(graph, producer_name="test")
 
         checker.check_model(model.SerializeToString())
+
+    def test_check_model_protobuf_size_boundary(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        serialized = model.SerializeToString()
+
+        with unittest.mock.patch.object(checker, "MAXIMUM_PROTOBUF", len(serialized)):
+            checker.check_model(serialized)
+
+    def test_check_model_protobuf_size_over_limit_raises(self) -> None:
+        node = helper.make_node("Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])],
+        )
+        model = helper.make_model(graph, producer_name="test")
+        serialized = model.SerializeToString()
+
+        with unittest.mock.patch.object(
+            checker, "MAXIMUM_PROTOBUF", len(serialized) - 1
+        ):
+            self.assertRaises(ValueError, checker.check_model, serialized)
 
     def test_check_old_model(self) -> None:
         node = helper.make_node("Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
@@ -1143,6 +1174,29 @@ class TestChecker(unittest.TestCase):
         """
         )
         self.assertRaises(checker.ValidationError, checker.check_model, model)
+
+    def test_check_tensor_invalid_dims(self) -> None:
+        """Reject tensors with overflowing or negative dimensions."""
+        # Overflow: 2^62 * 2^62 exceeds int64
+        tensor = TensorProto()
+        tensor.data_type = TensorProto.FLOAT
+        tensor.dims.extend([2**62, 2**62])
+        tensor.name = "t"
+        tensor.raw_data = b"\x00"
+        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+        # Negative dim
+        tensor2 = TensorProto()
+        tensor2.data_type = TensorProto.FLOAT
+        tensor2.dims.extend([-1, 4])
+        tensor2.name = "t"
+        tensor2.raw_data = b"\x00" * 16
+        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor2)
+        # Zero dim: empty tensors are valid and must be accepted.
+        tensor3 = TensorProto()
+        tensor3.data_type = TensorProto.FLOAT
+        tensor3.dims.extend([0])
+        tensor3.name = "t"
+        checker.check_tensor(tensor3)
 
 
 if __name__ == "__main__":

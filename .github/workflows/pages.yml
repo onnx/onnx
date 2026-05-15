@@ -16,8 +16,6 @@ on:
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   build:
@@ -42,6 +40,9 @@ jobs:
   deploy:
     needs: 'build'
     if: github.event_name != 'pull_request'
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

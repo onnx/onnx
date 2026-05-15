@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' }}-sdist
+  group: sdist-release-${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   build:
@@ -33,7 +33,6 @@ jobs:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         persist-credentials: false
-        submodules: true
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -50,7 +49,8 @@ jobs:
       run: |
         git clean -xdf
         sed -i 's/name = "onnx"/name = "onnx-weekly"/' 'pyproject.toml'
-        ONNX_PREVIEW_BUILD=1 python -m build --sdist
+        echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
+        python -m build --sdist
 
     - name: Build source distribution (for release)
       if: ${{ inputs.build_mode == 'release' }}
