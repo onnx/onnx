@@ -227,6 +227,9 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Remove wasm32 wheels unsupported by PyPI
+        run: rm -f dist/*wasm32*.whl
+
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
@@ -292,6 +295,9 @@ jobs:
             path: dist
             merge-multiple: true
 
+        - name: Remove wasm32 wheels unsupported by PyPI
+          run: rm -f dist/*wasm32*.whl
+
         - name: Generate SLSA Build Provenance attestations
           if: hashFiles('dist/**') != ''
           id: attest
@@ -356,6 +362,9 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Remove wasm32 wheels unsupported by PyPI
+        run: rm -f dist/*wasm32*.whl
+
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
         id: attest
@@ -408,6 +417,9 @@ jobs:
           pattern: sdist
           path: dist
           merge-multiple: true
+
+      - name: Remove wasm32 wheels unsupported by PyPI
+        run: rm -f dist/*wasm32*.whl
 
       - name: Generate SLSA Build Provenance attestations
         if: hashFiles('dist/**') != ''
