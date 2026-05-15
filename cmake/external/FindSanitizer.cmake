@@ -12,6 +12,7 @@ include_guard(GLOBAL)
 
 option(ASAN_FLAGS "additional ASAN flags" "")
 option(UBSAN_FLAGS "additional UBSAN flags" "")
+option(TSAN_FLAGS "additional TSAN flags" "")
 option(MSAN_FLAGS "additional MSAN flags" "-fsanitize-memory-track-origins=2")
 
 get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
