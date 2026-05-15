@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 import os
 import tarfile
 from collections import deque
@@ -11,15 +12,44 @@ from typing import TYPE_CHECKING
 import onnx.checker
 import onnx.helper
 import onnx.shape_inference
+from onnx.helper import tensor_dtype_to_np_dtype
+from onnx.onnx_pb import TensorProto
 
 if TYPE_CHECKING:
     from onnx.onnx_pb import (
         FunctionProto,
         ModelProto,
         NodeProto,
-        TensorProto,
         ValueInfoProto,
     )
+
+
+def get_model_initializers_size(model: ModelProto) -> int:
+    """Calculate the total estimated size in bytes of all initializers in the model.
+    This is useful for quickly estimating the memory footprint of the model parameters.
+    """
+    total_size_bytes = 0
+    for initializer in model.graph.initializer:
+        if getattr(initializer, "raw_data", None):
+            total_size_bytes += len(initializer.raw_data)
+        else:
+            try:
+                np_dtype = tensor_dtype_to_np_dtype(initializer.data_type)
+                if initializer.data_type == TensorProto.STRING:
+                    total_size_bytes += sum(len(s) for s in initializer.string_data)
+                elif initializer.data_type in {
+                    TensorProto.UINT4,
+                    TensorProto.INT4,
+                    TensorProto.FLOAT4E2M1,
+                }:
+                    total_size_bytes += math.ceil(math.prod(initializer.dims) * 0.5)
+                elif initializer.data_type in {TensorProto.UINT2, TensorProto.INT2}:
+                    total_size_bytes += math.ceil(math.prod(initializer.dims) * 0.25)
+                else:
+                    total_size_bytes += np_dtype.itemsize * math.prod(initializer.dims)
+            except KeyError as err:
+                raise TypeError("Unsupported Tensor Data Types") from err
+    return total_size_bytes
 
 
 class Extractor:
