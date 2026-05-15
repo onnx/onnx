@@ -48,11 +48,12 @@ class ScanVarLen(OpRun):
           ``scan_output_axes``.
         * Zero-iteration scans are an error: ScanVarLen requires
           ``sequence_length >= 1``. The op raises :class:`ValueError` when the
-          scan-input sequence axis has size 0, since the final concat-axis
-          size of each scan output is data-dependent on the body's
-          per-iteration outputs and cannot be determined when the body never
-          runs. Models that need to handle empty sequences should special-case
-          ``sequence_length == 0`` outside the ScanVarLen node.
+          scan-input sequence axis has size 0. Supporting zero iterations
+          would either force runtimes to execute the body's shape inference
+          to fabricate empty outputs, or leave the body's execution status
+          implementation-defined; both complicate the runtime contract.
+          Models that need to handle empty sequences should guard the
+          ScanVarLen call with an ``If`` node.
     """
 
     def __init__(self, onnx_node, run_params):
@@ -174,12 +175,12 @@ class ScanVarLen(OpRun):
                 )
         if sequence_length == 0:
             raise ValueError(
-                "ScanVarLen requires sequence_length >= 1; got 0. Zero-iteration "
-                "scans are an error because the final concat-axis size of each "
-                "scan output is data-dependent on the body's per-iteration "
-                "outputs and cannot be determined when the body never runs. "
-                "Guard the ScanVarLen call with an If node to handle empty "
-                "sequences."
+                "ScanVarLen requires sequence_length >= 1; got 0. Supporting "
+                "zero iterations would either force runtimes to execute the "
+                "body's shape inference to fabricate empty outputs, or leave "
+                "the body's execution status implementation-defined; both "
+                "complicate the runtime contract. Guard the ScanVarLen call "
+                "with an If node to handle empty sequences."
             )
 
         per_iter_outputs: list[list[np.ndarray]] = [[] for _ in range(num_scan_outputs)]
