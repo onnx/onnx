@@ -5,7 +5,7 @@
 name: CI
 
 env:
-  ASAN_OPTIONS: detect_leaks=0:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:verify_asan_link_order=0:alloc_dealloc_mismatch=1
+  ASAN_OPTIONS: detect_leaks=0:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:verify_asan_link_order=0:alloc_dealloc_mismatch=1:abort_on_error=1
   UBSAN_OPTIONS: print_stacktrace=1
   TSAN_OPTIONS: suppressions=./tsan.supp
 
