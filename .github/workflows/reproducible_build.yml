@@ -6,6 +6,11 @@
 # identical wheels (reproducible builds).  Calls each platform cibw workflow
 # twice with a minimal single-target matrix, then compares wheel checksums.
 # On mismatch, diffoscope pinpoints exactly which files or metadata differ.
+#
+# Linux is the blocking gate: reproducibility is well-supported there via
+# SOURCE_DATE_EPOCH + manylinux containers.  macOS (Mach-O LC_UUID / ad-hoc
+# codesign) and Windows (PE timestamp) are compared informally — failures are
+# reported but do not fail the workflow.
 
 name: ReproducibleBuild
 
@@ -100,22 +105,65 @@ jobs:
         id: compare
         shell: bash
         run: |
-          fail=0
-          for platform in linux macos windows; do
-            b1=$(ls /tmp/${platform}-build1/*.whl | head -1)
-            b2=$(ls /tmp/${platform}-build2/*.whl | head -1)
-            h1=$(sha256sum "$b1" | cut -d' ' -f1)
-            h2=$(sha256sum "$b2" | cut -d' ' -f1)
-            echo "[$platform] Build 1: $(basename "$b1")  →  $h1"
-            echo "[$platform] Build 2: $(basename "$b2")  →  $h2"
-            if [ "$h1" = "$h2" ]; then
-              echo "[$platform] Reproducible build confirmed — SHA-256 $h1"
-            else
-              echo "[$platform] Non-reproducible build — SHA-256 mismatch"
-              fail=1
+          linux_fail=0
+          informational_fail=0
+
+          compare_platform() {
+            local platform=$1
+            local dir1=/tmp/${platform}-build1
+            local dir2=/tmp/${platform}-build2
+
+            mapfile -t wheels1 < <(ls "$dir1"/*.whl 2>/dev/null | sort)
+            mapfile -t wheels2 < <(ls "$dir2"/*.whl 2>/dev/null | sort)
+
+            if [ "${#wheels1[@]}" -ne 1 ]; then
+              echo "[$platform] ERROR: expected exactly 1 wheel in build1, found ${#wheels1[@]}"
+              return 1
             fi
-          done
-          exit $fail
+            if [ "${#wheels2[@]}" -ne 1 ]; then
+              echo "[$platform] ERROR: expected exactly 1 wheel in build2, found ${#wheels2[@]}"
+              return 1
+            fi
+
+            local name1 name2
+            name1=$(basename "${wheels1[0]}")
+            name2=$(basename "${wheels2[0]}")
+            if [ "$name1" != "$name2" ]; then
+              echo "[$platform] ERROR: wheel filenames differ: '$name1' vs '$name2'"
+              return 1
+            fi
+
+            local h1 h2
+            h1=$(sha256sum "${wheels1[0]}" | cut -d' ' -f1)
+            h2=$(sha256sum "${wheels2[0]}" | cut -d' ' -f1)
+            echo "[$platform] $name1"
+            echo "[$platform]   build1: $h1"
+            echo "[$platform]   build2: $h2"
+
+            if [ "$h1" = "$h2" ]; then
+              echo "[$platform] Reproducible build confirmed."
+              return 0
+            else
+              echo "[$platform] Non-reproducible build — SHA-256 mismatch."
+              return 1
+            fi
+          }
+
+          # Linux is the blocking gate.
+          compare_platform linux || linux_fail=1
+
+          # macOS and Windows are informational: codesigning (Mach-O LC_UUID)
+          # and PE timestamps can differ between runs despite SOURCE_DATE_EPOCH.
+          compare_platform macos  || informational_fail=1
+          compare_platform windows || informational_fail=1
+
+          if [ "$informational_fail" -eq 1 ]; then
+            echo ""
+            echo "Note: macOS/Windows reproducibility is informational only."
+            echo "Mach-O codesigning and Windows PE timestamps may differ between runs."
+          fi
+
+          exit "$linux_fail"
 
       - name: Install diffoscope
         if: failure()
@@ -130,14 +178,17 @@ jobs:
         shell: bash
         run: |
           for platform in linux macos windows; do
-            b1=$(ls /tmp/${platform}-build1/*.whl 2>/dev/null | head -1)
-            b2=$(ls /tmp/${platform}-build2/*.whl 2>/dev/null | head -1)
-            [ -z "$b1" ] || [ -z "$b2" ] && continue
-            h1=$(sha256sum "$b1" | cut -d' ' -f1)
-            h2=$(sha256sum "$b2" | cut -d' ' -f1)
+            mapfile -t wheels1 < <(ls /tmp/${platform}-build1/*.whl 2>/dev/null | sort)
+            mapfile -t wheels2 < <(ls /tmp/${platform}-build2/*.whl 2>/dev/null | sort)
+            [ "${#wheels1[@]}" -ne 1 ] || [ "${#wheels2[@]}" -ne 1 ] && continue
+            name1=$(basename "${wheels1[0]}")
+            name2=$(basename "${wheels2[0]}")
+            [ "$name1" != "$name2" ] && continue
+            h1=$(sha256sum "${wheels1[0]}" | cut -d' ' -f1)
+            h2=$(sha256sum "${wheels2[0]}" | cut -d' ' -f1)
             [ "$h1" = "$h2" ] && continue
-            echo "=== diffoscope: $platform ==="
-            diffoscope "$b1" "$b2" \
+            echo "=== diffoscope: $platform ($name1) ==="
+            diffoscope "${wheels1[0]}" "${wheels2[0]}" \
               --text /tmp/diffoscope-${platform}.txt \
               --html /tmp/diffoscope-${platform}.html \
               --max-text-report-size 10000000 \
@@ -151,5 +202,7 @@ jobs:
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: diffoscope-report
-          path: /tmp/diffoscope-*.{html,txt}
+          path: |
+            /tmp/diffoscope-*.html
+            /tmp/diffoscope-*.txt
           retention-days: 30
