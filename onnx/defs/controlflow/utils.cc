@@ -455,6 +455,9 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
   subgraph_input_types.reserve(num_variadic_inputs);
 
   TensorShapeProto_Dimension sequence_len_dim;
+  // Track the first scan input that carries a static-zero sequence dim, so we
+  // can name it in the fail_shape_inference error message below.
+  int first_zero_scan_input = -1;
 
   for (size_t i = 0; i < num_variadic_inputs; ++i) {
     const size_t input_idx = i + kInputOffset;
@@ -483,6 +486,9 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
         axis = handle_negative_axis_validate("scan_input_axes", axis, shape.dim_size());
 
         const auto& dims = shape.dim();
+        if (first_zero_scan_input < 0 && dims.Get(axis).has_dim_value() && dims.Get(axis).dim_value() == 0) {
+          first_zero_scan_input = static_cast<int>(i - num_loop_state_vars);
+        }
         mergeInDimensionInfo(dims.Get(axis), sequence_len_dim, 1);
 
         temporary_type_protos.emplace_back(RemoveIthDimensionFromShape(*input_type, axis));
@@ -493,14 +499,26 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
     }
   }
 
-  // ScanVarLen requires at least one iteration: the concatenation-axis size in
-  // each scan output is data-dependent on the body's per-iteration output, so a
-  // zero-iteration scan has no well-defined output shape. Fail shape inference
+  // ScanVarLen requires at least one iteration. Supporting zero iterations
+  // would either force runtimes to execute body shape inference at runtime to
+  // fabricate empty outputs with the correct non-concat dimensions, or leave
+  // the body's execution status implementation-defined (as standard Scan v25
+  // latently does). Both complicate the runtime contract, so ScanVarLen makes
+  // zero iterations a hard error; users who need empty-sequence handling
+  // should guard the ScanVarLen call with an If node. Fail shape inference
   // when the sequence-axis dim is statically known to be 0.
   if (sequence_len_dim.has_dim_value() && sequence_len_dim.dim_value() == 0) {
-    fail_shape_inference(
-        "ScanVarLen requires sequence_length >= 1; the scan-input sequence axis is statically 0. "
-        "If the model needs to handle empty sequences, guard the ScanVarLen call with an If node.");
+    if (first_zero_scan_input >= 0) {
+      fail_shape_inference(
+          "ScanVarLen requires sequence_length >= 1; scan input ",
+          first_zero_scan_input,
+          " has a statically-0 sequence-axis dimension. "
+          "If the model needs to handle empty sequences, guard the ScanVarLen call with an If node.");
+    } else {
+      fail_shape_inference(
+          "ScanVarLen requires sequence_length >= 1; the scan-input sequence axis is statically 0. "
+          "If the model needs to handle empty sequences, guard the ScanVarLen call with an If node.");
+    }
   }
 
   // Run inferencing on the body subgraph.

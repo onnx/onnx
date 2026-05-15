@@ -150,8 +150,8 @@ class ScanVarLen(OpRun):
                     f"ScanVarLen: scan_input_directions[{i}]={direction} is invalid; "
                     f"expected 0 (forward) or 1 (reverse)."
                 )
-        # Output axes are resolved+validated against each scan output's rank later
-        # (after we have a sample output array).
+        # Output axes are resolved+validated against each scan output's rank
+        # after the first iteration produces a chunk of the expected rank.
         output_axes_attr = [
             (
                 0

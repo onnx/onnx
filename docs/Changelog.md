@@ -32905,13 +32905,18 @@ This version of the operator has been available since version 26 of the default 
 
   ScanVarLen requires `sequence_length >= 1` (i.e. at least one iteration). It is an
   error to invoke ScanVarLen with a scan input whose sequence-axis dimension is 0:
-  implementations MUST raise a runtime error, and shape inference MUST fail at model
-  load time when the sequence-axis dimension is statically known to be 0. Models that
-  need to handle empty sequences should special-case `sequence_length == 0` outside
-  the ScanVarLen node — for example, by selecting between a ScanVarLen execution and
-  an empty-tensor construction via an `If` node. (This restriction is needed because
-  the final scan-output shape along the concatenation axis is data-dependent on the
-  body's per-iteration outputs and cannot be determined when the body never runs.)
+  implementations MUST raise a runtime error, and shape inference MUST fail when the
+  sequence-axis dimension is statically known to be 0. Models that need to handle
+  empty sequences should guard the ScanVarLen call with an `If` node (selecting
+  between a ScanVarLen execution and an empty-tensor construction).
+
+  This restriction is intentional: supporting zero iterations would either (a) force
+  runtimes to execute the body's shape inference at runtime to fabricate empty
+  outputs with the correct non-concat dimensions, or (b) leave the body's execution
+  status implementation-defined when iteration count is zero (as standard Scan v25
+  latently does). Both alternatives complicate the runtime contract; requiring users
+  to express the empty-sequence case explicitly via `If` keeps ScanVarLen's
+  semantics simple and unambiguous.
 
   Each non-final iteration's per-output concat-axis size may be 0 (zero-size
   contributions are allowed and contribute nothing to the final concatenation); the
