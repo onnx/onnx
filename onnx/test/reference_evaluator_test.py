@@ -5558,8 +5558,68 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
         np.testing.assert_array_equal(
-            np.array([[41, -12, -9], [1, -75, 20]], dtype=np.int8), got[0]
+            np.array([[41, -12, -9], [1, -75, -128]], dtype=np.int8), got[0]
         )
+
+    @parameterized.parameterized.expand(
+        [
+            (np.uint8, TensorProto.UINT8, [[100]], [[100]], 0.2, [[255]]),
+            (np.int8, TensorProto.INT8, [[-100]], [[100]], 0.5, [[-128]]),
+        ]
+    )
+    def test_qlinearmatmul_saturates_output(
+        self, dtype, tensor_type, a_values, b_values, y_scale_value, expected_values
+    ):
+        node = make_node(
+            "QLinearMatMul",
+            inputs=[
+                "a",
+                "a_scale",
+                "a_zero_point",
+                "b",
+                "b_scale",
+                "b_zero_point",
+                "y_scale",
+                "y_zero_point",
+            ],
+            outputs=["y"],
+        )
+        graph = make_graph(
+            [node],
+            "g",
+            [
+                make_tensor_value_info("a", tensor_type, [1, 1]),
+                make_tensor_value_info("a_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("a_zero_point", tensor_type, [1]),
+                make_tensor_value_info("b", tensor_type, [1, 1]),
+                make_tensor_value_info("b_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("b_zero_point", tensor_type, [1]),
+                make_tensor_value_info("y_scale", TensorProto.FLOAT, [1]),
+                make_tensor_value_info("y_zero_point", tensor_type, [1]),
+            ],
+            [make_tensor_value_info("y", tensor_type, [1, 1])],
+        )
+        onnx_model = make_model(
+            graph, opset_imports=[make_opsetid("", 20)], ir_version=9
+        )
+        sess = ReferenceEvaluator(onnx_model)
+
+        zero_point = np.array([0], dtype=dtype)
+        got = sess.run(
+            None,
+            {
+                "a": np.array(a_values, dtype=dtype),
+                "a_scale": np.array([1.0], dtype=np.float32),
+                "a_zero_point": zero_point,
+                "b": np.array(b_values, dtype=dtype),
+                "b_scale": np.array([1.0], dtype=np.float32),
+                "b_zero_point": zero_point,
+                "y_scale": np.array([y_scale_value], dtype=np.float32),
+                "y_zero_point": zero_point,
+            },
+        )
+
+        np.testing.assert_array_equal(np.array(expected_values, dtype=dtype), got[0])
 
     @parameterized.parameterized.expand(
         [
