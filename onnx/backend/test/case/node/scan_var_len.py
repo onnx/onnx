@@ -254,31 +254,3 @@ class ScanVarLen(Base):
             name="test_scan_var_len_ragged",
             opset_imports=_OPSET_IMPORTS,
         )
-
-    @staticmethod
-    def export_scan_var_len_zero_iterations() -> None:
-        """Scan input has sequence_length=0 along the sequence axis. The ref
-        impl must do a body 'dry run' to recover the non-concat dims and
-        emit a shape-correct empty output (size 0 along the concat axis).
-        """
-        body = _identity_body("scan_var_len_zero_iterations_body")
-        node = onnx.helper.make_node(
-            "ScanVarLen",
-            inputs=["", "scan_input"],
-            outputs=["scan_output"],
-            num_scan_inputs=1,
-            body=body,
-        )
-        # Zero iterations: sequence axis (default 0) has length 0.
-        scan_input = np.zeros((0, 4), dtype=np.float32)
-        # With identity body producing per-iter shape [4] and default
-        # scan_output_axes=[0], 0 iterations yield a length-0 1-D output.
-        scan_output = np.zeros((0,), dtype=np.float32)
-
-        expect(
-            node,
-            inputs=[scan_input],
-            outputs=[scan_output],
-            name="test_scan_var_len_zero_iterations",
-            opset_imports=_OPSET_IMPORTS,
-        )

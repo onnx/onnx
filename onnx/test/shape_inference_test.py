@@ -5566,6 +5566,52 @@ class TestShapeInference(TestShapeInferenceHelper):
 
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
+    def test_scan_var_len_rejects_static_zero_iterations(self) -> None:
+        # ScanVarLen requires sequence_length >= 1. When the scan input's
+        # sequence axis is statically 0, shape inference must fail because the
+        # final concat-axis size of each scan output is data-dependent on the
+        # body's per-iteration outputs and cannot be determined when the body
+        # never runs.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[0, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_scan_var_len_allows_symbolic_sequence_length(self) -> None:
+        # If the sequence axis is symbolic (unknown), shape inference cannot
+        # prove sequence_length == 0, so the model is accepted. (Runtime is
+        # responsible for failing if the actual value is 0.)
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[T, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None,)),
+            ],
+        )
+
     def test_if_ver1(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.

@@ -493,6 +493,16 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
     }
   }
 
+  // ScanVarLen requires at least one iteration: the concatenation-axis size in
+  // each scan output is data-dependent on the body's per-iteration output, so a
+  // zero-iteration scan has no well-defined output shape. Fail shape inference
+  // when the sequence-axis dim is statically known to be 0.
+  if (sequence_len_dim.has_dim_value() && sequence_len_dim.dim_value() == 0) {
+    fail_shape_inference(
+        "ScanVarLen requires sequence_length >= 1; the scan-input sequence axis is statically 0. "
+        "If the model needs to handle empty sequences, guard the ScanVarLen call with an If node.");
+  }
+
   // Run inferencing on the body subgraph.
   std::vector<const TypeProto*> output_types;
 

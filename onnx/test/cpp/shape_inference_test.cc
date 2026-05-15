@@ -734,6 +734,41 @@ agraph (float[3] state_in, int32[5, 4] scan_in_full) => (state_out, scan_out)
   ExpectFreeDim(scan_out.tensor_type().shape(), 0);
 }
 
+// Case 5: ScanVarLen requires sequence_length >= 1. When the scan input's
+// sequence axis is statically 0, shape inference must fail because the final
+// concat-axis size of each scan output is data-dependent on the body's
+// per-iteration outputs and cannot be determined when the body never runs.
+TEST(ShapeInferenceTest, ScanVarLen27_StaticZeroIterationsFails) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[0, 4] scan_in_full) => (state_out, scan_out)
+{
+  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  ShapeInferenceOptions options{true, 1, true};
+  EXPECT_THROW(
+      ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options),
+      ONNX_NAMESPACE::InferenceError);
+}
+
 static void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {
   ModelProto model;
   ParseAndInfer(model, modelStr);

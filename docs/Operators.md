@@ -32402,15 +32402,19 @@ expect(
 
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
-  If `sequence_length` is 0, each scan output has a 0-sized dimension at
-  `scan_output_axes[i]`. Conforming implementations may or may not execute the body
-  subgraph in this case (implementation-defined); the output shape is determined by the
-  body's output shape with the concat-axis dimension set to 0. Shape inference still runs
-  the body's shape inference and propagates the resulting shapes (with the concat-axis
-  dimension left unknown).
+  ScanVarLen requires `sequence_length >= 1` (i.e. at least one iteration). It is an
+  error to invoke ScanVarLen with a scan input whose sequence-axis dimension is 0:
+  implementations MUST raise a runtime error, and shape inference MUST fail at model
+  load time when the sequence-axis dimension is statically known to be 0. Models that
+  need to handle empty sequences should special-case `sequence_length == 0` outside
+  the ScanVarLen node — for example, by selecting between a ScanVarLen execution and
+  an empty-tensor construction via an `If` node. (This restriction is needed because
+  the final scan-output shape along the concatenation axis is data-dependent on the
+  body's per-iteration outputs and cannot be determined when the body never runs.)
 
-  Each iteration's per-output concat-axis size may be 0 (zero-size contributions are
-  allowed and contribute nothing to the final concatenation).
+  Each non-final iteration's per-output concat-axis size may be 0 (zero-size
+  contributions are allowed and contribute nothing to the final concatenation); the
+  restriction is only on the total number of iterations being 0.
 
   *Sample usage: PackedAttention-like processing of variable-length sequences*
 
@@ -32481,24 +32485,14 @@ iterations reconstructs the original input.
 """
 # Body: input shape [3] (axis-1 slice of a [3, 4] tensor); output
 # shape [3, 1] (unsqueeze a length-1 concat axis at position 1).
-scan_in_vi = onnx.helper.make_tensor_value_info(
-    "scan_in", onnx.TensorProto.FLOAT, [3]
-)
-scan_out_vi = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [3, 1]
-)
-axes_init = onnx.helper.make_tensor(
-    "unsqueeze_axes", onnx.TensorProto.INT64, [1], [1]
-)
-unsqueeze_node = onnx.helper.make_node(
-    "Unsqueeze", inputs=["scan_in", "unsqueeze_axes"], outputs=["scan_out"]
-)
-body = onnx.helper.make_graph(
-    [unsqueeze_node],
-    "scan_var_len_axes_body",
-    [scan_in_vi],
-    [scan_out_vi],
-    initializer=[axes_init],
+body = onnx.parser.parse_graph(
+    """
+    scan_var_len_axes_body (float[3] scan_in) => (float[3, 1] scan_out)
+    <int64[1] unsqueeze_axes = {1}>
+    {
+        scan_out = Unsqueeze(scan_in, unsqueeze_axes)
+    }
+    """
 )
 node = onnx.helper.make_node(
     "ScanVarLen",
@@ -32536,12 +32530,7 @@ expect(
 iterations each contributing a length-4 slice yield a length-12
 output along the default concat axis 0.
 """
-body = _identity_body(
-    body_name="scan_var_len_basic_body",
-    scan_in_name="scan_in",
-    scan_out_name="scan_out",
-    shape=[4],
-)
+body = _identity_body("scan_var_len_basic_body")
 node = onnx.helper.make_node(
     "ScanVarLen",
     inputs=["", "scan_input"],  # "" = omitted optional output_lengths
@@ -32574,12 +32563,7 @@ expect(
 input. The supplied length must equal the total concat-axis size of
 the scan output.
 """
-body = _identity_body(
-    body_name="scan_var_len_output_lengths_body",
-    scan_in_name="scan_in",
-    scan_out_name="scan_out",
-    shape=[4],
-)
+body = _identity_body("scan_var_len_output_lengths_body")
 node = onnx.helper.make_node(
     "ScanVarLen",
     inputs=["output_lengths", "scan_input"],
@@ -32617,34 +32601,17 @@ also asserted via the optional ``output_lengths`` input.
 """
 # Body inputs: data of shape [4] (fixed) and length of shape [1]
 # (int64). Body output: Slice(data, [0], length, [0]) — a 1-D tensor
-# of dynamic length.
-data_in_vi = onnx.helper.make_tensor_value_info(
-    "data_in", onnx.TensorProto.FLOAT, [4]
-)
-length_in_vi = onnx.helper.make_tensor_value_info(
-    "length_in", onnx.TensorProto.INT64, [1]
-)
-# Use [None] to declare a 1-D output of unknown length.
-scan_out_vi = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [None]
-)
-starts_init = onnx.helper.make_tensor(
-    "starts", onnx.TensorProto.INT64, [1], [0]
-)
-axes_init = onnx.helper.make_tensor(
-    "slice_axes", onnx.TensorProto.INT64, [1], [0]
-)
-slice_node = onnx.helper.make_node(
-    "Slice",
-    inputs=["data_in", "starts", "length_in", "slice_axes"],
-    outputs=["scan_out"],
-)
-body = onnx.helper.make_graph(
-    [slice_node],
-    "scan_var_len_ragged_body",
-    [data_in_vi, length_in_vi],
-    [scan_out_vi],
-    initializer=[starts_init, axes_init],
+# of dynamic length (``float[?]``).
+body = onnx.parser.parse_graph(
+    """
+    scan_var_len_ragged_body
+        (float[4] data_in, int64[1] length_in)
+        => (float[?] scan_out)
+    <int64[1] starts = {0}, int64[1] slice_axes = {0}>
+    {
+        scan_out = Slice(data_in, starts, length_in, slice_axes)
+    }
+    """
 )
 node = onnx.helper.make_node(
     "ScanVarLen",
@@ -32684,12 +32651,7 @@ from last to first; per-iteration outputs are still concatenated in
 iteration order, so the final concat output is the reversed input
 along axis 0.
 """
-body = _identity_body(
-    body_name="scan_var_len_reverse_body",
-    scan_in_name="scan_in",
-    scan_out_name="scan_out",
-    shape=[4],
-)
+body = _identity_body("scan_var_len_reverse_body")
 node = onnx.helper.make_node(
     "ScanVarLen",
     inputs=["", "scan_input"],
@@ -32724,29 +32686,16 @@ output. Mirrors the classic Scan running-sum example but with the
 ScanVarLen concat semantics (each iter contributes a length-2
 slice, concatenated to a length-6 output).
 """
-state_in_vi = onnx.helper.make_tensor_value_info(
-    "state_in", onnx.TensorProto.FLOAT, [2]
-)
-scan_in_vi = onnx.helper.make_tensor_value_info(
-    "scan_in", onnx.TensorProto.FLOAT, [2]
-)
-state_out_vi = onnx.helper.make_tensor_value_info(
-    "state_out", onnx.TensorProto.FLOAT, [2]
-)
-scan_out_vi = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [2]
-)
-add_node = onnx.helper.make_node(
-    "Add", inputs=["state_in", "scan_in"], outputs=["state_out"]
-)
-id_node = onnx.helper.make_node(
-    "Identity", inputs=["state_out"], outputs=["scan_out"]
-)
-body = onnx.helper.make_graph(
-    [add_node, id_node],
-    "scan_var_len_state_body",
-    [state_in_vi, scan_in_vi],
-    [state_out_vi, scan_out_vi],
+body = onnx.parser.parse_graph(
+    """
+    scan_var_len_state_body
+        (float[2] state_in, float[2] scan_in)
+        => (float[2] state_out, float[2] scan_out)
+    {
+        state_out = Add(state_in, scan_in)
+        scan_out = Identity(state_out)
+    }
+    """
 )
 node = onnx.helper.make_node(
     "ScanVarLen",
@@ -32768,45 +32717,6 @@ expect(
     inputs=[initial_state, scan_input],
     outputs=[final_state, scan_output],
     name="test_scan_var_len_state",
-    opset_imports=_OPSET_IMPORTS,
-)
-```
-
-</details>
-
-
-<details>
-<summary>scan_var_len_zero_iterations</summary>
-
-```python
-"""Scan input has sequence_length=0 along the sequence axis. The ref
-impl must do a body 'dry run' to recover the non-concat dims and
-emit a shape-correct empty output (size 0 along the concat axis).
-"""
-body = _identity_body(
-    body_name="scan_var_len_zero_iterations_body",
-    scan_in_name="scan_in",
-    scan_out_name="scan_out",
-    shape=[4],
-)
-node = onnx.helper.make_node(
-    "ScanVarLen",
-    inputs=["", "scan_input"],
-    outputs=["scan_output"],
-    num_scan_inputs=1,
-    body=body,
-)
-# Zero iterations: sequence axis (default 0) has length 0.
-scan_input = np.zeros((0, 4), dtype=np.float32)
-# With identity body producing per-iter shape [4] and default
-# scan_output_axes=[0], 0 iterations yield a length-0 1-D output.
-scan_output = np.zeros((0,), dtype=np.float32)
-
-expect(
-    node,
-    inputs=[scan_input],
-    outputs=[scan_output],
-    name="test_scan_var_len_zero_iterations",
     opset_imports=_OPSET_IMPORTS,
 )
 ```

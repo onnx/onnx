@@ -876,15 +876,19 @@ is equivalent to the following pseudo-code:
 
     return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
-If `sequence_length` is 0, each scan output has a 0-sized dimension at
-`scan_output_axes[i]`. Conforming implementations may or may not execute the body
-subgraph in this case (implementation-defined); the output shape is determined by the
-body's output shape with the concat-axis dimension set to 0. Shape inference still runs
-the body's shape inference and propagates the resulting shapes (with the concat-axis
-dimension left unknown).
+ScanVarLen requires `sequence_length >= 1` (i.e. at least one iteration). It is an
+error to invoke ScanVarLen with a scan input whose sequence-axis dimension is 0:
+implementations MUST raise a runtime error, and shape inference MUST fail at model
+load time when the sequence-axis dimension is statically known to be 0. Models that
+need to handle empty sequences should special-case `sequence_length == 0` outside
+the ScanVarLen node — for example, by selecting between a ScanVarLen execution and
+an empty-tensor construction via an `If` node. (This restriction is needed because
+the final scan-output shape along the concatenation axis is data-dependent on the
+body's per-iteration outputs and cannot be determined when the body never runs.)
 
-Each iteration's per-output concat-axis size may be 0 (zero-size contributions are
-allowed and contribute nothing to the final concatenation).
+Each non-final iteration's per-output concat-axis size may be 0 (zero-size
+contributions are allowed and contribute nothing to the final concatenation); the
+restriction is only on the total number of iterations being 0.
 
 *Sample usage: PackedAttention-like processing of variable-length sequences*
 

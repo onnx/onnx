@@ -1564,6 +1564,51 @@ class TestReferenceEvaluator(unittest.TestCase):
                 },
             )
 
+    def test_scan_var_len_zero_iterations_raises(self):
+        # ScanVarLen requires sequence_length >= 1; running with a scan input
+        # whose sequence axis has size 0 must raise ValueError. The sequence
+        # axis is left symbolic in the model declaration so shape inference
+        # accepts the model — only the runtime invocation triggers the error.
+        feature = 2
+
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[{feature}] outer_state_in,
+               float[T, {feature}] outer_scan_in)
+                => (float[{feature}] outer_state_out,
+                    float[?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen ("", outer_state_in, outer_scan_in) <
+                    num_scan_inputs = 1,
+                    body = b (float[{feature}] state_in,
+                              float[{feature}] scan_in)
+                        => (float[{feature}] state_out,
+                            float[{feature}] scan_out)
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Identity(scan_in)
+                    }}
+                >
+            }}
+            """
+        )
+        check_model(model)
+
+        state_value = np.zeros(feature, dtype=np.float32)
+        # Sequence axis (axis 0) has size 0: zero iterations.
+        empty_scan_value = np.zeros((0, feature), dtype=np.float32)
+
+        sess = ReferenceEvaluator(model)
+        with self.assertRaisesRegex(ValueError, "sequence_length >= 1"):
+            sess.run(
+                None,
+                {
+                    "outer_state_in": state_value,
+                    "outer_scan_in": empty_scan_value,
+                },
+            )
+
     def test_onnxt_runtime_bernoulli(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])

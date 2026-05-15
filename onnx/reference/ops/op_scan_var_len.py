@@ -46,11 +46,13 @@ class ScanVarLen(OpRun):
         * Supports per-input reverse iteration via ``scan_input_directions``.
         * Supports non-zero (including negative) ``scan_input_axes`` /
           ``scan_output_axes``.
-        * Zero-iteration scans produce shape-correct empty outputs by
-          performing a single "dry run" of the body subgraph using
-          zero-filled per-iteration inputs derived from the scan-input
-          shapes; the dimension at ``scan_output_axes[i]`` is then
-          collapsed to ``0``.
+        * Zero-iteration scans are an error: ScanVarLen requires
+          ``sequence_length >= 1``. The op raises :class:`ValueError` when the
+          scan-input sequence axis has size 0, since the final concat-axis
+          size of each scan output is data-dependent on the body's
+          per-iteration outputs and cannot be determined when the body never
+          runs. Models that need to handle empty sequences should special-case
+          ``sequence_length == 0`` outside the ScanVarLen node.
     """
 
     def __init__(self, onnx_node, run_params):
@@ -170,6 +172,15 @@ class ScanVarLen(OpRun):
                     f"axis {input_axes[i]}, but expected {sequence_length} (from scan "
                     f"input 0 along axis {input_axes[0]})."
                 )
+        if sequence_length == 0:
+            raise ValueError(
+                "ScanVarLen requires sequence_length >= 1; got 0. Zero-iteration "
+                "scans are an error because the final concat-axis size of each "
+                "scan output is data-dependent on the body's per-iteration "
+                "outputs and cannot be determined when the body never runs. "
+                "Guard the ScanVarLen call with an If node to handle empty "
+                "sequences."
+            )
 
         per_iter_outputs: list[list[np.ndarray]] = [[] for _ in range(num_scan_outputs)]
         for t in range(sequence_length):
@@ -189,72 +200,42 @@ class ScanVarLen(OpRun):
                 per_iter_outputs[i].append(outputs[name])
 
         final_scan_outputs: list[np.ndarray] = []
-        # Resolve and validate output axes against the rank of a representative
-        # scan output (either from the first iteration or from a dry run).
+        # Resolve and validate output axes against the rank of the first
+        # iteration's scan output (sequence_length >= 1 is guaranteed above).
         resolved_output_axes: list[int] = []
-        if sequence_length == 0 and num_scan_outputs > 0:
-            # Dry-run the body once with zero-filled per-iteration inputs to
-            # learn the non-concat dims of each scan output.
-            dry_inputs = dict(zip(state_names_in, states, strict=False))
-            for i, name in enumerate(scan_names_in):
-                scan_value = scan_values[i]
-                axis = input_axes[i]
-                slice_shape = scan_value.shape[:axis] + scan_value.shape[axis + 1 :]
-                dry_inputs[name] = np.zeros(slice_shape, dtype=scan_value.dtype)
-            try:
-                dry_outputs_list = self._run_body(dry_inputs)
-            except TypeError as e:
-                raise TypeError(
-                    f"Unable to call 'run' for type '{type(self.body)}'."
-                ) from e
-            dry_outputs = dict(
-                zip(body_runner.output_names, dry_outputs_list, strict=False)
+        for i in range(num_scan_outputs):
+            chunks = per_iter_outputs[i]
+            # The ONNX schema requires consistent ranks across iterations,
+            # so normalizing against the first chunk's rank is sufficient.
+            axis = _resolve_axis(
+                output_axes_attr[i], chunks[0].ndim, "scan_output_axes", i
             )
-            for i, name in enumerate(scan_names_out):
-                prototype = np.asarray(dry_outputs[name])
-                axis = _resolve_axis(
-                    output_axes_attr[i], prototype.ndim, "scan_output_axes", i
-                )
-                resolved_output_axes.append(axis)
-                shape = list(prototype.shape)
-                shape[axis] = 0
-                final_scan_outputs.append(np.zeros(tuple(shape), dtype=prototype.dtype))
-        else:
-            for i in range(num_scan_outputs):
-                chunks = per_iter_outputs[i]
-                # The ONNX schema requires consistent ranks across iterations,
-                # so normalizing against the first chunk's rank is sufficient.
-                axis = _resolve_axis(
-                    output_axes_attr[i], chunks[0].ndim, "scan_output_axes", i
-                )
-                resolved_output_axes.append(axis)
-                # Defensive: verify rank and non-concat dims are consistent
-                # across iterations before concatenating. np.concatenate would
-                # raise on mismatch but with a less specific message.
-                base_rank = chunks[0].ndim
-                base_other_dims = tuple(
-                    d for k, d in enumerate(chunks[0].shape) if k != axis
-                )
-                for t, chunk in enumerate(chunks[1:], start=1):
-                    if chunk.ndim != base_rank:
-                        raise ValueError(
-                            f"ScanVarLen: scan output {i} has inconsistent ranks "
-                            f"across iterations (iteration 0 produced rank "
-                            f"{base_rank}, iteration {t} produced rank "
-                            f"{chunk.ndim})."
-                        )
-                    other_dims = tuple(
-                        d for k, d in enumerate(chunk.shape) if k != axis
+            resolved_output_axes.append(axis)
+            # Defensive: verify rank and non-concat dims are consistent
+            # across iterations before concatenating. np.concatenate would
+            # raise on mismatch but with a less specific message.
+            base_rank = chunks[0].ndim
+            base_other_dims = tuple(
+                d for k, d in enumerate(chunks[0].shape) if k != axis
+            )
+            for t, chunk in enumerate(chunks[1:], start=1):
+                if chunk.ndim != base_rank:
+                    raise ValueError(
+                        f"ScanVarLen: scan output {i} has inconsistent ranks "
+                        f"across iterations (iteration 0 produced rank "
+                        f"{base_rank}, iteration {t} produced rank "
+                        f"{chunk.ndim})."
                     )
-                    if other_dims != base_other_dims:
-                        raise ValueError(
-                            f"ScanVarLen: scan output {i} has inconsistent "
-                            f"non-concat dimensions across iterations "
-                            f"(iteration 0 shape {tuple(chunks[0].shape)}, "
-                            f"iteration {t} shape {tuple(chunk.shape)}, "
-                            f"concat axis {axis})."
-                        )
-                final_scan_outputs.append(np.concatenate(chunks, axis=axis))
+                other_dims = tuple(d for k, d in enumerate(chunk.shape) if k != axis)
+                if other_dims != base_other_dims:
+                    raise ValueError(
+                        f"ScanVarLen: scan output {i} has inconsistent "
+                        f"non-concat dimensions across iterations "
+                        f"(iteration 0 shape {tuple(chunks[0].shape)}, "
+                        f"iteration {t} shape {tuple(chunk.shape)}, "
+                        f"concat axis {axis})."
+                    )
+            final_scan_outputs.append(np.concatenate(chunks, axis=axis))
 
         if output_lengths is not None:
             output_lengths_arr = np.asarray(output_lengths)
