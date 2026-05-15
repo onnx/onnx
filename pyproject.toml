@@ -21,7 +21,7 @@ license = "Apache-2.0"
 # scikit-build-core expects dependencies here rather than in a requirements.txt file
 requires-python = ">=3.10"
 dependencies = [
-    "numpy>=2",
+    "numpy>=1.23.2",
     "protobuf>=4.25.1",
     "typing_extensions>=4.15.0",
     "ml_dtypes>=0.5.4",
