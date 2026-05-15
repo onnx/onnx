@@ -51,6 +51,15 @@ jobs:
             protobuf_type: 'Internal'
             unity_build: 0
 
+          # Ubuntu debug build with TSAN (free-threaded Python)
+          - python_version: "3.14t"
+            autogenerate_files: 0
+            debug_build: 1
+            onnx_ml: 1
+            os: "ubuntu-24.04"
+            protobuf_type: 'Internal'
+            unity_build: 0
+
           # Test compilation with dynamically linked protobuf.
           # This is actually redundant with the pixi-tests which
           # also use dynamic linking.
