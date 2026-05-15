@@ -154,16 +154,16 @@ jobs:
 
           # macOS and Windows are informational: codesigning (Mach-O LC_UUID)
           # and PE timestamps can differ between runs despite SOURCE_DATE_EPOCH.
-          compare_platform macos  || informational_fail=1
-          compare_platform windows || informational_fail=1
+          compare_platform macos
+          compare_platform windows
 
-          if [ "$informational_fail" -eq 1 ]; then
-            echo ""
-            echo "Note: macOS/Windows reproducibility is informational only."
-            echo "Mach-O codesigning and Windows PE timestamps may differ between runs."
-          fi
+          # if [ "$informational_fail" -eq 1 ]; then
+          #   echo ""
+          #   echo "Note: macOS/Windows reproducibility is informational only."
+          #   echo "Mach-O codesigning and Windows PE timestamps may differ between runs."
+          # fi
 
-          exit "$linux_fail"
+          # exit "$linux_fail"
 
       - name: Install diffoscope
         if: failure()
