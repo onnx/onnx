@@ -160,10 +160,10 @@ jobs:
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
           if [ "${{ matrix.debug_build }}" == "1" ]; then
-            if [ "${{ matrix.python_version }}" == "3.13t" ]; then
-              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_TSAN=ON"
+            if [ "${{ matrix.python_version }}" == "3.14t" ]; then
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=OFF -DONNX_USE_TSAN=ON"
             elif [ "${{ matrix.python_version }}" == "3.10" ]; then
-              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_MSAN=ON"
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=OFF -DONNX_USE_MSAN=ON"
             else
               export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=ON"
             fi
