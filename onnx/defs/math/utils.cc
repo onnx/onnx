@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/defs/type_builders.h"
+
 namespace ONNX_NAMESPACE {
 namespace defs {
 namespace math {
@@ -74,7 +76,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", allowed_types, "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
+        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64")
         .Attr(
             "axis",
             "Dimension on which to do the sort. Negative value means counting dimensions "
