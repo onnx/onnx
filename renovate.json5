@@ -4,10 +4,10 @@
 
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  // Only enable custom regex manager to avoid overlap with dependabot
+  // Only enable specific managers to avoid overlap with dependabot
   // Dependabot handles: pip (Python), github-actions
-  // Renovate handles: custom-only dependencies like manylinux, nanobind, googletest
-  "enabledManagers": ["custom.regex"],
+  // Renovate handles: pixi lockfile, nanobind, googletest
+  "enabledManagers": ["custom.regex", "pixi"],
   // Disable the Dependency Dashboard issue
   "dependencyDashboard": false,
   // Wait one week after a release before creating an update PR
@@ -78,6 +78,12 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["quay.io/pypa/manylinux_**"],
       "groupName": "manylinux docker images"
+    },
+    {
+      // Group all pixi dependencies into a single monthly PR
+      "matchManagers": ["pixi"],
+      "groupName": "pixi dependencies",
+      "schedule": ["on the first day of the month"]
     }
   ]
 }
