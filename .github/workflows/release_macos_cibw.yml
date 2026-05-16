@@ -100,6 +100,18 @@ jobs:
             python -m abi3audit -v "$whl"
           done
 
+      - name: Generate build SBOM
+        shell: bash
+        env:
+          PLATFORM_TAG: ${{ matrix.build }}
+        run: python workflow_scripts/generate_build_sbom.py
+
+      - name: Upload build SBOM
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: build-sbom-${{ matrix.build }}
+          path: build-sbom-${{ matrix.build }}.cdx.json
+
   test-min-deps:
     needs: build
     if: github.event_name == 'schedule'

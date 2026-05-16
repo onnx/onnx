@@ -88,3 +88,15 @@ jobs:
         with:
           name: wheels-pyodide
           path: dist/*.whl
+
+      - name: Generate build SBOM
+        shell: bash
+        env:
+          PLATFORM_TAG: pyodide
+        run: python workflow_scripts/generate_build_sbom.py
+
+      - name: Upload build SBOM
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: build-sbom-pyodide
+          path: build-sbom-pyodide.cdx.json
