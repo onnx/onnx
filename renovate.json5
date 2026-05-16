@@ -18,7 +18,7 @@
   "labels": ["module: dependencies", "run release CIs"],
   // Add a note to every Renovate PR body explaining the update context
   "prBodyNotes": [
-    "This PR was automatically created by [Renovate Bot](https://renovateapp.com/) to keep build dependencies up to date.",
+    "This PR was automatically created by [Renovate Bot](https://docs.renovatebot.com/) to keep build dependencies up to date.",
     "Renovate manages dependencies **not** handled by Dependabot: manylinux Docker images, nanobind (via CMake FetchContent), and googletest (release tarball + SHA256).",
     "Please review the linked changelog/release notes before merging. A one-week stabilization period (`minimumReleaseAge`) has already elapsed since the new version was published."
   ],
@@ -26,7 +26,7 @@
   "customManagers": [
     {
       // Detect manylinux Docker images in GitHub Actions workflows
-      // Example: uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2025.10.10-1
+      // Example: uses: docker://quay.io/pypa/manylinux_2_28_x86_64:2024.10.10-1
       "customType": "regex",
       "fileMatch": ["^\\.github/workflows/release_linux\\.yml$"],
       "matchStrings": [

@@ -30,11 +30,12 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          submodules: recursive
           fetch-depth: 0
           persist-credentials: false
       - name: Set up pixi
         uses: prefix-dev/setup-pixi@1b2de7f3351f171c8b4dfeb558c639cb58ed4ec0 # v0.9.5
+        with:
+          environments: ${{ matrix.environment }} reuse
       - name: Install repository
         run: pixi run install
       - name: Lint
@@ -62,7 +63,6 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          submodules: recursive
           fetch-depth: 0
           persist-credentials: false
       - name: Set up pixi
@@ -71,6 +71,8 @@ jobs:
           environments: ${{ matrix.environment }}
       - name: Install repository
         run: pixi run -e ${{ matrix.environment }} install
+      - name: pip check installation
+        run: pixi run -e ${{ matrix.environment }} pip check
       - name: gtests
         run: pixi run -e ${{ matrix.environment }} gtest
       - name: pytest
