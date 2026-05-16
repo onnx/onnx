@@ -42,7 +42,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install -q --upgrade pip
-        python -m pip install -q -r requirements-release_build.txt
+        python -m pip install -q build scikit-build-core
 
     - name: Build source distribution (preview build / weekly)
       if: ${{ inputs.build_mode != 'release' }}
