@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "onnx/defs/tensor_proto_util.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 void resizeShapeInferenceHelper(
@@ -441,7 +442,7 @@ std::function<void(OpSchema&)> PadDocGenerator(
 
     schema.Output(0, "output", "Tensor after padding.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
     schema.TypeConstraint("T", op_schema, op_schema_description);
-    schema.TypeConstraint("Tind", {"tensor(int32)", "tensor(int64)"}, "Constrain indices to integer types");
+    schema.TypeConstraint("Tind", {types::Int32, types::Int64}, "Constrain indices to integer types");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // Type inference
       propagateElemTypeFromInputToOutput(ctx, 0, 0);

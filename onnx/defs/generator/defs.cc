@@ -9,6 +9,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/generator/utils.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 ONNX_OPERATOR_SET_SCHEMA(
@@ -81,32 +82,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype "
             "defaults to float32.",
             "T2")
-        .TypeConstraint("T1", {"tensor(int64)"}, "Constrain input types.")
+        .TypeConstraint("T1", {types::Int64}, "Constrain input types.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)",
-             "tensor(int8)",
-             "tensor(int16)",
-             "tensor(int32)",
-             "tensor(int64)",
-             "tensor(uint8)",
-             "tensor(uint16)",
-             "tensor(uint32)",
-             "tensor(uint64)",
-             "tensor(uint4)",
-             "tensor(int4)",
-             "tensor(bool)",
-             "tensor(bfloat16)",
-             "tensor(float8e4m3fn)",
-             "tensor(float8e4m3fnuz)",
-             "tensor(float8e5m2)",
-             "tensor(float8e5m2fnuz)",
-             "tensor(float4e2m1)",
-             "tensor(float8e8m0)",
-             "tensor(uint2)",
-             "tensor(int2)"},
+            {types::Float16,      types::Float,          types::Double,     types::Int8,           types::Int16,
+             types::Int32,        types::Int64,          types::UInt8,      types::UInt16,         types::UInt32,
+             types::UInt64,       types::UInt4,          types::Int4,       types::Bool,           types::BFloat16,
+             types::Float8E4M3FN, types::Float8E4M3FNUZ, types::Float8E5M2, types::Float8E5M2FNUZ, types::Float4E2M1,
+             types::Float8E8M0,   types::UInt2,          types::Int2},
             "Constrain output types to be numerics or boolean.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
@@ -318,7 +301,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.",
             "T2")
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int32)", "tensor(int64)"}, "Constrain output types to integral tensors.")
+        .TypeConstraint("T2", {types::Int32, types::Int64}, "Constrain output types to integral tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto dtype = ctx.getAttribute("dtype");
@@ -406,7 +389,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated range of values.", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)"},
+            {types::Float, types::Double, types::Int16, types::Int32, types::Int64},
             "Constrain input types to common numeric type tensors.")
         .FunctionBody(R"ONNX(
           {

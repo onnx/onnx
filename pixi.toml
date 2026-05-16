@@ -10,7 +10,14 @@ name = "onnx"
 platforms = ["osx-arm64", "linux-64", "linux-aarch64", "win-64"]
 
 [tasks.install]
-cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation --editable .'
+# the compilation auto-generates .pyi files for the protobuf files
+# which are not checked into git/found in 'onnx/'. mypy adds the CWD
+# to the search pass meaning that it searches the 'onnx/' folder first
+# for the repecitive .py[i] files. When they are not found there, mypy
+# will complain. The proper fix would be to use to have a 'src' folder
+# structure. Until then, we simply copy the interface files to the
+# source directory after the build.
+cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation --force --editable . && cp .setuptools-cmake-build/onnx/onnx_pb.py .setuptools-cmake-build/onnx/*_pb2.pyi onnx/'
 [tasks.install.env]
 ONNX_ML="1"
 ONNX_BUILD_TESTS="1"
@@ -85,6 +92,7 @@ ninja = "*"
 packaging = ">=24.1"
 pip = ">=25.0"
 python = ">=3.10"
+scikit-build-core = ">=0.12.1"
 
 [feature.dev.dependencies]
 c-compiler = ">=1.8.0"
@@ -100,7 +108,7 @@ pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
 setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
-"ruamel.yaml" = ">=0.19.1"
+zizmor = ">=1.24.1,<2"
 
 [feature.reference.dependencies]
 # follows requirements-reference.txt
@@ -117,7 +125,6 @@ clang-format = ">=22.1.1"
 mypy = ">=1.19.1"
 prek = ">=0.3.9"
 prettier = ">=3.8.1,<4"
-reuse = ">=5.1.1,<7"
 ruff = ">=0.15.7"
 shellcheck = ">=0.11.0"
 types-protobuf = ">=6.32.1.20260221,<7"
@@ -158,6 +165,12 @@ lychee = ">=0.23.0"
 [feature.link-checker.tasks.link-checker]
 cmd = "pixi exec lychee --root-dir . ."
 
+[feature.reuse.dependencies]
+# Isolate REUSE since it does not play nice with `pip check` in the
+# default environment.
+reuse = ">=5.1.1,<7"
+[feature.reuse.tasks.reuse]
+cmd = "reuse"
 
 [environments]
 default = ["dev", "lint", "reference"]
@@ -168,3 +181,4 @@ docs = ["dev", "lint", "reference", "docs"]
 clang-tools = {features=["clang-tools"], no-default-feature=true}
 link-checker = {features=["link-checker"], no-default-feature=true}
 lintrunner = ["dev", "reference", "lint", "lintrunner"]
+reuse = {features=["reuse"], no-default-feature=true}

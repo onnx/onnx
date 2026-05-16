@@ -449,6 +449,12 @@ def make_tensor(
     else:
         vals = np.asarray(vals, dtype=np_dtype).flatten()
 
+    expected_elements = math.prod(dims)
+    if len(vals) != expected_elements:
+        raise ValueError(
+            f"Number of values ({len(vals)}) does not match tensor "
+            f"dimensions requiring {expected_elements} elements."
+        )
     if data_type == TensorProto.COMPLEX128:
         vals = vals.view(np.float64)  # type: ignore[union-attr]
     elif data_type == TensorProto.COMPLEX64:
