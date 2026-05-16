@@ -72,18 +72,21 @@ jobs:
     uses: ./.github/workflows/release_linux_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      protobuf_version: "25.1"
 
   call-win:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
     uses: ./.github/workflows/release_windows_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      protobuf_version: "25.1"
 
   call-mac:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
     uses: ./.github/workflows/release_macos_cibw.yml
     with:
       build_mode: ${{ github.event.inputs.build_mode || 'preview' }}
+      protobuf_version: "25.1"
 
   call-pyodide:
     if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run release CIs') || contains(github.event.pull_request.labels.*.name, 'ci-slsa-provenance')
