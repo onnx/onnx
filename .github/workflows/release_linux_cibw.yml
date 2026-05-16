@@ -72,6 +72,26 @@ jobs:
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
           tar -xf protobuf.tar.gz
 
+      - name: Patch sbom.cdx.json with actual protobuf version and hash
+        shell: bash
+        run: |
+          python - <<'EOF'
+          import json, hashlib, os
+          ver = os.environ['PROTOBUF_VERSION']
+          sha = hashlib.sha256(open('protobuf.tar.gz', 'rb').read()).hexdigest()
+          with open('sbom.cdx.json') as f:
+              sbom = json.load(f)
+          for c in sbom['components']:
+              if c['name'] == 'protobuf':
+                  c['version'] = ver
+                  c['purl'] = f'pkg:github/protocolbuffers/protobuf@v{ver}'
+                  c['externalReferences'][0]['url'] = f'https://github.com/protocolbuffers/protobuf/releases/download/v{ver}/protobuf-{ver}.tar.gz'
+                  c['hashes'][0]['content'] = sha
+          with open('sbom.cdx.json', 'w') as f:
+              json.dump(sbom, f, indent=2)
+              f.write('\n')
+          EOF
+
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
