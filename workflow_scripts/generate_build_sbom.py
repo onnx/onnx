@@ -10,6 +10,7 @@ Intentionally omitted (documented here for transparency):
 - abseil-cpp: transitive FetchContent dependency of protobuf; not directly declared
 - Python build tools (pip, setuptools, wheel): part of the isolated PEP 517 environment
 """
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,7 @@ from datetime import datetime, timezone
 
 def _run(cmd: list[str]) -> str | None:
     try:
-        return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True).strip()
+        return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True).strip()  # noqa: S603
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
 
