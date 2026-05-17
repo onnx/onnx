@@ -113,7 +113,7 @@ def test_opname(self, _, version) -> None:
     )
 ```
 
-For one-off fixtures — anything with attributes, body subgraphs, or non-trivial type info — prefer the ONNX text format via `onnx.parser`; see the [`onnxtxt`](../onnxtxt/SKILL.md) skill for syntax, the inputs-before-attrs convention for subgraph attributes, the C++ `OnnxParser`, and the `unk__*` materialization gotcha (use the `ExpectFreeDim` helper in `shape_inference_test.cc`).
+For one-off fixtures — anything with attributes, body subgraphs, or non-trivial type info — prefer the ONNX text format via `onnx.parser`; see the [`onnxtxt`](../onnxtxt/SKILL.md) skill for syntax, the inputs-before-attrs convention for subgraph attributes, the C++ `OnnxParser`, and the `unk__*` materialization gotcha (free dims may appear either unset or as `unk__N` placeholders — assertions should accept either form).
 
 Cover: known shapes, partial shapes (`None`), rank inference, error cases, broadcasting, attribute-dependent shapes.
 

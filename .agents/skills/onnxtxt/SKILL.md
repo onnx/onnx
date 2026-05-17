@@ -97,13 +97,14 @@ OnnxParser parser(R"ONNX(
         Y = Transpose<perm = [2, 0, 1]>(X)
     }
 )ONNX");
-ASSERT_TRUE(parser.Parse(model).IsOK());
+auto status = parser.Parse(model);
+ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
 shape_inference::InferShapes(model);
 ```
 
 ## Gotchas
 
-- **`unk__*` materialization in C++ shape-inference tests.** Under `InferShapes`, unset output dims are materialized by `MaterializeSymbolicShape` into `dim_param` names like `unk__0`, `unk__1`, … Assertions on free dims must accept either an unset dim or an `unk__*` placeholder — use the `ExpectFreeDim` helper in `onnx/test/cpp/shape_inference_test.cc`.
+- **`unk__*` materialization in C++ shape-inference tests.** Under `InferShapes`, unset output dims are materialized by `MaterializeSymbolicShape` into `dim_param` names like `unk__0`, `unk__1`, … Assertions on free dims must accept either an unset dim or an `unk__*` placeholder — write (or use) a helper that treats both forms as equivalent.
 - **Variable-name collisions.** Local variables in a function body must not reuse declared input/output names of the enclosing op.
 - **`@attr_name` scope.** Only valid inside a function body, and only for attributes declared on the enclosing schema's `.Attr(...)` calls.
 - **`CastLike` vs `Cast`.** Use `CastLike` when the desired target dtype is determined by another input; `Cast` requires a static `to` attribute.
