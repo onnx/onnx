@@ -4,6 +4,7 @@
 
 #include "onnx/defs/schema.h"
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -727,6 +728,45 @@ OpSchema& OpSchema::TypeConstraint(
   }
 
   return TypeConstraint(std::string(type_str), constraints_vector, std::string(description));
+}
+
+OpSchema& OpSchema::ClearAttr(const std::string& name) {
+  attributes_.erase(name);
+  return *this;
+}
+
+OpSchema& OpSchema::ClearTypeConstraint(const std::string& type_str) {
+  type_constraints_.erase(type_str);
+  type_constraint_params_.erase(
+      std::remove_if(
+          type_constraint_params_.begin(),
+          type_constraint_params_.end(),
+          [&](const TypeConstraintParam& p) { return p.type_param_str == type_str; }),
+      type_constraint_params_.end());
+  return *this;
+}
+
+OpSchema& OpSchema::TruncateInputsFrom(int from_index) {
+  from_index = std::max(from_index, 0);
+  if (static_cast<size_t>(from_index) < inputs_.size()) {
+    inputs_.resize(from_index);
+  }
+  return *this;
+}
+
+OpSchema& OpSchema::TruncateOutputsFrom(int from_index) {
+  from_index = std::max(from_index, 0);
+  if (static_cast<size_t>(from_index) < outputs_.size()) {
+    outputs_.resize(from_index);
+  }
+  return *this;
+}
+
+OpSchema& OpSchema::ClearDoc() {
+#ifndef __ONNX_NO_DOC_STRINGS
+  doc_.clear();
+#endif
+  return *this;
 }
 
 void OpSchema::ParseAndSetTypes(

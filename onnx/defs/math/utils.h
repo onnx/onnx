@@ -19,6 +19,12 @@ namespace utils {
 
 std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_types);
 
+// v14 builder for binary elementwise math ops (Add/Sub/Mul/Div); inherited by old versions.
+std::function<void(OpSchema&)> MathDocGenerator_v14(const char* name);
+
+// Builder for Pow (v13+); callers supply the T and T1 type sets, which differ across versions.
+std::function<void(OpSchema&)> PowOpGenerator(std::vector<std::string> t_types, std::vector<std::string> t1_types);
+
 // Unary elementwise ops on float types: T input -> T output, no attrs, no function body.
 std::function<void(OpSchema&)> UnaryFloatMathOpGenerator(
     const char* doc,

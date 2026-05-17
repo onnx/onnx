@@ -575,6 +575,13 @@ class OpSchema final {
   ONNX_API OpSchema&
   TypeConstraint(const char* type_str, std::initializer_list<const char*> constraints, const char* description);
 
+  // Internal helpers for old-version schema deltas.
+  OpSchema& ClearAttr(const std::string& name);
+  OpSchema& ClearTypeConstraint(const std::string& type_str);
+  OpSchema& TruncateInputsFrom(int from_index);
+  OpSchema& TruncateOutputsFrom(int from_index);
+  OpSchema& ClearDoc();
+
   // Convenience members for types
 
   // All high-precision numeric types.
