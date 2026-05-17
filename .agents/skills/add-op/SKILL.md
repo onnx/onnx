@@ -16,6 +16,7 @@ Follow the full procedure in [docs/AddNewOp.md](../../../docs/AddNewOp.md).
 | Reference implementation | `onnx/reference/ops/op_<lowercase_name>.py` |
 | Node tests | `onnx/backend/test/case/node/<lowercase_name>.py` |
 | Shape inference tests | `onnx/test/shape_inference_test.py` |
+| Version converter adapter (if behavior changed) | `onnx/version_converter/adapters/<name>_<from>_<to>.h` |
 | Upgrade/downgrade tests | `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` |
 
 Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`, `reduction/`, `rnn/`, `sequence/`, `image/`, `text/`, `quantization/`, `controlflow/`, `optional/`, `traditionalml/`, `training/`
@@ -76,16 +77,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ## Writing Tests
 
-For writing tests with the ONNX text format (`onnx.parser.parse_model`, `parse_graph`, body subgraphs, argument-order conventions, the C++ `OnnxParser`), see the [`onnxtxt`](../onnxtxt/SKILL.md) skill. Per-file recommendations:
-
-| Test file | Recommendation |
-|-----------|----------------|
-| `onnx/test/shape_inference_test.py`, `onnx/test/reference_evaluator_test.py` | Use `onnx.parser.parse_model`. |
-| `onnx/backend/test/case/node/<op>.py` | Keep the outer `helper.make_node` + `expect(...)` (it drives data generation). For ops with a graph attribute (`Scan`, `Loop`, `If`, …), build the body with `onnx.parser.parse_graph`. |
-| `onnx/test/cpp/shape_inference_test.cc` | Use the C++ `OnnxParser` (`onnx/defs/parser.h`): parse text, then `shape_inference::InferShapes`. |
-| `onnx/test/version_converter/automatic_upgrade_test.py` and similar harnesses | Keep the established `_test_op_upgrade` style — do not rewrite. |
-
-Empirical: PR #7962 (ScanVarLen) cut ~58–70% of test LOC by switching.
+For test fixtures, prefer the ONNX text format via `onnx.parser` / C++ `OnnxParser`. See the [`onnxtxt`](../onnxtxt/SKILL.md) skill for the per-file recommendations table, body-subgraph idioms, the argument-order convention, and the `unk__*` materialization gotcha. (Empirical: PR #7962 cut ~58–70% of test LOC by switching.)
 
 ## After Making Changes
 
