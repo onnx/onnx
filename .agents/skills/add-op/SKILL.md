@@ -3,7 +3,7 @@ name: add-op
 description: Add a new ONNX operator or update an existing operator to a new opset version. Use when asked to define an operator schema, register an op, add inputs/outputs/attributes to an op, move an op to old.cc, or bump an op's opset version.
 ---
 
-Follow the full procedure in [docs/AddNewOp.md](../../docs/AddNewOp.md).
+Follow the full procedure in [docs/AddNewOp.md](../../../docs/AddNewOp.md).
 
 ## Files to Modify
 
@@ -74,9 +74,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(InferShapeForMyOp));
 ```
 
-## Writing Tests: Prefer `onnx.parser` for Model Fixtures
+## Writing Tests
 
-Hand-constructed test models are far more compact in ONNX text format than as chains of `helper.make_*` calls. PR #7962 (ScanVarLen) cut ~58–70% of test LOC by switching.
+For writing tests with the ONNX text format (`onnx.parser.parse_model`, `parse_graph`, body subgraphs, argument-order conventions, the C++ `OnnxParser`), see the [`onnxtxt`](../onnxtxt/SKILL.md) skill. Per-file recommendations:
 
 | Test file | Recommendation |
 |-----------|----------------|
@@ -85,19 +85,7 @@ Hand-constructed test models are far more compact in ONNX text format than as ch
 | `onnx/test/cpp/shape_inference_test.cc` | Use the C++ `OnnxParser` (`onnx/defs/parser.h`): parse text, then `shape_inference::InferShapes`. |
 | `onnx/test/version_converter/automatic_upgrade_test.py` and similar harnesses | Keep the established `_test_op_upgrade` style — do not rewrite. |
 
-Text-format example with a body-graph attribute (Scan / Loop / If):
-
-```
-out, state_out = Scan (state, x) <
-    num_scan_inputs = 1,
-    body = b (float[1] s, float[1] xi) => (float[1] so, float[1] xo) {
-        so = Identity(s)
-        xo = Identity(xi)
-    }
->
-```
-
-**Argument order**: simple scalar/tensor attributes read well as `Op<attrs>(inputs)` (e.g. `Transpose<perm=[2,0,1]>(X)`). For ops with subgraph attributes whose body spans multiple lines, prefer `Op(inputs)<body = ... { ... }>` so the inputs aren't buried after the body.
+Empirical: PR #7962 (ScanVarLen) cut ~58–70% of test LOC by switching.
 
 ## After Making Changes
 
@@ -110,8 +98,9 @@ lintrunner -a --output oneline
 
 ## References
 
-- [docs/AddNewOp.md](../../docs/AddNewOp.md) — Full procedure for adding/updating ops
-- [docs/AddFunctionBody.md](../../docs/AddFunctionBody.md) — Function body guide
-- [docs/ShapeInference.md](../../docs/ShapeInference.md) — Shape inference guide
+- [docs/AddNewOp.md](../../../docs/AddNewOp.md) — Full procedure for adding/updating ops
+- [docs/AddFunctionBody.md](../../../docs/AddFunctionBody.md) — Function body guide
+- [docs/ShapeInference.md](../../../docs/ShapeInference.md) — Shape inference guide
+- [../onnxtxt/SKILL.md](../onnxtxt/SKILL.md) — ONNX text format ("onnxtxt") for tests and function bodies
 - [references/node-test-pattern.md](references/node-test-pattern.md) — Node test example
 - [references/reference-impl-pattern.md](references/reference-impl-pattern.md) — Reference implementation example
