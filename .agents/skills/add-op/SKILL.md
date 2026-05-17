@@ -34,6 +34,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr("attr_name", "Description", AttributeProto::FLOAT, default_value)
         .TypeConstraint("T", {"tensor(float)", "tensor(double)", ...}, "Description")
         .TypeAndShapeInferenceFunction(InferShapeForOperatorName)
+        // Function body uses ONNX text format — see the onnxtxt skill for syntax/conventions.
         .FunctionBody(R"ONNX(
           {
             ...
