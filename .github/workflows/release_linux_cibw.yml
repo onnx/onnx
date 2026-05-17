@@ -113,6 +113,7 @@ jobs:
         env:
           PLATFORM_TAG: ${{ matrix.build }}
           PACKAGE_NAME: ${{ inputs.build_mode == 'release' && 'onnx' || 'onnx-weekly' }}
+          CIBW_VERSION: "3.4.1"  # keep in sync with pypa/cibuildwheel pin above
         run: python workflow_scripts/generate_build_sbom.py
 
       - name: Upload build SBOM

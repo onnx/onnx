@@ -22,7 +22,9 @@ from datetime import datetime, timezone
 
 def _run(cmd: list[str]) -> str | None:
     try:
-        return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True).strip()  # noqa: S603
+        return subprocess.check_output(
+            cmd, stderr=subprocess.DEVNULL, text=True
+        ).strip()  # noqa: S603
     except (subprocess.CalledProcessError, FileNotFoundError):
         return None
 
@@ -43,13 +45,14 @@ def main() -> None:
             protobuf_component = c
             break
 
-    cibw_version: str | None = None
-    cibw_info = _run(["python", "-m", "pip", "show", "cibuildwheel"])
-    if cibw_info:
-        for line in cibw_info.splitlines():
-            if line.startswith("Version:"):
-                cibw_version = line.split(":", 1)[1].strip()
-                break
+    cibw_version: str | None = os.environ.get("CIBW_VERSION") or None
+    if not cibw_version:
+        cibw_info = _run(["python", "-m", "pip", "show", "cibuildwheel"])
+        if cibw_info:
+            for line in cibw_info.splitlines():
+                if line.startswith("Version:"):
+                    cibw_version = line.split(":", 1)[1].strip()
+                    break
 
     cmake_version: str | None = None
     cmake_out = _run(["cmake", "--version"])
