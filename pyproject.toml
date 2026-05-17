@@ -97,7 +97,7 @@ build = "cp313-pyodide_wasm32"
 
 [tool.cibuildwheel]
 test-command = "pytest {project}/onnx/test"
-test-requires = ["pytest", "parameterized", "ruamel.yaml", "Pillow"]
+test-requires = ["pytest", "parameterized", "Pillow"]
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
