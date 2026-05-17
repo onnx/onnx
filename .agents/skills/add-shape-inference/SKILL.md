@@ -3,7 +3,7 @@ name: add-shape-inference
 description: Add or update type and shape inference for an ONNX operator. Use when asked to implement TypeAndShapeInferenceFunction, propagate shapes, add shape inference tests, fix shape inference bugs, or handle broadcasting logic.
 ---
 
-See also: [docs/ShapeInference.md](../../docs/ShapeInference.md)
+See also: [docs/ShapeInference.md](../../../docs/ShapeInference.md)
 
 ## File Locations
 
@@ -96,31 +96,24 @@ Dim multiplyDims(const TensorShapeProto& shape, int from, int upto);
 
 ## Writing Tests
 
-The `_make_graph` / `_assert_inferred` helpers are right for parameterized op-version sweeps. For one-off fixtures — especially anything with attributes, body subgraphs, or non-trivial type info — prefer the ONNX text format via `onnx.parser`; it's far more compact. PR #7962 (ScanVarLen) cut shape-inference test LOC by ~58–70% this way.
+The `_make_graph` / `_assert_inferred` helpers are right for parameterized op-version sweeps:
 
 ```python
-model = onnx.parser.parse_model("""
-    <ir_version: 8, opset_import: ["" : 18]>
-    g (float[2,3,4] X) => (float[4,2,3] Y) { Y = Transpose<perm=[2,0,1]>(X) }
-""")
-inferred = onnx.shape_inference.infer_shapes(model, strict_mode=True)
+@parameterized.expand(all_versions_for("OpName"))
+def test_opname(self, _, version) -> None:
+    graph = self._make_graph(
+        [("X", TensorProto.FLOAT, (2, 3, 4))],
+        [make_node("OpName", ["X"], ["Y"], attr_name=attr_value)],
+        [],
+    )
+    self._assert_inferred(
+        graph,
+        [make_tensor_value_info("Y", TensorProto.FLOAT, expected_shape)],
+        opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+    )
 ```
 
-**Argument order**: simple attributes read well as `Op<attrs>(inputs)` (above). For ops with subgraph attributes whose body spans multiple lines, prefer `Op(inputs)<body = ... { ... }>`:
-
-```
-so, xo = Scan (s, x) <
-    num_scan_inputs = 1,
-    body = b (float[1] si, float[1] xi) => (float[1] so, float[1] xo) {
-        so = Identity(si)
-        xo = Identity(xi)
-    }
->
-```
-
-**C++** (`onnx/test/cpp/shape_inference_test.cc`): use `OnnxParser` (`onnx/defs/parser.h`) to parse a text model, then call `shape_inference::InferShapes`.
-
-**C++ gotcha**: under `InferShapes`, unset output dims are materialized by `MaterializeSymbolicShape` into `dim_param` names like `unk__0`. Assertions on free dims must accept either an unset dim or an `unk__*` placeholder — use the `ExpectFreeDim` helper in `shape_inference_test.cc`.
+For one-off fixtures — anything with attributes, body subgraphs, or non-trivial type info — prefer the ONNX text format via `onnx.parser`; see the [`onnxtxt`](../onnxtxt/SKILL.md) skill for syntax, the inputs-before-attrs convention for subgraph attributes, the C++ `OnnxParser`, and the `unk__*` materialization gotcha (use the `ExpectFreeDim` helper in `shape_inference_test.cc`).
 
 Cover: known shapes, partial shapes (`None`), rank inference, error cases, broadcasting, attribute-dependent shapes.
 
