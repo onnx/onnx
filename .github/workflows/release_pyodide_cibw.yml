@@ -97,6 +97,7 @@ jobs:
         shell: bash
         env:
           PLATFORM_TAG: pyodide
+          PACKAGE_NAME: ${{ inputs.build_mode == 'release' && 'onnx' || 'onnx-weekly' }}
         run: python workflow_scripts/generate_build_sbom.py
 
       - name: Upload build SBOM

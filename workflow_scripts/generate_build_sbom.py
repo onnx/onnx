@@ -29,11 +29,12 @@ def _run(cmd: list[str]) -> str | None:
 
 def main() -> None:
     platform_tag = os.environ.get("PLATFORM_TAG", "unknown")
+    package_name = os.environ.get("PACKAGE_NAME", "onnx")
 
-    with open("VERSION_NUMBER") as f:
+    with open("VERSION_NUMBER", encoding="utf-8") as f:
         onnx_version = f.read().strip()
 
-    with open("sbom.cdx.json") as f:
+    with open("sbom.cdx.json", encoding="utf-8") as f:
         wheel_sbom = json.load(f)
 
     protobuf_component: dict | None = None
@@ -91,9 +92,9 @@ def main() -> None:
             "lifecycles": [{"phase": "build"}],
             "component": {
                 "type": "library",
-                "name": "onnx",
+                "name": package_name,
                 "version": onnx_version,
-                "purl": f"pkg:pypi/onnx@{onnx_version}",
+                "purl": f"pkg:pypi/{package_name}@{onnx_version}",
             },
             "tools": [
                 {
@@ -107,7 +108,7 @@ def main() -> None:
     }
 
     output_file = f"build-sbom-{platform_tag}.cdx.json"
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(sbom, f, indent=2)
         f.write("\n")
 
