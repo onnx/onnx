@@ -23,5 +23,6 @@ When working in `onnx/defs/**`, follow the relevant agent skill — these contai
 - **New Python files** need `from __future__ import annotations` and the standard copyright header (`# Copyright (c) ONNX Project Contributors` + `# SPDX-License-Identifier: Apache-2.0`).
 - **Updating an op:** move the old schema to `<domain>/old.cc` before adding the new version to `defs.cc`; update `onnx/defs/operator_sets.h`; add upgrade/downgrade tests.
 - **Prefer named functions** over inline lambdas in `ONNX_OPERATOR_SET_SCHEMA` (macro expansion makes breakpoints on lambdas unreliable).
+- **Context-dependent function bodies:** always finalize the builder with `schema.BuildFunction(functionProto)` and `return true`.
 
 For the full procedures (file locations, registration patterns, common idioms, test recipes), open the skills above.
