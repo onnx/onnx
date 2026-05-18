@@ -22,11 +22,7 @@ on:
       builds:
         required: false
         type: string
-        default: >-
-          ["cp310-win_amd64","cp310-win32",
-           "cp311-win_amd64","cp311-win32","cp311-win_arm64",
-           "cp312-win_amd64","cp312-win32","cp312-win_arm64",
-           "cp314t-win_amd64","cp314t-win_arm64"]
+        default: ""
   workflow_dispatch:
 
 permissions:
