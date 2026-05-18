@@ -4,8 +4,7 @@
 
 # Verifies that two successive builds from identical source produce bit-for-bit
 # identical wheels (reproducible builds).  Calls each platform cibw workflow
-# twice with a minimal single-target matrix, then compares wheel checksums.
-# On mismatch, diffoscope pinpoints exactly which files or metadata differ.
+# twice with a single target, then compares SHA-256 checksums.
 #
 # Linux is the blocking gate: reproducibility is well-supported there via
 # SOURCE_DATE_EPOCH + manylinux containers.  macOS (Mach-O LC_UUID / ad-hoc
@@ -28,42 +27,42 @@ jobs:
     uses: ./.github/workflows/release_linux_cibw.yml
     with:
       build_mode: release
-      builds: '["cp312-manylinux_x86_64"]'
+      build: cp312-manylinux_x86_64
       artifact_name_prefix: repro-build1
 
   linux-build2:
     uses: ./.github/workflows/release_linux_cibw.yml
     with:
       build_mode: release
-      builds: '["cp312-manylinux_x86_64"]'
+      build: cp312-manylinux_x86_64
       artifact_name_prefix: repro-build2
 
   macos-build1:
     uses: ./.github/workflows/release_macos_cibw.yml
     with:
       build_mode: release
-      builds: '["cp312-macosx_universal2"]'
+      build: cp312-macosx_universal2
       artifact_name_prefix: repro-build1
 
   macos-build2:
     uses: ./.github/workflows/release_macos_cibw.yml
     with:
       build_mode: release
-      builds: '["cp312-macosx_universal2"]'
+      build: cp312-macosx_universal2
       artifact_name_prefix: repro-build2
 
   windows-build1:
     uses: ./.github/workflows/release_windows_cibw.yml
     with:
       build_mode: release
-      builds: '["cp312-win_amd64"]'
+      build: cp312-win_amd64
       artifact_name_prefix: repro-build1
 
   windows-build2:
     uses: ./.github/workflows/release_windows_cibw.yml
     with:
       build_mode: release
-      builds: '["cp312-win_amd64"]'
+      build: cp312-win_amd64
       artifact_name_prefix: repro-build2
 
   compare:
@@ -102,107 +101,21 @@ jobs:
           path: /tmp/windows-build2
 
       - name: Compare checksums
-        id: compare
         shell: bash
         run: |
           linux_fail=0
-          informational_fail=0
-
-          compare_platform() {
-            local platform=$1
-            local dir1=/tmp/${platform}-build1
-            local dir2=/tmp/${platform}-build2
-
-            mapfile -t wheels1 < <(ls "$dir1"/*.whl 2>/dev/null | sort)
-            mapfile -t wheels2 < <(ls "$dir2"/*.whl 2>/dev/null | sort)
-
-            if [ "${#wheels1[@]}" -ne 1 ]; then
-              echo "[$platform] ERROR: expected exactly 1 wheel in build1, found ${#wheels1[@]}"
-              return 1
-            fi
-            if [ "${#wheels2[@]}" -ne 1 ]; then
-              echo "[$platform] ERROR: expected exactly 1 wheel in build2, found ${#wheels2[@]}"
-              return 1
-            fi
-
-            local name1 name2
-            name1=$(basename "${wheels1[0]}")
-            name2=$(basename "${wheels2[0]}")
-            if [ "$name1" != "$name2" ]; then
-              echo "[$platform] ERROR: wheel filenames differ: '$name1' vs '$name2'"
-              return 1
-            fi
-
-            local h1 h2
-            h1=$(sha256sum "${wheels1[0]}" | cut -d' ' -f1)
-            h2=$(sha256sum "${wheels2[0]}" | cut -d' ' -f1)
-            echo "[$platform] $name1"
-            echo "[$platform]   build1: $h1"
-            echo "[$platform]   build2: $h2"
-
-            if [ "$h1" = "$h2" ]; then
-              echo "[$platform] Reproducible build confirmed."
-              return 0
-            else
-              echo "[$platform] Non-reproducible build — SHA-256 mismatch."
-              return 1
-            fi
-          }
-
-          # Linux is the blocking gate.
-          compare_platform linux || linux_fail=1
-
-          # macOS and Windows are informational: codesigning (Mach-O LC_UUID)
-          # and PE timestamps can differ between runs despite SOURCE_DATE_EPOCH.
-          compare_platform macos
-          compare_platform windows
-
-          # if [ "$informational_fail" -eq 1 ]; then
-          #   echo ""
-          #   echo "Note: macOS/Windows reproducibility is informational only."
-          #   echo "Mach-O codesigning and Windows PE timestamps may differ between runs."
-          # fi
-
-          # exit "$linux_fail"
-
-      - name: Install diffoscope
-        if: failure()
-        run: |
-          sudo apt-get install -y --no-install-recommends \
-            diffoscope \
-            binutils-mingw-w64-x86-64 \
-            llvm
-
-      - name: Run diffoscope
-        if: failure()
-        shell: bash
-        run: |
           for platform in linux macos windows; do
-            mapfile -t wheels1 < <(ls /tmp/${platform}-build1/*.whl 2>/dev/null | sort)
-            mapfile -t wheels2 < <(ls /tmp/${platform}-build2/*.whl 2>/dev/null | sort)
-            [ "${#wheels1[@]}" -ne 1 ] || [ "${#wheels2[@]}" -ne 1 ] && continue
-            name1=$(basename "${wheels1[0]}")
-            name2=$(basename "${wheels2[0]}")
-            [ "$name1" != "$name2" ] && continue
-            h1=$(sha256sum "${wheels1[0]}" | cut -d' ' -f1)
-            h2=$(sha256sum "${wheels2[0]}" | cut -d' ' -f1)
-            [ "$h1" = "$h2" ] && continue
-            echo "=== diffoscope: $platform ($name1) ==="
-            diffoscope "${wheels1[0]}" "${wheels2[0]}" \
-              --text /tmp/diffoscope-${platform}.txt \
-              --html /tmp/diffoscope-${platform}.html \
-              --max-text-report-size 10000000 \
-              || true
-            echo "--- first 100 lines ---"
-            head -100 /tmp/diffoscope-${platform}.txt || true
+            b1=$(ls /tmp/${platform}-build1/*.whl)
+            b2=$(ls /tmp/${platform}-build2/*.whl)
+            h1=$(sha256sum "$b1" | cut -d' ' -f1)
+            h2=$(sha256sum "$b2" | cut -d' ' -f1)
+            echo "[$platform] build1 $h1  $(basename $b1)"
+            echo "[$platform] build2 $h2"
+            if [ "$h1" = "$h2" ]; then
+              echo "[$platform] OK"
+            else
+              echo "[$platform] MISMATCH"
+              [ "$platform" = linux ] && linux_fail=1
+            fi
           done
-
-      - name: Upload diffoscope report
-        if: failure()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: diffoscope-report
-          path: |
-            /tmp/diffoscope-*.html
-            /tmp/diffoscope-*.txt
-          retention-days: 30
+          exit $linux_fail

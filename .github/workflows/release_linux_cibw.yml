@@ -15,6 +15,10 @@ on:
         required: false
         type: string
         default: "wheels"
+      build:
+        required: false
+        type: string
+        default: ""
       builds:
         required: false
         type: string
@@ -37,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: ${{ fromJSON(inputs.builds) }}
+        build: ${{ inputs.build != '' && fromJSON(format('["{0}"]', inputs.build)) || fromJSON(inputs.builds) }}
 
     runs-on: ${{ contains(matrix.build, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
