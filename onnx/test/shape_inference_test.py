@@ -5611,6 +5611,53 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, None)]
         )
 
+    def test_maxunpool_rank0_indices_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("xI", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank0_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, ()),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (), [0.0]),
+            ],
+        )
+        # With rank-0 weight, shape inference should raise an error, not crash.
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank1_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, (9,)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (9,), list(range(9))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def test_onehot_without_axis(self) -> None:
         graph = self._make_graph(
             [
