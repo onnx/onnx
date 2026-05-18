@@ -10,7 +10,7 @@ on:
       build_mode:
         required: false
         type: string
-        default: "release"
+        default: "preview"
       protobuf_version:
         required: false
         type: string
@@ -21,7 +21,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: pyodide-release-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -35,7 +35,6 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -63,19 +62,30 @@ jobs:
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
           tar -xf protobuf.tar.gz
 
-      - name: Build Pyodide wheel
-        run: cibuildwheel --platform pyodide --output-dir dist/
+      - name: Patch sbom.cdx.json with actual protobuf version and hash
+        shell: bash
+        run: python .github/scripts/patch_sbom.py
+
+      - name: Set SOURCE_DATE_EPOCH for reproducible builds
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        with:
+          output-dir: dist/
         env:
+          CIBW_PLATFORM: pyodide
           CIBW_TEST_COMMAND: >-
             python -c "from onnx import NodeProto; n = NodeProto(); n.op_type = 'Add'; print(n)"
           CIBW_ENVIRONMENT: >-
-            ONNX_ML=1
             CMAKE_ARGS="
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
+            -DONNX_HARDENING=ON
             -DONNX_PYODIDE_BUILD=ON
             -DONNX_USE_LITE_PROTO=ON
-            -DONNX_USE_PROTOBUF_SHARED_LIBS=OFF
-            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
-            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
+            -DONNX_WERROR=ON
+            -DCMAKE_CXX_FLAGS='-Wno-error=deprecated-builtins'
             "
 
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0

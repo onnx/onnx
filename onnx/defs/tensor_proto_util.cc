@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "onnx/common/platform_helpers.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/defs/shape_inference.h"
 
@@ -35,93 +36,97 @@ namespace ONNX_NAMESPACE {
     return t;                                                   \
   }
 
-#define DEFINE_PARSE_DATA(type, typed_data_fetch, tensorproto_datatype)                                            \
-  template <>                                                                                                      \
-  std::vector<type> ParseData(const TensorProto* tensor_proto) {                                                   \
-    if (!tensor_proto->has_data_type() || tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {           \
-      fail_shape_inference("The type of tensor: ", tensor_proto->name(), " is undefined so it cannot be parsed."); \
-    } else if (tensor_proto->data_type() != tensorproto_datatype) {                                                \
-      fail_shape_inference(                                                                                        \
-          "ParseData type mismatch for tensor: ",                                                                  \
-          tensor_proto->name(),                                                                                    \
-          ". Expected:",                                                                                           \
-          Utils::DataTypeUtils::ToDataTypeString(tensorproto_datatype),                                            \
-          " Actual:",                                                                                              \
-          Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));                                      \
-    }                                                                                                              \
-    int64_t num_elements = 1;                                                                                      \
-    for (int i = 0; i < tensor_proto->dims_size(); ++i) {                                                          \
-      num_elements *= tensor_proto->dims(i);                                                                       \
-    }                                                                                                              \
-    std::vector<type> res;                                                                                         \
-    if (tensor_proto->has_data_location() && tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) { \
-      fail_shape_inference(                                                                                        \
-          "Cannot parse data from external tensors. Please ",                                                      \
-          "load external data into raw data for tensor: ",                                                         \
-          tensor_proto->name());                                                                                   \
-    } else if (!tensor_proto->has_raw_data()) {                                                                    \
-      const auto& data = tensor_proto->typed_data_fetch();                                                         \
-      if (data.size() != num_elements) {                                                                           \
-        fail_shape_inference(                                                                                      \
-            "Data size mismatch. Tensor: ",                                                                        \
-            tensor_proto->name(),                                                                                  \
-            " expected num elements ",                                                                             \
-            num_elements,                                                                                          \
-            " does not match the actual num elements ",                                                            \
-            data.size());                                                                                          \
-      }                                                                                                            \
-      res.insert(res.end(), data.begin(), data.end());                                                             \
-      return res;                                                                                                  \
-    }                                                                                                              \
-    if (tensor_proto->data_type() == TensorProto_DataType_STRING) {                                                \
-      fail_shape_inference(                                                                                        \
-          tensor_proto->name(),                                                                                    \
-          " data type is string. string",                                                                          \
-          " content is required to be stored in repeated bytes string_data field.",                                \
-          " raw_data type cannot be string.");                                                                     \
-    }                                                                                                              \
-    /* The given tensor does have raw_data itself so parse it by given type */                                     \
-    /* make copy as we may have to reverse bytes */                                                                \
-    std::string raw_data = tensor_proto->raw_data();                                                               \
-    constexpr size_t element_size = sizeof(type);                                                                  \
-    const auto required_bytes = num_elements * element_size;                                                       \
-    if (raw_data.size() < required_bytes) {                                                                        \
-      fail_shape_inference(                                                                                        \
-          "Data size mismatch. Tensor: ",                                                                          \
-          tensor_proto->name(),                                                                                    \
-          " does not have sufficient raw_data. Required bytes: ",                                                  \
-          required_bytes,                                                                                          \
-          ", actual bytes: ",                                                                                      \
-          raw_data.size());                                                                                        \
-    }                                                                                                              \
-    /* in case raw_data has extra bytes, we only parse the required bytes according to tensor shape */             \
-    raw_data.resize(required_bytes);                                                                               \
-    /* okay to remove const qualifier as we have already made a copy */                                            \
-    char* bytes = raw_data.data();                                                                                 \
-    /* onnx is little endian serialized always-tweak byte order if needed */                                       \
-    if (!is_processor_little_endian()) {                                                                           \
-      const size_t num_elements = raw_data.size() / element_size;                                                  \
-      for (size_t i = 0; i < num_elements; ++i) {                                                                  \
-        char* start_byte = bytes + i * element_size;                                                               \
-        char* end_byte = start_byte + element_size - 1;                                                            \
-        /* keep swapping */                                                                                        \
-        for (size_t count = 0; count < element_size / 2; ++count) {                                                \
-          char temp = *start_byte;                                                                                 \
-          *start_byte = *end_byte;                                                                                 \
-          *end_byte = temp;                                                                                        \
-          ++start_byte;                                                                                            \
-          --end_byte;                                                                                              \
-        }                                                                                                          \
-      }                                                                                                            \
-    }                                                                                                              \
-    /* raw_data.c_str()/bytes is a byte array and may not be properly  */                                          \
-    /* aligned for the underlying type */                                                                          \
-    /* We need to copy the raw_data.c_str()/bytes as byte instead of  */                                           \
-    /* copying as the underlying type, otherwise we may hit memory   */                                            \
-    /* misalignment issues on certain platforms, such as arm32-v7a */                                              \
-    res.resize(num_elements);                                                                                      \
-    memcpy(reinterpret_cast<char*>(res.data()), bytes, required_bytes);                                            \
-    return res;                                                                                                    \
+#define DEFINE_PARSE_DATA(type, typed_data_fetch, tensorproto_datatype)                                              \
+  template <>                                                                                                        \
+  std::vector<type> ParseData(const TensorProto* tensor_proto) {                                                     \
+    if (!tensor_proto->has_data_type() || tensor_proto->data_type() == TensorProto_DataType_UNDEFINED) {             \
+      fail_shape_inference("The type of tensor: ", tensor_proto->name(), " is undefined so it cannot be parsed.");   \
+    } else if (tensor_proto->data_type() != tensorproto_datatype) {                                                  \
+      fail_shape_inference(                                                                                          \
+          "ParseData type mismatch for tensor: ",                                                                    \
+          tensor_proto->name(),                                                                                      \
+          ". Expected:",                                                                                             \
+          Utils::DataTypeUtils::ToDataTypeString(tensorproto_datatype),                                              \
+          " Actual:",                                                                                                \
+          Utils::DataTypeUtils::ToDataTypeString(tensor_proto->data_type()));                                        \
+    }                                                                                                                \
+    int64_t num_elements = safe_dim_product(tensor_proto->dims(), [&](const char* msg) {                             \
+      fail_shape_inference(msg, " for tensor: ", tensor_proto->name());                                              \
+    });                                                                                                              \
+    std::vector<type> res;                                                                                           \
+    if (tensor_proto->has_data_location() && tensor_proto->data_location() == TensorProto_DataLocation_EXTERNAL) {   \
+      fail_shape_inference(                                                                                          \
+          "Cannot parse data from external tensors. Please ",                                                        \
+          "load external data into raw data for tensor: ",                                                           \
+          tensor_proto->name());                                                                                     \
+    } else if (!tensor_proto->has_raw_data()) {                                                                      \
+      const auto& data = tensor_proto->typed_data_fetch();                                                           \
+      if (data.size() != num_elements) {                                                                             \
+        fail_shape_inference(                                                                                        \
+            "Data size mismatch. Tensor: ",                                                                          \
+            tensor_proto->name(),                                                                                    \
+            " expected num elements ",                                                                               \
+            num_elements,                                                                                            \
+            " does not match the actual num elements ",                                                              \
+            data.size());                                                                                            \
+      }                                                                                                              \
+      res.insert(res.end(), data.begin(), data.end());                                                               \
+      return res;                                                                                                    \
+    }                                                                                                                \
+    if (tensor_proto->data_type() == TensorProto_DataType_STRING) {                                                  \
+      fail_shape_inference(                                                                                          \
+          tensor_proto->name(),                                                                                      \
+          " data type is string. string",                                                                            \
+          " content is required to be stored in repeated bytes string_data field.",                                  \
+          " raw_data type cannot be string.");                                                                       \
+    }                                                                                                                \
+    /* The given tensor does have raw_data itself so parse it by given type */                                       \
+    /* make copy as we may have to reverse bytes */                                                                  \
+    std::string raw_data = tensor_proto->raw_data();                                                                 \
+    constexpr size_t element_size = sizeof(type);                                                                    \
+    int64_t required_bytes;                                                                                          \
+    if (checked_mul_overflow(num_elements, static_cast<int64_t>(element_size), &required_bytes)) {                   \
+      fail_shape_inference("Tensor byte size overflow for tensor: ", tensor_proto->name());                          \
+    }                                                                                                                \
+    const size_t required_bytes_sz = safe_cast_to_size(                                                              \
+        required_bytes, [&](const char* msg) { fail_shape_inference(msg, " for tensor: ", tensor_proto->name()); }); \
+    if (raw_data.size() < required_bytes_sz) {                                                                       \
+      fail_shape_inference(                                                                                          \
+          "Data size mismatch. Tensor: ",                                                                            \
+          tensor_proto->name(),                                                                                      \
+          " does not have sufficient raw_data. Required bytes: ",                                                    \
+          required_bytes,                                                                                            \
+          ", actual bytes: ",                                                                                        \
+          raw_data.size());                                                                                          \
+    }                                                                                                                \
+    /* in case raw_data has extra bytes, we only parse the required bytes according to tensor shape */               \
+    raw_data.resize(required_bytes_sz);                                                                              \
+    /* okay to remove const qualifier as we have already made a copy */                                              \
+    char* bytes = raw_data.data();                                                                                   \
+    /* onnx is little endian serialized always-tweak byte order if needed */                                         \
+    if (!is_processor_little_endian()) {                                                                             \
+      const size_t num_elements = raw_data.size() / element_size;                                                    \
+      for (size_t i = 0; i < num_elements; ++i) {                                                                    \
+        char* start_byte = bytes + i * element_size;                                                                 \
+        char* end_byte = start_byte + element_size - 1;                                                              \
+        /* keep swapping */                                                                                          \
+        for (size_t count = 0; count < element_size / 2; ++count) {                                                  \
+          char temp = *start_byte;                                                                                   \
+          *start_byte = *end_byte;                                                                                   \
+          *end_byte = temp;                                                                                          \
+          ++start_byte;                                                                                              \
+          --end_byte;                                                                                                \
+        }                                                                                                            \
+      }                                                                                                              \
+    }                                                                                                                \
+    /* raw_data.c_str()/bytes is a byte array and may not be properly  */                                            \
+    /* aligned for the underlying type */                                                                            \
+    /* We need to copy the raw_data.c_str()/bytes as byte instead of  */                                             \
+    /* copying as the underlying type, otherwise we may hit memory   */                                              \
+    /* misalignment issues on certain platforms, such as arm32-v7a */                                                \
+    res.resize(required_bytes_sz / element_size);                                                                    \
+    memcpy(reinterpret_cast<char*>(res.data()), bytes, required_bytes_sz);                                           \
+    return res;                                                                                                      \
   }
 
 DEFINE_TO_TENSOR_ONE(float, TensorProto_DataType_FLOAT, float)

@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/defs/type_builders.h"
+
 namespace ONNX_NAMESPACE {
 namespace defs {
 namespace math {
@@ -74,7 +76,7 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
             1,
             OpSchema::NonDifferentiable)
         .TypeConstraint("T", allowed_types, "Constrain input and output types to numeric tensors.")
-        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
+        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64")
         .Attr(
             "axis",
             "Dimension on which to do the sort. Negative value means counting dimensions "
@@ -146,6 +148,17 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
 
           return;
         });
+  };
+}
+
+std::function<void(OpSchema&)>
+UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::vector<std::string> allowed_types) {
+  return [doc, output_description, allowed_types = std::move(allowed_types)](OpSchema& schema) {
+    schema.SetDoc(doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "output", output_description, "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", allowed_types, "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   };
 }
 
