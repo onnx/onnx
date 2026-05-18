@@ -21,10 +21,10 @@ SPDX-License-Identifier: Apache-2.0
 | Workflow | When it runs | What it does |
 |---|---|---|
 | [Create Releases](/.github/workflows/create_release.yml) | Push to main/rel-\*, PRs targeting rel-\* or labeled "run release CIs", weekly (Monday 00:00 UTC), workflow\_dispatch | Orchestrator — calls WindowsRelease, LinuxRelease, MacRelease, PyodideRelease, and sdistRelease as reusable workflows |
-| [WindowsRelease](/.github/workflows/release_windows_cibw.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package (2)(3) |
-| [LinuxRelease](/.github/workflows/release_linux_cibw.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package |
-| [MacRelease](/.github/workflows/release_macos_cibw.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with min and latest numpy/protobuf; verifies with latest ONNX Runtime PyPI package; tests source distribution build |
-| [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `cibuildwheel` with a pre-downloaded host `protoc` and protobuf source; runs a basic import test |
+| [WindowsRelease](/.github/workflows/release_windows_cibw.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with minimum supported packages (2)(3) |
+| [LinuxRelease](/.github/workflows/release_linux_cibw.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with minimum supported packages (3) |
+| [MacRelease](/.github/workflows/release_macos_cibw.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with minimum supported packages (3) |
+| [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `cibuildwheel` with a pre-downloaded host `protoc` and protobuf source; runs a basic import test (3) |
 | [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 
 ## Security and Supply Chain
@@ -55,3 +55,5 @@ SPDX-License-Identifier: Apache-2.0
   * Manually via workflow\_dispatch
 
 * **(2)** Minimum supported dependency versions are listed in `[project.dependencies]` in [pyproject.toml](/pyproject.toml).
+
+* **(3)** The [PEP 770](https://peps.python.org/pep-0770/) SBOM (`dist-info/sboms/sbom.cdx.json`) is embedded in any wheel build where `SKBUILD_METADATA_DIR` is set (including local `pip wheel` builds). Only the cibuildwheel release pipeline patches the SBOM to reflect the actual protobuf tarball version, URL, and SHA-256 used for that specific build; other wheel builds embed the template values from `sbom.cdx.json`.
