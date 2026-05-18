@@ -91,9 +91,7 @@ cmake.build-type = "Debug"
 cmake.define.ONNX_COVERAGE = "ON"
 
 [tool.cibuildwheel.pyodide]
-# We can't use cp312 because that would pick an older version of
-# pyodide[-build] which does not ship with ml_dtypes.
-build = "cp313-pyodide_wasm32"
+build = "cp313-pyemscripten_2026_0_wasm32"
 
 [tool.cibuildwheel]
 test-command = "pytest {project}/onnx/test"
