@@ -5,11 +5,7 @@
 # Verifies that two successive builds from identical source produce bit-for-bit
 # identical wheels (reproducible builds).  Calls each platform cibw workflow
 # twice with a single target, then compares SHA-256 checksums.
-#
-# Linux is the blocking gate: reproducibility is well-supported there via
-# SOURCE_DATE_EPOCH + manylinux containers.  macOS (Mach-O LC_UUID / ad-hoc
-# codesign) and Windows (PE timestamp) are compared informally — failures are
-# reported but do not fail the workflow.
+# A mismatch on any platform fails the workflow.
 
 name: ReproducibleBuild
 
@@ -103,7 +99,7 @@ jobs:
       - name: Compare checksums
         shell: bash
         run: |
-          linux_fail=0
+          fail=0
           for platform in linux macos windows; do
             b1=$(ls /tmp/${platform}-build1/*.whl)
             b2=$(ls /tmp/${platform}-build2/*.whl)
@@ -115,7 +111,7 @@ jobs:
               echo "[$platform] OK"
             else
               echo "[$platform] MISMATCH"
-              [ "$platform" = linux ] && linux_fail=1
+              fail=1
             fi
           done
-          exit $linux_fail
+          exit $fail
