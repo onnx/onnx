@@ -11,10 +11,6 @@ on:
         required: false
         type: string
         default: "preview"
-      protobuf_version:
-        required: false
-        type: string
-        default: "33.6"
   workflow_dispatch:
 
 permissions:
@@ -28,18 +24,18 @@ jobs:
   build:
     runs-on: ubuntu-24.04
 
-    env:
-      PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
-
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
+      - name: Read protobuf version from sbom.cdx.json
+        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       - name: Set preview version
         if: inputs.build_mode != 'release'
@@ -48,8 +44,33 @@ jobs:
           sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
 
-      - name: Install cibuildwheel
-        run: python -m pip install -q cibuildwheel>=2.21
+      - name: Install pyodide-build
+        run: python -m pip install -q "pyodide-build>=0.34.2"
+
+      - name: Get Pyodide config
+        id: pyodide-config
+        run: |
+          pyodide config get emscripten_version | sed 's/^/emscripten_version=/' >> "$GITHUB_OUTPUT"
+          pyodide config get emsdk_dir | sed 's/^/emsdk_dir=/' >> "$GITHUB_OUTPUT"
+
+      - name: Cache emsdk
+        id: cache-emsdk
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ${{ steps.pyodide-config.outputs.emsdk_dir }}
+          key: emsdk-${{ steps.pyodide-config.outputs.emscripten_version }}
+
+      - name: Install emscripten
+        if: steps.cache-emsdk.outputs.cache-hit != 'true'
+        run: pyodide xbuildenv install-emscripten
+
+      - name: Export emscripten environment
+        env:
+          EMSDK_DIR: ${{ steps.pyodide-config.outputs.emsdk_dir }}
+        run: |
+          echo "EMSDK=$EMSDK_DIR" >> "$GITHUB_ENV"
+          echo "$EMSDK_DIR" >> "$GITHUB_PATH"
+          echo "$EMSDK_DIR/upstream/emscripten" >> "$GITHUB_PATH"
 
       - name: Download protoc for host
         run: |
@@ -62,23 +83,12 @@ jobs:
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
           tar -xf protobuf.tar.gz
 
-      - name: Patch sbom.cdx.json with actual protobuf version and hash
-        shell: bash
-        run: python .github/scripts/patch_sbom.py
-
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
-      - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
-        with:
-          output-dir: dist/
+      - name: Build wheel (pyemscripten)
         env:
-          CIBW_PLATFORM: pyodide
-          CIBW_TEST_COMMAND: >-
-            python -c "from onnx import NodeProto; n = NodeProto(); n.op_type = 'Add'; print(n)"
-          CIBW_ENVIRONMENT: >-
-            CMAKE_ARGS="
+          CMAKE_ARGS: >-
             -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
             -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
             -DONNX_HARDENING=ON
@@ -86,7 +96,9 @@ jobs:
             -DONNX_USE_LITE_PROTO=ON
             -DONNX_WERROR=ON
             -DCMAKE_CXX_FLAGS='-Wno-error=deprecated-builtins'
-            "
+        run: |
+          source "$EMSDK/emsdk_env.sh" > /dev/null
+          pyodide build
 
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:

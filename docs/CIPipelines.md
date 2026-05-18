@@ -24,7 +24,7 @@ SPDX-License-Identifier: Apache-2.0
 | [WindowsRelease](/.github/workflows/release_windows_cibw.yml) | Called by Create Releases | Builds Windows wheels for x64, x86, and arm64; verifies with minimum supported packages (2)(3) |
 | [LinuxRelease](/.github/workflows/release_linux_cibw.yml) | Called by Create Releases | Builds Linux wheels for x86\_64 (manylinux\_2\_28) and aarch64; verifies with minimum supported packages (3) |
 | [MacRelease](/.github/workflows/release_macos_cibw.yml) | Called by Create Releases | Builds macOS wheels (macos-14, MACOSX\_DEPLOYMENT\_TARGET=12.0); verifies with minimum supported packages (3) |
-| [PyodideRelease](/.github/workflows/release_pyodide_cibw.yml) | Called by Create Releases and on every push | Builds a Pyodide (WebAssembly) wheel on Ubuntu using `cibuildwheel` with a pre-downloaded host `protoc` and protobuf source; runs a basic import test (3) |
+| [PyodideRelease](/.github/workflows/release_pyodide.yml) | Called by Create Releases and on every push | Builds a PyPI-compatible WebAssembly wheel (`pyemscripten_wasm32`) on Ubuntu using `pyodide-build` with Python 3.14, a pre-downloaded host `protoc` and protobuf source |
 | [sdistRelease](/.github/workflows/release_sdist.yml) | Called by Create Releases | Builds and tests source distribution |
 
 ## Security and Supply Chain

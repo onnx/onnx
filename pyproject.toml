@@ -90,11 +90,6 @@ if.env.COVERAGE = "1"
 cmake.build-type = "Debug"
 cmake.define.ONNX_COVERAGE = "ON"
 
-[tool.cibuildwheel.pyodide]
-# We can't use cp312 because that would pick an older version of
-# pyodide[-build] which does not ship with ml_dtypes.
-build = "cp313-pyodide_wasm32"
-
 [tool.cibuildwheel]
 test-command = "pytest {project}/onnx/test"
 test-requires = ["pytest", "parameterized", "Pillow"]
@@ -106,6 +101,7 @@ manylinux-aarch64-image = "manylinux_2_28"
 [tool.cibuildwheel.macos]
 archs = ["universal2"]
 environment = { MACOSX_DEPLOYMENT_TARGET = "12.0" }
+
 
 [tool.check-wheel-contents]
 ignore = ["W002"]
