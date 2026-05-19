@@ -78,8 +78,6 @@ jobs:
     - name: Install ONNX
       if: matrix.language != 'actions'
       run: |
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
-        python -m pip install --quiet scikit-build-core "protobuf==4.25.1"
         export ONNX_ML=1
         export ONNX_BUILD_TESTS=1
         pip install .

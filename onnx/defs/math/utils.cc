@@ -151,6 +151,17 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
   };
 }
 
+std::function<void(OpSchema&)>
+UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::vector<std::string> allowed_types) {
+  return [doc, output_description, allowed_types = std::move(allowed_types)](OpSchema& schema) {
+    schema.SetDoc(doc)
+        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .Output(0, "output", output_description, "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
+        .TypeConstraint("T", allowed_types, "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+  };
+}
+
 int MathOpTwoIntegers(const std::string& op_type, int a, int b) {
   if (op_type == "Add") {
     return a + b;

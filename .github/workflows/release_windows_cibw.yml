@@ -71,6 +71,10 @@ jobs:
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOBUF_VERSION}/protobuf-${env:PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
           tar -xf protobuf.tar.gz
 
+      - name: Patch sbom.cdx.json with actual protobuf version and hash
+        shell: bash
+        run: python .github/scripts/patch_sbom.py
+
       - name: Set paths
         shell: bash
         run: |
