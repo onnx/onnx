@@ -5641,7 +5641,6 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("W", TensorProto.FLOAT, (), [0.0]),
             ],
         )
-        # With rank-0 weight, shape inference should raise an error, not crash.
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
     def test_conv_transpose_rank1_weight_raises(self) -> None:
@@ -12075,16 +12074,20 @@ class TestShapeInference(TestShapeInferenceHelper):
         with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
-    def test_conv_transpose_undersized_weight_does_not_crash(self):
-        # Weight rank < input spatial rank → empty kernel_shape would OOB-index later.
+    def test_conv_transpose_undersized_weight_raises(self):
+        # Weight rank < 3 violates ConvTranspose spec (C x M/group x k1...kn).
         model = onnx.parser.parse_model(
             """
             <ir_version: 8, opset_import: [ "" : 11 ]>
             g (float[1,1,5] X, float[1,3] W) => (float[1,1,?] Y) { Y = ConvTranspose(X, W) }
             """
         )
-        # Graceful return without output shape inference is acceptable; must not crash.
-        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            onnx.shape_inference.infer_shapes,
+            model,
+            True,
+        )
 
     def test_infer_shapes_pathlike_error(self) -> None:
         with self.assertRaisesRegex(
