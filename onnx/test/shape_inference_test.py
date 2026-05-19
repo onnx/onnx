@@ -5658,6 +5658,34 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
 
+    def test_conv_transpose_rank2_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, (48, 32)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (48, 32), list(range(48 * 32))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank2_input_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48)),
+                ("W", TensorProto.FLOAT, (48, 32, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("X", TensorProto.FLOAT, (25, 48), list(range(25 * 48))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
     def test_onehot_without_axis(self) -> None:
         graph = self._make_graph(
             [

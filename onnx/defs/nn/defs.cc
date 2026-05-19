@@ -1097,14 +1097,16 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   int64_t group = getAttribute(ctx, "group", 1);
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions. Got: ", input_shape.dim_size());
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference(
+        "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
   }
 
-  // Weight tensor (input 1) must also have at least 2 dimensions.
+  // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
   auto weight_shape = ctx.getInputType(1)->tensor_type().shape();
-  if (weight_shape.dim_size() < 2) {
-    fail_shape_inference("Weight tensor must have at least 2 dimensions. Got: ", weight_shape.dim_size());
+  if (weight_shape.dim_size() < 3) {
+    fail_shape_inference(
+        "Weight tensor must have at least 3 dimensions (C x M/group x k1...kn). Got: ", weight_shape.dim_size());
   }
 
   // first dim is the batch axis and the next is the number of channels.
