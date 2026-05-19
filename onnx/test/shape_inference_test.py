@@ -12082,12 +12082,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[1,1,5] X, float[1,3] W) => (float[1,1,?] Y) { Y = ConvTranspose(X, W) }
             """
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            onnx.shape_inference.infer_shapes,
-            model,
-            True,
-        )
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_infer_shapes_pathlike_error(self) -> None:
         with self.assertRaisesRegex(
