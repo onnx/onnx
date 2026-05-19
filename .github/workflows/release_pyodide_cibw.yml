@@ -44,9 +44,6 @@ jobs:
           sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
 
-      - name: Install cibuildwheel
-        run: python -m pip install -q cibuildwheel>=2.21
-
       - name: Download protoc for host
         run: |
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-x86_64.zip" -o protoc.zip
@@ -62,7 +59,7 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        uses: pypa/cibuildwheel@54327ab9d35de03b359ac25c97de9417d94639c0  # v4.0.0rc1
         with:
           output-dir: dist/
         env:

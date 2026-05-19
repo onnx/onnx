@@ -3,7 +3,7 @@ name: add-op
 description: Add a new ONNX operator or update an existing operator to a new opset version. Use when asked to define an operator schema, register an op, add inputs/outputs/attributes to an op, move an op to old.cc, or bump an op's opset version.
 ---
 
-Follow the full procedure in [docs/AddNewOp.md](../../docs/AddNewOp.md).
+Follow the full procedure in [docs/AddNewOp.md](../../../docs/AddNewOp.md).
 
 ## Files to Modify
 
@@ -16,6 +16,7 @@ Follow the full procedure in [docs/AddNewOp.md](../../docs/AddNewOp.md).
 | Reference implementation | `onnx/reference/ops/op_<lowercase_name>.py` |
 | Node tests | `onnx/backend/test/case/node/<lowercase_name>.py` |
 | Shape inference tests | `onnx/test/shape_inference_test.py` |
+| Version converter adapter (if behavior changed) | `onnx/version_converter/adapters/<name>_<from>_<to>.h` |
 | Upgrade/downgrade tests | `onnx/test/version_converter/automatic_upgrade_test.py` and `automatic_downgrade_test.py` |
 
 Domain subdirectories under `onnx/defs/`: `math/`, `nn/`, `tensor/`, `logical/`, `reduction/`, `rnn/`, `sequence/`, `image/`, `text/`, `quantization/`, `controlflow/`, `optional/`, `traditionalml/`, `training/`
@@ -33,6 +34,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr("attr_name", "Description", AttributeProto::FLOAT, default_value)
         .TypeConstraint("T", {"tensor(float)", "tensor(double)", ...}, "Description")
         .TypeAndShapeInferenceFunction(InferShapeForOperatorName)
+        // Function body uses ONNX text format — see the onnxtxt skill for syntax/conventions.
         .FunctionBody(R"ONNX(
           {
             ...
@@ -74,6 +76,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(InferShapeForMyOp));
 ```
 
+## Writing Tests
+
+For test fixtures, prefer the ONNX text format via `onnx.parser` / C++ `OnnxParser`. See the [`onnxtxt`](../onnxtxt/SKILL.md) skill for the per-file recommendations table, body-subgraph idioms, the argument-order convention, and the `unk__*` materialization gotcha. (Empirical: PR #7962 cut ~58–70% of test LOC by switching.)
+
 ## After Making Changes
 
 ```bash
@@ -85,8 +91,9 @@ lintrunner -a --output oneline
 
 ## References
 
-- [docs/AddNewOp.md](../../docs/AddNewOp.md) — Full procedure for adding/updating ops
-- [docs/AddFunctionBody.md](../../docs/AddFunctionBody.md) — Function body guide
-- [docs/ShapeInference.md](../../docs/ShapeInference.md) — Shape inference guide
+- [docs/AddNewOp.md](../../../docs/AddNewOp.md) — Full procedure for adding/updating ops
+- [docs/AddFunctionBody.md](../../../docs/AddFunctionBody.md) — Function body guide
+- [docs/ShapeInference.md](../../../docs/ShapeInference.md) — Shape inference guide
+- [../onnxtxt/SKILL.md](../onnxtxt/SKILL.md) — ONNX text format ("onnxtxt") for tests and function bodies
 - [references/node-test-pattern.md](references/node-test-pattern.md) — Node test example
 - [references/reference-impl-pattern.md](references/reference-impl-pattern.md) — Reference implementation example
