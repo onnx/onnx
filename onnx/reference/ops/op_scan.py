@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import numpy as np
 
-from onnx.helper import tensor_dtype_to_np_dtype
 from onnx.reference.op_run import OpRun
 
 
@@ -170,45 +169,13 @@ class Scan(OpRun):
             for i, name in enumerate(scan_names_out):
                 results[i].append(np.expand_dims(outputs[name], axis=0))
 
-        for i, res in enumerate(results):
-            if res:
-                states.append(np.concatenate(res, axis=0))
-            else:
-                states.append(
-                    self._empty_scan_output(num_loop_state_vars + i, scan_values, i)
-                )
-        return self._check_and_fix_outputs(tuple(states))
-
-    def _empty_scan_output(self, body_output_index, scan_values, scan_output_index):
-        """Build a zero-length scan output preserving the per-iteration shape.
-
-        Uses ``self.body.output_types_`` (populated by the reference evaluator)
-        as the source of truth for the trailing element shape and dtype. Unknown
-        or symbolic dims map to 0 so ``np.zeros`` is safe. Falls back to the
-        previous ``(0,)`` shape only when no type info is available at all.
-        """
-        output_types = getattr(self.body, "output_types_", None)
-        type_proto = (
-            output_types[body_output_index]
-            if output_types is not None and body_output_index < len(output_types)
-            else None
-        )
-
-        # Resolve dtype, preferring the body's declared element type.
-        dtype = None
-        if type_proto is not None and type_proto.tensor_type.elem_type:
-            dtype = tensor_dtype_to_np_dtype(type_proto.tensor_type.elem_type)
-        if dtype is None:
-            if scan_values:
-                dtype = scan_values[min(scan_output_index, len(scan_values) - 1)].dtype
-            else:
-                dtype = np.float32
-
-        # Resolve trailing shape from the body output, when present.
-        if type_proto is not None and type_proto.tensor_type.HasField("shape"):
-            trailing_dims = tuple(
-                d.dim_value if d.HasField("dim_value") and d.dim_value >= 0 else 0
-                for d in type_proto.tensor_type.shape.dim
+        if max_iter == 0 and results:
+            # Zero-trip Scan with scan outputs is not supported: the per-iteration
+            # element shape/dtype cannot be reliably inferred without executing
+            # the body. Treat as an error rather than guessing.
+            raise RuntimeError(
+                "Scan with zero scan-input length and scan outputs is not supported."
             )
-            return np.zeros((0, *trailing_dims), dtype=dtype)
-        return np.empty((0,), dtype=dtype)
+        for res in results:
+            states.append(np.concatenate(res, axis=0))
+        return self._check_and_fix_outputs(tuple(states))
