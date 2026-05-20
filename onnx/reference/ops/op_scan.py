@@ -52,6 +52,13 @@ class Scan(OpRun):
         self.input_names = self.body.input_names
         self.output_names = self.body.output_names
 
+    def need_context(self) -> bool:
+        """Scan body subgraphs may reference names from the enclosing graph
+        (lexical capture, per the ONNX spec). Request the outer-scope
+        context so those names resolve at body-evaluation time.
+        """
+        return True
+
     def _common_run_shape(self, *args):
         num_loop_state_vars = len(args) - self.num_scan_inputs
         num_scan_outputs = len(self.output_names) - num_loop_state_vars
@@ -108,6 +115,7 @@ class Scan(OpRun):
     def _run(  # type: ignore[override]
         self,
         *args,
+        context=None,
         body=None,  # noqa: ARG002
         num_scan_inputs=None,  # noqa: ARG002
         scan_input_axes=None,  # noqa: ARG002
@@ -136,7 +144,13 @@ class Scan(OpRun):
         results = [[] for _ in scan_names_out]
 
         for it in range(max_iter):
-            inputs = dict(zip(state_names_in, states, strict=False))
+            # Seed with outer-scope values first; per-iteration state and
+            # scan-slice inputs (added below) shadow any same-named outer
+            # values, matching ONNX's lexical-capture semantics.
+            inputs: dict = {}
+            if context is not None:
+                inputs.update(context)
+            inputs.update(dict(zip(state_names_in, states, strict=False)))
             inputs.update(
                 {
                     name: value[it]
