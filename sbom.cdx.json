@@ -34,17 +34,17 @@
     {
       "type": "library",
       "name": "protobuf",
-      "version": "33.6",
+      "version": "25.1",
       "bom-ref": "protobuf",
-      "purl": "pkg:github/protocolbuffers/protobuf@v33.6",
+      "purl": "pkg:github/protocolbuffers/protobuf@v25.1",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz"
+          "url": "https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protobuf-25.1.tar.gz"
         }
       ],
       "hashes": [
-        {"alg": "SHA-256", "content": "16498d7dc7967e9b100632138babd4b86b61592beeccdd556f67539d9c231355"}
+        {"alg": "SHA-256", "content": "9bd87b8280ef720d3240514f884e56a712f2218f0d693b48050c836028940a42"}
       ],
       "licenses": [{"license": {"id": "BSD-3-Clause"}}]
     },

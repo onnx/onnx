@@ -3,7 +3,7 @@ name: add-shape-inference
 description: Add or update type and shape inference for an ONNX operator. Use when asked to implement TypeAndShapeInferenceFunction, propagate shapes, add shape inference tests, fix shape inference bugs, or handle broadcasting logic.
 ---
 
-See also: [docs/ShapeInference.md](../../docs/ShapeInference.md)
+See also: [docs/ShapeInference.md](../../../docs/ShapeInference.md)
 
 ## File Locations
 
@@ -96,24 +96,26 @@ Dim multiplyDims(const TensorShapeProto& shape, int from, int upto);
 
 ## Writing Tests
 
-```python
-# In onnx/test/shape_inference_test.py
+The `_make_graph` / `_assert_inferred` helpers are right for parameterized op-version sweeps:
 
+```python
 @parameterized.expand(all_versions_for("OpName"))
 def test_opname(self, _, version) -> None:
     graph = self._make_graph(
         [("X", TensorProto.FLOAT, (2, 3, 4))],
-        [make_node("OpName", ["X"], ["Y"], attr_name=value)],
+        [make_node("OpName", ["X"], ["Y"], attr_name=attr_value)],
         [],
     )
     self._assert_inferred(
         graph,
-        [make_tensor_value_info("Y", TensorProto.FLOAT, (expected_shape))],
+        [make_tensor_value_info("Y", TensorProto.FLOAT, expected_shape)],
         opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
     )
 ```
 
-Cover: known shapes, partial shapes (None), rank inference, error cases, broadcasting, attribute-dependent shapes.
+For one-off fixtures — anything with attributes, body subgraphs, or non-trivial type info — prefer the [`onnxtxt`](../onnxtxt/SKILL.md) skill's parser-based fixtures (it also covers the C++ `unk__*` materialization gotcha for free dims).
+
+Cover: known shapes, partial shapes (`None`), rank inference, error cases, broadcasting, attribute-dependent shapes.
 
 ## Code Style: Prefer Named Functions
 
