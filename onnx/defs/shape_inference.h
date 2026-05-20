@@ -908,63 +908,17 @@ inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int d
 
 // unifyInputShape: unifies all dimensions of an input with the given dim references.
 // Requires the input to have rank exactly equal to the number of dims provided.
-inline void unifyInputShape(
+void unifyInputShape(
     InferenceContext& ctx,
     size_t input_index,
-    std::initializer_list<std::reference_wrapper<Dim>> dims) {
-  if (!hasInputShape(ctx, input_index)) {
-    return;
-  }
-  const auto& input_shape = getInputShape(ctx, input_index);
-  if (static_cast<size_t>(input_shape.dim_size()) != dims.size()) {
-    fail_shape_inference(
-        "Input ",
-        input_index,
-        " expected to have rank ",
-        dims.size(),
-        " but has rank ",
-        input_shape.dim_size(),
-        " in ",
-        ctx.getDisplayName(),
-        ".");
-  }
-  int i = 0;
-  for (auto& dim_ref : dims) {
-    const Dim& input_dim = input_shape.dim(i);
-    unifyDim(input_dim, dim_ref.get());
-    ++i;
-  }
-}
+    std::initializer_list<std::reference_wrapper<Dim>> dims);
 
 // unifyInputShapePrefix: unifies the first N dimensions of an input with the given dim references.
 // Requires the input to have rank at least equal to the number of dims provided.
-inline void unifyInputShapePrefix(
+void unifyInputShapePrefix(
     InferenceContext& ctx,
     size_t input_index,
-    std::initializer_list<std::reference_wrapper<Dim>> prefix) {
-  if (!hasInputShape(ctx, input_index)) {
-    return;
-  }
-  const auto& input_shape = getInputShape(ctx, input_index);
-  if (static_cast<size_t>(input_shape.dim_size()) < prefix.size()) {
-    fail_shape_inference(
-        "Input ",
-        input_index,
-        " expected to have rank >= ",
-        prefix.size(),
-        " but has rank ",
-        input_shape.dim_size(),
-        " in ",
-        ctx.getDisplayName(),
-        ".");
-  }
-  int i = 0;
-  for (auto& dim_ref : prefix) {
-    const Dim& input_dim = input_shape.dim(i);
-    unifyDim(input_dim, dim_ref.get());
-    ++i;
-  }
-}
+    std::initializer_list<std::reference_wrapper<Dim>> prefix);
 
 // unifyDim: unifies a dimension with a constant value. If the dimension
 // already has a value, we check for equality of new value with old value.
