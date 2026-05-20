@@ -1238,14 +1238,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           // A is (M, K) or (K, M) if transA; B is (K, N) or (N, K) if transB
           Dim M, N, K;
           if (transA) {
-            unifyInputShape(ctx, 0, {std::ref(K), std::ref(M)});
+            unifyInputShape(ctx, 0, {K, M});
           } else {
-            unifyInputShape(ctx, 0, {std::ref(M), std::ref(K)});
+            unifyInputShape(ctx, 0, {M, K});
           }
           if (transB) {
-            unifyInputShape(ctx, 1, {std::ref(N), std::ref(K)});
+            unifyInputShape(ctx, 1, {N, K});
           } else {
-            unifyInputShape(ctx, 1, {std::ref(K), std::ref(N)});
+            unifyInputShape(ctx, 1, {K, N});
           }
           // Output shape is (M, N)
           updateOutputShape(ctx, 0, {M, N});
