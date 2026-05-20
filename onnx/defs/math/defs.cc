@@ -1234,8 +1234,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
           auto transBAttr = ctx.getAttribute("transB");
           bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-          // Gemm computes C = alpha * A * B + beta * C
-          // A is (M, K) or (K, M) if transA; B is (K, N) or (N, K) if transB
+          // Gemm computes Y = alpha * A' * B' + beta * C
+          // A' is A or A^T depending on transA; B' is B or B^T depending on transB
           Dim M, N, K;
           if (transA) {
             unifyInputShape(ctx, 0, {K, M});
