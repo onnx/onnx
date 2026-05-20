@@ -577,7 +577,7 @@ void unifyInputShape(
         ".");
   }
   int i = 0;
-  for (auto& dim_ref : dims) {
+  for (const auto& dim_ref : dims) {
     const Dim& input_dim = input_shape.dim(i);
     unifyDim(input_dim, dim_ref.get());
     ++i;
@@ -605,7 +605,7 @@ void unifyInputShapePrefix(
         ".");
   }
   int i = 0;
-  for (auto& dim_ref : prefix) {
+  for (const auto& dim_ref : prefix) {
     const Dim& input_dim = input_shape.dim(i);
     unifyDim(input_dim, dim_ref.get());
     ++i;
