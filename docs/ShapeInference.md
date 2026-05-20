@@ -156,6 +156,12 @@ when multiple input dims are expected to be the same, and when input
 dimensions are propagated to specific output dimensions. (See the inference
 for `RoiAlign` for an example.)
 
+* `unifyInputShape` and `unifyInputShapePrefix` are higher-level utilities
+built on `unifyInputDim`. They unify all dimensions (or a prefix of dimensions)
+of an input in one call, enabling a more declarative style. `unifyInputDim`
+remains useful for more complex scenarios where individual dimensions are
+accessed selectively.
+
 * Overloaded operators `*` and `/` can be used on symbolic dimensions when output
 dimensions are computed from input dimensions using arithmetic. (See the inference
 for `SpaceToDepth` for an example.)
@@ -178,4 +184,14 @@ up as below:
    unifyInputDim(ctx, 1, 0, K);
    unifyInputDim(ctx, 1, 1, N);
    updateOutputShape(ctx, 0, {M. N});
+```
+
+The same example can be written more concisely using `unifyInputShape`, which
+checks rank and unifies all dimensions in one call:
+
+```cpp
+   Dim M, K, N;
+   unifyInputShape(ctx, 0, {M, K});
+   unifyInputShape(ctx, 1, {K, N});
+   updateOutputShape(ctx, 0, {M, N});
 ```
