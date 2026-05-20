@@ -183,7 +183,7 @@ up as below:
    unifyInputDim(ctx, 0, 1, K);
    unifyInputDim(ctx, 1, 0, K);
    unifyInputDim(ctx, 1, 1, N);
-   updateOutputShape(ctx, 0, {M. N});
+   updateOutputShape(ctx, 0, {M, N});
 ```
 
 The same example can be written more concisely using `unifyInputShape`, which
