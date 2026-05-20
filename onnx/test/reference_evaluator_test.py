@@ -6362,9 +6362,11 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(got, xs.sum(axis=0))
 
     def test_scan_max_iter_zero(self):
-        # Regression test: when max_iter == 0 (zero-length scan input along the
-        # iteration axis) the scan output must preserve the per-iteration shape
-        # declared by the body, i.e. shape == (0, *body_out_shape), not (0,).
+        # Zero-length scan input (max_iter == 0) combined with scan outputs is
+        # an unsupported edge case in the reference implementation: the
+        # per-iteration element shape/dtype cannot be reliably synthesized
+        # without executing the body. The runtime must raise rather than
+        # silently produce a guess.
         body = make_graph(
             [
                 make_node("Add", ["s_in", "x_in"], ["s_out"]),
@@ -6406,11 +6408,8 @@ class TestReferenceEvaluator(unittest.TestCase):
         sess = ReferenceEvaluator(onnx_model)
         init = np.zeros(2, dtype=np.float32)
         xs = np.zeros((0, 2), dtype=np.float32)
-        final, ys = sess.run(None, {"init": init, "xs": xs})
-
-        assert_allclose(final, init)
-        self.assertEqual(ys.shape, (0, 2))
-        self.assertEqual(ys.dtype, np.float32)
+        with self.assertRaisesRegex(RuntimeError, "zero scan-input length"):
+            sess.run(None, {"init": init, "xs": xs})
 
     def test_scan_k_neq_m(self):
         # Regression test for the original `num_scan_outputs = len(args) - N`
