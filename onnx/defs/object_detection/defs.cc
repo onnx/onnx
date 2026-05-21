@@ -6,6 +6,7 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -78,7 +79,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 

@@ -11,6 +11,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/nn/utils.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 static constexpr const char* pads_doc =
@@ -366,7 +367,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64"));
+        .TypeConstraint("I", {types::Int64}, "Constrain index tensor to int64"));
 
 static void maxUnpoolShapeInference(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
@@ -429,11 +430,18 @@ static void maxUnpoolShapeInference(InferenceContext& ctx) {
             // determined at runtime.
   }
 
+  if (!hasInputShape(ctx, 1)) {
+    return; // If indices input does not have shape, we cannot infer output shape.
+  }
+  auto indices_shape = ctx.getInputType(1)->tensor_type().shape();
+  if (indices_shape.dim_size() < 2) {
+    fail_shape_inference("Indices tensor I must have at least 2 dimensions.");
+  }
+
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() =
-      ctx.getInputType(1)->tensor_type().shape().dim(1); // channels should be the second dim of second input.
+  *final_output_shape->add_dim() = indices_shape.dim(1); // channels should be the second dim of second input.
 
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
   for (int i = 0; i < kernel_shape_size; ++i) {
@@ -519,7 +527,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::Differentiable)
         .TypeConstraint("T1", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain index tensor to int64")
+        .TypeConstraint("T2", {types::Int64}, "Constrain index tensor to int64")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) { maxUnpoolShapeInference(ctx); }));
 
 static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
@@ -899,10 +907,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "convolution. The output dimensions are functions "
             "of the kernel size, stride size, and pad lengths.",
             "T3")
-        .TypeConstraint("T1", {"tensor(int8)", "tensor(uint8)"}, "Constrain input type to 8-bit integer tensor.")
-        .TypeConstraint("T2", {"tensor(int8)", "tensor(uint8)"}, "Constrain filter type to 8-bit integer tensor.")
-        .TypeConstraint("T3", {"tensor(int8)", "tensor(uint8)"}, "Constrain output type to 8-bit integer tensor.")
-        .TypeConstraint("T4", {"tensor(int32)"}, "Constrain bias type to 32-bit integer tensor.")
+        .TypeConstraint("T1", {types::Int8, types::UInt8}, "Constrain input type to 8-bit integer tensor.")
+        .TypeConstraint("T2", {types::Int8, types::UInt8}, "Constrain filter type to 8-bit integer tensor.")
+        .TypeConstraint("T3", {types::Int8, types::UInt8}, "Constrain output type to 8-bit integer tensor.")
+        .TypeConstraint("T4", {types::Int32}, "Constrain bias type to 32-bit integer tensor.")
         .Attr("auto_pad", conv_auto_pad_doc, AttributeProto::STRING, std::string("NOTSET"))
         .Attr(
             "kernel_shape",
@@ -1025,13 +1033,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T3")
         .TypeConstraint(
             "T1",
-            {"tensor(int8)", "tensor(uint8)"},
+            {types::Int8, types::UInt8},
             "Constrain input x and its zero point data type to 8-bit integer tensor.")
         .TypeConstraint(
             "T2",
-            {"tensor(int8)", "tensor(uint8)"},
+            {types::Int8, types::UInt8},
             "Constrain input w and its zero point data type to 8-bit integer tensor.")
-        .TypeConstraint("T3", {"tensor(int32)"}, "Constrain output y data type to 32-bit integer tensor.")
+        .TypeConstraint("T3", {types::Int32}, "Constrain output y data type to 32-bit integer tensor.")
         .Attr("auto_pad", conv_auto_pad_doc, AttributeProto::STRING, std::string("NOTSET"))
         .Attr(
             "kernel_shape",
@@ -1089,8 +1097,16 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   int64_t group = getAttribute(ctx, "group", 1);
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  if (input_shape.dim_size() < 2) {
-    return; // Input tensor should have at least two dimensions.
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference(
+        "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
+  }
+
+  // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
+  auto weight_shape = ctx.getInputType(1)->tensor_type().shape();
+  if (weight_shape.dim_size() < 3) {
+    fail_shape_inference(
+        "Weight tensor must have at least 3 dimensions (C x M/group x k1...kn). Got: ", weight_shape.dim_size());
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -1120,12 +1136,11 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
       return;
     }
   } else {
-    auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
-    for (int i = 2; i < second_input_shape.dim_size(); ++i) {
-      if (!second_input_shape.dim(i).has_dim_value()) {
+    for (int i = 2; i < weight_shape.dim_size(); ++i) {
+      if (!weight_shape.dim(i).has_dim_value()) {
         return;
       }
-      kernel_shape.push_back(second_input_shape.dim(i).dim_value());
+      kernel_shape.push_back(weight_shape.dim(i).dim_value());
     }
     if (kernel_shape.size() != n_input_dims) {
       return; // weight rank mismatch
@@ -1190,9 +1205,8 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   auto* final_output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
-  *final_output_shape->add_dim() =
-      ctx.getInputType(1)->tensor_type().shape().dim(1) * group; // channels should be the second dim of second input
-                                                                 // multiply group.
+  *final_output_shape->add_dim() = weight_shape.dim(1) * group; // channels should be the second dim of second input
+                                                                // multiply group.
 
   int size_of_output = 0;
   if (output_shape_presented) {
@@ -1681,15 +1695,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain scale and bias types to float tensors.")
         .TypeConstraint(
             "T2",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain mean and variance types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
@@ -1847,7 +1861,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(1, "mask", "The output mask.", "T2", OpSchema::Optional, true, 1, OpSchema::NonDifferentiable)
         .TypeConstraint("T", OpSchema::all_float_types_ir10(), "Constrain input and output types to float tensors.")
         .TypeConstraint("T1", OpSchema::all_float_types_ir10(), "Constrain input 'ratio' types to float tensors.")
-        .TypeConstraint("T2", {"tensor(bool)"}, "Constrain output 'mask' types to boolean tensors.")
+        .TypeConstraint("T2", {types::Bool}, "Constrain output 'mask' types to boolean tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::NonDeterministic)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2015,7 +2029,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output "
             " types to float tensors.")
         .SetDoc(LRN_ver13_doc)
@@ -2057,11 +2071,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Input(0, "X", "Input for n-gram extraction", "T", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
         .Output(0, "Y", "Ngram results", "T1", OpSchema::Single, true, 1, OpSchema::NonDifferentiable)
-        .TypeConstraint(
-            "T",
-            {"tensor(string)", "tensor(int32)", "tensor(int64)"},
-            "Input is ether string UTF-8 or int32/int64")
-        .TypeConstraint("T1", {"tensor(float)"}, "1-D tensor of floats")
+        .TypeConstraint("T", {types::String, types::Int32, types::Int64}, "Input is either string UTF-8 or int32/int64")
+        .TypeConstraint("T1", {types::Float}, "1-D tensor of floats")
         .Attr(
             "max_gram_length",
             "Maximum n-gram length. If this value is 3, 3-grams will be used to generate the output.",
@@ -2171,7 +2182,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             mvn_default_axes)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input and output types to all numeric tensors.")
         .FunctionBody(R"ONNX(
         {
@@ -2570,9 +2581,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Optional)
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input types and output Y type to float tensors.")
-        .TypeConstraint("U", {"tensor(float)", "tensor(bfloat16)"}, "Type of Mean and InvStdDev tensors.")
+        .TypeConstraint("U", {types::Float, types::BFloat16}, "Type of Mean and InvStdDev tensors.")
         .SetNodeDeterminism(OpSchema::NodeDeterminism::Deterministic)
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer17, 17)
         .SetContextDependentFunctionBodyBuilder(BuildContextDependentFunctionBodyLayerNormalizationVer18, 18)
@@ -2835,11 +2846,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output data tensor. Same shape as X", "V")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain input X type to float tensors.")
         .TypeConstraint(
             "V",
-            {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(bfloat16)"},
+            {types::Float16, types::Float, types::Double, types::BFloat16},
             "Constrain output Y and scale type to float tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateShapeAndTypeFromFirstInput(ctx);
@@ -3075,9 +3086,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Tensor with same shape as input.", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float)", "tensor(float16)", "tensor(bfloat16)"},
+            {types::Float, types::Float16, types::BFloat16},
             "Constrain input and output types to float tensors.")
-        .TypeConstraint("M", {"tensor(int64)"}, "Constrain input and output types to integer tensors.")
+        .TypeConstraint("M", {types::Int64}, "Constrain input and output types to integer tensors.")
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           propagateShapeFromInputToOutput(ctx, 0, 0);

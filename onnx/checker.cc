@@ -16,6 +16,7 @@
 #include "onnx/common/file_utils.h"
 #include "onnx/common/path.h"
 #include "onnx/common/proto_util.h"
+#include "onnx/common/safe_math.h"
 #include "onnx/common/scoped_resource.h"
 #include "onnx/defs/tensor_proto_util.h"
 #include "onnx/shape_inference/implementation.h"
@@ -162,10 +163,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     }
     return;
   }
-  int64_t nelem = 1;
-  for (auto x : tensor.dims()) {
-    nelem *= x;
-  }
+  int64_t nelem =
+      safe_dim_product(tensor.dims(), [&](const char* msg) { fail_check(msg, " (tensor name: ", tensor.name(), ")"); });
   if (nelem == 0 && num_value_fields != 0) {
     fail_check("TensorProto (tensor name: ", tensor.name(), ") is 0-element but contains data!");
   }

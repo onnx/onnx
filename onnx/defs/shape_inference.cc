@@ -566,4 +566,60 @@ std::pair<int, int> getAttributeElementTypeAndLength(
   return {elem_type, length};
 }
 
+void unifyInputShape(
+    InferenceContext& ctx,
+    size_t input_index,
+    std::initializer_list<std::reference_wrapper<Dim>> dims) {
+  if (!hasInputShape(ctx, input_index)) {
+    return;
+  }
+  const auto& input_shape = getInputShape(ctx, input_index);
+  if (static_cast<size_t>(input_shape.dim_size()) != dims.size()) {
+    fail_shape_inference(
+        "Input ",
+        input_index,
+        " expected to have rank ",
+        dims.size(),
+        " but has rank ",
+        input_shape.dim_size(),
+        " in ",
+        ctx.getDisplayName(),
+        ".");
+  }
+  int i = 0;
+  for (const auto& dim_ref : dims) {
+    const Dim& input_dim = input_shape.dim(i);
+    unifyDim(input_dim, dim_ref.get());
+    ++i;
+  }
+}
+
+void unifyInputShapePrefix(
+    InferenceContext& ctx,
+    size_t input_index,
+    std::initializer_list<std::reference_wrapper<Dim>> prefix) {
+  if (!hasInputShape(ctx, input_index)) {
+    return;
+  }
+  const auto& input_shape = getInputShape(ctx, input_index);
+  if (static_cast<size_t>(input_shape.dim_size()) < prefix.size()) {
+    fail_shape_inference(
+        "Input ",
+        input_index,
+        " expected to have rank >= ",
+        prefix.size(),
+        " but has rank ",
+        input_shape.dim_size(),
+        " in ",
+        ctx.getDisplayName(),
+        ".");
+  }
+  int i = 0;
+  for (const auto& dim_ref : prefix) {
+    const Dim& input_dim = input_shape.dim(i);
+    unifyDim(input_dim, dim_ref.get());
+    ++i;
+  }
+}
+
 } // namespace ONNX_NAMESPACE
