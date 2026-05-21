@@ -327,20 +327,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
-static bool BuildFunctionBodyRange27(
-    const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+static bool
+BuildFunctionBodyRange27(const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
   if (ctx.getInputType(0) == nullptr) {
     return false;
   }
   int64_t T = ctx.getInputType(0)->tensor_type().elem_type();
-  bool needs_stash = (T == static_cast<int64_t>(TensorProto_DataType_FLOAT16) ||
-                      T == static_cast<int64_t>(TensorProto_DataType_BFLOAT16));
+  bool needs_stash =
+      (T == static_cast<int64_t>(TensorProto_DataType_FLOAT16) ||
+       T == static_cast<int64_t>(TensorProto_DataType_BFLOAT16));
 
   int64_t stash_type = T;
   if (needs_stash) {
     const auto* stash_attr = ctx.getAttribute("stash_type");
-    stash_type =
-        (stash_attr != nullptr) ? stash_attr->i() : static_cast<int64_t>(TensorProto_DataType_FLOAT);
+    stash_type = (stash_attr != nullptr) ? stash_attr->i() : static_cast<int64_t>(TensorProto_DataType_FLOAT);
   }
 
   FunctionBuilder builder(functionProto);

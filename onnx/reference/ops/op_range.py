@@ -23,7 +23,9 @@ class Range(OpRun):
         end_val = ends.item() if isinstance(ends, np.ndarray) else ends
         step_val = steps.item() if isinstance(steps, np.ndarray) else steps
         if stash_type is not None and dtype in _LOW_PRECISION_DTYPES:
-            compute_dtype = _STASH_TYPE_TO_DTYPE.get(int(stash_type), np.dtype(np.float32))
+            compute_dtype = _STASH_TYPE_TO_DTYPE.get(
+                int(stash_type), np.dtype(np.float32)
+            )
             return (
                 np.arange(
                     starts.astype(compute_dtype).item(),
