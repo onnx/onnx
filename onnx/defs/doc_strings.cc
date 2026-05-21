@@ -505,8 +505,8 @@ The following table describes the casting behavior of special values to FLOAT8E8
 | NaN               | NaN           | NaN                    |
 | Inf               | E8M0_MAX      | NaN                    |
 | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-| x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-| x \< 0            | Unspecified   | Unspecified            |
+| x < E8M0_MIN      | E8M0_MIN      | NaN                    |
+| x < 0             | Unspecified   | Unspecified            |
 )DOC";
 
 const char kDoc_Multinomial_ver7[] = R"DOC(
