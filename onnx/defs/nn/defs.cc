@@ -4299,15 +4299,16 @@ ONNX_OPERATOR_SET_SCHEMA(
           // T-typed q_t) so the Scan accumulates a T-typed output tensor.
           std::string read_block;
           if (group_size > 1) {
-            read_block =
-                "                StateUnsq = Unsqueeze (state_out, Two1D)\n"
-                "                StateExpanded = Expand (StateUnsq, StateExpandShape)\n"
-                "                StateForRead = Reshape (StateExpanded, StateReadShape)\n"
-                "                QtRow = Unsqueeze (q_t_f, NegTwo1D)\n"
-                "                ReadOut = MatMul (QtRow, StateForRead)\n"
-                "                ReadSq = Squeeze (ReadOut, NegTwo1D)\n"
-                "                output_t_f = Mul (ScaleFactor, ReadSq)\n"
-                "                output_t = CastLike (output_t_f, q_t)\n";
+            read_block = R"ONNX(
+                StateUnsq = Unsqueeze (state_out, Two1D)
+                StateExpanded = Expand (StateUnsq, StateExpandShape)
+                StateForRead = Reshape (StateExpanded, StateReadShape)
+                QtRow = Unsqueeze (q_t_f, NegTwo1D)
+                ReadOut = MatMul (QtRow, StateForRead)
+                ReadSq = Squeeze (ReadOut, NegTwo1D)
+                output_t_f = Mul (ScaleFactor, ReadSq)
+                output_t = CastLike (output_t_f, q_t)
+              )ONNX";
           } else {
             read_block = R"ONNX(
                 QtRow = Unsqueeze (q_t_f, NegTwo1D)
