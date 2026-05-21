@@ -6465,6 +6465,99 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(ys_a, np.cumsum(xs, axis=0))
         assert_allclose(ys_b, xs * xs)
 
+    def test_scan_body_captures_outer_initializer(self):
+        # Regression test for Scan.need_context() / context plumbing.
+        # The body references `bias`, which is *not* a body input but an
+        # initializer in the enclosing graph. Without lexical-capture
+        # support the body would fail to resolve the name.
+        body = make_graph(
+            [make_node("Add", ["s_in", "bias"], ["s_out"])],
+            "scan_body",
+            [
+                make_tensor_value_info("s_in", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("x_in", TensorProto.FLOAT, [2]),
+            ],
+            [make_tensor_value_info("s_out", TensorProto.FLOAT, [2])],
+        )
+        bias_init = from_array(np.array([10, 100], dtype=np.float32), name="bias")
+        graph = make_graph(
+            [
+                make_node(
+                    "Scan",
+                    ["init", "xs"],
+                    ["final"],
+                    num_scan_inputs=1,
+                    body=body,
+                )
+            ],
+            "g",
+            [
+                make_tensor_value_info("init", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("xs", TensorProto.FLOAT, [3, 2]),
+            ],
+            [make_tensor_value_info("final", TensorProto.FLOAT, [2])],
+            initializer=[bias_init],
+        )
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        # xs is unused by the body except to drive the iteration count (3).
+        xs = np.zeros((3, 2), dtype=np.float32)
+        (final,) = sess.run(None, {"init": init, "xs": xs})
+
+        # Each of the 3 iterations adds `bias` to the running state.
+        assert_allclose(final, np.array([30, 300], dtype=np.float32))
+
+    def test_scan_body_input_shadows_outer_initializer(self):
+        # Regression test for the ordering inside Scan._run: per-iteration
+        # state and scan-slice inputs must shadow any same-named outer
+        # values seeded from the captured context. If the update order were
+        # reversed the body would see the outer constant on every iteration
+        # and the final state would be wrong.
+        body = make_graph(
+            [make_node("Add", ["s_in", "x_in"], ["s_out"])],
+            "scan_body",
+            [
+                make_tensor_value_info("s_in", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("x_in", TensorProto.FLOAT, [2]),
+            ],
+            [make_tensor_value_info("s_out", TensorProto.FLOAT, [2])],
+        )
+        # Outer initializer deliberately named `x_in` — same as the body's
+        # scan-input. The body must see the per-iteration value, not this.
+        shadow_init = from_array(np.array([999, 999], dtype=np.float32), name="x_in")
+        graph = make_graph(
+            [
+                make_node(
+                    "Scan",
+                    ["init", "xs"],
+                    ["final"],
+                    num_scan_inputs=1,
+                    body=body,
+                )
+            ],
+            "g",
+            [
+                make_tensor_value_info("init", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("xs", TensorProto.FLOAT, [3, 2]),
+            ],
+            [make_tensor_value_info("final", TensorProto.FLOAT, [2])],
+            initializer=[shadow_init],
+        )
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        xs = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+        (final,) = sess.run(None, {"init": init, "xs": xs})
+
+        # If shadowing works the result is xs.sum(axis=0) = [9, 12].
+        # If the outer constant leaked through it would be 3 * [999, 999].
+        assert_allclose(final, xs.sum(axis=0))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
