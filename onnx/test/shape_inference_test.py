@@ -2819,11 +2819,12 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_linear_attention_unknown_qkv_with_past_state(self) -> None:
-        # Q/K/V have no shapes; only past_state has a shape. Output falls back
-        # to rank-3 unknown; present_state is propagated from past_state.
-        # Uses _make_graph (not onnx.parser) because shapeless graph inputs
-        # are rejected by the model checker; _make_graph wraps them behind a
-        # Reshape so the shape-erasure happens inside the graph.
+        # Q/K/V have no shapes; only past_state has a shape. Dim unification
+        # propagates B, d_k, d_v from past_state into both output and
+        # present_state (only T remains unknown for output). Uses _make_graph
+        # because shapeless graph inputs are rejected by the model checker;
+        # _make_graph wraps them behind a Reshape so the shape-erasure happens
+        # inside the graph.
         graph = self._make_graph(
             [
                 ("Q", TensorProto.FLOAT, None),
@@ -2846,7 +2847,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph,
             [
-                make_tensor_value_info("output", TensorProto.FLOAT, (None, None, None)),
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, None, 64)),
                 make_tensor_value_info(
                     "present_state", TensorProto.FLOAT, (2, 4, 16, 16)
                 ),

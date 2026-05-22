@@ -3802,44 +3802,39 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // --- Type inference ---
           // All inputs and outputs share the same type T.
-          // Propagate element type from input to both outputs.
           propagateElemTypeFromInputToOutput(ctx, 0, 0); // input -> output
           propagateElemTypeFromInputToOutput(ctx, 0, 1); // input -> present_state
 
           // --- Output 0: same shape as input (B, C, L) ---
           propagateShapeFromInputToOutput(ctx, 0, 0);
 
-          // --- Input rank validation ---
-          // All tensors are rank-3 for this 1D-only operator.
-          checkInputRank(ctx, 0, 3);
-          checkInputRank(ctx, 1, 3);
-
-          // --- Output 1: present_state shape (B, C, k-1) ---
-          // The carry state stores the last (k-1) input positions for
-          // causal continuity across decode steps.
-          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 1)) {
-            auto& input_shape = getInputShape(ctx, 0);
-            auto& weight_shape = getInputShape(ctx, 1);
-            TensorShapeProto state_shape;
-
-            // Batch and channel dims come from the input.
-            *state_shape.add_dim() = input_shape.dim(0); // B
-            *state_shape.add_dim() = input_shape.dim(1); // C
-
-            // Causal dim: kernel_size - 1.
-            // Only compute if weight dim 2 (k) has a concrete value.
-            if (weight_shape.dim(2).has_dim_value()) {
-              int64_t k = weight_shape.dim(2).dim_value();
-              if (k < 1) {
-                fail_shape_inference("Kernel size k must be >= 1, got ", k);
-              }
-              state_shape.add_dim()->set_dim_value(k - 1);
-            } else {
-              state_shape.add_dim(); // unknown causal dim
-            }
-
-            updateOutputShape(ctx, 1, state_shape);
+          // --- Shape inference via dimension unification ---
+          // Declare logical dims and unify each input against its expected shape.
+          // unifyInputShape implicitly validates the rank of each provided input
+          // and propagates the most-informative known value across inputs that
+          // share a dim (e.g. B and C across input/weight/bias/past_state, and
+          // K between weight and past_state).
+          Dim B, C, L, One, K, KMinus1;
+          One.set_dim_value(1);
+          unifyInputShape(ctx, 0, {B, C, L});
+          unifyInputShape(ctx, 1, {C, One, K});
+          if (ctx.hasInput(2)) {
+            unifyInputShape(ctx, 2, {C});
           }
+          if (ctx.hasInput(3)) {
+            unifyInputShape(ctx, 3, {B, C, KMinus1});
+          }
+
+          // Connect KMinus1 to K (when K is known) using Dim arithmetic.
+          // If both are known via past_state and weight, unifyDim checks they agree.
+          unifyDim(K - 1, KMinus1);
+
+          if (K.has_dim_value() && K.dim_value() < 1) {
+            fail_shape_inference("Kernel size k must be >= 1, got ", K.dim_value());
+          }
+
+          // --- Output 1: present_state shape (B, C, k - 1) ---
+          updateOutputShape(ctx, 1, {B, C, KMinus1});
         })
         .SetContextDependentFunctionBodyBuilder(
             [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
@@ -4425,17 +4420,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::string update_rule = (update_rule_attr != nullptr) ? update_rule_attr->s() : "gated_delta";
 
           // Validate update_rule value
-          // TODO: See if needed
           if (update_rule != "linear" && update_rule != "gated" && update_rule != "delta" &&
               update_rule != "gated_delta") {
             fail_type_inference("update_rule must be one of: 'linear', 'gated', 'delta', 'gated_delta'");
           }
 
           // Validate update_rule vs optional inputs (decay=input 4, beta=input 5).
-          bool has_decay = ctx.getNumInputs() > 4 && ctx.getInputType(4) != nullptr &&
-              ctx.getInputType(4)->value_case() == TypeProto::kTensorType;
-          bool has_beta = ctx.getNumInputs() > 5 && ctx.getInputType(5) != nullptr &&
-              ctx.getInputType(5)->value_case() == TypeProto::kTensorType;
+          const bool has_past_state = ctx.hasInput(3);
+          const bool has_decay = ctx.hasInput(4);
+          const bool has_beta = ctx.hasInput(5);
 
           if (update_rule == "linear") {
             if (has_decay) {
@@ -4467,86 +4460,68 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          // Validate input ranks
-          // query/key/value: 3D packed (B, T, H * d); past_state: 4D (B, H_kv, d_k, d_v);
-          // decay/beta: 3D packed when present.
-          checkInputRank(ctx, 0, 3);
-          checkInputRank(ctx, 1, 3);
-          checkInputRank(ctx, 2, 3);
-          checkInputRank(ctx, 3, 4);
-          if (has_decay) {
-            checkInputRank(ctx, 4, 3);
-          }
-          if (has_beta) {
-            checkInputRank(ctx, 5, 3);
-          }
-
-          // Propagate types and shapes
-          propagateElemTypeFromInputToOutput(ctx, 0, 0); // output gets type T from query
-          if (ctx.getNumInputs() > 3 && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type()) {
-            propagateElemTypeFromInputToOutput(ctx, 3, 1); // present_state gets type S from past_state
+          // --- Type propagation ---
+          // output: type T from query
+          // present_state: type S from past_state when provided, else fall back to T
+          // (the spec recommends S == float32 or S == T for numerical stability).
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (has_past_state && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type()) {
+            propagateElemTypeFromInputToOutput(ctx, 3, 1);
           } else {
-            // TODO: Proposal says S must be float32 or same as T, but does not specify
-            // how to infer S when past_state is omitted. Defaulting to T for now.
             propagateElemTypeFromInputToOutput(ctx, 0, 1);
           }
 
-          // Output 0: (B, T, H_q * d_v) — 3D packed
-          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 2) && q_num_heads > 0 && kv_num_heads > 0) {
-            auto& query_shape = getInputShape(ctx, 0);
-            auto& value_shape = getInputShape(ctx, 2);
-            TensorShapeProto output_shape;
-            *output_shape.add_dim() = query_shape.dim(0); // B
-            *output_shape.add_dim() = query_shape.dim(1); // T
-            // H_q * d_v: d_v = value.dim(2) / kv_num_heads, then H_q * d_v
-            if (value_shape.dim(2).has_dim_value()) {
-              int64_t d_v = value_shape.dim(2).dim_value() / kv_num_heads;
-              output_shape.add_dim()->set_dim_value(q_num_heads * d_v);
-            } else {
-              output_shape.add_dim(); // unknown
-            }
-            updateOutputShape(ctx, 0, output_shape);
-          } else {
-            // Rank inference fallback: output is always rank 3
-            // TODO: See if needed
-            TensorShapeProto output_shape;
-            output_shape.add_dim();
-            output_shape.add_dim();
-            output_shape.add_dim();
-            updateOutputShape(ctx, 0, output_shape);
+          // --- Shape inference via dimension unification ---
+          // Declare logical dims and unify each input against its expected shape.
+          // unifyInputShape validates the rank of each provided input and merges
+          // the most-informative known value across inputs that share a dim
+          // (B and T across Q/K/V/decay/beta/past_state; H_kv between past_state
+          // and the kv_num_heads attribute; d_k between past_state, Q (via
+          // QPack/q_num_heads) and K; d_v between past_state and V).
+          Dim B, T, QPack, KPack, VPack, Hkv, Dk, Dv;
+          if (kv_num_heads > 0) {
+            Hkv.set_dim_value(kv_num_heads);
+          }
+          unifyInputShape(ctx, 0, {B, T, QPack});
+          unifyInputShape(ctx, 1, {B, T, KPack});
+          unifyInputShape(ctx, 2, {B, T, VPack});
+          if (has_past_state) {
+            unifyInputShape(ctx, 3, {B, Hkv, Dk, Dv});
+          }
+          // decay shape: (B, T, H_kv * d_k) for per-key-dim or (B, T, H_kv) for
+          // per-head. Both are rank-3; we only constrain B and T.
+          if (has_decay) {
+            Dim DecayLast;
+            unifyInputShape(ctx, 4, {B, T, DecayLast});
+          }
+          // beta shape: (B, T, H_kv) or (B, T, 1). Both rank-3; only B, T checked.
+          if (has_beta) {
+            Dim BetaLast;
+            unifyInputShape(ctx, 5, {B, T, BetaLast});
           }
 
-          // Output 1: present_state shape (B, H_kv, d_k, d_v) — 4D
-          if (hasInputShape(ctx, 0) && hasInputShape(ctx, 2) && q_num_heads > 0 && kv_num_heads > 0) {
-            auto& query_shape = getInputShape(ctx, 0);
-            auto& value_shape = getInputShape(ctx, 2);
-            TensorShapeProto state_shape;
-            *state_shape.add_dim() = query_shape.dim(0); // B
-            state_shape.add_dim()->set_dim_value(kv_num_heads); // H_kv
-            // d_k = query.dim(2) / q_num_heads
-            if (query_shape.dim(2).has_dim_value()) {
-              state_shape.add_dim()->set_dim_value(query_shape.dim(2).dim_value() / q_num_heads);
-            } else {
-              state_shape.add_dim();
-            }
-            // d_v = value.dim(2) / kv_num_heads
-            if (value_shape.dim(2).has_dim_value()) {
-              state_shape.add_dim()->set_dim_value(value_shape.dim(2).dim_value() / kv_num_heads);
-            } else {
-              state_shape.add_dim();
-            }
-            updateOutputShape(ctx, 1, state_shape);
-          } else if (hasInputShape(ctx, 3)) {
-            propagateShapeFromInputToOutput(ctx, 3, 1);
-          } else {
-            // Rank inference fallback: state is always rank 4
-            // TODO: See if needed
-            TensorShapeProto state_shape;
-            state_shape.add_dim();
-            state_shape.add_dim();
-            state_shape.add_dim();
-            state_shape.add_dim();
-            updateOutputShape(ctx, 1, state_shape);
+          // Derive d_k from Q (via q_num_heads) and K (via kv_num_heads).
+          // Multiple sources for the same logical dim are unified, so an
+          // inconsistency between Q and K (e.g. mismatched d_k) fails here.
+          if (q_num_heads > 0 && QPack.has_dim_value()) {
+            unifyDim(Dk, QPack.dim_value() / q_num_heads);
           }
+          if (kv_num_heads > 0 && KPack.has_dim_value()) {
+            unifyDim(Dk, KPack.dim_value() / kv_num_heads);
+          }
+          // Derive d_v from V.
+          if (kv_num_heads > 0 && VPack.has_dim_value()) {
+            unifyDim(Dv, VPack.dim_value() / kv_num_heads);
+          }
+
+          // Output 0: (B, T, H_q * d_v) — 3D packed.
+          Dim OutLast;
+          if (q_num_heads > 0 && Dv.has_dim_value()) {
+            OutLast.set_dim_value(q_num_heads * Dv.dim_value());
+          }
+          updateOutputShape(ctx, 0, {B, T, OutLast});
+
+          // Output 1: present_state (B, H_kv, d_k, d_v) — always 4D.
+          updateOutputShape(ctx, 1, {B, Hkv, Dk, Dv});
         }));
 } // namespace ONNX_NAMESPACE
