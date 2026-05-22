@@ -9,6 +9,8 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/defs/type_builders.h"
+
 namespace ONNX_NAMESPACE {
 namespace defs {
 namespace sequence {
@@ -45,7 +47,7 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
             OpSchema::Optional)
         .Output(0, "output_sequence", "One or more outputs forming a sequence of tensors after splitting", "S")
         .TypeConstraint("T", input_types, "Constrain input types to all tensor types.")
-        .TypeConstraint("I", {"tensor(int32)", "tensor(int64)"}, "Constrain split size to integral tensor.")
+        .TypeConstraint("I", {types::Int32, types::Int64}, "Constrain split size to integral tensor.")
         .TypeConstraint("S", output_types, "Constrain output types to all tensor types.")
         .Attr(
             "axis",

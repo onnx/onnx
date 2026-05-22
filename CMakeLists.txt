@@ -93,11 +93,6 @@ set(ONNX_VERSION_MAJOR ${CMAKE_MATCH_1})
 set(ONNX_VERSION_MINOR ${CMAKE_MATCH_2})
 set(ONNX_VERSION_PATCH ${CMAKE_MATCH_3})
 
-configure_file(
-  ${ONNX_ROOT}/onnx/common/version.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/onnx/common/version.h
-  @ONLY)
-
 if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
@@ -359,7 +354,6 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     else()
       set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
     endif()
-    set(Protobuf_VERSION "6.33.6")  # TODO: Remove this hard coded version when updating protobuf
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -491,21 +485,33 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
   set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
+  set(ONNX_GENERATED_PROTO_FILES ${GENERATED_FILES} PARENT_SCOPE)
 endfunction()
+
+# Sources are listed explicitly in subdirectory CMakeLists.txt files via
+# target_sources. onnx_core is an OBJECT library consumed by both the onnx
+# static library and the onnx_cpp2py_export Python extension module.
+add_library(onnx_core OBJECT)
+add_subdirectory(onnx)
 
 relative_protobuf_generate_cpp(ONNX_PROTO_SRCS
                                onnx/onnx.in.proto
                                onnx/onnx-operators.in.proto
                                onnx/onnx-data.in.proto)
+target_sources(onnx_core PRIVATE ${ONNX_PROTO_SRCS})
 
-file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
-file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
-    "${ONNX_ROOT}/onnx/test/cpp/*.cc"
-    "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
-    "${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
-list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src} "${ONNX_ROOT}/onnx/test/cmake/main.cc")
-list(APPEND ONNX_SRCS ${__tmp_srcs})
+# Proto sources don't play well with unity builds.
+set_source_files_properties(${ONNX_PROTO_SRCS}
+    TARGET_DIRECTORY onnx_core
+    PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE
+)
+
+# Dedicated target for the gen_proto.py step only (produces .proto files).
+# Both onnx_core and onnx_proto run gen_proto.py in a parallel build, creating
+# a race where both write to the same generated .proto paths simultaneously.
+# Serialising only the generation step lets protoc and C++ compilation for both
+# targets proceed in parallel afterwards.
+add_custom_target(onnx_proto_gen DEPENDS ${ONNX_GENERATED_PROTO_FILES})
 
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
@@ -515,10 +521,19 @@ if(ONNX_USE_LITE_PROTO)
 endif()
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 add_onnx_global_defines(onnx_proto)
+add_dependencies(onnx_proto onnx_proto_gen)
 
-add_library(onnx ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
-add_dependencies(onnx onnx_proto)
-set_source_files_properties(${ONNX_SRCS} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+# onnx_core lists ONNX_PROTO_SRCS as sources alongside onnx_proto; without an
+# explicit ordering cmake schedules gen_proto.py for both concurrently, causing
+# a write/read race on the generated .proto files. Depending on onnx_proto_gen
+# (the dedicated gen_proto.py step) serialises only the generation, letting
+# protoc and C++ compilation for both targets overlap afterwards.
+add_dependencies(onnx_core onnx_proto_gen)
+
+add_library(onnx $<TARGET_OBJECTS:onnx_core>)
+add_dependencies(onnx onnx_proto onnx_core)
+set_target_properties(onnx_core PROPERTIES CXX_VISIBILITY_PRESET hidden)
+add_onnx_global_defines(onnx_core)
 add_onnx_global_defines(onnx)
 
 if(ONNX_BUILD_PYTHON)
@@ -557,11 +572,12 @@ if(ONNX_BUILD_PYTHON)
   nanobind_add_module(
     onnx_cpp2py_export
     NB_STATIC NB_DOMAIN onnx STABLE_ABI FREE_THREADED LTO
-    "${ONNX_ROOT}/onnx/cpp2py_export.cc" ${ONNX_SRCS} ${ONNX_PROTO_SRCS})
+    "${ONNX_ROOT}/onnx/cpp2py_export.cc" $<TARGET_OBJECTS:onnx_core>)
   add_dependencies(onnx_cpp2py_export onnx)
 endif()
 
 add_onnx_compile_options(onnx_proto)
+add_onnx_compile_options(onnx_core)
 add_onnx_compile_options(onnx)
 if(TARGET onnx_cpp2py_export)
   add_onnx_global_defines(onnx_cpp2py_export)
@@ -609,25 +625,15 @@ if(ONNX_INSTALL)
 endif()
 
 if(ONNX_USE_UNITY_BUILD)
-  # If ONNX_USE_UNITY_BUILD is set to ON, set ONNX target to use Unity builds.
-  #  We set Unity build to use groups, it allows us to set some specific files to be compiled individually
-  set_target_properties(onnx
+  # If ONNX_USE_UNITY_BUILD is set to ON, set onnx_core to use Unity builds.
+  set_target_properties(onnx_core
     PROPERTIES
       UNITY_BUILD ON
-      UNITY_BUILD_MODE GROUP
   )
-
-  set(NEW_LIST __unity_src_files)
-  list(APPEND __unity_src_files ${ONNX_SRCS})
-  # These files have an issue with template explicit specialization after instantiation:
-  #   We take them out of the unity group so that they are compiled individually.
-  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/schema.cc")
-  list(REMOVE_ITEM __unity_src_files "${ONNX_ROOT}/onnx/defs/tensor_proto_util.cc")
-  set_source_files_properties(${__unity_src_files} PROPERTIES UNITY_GROUP "Unity_Group" )
 
   # With unity build object file could get big, need this switch in MSVC.
   if(MSVC)
-    target_compile_options(onnx PRIVATE /bigobj)
+    target_compile_options(onnx_core PRIVATE /bigobj)
   endif()
 # should be enabled for onnx_proto when protobuf can support Unity builds
 endif()

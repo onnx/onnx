@@ -6281,8 +6281,8 @@ expect(
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-  | x \< 0            | Unspecified   | Unspecified            |
+  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
+  | x < 0             | Unspecified   | Unspecified            |
 
 #### Version
 
@@ -25282,7 +25282,7 @@ for quant_type_name in ["uint8", "int8"]:
         )
 
         if quant_type == np.int8:
-            output = np.array([[41, -12, -9], [1, -75, 20]])
+            output = np.array([[41, -12, -9], [1, -75, -128]])
         else:
             output = np.array([[168, 115, 255], [1, 66, 151]])
         output = output.astype(quant_type)
@@ -25338,20 +25338,12 @@ for quant_type_name in ["uint8", "int8"]:
         )
 
         if quant_type == np.int8:
-            if dtype == np.float32:
-                output = np.array(
-                    [
-                        [[-86, 117, 120], [115, 39, -121]],
-                        [[-86, 117, 120], [115, 39, -121]],
-                    ]
-                )
-            else:
-                output = np.array(
-                    [
-                        [[-86, 116, 119], [115, 39, -121]],
-                        [[-86, 116, 119], [115, 39, -121]],
-                    ]
-                )
+            output = np.array(
+                [
+                    [[-86, -128, -128], [115, 39, -121]],
+                    [[-86, -128, -128], [115, 39, -121]],
+                ]
+            )
         else:
             output = np.array(
                 [
@@ -39405,7 +39397,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
-<dd>Input is ether string UTF-8 or int32/int64</dd>
+<dd>Input is either string UTF-8 or int32/int64</dd>
 <dt><tt>T1</tt> : tensor(float)</dt>
 <dd>1-D tensor of floats</dd>
 </dl>
