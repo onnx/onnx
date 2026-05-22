@@ -249,6 +249,26 @@ inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& 
   return result;
 }
 
+inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() + dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() - dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  }
+  return result;
+}
+
 // if from >= upto_exclusive, return 1.
 // Caller must make sure upto_exclusive is less than or equal to shape.size()
 // Caller must make sure from>=0
