@@ -3867,8 +3867,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               FunctionBuilder builder(functionProto);
 
               // --- Shared kernel-size helpers (used by Step 2 zero-pad and Step 5 slice) ---
-              builder.Const1D("One1D", static_cast<int64_t>(1))
-                  .Add(R"ONNX(
+              builder.Const1D("One1D", static_cast<int64_t>(1)).Add(R"ONNX(
                     KernelSize = Shape <start = 2, end = 3> (weight)
                     Km1 = Sub (KernelSize, One1D)
                   )ONNX");
@@ -4224,9 +4223,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Shapes are computed once outside the Scan body and captured inside
           // by name.
           if (group_size > 1) {
-            builder.Const1D("GroupSize", group_size)
-                .Const1D("Two1D", static_cast<int64_t>(2))
-                .Add(R"ONNX(
+            builder.Const1D("GroupSize", group_size).Const1D("Two1D", static_cast<int64_t>(2)).Add(R"ONNX(
                   StateExpandShape = Concat <axis = 0> (BatchDim, HkvConst, GroupSize, DkDim, DvDim)
                   StateReadShape = Concat <axis = 0> (BatchDim, HqConst, DkDim, DvDim)
                 )ONNX");
@@ -4362,8 +4359,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           // were already pre-transposed so the T axis is the leading dimension.
           std::string scan_text =
               "FinalState, OutputAccum = Scan <\n"
-              "  num_scan_inputs = " + std::to_string(num_scan_inputs) + ",\n"
-              "  body = linear_attn_step (" + body_inputs + ") => (state_out, output_t) {\n";
+              "  num_scan_inputs = " +
+              std::to_string(num_scan_inputs) +
+              ",\n"
+              "  body = linear_attn_step (" +
+              body_inputs + ") => (state_out, output_t) {\n";
           scan_text += body_cast_inputs;
           if (gating)
             scan_text += decay_block;
