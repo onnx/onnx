@@ -3862,8 +3862,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               // --- Shared kernel-size helpers (used by Step 2 zero-pad and Step 5 slice) ---
               builder.Const1D("One1D", static_cast<int64_t>(1))
-                  .Add("KernelSize = Shape <start = 2, end = 3> (weight)")
-                  .Add("Km1 = Sub (KernelSize, One1D)");
+                  .Add(R"ONNX(
+                    KernelSize = Shape <start = 2, end = 3> (weight)
+                    Km1 = Sub (KernelSize, One1D)
+                  )ONNX");
 
               // --- Step 2: Build the left-padded input (B, C, L+k-1) ---
               if (ctx.hasInput(3)) {
@@ -3871,12 +3873,14 @@ ONNX_OPERATOR_SET_SCHEMA(
                 builder.Add("PaddedInput = Concat <axis = 2> (past_state, input)");
               } else {
                 // No past_state: zero-pad on the left by (k-1)
-                builder.Add("BatchDim = Shape <start = 0, end = 1> (input)")
-                    .Add("ChannelDim = Shape <start = 1, end = 2> (input)")
-                    .Add("ZeroPadShape = Concat <axis = 0> (BatchDim, ChannelDim, Km1)")
-                    .Add("ZeroPad = ConstantOfShape (ZeroPadShape)")
-                    .Add("ZeroPadCast = CastLike (ZeroPad, input)")
-                    .Add("PaddedInput = Concat <axis = 2> (ZeroPadCast, input)");
+                builder.Add(R"ONNX(
+                  BatchDim = Shape <start = 0, end = 1> (input)
+                  ChannelDim = Shape <start = 1, end = 2> (input)
+                  ZeroPadShape = Concat <axis = 0> (BatchDim, ChannelDim, Km1)
+                  ZeroPad = ConstantOfShape (ZeroPadShape)
+                  ZeroPadCast = CastLike (ZeroPad, input)
+                  PaddedInput = Concat <axis = 2> (ZeroPadCast, input)
+                )ONNX");
               }
 
               // --- Step 3: Depthwise Conv1d (group=C, valid padding) ---
@@ -3890,7 +3894,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               // --- Step 4: Optional fused activation ---
               if (activation == "silu" || activation == "swish") {
-                builder.Add("ConvSigmoid = Sigmoid (ConvOut)").Add("output = Mul (ConvOut, ConvSigmoid)");
+                builder.Add(R"ONNX(
+                  ConvSigmoid = Sigmoid (ConvOut)
+                  output = Mul (ConvOut, ConvSigmoid)
+                )ONNX");
               } else {
                 builder.Add("output = Identity (ConvOut)");
               }
@@ -3901,8 +3908,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               // edge case yields an empty (B, C, 0) slice. A negative start index
               // would not work here because Slice treats -0 as 0, returning the full
               // padded sequence instead of an empty tensor.
-              builder.Add("PadLen = Shape <start = 2, end = 3> (PaddedInput)")
-                  .Add("StartIdx = Sub (PadLen, Km1)")
+              builder
+                  .Add(R"ONNX(
+                    PadLen = Shape <start = 2, end = 3> (PaddedInput)
+                    StartIdx = Sub (PadLen, Km1)
+                  )ONNX")
                   .Const("SliceAxes", std::vector<int64_t>{2})
                   .Add("present_state = Slice (PaddedInput, StartIdx, PadLen, SliceAxes)");
 
@@ -4110,49 +4120,61 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Const1D("One1D", static_cast<int64_t>(1))
               .Const1D("HqConst", q_num_heads)
               .Const1D("HkvConst", kv_num_heads)
-              .Add("BatchDim = Shape <start = 0, end = 1> (query)")
-              .Add("SeqLenDim = Shape <start = 1, end = 2> (query)");
+              .Add(R"ONNX(
+                BatchDim = Shape <start = 0, end = 1> (query)
+                SeqLenDim = Shape <start = 1, end = 2> (query)
+              )ONNX");
 
           // Inputs are reshaped to (B, T, H, D), then transposed so the T axis is
           // first: (T, B, H, D). The leading T axis is consumed by Scan (which
           // only supports scan_input_axes=0 in the ONNX reference runtime).
 
           // Query: (B, T, H_q*d_k) -> (B, T, H_q, d_k) -> (T, B, H_q, d_k)
-          builder.Add("QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)")
-              .Add("QReshaped = Reshape (query, QShape4D)")
-              .Add("Q4D = Transpose <perm = [1, 0, 2, 3]> (QReshaped)");
+          builder.Add(R"ONNX(
+            QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)
+            QReshaped = Reshape (query, QShape4D)
+            Q4D = Transpose <perm = [1, 0, 2, 3]> (QReshaped)
+          )ONNX");
 
           // Key/Value/Decay all share H_kv as the head dimension; -1 absorbs
           // d_k (key/decay) or d_v (value), and degenerates to 1 for per-head
           // scalar decay of shape (B, T, H_kv).
-          builder.Add("KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)")
-              .Add("KReshaped = Reshape (key, KVShape4D)")
-              .Add("K4D = Transpose <perm = [1, 0, 2, 3]> (KReshaped)")
-              .Add("VReshaped = Reshape (value, KVShape4D)")
-              .Add("V4D = Transpose <perm = [1, 0, 2, 3]> (VReshaped)");
+          builder.Add(R"ONNX(
+            KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)
+            KReshaped = Reshape (key, KVShape4D)
+            K4D = Transpose <perm = [1, 0, 2, 3]> (KReshaped)
+            VReshaped = Reshape (value, KVShape4D)
+            V4D = Transpose <perm = [1, 0, 2, 3]> (VReshaped)
+          )ONNX");
 
           if (has_decay) {
             // Decay: (B, T, H_kv*d_k) -> (T, B, H_kv, d_k), or
             //        (B, T, H_kv)      -> (T, B, H_kv, 1)   [broadcastable].
-            builder.Add("DecayReshaped = Reshape (decay, KVShape4D)")
-                .Add("Decay4D = Transpose <perm = [1, 0, 2, 3]> (DecayReshaped)");
+            builder.Add(R"ONNX(
+              DecayReshaped = Reshape (decay, KVShape4D)
+              Decay4D = Transpose <perm = [1, 0, 2, 3]> (DecayReshaped)
+            )ONNX");
           }
 
           if (has_beta) {
             // Beta: (B, T, H_kv) or (B, T, 1) -> reshape (B, T, -1, 1)
             //       -> transpose (T, B, H_kv_or_1, 1) [broadcastable head dim].
-            builder.Add("BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)")
-                .Add("BetaReshaped = Reshape (beta, BetaShape4D)")
-                .Add("Beta4D = Transpose <perm = [1, 0, 2, 3]> (BetaReshaped)");
+            builder.Add(R"ONNX(
+              BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)
+              BetaReshaped = Reshape (beta, BetaShape4D)
+              Beta4D = Transpose <perm = [1, 0, 2, 3]> (BetaReshaped)
+            )ONNX");
           }
 
           // --- Step 3: Initialize recurrence state (B, H_kv, d_k, d_v) ---
           // Compute d_k and d_v as 1D shape tensors for downstream use
           // (state shape here, scale factor in Step 4).
-          builder.Add("QLastDim = Shape <start = 2, end = 3> (query)")
-              .Add("VLastDim = Shape <start = 2, end = 3> (value)")
-              .Add("DkDim = Div (QLastDim, HqConst)")
-              .Add("DvDim = Div (VLastDim, HkvConst)");
+          builder.Add(R"ONNX(
+            QLastDim = Shape <start = 2, end = 3> (query)
+            VLastDim = Shape <start = 2, end = 3> (value)
+            DkDim = Div (QLastDim, HqConst)
+            DvDim = Div (VLastDim, HkvConst)
+          )ONNX");
 
           // State and scale are kept in float32 inside the body to match the
           // Python reference's fp32 accumulation. `present_state` is cast back
@@ -4166,8 +4188,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             // ConstantOfShape with default value yields float32 already; no
             // cast required. S anchor for the post-Scan cast defaults to T
             // (query's dtype) in this case.
-            builder.Add("StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)")
-                .Add("State0 = ConstantOfShape (StateShape)");
+            builder.Add(R"ONNX(
+              StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)
+              State0 = ConstantOfShape (StateShape)
+            )ONNX");
           }
 
           // --- Step 4: Compute scale factor (scalar, float32) ---
@@ -4178,10 +4202,12 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (scale != 0.0f) {
             builder.Const("ScaleFactor", scale);
           } else {
-            builder.Add("DkScalar = Squeeze (DkDim)")
-                .Add("DkFloat = Cast <to = 1> (DkScalar)")
-                .Add("SqrtDk = Sqrt (DkFloat)")
-                .Add("ScaleFactor = Reciprocal (SqrtDk)");
+            builder.Add(R"ONNX(
+              DkScalar = Squeeze (DkDim)
+              DkFloat = Cast <to = 1> (DkScalar)
+              SqrtDk = Sqrt (DkFloat)
+              ScaleFactor = Reciprocal (SqrtDk)
+            )ONNX");
           }
 
           // --- Step 4b: Precompute GQA expand/read shapes (only when group_size > 1) ---
@@ -4194,8 +4220,10 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (group_size > 1) {
             builder.Const1D("GroupSize", group_size)
                 .Const1D("Two1D", static_cast<int64_t>(2))
-                .Add("StateExpandShape = Concat <axis = 0> (BatchDim, HkvConst, GroupSize, DkDim, DvDim)")
-                .Add("StateReadShape = Concat <axis = 0> (BatchDim, HqConst, DkDim, DvDim)");
+                .Add(R"ONNX(
+                  StateExpandShape = Concat <axis = 0> (BatchDim, HkvConst, GroupSize, DkDim, DvDim)
+                  StateReadShape = Concat <axis = 0> (BatchDim, HqConst, DkDim, DvDim)
+                )ONNX");
           }
 
           // --- Step 5: Scan node with body subgraph ---
@@ -4350,9 +4378,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           // present_state: cast FinalState (float32) back to S.
           //   * With past_state: anchor on past_state's dtype.
           //   * Without past_state: default S to T (query's dtype).
-          builder.Add("OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)")
-              .Add("OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)")
-              .Add("output = Reshape (OutputTransposed, OutputShape3D)");
+          builder.Add(R"ONNX(
+            OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)
+            OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)
+            output = Reshape (OutputTransposed, OutputShape3D)
+          )ONNX");
           if (ctx.hasInput(3)) {
             builder.Add("present_state = CastLike (FinalState, past_state)");
           } else {
