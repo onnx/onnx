@@ -908,10 +908,8 @@ inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int d
 
 // unifyInputShape: unifies all dimensions of an input with the given dim references.
 // Requires the input to have rank exactly equal to the number of dims provided.
-ONNX_API void unifyInputShape(
-    InferenceContext& ctx,
-    size_t input_index,
-    std::initializer_list<std::reference_wrapper<Dim>> dims);
+ONNX_API void
+unifyInputShape(InferenceContext& ctx, size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims);
 
 // unifyInputShapePrefix: unifies the first N dimensions of an input with the given dim references.
 // Requires the input to have rank at least equal to the number of dims provided.
