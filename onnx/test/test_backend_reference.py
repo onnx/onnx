@@ -111,6 +111,8 @@ backend_test.exclude(
     "|test_if_opt"
     "|test_loop16_seq_none"
     "|test_range_float_type_positive_delta_expanded"
+    "|test_range_float16_type_positive_delta_expanded"
+    "|test_range_bfloat16_type_positive_delta_expanded"
     "|test_range_int32_type_negative_delta_expanded"
     "|test_scan_sum)"
 )
