@@ -38,6 +38,7 @@
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
+#include "onnx/version_converter/adapters/range_27_26.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
@@ -971,10 +972,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
 
     /******** 27 -> 26 ********/
-    // Range v27 added FLOAT16/BFLOAT16; Range v11 (opset 26) does not support them.
+    // Range v27 added FLOAT16/BFLOAT16 and stash_type; Range v11 (opset 26) supports neither.
     const std::vector<TensorProto_DataType> range_27_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16};
-    registerAdapter(std::make_unique<TypeRestriction>("Range", OpSetID(27), OpSetID(26), range_27_unallowed_types));
+    registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

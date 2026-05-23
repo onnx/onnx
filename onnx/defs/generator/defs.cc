@@ -343,6 +343,8 @@ BuildFunctionBodyRange27(const FunctionBodyBuildContext& ctx, const OpSchema& sc
     stash_type = (stash_attr != nullptr) ? stash_attr->i() : static_cast<int64_t>(TensorProto_DataType_FLOAT);
     if (stash_type != static_cast<int64_t>(TensorProto_DataType_FLOAT) &&
         stash_type != static_cast<int64_t>(TensorProto_DataType_DOUBLE))
+      // return false so no inline function body is emitted; the model checker
+      // will catch the invalid attribute value during validation.
       return false;
   }
 
@@ -354,9 +356,7 @@ BuildFunctionBodyRange27(const FunctionBodyBuildContext& ctx, const OpSchema& sc
         .Add("limit_s = Cast (limit)", "to", stash_type)
         .Add("delta_s = Cast (delta)", "to", stash_type)
         .Add("sub_result = Sub (limit_s, start_s)")
-        .Add("sub_result_f = Cast (sub_result)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
-        .Add("delta_f = Cast (delta_s)", "to", static_cast<int64_t>(TensorProto_DataType_FLOAT))
-        .Add("div_result = Div (sub_result_f, delta_f)")
+        .Add("div_result = Div (sub_result, delta_s)")
         .Add("ceil_result = Ceil (div_result)")
         .Add("ceil_relu = Relu (ceil_result)")
         .Add("n = Cast (ceil_relu)", "to", static_cast<int64_t>(TensorProto_DataType_INT64))
@@ -444,8 +444,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               output_dim->set_dim_value(
                   compute_output_dim_for_range<double>(start_initializer, limit_initializer, delta_initializer));
             } else {
-              // float16 and bfloat16 have no native CPU type -
-              // stop with rank inference, no action here
+              // float16, bfloat16, int16, and other types without a native C++
+              // range-computation type — stop with rank inference, no action here
             }
 
             return;
