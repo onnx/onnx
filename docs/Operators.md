@@ -195,7 +195,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
 |<a href="#RMSNormalization">RMSNormalization</a>|<a href="Changelog.md#RMSNormalization-23">23</a>|23|
-|<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|11|
+|<a href="#Range">Range</a>|<a href="Changelog.md#Range-27">27</a>, <a href="Changelog.md#Range-11">11</a>|27|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
 |<a href="#ReduceL2">ReduceL2</a>|<a href="Changelog.md#ReduceL2-18">18</a>, <a href="Changelog.md#ReduceL2-13">13</a>, <a href="Changelog.md#ReduceL2-11">11</a>, <a href="Changelog.md#ReduceL2-1">1</a>|18|
 |<a href="#ReduceLogSum">ReduceLogSum</a>|<a href="Changelog.md#ReduceLogSum-18">18</a>, <a href="Changelog.md#ReduceLogSum-13">13</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-1">1</a>|18|
@@ -6279,8 +6279,8 @@ expect(
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
-  | x < 0             | Unspecified   | Unspecified            |
+  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
+  | x \< 0            | Unspecified   | Unspecified            |
 
 #### Version
 
@@ -25632,36 +25632,44 @@ Other versions of this operator: <a href="Changelog.md#RandomUniformLike-1">1</a
   up to `limit` (exclusive).
 
   The number of elements in the output of range is computed as below:
-
   ```
   number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
   ```
-
   The pseudocode determining the contents of the output is shown below:
-
   ```
   for(int i=0; i<number_of_elements; ++i) {
     output[i] =  start + (i * delta);
   }
   ```
-
-  Example 1
-
+  Example 1:
   ```
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
   ```
-
-  Example 2
-
+  Example 2:
   ```
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
   ```
 
+  For `float16` and `bfloat16` inputs, the `stash_type` attribute controls the precision used for
+  intermediate accumulation. Setting `stash_type` to `1` (float) causes `start`, `limit`, and
+  `delta` to be cast to 32-bit float before the loop, with the output cast back to the original
+  type. This avoids precision loss for large ranges where successive additions in float16 or
+  bfloat16 would otherwise be inexact (e.g. `x + 1 == x` for large `x`).
+
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Range-11">11</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The data type used for intermediate computation when T is float16 or bfloat16. Defaults to 1 (float). Has no effect for other types.</dd>
+</dl>
 
 #### Inputs
 
@@ -25684,12 +25692,69 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(bfloat16)</dt>
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>range_bfloat16_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Range",
+    inputs=["start", "limit", "delta"],
+    outputs=["output"],
+)
+
+start = np.array(1.0, dtype=ml_dtypes.bfloat16)
+limit = np.array(5.0, dtype=ml_dtypes.bfloat16)
+delta = np.array(2.0, dtype=ml_dtypes.bfloat16)
+
+output = np.arange(1.0, 5.0, 2.0, dtype=np.float32).astype(
+    ml_dtypes.bfloat16
+)  # expected output [1.0, 3.0] as bfloat16
+
+expect(
+    node,
+    inputs=[start, limit, delta],
+    outputs=[output],
+    name="test_range_bfloat16_type_positive_delta",
+)
+```
+
+</details>
+
+
+<details>
+<summary>range_float16_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Range",
+    inputs=["start", "limit", "delta"],
+    outputs=["output"],
+)
+
+start = np.float16(1)
+limit = np.float16(5)
+delta = np.float16(2)
+
+output = np.arange(
+    start, limit, delta, dtype=np.float16
+)  # expected output [1.0, 3.0]
+expect(
+    node,
+    inputs=[start, limit, delta],
+    outputs=[output],
+    name="test_range_float16_type_positive_delta",
+)
+```
+
+</details>
+
 
 <details>
 <summary>range_float_type_positive_delta</summary>
