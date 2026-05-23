@@ -341,6 +341,9 @@ BuildFunctionBodyRange27(const FunctionBodyBuildContext& ctx, const OpSchema& sc
   if (needs_stash) {
     const auto* stash_attr = ctx.getAttribute("stash_type");
     stash_type = (stash_attr != nullptr) ? stash_attr->i() : static_cast<int64_t>(TensorProto_DataType_FLOAT);
+    if (stash_type != static_cast<int64_t>(TensorProto_DataType_FLOAT) &&
+        stash_type != static_cast<int64_t>(TensorProto_DataType_DOUBLE))
+      return false;
   }
 
   FunctionBuilder builder(functionProto);
