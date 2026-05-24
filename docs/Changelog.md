@@ -30030,8 +30030,8 @@ This version of the operator has been available since version 24 of the default 
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
-  | x < 0             | Unspecified   | Unspecified            |
+  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
+  | x \< 0            | Unspecified   | Unspecified            |
 
 #### Version
 
@@ -31510,8 +31510,8 @@ This version of the operator has been available since version 24 of the default 
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
-  | x < 0             | Unspecified   | Unspecified            |
+  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
+  | x \< 0            | Unspecified   | Unspecified            |
 
 #### Version
 
