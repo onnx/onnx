@@ -3755,7 +3755,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "weight",
-            "Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size.",
+            "Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. "
+            "The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: "
+            "since this op is always depthwise, `group = channels`, so `C/group = 1`. "
+            "Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` "
+            "weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.",
             "T",
             OpSchema::Single,
             true,
