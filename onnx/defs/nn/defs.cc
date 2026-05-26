@@ -4230,11 +4230,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // --- Step 5: Scan node with body subgraph ---
-          // The body implements one recurrence step. Per update_rule we
-          // assemble the body from reusable fragments. ScaleFactor (and,
-          // for group_size > 1, StateExpandShape / StateReadShape) are
-          // referenced from the enclosing scope (Scan subgraphs may
-          // capture outer-scope tensors by name).
+          // The body implements one recurrence step. We write one complete
+          // body per update_rule (linear / gated / delta / gated_delta) so
+          // the recurrence is readable inline rather than assembled from
+          // fragments. ScaleFactor (and, for group_size > 1,
+          // StateExpandShape / StateReadShape) are referenced from the
+          // enclosing scope (Scan subgraphs may capture outer-scope
+          // tensors by name).
           //
           // The body always accumulates in float32 to match the Python
           // reference: each sliced T-typed input (q_t/k_t/v_t/decay_t/beta_t)
@@ -4242,84 +4244,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           // in float32 throughout; output_t is cast back to T (anchored on
           // q_t) before being emitted as a per-step Scan output. The post-
           // Scan code casts FinalState back to S.
-
-          // Axes constants used inside the body for Unsqueeze/Squeeze.
+          //
+          // Axes constants used inside the body for Unsqueeze/Squeeze:
           // NegOne1D was added in Step 2; Two1D is set up in Step 4b
           // when group_size > 1.
           builder.Const1D("NegTwo1D", static_cast<int64_t>(-2));
 
-          // Cast all sliced T-typed inputs to float32 at body entry. The
-          // remainder of the body operates exclusively on the `_f` variants;
-          // q_t is preserved as the T-typed dtype anchor for the final
-          // CastLike on output_t.
-          std::string body_cast_inputs =
-              "                q_t_f = Cast <to = 1> (q_t)\n"
-              "                k_t_f = Cast <to = 1> (k_t)\n"
-              "                v_t_f = Cast <to = 1> (v_t)\n";
-          if (has_decay) {
-            body_cast_inputs += "                decay_t_f = Cast <to = 1> (decay_t)\n";
-          }
-          if (has_beta) {
-            body_cast_inputs += "                beta_t_f = Cast <to = 1> (beta_t)\n";
-          }
-
-          // Common decay block (gated, gated_delta): produces DecayedState.
-          const std::string decay_block = R"ONNX(
-                DecayExp = Exp (decay_t_f)
-                DecayExpUnsq = Unsqueeze (DecayExp, NegOne1D)
-                DecayedState = Mul (state_in, DecayExpUnsq)
-              )ONNX";
-
-          // The "state basis" for write/retrieve is DecayedState when
-          // gating is on, and state_in otherwise.
-          const bool gating = (update_rule == "gated" || update_rule == "gated_delta");
-          const bool delta_correction = (update_rule == "delta" || update_rule == "gated_delta");
-          const std::string state_basis = gating ? "DecayedState" : "state_in";
-
-          // Always-needed: KtCol = (B, H, d_k, 1) in float32.
-          const std::string ktcol_block = R"ONNX(
-                KtCol = Unsqueeze (k_t_f, NegOne1D)
-              )ONNX";
-
-          // Delta-rule retrieval block: produces RetrievedSq = (B, H, d_v).
-          //   StateT = transpose(state_basis) along the last two dims.
-          //   Retrieved = MatMul(StateT, KtCol)
-          //   RetrievedSq = Squeeze(Retrieved, axes=[-1])
-          // Then Diff/Delta computed; "WriteVec" feeds into Outer.
-          // For non-delta rules, WriteVec is just v_t_f.
-          std::string retrieve_and_writevec_block;
-          std::string write_vec_name;
-          if (delta_correction) {
-            retrieve_and_writevec_block = "                StateT = Transpose <perm = [0, 1, 3, 2]> (" + state_basis +
-                ")\n"
-                "                Retrieved = MatMul (StateT, KtCol)\n"
-                "                RetrievedSq = Squeeze (Retrieved, NegOne1D)\n"
-                "                Diff = Sub (v_t_f, RetrievedSq)\n"
-                "                Delta = Mul (beta_t_f, Diff)\n";
-            write_vec_name = "Delta";
-          } else {
-            write_vec_name = "v_t_f";
-          }
-
-          // Write block: Outer = KtCol @ row(write_vec); state_out = basis + Outer.
-          const std::string write_block = "                WriteRow = Unsqueeze (" + write_vec_name +
-              ", NegTwo1D)\n"
-              "                Outer = MatMul (KtCol, WriteRow)\n"
-              "                state_out = Add (" +
-              state_basis + ", Outer)\n";
-
-          // Read block (always): output_t = ScaleFactor * (q_t^T @ state_out).
+          // Read block (shared across all update_rules; differs only by GQA):
+          // output_t = ScaleFactor * (q_t^T @ state_out), then CastLike to T.
           // For GQA (group_size > 1) the per-KV-head state must first be
           // repeat-interleaved across the `group_size` query heads sharing
-          // each KV head. We use the same Unsqueeze + Expand + Reshape
+          // each KV head, using the same Unsqueeze + Expand + Reshape
           // pattern as the standard Attention op. `StateExpandShape` and
           // `StateReadShape` are captured from the enclosing scope.
-          // The read computes in float32 (using q_t_f and the float32 state),
-          // then casts the per-step output back to T (anchored on the
-          // T-typed q_t) so the Scan accumulates a T-typed output tensor.
-          std::string read_block;
-          if (group_size > 1) {
-            read_block = R"ONNX(
+          const std::string read_block = (group_size > 1) ? R"ONNX(
                 StateUnsq = Unsqueeze (state_out, Two1D)
                 StateExpanded = Expand (StateUnsq, StateExpandShape)
                 StateForRead = Reshape (StateExpanded, StateReadShape)
@@ -4328,50 +4266,108 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ReadSq = Squeeze (ReadOut, NegTwo1D)
                 output_t_f = Mul (ScaleFactor, ReadSq)
                 output_t = CastLike (output_t_f, q_t)
-              )ONNX";
-          } else {
-            read_block = R"ONNX(
+              )ONNX"
+                                                          : R"ONNX(
                 QtRow = Unsqueeze (q_t_f, NegTwo1D)
                 ReadOut = MatMul (QtRow, state_out)
                 ReadSq = Squeeze (ReadOut, NegTwo1D)
                 output_t_f = Mul (ScaleFactor, ReadSq)
                 output_t = CastLike (output_t_f, q_t)
               )ONNX";
-          }
 
-          // Body input list and Scan input list vary by rule.
-          std::string body_inputs = "state_in, q_t, k_t, v_t";
-          std::string scan_inputs = "State0, Q4D, K4D, V4D";
-          int64_t num_scan_inputs = 3;
-          if (has_decay) {
-            body_inputs += ", decay_t";
-            scan_inputs += ", Decay4D";
-            num_scan_inputs += 1;
-          }
-          if (has_beta) {
-            body_inputs += ", beta_t";
-            scan_inputs += ", Beta4D";
-            num_scan_inputs += 1;
+          // One complete recurrence body per update_rule. Each body:
+          //   * casts its T-typed inputs to float32,
+          //   * computes state_out = (decayed) state_in + KtCol @ WriteRow,
+          //     where WriteRow comes from v_t_f directly (linear/gated) or
+          //     from a delta-rule correction Delta = beta * (v - retrieved).
+          std::string body;
+          std::string body_inputs;
+          std::string scan_inputs;
+          int64_t num_scan_inputs;
+          if (update_rule == "linear") {
+            body_inputs = "state_in, q_t, k_t, v_t";
+            scan_inputs = "State0, Q4D, K4D, V4D";
+            num_scan_inputs = 3;
+            body = R"ONNX(
+                q_t_f = Cast <to = 1> (q_t)
+                k_t_f = Cast <to = 1> (k_t)
+                v_t_f = Cast <to = 1> (v_t)
+                KtCol = Unsqueeze (k_t_f, NegOne1D)
+                WriteRow = Unsqueeze (v_t_f, NegTwo1D)
+                Outer = MatMul (KtCol, WriteRow)
+                state_out = Add (state_in, Outer)
+              )ONNX";
+          } else if (update_rule == "gated") {
+            body_inputs = "state_in, q_t, k_t, v_t, decay_t";
+            scan_inputs = "State0, Q4D, K4D, V4D, Decay4D";
+            num_scan_inputs = 4;
+            body = R"ONNX(
+                q_t_f = Cast <to = 1> (q_t)
+                k_t_f = Cast <to = 1> (k_t)
+                v_t_f = Cast <to = 1> (v_t)
+                decay_t_f = Cast <to = 1> (decay_t)
+                DecayExp = Exp (decay_t_f)
+                DecayExpUnsq = Unsqueeze (DecayExp, NegOne1D)
+                DecayedState = Mul (state_in, DecayExpUnsq)
+                KtCol = Unsqueeze (k_t_f, NegOne1D)
+                WriteRow = Unsqueeze (v_t_f, NegTwo1D)
+                Outer = MatMul (KtCol, WriteRow)
+                state_out = Add (DecayedState, Outer)
+              )ONNX";
+          } else if (update_rule == "delta") {
+            body_inputs = "state_in, q_t, k_t, v_t, beta_t";
+            scan_inputs = "State0, Q4D, K4D, V4D, Beta4D";
+            num_scan_inputs = 4;
+            body = R"ONNX(
+                q_t_f = Cast <to = 1> (q_t)
+                k_t_f = Cast <to = 1> (k_t)
+                v_t_f = Cast <to = 1> (v_t)
+                beta_t_f = Cast <to = 1> (beta_t)
+                KtCol = Unsqueeze (k_t_f, NegOne1D)
+                StateT = Transpose <perm = [0, 1, 3, 2]> (state_in)
+                Retrieved = MatMul (StateT, KtCol)
+                RetrievedSq = Squeeze (Retrieved, NegOne1D)
+                Diff = Sub (v_t_f, RetrievedSq)
+                Delta = Mul (beta_t_f, Diff)
+                WriteRow = Unsqueeze (Delta, NegTwo1D)
+                Outer = MatMul (KtCol, WriteRow)
+                state_out = Add (state_in, Outer)
+              )ONNX";
+          } else { // gated_delta
+            body_inputs = "state_in, q_t, k_t, v_t, decay_t, beta_t";
+            scan_inputs = "State0, Q4D, K4D, V4D, Decay4D, Beta4D";
+            num_scan_inputs = 5;
+            body = R"ONNX(
+                q_t_f = Cast <to = 1> (q_t)
+                k_t_f = Cast <to = 1> (k_t)
+                v_t_f = Cast <to = 1> (v_t)
+                decay_t_f = Cast <to = 1> (decay_t)
+                beta_t_f = Cast <to = 1> (beta_t)
+                DecayExp = Exp (decay_t_f)
+                DecayExpUnsq = Unsqueeze (DecayExp, NegOne1D)
+                DecayedState = Mul (state_in, DecayExpUnsq)
+                KtCol = Unsqueeze (k_t_f, NegOne1D)
+                StateT = Transpose <perm = [0, 1, 3, 2]> (DecayedState)
+                Retrieved = MatMul (StateT, KtCol)
+                RetrievedSq = Squeeze (Retrieved, NegOne1D)
+                Diff = Sub (v_t_f, RetrievedSq)
+                Delta = Mul (beta_t_f, Diff)
+                WriteRow = Unsqueeze (Delta, NegTwo1D)
+                Outer = MatMul (KtCol, WriteRow)
+                state_out = Add (DecayedState, Outer)
+              )ONNX";
           }
 
           // Assemble Scan node text. Body name is arbitrary.
           // We omit scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
           // were already pre-transposed so the T axis is the leading dimension.
-          std::string scan_text =
-              "FinalState, OutputAccum = Scan <\n"
-              "  num_scan_inputs = " +
+          std::string scan_text = "FinalState, OutputAccum = Scan <\n"
+                                  "  num_scan_inputs = " +
               std::to_string(num_scan_inputs) +
               ",\n"
               "  body = linear_attn_step (" +
-              body_inputs + ") => (state_out, output_t) {\n";
-          scan_text += body_cast_inputs;
-          if (gating)
-            scan_text += decay_block;
-          scan_text += ktcol_block;
-          scan_text += retrieve_and_writevec_block;
-          scan_text += write_block;
-          scan_text += read_block;
-          scan_text +=
+              body_inputs +
+              ") => (state_out, output_t) {\n" + body + read_block +
               "              }\n"
               "> (" +
               scan_inputs + ")";
