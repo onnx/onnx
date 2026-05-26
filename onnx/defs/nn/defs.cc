@@ -3872,9 +3872,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               // --- Shared kernel-size helpers (used by Step 2 zero-pad and Step 5 slice) ---
               builder.Const1D("One1D", static_cast<int64_t>(1)).Add(R"ONNX(
-                    KernelSize = Shape <start = 2, end = 3> (weight)
-                    Km1 = Sub (KernelSize, One1D)
-                  )ONNX");
+                KernelSize = Shape <start = 2, end = 3> (weight)
+                Km1 = Sub (KernelSize, One1D)
+              )ONNX");
 
               // --- Step 2: Build the left-padded input (B, C, L+k-1) ---
               if (ctx.hasInput(3)) {
@@ -4072,196 +4072,195 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(bfloat16)", "tensor(float)"},
             "Constrain state types to float16, bfloat16, or float32 tensors. "
             "Should be float32 or the same as T for numerical stability on long sequences.")
-        .SetContextDependentFunctionBodyBuilder([](const FunctionBodyBuildContext& ctx,
-                                                   const OpSchema& schema,
-                                                   FunctionProto& functionProto) {
-          // LinearAttention <update_rule, scale, q_num_heads, kv_num_heads, chunk_size>
-          //   (query, key, value, past_state?, decay?, beta?)
-          //   => (output, present_state)
-          //
-          // Reference decomposition (sequential recurrence via Scan):
-          //   1. Reshape/transpose 3D packed inputs (B, T, H*D) -> 4D (B, H, T, D)
-          //   2. Initialize state (past_state or zeros), shape (B, H_kv, d_k, d_v)
-          //   3. Compute scale factor (attribute or 1/sqrt(d_k))
-          //   4. Run Scan over T axis with body implementing one recurrence step
-          //   5. Transpose/reshape 4D outputs back to 3D (B, T, H_q*d_v)
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // LinearAttention <update_rule, scale, q_num_heads, kv_num_heads, chunk_size>
+              //   (query, key, value, past_state?, decay?, beta?)
+              //   => (output, present_state)
+              //
+              // Reference decomposition (sequential recurrence via Scan):
+              //   1. Reshape/transpose 3D packed inputs (B, T, H*D) -> 4D (B, H, T, D)
+              //   2. Initialize state (past_state or zeros), shape (B, H_kv, d_k, d_v)
+              //   3. Compute scale factor (attribute or 1/sqrt(d_k))
+              //   4. Run Scan over T axis with body implementing one recurrence step
+              //   5. Transpose/reshape 4D outputs back to 3D (B, T, H_q*d_v)
 
-          // --- Step 1: Extract attributes and validate ---
-          auto* update_rule_attr = ctx.getAttribute("update_rule");
-          std::string update_rule =
-              (update_rule_attr != nullptr && update_rule_attr->has_s()) ? update_rule_attr->s() : "gated_delta";
+              // --- Step 1: Extract attributes and validate ---
+              auto* update_rule_attr = ctx.getAttribute("update_rule");
+              std::string update_rule =
+                  (update_rule_attr != nullptr && update_rule_attr->has_s()) ? update_rule_attr->s() : "gated_delta";
 
-          auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
-          auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
-          if (q_num_heads_attr == nullptr || !q_num_heads_attr->has_i() || kv_num_heads_attr == nullptr ||
-              !kv_num_heads_attr->has_i()) {
-            return false;
-          }
-          int64_t q_num_heads = q_num_heads_attr->i();
-          int64_t kv_num_heads = kv_num_heads_attr->i();
+              auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+              auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+              if (q_num_heads_attr == nullptr || !q_num_heads_attr->has_i() || kv_num_heads_attr == nullptr ||
+                  !kv_num_heads_attr->has_i()) {
+                return false;
+              }
+              int64_t q_num_heads = q_num_heads_attr->i();
+              int64_t kv_num_heads = kv_num_heads_attr->i();
 
-          auto* scale_attr = ctx.getAttribute("scale");
-          float scale = (scale_attr != nullptr && scale_attr->has_f()) ? scale_attr->f() : 0.0f;
+              auto* scale_attr = ctx.getAttribute("scale");
+              float scale = (scale_attr != nullptr && scale_attr->has_f()) ? scale_attr->f() : 0.0f;
 
-          // Per-rule presence of optional inputs
-          bool has_decay = (update_rule == "gated" || update_rule == "gated_delta");
-          bool has_beta = (update_rule == "delta" || update_rule == "gated_delta");
+              // Per-rule presence of optional inputs
+              bool has_decay = (update_rule == "gated" || update_rule == "gated_delta");
+              bool has_beta = (update_rule == "delta" || update_rule == "gated_delta");
 
-          // Need query type (for CastLike on zero state) — checked indirectly via input 0 presence.
-          if (ctx.getInputType(0) == nullptr) {
-            return false;
-          }
+              // Need query type (for CastLike on zero state) — checked indirectly via input 0 presence.
+              if (ctx.getInputType(0) == nullptr) {
+                return false;
+              }
 
-          // GQA: q_num_heads must be a positive multiple of kv_num_heads.
-          // group_size == 1 is the standard MHA case (no expansion); group_size > 1
-          // means each KV head is shared by `group_size` query heads.
-          if (q_num_heads <= 0 || kv_num_heads <= 0 || q_num_heads % kv_num_heads != 0) {
-            return false;
-          }
-          int64_t group_size = q_num_heads / kv_num_heads;
+              // GQA: q_num_heads must be a positive multiple of kv_num_heads.
+              // group_size == 1 is the standard MHA case (no expansion); group_size > 1
+              // means each KV head is shared by `group_size` query heads.
+              if (q_num_heads <= 0 || kv_num_heads <= 0 || q_num_heads % kv_num_heads != 0) {
+                return false;
+              }
+              int64_t group_size = q_num_heads / kv_num_heads;
 
-          FunctionBuilder builder(functionProto);
+              FunctionBuilder builder(functionProto);
 
-          // --- Step 2: Pre-Scan 3D -> 4D reshape and transpose ---
-          // Inputs arrive packed as (B, T, H*D). Reshape to (B, T, H, D) then
-          // transpose to (B, H, T, D) so the Scan iterates along the T axis.
-          builder.Const1D("NegOne1D", static_cast<int64_t>(-1))
-              .Const1D("One1D", static_cast<int64_t>(1))
-              .Const1D("HqConst", q_num_heads)
-              .Const1D("HkvConst", kv_num_heads)
-              .Add(R"ONNX(
+              // --- Step 2: Pre-Scan 3D -> 4D reshape and transpose ---
+              // Inputs arrive packed as (B, T, H*D). Reshape to (B, T, H, D) then
+              // transpose to (B, H, T, D) so the Scan iterates along the T axis.
+              builder.Const1D("NegOne1D", static_cast<int64_t>(-1))
+                  .Const1D("One1D", static_cast<int64_t>(1))
+                  .Const1D("HqConst", q_num_heads)
+                  .Const1D("HkvConst", kv_num_heads)
+                  .Add(R"ONNX(
                 BatchDim = Shape <start = 0, end = 1> (query)
                 SeqLenDim = Shape <start = 1, end = 2> (query)
               )ONNX");
 
-          // Inputs are reshaped to (B, T, H, D), then transposed so the T axis is
-          // first: (T, B, H, D). The leading T axis is consumed by Scan (which
-          // only supports scan_input_axes=0 in the ONNX reference runtime).
+              // Inputs are reshaped to (B, T, H, D), then transposed so the T axis is
+              // first: (T, B, H, D). The leading T axis is consumed by Scan (which
+              // only supports scan_input_axes=0 in the ONNX reference runtime).
 
-          // Query: (B, T, H_q*d_k) -> (B, T, H_q, d_k) -> (T, B, H_q, d_k)
-          builder.Add(R"ONNX(
-            QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)
-            QReshaped = Reshape (query, QShape4D)
-            Q4D = Transpose <perm = [1, 0, 2, 3]> (QReshaped)
-          )ONNX");
+              // Query: (B, T, H_q*d_k) -> (B, T, H_q, d_k) -> (T, B, H_q, d_k)
+              builder.Add(R"ONNX(
+                QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)
+                QReshaped = Reshape (query, QShape4D)
+                Q4D = Transpose <perm = [1, 0, 2, 3]> (QReshaped)
+              )ONNX");
 
-          // Key/Value/Decay all share H_kv as the head dimension; -1 absorbs
-          // d_k (key/decay) or d_v (value), and degenerates to 1 for per-head
-          // scalar decay of shape (B, T, H_kv).
-          builder.Add(R"ONNX(
-            KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)
-            KReshaped = Reshape (key, KVShape4D)
-            K4D = Transpose <perm = [1, 0, 2, 3]> (KReshaped)
-            VReshaped = Reshape (value, KVShape4D)
-            V4D = Transpose <perm = [1, 0, 2, 3]> (VReshaped)
-          )ONNX");
+              // Key/Value/Decay all share H_kv as the head dimension; -1 absorbs
+              // d_k (key/decay) or d_v (value), and degenerates to 1 for per-head
+              // scalar decay of shape (B, T, H_kv).
+              builder.Add(R"ONNX(
+                KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)
+                KReshaped = Reshape (key, KVShape4D)
+                K4D = Transpose <perm = [1, 0, 2, 3]> (KReshaped)
+                VReshaped = Reshape (value, KVShape4D)
+                V4D = Transpose <perm = [1, 0, 2, 3]> (VReshaped)
+              )ONNX");
 
-          if (has_decay) {
-            // Decay: (B, T, H_kv*d_k) -> (T, B, H_kv, d_k), or
-            //        (B, T, H_kv)      -> (T, B, H_kv, 1)   [broadcastable].
-            builder.Add(R"ONNX(
-              DecayReshaped = Reshape (decay, KVShape4D)
-              Decay4D = Transpose <perm = [1, 0, 2, 3]> (DecayReshaped)
-            )ONNX");
-          }
+              if (has_decay) {
+                // Decay: (B, T, H_kv*d_k) -> (T, B, H_kv, d_k), or
+                //        (B, T, H_kv)      -> (T, B, H_kv, 1)   [broadcastable].
+                builder.Add(R"ONNX(
+                  DecayReshaped = Reshape (decay, KVShape4D)
+                  Decay4D = Transpose <perm = [1, 0, 2, 3]> (DecayReshaped)
+                )ONNX");
+              }
 
-          if (has_beta) {
-            // Beta: (B, T, H_kv) or (B, T, 1) -> reshape (B, T, -1, 1)
-            //       -> transpose (T, B, H_kv_or_1, 1) [broadcastable head dim].
-            builder.Add(R"ONNX(
-              BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)
-              BetaReshaped = Reshape (beta, BetaShape4D)
-              Beta4D = Transpose <perm = [1, 0, 2, 3]> (BetaReshaped)
-            )ONNX");
-          }
+              if (has_beta) {
+                // Beta: (B, T, H_kv) or (B, T, 1) -> reshape (B, T, -1, 1)
+                //       -> transpose (T, B, H_kv_or_1, 1) [broadcastable head dim].
+                builder.Add(R"ONNX(
+                  BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)
+                  BetaReshaped = Reshape (beta, BetaShape4D)
+                  Beta4D = Transpose <perm = [1, 0, 2, 3]> (BetaReshaped)
+                )ONNX");
+              }
 
-          // --- Step 3: Initialize recurrence state (B, H_kv, d_k, d_v) ---
-          // Compute d_k and d_v as 1D shape tensors for downstream use
-          // (state shape here, scale factor in Step 4).
-          builder.Add(R"ONNX(
-            QLastDim = Shape <start = 2, end = 3> (query)
-            VLastDim = Shape <start = 2, end = 3> (value)
-            DkDim = Div (QLastDim, HqConst)
-            DvDim = Div (VLastDim, HkvConst)
-          )ONNX");
+              // --- Step 3: Initialize recurrence state (B, H_kv, d_k, d_v) ---
+              // Compute d_k and d_v as 1D shape tensors for downstream use
+              // (state shape here, scale factor in Step 4).
+              builder.Add(R"ONNX(
+                QLastDim = Shape <start = 2, end = 3> (query)
+                VLastDim = Shape <start = 2, end = 3> (value)
+                DkDim = Div (QLastDim, HqConst)
+                DvDim = Div (VLastDim, HkvConst)
+              )ONNX");
 
-          // State and scale are kept in float32 inside the body to match the
-          // Python reference's fp32 accumulation. `present_state` is cast back
-          // to S (past_state's dtype, or query's dtype when past_state is
-          // absent) after the Scan; `output` is cast back to T inside the body.
-          if (ctx.hasInput(3)) {
-            // past_state has shape (B, H_kv, d_k, d_v) and dtype S.
-            // Upcast to float32 for accumulation regardless of S.
-            builder.Add("State0 = Cast <to = 1> (past_state)");
-          } else {
-            // ConstantOfShape with default value yields float32 already; no
-            // cast required. S anchor for the post-Scan cast defaults to T
-            // (query's dtype) in this case.
-            builder.Add(R"ONNX(
-              StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)
-              State0 = ConstantOfShape (StateShape)
-            )ONNX");
-          }
+              // State and scale are kept in float32 inside the body to match the
+              // Python reference's fp32 accumulation. `present_state` is cast back
+              // to S (past_state's dtype, or query's dtype when past_state is
+              // absent) after the Scan; `output` is cast back to T inside the body.
+              if (ctx.hasInput(3)) {
+                // past_state has shape (B, H_kv, d_k, d_v) and dtype S.
+                // Upcast to float32 for accumulation regardless of S.
+                builder.Add("State0 = Cast <to = 1> (past_state)");
+              } else {
+                // ConstantOfShape with default value yields float32 already; no
+                // cast required. S anchor for the post-Scan cast defaults to T
+                // (query's dtype) in this case.
+                builder.Add(R"ONNX(
+                  StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)
+                  State0 = ConstantOfShape (StateShape)
+                )ONNX");
+              }
 
-          // --- Step 4: Compute scale factor (scalar, float32) ---
-          // If `scale` attribute is non-zero, use it directly; otherwise
-          // derive 1/sqrt(d_k) from query's last dim. ScaleFactor stays in
-          // float32 to multiply against the float32 read result inside the
-          // body; the body casts the final output back to T.
-          if (scale != 0.0f) {
-            builder.Const("ScaleFactor", scale);
-          } else {
-            builder.Add(R"ONNX(
-              DkScalar = Squeeze (DkDim)
-              DkFloat = Cast <to = 1> (DkScalar)
-              SqrtDk = Sqrt (DkFloat)
-              ScaleFactor = Reciprocal (SqrtDk)
-            )ONNX");
-          }
+              // --- Step 4: Compute scale factor (scalar, float32) ---
+              // If `scale` attribute is non-zero, use it directly; otherwise
+              // derive 1/sqrt(d_k) from query's last dim. ScaleFactor stays in
+              // float32 to multiply against the float32 read result inside the
+              // body; the body casts the final output back to T.
+              if (scale != 0.0f) {
+                builder.Const("ScaleFactor", scale);
+              } else {
+                builder.Add(R"ONNX(
+                  DkScalar = Squeeze (DkDim)
+                  DkFloat = Cast <to = 1> (DkScalar)
+                  SqrtDk = Sqrt (DkFloat)
+                  ScaleFactor = Reciprocal (SqrtDk)
+                )ONNX");
+              }
 
-          // --- Step 4b: Precompute GQA expand/read shapes (only when group_size > 1) ---
-          // GQA expansion uses the same Unsqueeze + Expand + Reshape pattern as the
-          // standard Attention op. The state lives at H_kv heads (one state per
-          // KV head — recurrence is per-KV-head); only the read step needs to
-          // broadcast it across the `group_size` query heads sharing that KV head.
-          // Shapes are computed once outside the Scan body and captured inside
-          // by name.
-          if (group_size > 1) {
-            builder.Const1D("GroupSize", group_size).Const1D("Two1D", static_cast<int64_t>(2)).Add(R"ONNX(
+              // --- Step 4b: Precompute GQA expand/read shapes (only when group_size > 1) ---
+              // GQA expansion uses the same Unsqueeze + Expand + Reshape pattern as the
+              // standard Attention op. The state lives at H_kv heads (one state per
+              // KV head — recurrence is per-KV-head); only the read step needs to
+              // broadcast it across the `group_size` query heads sharing that KV head.
+              // Shapes are computed once outside the Scan body and captured inside
+              // by name.
+              if (group_size > 1) {
+                builder.Const1D("GroupSize", group_size).Const1D("Two1D", static_cast<int64_t>(2)).Add(R"ONNX(
                   StateExpandShape = Concat <axis = 0> (BatchDim, HkvConst, GroupSize, DkDim, DvDim)
                   StateReadShape = Concat <axis = 0> (BatchDim, HqConst, DkDim, DvDim)
                 )ONNX");
-          }
+              }
 
-          // --- Step 5: Scan node with body subgraph ---
-          // The body implements one recurrence step. We write one complete
-          // body per update_rule (linear / gated / delta / gated_delta) so
-          // the recurrence is readable inline rather than assembled from
-          // fragments. ScaleFactor (and, for group_size > 1,
-          // StateExpandShape / StateReadShape) are referenced from the
-          // enclosing scope (Scan subgraphs may capture outer-scope
-          // tensors by name).
-          //
-          // The body always accumulates in float32 to match the Python
-          // reference: each sliced T-typed input (q_t/k_t/v_t/decay_t/beta_t)
-          // is cast to float32 at body entry; state_in/state_out stay
-          // in float32 throughout; output_t is cast back to T (anchored on
-          // q_t) before being emitted as a per-step Scan output. The post-
-          // Scan code casts FinalState back to S.
-          //
-          // Axes constants used inside the body for Unsqueeze/Squeeze:
-          // NegOne1D was added in Step 2; Two1D is set up in Step 4b
-          // when group_size > 1.
-          builder.Const1D("NegTwo1D", static_cast<int64_t>(-2));
+              // --- Step 5: Scan node with body subgraph ---
+              // The body implements one recurrence step. We write one complete
+              // body per update_rule (linear / gated / delta / gated_delta) so
+              // the recurrence is readable inline rather than assembled from
+              // fragments. ScaleFactor (and, for group_size > 1,
+              // StateExpandShape / StateReadShape) are referenced from the
+              // enclosing scope (Scan subgraphs may capture outer-scope
+              // tensors by name).
+              //
+              // The body always accumulates in float32 to match the Python
+              // reference: each sliced T-typed input (q_t/k_t/v_t/decay_t/beta_t)
+              // is cast to float32 at body entry; state_in/state_out stay
+              // in float32 throughout; output_t is cast back to T (anchored on
+              // q_t) before being emitted as a per-step Scan output. The post-
+              // Scan code casts FinalState back to S.
+              //
+              // Axes constants used inside the body for Unsqueeze/Squeeze:
+              // NegOne1D was added in Step 2; Two1D is set up in Step 4b
+              // when group_size > 1.
+              builder.Const1D("NegTwo1D", static_cast<int64_t>(-2));
 
-          // Read block (shared across all update_rules; differs only by GQA):
-          // output_t = ScaleFactor * (q_t^T @ state_out), then CastLike to T.
-          // For GQA (group_size > 1) the per-KV-head state must first be
-          // repeat-interleaved across the `group_size` query heads sharing
-          // each KV head, using the same Unsqueeze + Expand + Reshape
-          // pattern as the standard Attention op. `StateExpandShape` and
-          // `StateReadShape` are captured from the enclosing scope.
-          const std::string read_block = (group_size > 1) ? R"ONNX(
+              // Read block (shared across all update_rules; differs only by GQA):
+              // output_t = ScaleFactor * (q_t^T @ state_out), then CastLike to T.
+              // For GQA (group_size > 1) the per-KV-head state must first be
+              // repeat-interleaved across the `group_size` query heads sharing
+              // each KV head, using the same Unsqueeze + Expand + Reshape
+              // pattern as the standard Attention op. `StateExpandShape` and
+              // `StateReadShape` are captured from the enclosing scope.
+              const std::string read_block = (group_size > 1) ? R"ONNX(
                 StateUnsq = Unsqueeze (state_out, Two1D)
                 StateExpanded = Expand (StateUnsq, StateExpandShape)
                 StateForRead = Reshape (StateExpanded, StateReadShape)
@@ -4271,7 +4270,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 output_t_f = Mul (ScaleFactor, ReadSq)
                 output_t = CastLike (output_t_f, q_t)
               )ONNX"
-                                                          : R"ONNX(
+                                                              : R"ONNX(
                 QtRow = Unsqueeze (q_t_f, NegTwo1D)
                 ReadOut = MatMul (QtRow, state_out)
                 ReadSq = Squeeze (ReadOut, NegTwo1D)
@@ -4279,20 +4278,20 @@ ONNX_OPERATOR_SET_SCHEMA(
                 output_t = CastLike (output_t_f, q_t)
               )ONNX";
 
-          // One complete recurrence body per update_rule. Each body:
-          //   * casts its T-typed inputs to float32,
-          //   * computes state_out = (decayed) state_in + KtCol @ WriteRow,
-          //     where WriteRow comes from v_t_f directly (linear/gated) or
-          //     from a delta-rule correction Delta = beta * (v - retrieved).
-          std::string body;
-          std::string body_inputs;
-          std::string scan_inputs;
-          int64_t num_scan_inputs;
-          if (update_rule == "linear") {
-            body_inputs = "state_in, q_t, k_t, v_t";
-            scan_inputs = "State0, Q4D, K4D, V4D";
-            num_scan_inputs = 3;
-            body = R"ONNX(
+              // One complete recurrence body per update_rule. Each body:
+              //   * casts its T-typed inputs to float32,
+              //   * computes state_out = (decayed) state_in + KtCol @ WriteRow,
+              //     where WriteRow comes from v_t_f directly (linear/gated) or
+              //     from a delta-rule correction Delta = beta * (v - retrieved).
+              std::string body;
+              std::string body_inputs;
+              std::string scan_inputs;
+              int64_t num_scan_inputs;
+              if (update_rule == "linear") {
+                body_inputs = "state_in, q_t, k_t, v_t";
+                scan_inputs = "State0, Q4D, K4D, V4D";
+                num_scan_inputs = 3;
+                body = R"ONNX(
                 q_t_f = Cast <to = 1> (q_t)
                 k_t_f = Cast <to = 1> (k_t)
                 v_t_f = Cast <to = 1> (v_t)
@@ -4301,11 +4300,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 Outer = MatMul (KtCol, WriteRow)
                 state_out = Add (state_in, Outer)
               )ONNX";
-          } else if (update_rule == "gated") {
-            body_inputs = "state_in, q_t, k_t, v_t, decay_t";
-            scan_inputs = "State0, Q4D, K4D, V4D, Decay4D";
-            num_scan_inputs = 4;
-            body = R"ONNX(
+              } else if (update_rule == "gated") {
+                body_inputs = "state_in, q_t, k_t, v_t, decay_t";
+                scan_inputs = "State0, Q4D, K4D, V4D, Decay4D";
+                num_scan_inputs = 4;
+                body = R"ONNX(
                 q_t_f = Cast <to = 1> (q_t)
                 k_t_f = Cast <to = 1> (k_t)
                 v_t_f = Cast <to = 1> (v_t)
@@ -4318,11 +4317,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 Outer = MatMul (KtCol, WriteRow)
                 state_out = Add (DecayedState, Outer)
               )ONNX";
-          } else if (update_rule == "delta") {
-            body_inputs = "state_in, q_t, k_t, v_t, beta_t";
-            scan_inputs = "State0, Q4D, K4D, V4D, Beta4D";
-            num_scan_inputs = 4;
-            body = R"ONNX(
+              } else if (update_rule == "delta") {
+                body_inputs = "state_in, q_t, k_t, v_t, beta_t";
+                scan_inputs = "State0, Q4D, K4D, V4D, Beta4D";
+                num_scan_inputs = 4;
+                body = R"ONNX(
                 q_t_f = Cast <to = 1> (q_t)
                 k_t_f = Cast <to = 1> (k_t)
                 v_t_f = Cast <to = 1> (v_t)
@@ -4337,11 +4336,11 @@ ONNX_OPERATOR_SET_SCHEMA(
                 Outer = MatMul (KtCol, WriteRow)
                 state_out = Add (state_in, Outer)
               )ONNX";
-          } else { // gated_delta
-            body_inputs = "state_in, q_t, k_t, v_t, decay_t, beta_t";
-            scan_inputs = "State0, Q4D, K4D, V4D, Decay4D, Beta4D";
-            num_scan_inputs = 5;
-            body = R"ONNX(
+              } else { // gated_delta
+                body_inputs = "state_in, q_t, k_t, v_t, decay_t, beta_t";
+                scan_inputs = "State0, Q4D, K4D, V4D, Decay4D, Beta4D";
+                num_scan_inputs = 5;
+                body = R"ONNX(
                 q_t_f = Cast <to = 1> (q_t)
                 k_t_f = Cast <to = 1> (k_t)
                 v_t_f = Cast <to = 1> (v_t)
@@ -4360,44 +4359,44 @@ ONNX_OPERATOR_SET_SCHEMA(
                 Outer = MatMul (KtCol, WriteRow)
                 state_out = Add (DecayedState, Outer)
               )ONNX";
-          }
+              }
 
-          // Assemble Scan node text. Body name is arbitrary.
-          // We omit scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
-          // were already pre-transposed so the T axis is the leading dimension.
-          std::string scan_text = "FinalState, OutputAccum = Scan <\n"
-                                  "  num_scan_inputs = " +
-              std::to_string(num_scan_inputs) +
-              ",\n"
-              "  body = linear_attn_step (" +
-              body_inputs +
-              ") => (state_out, output_t) {\n" + body + read_block +
-              "              }\n"
-              "> (" +
-              scan_inputs + ")";
+              // Assemble Scan node text. Body name is arbitrary.
+              // We omit scan_input_axes/scan_output_axes (default 0); Q/K/V/decay/beta
+              // were already pre-transposed so the T axis is the leading dimension.
+              std::string scan_text =
+                  "FinalState, OutputAccum = Scan <\n"
+                  "  num_scan_inputs = " +
+                  std::to_string(num_scan_inputs) +
+                  ",\n"
+                  "  body = linear_attn_step (" +
+                  body_inputs + ") => (state_out, output_t) {\n" + body + read_block +
+                  "              }\n"
+                  "> (" +
+                  scan_inputs + ")";
 
-          builder.Add(scan_text.c_str());
+              builder.Add(scan_text.c_str());
 
-          // --- Step 6: Post-Scan 4D -> 3D reshape and present_state ---
-          // OutputAccum: (T, B, H_q, d_v) -> Transpose to (B, T, H_q, d_v)
-          // -> Reshape to (B, T, H_q * d_v). Already T-typed (cast inside body).
-          // present_state: cast FinalState (float32) back to S.
-          //   * With past_state: anchor on past_state's dtype.
-          //   * Without past_state: default S to T (query's dtype).
-          builder.Add(R"ONNX(
-            OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)
-            OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)
-            output = Reshape (OutputTransposed, OutputShape3D)
-          )ONNX");
-          if (ctx.hasInput(3)) {
-            builder.Add("present_state = CastLike (FinalState, past_state)");
-          } else {
-            builder.Add("present_state = CastLike (FinalState, query)");
-          }
+              // --- Step 6: Post-Scan 4D -> 3D reshape and present_state ---
+              // OutputAccum: (T, B, H_q, d_v) -> Transpose to (B, T, H_q, d_v)
+              // -> Reshape to (B, T, H_q * d_v). Already T-typed (cast inside body).
+              // present_state: cast FinalState (float32) back to S.
+              //   * With past_state: anchor on past_state's dtype.
+              //   * Without past_state: default S to T (query's dtype).
+              builder.Add(R"ONNX(
+                OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)
+                OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)
+                output = Reshape (OutputTransposed, OutputShape3D)
+              )ONNX");
+              if (ctx.hasInput(3)) {
+                builder.Add("present_state = CastLike (FinalState, past_state)");
+              } else {
+                builder.Add("present_state = CastLike (FinalState, query)");
+              }
 
-          schema.BuildFunction(functionProto);
-          return true;
-        })
+              schema.BuildFunction(functionProto);
+              return true;
+            })
         .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
           // Read required attributes
           auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
