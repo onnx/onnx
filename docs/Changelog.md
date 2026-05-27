@@ -32842,7 +32842,7 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>input</tt> (differentiable) : T</dt>
 <dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
 <dt><tt>weight</tt> (differentiable) : T</dt>
-<dd>Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size.</dd>
+<dd>Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: since this op is always depthwise, `group = channels`, so `C/group = 1`. Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.</dd>
 <dt><tt>bias</tt> (optional, differentiable) : T</dt>
 <dd>Optional per-channel bias with shape (channels).</dd>
 <dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
