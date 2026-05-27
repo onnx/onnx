@@ -1240,6 +1240,82 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _check_keep_aspect_ratio_precision(
+        self,
+        version: int,
+        policy: str,
+        dims: tuple[int, ...],
+        sizes: tuple[int, ...],
+        expected: tuple[int, ...],
+    ) -> None:
+        # Shared body for KeepAspectRatioHelper precision regression tests.
+        # Builds a Resize graph using the sizes-input path with the given
+        # keep_aspect_ratio_policy and asserts the inferred output shape.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.INT32, dims),
+                ("roi", TensorProto.FLOAT, (2 * len(dims),)),
+                ("sizes", TensorProto.INT64, (len(sizes),)),
+            ],
+            [
+                make_node(
+                    "Resize",
+                    ["x", "roi", "", "sizes"],
+                    ["y"],
+                    keep_aspect_ratio_policy=policy,
+                )
+            ],
+            [],
+            initializer=[make_tensor("sizes", TensorProto.INT64, (len(sizes),), sizes)],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, expected)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_keep_aspect_ratio_precision_not_larger(self, _, version) -> None:
+        # Regression: KeepAspectRatioHelper computed `sizes_data[i] /
+        # static_cast<float>(dim_value)` and `roundf(scale * dim_value)`.
+        # With float32, 2**24 + 1 = 16_777_217 is unrepresentable, so a 1:1
+        # request collapses the inferred dim to 16_777_216.
+        self.skipIf(version < 18, "keep_aspect_ratio_policy is from Version 18")
+        self._check_keep_aspect_ratio_precision(
+            version,
+            "not_larger",
+            dims=(16777217, 16777217),
+            sizes=(16777217, 16777217),
+            expected=(16777217, 16777217),
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_keep_aspect_ratio_precision_not_smaller(self, _, version) -> None:
+        # Same float32 mantissa boundary, NOT_SMALLER policy path.
+        self.skipIf(version < 18, "keep_aspect_ratio_policy is from Version 18")
+        self._check_keep_aspect_ratio_precision(
+            version,
+            "not_smaller",
+            dims=(16777217, 16777217),
+            sizes=(16777217, 16777217),
+            expected=(16777217, 16777217),
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_keep_aspect_ratio_precision_non_unit_scale(
+        self, _, version
+    ) -> None:
+        # Non-unit scale path: dim 16_777_217 scaled by 2 should produce
+        # 33_554_434. With float32 the result collapses to 33_554_432.
+        self.skipIf(version < 18, "keep_aspect_ratio_policy is from Version 18")
+        self._check_keep_aspect_ratio_precision(
+            version,
+            "not_larger",
+            dims=(16777217,),
+            sizes=(33554434,),
+            expected=(33554434,),
+        )
+
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_scale(self, _, version) -> None:
         self.skipIf(version < 11, "roi input is from Version 11")
