@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["scikit-build-core>=0.11", "protobuf>=4.25.1"]
+requires = ["scikit-build-core>=0.11", "protobuf==4.25.1"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -91,8 +91,6 @@ cmake.build-type = "Debug"
 cmake.define.ONNX_COVERAGE = "ON"
 
 [tool.cibuildwheel.pyodide]
-# We can't use cp312 because that would pick an older version of
-# pyodide[-build] which does not ship with ml_dtypes.
 build = "cp313-pyodide_wasm32"
 
 [tool.cibuildwheel]

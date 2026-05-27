@@ -5903,6 +5903,164 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, None)]
         )
 
+    def test_maxunpool_rank0_indices_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("xI", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank0_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, ()),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (), [0.0]),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank1_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, (9,)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (9,), list(range(9))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank2_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, (48, 32)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (48, 32), list(range(48 * 32))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank2_input_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48)),
+                ("W", TensorProto.FLOAT, (48, 32, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("X", TensorProto.FLOAT, (25, 48), list(range(25 * 48))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank0_weight_raises_opset11(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, ()),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (), [0.0]),
+            ],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
+        )
+
+    def test_conv_transpose_rank0_weight_raises_opset1(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, ()),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (), [0.0]),
+            ],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 1)],
+        )
+
+    def test_maxunpool_rank0_indices_raises_opset9(self) -> None:
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("xI", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
+        )
+
+    def test_maxunpool_rank0_indices_raises_opset11(self) -> None:
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("xI", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
+        )
+
     def test_onehot_without_axis(self) -> None:
         graph = self._make_graph(
             [
@@ -12208,16 +12366,16 @@ class TestShapeInference(TestShapeInferenceHelper):
         with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
-    def test_conv_transpose_undersized_weight_does_not_crash(self):
-        # Weight rank < input spatial rank → empty kernel_shape would OOB-index later.
+    def test_conv_transpose_undersized_weight_raises(self):
+        # Weight rank < 3 violates ConvTranspose spec (C x M/group x k1...kn).
         model = onnx.parser.parse_model(
             """
             <ir_version: 8, opset_import: [ "" : 11 ]>
             g (float[1,1,5] X, float[1,3] W) => (float[1,1,?] Y) { Y = ConvTranspose(X, W) }
             """
         )
-        # Graceful return without output shape inference is acceptable; must not crash.
-        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_infer_shapes_pathlike_error(self) -> None:
         with self.assertRaisesRegex(

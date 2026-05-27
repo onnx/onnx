@@ -354,7 +354,6 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     else()
       set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
     endif()
-    set(Protobuf_VERSION "6.33.6")  # TODO: Remove this hard coded version when updating protobuf
     # Change back the BUILD_SHARED_LIBS to control the onnx project.
     set(BUILD_SHARED_LIBS ${ONNX_BUILD_SHARED_LIBS})
     set(PROTOBUF_DIR "${protobuf_BINARY_DIR}")
@@ -486,6 +485,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS)
 
   set(${SRCS} ${${SRCS}} PARENT_SCOPE)
   set(ONNX_PROTO_PY_FILES ${_py_files} PARENT_SCOPE)
+  set(ONNX_GENERATED_PROTO_FILES ${GENERATED_FILES} PARENT_SCOPE)
 endfunction()
 
 # Sources are listed explicitly in subdirectory CMakeLists.txt files via
@@ -506,6 +506,13 @@ set_source_files_properties(${ONNX_PROTO_SRCS}
     PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE
 )
 
+# Dedicated target for the gen_proto.py step only (produces .proto files).
+# Both onnx_core and onnx_proto run gen_proto.py in a parallel build, creating
+# a race where both write to the same generated .proto paths simultaneously.
+# Serialising only the generation step lets protoc and C++ compilation for both
+# targets proceed in parallel afterwards.
+add_custom_target(onnx_proto_gen DEPENDS ${ONNX_GENERATED_PROTO_FILES})
+
 set(LINKED_PROTOBUF_TARGET protobuf::libprotobuf)
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
@@ -514,6 +521,14 @@ if(ONNX_USE_LITE_PROTO)
 endif()
 add_library(onnx_proto ${ONNX_PROTO_SRCS})
 add_onnx_global_defines(onnx_proto)
+add_dependencies(onnx_proto onnx_proto_gen)
+
+# onnx_core lists ONNX_PROTO_SRCS as sources alongside onnx_proto; without an
+# explicit ordering cmake schedules gen_proto.py for both concurrently, causing
+# a write/read race on the generated .proto files. Depending on onnx_proto_gen
+# (the dedicated gen_proto.py step) serialises only the generation, letting
+# protoc and C++ compilation for both targets overlap afterwards.
+add_dependencies(onnx_core onnx_proto_gen)
 
 add_library(onnx $<TARGET_OBJECTS:onnx_core>)
 add_dependencies(onnx onnx_proto onnx_core)
