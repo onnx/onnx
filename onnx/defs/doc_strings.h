@@ -62,6 +62,7 @@ extern const char kDoc_RNN_ver14[];
 extern const char kDoc_RoiAlign_ver16[];
 extern const char kDoc_Round_ver11[];
 extern const char kDoc_scan_24[];
+extern const char kDoc_ScanVarLen_ver27[];
 extern const char kDoc_Selu_ver6[];
 extern const char kDoc_Shape_ver24[];
 extern const char kDoc_Sigmoid_ver6[];

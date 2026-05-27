@@ -1449,6 +1449,166 @@ class TestReferenceEvaluator(unittest.TestCase):
         got = oinf.run(None, inputs)
         assert_allclose(got[0], expected)
 
+    def test_scan_var_len(self):
+        # End-to-end ScanVarLen reference execution exercising non-default
+        # scan_output_axes (variant #4 from the implementation map): each
+        # iteration's scan output contribution is concatenated along axis 1
+        # rather than the default axis 0. Verifies that ReferenceEvaluator
+        # routes ScanVarLen through op_scan_var_len.ScanVarLen and produces
+        # numerically correct outputs.
+        sequence_length = 3
+        d0 = 2
+        d1 = 4
+
+        # Body: state passes through unchanged; scan output is the per-iteration
+        # scan input multiplied by 2 (rank 2, shape [d0, d1]).
+        # Outer graph omits the optional output_lengths input by passing "".
+        # Concat axis (axis 1) total size = sequence_length * d1 = 12 here, but
+        # the schema infers this as unknown so the outer scan output dim is "?".
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[{d0}] outer_state_in,
+               float[{sequence_length}, {d0}, {d1}] outer_scan_in)
+                => (float[{d0}] outer_state_out,
+                    float[{d0}, ?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen ("", outer_state_in, outer_scan_in) <
+                    num_scan_inputs = 1,
+                    scan_output_axes = [1],
+                    body = b (float[{d0}] state_in,
+                              float[{d0}, {d1}] scan_in)
+                        => (float[{d0}] state_out,
+                            float[{d0}, {d1}] scan_out)
+                        <float two = {{2.0}}>
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Mul(scan_in, two)
+                    }}
+                >
+            }}
+            """
+        )
+        check_model(model)
+
+        state_value = np.array([100.0, 200.0], dtype=np.float32)
+        scan_value = np.arange(sequence_length * d0 * d1, dtype=np.float32).reshape(
+            sequence_length, d0, d1
+        )
+
+        sess = ReferenceEvaluator(model)
+        state_result, scan_result = sess.run(
+            None,
+            {"outer_state_in": state_value, "outer_scan_in": scan_value},
+        )
+
+        # Expected: state passes through; scan output is (2 * scan_value)
+        # reordered so axis 0 (iteration) is concatenated into axis 1 of the
+        # per-iteration shape [d0, d1] -> final shape [d0, sequence_length * d1].
+        expected_scan = (2.0 * np.transpose(scan_value, (1, 0, 2))).reshape(
+            d0, sequence_length * d1
+        )
+        assert_allclose(state_result, state_value)
+        assert_allclose(scan_result, expected_scan)
+        self.assertEqual(scan_result.shape, (d0, sequence_length * d1))
+
+    def test_scan_var_len_output_lengths_mismatch(self):
+        # When output_lengths is supplied, it must match the actual concat-axis
+        # total size of each scan output. The reference implementation raises
+        # ValueError with a message naming output_lengths and both the
+        # declared and actual sizes.
+        sequence_length = 3
+        feature = 2
+
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (int64[1] output_lengths,
+               float[{feature}] outer_state_in,
+               float[{sequence_length}, {feature}] outer_scan_in)
+                => (float[{feature}] outer_state_out,
+                    float[?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen (output_lengths, outer_state_in, outer_scan_in) <
+                    num_scan_inputs = 1,
+                    body = b (float[{feature}] state_in,
+                              float[{feature}] scan_in)
+                        => (float[{feature}] state_out,
+                            float[{feature}] scan_out)
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Identity(scan_in)
+                    }}
+                >
+            }}
+            """
+        )
+        check_model(model)
+
+        # Actual concat-axis total is sequence_length * feature = 6, but
+        # output_lengths claims 99.
+        wrong_output_lengths = np.array([99], dtype=np.int64)
+        state_value = np.zeros(feature, dtype=np.float32)
+        scan_value = np.arange(sequence_length * feature, dtype=np.float32).reshape(
+            sequence_length, feature
+        )
+
+        sess = ReferenceEvaluator(model)
+        with self.assertRaisesRegex(ValueError, "output_lengths"):
+            sess.run(
+                None,
+                {
+                    "output_lengths": wrong_output_lengths,
+                    "outer_state_in": state_value,
+                    "outer_scan_in": scan_value,
+                },
+            )
+
+    def test_scan_var_len_zero_iterations_raises(self):
+        # ScanVarLen requires sequence_length >= 1; running with a scan input
+        # whose sequence axis has size 0 must raise ValueError. The sequence
+        # axis is left symbolic in the model declaration so shape inference
+        # accepts the model — only the runtime invocation triggers the error.
+        feature = 2
+
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[{feature}] outer_state_in,
+               float[T, {feature}] outer_scan_in)
+                => (float[{feature}] outer_state_out,
+                    float[?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen ("", outer_state_in, outer_scan_in) <
+                    num_scan_inputs = 1,
+                    body = b (float[{feature}] state_in,
+                              float[{feature}] scan_in)
+                        => (float[{feature}] state_out,
+                            float[{feature}] scan_out)
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Identity(scan_in)
+                    }}
+                >
+            }}
+            """
+        )
+        check_model(model)
+
+        state_value = np.zeros(feature, dtype=np.float32)
+        # Sequence axis (axis 0) has size 0: zero iterations.
+        empty_scan_value = np.zeros((0, feature), dtype=np.float32)
+
+        sess = ReferenceEvaluator(model)
+        with self.assertRaisesRegex(ValueError, "sequence_length >= 1"):
+            sess.run(
+                None,
+                {
+                    "outer_state_in": state_value,
+                    "outer_scan_in": empty_scan_value,
+                },
+            )
+
     def test_onnxt_runtime_bernoulli(self):
         X = make_tensor_value_info("X", TensorProto.FLOAT, [None])
         Y = make_tensor_value_info("Y", TensorProto.FLOAT, [None])

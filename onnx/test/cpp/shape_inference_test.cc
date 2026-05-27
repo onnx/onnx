@@ -507,7 +507,27 @@ TEST(GraphInferencerImplTest, Scan9_BasicTest) {
   doInferencingTest(false);
 }
 
-static void ParseAndInfer(ModelProto& model, const char* modelStr) {
+// =========================================================================
+// ScanVarLen (opset 27) shape inference tests.
+//
+// ScanVarLen mirrors Scan but with two key differences:
+//   1. An optional non-variadic input `output_lengths` (1-D int64, length K)
+//      appears at index 0, followed by a variadic
+//      `initial_state_and_scan_inputs` starting at index 1.
+//   2. The per-iteration scan-output's dimension at `scan_output_axes[i]`
+//      (default 0) is REPLACED with a free/unknown dim in the final output
+//      shape, rather than a new sequence dimension being inserted (as Scan
+//      does). All other dimensions propagate unchanged from the body output.
+//
+// Each test expresses the full model (outer graph + ScanVarLen op + body
+// subgraph) in ONNX text form via OnnxParser, then runs shape inference and
+// asserts on the inferred types of the model's graph outputs.
+// =========================================================================
+
+namespace {
+
+// Parse an ONNX model from text form and run shape inference on it.
+void ParseAndInfer(ModelProto& model, const char* modelStr) {
   OnnxParser parser(modelStr);
   auto status = parser.Parse(model);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -515,6 +535,238 @@ static void ParseAndInfer(ModelProto& model, const char* modelStr) {
 
   ShapeInferenceOptions options{true, 1, true};
   ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options);
+}
+
+void ExpectDimValue(const TensorShapeProto& shape, int axis, int expected_value) {
+  ASSERT_LT(axis, shape.dim_size()) << "axis " << axis << " out of bounds for rank " << shape.dim_size();
+  const auto& dim = shape.dim(axis);
+  ASSERT_TRUE(dim.has_dim_value()) << "expected concrete dim at axis " << axis;
+  EXPECT_EQ(dim.dim_value(), expected_value) << "at axis " << axis;
+}
+
+void ExpectFreeDim(const TensorShapeProto& shape, int axis) {
+  ASSERT_LT(axis, shape.dim_size()) << "axis " << axis << " out of bounds for rank " << shape.dim_size();
+  const auto& dim = shape.dim(axis);
+  EXPECT_FALSE(dim.has_dim_value()) << "expected free/unknown dim at axis " << axis
+                                    << " but got dim_value=" << dim.dim_value();
+  // A free dim has either no dim_param, or an auto-generated placeholder name
+  // (the shape-inference machinery materializes unset dims into symbolic
+  // names of the form "unk__<n>" via MaterializeSymbolicShape).
+  if (dim.has_dim_param()) {
+    EXPECT_EQ(dim.dim_param().rfind("unk__", 0), 0u)
+        << "expected free/unknown dim at axis " << axis << " but got dim_param='" << dim.dim_param() << "'";
+  }
+}
+
+} // namespace
+
+// Case 1: basic 1-state + 1-scan-input + 1-scan-output, default axes.
+// State var: float[3] -> float[3] (propagated 1:1).
+// Scan input: float[T=5, 4] -> per-iter float[4] -> scan output float[?]
+// (the dim at scan_output_axes[0]=0 is replaced with a free dim).
+TEST(ShapeInferenceTest, ScanVarLen27_BasicTest) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
+{
+  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  ASSERT_EQ(model.graph().output_size(), 2);
+  const auto& state_out = model.graph().output(0).type();
+  const auto& scan_out = model.graph().output(1).type();
+
+  // State var output: type and shape preserved exactly.
+  ASSERT_TRUE(state_out.has_tensor_type());
+  EXPECT_EQ(state_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(state_out.tensor_type().shape().dim_size(), 1);
+  ExpectDimValue(state_out.tensor_type().shape(), 0, 3);
+
+  // Scan output: rank == body output rank (= 1); axis 0 is free; element type
+  // propagated from body subgraph.
+  ASSERT_TRUE(scan_out.has_tensor_type());
+  EXPECT_EQ(scan_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(scan_out.tensor_type().shape().dim_size(), 1);
+  ExpectFreeDim(scan_out.tensor_type().shape(), 0);
+}
+
+// Case 2: scan_output_axes != 0. With a 2-D body scan output of shape [4, 6]
+// and scan_output_axes=[1], the final scan output should be [4, ?] (axis 0
+// preserved, axis 1 replaced with a free dim).
+TEST(ShapeInferenceTest, ScanVarLen27_ScanOutputAxesNonZero) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4, 6] scan_in_full) => (state_out, scan_out)
+{
+  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+    num_scan_inputs = 1,
+    scan_output_axes = [1],
+    body = scan_var_len_body (float[3] loop_state_in, float[4, 6] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4, 6] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  ASSERT_EQ(model.graph().output_size(), 2);
+  const auto& state_out = model.graph().output(0).type();
+  const auto& scan_out = model.graph().output(1).type();
+
+  // State var unchanged.
+  ASSERT_TRUE(state_out.has_tensor_type());
+  EXPECT_EQ(state_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(state_out.tensor_type().shape().dim_size(), 1);
+  ExpectDimValue(state_out.tensor_type().shape(), 0, 3);
+
+  // Scan output: rank 2, axis 0 preserved as 4, axis 1 is the free concat axis.
+  ASSERT_TRUE(scan_out.has_tensor_type());
+  EXPECT_EQ(scan_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(scan_out.tensor_type().shape().dim_size(), 2);
+  ExpectDimValue(scan_out.tensor_type().shape(), 0, 4);
+  ExpectFreeDim(scan_out.tensor_type().shape(), 1);
+}
+
+// Case 3: optional output_lengths input present. Inference should accept the
+// 1-D int64 tensor of length K (= num scan outputs) and produce the same shapes
+// as the basic case.
+TEST(ShapeInferenceTest, ScanVarLen27_WithOutputLengths) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (int64[1] output_lengths, float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
+{
+  state_out, scan_out = ScanVarLen (output_lengths, state_in, scan_in_full) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  ASSERT_EQ(model.graph().output_size(), 2);
+  const auto& state_out = model.graph().output(0).type();
+  const auto& scan_out = model.graph().output(1).type();
+
+  // Identical to the basic case.
+  ASSERT_TRUE(state_out.has_tensor_type());
+  EXPECT_EQ(state_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(state_out.tensor_type().shape().dim_size(), 1);
+  ExpectDimValue(state_out.tensor_type().shape(), 0, 3);
+
+  ASSERT_TRUE(scan_out.has_tensor_type());
+  EXPECT_EQ(scan_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(scan_out.tensor_type().shape().dim_size(), 1);
+  ExpectFreeDim(scan_out.tensor_type().shape(), 0);
+}
+
+// Case 4: the scan-output element type is taken from the body subgraph output,
+// not from any op input. Use a body whose scan output (and matching per-iter
+// scan input, since the body identity-copies it) is INT32 while the state var
+// remains FLOAT, and verify the inferred scan output is INT32.
+TEST(ShapeInferenceTest, ScanVarLen27_ScanOutputElemTypeFromBody) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, int32[5, 4] scan_in_full) => (state_out, scan_out)
+{
+  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, int32[4] scan_in_per_iter)
+           => (float[3] loop_state_out, int32[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  ASSERT_EQ(model.graph().output_size(), 2);
+  const auto& state_out = model.graph().output(0).type();
+  const auto& scan_out = model.graph().output(1).type();
+
+  // State var output element type comes from state input.
+  ASSERT_TRUE(state_out.has_tensor_type());
+  EXPECT_EQ(state_out.tensor_type().elem_type(), TensorProto::FLOAT);
+
+  // Scan output element type comes from the body subgraph (INT32).
+  ASSERT_TRUE(scan_out.has_tensor_type());
+  EXPECT_EQ(scan_out.tensor_type().elem_type(), TensorProto::INT32);
+  ASSERT_EQ(scan_out.tensor_type().shape().dim_size(), 1);
+  ExpectFreeDim(scan_out.tensor_type().shape(), 0);
+}
+
+// Case 5: ScanVarLen requires sequence_length >= 1. When the scan input's
+// sequence axis is statically 0, shape inference must fail because the final
+// concat-axis size of each scan output is data-dependent on the body's
+// per-iteration outputs and cannot be determined when the body never runs.
+TEST(ShapeInferenceTest, ScanVarLen27_StaticZeroIterationsFails) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[0, 4] scan_in_full) => (state_out, scan_out)
+{
+  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  ShapeInferenceOptions options{true, 1, true};
+  EXPECT_THROW(
+      ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options),
+      ONNX_NAMESPACE::InferenceError);
 }
 
 static void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {

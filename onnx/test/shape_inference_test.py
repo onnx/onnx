@@ -5320,6 +5320,298 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
         )
 
+    # Body subgraph shared by most ScanVarLen tests. The state passes through
+    # via Identity and the per-iteration scan output is also a copy of the
+    # per-iteration scan input. The exact computation does not matter for
+    # shape inference: only the body output shapes drive ScanVarLen's
+    # inferred output shapes.
+    _SCAN_VAR_LEN_BODY = (
+        "body = b (state_in, scan_in) => (state_out, scan_out) {"
+        " state_out = Identity(state_in)"
+        " scan_out = Identity(scan_in)"
+        " }"
+    )
+
+    def test_scan_var_len_basic(self) -> None:
+        # Default axes: scan_input_axes=[0], scan_output_axes=[0].
+        # State variables pass through unchanged. ScanVarLen *replaces* (does
+        # not insert) the dimension at scan_output_axes[i] of the body output;
+        # the body subgraph's per-iteration input shape is the scan input with
+        # the sequence axis stripped (i.e. (2,)), so the scan output is rank 1
+        # with axis 0 unknown.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # Body emits scan output of shape (2,); ScanVarLen replaces
+                # axis 0 -> shape (None,).
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None,)),
+            ],
+        )
+
+    def test_scan_var_len_scan_output_axes(self) -> None:
+        # scan_output_axes=[1]: the unknown dimension is placed at axis 1 of
+        # the scan output rather than axis 0. Body sees per-iteration scan
+        # input shape [3, 2] and emits a same-shaped scan output; with
+        # scan_output_axes=[1] the inferred final shape is [3, None].
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 3, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1,
+                    scan_output_axes = [1],
+                    {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (3, None)),
+            ],
+        )
+
+    def test_scan_var_len_scan_input_axes(self) -> None:
+        # scan_input_axes=[1]: the sequence axis is at position 1 of the scan
+        # input rather than position 0. Body sees per-iteration shape [5, 2];
+        # with default scan_output_axes=[0], the output is (None, 2).
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[5, sequence, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1,
+                    scan_input_axes = [1],
+                    {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # Per-iteration body input shape is (5, 2); body emits same
+                # shape; default scan_output_axes=[0] -> axis 0 unknown.
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None, 2)),
+            ],
+        )
+
+    def test_scan_var_len_output_lengths_present(self) -> None:
+        # Optional output_lengths input supplied as an int64[K] tensor.
+        # Inference should accept it and produce the same shapes as the basic
+        # case (output_lengths is purely a pre-allocation hint).
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (int64[1] output_lengths, float[3] loop_state_orig,
+               float[4, 2] scan_input) => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None,)),
+            ],
+        )
+
+    def test_scan_var_len_multiple_scan_outputs_different_axes(self) -> None:
+        # Two scan outputs with different concat axes. Body emits both outputs
+        # with the same per-iteration shape (2, 3); scan_output_axes=[0, 1]
+        # produces final shapes (None, 3) and (2, None) respectively.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 2, 3] scan_input)
+                => (loop_state_final, scan_output_a, scan_output_b)
+            {
+                loop_state_final, scan_output_a, scan_output_b = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1,
+                    scan_output_axes = [0, 1],
+                    body = b (state_in, scan_in) => (state_out, scan_out_a, scan_out_b) {
+                        state_out = Identity(state_in)
+                        scan_out_a = Identity(scan_in)
+                        scan_out_b = Identity(scan_in)
+                    }
+                >
+            }
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # Body scan output shape = per-iteration scan input shape =
+                # (2, 3); axis 0 of scan_output_a is unknown; axis 1 of
+                # scan_output_b is unknown.
+                make_tensor_value_info("scan_output_a", TensorProto.FLOAT, (None, 3)),
+                make_tensor_value_info("scan_output_b", TensorProto.FLOAT, (2, None)),
+            ],
+        )
+
+    def test_scan_var_len_negative_axes(self) -> None:
+        # Negative scan_input_axes / scan_output_axes resolve relative to the
+        # corresponding tensor's rank, mirroring test_scan_opset9_negative_axes.
+        # Here scan_input_axes=[-2] points at the middle axis of the scan input
+        # (sequence axis), and scan_output_axes=[-2] places the unknown
+        # concat-axis at the body output's second-to-last position.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1,
+                    scan_input_axes = [-2],
+                    scan_output_axes = [-2],
+                    {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # Per-iteration body input shape after stripping sequence axis
+                # is (axis0, 2); body emits same shape; concat axis is the
+                # second-to-last (axis 0 here) -> (None, 2).
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None, 2)),
+            ],
+        )
+
+    def test_scan_var_len_rejects_invalid_output_lengths_dtype(self) -> None:
+        # The optional output_lengths input must be tensor(int64); passing a
+        # float tensor must fail type inference.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[1] output_lengths, float[3] loop_state_orig,
+               float[4, 2] scan_input) => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_scan_var_len_rejects_invalid_output_lengths_rank(self) -> None:
+        # output_lengths must be a 1-D tensor; a 2-D shape must fail shape
+        # inference.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (int64[2, 3] output_lengths, float[3] loop_state_orig,
+               float[4, 2] scan_input) => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_scan_var_len_rejects_invalid_output_lengths_length(self) -> None:
+        # output_lengths length must equal the number of scan outputs (K).
+        # Here K=1 (one scan output) but output_lengths is shape [2].
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (int64[2] output_lengths, float[3] loop_state_orig,
+               float[4, 2] scan_input) => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_scan_var_len_rejects_static_zero_iterations(self) -> None:
+        # ScanVarLen requires sequence_length >= 1. When the scan input's
+        # sequence axis is statically 0, shape inference must fail because the
+        # final concat-axis size of each scan output is data-dependent on the
+        # body's per-iteration outputs and cannot be determined when the body
+        # never runs.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[0, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_scan_var_len_allows_symbolic_sequence_length(self) -> None:
+        # If the sequence axis is symbolic (unknown), shape inference cannot
+        # prove sequence_length == 0, so the model is accepted. (Runtime is
+        # responsible for failing if the actual value is 0.)
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[T, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None,)),
+            ],
+        )
+
     def test_if_ver1(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.
