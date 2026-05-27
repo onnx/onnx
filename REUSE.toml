@@ -140,7 +140,7 @@ SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = ["MANIFEST.in", "VERSION_NUMBER", "CODE_OF_CONDUCT.md", "CODEOWNERS", "pyproject**.toml", "requirements**.txt"]
+path = ["MANIFEST.in", "VERSION_NUMBER", "CODE_OF_CONDUCT.md", "CODEOWNERS", "NOTICE", "pyproject**.toml", "requirements**.txt"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "Copyright (c) ONNX Project Contributors"
 SPDX-License-Identifier = "Apache-2.0"

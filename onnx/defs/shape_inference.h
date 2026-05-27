@@ -249,6 +249,26 @@ inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& 
   return result;
 }
 
+inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() + dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() - dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  }
+  return result;
+}
+
 // if from >= upto_exclusive, return 1.
 // Caller must make sure upto_exclusive is less than or equal to shape.size()
 // Caller must make sure from>=0
@@ -905,6 +925,18 @@ inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int d
     unifyDim(input_dim, dim);
   }
 }
+
+// unifyInputShape: unifies all dimensions of an input with the given dim references.
+// Requires the input to have rank exactly equal to the number of dims provided.
+ONNX_API void
+unifyInputShape(InferenceContext& ctx, size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims);
+
+// unifyInputShapePrefix: unifies the first N dimensions of an input with the given dim references.
+// Requires the input to have rank at least equal to the number of dims provided.
+ONNX_API void unifyInputShapePrefix(
+    InferenceContext& ctx,
+    size_t input_index,
+    std::initializer_list<std::reference_wrapper<Dim>> prefix);
 
 // unifyDim: unifies a dimension with a constant value. If the dimension
 // already has a value, we check for equality of new value with old value.

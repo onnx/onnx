@@ -33,9 +33,9 @@ class Resize_10_11 final : public Adapter {
     auto& data = t.floats();
 
     for (int i = 0; i < input_rank; i++)
-      data.emplace_back(0);
+      data.emplace_back(0.0f);
     for (int i = 0; i < input_rank; i++)
-      data.emplace_back(1);
+      data.emplace_back(1.0f);
 
     Node* constant = graph->create(kConstant);
     constant->insertBefore(node);
