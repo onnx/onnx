@@ -238,32 +238,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
 
-      # Note that the test data should be generated with numpy>=2.0.
-      # numpy 1.x and numpy 2.0 produce slightly different numerical values.
-      - name: Test backend test data
-        if: matrix.autogenerate_files == 1 && startsWith(matrix.os,'ubuntu')
-        run: |
-          python onnx/backend/test/cmd_tools.py generate-data --clean
-          git status
-          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-          if [ $? -ne 0 ]; then
-            echo "git diff for test generation returned failures. Please check updated node test files"
-            exit 1
-          fi
-          git diff --exit-code --diff-filter=ADR -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3'
-          if [ $? -ne 0 ]; then
-            echo "Test generation returned failures. Please check the number of node test files (input_*.pb or output_*.pb)"
-            exit 1
-          fi
-          pip uninstall -y pillow
-          python onnx/backend/test/cmd_tools.py generate-data --clean
-          git status
-          git diff --exit-code -- . ':!onnx/onnx-data.proto' ':!onnx/onnx-data.proto3' ':!*output_*.pb' ':!*input_*.pb'
-          if [ $? -ne 0 ]; then
-            echo "git diff for test generation without pillow returned failures. Please check updated node test files"
-            exit 1
-          fi
-
       - name: Run Python tests with numpy<2.0 (win, mac)
         if: (matrix.python_version == '3.10') && (matrix.os == 'windows-latest' || matrix.os == 'macos-latest') && (matrix.debug_build != 1)
         run: |

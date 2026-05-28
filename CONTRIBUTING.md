@@ -142,17 +142,6 @@ python onnx/gen_proto.py -l
 python onnx/gen_proto.py -l --ml
 ```
 
-#### Generate test data
-
-Test ONNX models, their inputs, and expected outputs can be regenerated after updating test cases by running:
-
-```
-python onnx/backend/test/cmd_tools.py generate-data --diff
-```
-
-This will only re-generate test data for test cases that were updated in the current feature branch compared to main.
-
-
 ### Coding style
 
 We adopted the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html) and [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) for this project.

@@ -260,7 +260,6 @@ set CMAKE_ARGS=-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_USE_LITE_PROTO=ON -DONN
 python onnx\gen_proto.py -l
 python onnx\gen_proto.py -l --ml
 pip install -e .
-python onnx\backend\test\cmd_tools.py generate-data
 python onnx\backend\test\stat_coverage.py
 python onnx\defs\gen_doc.py
 set ONNX_ML=0
