@@ -2989,6 +2989,92 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
+    def test_linear_attention_unknown_update_rule(self) -> None:
+        # Only "linear", "gated", "delta", and "gated_delta" are accepted.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="forza inter"
+                > (Q, K, V)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_q_num_heads_zero(self) -> None:
+        # Non-positive head counts must be rejected explicitly, not silently
+        # skipped by the GQA divisibility check (0 % anything == 0).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,16] Q, float[2,3,16] K, float[2,3,16] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=0, kv_num_heads=2, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_qpack_indivisible(self) -> None:
+        # Packed query last dim must be divisible by q_num_heads so the
+        # function body can reshape (B, T, H_q * d_k) to (B, T, H_q, d_k).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,15] Q, float[2,3,16] K, float[2,3,16] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_decay_last_dim_wrong(self) -> None:
+        # With H_kv=4 and d_k=16, decay last dim must be 4 (per-head) or 64
+        # (per-key-dim). 7 is neither and must be rejected.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,64] Q, float[2,3,64] K, float[2,3,64] V,
+               float[2,3,7] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated"
+                > (Q, K, V, "", decay)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_beta_last_dim_wrong(self) -> None:
+        # With H_kv=4, beta last dim must be 1 (broadcast) or 4 (per-head).
+        # 3 is neither and must be rejected.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,64] Q, float[2,3,64] K, float[2,3,64] V,
+               float[2,3,4] decay, float[2,3,3] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, "", decay, beta)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
     def test_causal_conv_with_state_static(self) -> None:
         model = onnx.parser.parse_model(
             """
@@ -3148,6 +3234,21 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 3)),
             ],
         )
+
+    def test_causal_conv_with_state_unknown_activation_fails(self) -> None:
+        # Only "none", "silu", and "swish" are accepted; anything else must be
+        # rejected by shape inference rather than silently inlined as Identity.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState <activation = "forza inter"> (input, weight)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_flex_attention_basic(self) -> None:
         """Test FlexAttention basic shape inference with symbolic dimensions."""
