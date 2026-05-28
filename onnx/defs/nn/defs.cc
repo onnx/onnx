@@ -3964,8 +3964,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 static constexpr const char* LinearAttention_ver27_doc = R"DOC(
 Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
 
-All inputs use 3D packed format [B, T, H*D]; q_num_heads and kv_num_heads are always
-required. The op internally unpacks to 4D for computation.
+The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
+[B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
+kv_num_heads are always required and are used to unpack to 4D internally for computation.
+The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
 
 Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
 kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
