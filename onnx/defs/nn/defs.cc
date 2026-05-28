@@ -3721,9 +3721,10 @@ Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
 The convolution is causal (looks only at current and past positions) and depthwise
 (each channel is convolved independently with its own kernel).
 
-All inputs and outputs are rank-3 tensors (batch_size, channels, length).
-For higher-dimensional data, use Reshape nodes before and after this operator
-to pack extra dimensions into the batch or channel axis.
+The input, weight, past_state, output, and present_state tensors are rank-3 with
+shape (batch_size, channels, length). The optional bias input is rank-1 with
+shape (channels). For higher-dimensional data, use Reshape nodes before and
+after this operator to pack extra dimensions into the batch or channel axis.
 
 Weight layout: (channels, 1, k) for depthwise convolution.
 The carry state stores the last (k-1) positions for incremental decode.
@@ -3797,7 +3798,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "present_state",
             "Updated carry state with shape (batch_size, channels, k - 1). "
-            "Contains the last (k-1) values from the input along the causal axis.",
+            "Contains the last (k - 1) values of the effective padded/concatenated "
+            "sequence along the causal axis, including any values from past_state "
+            "or zero-padding when the current input is shorter than k - 1.",
             "T",
             OpSchema::Single,
             true,
@@ -3852,16 +3855,28 @@ ONNX_OPERATOR_SET_SCHEMA(
               //   4. Slice last (k-1) positions from padded input as present_state
 
               // --- Step 1: Extract static channel count for Conv group attribute ---
-              // Conv's group attribute must be a compile-time integer.
-              // TODO(review): If C is unknown at build time, we cannot construct the
-              // function body. Weights are typically initializers so C should be available.
+              // Conv's group attribute must be a compile-time integer. Prefer the
+              // input channel dimension when concrete; otherwise fall back to the
+              // leading weight dimension, which for depthwise weights is C and is
+              // typically statically known because weights are commonly
+              // initializers.
               auto* input_type = ctx.getInputType(0);
               if (input_type == nullptr || !input_type->has_tensor_type() || !input_type->tensor_type().has_shape() ||
-                  input_type->tensor_type().shape().dim_size() < 2 ||
-                  !input_type->tensor_type().shape().dim(1).has_dim_value()) {
+                  input_type->tensor_type().shape().dim_size() < 2) {
                 return false;
               }
-              int64_t C = input_type->tensor_type().shape().dim(1).dim_value();
+              int64_t C = 0;
+              if (input_type->tensor_type().shape().dim(1).has_dim_value()) {
+                C = input_type->tensor_type().shape().dim(1).dim_value();
+              } else {
+                auto* weight_type = ctx.getInputType(1);
+                if (weight_type == nullptr || !weight_type->has_tensor_type() ||
+                    !weight_type->tensor_type().has_shape() || weight_type->tensor_type().shape().dim_size() < 1 ||
+                    !weight_type->tensor_type().shape().dim(0).has_dim_value()) {
+                  return false;
+                }
+                C = weight_type->tensor_type().shape().dim(0).dim_value();
+              }
 
               // Read the activation attribute (default: "none")
               auto* activation_attr = ctx.getAttribute("activation");
@@ -3913,8 +3928,15 @@ ONNX_OPERATOR_SET_SCHEMA(
                   MulOutFloat = Mul (ConvOutFloat, ConvSigmoid)
                   output = CastLike (MulOutFloat, ConvOut)
                 )ONNX");
-              } else {
+              } else if (activation == "none") {
                 builder.Add("output = Identity (ConvOut)");
+              } else {
+                // The Python reference rejects any other value; mirror that here
+                // rather than silently aliasing unknown activations to Identity.
+                ONNX_THROW(
+                    "CausalConvWithState: unsupported activation value '",
+                    activation,
+                    "'. Supported values are 'none', 'silu', and 'swish'.");
               }
 
               // --- Step 5: Slice last (k-1) positions from PaddedInput as present_state ---
@@ -4412,12 +4434,18 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // GQA constraint: q_num_heads must be a positive multiple of kv_num_heads.
           // q_num_heads == kv_num_heads is MHA; q_num_heads > kv_num_heads with the
-          // divisibility rule is GQA (or MQA when kv_num_heads == 1).
-          if (q_num_heads > 0 && kv_num_heads > 0) {
-            if (q_num_heads % kv_num_heads != 0) {
-              fail_type_inference(
-                  "q_num_heads (", q_num_heads, ") must be a multiple of kv_num_heads (", kv_num_heads, ")");
-            }
+          // divisibility rule is GQA (or MQA when kv_num_heads == 1). Non-positive
+          // head counts are rejected here so that downstream divisions and the
+          // function body always see strictly positive values.
+          if (q_num_heads <= 0) {
+            fail_type_inference("q_num_heads must be > 0, got ", q_num_heads);
+          }
+          if (kv_num_heads <= 0) {
+            fail_type_inference("kv_num_heads must be > 0, got ", kv_num_heads);
+          }
+          if (q_num_heads % kv_num_heads != 0) {
+            fail_type_inference(
+                "q_num_heads (", q_num_heads, ") must be a multiple of kv_num_heads (", kv_num_heads, ")");
           }
 
           // Read update_rule attribute with default
@@ -4466,13 +4494,20 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           // --- Type propagation ---
-          // output: type T from query
-          // present_state: type S from past_state when provided, else fall back to T
-          // (the spec recommends S == float32 or S == T for numerical stability).
+          // output: type T from query.
+          //
+          // present_state uses the separately-declared state type S only when S can be
+          // anchored by the optional past_state input. When past_state is omitted,
+          // type inference cannot independently infer S, so present_state explicitly
+          // falls back to type T from query on the first step. Callers that require an
+          // fp32 state while using lower-precision query activations must therefore
+          // provide past_state with the desired state element type.
+          // (The spec recommends S == float32 or S == T for numerical stability.)
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (has_past_state && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type()) {
             propagateElemTypeFromInputToOutput(ctx, 3, 1);
           } else {
+            // No past_state is available to anchor S, so present_state defaults to T.
             propagateElemTypeFromInputToOutput(ctx, 0, 1);
           }
 
@@ -4508,15 +4543,95 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Derive d_k from Q (via q_num_heads) and K (via kv_num_heads).
           // Multiple sources for the same logical dim are unified, so an
           // inconsistency between Q and K (e.g. mismatched d_k) fails here.
+          // Reject packed last dims that are not divisible by their head count
+          // up-front so the resulting integer-division d_k actually corresponds
+          // to a shape the function body can reshape to (B, T, H, D).
           if (q_num_heads > 0 && QPack.has_dim_value()) {
+            if (QPack.dim_value() % q_num_heads != 0) {
+              fail_shape_inference(
+                  "Packed query last dim (",
+                  QPack.dim_value(),
+                  ") must be divisible by q_num_heads (",
+                  q_num_heads,
+                  ")");
+            }
             unifyDim(Dk, QPack.dim_value() / q_num_heads);
           }
           if (kv_num_heads > 0 && KPack.has_dim_value()) {
+            if (KPack.dim_value() % kv_num_heads != 0) {
+              fail_shape_inference(
+                  "Packed key last dim (",
+                  KPack.dim_value(),
+                  ") must be divisible by kv_num_heads (",
+                  kv_num_heads,
+                  ")");
+            }
             unifyDim(Dk, KPack.dim_value() / kv_num_heads);
           }
           // Derive d_v from V.
           if (kv_num_heads > 0 && VPack.has_dim_value()) {
+            if (VPack.dim_value() % kv_num_heads != 0) {
+              fail_shape_inference(
+                  "Packed value last dim (",
+                  VPack.dim_value(),
+                  ") must be divisible by kv_num_heads (",
+                  kv_num_heads,
+                  ")");
+            }
             unifyDim(Dv, VPack.dim_value() / kv_num_heads);
+          }
+
+          // Strict validation of decay/beta last dims, deferred until d_k and H_kv
+          // are derived above. The earlier unifyInputShape calls only checked rank
+          // and B/T; here we reject concrete last dims that the function body and
+          // Python reference cannot broadcast correctly.
+          //   decay last dim must be H_kv (per-head scalar form) or H_kv * d_k
+          //     (per-key-dim form). When d_k is unknown we still require divisibility
+          //     by H_kv.
+          //   beta  last dim must be 1 (broadcast) or H_kv (per-head).
+          if (has_decay && kv_num_heads > 0) {
+            auto* decay_type = ctx.getInputType(4);
+            if (decay_type != nullptr && decay_type->has_tensor_type() &&
+                decay_type->tensor_type().has_shape() && decay_type->tensor_type().shape().dim_size() == 3 &&
+                decay_type->tensor_type().shape().dim(2).has_dim_value()) {
+              const int64_t decay_last = decay_type->tensor_type().shape().dim(2).dim_value();
+              if (Dk.has_dim_value()) {
+                const int64_t dk = Dk.dim_value();
+                if (decay_last != kv_num_heads && decay_last != kv_num_heads * dk) {
+                  fail_shape_inference(
+                      "decay last dim (",
+                      decay_last,
+                      ") must be kv_num_heads (",
+                      kv_num_heads,
+                      ") or kv_num_heads * d_k (",
+                      kv_num_heads * dk,
+                      ")");
+                }
+              } else if (decay_last != kv_num_heads && decay_last % kv_num_heads != 0) {
+                fail_shape_inference(
+                    "decay last dim (",
+                    decay_last,
+                    ") must be kv_num_heads (",
+                    kv_num_heads,
+                    ") or a multiple of kv_num_heads");
+              }
+            }
+          }
+          if (has_beta && kv_num_heads > 0) {
+            auto* beta_type = ctx.getInputType(5);
+            if (beta_type != nullptr && beta_type->has_tensor_type() && beta_type->tensor_type().has_shape() &&
+                beta_type->tensor_type().shape().dim_size() == 3 &&
+                beta_type->tensor_type().shape().dim(2).has_dim_value()) {
+              const int64_t beta_last = beta_type->tensor_type().shape().dim(2).dim_value();
+              if (beta_last != 1 && beta_last != kv_num_heads) {
+                fail_shape_inference(
+                    "beta last dim (",
+                    beta_last,
+                    ") must be 1 or kv_num_heads (",
+                    kv_num_heads,
+                    ")");
+              }
+            }
           }
 
           // Output 0: (B, T, H_q * d_v) — 3D packed.
