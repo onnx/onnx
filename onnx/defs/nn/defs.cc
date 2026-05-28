@@ -3903,9 +3903,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
               // --- Step 4: Optional fused activation ---
               if (activation == "silu" || activation == "swish") {
+                // Upcast Sigmoid/Mul to float32 to match the Python reference
+                // implementation, which evaluates SiLU in float32 for fp16/bf16
+                // inputs and casts back. For float32 inputs the Cast/CastLike
+                // pair is a no-op that runtimes fold away.
                 builder.Add(R"ONNX(
-                  ConvSigmoid = Sigmoid (ConvOut)
-                  output = Mul (ConvOut, ConvSigmoid)
+                  ConvOutFloat = Cast <to = 1> (ConvOut)
+                  ConvSigmoid = Sigmoid (ConvOutFloat)
+                  MulOutFloat = Mul (ConvOutFloat, ConvSigmoid)
+                  output = CastLike (MulOutFloat, ConvOut)
                 )ONNX");
               } else {
                 builder.Add("output = Identity (ConvOut)");
