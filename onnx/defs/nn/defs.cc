@@ -3807,6 +3807,22 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             OpSchema::NonDifferentiable)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // --- Validate activation attribute ---
+          // Reject unknown values here (rather than in the function-body builder)
+          // so checker/shape-inference users get a clear error even when the op
+          // is never inlined. Allowed values mirror the schema doc string and
+          // the Python reference implementation.
+          auto* activation_attr = ctx.getAttribute("activation");
+          if (activation_attr != nullptr && activation_attr->has_s()) {
+            const std::string& activation = activation_attr->s();
+            if (activation != "none" && activation != "silu" && activation != "swish") {
+              fail_shape_inference(
+                  "CausalConvWithState: unsupported activation value '",
+                  activation,
+                  "'. Supported values are 'none', 'silu', and 'swish'.");
+            }
+          }
+
           // --- Type inference ---
           // All inputs and outputs share the same type T.
           propagateElemTypeFromInputToOutput(ctx, 0, 0); // input -> output
@@ -3931,12 +3947,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               } else if (activation == "none") {
                 builder.Add("output = Identity (ConvOut)");
               } else {
-                // The Python reference rejects any other value; mirror that here
-                // rather than silently aliasing unknown activations to Identity.
-                ONNX_THROW(
-                    "CausalConvWithState: unsupported activation value '",
-                    activation,
-                    "'. Supported values are 'none', 'silu', and 'swish'.");
+                // Unsupported activation values are rejected up front by
+                // TypeAndShapeInferenceFunction; if we somehow reach the body
+                // builder with an unknown value (e.g. inference was bypassed),
+                // decline to build a function body rather than throw.
+                return false;
               }
 
               // --- Step 5: Slice last (k-1) positions from PaddedInput as present_state ---
