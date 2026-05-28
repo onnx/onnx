@@ -7094,9 +7094,10 @@ for from_type, to_type in test_cases:
   The convolution is causal (looks only at current and past positions) and depthwise
   (each channel is convolved independently with its own kernel).
 
-  All inputs and outputs are rank-3 tensors (batch_size, channels, length).
-  For higher-dimensional data, use Reshape nodes before and after this operator
-  to pack extra dimensions into the batch or channel axis.
+  The input, weight, past_state, output, and present_state tensors are rank-3 with
+  shape (batch_size, channels, length). The optional bias input is rank-1 with
+  shape (channels). For higher-dimensional data, use Reshape nodes before and
+  after this operator to pack extra dimensions into the batch or channel axis.
 
   Weight layout: (channels, 1, k) for depthwise convolution.
   The carry state stores the last (k-1) positions for incremental decode.
@@ -7134,7 +7135,7 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>output</tt> (differentiable) : T</dt>
 <dd>Convolution output with same shape as input.</dd>
 <dt><tt>present_state</tt> (non-differentiable) : T</dt>
-<dd>Updated carry state with shape (batch_size, channels, k - 1). Contains the last (k-1) values from the input along the causal axis.</dd>
+<dd>Updated carry state with shape (batch_size, channels, k - 1). Contains the last (k - 1) values of the effective padded/concatenated sequence along the causal axis, including any values from past_state or zero-padding when the current input is shorter than k - 1.</dd>
 </dl>
 
 #### Type Constraints
@@ -18155,8 +18156,10 @@ Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
 
   Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
 
-  All inputs use 3D packed format [B, T, H*D]; q_num_heads and kv_num_heads are always
-  required. The op internally unpacks to 4D for computation.
+  The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
+  [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
+  kv_num_heads are always required and are used to unpack to 4D internally for computation.
+  The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
 
   Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
   kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
