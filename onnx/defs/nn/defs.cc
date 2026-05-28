@@ -4608,8 +4608,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           //   beta  last dim must be 1 (broadcast) or H_kv (per-head).
           if (has_decay && kv_num_heads > 0) {
             auto* decay_type = ctx.getInputType(4);
-            if (decay_type != nullptr && decay_type->has_tensor_type() &&
-                decay_type->tensor_type().has_shape() && decay_type->tensor_type().shape().dim_size() == 3 &&
+            if (decay_type != nullptr && decay_type->has_tensor_type() && decay_type->tensor_type().has_shape() &&
+                decay_type->tensor_type().shape().dim_size() == 3 &&
                 decay_type->tensor_type().shape().dim(2).has_dim_value()) {
               const int64_t decay_last = decay_type->tensor_type().shape().dim(2).dim_value();
               if (Dk.has_dim_value()) {
@@ -4641,12 +4641,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 beta_type->tensor_type().shape().dim(2).has_dim_value()) {
               const int64_t beta_last = beta_type->tensor_type().shape().dim(2).dim_value();
               if (beta_last != 1 && beta_last != kv_num_heads) {
-                fail_shape_inference(
-                    "beta last dim (",
-                    beta_last,
-                    ") must be 1 or kv_num_heads (",
-                    kv_num_heads,
-                    ")");
+                fail_shape_inference("beta last dim (", beta_last, ") must be 1 or kv_num_heads (", kv_num_heads, ")");
               }
             }
           }
