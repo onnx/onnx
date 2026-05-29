@@ -75,6 +75,23 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.name, "a")
         self.assertEqual(attr.doc_string, "doc")
 
+    def test_make_attribute_ref(self) -> None:
+        attr = helper.make_attribute_ref("alpha", AttributeProto.FLOAT, "parent_alpha")
+        self.assertEqual(attr.name, "alpha")
+        self.assertEqual(attr.type, AttributeProto.FLOAT)
+        self.assertEqual(attr.ref_attr_name, "parent_alpha")
+        # A reference attribute carries no data; it is resolved from the parent
+        # function's attribute at instantiation time.
+        with self.assertRaises(ValueError):
+            helper.get_attribute_value(attr)
+
+    def test_make_attribute_ref_doc_string(self) -> None:
+        attr = helper.make_attribute_ref(
+            "alpha", AttributeProto.FLOAT, "parent_alpha", doc_string="doc"
+        )
+        self.assertEqual(attr.ref_attr_name, "parent_alpha")
+        self.assertEqual(attr.doc_string, "doc")
+
     def test_attr_string(self) -> None:
         # bytes
         attr = helper.make_attribute("str", b"test")
