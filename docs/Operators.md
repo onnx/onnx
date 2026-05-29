@@ -32536,7 +32536,7 @@ body = onnx.parser.parse_graph(
 )
 node = onnx.helper.make_node(
     "ScanVarLen",
-    inputs=["", "scan_input"],
+    inputs=["scan_input"],
     outputs=["scan_output"],
     num_scan_inputs=1,
     scan_input_axes=[1],
@@ -32566,14 +32566,14 @@ expect(
 
 ```python
 """Single scan input, single scan output, default axes/direction, no
-``output_lengths``. Verifies the concat (not stack) semantics: three
+shape hint. Verifies the concat (not stack) semantics: three
 iterations each contributing a length-4 slice yield a length-12
 output along the default concat axis 0.
 """
 body = _identity_body("scan_var_len_basic_body")
 node = onnx.helper.make_node(
     "ScanVarLen",
-    inputs=["", "scan_input"],  # "" = omitted optional output_lengths
+    inputs=["scan_input"],
     outputs=["scan_output"],
     num_scan_inputs=1,
     body=body,
@@ -32596,30 +32596,31 @@ expect(
 
 
 <details>
-<summary>scan_var_len_output_lengths</summary>
+<summary>scan_var_len_hint</summary>
 
 ```python
-"""Same as the basic variant but with an explicit ``output_lengths``
-input. The supplied length must equal the total concat-axis size of
-the scan output.
+"""Same as the basic variant but with an explicit shape hint
+supplied as the trailing optional input. The hint declares the full
+scan-output shape (here, length 12 along the default concat axis 0)
+and is validated against the runtime concatenation result.
 """
-body = _identity_body("scan_var_len_output_lengths_body")
+body = _identity_body("scan_var_len_hint_body")
 node = onnx.helper.make_node(
     "ScanVarLen",
-    inputs=["output_lengths", "scan_input"],
+    inputs=["scan_input", "scan_out_hint"],
     outputs=["scan_output"],
     num_scan_inputs=1,
     body=body,
 )
-output_lengths = np.array([12], dtype=np.int64)
+scan_out_hint = np.array([12], dtype=np.int64)
 scan_input = np.arange(12, dtype=np.float32).reshape(3, 4)
 scan_output = scan_input.reshape(12)
 
 expect(
     node,
-    inputs=[output_lengths, scan_input],
+    inputs=[scan_input, scan_out_hint],
     outputs=[scan_output],
-    name="test_scan_var_len_output_lengths",
+    name="test_scan_var_len_hint",
     opset_imports=_OPSET_IMPORTS,
 )
 ```
@@ -32637,7 +32638,7 @@ each iteration slices a different prefix length of its per-iter data
 input, driven by a second scan input that supplies the length.
 
 The final concatenated scan output has length 1 + 2 + 3 = 6, which is
-also asserted via the optional ``output_lengths`` input.
+also asserted via the trailing shape-hint input.
 """
 # Body inputs: data of shape [4] (fixed) and length of shape [1]
 # (int64). Body output: Slice(data, [0], length, [0]) — a 1-D tensor
@@ -32655,12 +32656,12 @@ body = onnx.parser.parse_graph(
 )
 node = onnx.helper.make_node(
     "ScanVarLen",
-    inputs=["output_lengths", "data", "lengths"],
+    inputs=["data", "lengths", "scan_out_hint"],
     outputs=["scan_output"],
     num_scan_inputs=2,
     body=body,
 )
-output_lengths = np.array([6], dtype=np.int64)
+scan_out_hint = np.array([6], dtype=np.int64)
 data = np.array(
     [[10, 11, 12, 13], [20, 21, 22, 23], [30, 31, 32, 33]],
     dtype=np.float32,
@@ -32672,7 +32673,7 @@ scan_output = np.array([10, 20, 21, 30, 31, 32], dtype=np.float32)
 
 expect(
     node,
-    inputs=[output_lengths, data, lengths],
+    inputs=[data, lengths, scan_out_hint],
     outputs=[scan_output],
     name="test_scan_var_len_ragged",
     opset_imports=_OPSET_IMPORTS,
@@ -32694,7 +32695,7 @@ along axis 0.
 body = _identity_body("scan_var_len_reverse_body")
 node = onnx.helper.make_node(
     "ScanVarLen",
-    inputs=["", "scan_input"],
+    inputs=["scan_input"],
     outputs=["scan_output"],
     num_scan_inputs=1,
     scan_input_directions=[1],
@@ -32739,7 +32740,7 @@ body = onnx.parser.parse_graph(
 )
 node = onnx.helper.make_node(
     "ScanVarLen",
-    inputs=["", "initial_state", "scan_input"],
+    inputs=["initial_state", "scan_input"],
     outputs=["final_state", "scan_output"],
     num_scan_inputs=1,
     body=body,

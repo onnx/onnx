@@ -511,13 +511,18 @@ TEST(GraphInferencerImplTest, Scan9_BasicTest) {
 // ScanVarLen (opset 27) shape inference tests.
 //
 // ScanVarLen mirrors Scan but with two key differences:
-//   1. An optional non-variadic input `output_lengths` (1-D int64, length K)
-//      appears at index 0, followed by a variadic
-//      `initial_state_and_scan_inputs` starting at index 1.
+//   1. A single trailing variadic input "initial_state_scan_inputs_and_hints"
+//      with layout [N state vars, M scan inputs, K optional shape hints].
+//      N is derived from the body subgraph (N = body.input_count - M);
+//      K is the number of scan outputs. The hint group is either omitted
+//      entirely or present as exactly K slots; individual slots may be
+//      "" placeholders (no hint for that output).
 //   2. The per-iteration scan-output's dimension at `scan_output_axes[i]`
 //      (default 0) is REPLACED with a free/unknown dim in the final output
 //      shape, rather than a new sequence dimension being inserted (as Scan
 //      does). All other dimensions propagate unchanged from the body output.
+//      When a hint is a constant initializer, the concat-axis dim is taken
+//      from the hint instead of being left symbolic.
 //
 // Each test expresses the full model (outer graph + ScanVarLen op + body
 // subgraph) in ONNX text form via OnnxParser, then runs shape inference and
@@ -560,7 +565,8 @@ void ExpectFreeDim(const TensorShapeProto& shape, int axis) {
 
 } // namespace
 
-// Case 1: basic 1-state + 1-scan-input + 1-scan-output, default axes.
+// Case 1: basic 1-state + 1-scan-input + 1-scan-output, default axes, no hints.
+// Option B input layout: [state_in, scan_in_full] (N + M = 2, K_hints = 0).
 // State var: float[3] -> float[3] (propagated 1:1).
 // Scan input: float[T=5, 4] -> per-iter float[4] -> scan output float[?]
 // (the dim at scan_output_axes[0]=0 is replaced with a free dim).
@@ -572,7 +578,7 @@ TEST(ShapeInferenceTest, ScanVarLen27_BasicTest) {
 >
 agraph (float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full) <
     num_scan_inputs = 1,
     body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
            => (float[3] loop_state_out, float[4] scan_out_per_iter)
@@ -616,7 +622,7 @@ TEST(ShapeInferenceTest, ScanVarLen27_ScanOutputAxesNonZero) {
 >
 agraph (float[3] state_in, float[5, 4, 6] scan_in_full) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full) <
     num_scan_inputs = 1,
     scan_output_axes = [1],
     body = scan_var_len_body (float[3] loop_state_in, float[4, 6] scan_in_per_iter)
@@ -650,18 +656,19 @@ agraph (float[3] state_in, float[5, 4, 6] scan_in_full) => (state_out, scan_out)
   ExpectFreeDim(scan_out.tensor_type().shape(), 1);
 }
 
-// Case 3: optional output_lengths input present. Inference should accept the
-// 1-D int64 tensor of length K (= num scan outputs) and produce the same shapes
-// as the basic case.
-TEST(ShapeInferenceTest, ScanVarLen27_WithOutputLengths) {
+// Case 3: hint supplied but as a graph INPUT (non-constant). Shape inference
+// validates the hint structurally (int64, rank-1) but cannot read its values
+// at inference time, so it falls back to the body-inference path with the
+// concat axis left symbolic — same shapes as the basic case.
+TEST(ShapeInferenceTest, ScanVarLen27_WithDynamicHint) {
   const char* modelStr = R"ONNX(
 <
   ir_version: 10,
   opset_import: [ "" : 27 ]
 >
-agraph (int64[1] output_lengths, float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
+agraph (float[3] state_in, float[5, 4] scan_in_full, int64[1] scan_out_hint) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen (output_lengths, state_in, scan_in_full) <
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full, scan_out_hint) <
     num_scan_inputs = 1,
     body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
            => (float[3] loop_state_out, float[4] scan_out_per_iter)
@@ -680,7 +687,7 @@ agraph (int64[1] output_lengths, float[3] state_in, float[5, 4] scan_in_full) =>
   const auto& state_out = model.graph().output(0).type();
   const auto& scan_out = model.graph().output(1).type();
 
-  // Identical to the basic case.
+  // Identical shapes to the basic case (non-constant hint -> fallback path).
   ASSERT_TRUE(state_out.has_tensor_type());
   EXPECT_EQ(state_out.tensor_type().elem_type(), TensorProto::FLOAT);
   ASSERT_EQ(state_out.tensor_type().shape().dim_size(), 1);
@@ -704,7 +711,7 @@ TEST(ShapeInferenceTest, ScanVarLen27_ScanOutputElemTypeFromBody) {
 >
 agraph (float[3] state_in, int32[5, 4] scan_in_full) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full) <
     num_scan_inputs = 1,
     body = scan_var_len_body (float[3] loop_state_in, int32[4] scan_in_per_iter)
            => (float[3] loop_state_out, int32[4] scan_out_per_iter)
@@ -734,11 +741,11 @@ agraph (float[3] state_in, int32[5, 4] scan_in_full) => (state_out, scan_out)
   ExpectFreeDim(scan_out.tensor_type().shape(), 0);
 }
 
-// Case 5: ScanVarLen requires sequence_length >= 1. When the scan input's
-// sequence axis is statically 0, shape inference must fail because the final
-// concat-axis size of each scan output is data-dependent on the body's
-// per-iteration outputs and cannot be determined when the body never runs.
-TEST(ShapeInferenceTest, ScanVarLen27_StaticZeroIterationsFails) {
+// Case 5: Option B makes zero iterations defined behavior. When the scan
+// input's sequence axis is statically 0 and no hint is supplied, shape
+// inference MUST NOT fail; the scan output's non-concat dims propagate
+// from the body output and the concat axis is left symbolic.
+TEST(ShapeInferenceTest, ScanVarLen27_StaticZeroIterationsDefined) {
   const char* modelStr = R"ONNX(
 <
   ir_version: 10,
@@ -746,7 +753,170 @@ TEST(ShapeInferenceTest, ScanVarLen27_StaticZeroIterationsFails) {
 >
 agraph (float[3] state_in, float[0, 4] scan_in_full) => (state_out, scan_out)
 {
-  state_out, scan_out = ScanVarLen ("", state_in, scan_in_full) <
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  ASSERT_EQ(model.graph().output_size(), 2);
+  const auto& state_out = model.graph().output(0).type();
+  const auto& scan_out = model.graph().output(1).type();
+
+  ASSERT_TRUE(state_out.has_tensor_type());
+  EXPECT_EQ(state_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(state_out.tensor_type().shape().dim_size(), 1);
+  ExpectDimValue(state_out.tensor_type().shape(), 0, 3);
+
+  // Body output rank = 1 (shape [4]); concat-axis (default 0) left symbolic.
+  ASSERT_TRUE(scan_out.has_tensor_type());
+  EXPECT_EQ(scan_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(scan_out.tensor_type().shape().dim_size(), 1);
+  ExpectFreeDim(scan_out.tensor_type().shape(), 0);
+}
+
+// Case 6: constant-initializer hint produces a fully-static scan output shape.
+// Body emits per-iter shape [4]; the hint {7} declares total concat-axis
+// size 7, so the inferred scan output is [7] (no free dims).
+TEST(ShapeInferenceTest, ScanVarLen27_ConstantHintFullyStatic) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
+<
+  int64[1] scan_out_hint = {7}
+>
+{
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full, scan_out_hint) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  ASSERT_EQ(model.graph().output_size(), 2);
+  const auto& scan_out = model.graph().output(1).type();
+
+  ASSERT_TRUE(scan_out.has_tensor_type());
+  EXPECT_EQ(scan_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(scan_out.tensor_type().shape().dim_size(), 1);
+  ExpectDimValue(scan_out.tensor_type().shape(), 0, 7);
+}
+
+// Case 7: K=2 scan outputs with partial hints (slot 0 = "" placeholder,
+// slot 1 = constant). Output 0 falls back to body inference (concat axis
+// symbolic); output 1 gets fully-static shape from the hint.
+TEST(ShapeInferenceTest, ScanVarLen27_PartialHints) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out_a, scan_out_b)
+<
+  int64[2] scan_out_b_hint = {6, 4}
+>
+{
+  state_out, scan_out_a, scan_out_b = ScanVarLen (state_in, scan_in_full, "", scan_out_b_hint) <
+    num_scan_inputs = 1,
+    scan_output_axes = [0, 0],
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_a_per_iter, float[1, 4] scan_out_b_per_iter)
+    <int64[1] unsqueeze_axes = {0}>
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_a_per_iter = Identity(scan_in_per_iter)
+      scan_out_b_per_iter = Unsqueeze(scan_in_per_iter, unsqueeze_axes)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  ASSERT_EQ(model.graph().output_size(), 3);
+  const auto& scan_out_a = model.graph().output(1).type();
+  const auto& scan_out_b = model.graph().output(2).type();
+
+  // Output a: no hint -> rank 1, axis 0 free.
+  ASSERT_TRUE(scan_out_a.has_tensor_type());
+  ASSERT_EQ(scan_out_a.tensor_type().shape().dim_size(), 1);
+  ExpectFreeDim(scan_out_a.tensor_type().shape(), 0);
+
+  // Output b: constant hint -> rank 2, both dims static from the hint.
+  ASSERT_TRUE(scan_out_b.has_tensor_type());
+  ASSERT_EQ(scan_out_b.tensor_type().shape().dim_size(), 2);
+  ExpectDimValue(scan_out_b.tensor_type().shape(), 0, 6);
+  ExpectDimValue(scan_out_b.tensor_type().shape(), 1, 4);
+}
+
+// Case 8: hint count must be 0 or K. With K=2 scan outputs, supplying just
+// 1 hint slot is a schema error.
+TEST(ShapeInferenceTest, ScanVarLen27_HintCountMismatch) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4] scan_in_full, int64[1] only_one_hint)
+    => (state_out, scan_out_a, scan_out_b)
+{
+  state_out, scan_out_a, scan_out_b = ScanVarLen (state_in, scan_in_full, only_one_hint) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_a_per_iter, float[4] scan_out_b_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_a_per_iter = Identity(scan_in_per_iter)
+      scan_out_b_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  ShapeInferenceOptions options{true, 1, true};
+  EXPECT_THROW(
+      ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options),
+      ONNX_NAMESPACE::InferenceError);
+}
+
+// Case 9: each present hint must be a tensor(int64). A float hint must fail
+// type inference.
+TEST(ShapeInferenceTest, ScanVarLen27_HintWrongDtype) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4] scan_in_full, float[1] bad_hint)
+    => (state_out, scan_out)
+{
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full, bad_hint) <
     num_scan_inputs = 1,
     body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
            => (float[3] loop_state_out, float[4] scan_out_per_iter)
@@ -767,6 +937,150 @@ agraph (float[3] state_in, float[0, 4] scan_in_full) => (state_out, scan_out)
   EXPECT_THROW(
       ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options),
       ONNX_NAMESPACE::InferenceError);
+}
+
+// Case 10: each present hint must be a 1-D tensor. A 2-D hint must fail
+// shape inference.
+TEST(ShapeInferenceTest, ScanVarLen27_HintWrongRank) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4] scan_in_full, int64[2, 3] bad_hint)
+    => (state_out, scan_out)
+{
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full, bad_hint) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  ShapeInferenceOptions options{true, 1, true};
+  EXPECT_THROW(
+      ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options),
+      ONNX_NAMESPACE::InferenceError);
+}
+
+// Case 11: constant hint values must be non-negative.
+TEST(ShapeInferenceTest, ScanVarLen27_HintNegativeValue) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4] scan_in_full) => (state_out, scan_out)
+<
+  int64[1] bad_hint = {-1}
+>
+{
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full, bad_hint) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  ShapeInferenceOptions options{true, 1, true};
+  EXPECT_THROW(
+      ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options),
+      ONNX_NAMESPACE::InferenceError);
+}
+
+// Case 12: non-concat hint dims must agree with the body's per-iteration
+// output dims. Here body emits per-iter shape [4] along concat axis 0, but
+// the constant hint declares rank 2 with dim 1 set to 99 (inconsistent).
+TEST(ShapeInferenceTest, ScanVarLen27_HintNonConcatMismatch) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[5, 4, 3] scan_in_full) => (state_out, scan_out)
+<
+  int64[2] bad_hint = {5, 99}
+>
+{
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full, bad_hint) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4, 3] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4, 3] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  ShapeInferenceOptions options{true, 1, true};
+  EXPECT_THROW(
+      ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options),
+      ONNX_NAMESPACE::InferenceError);
+}
+
+// Case 13: zero-iter combined with a constant hint still produces fully-static
+// inferred output shape (the runtime distinction of "axis becomes 0" doesn't
+// affect what shape inference reports).
+TEST(ShapeInferenceTest, ScanVarLen27_ZeroIterConstantHintFullyStatic) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[0, 4] scan_in_full) => (state_out, scan_out)
+<
+  int64[1] scan_out_hint = {12}
+>
+{
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full, scan_out_hint) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  ParseAndInfer(model, modelStr);
+
+  ASSERT_EQ(model.graph().output_size(), 2);
+  const auto& scan_out = model.graph().output(1).type();
+
+  ASSERT_TRUE(scan_out.has_tensor_type());
+  EXPECT_EQ(scan_out.tensor_type().elem_type(), TensorProto::FLOAT);
+  ASSERT_EQ(scan_out.tensor_type().shape().dim_size(), 1);
+  ExpectDimValue(scan_out.tensor_type().shape(), 0, 12);
 }
 
 static void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {

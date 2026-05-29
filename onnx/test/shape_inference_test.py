@@ -5333,6 +5333,9 @@ class TestShapeInference(TestShapeInferenceHelper):
     )
 
     def test_scan_var_len_basic(self) -> None:
+        # ScanVarLen Option B: input layout is a single trailing variadic
+        # [N state vars, M scan inputs, K optional shape hints]. The basic
+        # variant omits all hints — total input count = N + M = 2.
         # Default axes: scan_input_axes=[0], scan_output_axes=[0].
         # State variables pass through unchanged. ScanVarLen *replaces* (does
         # not insert) the dimension at scan_output_axes[i] of the body output;
@@ -5345,7 +5348,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[4, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
                 >
             }}
@@ -5373,7 +5376,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[4, 3, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     scan_output_axes = [1],
                     {self._SCAN_VAR_LEN_BODY}
@@ -5400,7 +5403,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[5, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     scan_input_axes = [1],
                     {self._SCAN_VAR_LEN_BODY}
@@ -5419,17 +5422,19 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    def test_scan_var_len_output_lengths_present(self) -> None:
-        # Optional output_lengths input supplied as an int64[K] tensor.
-        # Inference should accept it and produce the same shapes as the basic
-        # case (output_lengths is purely a pre-allocation hint).
+    def test_scan_var_len_hint_dynamic(self) -> None:
+        # When a hint is supplied but its value is NOT a constant initializer
+        # (here it is a graph input), shape inference falls through to the
+        # no-hint body-inference path: the concat axis is left symbolic and
+        # the other dims come from the body output. The hint is still
+        # structurally validated (int64, rank-1) by the schema.
         model = onnx.parser.parse_model(
             f"""
             <ir_version: 8, opset_import: [ "" : 27 ]>
-            g (int64[1] output_lengths, float[3] loop_state_orig,
-               float[4, 2] scan_input) => (loop_state_final, scan_output)
+            g (float[3] loop_state_orig, float[4, 2] scan_input,
+               int64[1] scan_out_hint) => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, scan_out_hint) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
                 >
             }}
@@ -5444,17 +5449,83 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_scan_var_len_hint_constant_static_shape(self) -> None:
+        # When the hint is a constant initializer, shape inference uses its
+        # values to produce a FULLY-STATIC output shape — all dims including
+        # the concat axis are concrete. Here body emits per-iter scan output
+        # of rank 1 (shape (2,)); the hint (7,) declares the total concat-
+        # axis size, so the inferred output shape is (7,).
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 2] scan_input)
+                => (loop_state_final, scan_output)
+            <int64[1] scan_out_hint = {{7}}>
+            {{
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, scan_out_hint) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # Concat axis 0 set from the constant hint -> fully-static.
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (7,)),
+            ],
+        )
+
+    def test_scan_var_len_hint_partial_via_empty_placeholder(self) -> None:
+        # With K=2 scan outputs, the schema accepts either 0 or K=2 hint
+        # slots. A partial-hint case uses "" placeholders for outputs without
+        # a hint: output 0 has no hint (falls back to body inference, concat
+        # axis unknown); output 1 has a constant hint (fully-static shape).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 2, 3] scan_input)
+                => (loop_state_final, scan_output_a, scan_output_b)
+            <int64[2] scan_out_b_hint = {2, 9}>
+            {
+                loop_state_final, scan_output_a, scan_output_b = ScanVarLen (loop_state_orig, scan_input, "", scan_out_b_hint) <
+                    num_scan_inputs = 1,
+                    scan_output_axes = [0, 1],
+                    body = b (state_in, scan_in) => (state_out, scan_out_a, scan_out_b) {
+                        state_out = Identity(state_in)
+                        scan_out_a = Identity(scan_in)
+                        scan_out_b = Identity(scan_in)
+                    }
+                >
+            }
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # No hint for output a: concat axis 0 left symbolic.
+                make_tensor_value_info("scan_output_a", TensorProto.FLOAT, (None, 3)),
+                # Constant hint for output b -> fully-static (2, 9).
+                make_tensor_value_info("scan_output_b", TensorProto.FLOAT, (2, 9)),
+            ],
+        )
+
     def test_scan_var_len_multiple_scan_outputs_different_axes(self) -> None:
         # Two scan outputs with different concat axes. Body emits both outputs
         # with the same per-iteration shape (2, 3); scan_output_axes=[0, 1]
-        # produces final shapes (None, 3) and (2, None) respectively.
+        # produces final shapes (None, 3) and (2, None) respectively when no
+        # hints are supplied (total inputs = N + M = 2).
         model = onnx.parser.parse_model(
             """
             <ir_version: 8, opset_import: [ "" : 27 ]>
             g (float[3] loop_state_orig, float[4, 2, 3] scan_input)
                 => (loop_state_final, scan_output_a, scan_output_b)
             {
-                loop_state_final, scan_output_a, scan_output_b = ScanVarLen ("", loop_state_orig, scan_input) <
+                loop_state_final, scan_output_a, scan_output_b = ScanVarLen (loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     scan_output_axes = [0, 1],
                     body = b (state_in, scan_in) => (state_out, scan_out_a, scan_out_b) {
@@ -5491,7 +5562,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input) <
                     num_scan_inputs = 1,
                     scan_input_axes = [-2],
                     scan_output_axes = [-2],
@@ -5512,16 +5583,16 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
-    def test_scan_var_len_rejects_invalid_output_lengths_dtype(self) -> None:
-        # The optional output_lengths input must be tensor(int64); passing a
-        # float tensor must fail type inference.
+    def test_scan_var_len_rejects_invalid_hint_dtype(self) -> None:
+        # Each present hint must be a tensor(int64); a float hint must fail
+        # type inference even when the count (== K) is correct.
         model = onnx.parser.parse_model(
             f"""
             <ir_version: 8, opset_import: [ "" : 27 ]>
-            g (float[1] output_lengths, float[3] loop_state_orig,
-               float[4, 2] scan_input) => (loop_state_final, scan_output)
+            g (float[3] loop_state_orig, float[4, 2] scan_input,
+               float[1] bad_hint) => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, bad_hint) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
                 >
             }}
@@ -5530,16 +5601,16 @@ class TestShapeInference(TestShapeInferenceHelper):
 
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
-    def test_scan_var_len_rejects_invalid_output_lengths_rank(self) -> None:
-        # output_lengths must be a 1-D tensor; a 2-D shape must fail shape
+    def test_scan_var_len_rejects_invalid_hint_rank(self) -> None:
+        # Each present hint must be a 1-D tensor; a 2-D hint must fail shape
         # inference.
         model = onnx.parser.parse_model(
             f"""
             <ir_version: 8, opset_import: [ "" : 27 ]>
-            g (int64[2, 3] output_lengths, float[3] loop_state_orig,
-               float[4, 2] scan_input) => (loop_state_final, scan_output)
+            g (float[3] loop_state_orig, float[4, 2] scan_input,
+               int64[2, 3] bad_hint) => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, bad_hint) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
                 >
             }}
@@ -5548,16 +5619,42 @@ class TestShapeInference(TestShapeInferenceHelper):
 
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
-    def test_scan_var_len_rejects_invalid_output_lengths_length(self) -> None:
-        # output_lengths length must equal the number of scan outputs (K).
-        # Here K=1 (one scan output) but output_lengths is shape [2].
+    def test_scan_var_len_rejects_invalid_hint_count(self) -> None:
+        # Hint count must be either 0 or exactly K (== num scan outputs).
+        # With K=2 scan outputs, supplying just 1 hint slot is a schema error.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 2, 3] scan_input,
+               int64[2] only_one_hint)
+                => (loop_state_final, scan_output_a, scan_output_b)
+            {
+                loop_state_final, scan_output_a, scan_output_b = ScanVarLen (loop_state_orig, scan_input, only_one_hint) <
+                    num_scan_inputs = 1,
+                    body = b (state_in, scan_in) => (state_out, scan_out_a, scan_out_b) {
+                        state_out = Identity(state_in)
+                        scan_out_a = Identity(scan_in)
+                        scan_out_b = Identity(scan_in)
+                    }
+                >
+            }
+            """
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_scan_var_len_rejects_hint_wrong_length(self) -> None:
+        # When a hint is a constant initializer, its length must equal the
+        # rank of the corresponding body subgraph output. Here body output
+        # rank = 1 but the hint has length 2.
         model = onnx.parser.parse_model(
             f"""
             <ir_version: 8, opset_import: [ "" : 27 ]>
-            g (int64[2] output_lengths, float[3] loop_state_orig,
-               float[4, 2] scan_input) => (loop_state_final, scan_output)
+            g (float[3] loop_state_orig, float[4, 2] scan_input)
+                => (loop_state_final, scan_output)
+            <int64[2] bad_hint = {{3, 4}}>
             {{
-                loop_state_final, scan_output = ScanVarLen (output_lengths, loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, bad_hint) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
                 >
             }}
@@ -5566,38 +5663,112 @@ class TestShapeInference(TestShapeInferenceHelper):
 
         self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
-    def test_scan_var_len_rejects_static_zero_iterations(self) -> None:
-        # ScanVarLen requires sequence_length >= 1. When the scan input's
-        # sequence axis is statically 0, shape inference must fail because the
-        # final concat-axis size of each scan output is data-dependent on the
-        # body's per-iteration outputs and cannot be determined when the body
-        # never runs.
+    def test_scan_var_len_rejects_hint_negative_value(self) -> None:
+        # Constant hint values must be non-negative. A negative concat-axis
+        # value (or any negative dim) must fail shape inference.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 2] scan_input)
+                => (loop_state_final, scan_output)
+            <int64[1] bad_hint = {{-1}}>
+            {{
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, bad_hint) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_scan_var_len_rejects_hint_nonconcat_mismatch(self) -> None:
+        # Non-concat-axis hint values must agree with the body subgraph's
+        # per-iteration output dims. Here body emits per-iter shape (2, 3)
+        # along scan_output_axes=[0] (concat axis 0); the hint claims dim 1
+        # is 99, which contradicts the body's 3.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 2, 3] scan_input)
+                => (loop_state_final, scan_output)
+            <int64[2] bad_hint = {{12, 99}}>
+            {{
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, bad_hint) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_scan_var_len_allows_static_zero_iterations(self) -> None:
+        # Option B: zero iterations is defined behavior, not an error. When
+        # the scan input's sequence axis is statically 0, shape inference
+        # MUST NOT fail; the scan output's non-concat dims propagate from
+        # the body output and the concat axis is left symbolic (no hint).
         model = onnx.parser.parse_model(
             f"""
             <ir_version: 8, opset_import: [ "" : 27 ]>
             g (float[3] loop_state_orig, float[0, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
                 >
             }}
             """
         )
 
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # Body output shape (2,); concat axis 0 left symbolic.
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (None,)),
+            ],
+        )
+
+    def test_scan_var_len_zero_iter_with_constant_hint(self) -> None:
+        # Zero iterations + constant hint: shape inference produces the full
+        # static shape from the hint values. The runtime distinction (the
+        # ref impl replaces the concat axis with 0) does not show up in shape
+        # inference — only the declared dims do.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[0, 2] scan_input)
+                => (loop_state_final, scan_output)
+            <int64[1] scan_out_hint = {{5}}>
+            {{
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, scan_out_hint) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # Fully-static from the hint value.
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (5,)),
+            ],
+        )
 
     def test_scan_var_len_allows_symbolic_sequence_length(self) -> None:
-        # If the sequence axis is symbolic (unknown), shape inference cannot
-        # prove sequence_length == 0, so the model is accepted. (Runtime is
-        # responsible for failing if the actual value is 0.)
+        # If the sequence axis is symbolic, shape inference cannot prove
+        # sequence_length == 0 either way; the model is accepted with the
+        # no-hint fallback (concat axis left symbolic).
         model = onnx.parser.parse_model(
             f"""
             <ir_version: 8, opset_import: [ "" : 27 ]>
             g (float[3] loop_state_orig, float[T, 2] scan_input)
                 => (loop_state_final, scan_output)
             {{
-                loop_state_final, scan_output = ScanVarLen ("", loop_state_orig, scan_input) <
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input) <
                     num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
                 >
             }}
