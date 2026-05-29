@@ -6479,6 +6479,65 @@ class TestReferenceEvaluator(unittest.TestCase):
         # Each of the 3 iterations adds `bias` to the running state.
         assert_allclose(final, np.array([30, 300], dtype=np.float32))
 
+    def test_causal_conv_with_state_silu_fp16_function_body(self):
+        # Regression test: the CausalConvWithState function body must upcast
+        # Sigmoid/Mul to float32 for the SiLU activation, matching the
+        # Python reference implementation. Without the upcast, the
+        # function-body expansion diverges from the registered op in fp16.
+        B, C, L, k = 2, 4, 8, 4
+        input_vi = make_tensor_value_info("input", TensorProto.FLOAT16, [B, C, L])
+        weight_vi = make_tensor_value_info("weight", TensorProto.FLOAT16, [C, 1, k])
+        bias_vi = make_tensor_value_info("bias", TensorProto.FLOAT16, [C])
+        past_vi = make_tensor_value_info(
+            "past_state", TensorProto.FLOAT16, [B, C, k - 1]
+        )
+        output_vi = make_tensor_value_info("output", TensorProto.FLOAT16, [B, C, L])
+        present_vi = make_tensor_value_info(
+            "present_state", TensorProto.FLOAT16, [B, C, k - 1]
+        )
+        node = make_node(
+            "CausalConvWithState",
+            ["input", "weight", "bias", "past_state"],
+            ["output", "present_state"],
+            activation="silu",
+        )
+        model = make_model(
+            make_graph(
+                [node],
+                "g",
+                [input_vi, weight_vi, bias_vi, past_vi],
+                [output_vi, present_vi],
+            ),
+            opset_imports=[make_opsetid("", 27)],
+        )
+        check_model(model)
+
+        rng = np.random.default_rng(0)
+        input_ = rng.standard_normal((B, C, L)).astype(np.float16)
+        weight = rng.standard_normal((C, 1, k)).astype(np.float16)
+        bias = rng.standard_normal((C,)).astype(np.float16)
+        past_state = rng.standard_normal((B, C, k - 1)).astype(np.float16)
+        feeds = {
+            "input": input_,
+            "weight": weight,
+            "bias": bias,
+            "past_state": past_state,
+        }
+
+        # Baseline: registered Python reference (upcasts SiLU to float32).
+        ref = ReferenceEvaluator(model)
+        expected_output, expected_state = ref.run(None, feeds)
+
+        # Force expansion via the schema's context-dependent function body.
+        class CausalConvWithState(OpRunExpand):
+            op_domain = ""
+
+        ref_expand = ReferenceEvaluator(model, new_ops=[CausalConvWithState])
+        got_output, got_state = ref_expand.run(None, feeds)
+
+        assert_allclose(got_state, expected_state)
+        assert_allclose(got_output, expected_output)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
