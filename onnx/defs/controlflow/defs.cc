@@ -198,22 +198,24 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(kDoc_ScanVarLen_ver27)
         .Input(
             0,
-            "output_lengths",
-            "Optional 1-D int64 tensor with K entries (one per scan output). "
-            "When provided, output_lengths[i] specifies the total size of the concatenation axis "
-            "(scan_output_axes[i], default 0) of the i-th scan output, summed over all iterations. "
-            "Conforming implementations may use this value to pre-allocate output buffers. "
-            "It is a runtime error if the actual sum of per-iteration concat-axis sizes "
-            "does not equal output_lengths[i].",
-            "I",
-            OpSchema::Optional,
-            true,
-            1,
-            OpSchema::NonDifferentiable)
-        .Input(
-            1,
-            "initial_state_and_scan_inputs",
-            "Initial values of the loop's N state variables followed by M scan_inputs.",
+            "initial_state_scan_inputs_and_hints",
+            "A single bundled variadic input with the layout "
+            "[s_0, ..., s_{N-1}, x_0, ..., x_{M-1}, h_0, ..., h_{K-1}]: "
+            "N loop-state initial values, then M scan inputs, then optionally K per-scan-output "
+            "shape hints. "
+            "N is derived from the body subgraph: N = body.input_size() - num_scan_inputs. "
+            "K is the number of scan outputs (K = num_outputs - N). "
+            "The hint group is either OMITTED ENTIRELY (the common case — total input count is N + M) "
+            "or PRESENT AS EXACTLY K SLOTS (total input count is N + M + K). Within a present hint "
+            "group, individual slots may be empty (the empty-string placeholder \"\" in the text "
+            "format, or an unset input name in the graph proto) to indicate that no hint is supplied "
+            "for that scan output. Any hint count other than 0 or K is a schema error. "
+            "Each non-empty hint is a 1-D int64 tensor whose length equals the rank of the "
+            "corresponding scan output; the values are the expected output dimensions including the "
+            "total concatenation-axis size summed across all iterations. When a hint is supplied as "
+            "a constant initializer, shape inference uses its values to produce a fully-static "
+            "output shape; otherwise the concatenation-axis dimension is left symbolic and resolved "
+            "at runtime.",
             "V",
             OpSchema::Variadic,
             false)
@@ -225,7 +227,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "output along the axis specified by scan_output_axes (default 0). Per-iteration "
             "contributions may have different sizes along this axis (including zero); the "
             "final scan output's size along that axis is the sum of the per-iteration sizes. "
-            "All other dimensions must match across iterations.",
+            "All other dimensions must match across iterations. "
+            "When the input sequence-axis dimension is 0 the loop is not required to execute: "
+            "loop-state outputs equal the loop-state inputs, and each scan output is an empty "
+            "tensor whose concatenation-axis dim is 0 and whose remaining dims come from the "
+            "corresponding hint (when supplied) or from the body subgraph's value-info.",
             "V",
             OpSchema::Variadic,
             false)
@@ -268,7 +274,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INTS,
             false)
         .TypeConstraint("V", OpSchema::all_tensor_types_ir13(), "All Tensor types up to IRv13.")
-        .TypeConstraint("I", {"tensor(int64)"}, "1-D int64 tensor for output_lengths.")
         .TypeAndShapeInferenceFunction(ScanVarLenInferenceFunction));
 
 } // namespace ONNX_NAMESPACE
