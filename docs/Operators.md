@@ -32312,17 +32312,7 @@ expect(
 
   The differences from Scan are:
 
-  1. ScanVarLen has an additional optional input `output_lengths` at position 0.
-     `output_lengths` is a 1-D int64 tensor with one entry per scan output — that is,
-     K values total, one per-output, NOT one per-iteration. When provided,
-     `output_lengths[i]` MUST equal the total size of the concatenation axis
-     (`scan_output_axes[i]`, default 0) of scan output `i`, summed across all iterations.
-     Conforming implementations may use this value to pre-allocate the output buffer.
-     It is a runtime error if `output_lengths[i]` does not match the actual concatenation
-     size produced by the loop. When `output_lengths` is omitted, no pre-allocation hint
-     is supplied and implementations compute the total size dynamically.
-
-  2. The concatenation axis specified by `scan_output_axes[i]` is an axis that ALREADY
+  1. The concatenation axis specified by `scan_output_axes[i]` is an axis that ALREADY
      EXISTS in the body subgraph's i-th scan output. Each iteration's body output may have
      a different size along this axis (including 0). The final scan output is the
      concatenation along that axis, so the final size is the SUM of the per-iteration sizes
@@ -32335,26 +32325,73 @@ expect(
      the rank of the corresponding body subgraph output. No new sequence dimension is
      introduced.
 
-  3. ScanVarLen has no `scan_output_directions` attribute; scan outputs are always
+  2. ScanVarLen accepts optional per-scan-output `scan_output_shape_hints`. The hints, when
+     supplied, occupy the LAST K positions of the bundled variadic input (after the N
+     loop-state initial values and the M scan inputs). Each hint is a 1-D `int64` tensor
+     whose length equals the rank of the corresponding scan output; its values are the
+     expected dimension sizes along each axis, including the total concatenation-axis size
+     summed across all iterations.
+
+     The hint group is either OMITTED ENTIRELY (the common case — total input count is
+     N + M) or PRESENT AS EXACTLY K SLOTS (total input count is N + M + K). Within a
+     present hint group, individual hints may be omitted with an empty-string placeholder
+     (`""` in the text format, or an unset input name in the graph proto). Any hint count
+     other than 0 or K is a schema error.
+
+     When a hint is supplied as a constant initializer, shape inference uses its values to
+     produce a fully-static output shape, with the body subgraph's per-iteration output
+     used to validate that non-concat dims agree. Otherwise the concatenation-axis
+     dimension is left symbolic and resolved at runtime.
+
+  3. ScanVarLen has DEFINED zero-iteration semantics. When the sequence-axis dimension of
+     the scan inputs is 0 the loop is not required to execute: the loop-state outputs
+     equal the loop-state inputs (passthrough), and each scan output is an empty tensor
+     whose concatenation-axis dimension is 0. The remaining (non-concat) dimensions of
+     each scan output are taken from the corresponding hint when one is supplied for that
+     output; otherwise they come from the body subgraph's value-info for the i-th scan
+     output.
+
+     Worked example: if `scan_output_shape_hints[i]` is the constant tensor `[4, 32, 64]`
+     and `scan_output_axes[i] = 1`, then for a zero-iteration invocation the i-th scan
+     output has shape `[4, 0, 64]` — the hint's value at the concat axis (32) is silently
+     overridden by 0 because nothing was concatenated. For non-zero iterations the same
+     output has shape `[4, 32, 64]` and the runtime validates that the actual concatenated
+     size along axis 1 equals 32.
+
+     Whether implementations execute the body subgraph when the iteration count is 0 is
+     implementation-defined; conforming implementations may skip body execution entirely.
+     Hints make this skip safe by providing the non-concat output dimensions inline,
+     avoiding the need to introspect the body for shape information.
+
+  4. ScanVarLen has no `scan_output_directions` attribute; scan outputs are always
      produced by appending the per-iteration values (forward direction).
 
   The attribute `body` specifies the subgraph executed each iteration. It takes as input
-  the current values of the loop state variables and the current iterated element of the
-  scan inputs. It must return the (updated) values of the loop state variables and the
-  per-iteration value of each scan output. Unlike Scan, the body subgraph's scan outputs
-  are NOT required to have the same shape across iterations along the concatenation axis;
-  all other dimensions must match across iterations.
+  the current values of the N loop state variables and the current iterated element of the
+  M scan inputs (total N + M inputs). It must return the (updated) values of the N loop
+  state variables and the per-iteration value of each of the K scan outputs (total N + K
+  outputs). Unlike Scan, the body subgraph's scan outputs are NOT required to have the
+  same shape across iterations along the concatenation axis; all other dimensions must
+  match across iterations.
 
   The iterated element passed to the body subgraph does not have a sequence axis. It has
   rank one less than the corresponding scan input (the dimension at `scan_input_axes[i]`
   is stripped).
 
-  Because of the ONNX restriction that only the last parameter of an operator can be
-  variadic, the initial-states and scan-inputs are listed together as one variadic input,
-  following the optional `output_lengths` input. Similarly, the final-states and scan-outputs
-  are listed together as one variadic output. The attribute `num_scan_inputs` indicates the
-  number M of scan-inputs, so the first N = (num_variadic_inputs - M) variadic inputs are the
-  initial loop state variables and the next M are the scan inputs.
+  Because the ONNX schema framework permits only the last operator parameter to be
+  variadic, ScanVarLen bundles all positional inputs into a single trailing variadic
+  input with the layout:
+
+      [s_0, ..., s_{N-1},  x_0, ..., x_{M-1},  h_0, ..., h_{K-1}]
+       ^^^^^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^^
+       N loop-state init    M scan inputs        K shape hints
+                                                 (absent OR exactly K)
+
+  The attribute `num_scan_inputs` provides M, and N is derived from the body subgraph as
+  `N = body.input_size() - num_scan_inputs`. K equals the number of scan outputs and is
+  derived from the operator output count: `K = num_outputs - N`. The total number of
+  operator inputs is therefore either `N + M` (no hints) or `N + M + K` (hint group
+  present, with individual hint slots possibly empty).
 
   The behavior of
 
@@ -32363,7 +32400,7 @@ expect(
           body = loop-body,
           scan_input_axes = [axis_1, ..., axis_m],
           scan_output_axes = [out_axis_1, ..., out_axis_k]
-      > (output_lengths, init_1, ..., init_n, scan_1, ..., scan_m)
+      > (init_1, ..., init_n, scan_1, ..., scan_m  [, hint_1, ..., hint_k])
 
   is equivalent to the following pseudo-code:
 
@@ -32373,6 +32410,19 @@ expect(
 
       // initialize state-variables
       st_1 = init_1; ... ; st_n = init_n;
+
+      if (sequence_length == 0) {
+          // Defined zero-iteration behavior: body is not required to execute.
+          // Each scan output is an empty tensor whose concat-axis dim is 0 and
+          // whose remaining dims come from hint_i (when supplied) or from the
+          // body subgraph's value-info for the i-th scan output.
+          scan_out_i = empty_tensor_with_shape(
+              (hint_i is supplied) ? replace_dim(hint_i, out_axis_i, 0)
+                                   : body_value_info_shape_with_axis_zero(i, out_axis_i),
+              dtype = body_value_info_dtype(i));
+          return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
+      }
+
       // initialize scan-output accumulators: each is empty along its concat axis.
       scan_out_1 = []; ... ; scan_out_k = [];
 
@@ -32388,30 +32438,16 @@ expect(
           scan_out_k = Concat<axis=out_axis_k>(scan_out_k, so_k);
       }
 
-      // If output_lengths was provided, the concatenation-axis size of each
-      // scan_out_i is required to equal output_lengths[i]; otherwise a runtime
-      // error is raised.
+      // When hint_i is supplied, the concatenation-axis size of scan_out_i is
+      // required to equal hint_i[out_axis_i]; otherwise a runtime error is raised.
+      // When hint_i is supplied as a constant initializer, shape inference also
+      // verifies that the non-concat dimensions of hint_i match the body output's
+      // per-iteration non-concat dimensions.
 
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
-  ScanVarLen requires `sequence_length >= 1` (i.e. at least one iteration). It is an
-  error to invoke ScanVarLen with a scan input whose sequence-axis dimension is 0:
-  implementations MUST raise a runtime error, and shape inference MUST fail when the
-  sequence-axis dimension is statically known to be 0. Models that need to handle
-  empty sequences should guard the ScanVarLen call with an `If` node (selecting
-  between a ScanVarLen execution and an empty-tensor construction).
-
-  This restriction is intentional: supporting zero iterations would either (a) force
-  runtimes to execute the body's shape inference at runtime to fabricate empty
-  outputs with the correct non-concat dimensions, or (b) leave the body's execution
-  status implementation-defined when iteration count is zero (as standard Scan v25
-  latently does). Both alternatives complicate the runtime contract; requiring users
-  to express the empty-sequence case explicitly via `If` keeps ScanVarLen's
-  semantics simple and unambiguous.
-
   Each non-final iteration's per-output concat-axis size may be 0 (zero-size
-  contributions are allowed and contribute nothing to the final concatenation); the
-  restriction is only on the total number of iterations being 0.
+  contributions are allowed and contribute nothing to the final concatenation).
 
   *Sample usage: PackedAttention-like processing of variable-length sequences*
 
@@ -32421,6 +32457,17 @@ expect(
   variable) and the per-iteration length to produce a per-iteration output of shape
   [len_t, D]. With `scan_output_axes=[0]`, ScanVarLen concatenates these to produce a
   final output of shape [L, D], where L = sum(len_t).
+
+  *Rationale for the hint mechanism*
+
+  The hint mechanism exists to make the zero-iteration path inline-defined without the
+  runtime cost of guarding every ScanVarLen call with an `If` node. The `If` pattern
+  forces conforming implementations to materialize both branches (or carry per-call
+  subgraph overhead) for the empty-sequence case; for models that may occasionally
+  encounter empty sequences this overhead is non-trivial. Inline-defined zero-iter
+  semantics with hints let implementations emit a single op call whose output buffers
+  can be pre-allocated from the hint shape, and which short-circuits to empty tensors
+  when the input sequence-axis dim is 0.
 
 #### Version
 
@@ -32441,20 +32488,18 @@ This version of the operator has been available since version 27 of the default 
 <dd>An optional list of K flags. The i-th element of the list specifies the axis along which the i-th scan_output is concatenated. This axis must already exist in the corresponding body subgraph output. If omitted, 0 will be used as the concatenation axis for every scan_output. Negative value for an axis means counting dimensions from the back. Accepted range is [-r, r-1] where r is the rank of the body subgraph's corresponding output.</dd>
 </dl>
 
-#### Inputs (2 - &#8734;)
+#### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>output_lengths</tt> (optional, non-differentiable) : I</dt>
-<dd>Optional 1-D int64 tensor with K entries (one per scan output). When provided, output_lengths[i] specifies the total size of the concatenation axis (scan_output_axes[i], default 0) of the i-th scan output, summed over all iterations. Conforming implementations may use this value to pre-allocate output buffers. It is a runtime error if the actual sum of per-iteration concat-axis sizes does not equal output_lengths[i].</dd>
-<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Initial values of the loop's N state variables followed by M scan_inputs.</dd>
+<dt><tt>initial_state_scan_inputs_and_hints</tt> (variadic, heterogeneous) : V</dt>
+<dd>A single bundled variadic input with the layout [s_0, ..., s_{N-1}, x_0, ..., x_{M-1}, h_0, ..., h_{K-1}]: N loop-state initial values, then M scan inputs, then optionally K per-scan-output shape hints. N is derived from the body subgraph: N = body.input_size() - num_scan_inputs. K is the number of scan outputs (K = num_outputs - N). The hint group is either OMITTED ENTIRELY (the common case — total input count is N + M) or PRESENT AS EXACTLY K SLOTS (total input count is N + M + K). Within a present hint group, individual slots may be empty (the empty-string placeholder "" in the text format, or an unset input name in the graph proto) to indicate that no hint is supplied for that scan output. Any hint count other than 0 or K is a schema error. Each non-empty hint is a 1-D int64 tensor whose length equals the rank of the corresponding scan output; the values are the expected output dimensions including the total concatenation-axis size summed across all iterations. When a hint is supplied as a constant initializer, shape inference uses its values to produce a fully-static output shape; otherwise the concatenation-axis dimension is left symbolic and resolved at runtime.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
 <dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Final values of the loop's N state variables followed by K scan_outputs. Each scan_output is produced by concatenating the corresponding body subgraph output along the axis specified by scan_output_axes (default 0). Per-iteration contributions may have different sizes along this axis (including zero); the final scan output's size along that axis is the sum of the per-iteration sizes. All other dimensions must match across iterations.</dd>
+<dd>Final values of the loop's N state variables followed by K scan_outputs. Each scan_output is produced by concatenating the corresponding body subgraph output along the axis specified by scan_output_axes (default 0). Per-iteration contributions may have different sizes along this axis (including zero); the final scan output's size along that axis is the sum of the per-iteration sizes. All other dimensions must match across iterations. When the input sequence-axis dimension is 0 the loop is not required to execute: loop-state outputs equal the loop-state inputs, and each scan output is an empty tensor whose concatenation-axis dim is 0 and whose remaining dims come from the corresponding hint (when supplied) or from the body subgraph's value-info.</dd>
 </dl>
 
 #### Type Constraints
@@ -32462,8 +32507,6 @@ This version of the operator has been available since version 27 of the default 
 <dl>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(bfloat16), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128), tensor(float8e4m3fn), tensor(float8e4m3fnuz), tensor(float8e5m2), tensor(float8e5m2fnuz), tensor(uint4), tensor(int4), tensor(float4e2m1), tensor(float8e8m0), tensor(uint2), tensor(int2)</dt>
 <dd>All Tensor types up to IRv13.</dd>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>1-D int64 tensor for output_lengths.</dd>
 </dl>
 
 
