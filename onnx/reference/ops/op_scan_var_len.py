@@ -29,29 +29,33 @@ def _normalize_hint(raw_hint, scan_output_index: int) -> np.ndarray | None:
 
     Returns a 1-D ``int64`` numpy array, or ``None`` if the hint is absent
     (the model-level ``""`` placeholder, which the reference evaluator
-    forwards as Python ``None``). Raises :class:`ValueError` on dtype, rank,
-    or value violations.
+    forwards as Python ``None``). Raises :class:`TypeError` on dtype
+    violations and :class:`ValueError` on rank or value violations.
+
+    The dtype check is strict (exactly ``int64``): the op schema requires
+    ``tensor(int64)`` for hints, and silently up-casting other integer
+    dtypes would mask producer-side bugs that other implementations would
+    correctly reject.
     """
     if raw_hint is None:
         return None
     hint_arr = np.asarray(raw_hint)
-    if not np.issubdtype(hint_arr.dtype, np.integer):
-        raise ValueError(
-            f"ScanVarLen: shape hint for scan output {scan_output_index} must be an "
-            f"integer tensor (tensor(int64) per the op schema); got dtype "
-            f"{hint_arr.dtype}."
+    if hint_arr.dtype != np.int64:
+        raise TypeError(
+            f"ScanVarLen scan_output_shape_hint[{scan_output_index}] must be "
+            f"tensor(int64), got {hint_arr.dtype}."
         )
     if hint_arr.ndim != 1:
         raise ValueError(
-            f"ScanVarLen: shape hint for scan output {scan_output_index} must be a "
+            f"ScanVarLen scan_output_shape_hint[{scan_output_index}] must be a "
             f"1-D tensor; got shape {tuple(hint_arr.shape)}."
         )
     if (hint_arr < 0).any():
         raise ValueError(
-            f"ScanVarLen: shape hint for scan output {scan_output_index} contains "
+            f"ScanVarLen scan_output_shape_hint[{scan_output_index}] contains "
             f"negative values ({hint_arr.tolist()}); all dims must be non-negative."
         )
-    return hint_arr.astype(np.int64, copy=False)
+    return hint_arr
 
 
 def _body_output_dtype(

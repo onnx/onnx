@@ -1565,6 +1565,61 @@ class TestReferenceEvaluator(unittest.TestCase):
                 },
             )
 
+    def test_scan_var_len_rejects_non_int64_hint(self):
+        # The op schema requires tensor(int64) for shape hints. The variadic
+        # 'V' type constraint cannot enforce per-slot dtype, so the reference
+        # implementation MUST reject other integer dtypes (e.g. int32)
+        # explicitly with TypeError, rather than silently up-casting.
+        sequence_length = 0
+        feature = 2
+
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[{feature}] outer_state_in,
+               float[{sequence_length}, {feature}] outer_scan_in,
+               int32[1] scan_out_hint)
+                => (float[{feature}] outer_state_out,
+                    float[?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen (outer_state_in, outer_scan_in, scan_out_hint) <
+                    num_scan_inputs = 1,
+                    body = b (float[{feature}] state_in,
+                              float[{feature}] scan_in)
+                        => (float[{feature}] state_out,
+                            float[{feature}] scan_out)
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Identity(scan_in)
+                    }}
+                >
+            }}
+            """
+        )
+        # Skip checker because the schema's V type constraint is too loose to
+        # catch this dtype error; it is the reference implementation's job to
+        # enforce int64 at execution time.
+        wrong_dtype_hint = np.array([0], dtype=np.int32)
+        state_value = np.zeros(feature, dtype=np.float32)
+        scan_value = np.zeros((sequence_length, feature), dtype=np.float32)
+
+        sess = ReferenceEvaluator(model)
+        with self.assertRaises(TypeError) as cm:
+            sess.run(
+                None,
+                {
+                    "outer_state_in": state_value,
+                    "outer_scan_in": scan_value,
+                    "scan_out_hint": wrong_dtype_hint,
+                },
+            )
+        # The reference evaluator wraps op-level exceptions; assert that the
+        # underlying cause carries the precise dtype error from _normalize_hint.
+        cause = cm.exception.__cause__
+        self.assertIsNotNone(cause, "expected wrapped TypeError to carry a __cause__")
+        self.assertIsInstance(cause, TypeError)
+        self.assertIn("must be tensor(int64)", str(cause))
+
     def test_scan_var_len_zero_iter_no_hint(self):
         # Option B: zero-iteration is defined behavior, not an error. When
         # the scan input's sequence axis is 0 and no hint is supplied, the

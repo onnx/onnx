@@ -389,16 +389,34 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
   const size_t num_loop_state_vars = body_input_count - num_scan_inputs; // N
   const size_t num_main_inputs = num_loop_state_vars + num_scan_inputs; // N + M
 
-  const auto num_outputs = ctx.getNumOutputs();
-  if (num_outputs < num_loop_state_vars) {
+  // Derive K from the body subgraph as well (single source of truth: K is
+  // body.output_count - N). Validate that the node's declared output count
+  // matches N + K — a mismatch indicates a malformed node.
+  const auto body_output_count = narrow<size_t>(body_graph.output_size());
+  if (body_output_count < num_loop_state_vars) {
     fail_shape_inference(
-        "ScanVarLen number of outputs (",
-        num_outputs,
-        ") is less than number of loop state variables (",
+        "ScanVarLen body subgraph has ",
+        body_output_count,
+        " output(s) but expected at least ",
         num_loop_state_vars,
-        ").");
+        " (one per loop state variable, derived as body.input_size() - num_scan_inputs).");
   }
-  const size_t num_scan_outputs = num_outputs - num_loop_state_vars; // K
+  const size_t num_scan_outputs = body_output_count - num_loop_state_vars; // K
+  const size_t expected_num_outputs = num_loop_state_vars + num_scan_outputs;
+
+  const auto num_outputs = ctx.getNumOutputs();
+  if (num_outputs != expected_num_outputs) {
+    fail_shape_inference(
+        "ScanVarLen has ",
+        num_outputs,
+        " output(s) but the body subgraph implies ",
+        expected_num_outputs,
+        " (N = ",
+        num_loop_state_vars,
+        " state vars + K = ",
+        num_scan_outputs,
+        " scan outputs).");
+  }
 
   // Validate hint arity: either 0 or exactly K hints.
   const auto num_total_inputs = ctx.getNumInputs();

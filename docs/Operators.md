@@ -32446,8 +32446,9 @@ expect(
 
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
-  Each non-final iteration's per-output concat-axis size may be 0 (zero-size
-  contributions are allowed and contribute nothing to the final concatenation).
+  Each iteration's per-output concat-axis size may be 0 (zero-size
+  contributions are allowed and contribute nothing to the final concatenation;
+  this includes the final iteration, since concatenation is order-agnostic).
 
   *Sample usage: PackedAttention-like processing of variable-length sequences*
 
