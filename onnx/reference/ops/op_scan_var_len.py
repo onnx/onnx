@@ -124,6 +124,20 @@ def _body_output_static_shape(
     return shape
 
 
+def _try_body_output_rank(body_runner, body_output_index: int) -> int | None:
+    """Return the body output's declared rank if it has one, else ``None``.
+
+    Unlike :func:`_body_output_static_shape`, this does not require any of the
+    dimensions to be concrete — only that a shape (i.e. rank) has been
+    declared. Used to validate hint length against body rank in cases where
+    the hint, not the body shape, supplies the actual dim values.
+    """
+    type_proto = body_runner.output_types[body_output_index]
+    if not type_proto.tensor_type.HasField("shape"):
+        return None
+    return len(type_proto.tensor_type.shape.dim)
+
+
 class ScanVarLen(OpRun):
     """Reference implementation for the ScanVarLen control-flow operator.
 
@@ -303,6 +317,17 @@ class ScanVarLen(OpRun):
                 dtype = _body_output_dtype(body_runner, body_out_idx, i)
                 hint = hints[i]
                 if hint is not None:
+                    # When the body's declared output rank is known, validate
+                    # the hint length against it before consuming the hint, so
+                    # the error attributes the mismatch to the hint (rather
+                    # than letting it silently shape-shift the output).
+                    declared_rank = _try_body_output_rank(body_runner, body_out_idx)
+                    if declared_rank is not None and hint.shape[0] != declared_rank:
+                        raise ValueError(
+                            f"ScanVarLen: shape hint for scan output {i} has length "
+                            f"{hint.shape[0]} but body subgraph output {body_out_idx} "
+                            f"has rank {declared_rank}."
+                        )
                     shape = [int(x) for x in hint.tolist()]
                 else:
                     shape = _body_output_static_shape(body_runner, body_out_idx, i)
@@ -340,15 +365,28 @@ class ScanVarLen(OpRun):
         final_scan_outputs: list[np.ndarray] = []
         for i in range(num_scan_outputs):
             chunks = per_iter_outputs[i]
+            body_output_rank = chunks[0].ndim
+
+            # Validate hint length vs body output rank BEFORE touching chunks
+            # for axis resolution / concatenation, so error attribution names
+            # the offending hint rather than the (correct) body output.
+            hint = hints[i]
+            if hint is not None and hint.shape[0] != body_output_rank:
+                raise ValueError(
+                    f"ScanVarLen: shape hint for scan output {i} has length "
+                    f"{hint.shape[0]} but body subgraph output "
+                    f"{num_loop_state_vars + i} has rank {body_output_rank}."
+                )
+
             # The ONNX schema requires consistent ranks across iterations,
             # so normalizing against the first chunk's rank is sufficient.
             axis = _resolve_axis(
-                output_axes_attr[i], chunks[0].ndim, "scan_output_axes", i
+                output_axes_attr[i], body_output_rank, "scan_output_axes", i
             )
             # Defensive: verify rank and non-concat dims are consistent
             # across iterations before concatenating. np.concatenate would
             # raise on mismatch but with a less specific message.
-            base_rank = chunks[0].ndim
+            base_rank = body_output_rank
             base_other_dims = tuple(
                 d for k, d in enumerate(chunks[0].shape) if k != axis
             )
@@ -370,25 +408,21 @@ class ScanVarLen(OpRun):
                     )
             result = np.concatenate(chunks, axis=axis)
 
-            # Runtime consistency check: full-shape match against the hint
-            # (every axis, including the concat axis).
-            hint = hints[i]
+            # Runtime consistency check: per-axis match against the hint.
+            # The rank check above guarantees hint.shape[0] == result.ndim.
             if hint is not None:
-                if hint.shape[0] != result.ndim:
-                    raise ValueError(
-                        f"ScanVarLen: shape hint for scan output {i} has length "
-                        f"{hint.shape[0]} but scan output {i} has rank "
-                        f"{result.ndim}."
-                    )
                 for j, hint_dim in enumerate(hint.tolist()):
                     hint_dim_value = int(hint_dim)
                     actual_dim = int(result.shape[j])
                     if hint_dim_value != actual_dim:
-                        which = "concat axis" if j == axis else "non-concat axis"
+                        axis_role = (
+                            "the concat axis" if j == axis else "a non-concat axis"
+                        )
                         raise ValueError(
-                            f"ScanVarLen: shape hint for scan output {i}[{j}]="
-                            f"{hint_dim_value} does not match scan output {i} "
-                            f"actual dim {actual_dim} ({which}={axis})."
+                            f"ScanVarLen: shape hint for scan output {i} at axis {j} "
+                            f"({axis_role}) is {hint_dim_value} but actual scan "
+                            f"output dim at axis {j} is {actual_dim} "
+                            f"(concat axis is {axis})."
                         )
             final_scan_outputs.append(result)
 

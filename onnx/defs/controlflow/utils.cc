@@ -598,6 +598,31 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
     const bool body_has_shape = subgraph_output_tensor_type.has_shape();
     int body_rank = body_has_shape ? subgraph_output_tensor_type.shape().dim_size() : -1;
 
+    // C5: Validate declared hint length vs body output rank even when the
+    // hint is non-constant. This catches mis-sized hints at shape inference
+    // time rather than deferring the error to runtime — and applies whenever
+    // the hint's declared shape provides a static dim_value for its length
+    // (which is the common case, since hints are 1-D int64 tensors).
+    if (hint_present && body_rank >= 0) {
+      const auto* declared_hint_type = ctx.getInputType(hint_idx);
+      if (declared_hint_type != nullptr && declared_hint_type->has_tensor_type() &&
+          declared_hint_type->tensor_type().has_shape() && declared_hint_type->tensor_type().shape().dim_size() == 1) {
+        const auto& length_dim = declared_hint_type->tensor_type().shape().dim(0);
+        if (length_dim.has_dim_value() && length_dim.dim_value() != body_rank) {
+          fail_shape_inference(
+              "ScanVarLen scan_output_shape_hint[",
+              scan_out_idx,
+              "] has declared length ",
+              length_dim.dim_value(),
+              " but body subgraph output ",
+              i,
+              " has rank ",
+              body_rank,
+              ".");
+        }
+      }
+    }
+
     if (hint_data != nullptr) {
       // CONSTANT HINT: derive a fully-static shape from the hint values.
       const std::vector<int64_t> hint_values = ParseData<int64_t>(hint_data);

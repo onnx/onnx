@@ -5478,6 +5478,45 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_scan_var_len_hint_sparse_initializer(self) -> None:
+        # Sparse hints are NOT supported as shape hints for ScanVarLen:
+        # the schema declares each hint slot as tensor(int64), and a
+        # sparse_initializer fills the slot with sparse_tensor type. The
+        # implementation correctly bails by failing type inference with a
+        # clear "must be tensor(int64)" error, rather than silently
+        # ignoring the sparse data and producing a misleading symbolic
+        # output. This locks in the "bail loudly" behavior so future
+        # const-prop work is not tempted to accept sparse hints without
+        # also wiring up :func:`getInputSparseData`.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[4, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {{
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, scan_out_hint) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+        sparse = onnx.SparseTensorProto()
+        sparse.dims.extend([1])
+        sparse.values.CopyFrom(
+            onnx.helper.make_tensor("scan_out_hint", TensorProto.INT64, (1,), [7])
+        )
+        sparse.indices.CopyFrom(
+            onnx.helper.make_tensor("scan_out_hint_idx", TensorProto.INT64, (1,), [0])
+        )
+        model.graph.sparse_initializer.extend([sparse])
+
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            r"must be a tensor\(int64\)",
+            self._inferred,
+            model,
+        )
+
     def test_scan_var_len_hint_partial_via_empty_placeholder(self) -> None:
         # With K=2 scan outputs, the schema accepts either 0 or K=2 hint
         # slots. A partial-hint case uses "" placeholders for outputs without

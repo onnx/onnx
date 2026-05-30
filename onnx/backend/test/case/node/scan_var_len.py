@@ -255,3 +255,125 @@ class ScanVarLen(Base):
             name="test_scan_var_len_ragged",
             opset_imports=_OPSET_IMPORTS,
         )
+
+    @staticmethod
+    def export_scan_var_len_hint_partial() -> None:
+        """Partial-hint case: K=2 scan outputs, one with an empty-string
+        placeholder (no hint) and one with a supplied int64 shape hint.
+
+        Exercises the per-slot hint mechanism — each scan output can
+        independently choose whether to provide a hint. The runtime
+        validates only the supplied hint; the placeholder output is
+        unconstrained.
+        """
+        body = onnx.parser.parse_graph(
+            """
+            scan_var_len_hint_partial_body (float[4] scan_in)
+                => (float[4] scan_out_a, float[4] scan_out_b)
+            {
+                scan_out_a = Identity(scan_in)
+                scan_out_b = Identity(scan_in)
+            }
+            """
+        )
+        # K = 2 scan outputs → hint group has 2 slots: "" (no hint for
+        # scan_out_a) and a supplied hint for scan_out_b.
+        node = onnx.helper.make_node(
+            "ScanVarLen",
+            inputs=["scan_input", "", "scan_out_b_hint"],
+            outputs=["scan_output_a", "scan_output_b"],
+            num_scan_inputs=1,
+            body=body,
+        )
+        scan_input = np.arange(12, dtype=np.float32).reshape(3, 4)
+        scan_out_b_hint = np.array([12], dtype=np.int64)
+        scan_output_a = scan_input.reshape(12)
+        scan_output_b = scan_input.reshape(12)
+
+        expect(
+            node,
+            inputs=[scan_input, scan_out_b_hint],
+            outputs=[scan_output_a, scan_output_b],
+            name="test_scan_var_len_hint_partial",
+            opset_imports=_OPSET_IMPORTS,
+        )
+
+    @staticmethod
+    def export_scan_var_len_zero_iter_with_hint() -> None:
+        """Zero-iteration case with a fully-specified hint, mirroring the
+        design spec's flagship example: ``hint=[4, 32, 64]`` with
+        ``scan_output_axes=[1]`` yields a scan output of shape
+        ``[4, 0, 64]`` (concat axis dim set to 0, remaining dims taken
+        from the hint).
+
+        Exercises the defined-behavior path: the body does not run; the
+        scan output is an empty tensor whose non-concat dims come from
+        the hint. This is the strongest form of doc-test alignment for
+        the hint mechanism's primary use case.
+        """
+        # Body produces a [4, 1, 64] tensor per iteration; with zero
+        # iterations and concat axis 1, the final output is [4, 0, 64].
+        body = onnx.parser.parse_graph(
+            """
+            scan_var_len_zero_iter_with_hint_body (float[4, 1, 64] scan_in)
+                => (float[4, 1, 64] scan_out)
+            {
+                scan_out = Identity(scan_in)
+            }
+            """
+        )
+        node = onnx.helper.make_node(
+            "ScanVarLen",
+            inputs=["scan_input", "scan_out_hint"],
+            outputs=["scan_output"],
+            num_scan_inputs=1,
+            scan_output_axes=[1],
+            body=body,
+        )
+        # Scan input has sequence-axis (default axis 0) dim = 0, so the
+        # body never runs and the loop returns an empty scan output.
+        scan_input = np.zeros((0, 4, 1, 64), dtype=np.float32)
+        scan_out_hint = np.array([4, 32, 64], dtype=np.int64)
+        # Output shape: hint with concat-axis (1) set to 0 → [4, 0, 64].
+        scan_output = np.zeros((4, 0, 64), dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[scan_input, scan_out_hint],
+            outputs=[scan_output],
+            name="test_scan_var_len_zero_iter_with_hint",
+            opset_imports=_OPSET_IMPORTS,
+        )
+
+    @staticmethod
+    def export_scan_var_len_zero_iter_no_hint() -> None:
+        """Zero-iteration case without a hint: the scan output's
+        non-concat dims come from the body subgraph's declared output
+        value_info, and the concat-axis dim is 0.
+
+        Companion to ``export_scan_var_len_zero_iter_with_hint`` covering
+        the body-value-info fallback path.
+        """
+        # Body declares a [4] scan output; with zero iterations and the
+        # default concat axis 0, the final scan output is an empty
+        # length-0 float tensor.
+        body = _identity_body("scan_var_len_zero_iter_no_hint_body")
+        node = onnx.helper.make_node(
+            "ScanVarLen",
+            inputs=["scan_input"],
+            outputs=["scan_output"],
+            num_scan_inputs=1,
+            body=body,
+        )
+        # Sequence-axis dim = 0 → no iterations.
+        scan_input = np.zeros((0, 4), dtype=np.float32)
+        # Body's declared per-iter shape [4]; concat axis 0 → final [0].
+        scan_output = np.zeros((0,), dtype=np.float32)
+
+        expect(
+            node,
+            inputs=[scan_input],
+            outputs=[scan_output],
+            name="test_scan_var_len_zero_iter_no_hint",
+            opset_imports=_OPSET_IMPORTS,
+        )

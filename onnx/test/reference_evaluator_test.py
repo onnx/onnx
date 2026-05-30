@@ -1721,6 +1721,57 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(scan_result.shape, (0,))
         self.assertEqual(scan_result.dtype, np.float32)
 
+    def test_scan_var_len_zero_iter_rejects_hint_wrong_rank(self):
+        # O-1: even on the zero-iteration path, a hint whose length does
+        # NOT match the body subgraph's declared output rank must be
+        # rejected. Without this check, a length-3 hint silently shape-
+        # shifts the empty output from rank 1 (body's declared rank) to
+        # rank 3 — masking a producer-side bug.
+        feature = 2
+
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[{feature}] outer_state_in,
+               float[T, {feature}] outer_scan_in,
+               int64[3] scan_out_hint)
+                => (float[{feature}] outer_state_out,
+                    float[?, ?, ?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen (outer_state_in, outer_scan_in, scan_out_hint) <
+                    num_scan_inputs = 1,
+                    body = b (float[{feature}] state_in,
+                              float[{feature}] scan_in)
+                        => (float[{feature}] state_out,
+                            float[{feature}] scan_out)
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Identity(scan_in)
+                    }}
+                >
+            }}
+            """
+        )
+
+        state_value = np.zeros(feature, dtype=np.float32)
+        empty_scan_value = np.zeros((0, feature), dtype=np.float32)
+        # Body output declared as float[2] (rank 1); hint declares 3 dims.
+        wrong_rank_hint = np.array([4, 0, 7], dtype=np.int64)
+
+        sess = ReferenceEvaluator(model)
+        with self.assertRaises(ValueError) as cm:
+            sess.run(
+                None,
+                {
+                    "outer_state_in": state_value,
+                    "outer_scan_in": empty_scan_value,
+                    "scan_out_hint": wrong_rank_hint,
+                },
+            )
+        cause = cm.exception.__cause__ if cm.exception.__cause__ else cm.exception
+        self.assertIn("shape hint for scan output 0", str(cause))
+        self.assertIn("rank", str(cause))
+
     def test_scan_var_len_hint_partial_via_empty_placeholder(self):
         # K=2 scan outputs with partial hints: hint slot 0 is "" (no hint),
         # hint slot 1 is a real constant. The reference impl validates the

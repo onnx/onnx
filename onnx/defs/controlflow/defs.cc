@@ -215,7 +215,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "total concatenation-axis size summed across all iterations. When a hint is supplied as "
             "a constant initializer, shape inference uses its values to produce a fully-static "
             "output shape; otherwise the concatenation-axis dimension is left symbolic and resolved "
-            "at runtime.",
+            "at runtime. "
+            "Note: the bundled variadic's 'V' type constraint cannot enforce tensor(int64) on the "
+            "hint slots — runtimes that skip shape inference must validate hint dtype separately.",
             "V",
             OpSchema::Variadic,
             false)
