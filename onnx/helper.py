@@ -700,21 +700,28 @@ def make_attribute(
 def make_attribute_ref(
     name: str,
     attr_type: AttributeProto.AttributeType,
-    ref_attr_name: str,
     doc_string: str | None = None,
+    *,
+    ref_attr_name: str | None = None,
 ) -> AttributeProto:
     """Make an AttributeProto holding a reference to the parent function's attribute.
 
     The returned attribute carries no value of its own; at instantiation time its
     value is supplied by the parent function's attribute named ``ref_attr_name``.
-    Reference attributes are only valid inside a function (sub-graph).
+    When ``ref_attr_name`` is not provided, it defaults to ``name``. Reference
+    attributes are only valid inside a function (sub-graph).
 
     Args:
         name: The name of this attribute as used inside the function body.
         attr_type: The type of the attribute.
-        ref_attr_name: The name of the parent function's attribute being referenced.
         doc_string: Optional human-readable documentation for the attribute.
+        ref_attr_name: The name of the parent function's attribute being referenced.
     """
+    if ref_attr_name is None:
+        ref_attr_name = name
+    if not ref_attr_name:
+        raise ValueError("ref_attr_name must be non-empty")
+
     attr = AttributeProto()
     attr.name = name
     attr.type = attr_type  # type: ignore[assignment]
