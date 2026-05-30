@@ -50,6 +50,7 @@ __all__ = [
     "Cast_24",
     "CastLike_15",
     "CastLike_19",
+    "CausalConvWithState",
     "Ceil",
     "Celu",
     "CenterCropPad",
@@ -116,6 +117,7 @@ __all__ = [
     "LeakyRelu",
     "Less",
     "LessOrEqual",
+    "LinearAttention",
     "Log",
     "LogSoftmax",
     "Loop",
@@ -302,6 +304,7 @@ from onnx.reference.ops.op_bitwise_xor import BitwiseXor
 from onnx.reference.ops.op_blackman_window import BlackmanWindow
 from onnx.reference.ops.op_cast import Cast_1, Cast_19, Cast_24
 from onnx.reference.ops.op_cast_like import CastLike_15, CastLike_19
+from onnx.reference.ops.op_causal_conv_with_state import CausalConvWithState
 from onnx.reference.ops.op_ceil import Ceil
 from onnx.reference.ops.op_celu import Celu
 from onnx.reference.ops.op_center_crop_pad import CenterCropPad
@@ -368,6 +371,7 @@ from onnx.reference.ops.op_layer_normalization import LayerNormalization
 from onnx.reference.ops.op_leaky_relu import LeakyRelu
 from onnx.reference.ops.op_less import Less
 from onnx.reference.ops.op_less_or_equal import LessOrEqual
+from onnx.reference.ops.op_linear_attention import LinearAttention
 from onnx.reference.ops.op_log import Log
 from onnx.reference.ops.op_log_softmax import LogSoftmax
 from onnx.reference.ops.op_loop import Loop
