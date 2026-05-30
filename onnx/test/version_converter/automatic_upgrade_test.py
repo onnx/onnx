@@ -1395,8 +1395,11 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
         self._test_op_upgrade(
             "ScanVarLen",
             27,
-            # Inputs: output_lengths (omitted), initial state [2], scan input [3, 2].
-            ["", [2], [3, 2]],
+            # Option B input layout: single trailing variadic
+            # [N state vars, M scan inputs, K optional shape hints]. Here we
+            # omit hints entirely (K=0). Inputs: initial state [2], scan
+            # input [3, 2].
+            [[2], [3, 2]],
             # Outputs: final state [2]; scan output's concat axis is unknown
             # (declared as None to match what shape inference will infer).
             [[2], [None]],
