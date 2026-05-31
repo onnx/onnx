@@ -15,18 +15,17 @@ is given (e.g. -e reuse for the isolated reuse environment).
 
 from __future__ import annotations
 
+import argparse
 import shutil
 import subprocess
 import sys
 import warnings
 
-args = sys.argv[1:]
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument("-e", "--environment", default=None)
+known, args = parser.parse_known_args(sys.argv[1:])
 
-# Parse optional -e/--environment flag forwarded to `pixi run`.
-env_args: list[str] = []
-if len(args) >= 2 and args[0] in ("-e", "--environment"):  # noqa: PLR2004
-    env_args = ["--environment", args[1]]
-    args = args[2:]
+env_args = ["--environment", known.environment] if known.environment else []
 
 if shutil.which("pixi"):
     raise SystemExit(subprocess.call(["pixi", "run", *env_args, "--", *args]))  # noqa: S603, S607
