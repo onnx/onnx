@@ -84,7 +84,7 @@ repos:
       # REUSE license compliance
       - id: reuse
         name: reuse lint
-        entry: python3 tools/pixi-shim.py -e reuse reuse lint
+        entry: python3 tools/pixi-shim.py reuse lint
         language: system
         pass_filenames: false
 
