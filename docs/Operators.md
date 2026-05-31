@@ -32416,8 +32416,13 @@ expect(
           // Each scan output is an empty tensor whose concat-axis dim is 0 and
           // whose remaining dims come from hint_i (when supplied) or from the
           // body subgraph's value-info for the i-th scan output.
+          //
+          // When hint_i is supplied, hint_i[out_axis_i] MUST be 0 (the hint is
+          // a strict commitment about the runtime output shape — a non-zero
+          // value at the concat axis disagrees with the actual zero-iteration
+          // size, and shape inference / runtime raises an error).
           scan_out_i = empty_tensor_with_shape(
-              (hint_i is supplied) ? replace_dim(hint_i, out_axis_i, 0)
+              (hint_i is supplied) ? require(hint_i[out_axis_i] == 0, hint_i)
                                    : body_value_info_shape_with_axis_zero(i, out_axis_i),
               dtype = body_value_info_dtype(i));
           return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
@@ -32438,11 +32443,14 @@ expect(
           scan_out_k = Concat<axis=out_axis_k>(scan_out_k, so_k);
       }
 
-      // When hint_i is supplied, the concatenation-axis size of scan_out_i is
-      // required to equal hint_i[out_axis_i]; otherwise a runtime error is raised.
-      // When hint_i is supplied as a constant initializer, shape inference also
-      // verifies that the non-concat dimensions of hint_i match the body output's
-      // per-iteration non-concat dimensions.
+      // When hint_i is supplied, the FULL shape of scan_out_i (every dim,
+      // including the concat axis) MUST equal hint_i — the hint is a strict
+      // commitment about the runtime output shape, not an advisory. If the
+      // actual output differs from hint_i at any axis, this is a user error.
+      // Shape inference detects mismatches whenever both the hint and the
+      // relevant output dim are statically known (constant initializer hint
+      // plus statically-known body output dims and/or statically-known
+      // iteration count); otherwise the mismatch surfaces as a runtime error.
 
       return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
@@ -32467,8 +32475,9 @@ expect(
   subgraph overhead) for the empty-sequence case; for models that may occasionally
   encounter empty sequences this overhead is non-trivial. Inline-defined zero-iter
   semantics with hints let implementations emit a single op call whose output buffers
-  can be pre-allocated from the hint shape, and which short-circuits to empty tensors
-  when the input sequence-axis dim is 0.
+  can be pre-allocated from the hint shape. The hint is a strict commitment about the
+  runtime output shape: at zero iterations, the hint's concat-axis value must be 0
+  (matching the actual output size).
 
 #### Version
 
@@ -32493,14 +32502,14 @@ This version of the operator has been available since version 27 of the default 
 
 <dl>
 <dt><tt>initial_state_scan_inputs_and_hints</tt> (variadic, heterogeneous) : V</dt>
-<dd>A single bundled variadic input with the layout [s_0, ..., s_{N-1}, x_0, ..., x_{M-1}, h_0, ..., h_{K-1}]: N loop-state initial values, then M scan inputs, then optionally K per-scan-output shape hints. N is derived from the body subgraph: N = body.input_size() - num_scan_inputs. K is the number of scan outputs (K = num_outputs - N). The hint group is either OMITTED ENTIRELY (the common case — total input count is N + M) or PRESENT AS EXACTLY K SLOTS (total input count is N + M + K). Within a present hint group, individual slots may be empty (the empty-string placeholder "" in the text format, or an unset input name in the graph proto) to indicate that no hint is supplied for that scan output. Any hint count other than 0 or K is a schema error. Each non-empty hint is a 1-D int64 tensor whose length equals the rank of the corresponding scan output; the values are the expected output dimensions including the total concatenation-axis size summed across all iterations. When a hint is supplied as a constant initializer, shape inference uses its values to produce a fully-static output shape; otherwise the concatenation-axis dimension is left symbolic and resolved at runtime.</dd>
+<dd>A single bundled variadic input with the layout [s_0, ..., s_{N-1}, x_0, ..., x_{M-1}, h_0, ..., h_{K-1}]: N loop-state initial values, then M scan inputs, then optionally K per-scan-output shape hints. N is derived from the body subgraph: N = body.input_size() - num_scan_inputs. K is the number of scan outputs (K = num_outputs - N). The hint group is either OMITTED ENTIRELY (the common case — total input count is N + M) or PRESENT AS EXACTLY K SLOTS (total input count is N + M + K). Within a present hint group, individual slots may be empty (the empty-string placeholder "" in the text format, or an unset input name in the graph proto) to indicate that no hint is supplied for that scan output. Any hint count other than 0 or K is a schema error. Each non-empty hint is a 1-D int64 tensor whose length equals the rank of the corresponding scan output; the values are the expected output dimensions including the total concatenation-axis size summed across all iterations. The hint is a STRICT commitment about the runtime output shape — at zero iterations, the hint's value at the concat axis must be 0 (matching the empty output). When a hint is supplied as a constant initializer, shape inference uses its values to produce a fully-static output shape and detects statically-provable mismatches (e.g. provably-zero-iter combined with a non-zero concat-axis hint value); otherwise the concatenation-axis dimension is left symbolic and resolved at runtime. Note: the bundled variadic's 'V' type constraint cannot enforce tensor(int64) on the hint slots — runtimes that skip shape inference must validate hint dtype separately.</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
 <dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
-<dd>Final values of the loop's N state variables followed by K scan_outputs. Each scan_output is produced by concatenating the corresponding body subgraph output along the axis specified by scan_output_axes (default 0). Per-iteration contributions may have different sizes along this axis (including zero); the final scan output's size along that axis is the sum of the per-iteration sizes. All other dimensions must match across iterations. When the input sequence-axis dimension is 0 the loop is not required to execute: loop-state outputs equal the loop-state inputs, and each scan output is an empty tensor whose concatenation-axis dim is 0 and whose remaining dims come from the corresponding hint (when supplied) or from the body subgraph's value-info.</dd>
+<dd>Final values of the loop's N state variables followed by K scan_outputs. Each scan_output is produced by concatenating the corresponding body subgraph output along the axis specified by scan_output_axes (default 0). Per-iteration contributions may have different sizes along this axis (including zero); the final scan output's size along that axis is the sum of the per-iteration sizes. All other dimensions must match across iterations. When the input sequence-axis dimension is 0 the loop is not required to execute: loop-state outputs equal the loop-state inputs, and each scan output is an empty tensor whose concatenation-axis dim is 0 and whose remaining dims come from the corresponding hint (when supplied; the hint's concat-axis entry must also be 0) or from the body subgraph's value-info.</dd>
 </dl>
 
 #### Type Constraints
@@ -32622,6 +32631,54 @@ expect(
     inputs=[scan_input, scan_out_hint],
     outputs=[scan_output],
     name="test_scan_var_len_hint",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
+<summary>scan_var_len_hint_partial</summary>
+
+```python
+"""Partial-hint case: K=2 scan outputs, one with an empty-string
+placeholder (no hint) and one with a supplied int64 shape hint.
+
+Exercises the per-slot hint mechanism — each scan output can
+independently choose whether to provide a hint. The runtime
+validates only the supplied hint; the placeholder output is
+unconstrained.
+"""
+body = onnx.parser.parse_graph(
+    """
+    scan_var_len_hint_partial_body (float[4] scan_in)
+        => (float[4] scan_out_a, float[4] scan_out_b)
+    {
+        scan_out_a = Identity(scan_in)
+        scan_out_b = Identity(scan_in)
+    }
+    """
+)
+# K = 2 scan outputs → hint group has 2 slots: "" (no hint for
+# scan_out_a) and a supplied hint for scan_out_b.
+node = onnx.helper.make_node(
+    "ScanVarLen",
+    inputs=["scan_input", "", "scan_out_b_hint"],
+    outputs=["scan_output_a", "scan_output_b"],
+    num_scan_inputs=1,
+    body=body,
+)
+scan_input = np.arange(12, dtype=np.float32).reshape(3, 4)
+scan_out_b_hint = np.array([12], dtype=np.int64)
+scan_output_a = scan_input.reshape(12)
+scan_output_b = scan_input.reshape(12)
+
+expect(
+    node,
+    inputs=[scan_input, scan_out_b_hint],
+    outputs=[scan_output_a, scan_output_b],
+    name="test_scan_var_len_hint_partial",
     opset_imports=_OPSET_IMPORTS,
 )
 ```
@@ -32759,6 +32816,96 @@ expect(
     inputs=[initial_state, scan_input],
     outputs=[final_state, scan_output],
     name="test_scan_var_len_state",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
+<summary>scan_var_len_zero_iter_no_hint</summary>
+
+```python
+"""Zero-iteration case without a hint: the scan output's
+non-concat dims come from the body subgraph's declared output
+value_info, and the concat-axis dim is 0.
+
+Companion to ``export_scan_var_len_zero_iter_with_hint`` covering
+the body-value-info fallback path.
+"""
+# Body declares a [4] scan output; with zero iterations and the
+# default concat axis 0, the final scan output is an empty
+# length-0 float tensor.
+body = _identity_body("scan_var_len_zero_iter_no_hint_body")
+node = onnx.helper.make_node(
+    "ScanVarLen",
+    inputs=["scan_input"],
+    outputs=["scan_output"],
+    num_scan_inputs=1,
+    body=body,
+)
+# Sequence-axis dim = 0 → no iterations.
+scan_input = np.zeros((0, 4), dtype=np.float32)
+# Body's declared per-iter shape [4]; concat axis 0 → final [0].
+scan_output = np.zeros((0,), dtype=np.float32)
+
+expect(
+    node,
+    inputs=[scan_input],
+    outputs=[scan_output],
+    name="test_scan_var_len_zero_iter_no_hint",
+    opset_imports=_OPSET_IMPORTS,
+)
+```
+
+</details>
+
+
+<details>
+<summary>scan_var_len_zero_iter_with_hint</summary>
+
+```python
+"""Zero-iteration case with a fully-specified hint, mirroring the
+design spec's flagship example: ``hint=[4, 0, 64]`` with
+``scan_output_axes=[1]`` yields a scan output of shape ``[4, 0,
+64]``. The hint is a strict commitment about the runtime output
+shape; at zero iterations, the hint's value at the concat axis
+MUST be 0 (matching the empty output) — a non-zero value is a
+user error rejected by both shape inference and the reference
+runtime.
+"""
+# Body produces a [4, 1, 64] tensor per iteration; with zero
+# iterations and concat axis 1, the final output is [4, 0, 64].
+body = onnx.parser.parse_graph(
+    """
+    scan_var_len_zero_iter_with_hint_body (float[4, 1, 64] scan_in)
+        => (float[4, 1, 64] scan_out)
+    {
+        scan_out = Identity(scan_in)
+    }
+    """
+)
+node = onnx.helper.make_node(
+    "ScanVarLen",
+    inputs=["scan_input", "scan_out_hint"],
+    outputs=["scan_output"],
+    num_scan_inputs=1,
+    scan_output_axes=[1],
+    body=body,
+)
+# Scan input has sequence-axis (default axis 0) dim = 0, so the
+# body never runs and the loop returns an empty scan output.
+scan_input = np.zeros((0, 4, 1, 64), dtype=np.float32)
+# Hint commits to the actual zero-iter output shape: [4, 0, 64].
+scan_out_hint = np.array([4, 0, 64], dtype=np.int64)
+scan_output = np.zeros((4, 0, 64), dtype=np.float32)
+
+expect(
+    node,
+    inputs=[scan_input, scan_out_hint],
+    outputs=[scan_output],
+    name="test_scan_var_len_zero_iter_with_hint",
     opset_imports=_OPSET_IMPORTS,
 )
 ```

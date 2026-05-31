@@ -898,8 +898,13 @@ is equivalent to the following pseudo-code:
         // Each scan output is an empty tensor whose concat-axis dim is 0 and
         // whose remaining dims come from hint_i (when supplied) or from the
         // body subgraph's value-info for the i-th scan output.
+        //
+        // When hint_i is supplied, hint_i[out_axis_i] MUST be 0 (the hint is
+        // a strict commitment about the runtime output shape — a non-zero
+        // value at the concat axis disagrees with the actual zero-iteration
+        // size, and shape inference / runtime raises an error).
         scan_out_i = empty_tensor_with_shape(
-            (hint_i is supplied) ? replace_dim(hint_i, out_axis_i, 0)
+            (hint_i is supplied) ? require(hint_i[out_axis_i] == 0, hint_i)
                                  : body_value_info_shape_with_axis_zero(i, out_axis_i),
             dtype = body_value_info_dtype(i));
         return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
@@ -920,11 +925,14 @@ is equivalent to the following pseudo-code:
         scan_out_k = Concat<axis=out_axis_k>(scan_out_k, so_k);
     }
 
-    // When hint_i is supplied, the concatenation-axis size of scan_out_i is
-    // required to equal hint_i[out_axis_i]; otherwise a runtime error is raised.
-    // When hint_i is supplied as a constant initializer, shape inference also
-    // verifies that the non-concat dimensions of hint_i match the body output's
-    // per-iteration non-concat dimensions.
+    // When hint_i is supplied, the FULL shape of scan_out_i (every dim,
+    // including the concat axis) MUST equal hint_i — the hint is a strict
+    // commitment about the runtime output shape, not an advisory. If the
+    // actual output differs from hint_i at any axis, this is a user error.
+    // Shape inference detects mismatches whenever both the hint and the
+    // relevant output dim are statically known (constant initializer hint
+    // plus statically-known body output dims and/or statically-known
+    // iteration count); otherwise the mismatch surfaces as a runtime error.
 
     return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
@@ -949,8 +957,9 @@ forces conforming implementations to materialize both branches (or carry per-cal
 subgraph overhead) for the empty-sequence case; for models that may occasionally
 encounter empty sequences this overhead is non-trivial. Inline-defined zero-iter
 semantics with hints let implementations emit a single op call whose output buffers
-can be pre-allocated from the hint shape, and which short-circuits to empty tensors
-when the input sequence-axis dim is 0.
+can be pre-allocated from the hint shape. The hint is a strict commitment about the
+runtime output shape: at zero iterations, the hint's concat-axis value must be 0
+(matching the actual output size).
 )DOC";
 
 const char kDoc_Pad_ver24[] = R"DOC(

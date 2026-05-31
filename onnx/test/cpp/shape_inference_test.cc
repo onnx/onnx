@@ -1045,9 +1045,10 @@ agraph (float[3] state_in, float[5, 4, 3] scan_in_full) => (state_out, scan_out)
       ONNX_NAMESPACE::InferenceError);
 }
 
-// Case 13: zero-iter combined with a constant hint still produces fully-static
-// inferred output shape (the runtime distinction of "axis becomes 0" doesn't
-// affect what shape inference reports).
+// Case 13: zero-iter combined with a constant hint whose concat-axis value
+// is 0 (the only positive case at provably-zero-iter under the strict-hint
+// contract). Shape inference produces the fully-static output shape from
+// the hint values.
 TEST(ShapeInferenceTest, ScanVarLen27_ZeroIterConstantHintFullyStatic) {
   const char* modelStr = R"ONNX(
 <
@@ -1056,7 +1057,7 @@ TEST(ShapeInferenceTest, ScanVarLen27_ZeroIterConstantHintFullyStatic) {
 >
 agraph (float[3] state_in, float[0, 4] scan_in_full) => (state_out, scan_out)
 <
-  int64[1] scan_out_hint = {12}
+  int64[1] scan_out_hint = {0}
 >
 {
   state_out, scan_out = ScanVarLen (state_in, scan_in_full, scan_out_hint) <
@@ -1080,7 +1081,45 @@ agraph (float[3] state_in, float[0, 4] scan_in_full) => (state_out, scan_out)
   ASSERT_TRUE(scan_out.has_tensor_type());
   EXPECT_EQ(scan_out.tensor_type().elem_type(), TensorProto::FLOAT);
   ASSERT_EQ(scan_out.tensor_type().shape().dim_size(), 1);
-  ExpectDimValue(scan_out.tensor_type().shape(), 0, 12);
+  ExpectDimValue(scan_out.tensor_type().shape(), 0, 0);
+}
+
+// Case 14: provably-zero-iter (scan input sequence-axis dim = 0) combined
+// with a constant hint whose concat-axis value is non-zero. Under the
+// strict-hint contract this is a statically-provable mismatch and shape
+// inference must fail.
+TEST(ShapeInferenceTest, ScanVarLen27_ProvablyZeroIterHintMismatch) {
+  const char* modelStr = R"ONNX(
+<
+  ir_version: 10,
+  opset_import: [ "" : 27 ]
+>
+agraph (float[3] state_in, float[0, 4] scan_in_full) => (state_out, scan_out)
+<
+  int64[1] scan_out_hint = {12}
+>
+{
+  state_out, scan_out = ScanVarLen (state_in, scan_in_full, scan_out_hint) <
+    num_scan_inputs = 1,
+    body = scan_var_len_body (float[3] loop_state_in, float[4] scan_in_per_iter)
+           => (float[3] loop_state_out, float[4] scan_out_per_iter)
+    {
+      loop_state_out = Identity(loop_state_in)
+      scan_out_per_iter = Identity(scan_in_per_iter)
+    }
+  >
+}
+)ONNX";
+
+  ModelProto model;
+  OnnxParser parser(modelStr);
+  auto status = parser.Parse(model);
+  ASSERT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  ShapeInferenceOptions options{true, 1, true};
+  EXPECT_THROW(
+      ONNX_NAMESPACE::shape_inference::InferShapes(model, ONNX_NAMESPACE::OpSchemaRegistry::Instance(), options),
+      ONNX_NAMESPACE::InferenceError);
 }
 
 static void RunReshapeShapeInfTest(const char* modelStr, TensorShapeProto& expectedShape) {

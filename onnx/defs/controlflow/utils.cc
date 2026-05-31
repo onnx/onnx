@@ -681,6 +681,24 @@ void ScanVarLenInferenceFunction(InferenceContext& ctx) {
         }
       }
 
+      // Strict-commitment check: when the iteration count is provably 0 (the
+      // scan-input sequence axis has a static value of 0), the hint's concat-
+      // axis value MUST also be 0. A non-zero value contradicts the actual
+      // runtime output shape and is therefore a user error.
+      if (sequence_len_dim.has_dim_value() && sequence_len_dim.dim_value() == 0 && hint_values[output_axis] != 0) {
+        fail_shape_inference(
+            "ScanVarLen scan_output_shape_hint[",
+            scan_out_idx,
+            "][",
+            output_axis,
+            "] = ",
+            hint_values[output_axis],
+            " at the concat axis, but the iteration count is provably 0 "
+            "(producing an actual concat-axis size of 0). The hint is a "
+            "strict commitment about the runtime output shape; mismatch is "
+            "not allowed.");
+      }
+
       // Emit fully-static output shape directly from the hint values.
       TensorShapeProto out_shape;
       for (int j = 0; j < hint_len; ++j) {

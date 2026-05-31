@@ -310,6 +310,11 @@ class ScanVarLen(OpRun):
         # Defined behavior: the body does not run; scan outputs are empty tensors
         # whose non-concat dims come from the hint (when present) or the body's
         # declared output value_info (otherwise), and whose concat-axis is 0.
+        #
+        # The hint is a STRICT commitment: at zero iterations the supplied hint
+        # MUST have value 0 at the concat axis (matching the empty output). A
+        # non-zero concat-axis hint value is a user error, not a silently-
+        # overridden advisory.
         if sequence_length == 0:
             scan_outputs: list[np.ndarray] = []
             for i in range(num_scan_outputs):
@@ -317,10 +322,6 @@ class ScanVarLen(OpRun):
                 dtype = _body_output_dtype(body_runner, body_out_idx, i)
                 hint = hints[i]
                 if hint is not None:
-                    # When the body's declared output rank is known, validate
-                    # the hint length against it before consuming the hint, so
-                    # the error attributes the mismatch to the hint (rather
-                    # than letting it silently shape-shift the output).
                     declared_rank = _try_body_output_rank(body_runner, body_out_idx)
                     if declared_rank is not None and hint.shape[0] != declared_rank:
                         raise ValueError(
@@ -329,12 +330,22 @@ class ScanVarLen(OpRun):
                             f"has rank {declared_rank}."
                         )
                     shape = [int(x) for x in hint.tolist()]
+                    axis = _resolve_axis(
+                        output_axes_attr[i], len(shape), "scan_output_axes", i
+                    )
+                    if shape[axis] != 0:
+                        raise ValueError(
+                            f"ScanVarLen: shape hint for scan output {i} at concat "
+                            f"axis {axis} is {shape[axis]} but the actual concat-axis "
+                            f"size is 0 (sequence length is 0, no iterations ran). "
+                            f"The hint is a strict commitment; mismatch is not allowed."
+                        )
                 else:
                     shape = _body_output_static_shape(body_runner, body_out_idx, i)
-                axis = _resolve_axis(
-                    output_axes_attr[i], len(shape), "scan_output_axes", i
-                )
-                shape[axis] = 0
+                    axis = _resolve_axis(
+                        output_axes_attr[i], len(shape), "scan_output_axes", i
+                    )
+                    shape[axis] = 0
                 scan_outputs.append(np.empty(shape, dtype=dtype))
             return self._check_and_fix_outputs(tuple(states + scan_outputs))
 

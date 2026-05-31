@@ -212,10 +212,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "for that scan output. Any hint count other than 0 or K is a schema error. "
             "Each non-empty hint is a 1-D int64 tensor whose length equals the rank of the "
             "corresponding scan output; the values are the expected output dimensions including the "
-            "total concatenation-axis size summed across all iterations. When a hint is supplied as "
+            "total concatenation-axis size summed across all iterations. The hint is a STRICT "
+            "commitment about the runtime output shape — at zero iterations, the hint's value at "
+            "the concat axis must be 0 (matching the empty output). When a hint is supplied as "
             "a constant initializer, shape inference uses its values to produce a fully-static "
-            "output shape; otherwise the concatenation-axis dimension is left symbolic and resolved "
-            "at runtime. "
+            "output shape and detects statically-provable mismatches (e.g. provably-zero-iter "
+            "combined with a non-zero concat-axis hint value); otherwise the concatenation-axis "
+            "dimension is left symbolic and resolved at runtime. "
             "Note: the bundled variadic's 'V' type constraint cannot enforce tensor(int64) on the "
             "hint slots — runtimes that skip shape inference must validate hint dtype separately.",
             "V",
@@ -233,7 +236,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "When the input sequence-axis dimension is 0 the loop is not required to execute: "
             "loop-state outputs equal the loop-state inputs, and each scan output is an empty "
             "tensor whose concatenation-axis dim is 0 and whose remaining dims come from the "
-            "corresponding hint (when supplied) or from the body subgraph's value-info.",
+            "corresponding hint (when supplied; the hint's concat-axis entry must also be 0) "
+            "or from the body subgraph's value-info.",
             "V",
             OpSchema::Variadic,
             false)

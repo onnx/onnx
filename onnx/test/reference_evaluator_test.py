@@ -1668,11 +1668,12 @@ class TestReferenceEvaluator(unittest.TestCase):
         self.assertEqual(scan_result.shape, (0,))
         self.assertEqual(scan_result.dtype, np.float32)
 
-    def test_scan_var_len_zero_iter_with_hint(self):
+    def test_scan_var_len_zero_iter_with_matching_hint(self):
         # Zero iteration + hint present: the body is not run; the scan
         # output's non-concat dims come from the hint, and the concat-axis
-        # entry is forced to 0 (matching the actual zero-iteration size,
-        # regardless of the hint value at the concat axis).
+        # entry of the hint MUST be 0 (matching the actual zero-iteration
+        # size). A non-zero concat-axis value is a strict-commitment
+        # violation (see test_scan_var_len_zero_iter_hint_axis_mismatch).
         feature = 2
 
         model = parser.parse_model(
@@ -1702,9 +1703,8 @@ class TestReferenceEvaluator(unittest.TestCase):
 
         state_value = np.zeros(feature, dtype=np.float32)
         empty_scan_value = np.zeros((0, feature), dtype=np.float32)
-        # Hint declares total concat-axis size 42; zero-iter overrides this
-        # to 0 at the concat axis (axis 0 by default).
-        hint = np.array([42], dtype=np.int64)
+        # Hint must match the actual concat-axis size (0) at zero-iter.
+        hint = np.array([0], dtype=np.int64)
 
         sess = ReferenceEvaluator(model)
         _state_result, scan_result = sess.run(
@@ -1716,10 +1716,57 @@ class TestReferenceEvaluator(unittest.TestCase):
             },
         )
 
-        # Concat axis (axis 0) is 0 at zero-iter; other dims come from the hint
-        # (there are no other dims here since the hint has length 1).
         self.assertEqual(scan_result.shape, (0,))
         self.assertEqual(scan_result.dtype, np.float32)
+
+    def test_scan_var_len_zero_iter_hint_axis_mismatch(self):
+        # Strict-commitment contract: at zero iterations, the hint's value at
+        # the concat axis MUST be 0. A non-zero value contradicts the actual
+        # runtime output shape and the reference implementation raises
+        # ValueError.
+        feature = 2
+
+        model = parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[{feature}] outer_state_in,
+               float[T, {feature}] outer_scan_in,
+               int64[1] scan_out_hint)
+                => (float[{feature}] outer_state_out,
+                    float[?] outer_scan_out)
+            {{
+                outer_state_out, outer_scan_out = ScanVarLen (outer_state_in, outer_scan_in, scan_out_hint) <
+                    num_scan_inputs = 1,
+                    body = b (float[{feature}] state_in,
+                              float[{feature}] scan_in)
+                        => (float[{feature}] state_out,
+                            float[{feature}] scan_out)
+                    {{
+                        state_out = Identity(state_in)
+                        scan_out = Identity(scan_in)
+                    }}
+                >
+            }}
+            """
+        )
+
+        state_value = np.zeros(feature, dtype=np.float32)
+        empty_scan_value = np.zeros((0, feature), dtype=np.float32)
+        # Hint claims concat-axis size 42 but actual size at zero-iter is 0.
+        bad_hint = np.array([42], dtype=np.int64)
+
+        sess = ReferenceEvaluator(model)
+        with self.assertRaises(ValueError) as cm:
+            sess.run(
+                None,
+                {
+                    "outer_state_in": state_value,
+                    "outer_scan_in": empty_scan_value,
+                    "scan_out_hint": bad_hint,
+                },
+            )
+        cause = cm.exception.__cause__ if cm.exception.__cause__ else cm.exception
+        self.assertIn("strict commitment", str(cause))
 
     def test_scan_var_len_zero_iter_rejects_hint_wrong_rank(self):
         # O-1: even on the zero-iteration path, a hint whose length does

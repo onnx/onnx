@@ -5770,10 +5770,40 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_scan_var_len_zero_iter_with_constant_hint(self) -> None:
-        # Zero iterations + constant hint: shape inference produces the full
-        # static shape from the hint values. The runtime distinction (the
-        # ref impl replaces the concat axis with 0) does not show up in shape
-        # inference — only the declared dims do.
+        # Zero iterations + constant hint that correctly commits to a 0
+        # concat-axis size: shape inference produces the full static shape
+        # from the hint values (which is (0,) here for a length-1 hint).
+        # The hint is a strict commitment; the matching-zero case is the
+        # only valid positive case at provably-zero-iter.
+        model = onnx.parser.parse_model(
+            f"""
+            <ir_version: 8, opset_import: [ "" : 27 ]>
+            g (float[3] loop_state_orig, float[0, 2] scan_input)
+                => (loop_state_final, scan_output)
+            <int64[1] scan_out_hint = {{0}}>
+            {{
+                loop_state_final, scan_output = ScanVarLen (loop_state_orig, scan_input, scan_out_hint) <
+                    num_scan_inputs = 1, {self._SCAN_VAR_LEN_BODY}
+                >
+            }}
+            """
+        )
+
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
+                # Fully-static from the hint value.
+                make_tensor_value_info("scan_output", TensorProto.FLOAT, (0,)),
+            ],
+        )
+
+    def test_scan_var_len_provably_zero_iter_hint_axis_mismatch(self) -> None:
+        # Strict-commitment contract: when the scan input's sequence axis is
+        # statically 0 AND the hint is a constant initializer with a non-zero
+        # value at the concat axis, shape inference proves the mismatch and
+        # raises InferenceError. (Without static info on either side, the
+        # check defers to runtime — covered by the ref-eval tests.)
         model = onnx.parser.parse_model(
             f"""
             <ir_version: 8, opset_import: [ "" : 27 ]>
@@ -5788,13 +5818,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             """
         )
 
-        self._assert_inferred(
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            r"iteration count is provably 0",
+            self._inferred,
             model,
-            [
-                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
-                # Fully-static from the hint value.
-                make_tensor_value_info("scan_output", TensorProto.FLOAT, (5,)),
-            ],
         )
 
     def test_scan_var_len_allows_symbolic_sequence_length(self) -> None:

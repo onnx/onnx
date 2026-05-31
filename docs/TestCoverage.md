@@ -23536,15 +23536,13 @@ expect(
 
 ```python
 """Zero-iteration case with a fully-specified hint, mirroring the
-design spec's flagship example: ``hint=[4, 32, 64]`` with
-``scan_output_axes=[1]`` yields a scan output of shape
-``[4, 0, 64]`` (concat axis dim set to 0, remaining dims taken
-from the hint).
-
-Exercises the defined-behavior path: the body does not run; the
-scan output is an empty tensor whose non-concat dims come from
-the hint. This is the strongest form of doc-test alignment for
-the hint mechanism's primary use case.
+design spec's flagship example: ``hint=[4, 0, 64]`` with
+``scan_output_axes=[1]`` yields a scan output of shape ``[4, 0,
+64]``. The hint is a strict commitment about the runtime output
+shape; at zero iterations, the hint's value at the concat axis
+MUST be 0 (matching the empty output) — a non-zero value is a
+user error rejected by both shape inference and the reference
+runtime.
 """
 # Body produces a [4, 1, 64] tensor per iteration; with zero
 # iterations and concat axis 1, the final output is [4, 0, 64].
@@ -23568,8 +23566,8 @@ node = onnx.helper.make_node(
 # Scan input has sequence-axis (default axis 0) dim = 0, so the
 # body never runs and the loop returns an empty scan output.
 scan_input = np.zeros((0, 4, 1, 64), dtype=np.float32)
-scan_out_hint = np.array([4, 32, 64], dtype=np.int64)
-# Output shape: hint with concat-axis (1) set to 0 → [4, 0, 64].
+# Hint commits to the actual zero-iter output shape: [4, 0, 64].
+scan_out_hint = np.array([4, 0, 64], dtype=np.int64)
 scan_output = np.zeros((4, 0, 64), dtype=np.float32)
 
 expect(
