@@ -20,12 +20,9 @@ concurrency:
 jobs:
   pre-commit-hooks:
     name: Install and lint
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     strategy:
       fail-fast: false
-      matrix:
-        os:
-          - ubuntu-24.04-arm
     steps:
       - name: Checkout branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -35,7 +32,7 @@ jobs:
       - name: Set up pixi
         uses: prefix-dev/setup-pixi@1b2de7f3351f171c8b4dfeb558c639cb58ed4ec0 # v0.9.5
         with:
-          environments: ${{ matrix.environment }} reuse
+          environments: default reuse
       - name: Install repository
         run: pixi run install
       - name: Lint
