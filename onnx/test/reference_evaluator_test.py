@@ -6324,6 +6324,220 @@ class TestReferenceEvaluator(unittest.TestCase):
         assert_allclose(got, expected)
         self.assertEqual(got.shape, (1, 1, 1))
 
+    def test_scan_zero_scan_outputs(self):
+        # Regression test: a Scan node with K=0 scan outputs (only loop-state
+        # variables threaded through, no per-iteration accumulated outputs) is
+        # spec-legal and must not crash the reference evaluator with
+        # `ValueError: max() arg is an empty sequence` from _common_run_shape.
+        # Body: takes (state, scan_in_elt) -> (state + scan_in_elt). N=1, K=0.
+        body_state_in = make_tensor_value_info("s_in", TensorProto.FLOAT, [2])
+        body_scan_in = make_tensor_value_info("x_in", TensorProto.FLOAT, [2])
+        body_state_out = make_tensor_value_info("s_out", TensorProto.FLOAT, [2])
+        body = make_graph(
+            [make_node("Add", ["s_in", "x_in"], ["s_out"])],
+            "scan_body",
+            [body_state_in, body_scan_in],
+            [body_state_out],
+        )
+
+        init_state = make_tensor_value_info("init_state", TensorProto.FLOAT, [2])
+        scan_input = make_tensor_value_info("scan_input", TensorProto.FLOAT, [3, 2])
+        final_state = make_tensor_value_info("final_state", TensorProto.FLOAT, [2])
+        scan_node = make_node(
+            "Scan",
+            ["init_state", "scan_input"],
+            ["final_state"],
+            num_scan_inputs=1,
+            body=body,
+        )
+        graph = make_graph([scan_node], "g", [init_state, scan_input], [final_state])
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        xs = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+        (got,) = sess.run(None, {"init_state": init, "scan_input": xs})
+
+        assert_allclose(got, xs.sum(axis=0))
+
+    def test_scan_max_iter_zero(self):
+        # Zero-length scan input (max_iter == 0) combined with scan outputs is
+        # an unsupported edge case in the reference implementation: the
+        # per-iteration element shape/dtype cannot be reliably synthesized
+        # without executing the body. The runtime must raise rather than
+        # silently produce a guess.
+        body = make_graph(
+            [
+                make_node("Add", ["s_in", "x_in"], ["s_out"]),
+                make_node("Identity", ["s_out"], ["scan_out"]),
+            ],
+            "scan_body",
+            [
+                make_tensor_value_info("s_in", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("x_in", TensorProto.FLOAT, [2]),
+            ],
+            [
+                make_tensor_value_info("s_out", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("scan_out", TensorProto.FLOAT, [2]),
+            ],
+        )
+        graph = make_graph(
+            [
+                make_node(
+                    "Scan",
+                    ["init", "xs"],
+                    ["final", "ys"],
+                    num_scan_inputs=1,
+                    body=body,
+                )
+            ],
+            "g",
+            [
+                make_tensor_value_info("init", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("xs", TensorProto.FLOAT, [None, 2]),
+            ],
+            [
+                make_tensor_value_info("final", TensorProto.FLOAT, [2]),
+                make_tensor_value_info("ys", TensorProto.FLOAT, [None, 2]),
+            ],
+        )
+        onnx_model = make_model(graph, opset_imports=[make_opsetid("", 21)])
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        xs = np.zeros((0, 2), dtype=np.float32)
+        with self.assertRaisesRegex(RuntimeError, "zero scan-input length"):
+            sess.run(None, {"init": init, "xs": xs})
+
+    def test_scan_k_neq_m(self):
+        # Regression test for the original `num_scan_outputs = len(args) - N`
+        # bug, which incorrectly forced K == M. Here M=1 scan input but K=2
+        # scan outputs, so the body has N + K = 1 + 2 = 3 outputs (N=1
+        # loop-state var, K=2 scan outputs).
+        onnx_model = parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "": 21 ]>
+            g (float[2] init, float[3, 2] xs)
+                => (float[2] final, float[3, 2] ys_a, float[3, 2] ys_b)
+            {
+                final, ys_a, ys_b = Scan <
+                    num_scan_inputs = 1,
+                    body = scan_body (float[2] s_in, float[2] x_in)
+                        => (float[2] s_out, float[2] scan_out_a, float[2] scan_out_b)
+                    {
+                        s_out = Add(s_in, x_in)
+                        scan_out_a = Identity(s_out)
+                        scan_out_b = Mul(x_in, x_in)
+                    }
+                > (init, xs)
+            }
+            """
+        )
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        xs = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+        final, ys_a, ys_b = sess.run(None, {"init": init, "xs": xs})
+
+        assert_allclose(final, xs.sum(axis=0))
+        assert_allclose(ys_a, np.cumsum(xs, axis=0))
+        assert_allclose(ys_b, xs * xs)
+
+    def test_scan_body_captures_outer_initializer(self):
+        # Regression test for Scan.need_context() / context plumbing.
+        # The body references `bias`, which is *not* a body input but an
+        # initializer in the enclosing graph. Without lexical-capture
+        # support the body would fail to resolve the name.
+        onnx_model = parser.parse_model(
+            """
+            <ir_version: 10, opset_import: [ "": 21 ]>
+            g (float[2] init, float[3, 2] xs) => (float[2] final)
+                <float[2] bias = {10, 100}>
+            {
+                final = Scan <
+                    num_scan_inputs = 1,
+                    body = scan_body (float[2] s_in, float[2] x_in)
+                        => (float[2] s_out)
+                    {
+                        s_out = Add(s_in, bias)
+                    }
+                > (init, xs)
+            }
+            """
+        )
+        check_model(onnx_model)
+
+        sess = ReferenceEvaluator(onnx_model)
+        init = np.zeros(2, dtype=np.float32)
+        # xs is unused by the body except to drive the iteration count (3).
+        xs = np.zeros((3, 2), dtype=np.float32)
+        (final,) = sess.run(None, {"init": init, "xs": xs})
+
+        # Each of the 3 iterations adds `bias` to the running state.
+        assert_allclose(final, np.array([30, 300], dtype=np.float32))
+
+    def test_causal_conv_with_state_silu_fp16_function_body(self):
+        # Regression test: the CausalConvWithState function body must upcast
+        # Sigmoid/Mul to float32 for the SiLU activation, matching the
+        # Python reference implementation. Without the upcast, the
+        # function-body expansion diverges from the registered op in fp16.
+        B, C, L, k = 2, 4, 8, 4
+        input_vi = make_tensor_value_info("input", TensorProto.FLOAT16, [B, C, L])
+        weight_vi = make_tensor_value_info("weight", TensorProto.FLOAT16, [C, 1, k])
+        bias_vi = make_tensor_value_info("bias", TensorProto.FLOAT16, [C])
+        past_vi = make_tensor_value_info(
+            "past_state", TensorProto.FLOAT16, [B, C, k - 1]
+        )
+        output_vi = make_tensor_value_info("output", TensorProto.FLOAT16, [B, C, L])
+        present_vi = make_tensor_value_info(
+            "present_state", TensorProto.FLOAT16, [B, C, k - 1]
+        )
+        node = make_node(
+            "CausalConvWithState",
+            ["input", "weight", "bias", "past_state"],
+            ["output", "present_state"],
+            activation="silu",
+        )
+        model = make_model(
+            make_graph(
+                [node],
+                "g",
+                [input_vi, weight_vi, bias_vi, past_vi],
+                [output_vi, present_vi],
+            ),
+            opset_imports=[make_opsetid("", 27)],
+        )
+        check_model(model)
+
+        rng = np.random.default_rng(0)
+        input_ = rng.standard_normal((B, C, L)).astype(np.float16)
+        weight = rng.standard_normal((C, 1, k)).astype(np.float16)
+        bias = rng.standard_normal((C,)).astype(np.float16)
+        past_state = rng.standard_normal((B, C, k - 1)).astype(np.float16)
+        feeds = {
+            "input": input_,
+            "weight": weight,
+            "bias": bias,
+            "past_state": past_state,
+        }
+
+        # Baseline: registered Python reference (upcasts SiLU to float32).
+        ref = ReferenceEvaluator(model)
+        expected_output, expected_state = ref.run(None, feeds)
+
+        # Force expansion via the schema's context-dependent function body.
+        class CausalConvWithState(OpRunExpand):
+            op_domain = ""
+
+        ref_expand = ReferenceEvaluator(model, new_ops=[CausalConvWithState])
+        got_output, got_state = ref_expand.run(None, feeds)
+
+        assert_allclose(got_state, expected_state)
+        assert_allclose(got_output, expected_output)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

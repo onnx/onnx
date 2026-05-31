@@ -1455,12 +1455,16 @@ class OpSet_Onnx_ver26 {
 };
 
 // Forward declarations for ai.onnx version 27
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, CausalConvWithState);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, LinearAttention);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range);
 
 // Iterate over schema from ai.onnx version 27
 class OpSet_Onnx_ver27 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, CausalConvWithState)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, LinearAttention)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 27, Range)>());
   }
 };
