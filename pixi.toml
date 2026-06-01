@@ -116,9 +116,9 @@ pillow = ">=11.2.1,<12"
 
 [feature.oldies.dependencies]
 # follows requirements-min.txt
-protobuf = "==4.25.1"
+protobuf = "==4.25.3"
 python = "3.10.*"
-numpy = "==1.23.2"
+numpy = "==1.26.4"
 
 [feature.lint.dependencies]
 clang-format = ">=22.1.1"
@@ -133,7 +133,7 @@ typos = ">=1.44.0,<2"
 [feature.lintrunner.pypi-dependencies]
 lintrunner = ">=0.10.7"
 lintrunner-adapters = ">=0.12.3"
-editorconfig-checker = "==3.2.1"
+editorconfig-checker = "==3.6.1"
 
 [feature.clang-tools.dependencies]
 # We want to use a clang-tidy/clang-format version that is possibly
