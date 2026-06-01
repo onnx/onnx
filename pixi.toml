@@ -112,13 +112,13 @@ zizmor = ">=1.24.1,<2"
 
 [feature.reference.dependencies]
 # follows requirements-reference.txt
-pillow = ">=11.2.1,<12"
+pillow = ">=12.2,<13"
 
 [feature.oldies.dependencies]
 # follows requirements-min.txt
-protobuf = "==4.25.1"
+protobuf = "==6.33.5"
 python = "3.10.*"
-numpy = "==1.23.2"
+numpy = "==2.4.6"
 
 [feature.lint.dependencies]
 clang-format = ">=22.1.1"
@@ -127,7 +127,7 @@ prek = ">=0.3.9"
 prettier = ">=3.8.1,<4"
 ruff = ">=0.15.7"
 shellcheck = ">=0.11.0"
-types-protobuf = ">=6.32.1.20260221,<7"
+types-protobuf = ">=7.34.1.20260518,<8"
 typos = ">=1.44.0,<2"
 
 [feature.lintrunner.pypi-dependencies]
@@ -152,10 +152,10 @@ myst-parser = "*"
 onnxruntime = "*"
 pillow = "*"
 pydot = "*"
-sphinx = "<9"  # Seems to be required by sphinx-tabs?
+sphinx = "<10"  # Seems to be required by sphinx-tabs?
 sphinx-copybutton = "*"
 sphinx-tabs = "*"
-setuptools = "<82"  # sphinx-tabs needs pkg_resources which was removed in 82
+setuptools = "<83"  # sphinx-tabs needs pkg_resources which was removed in 82
 linkify-it-py = "*"
 [feature.docs.pypi-dependencies]
 sphinx-exec-code = "*"
