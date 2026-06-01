@@ -56,7 +56,7 @@ function(onnx_print_configuration_summary)
   endif()
 
   message(STATUS "")
-  message(STATUS "  Protobuf version                  : ${_protobuf_VERSION}")
+  message(STATUS "  Protobuf version                  : ${Protobuf_VERSION}")
   if(EXISTS "${ONNX_PROTOC_EXECUTABLE}")
     message(STATUS "  Protobuf compiler                 : ${ONNX_PROTOC_EXECUTABLE}")
   else()
