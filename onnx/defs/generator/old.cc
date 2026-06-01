@@ -956,4 +956,79 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    Range,
+    11,
+    OpSchema()
+        .SetDoc(kDoc_Range_ver11)
+        .Input(0, "start", "Scalar. First entry for the range of output values.", "T")
+        .Input(1, "limit", "Scalar. Exclusive upper limit for the range of output values.", "T")
+        .Input(2, "delta", "Scalar. Value to step by.", "T")
+        .Output(0, "output", "A 1-D tensor with same type as the inputs containing generated range of values.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float)", "tensor(double)", "tensor(int16)", "tensor(int32)", "tensor(int64)"},
+            "Constrain input types to common numeric type tensors.")
+        .FunctionBody(R"ONNX(
+          {
+            sub_result = Sub (limit, start)
+            sub_result_casted = Cast <to = 1> (sub_result)
+            delta_casted = Cast <to = 1> (delta)
+            div_result = Div (sub_result_casted, delta_casted)
+            ceil_result = Ceil (div_result)
+            ceil_result_relu = Relu (ceil_result)
+            ceil_result_relu_int = Cast <to = 7> (ceil_result_relu)
+            ceil_result_relu_bool = Cast <to = 9> (ceil_result_relu)
+            variadic_output, output = Loop (ceil_result_relu_int, ceil_result_relu_bool, start)
+              <body = loop_body_attribute (int64 i, bool cond, prev) => (cond_out, current, range) {
+                cond_out = Identity (cond)
+                current = Add (prev, delta)
+                range = Identity (prev)
+              }>
+          }
+        )ONNX")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type inference
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+          // Shape inference
+          const auto start_initializer = ctx.getInputData(0);
+          const auto limit_initializer = ctx.getInputData(1);
+          const auto delta_initializer = ctx.getInputData(2);
+
+          // Output is always 1-D
+          auto output_dim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+
+          // If any of Range's inputs are not initializers, the output dimension
+          // value would remain unknown.
+          if (start_initializer != nullptr && limit_initializer != nullptr && delta_initializer != nullptr) {
+            // Make sure the input types are homogeneous
+            if ((start_initializer->data_type() != limit_initializer->data_type()) ||
+                (start_initializer->data_type() != delta_initializer->data_type())) {
+              fail_shape_inference("All inputs to 'Range' op must be of the same type");
+            }
+
+            // Explicitly compute the output dimension if Range's inputs are
+            // stored in initializer list.
+            if (start_initializer->data_type() == TensorProto::FLOAT) {
+              output_dim->set_dim_value(
+                  compute_output_dim_for_range<float>(start_initializer, limit_initializer, delta_initializer));
+            } else if (start_initializer->data_type() == TensorProto::INT32) {
+              output_dim->set_dim_value(
+                  compute_output_dim_for_range<int32_t>(start_initializer, limit_initializer, delta_initializer));
+            } else if (start_initializer->data_type() == TensorProto::INT64) {
+              output_dim->set_dim_value(
+                  compute_output_dim_for_range<int64_t>(start_initializer, limit_initializer, delta_initializer));
+            } else if (start_initializer->data_type() == TensorProto::DOUBLE) {
+              output_dim->set_dim_value(
+                  compute_output_dim_for_range<double>(start_initializer, limit_initializer, delta_initializer));
+            } else {
+              // int16 has no explicit shape computation here -
+              // stop with rank inference, no action here
+            }
+
+            return;
+          }
+        }));
+
 } // namespace ONNX_NAMESPACE
