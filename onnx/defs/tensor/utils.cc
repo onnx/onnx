@@ -38,13 +38,13 @@ void KeepAspectRatioHelper(
   if (policy != KeepAspectRatioPolicy::NOT_LARGER && policy != KeepAspectRatioPolicy::NOT_SMALLER) {
     return;
   }
-  float scale = policy == KeepAspectRatioPolicy::NOT_LARGER ? std::numeric_limits<float>::max()
-                                                            : std::numeric_limits<float>::min();
-  std::function<float(float, float)> reduce_f;
+  double scale = policy == KeepAspectRatioPolicy::NOT_LARGER ? std::numeric_limits<double>::max()
+                                                             : std::numeric_limits<double>::lowest();
+  std::function<double(double, double)> reduce_f;
   if (policy == KeepAspectRatioPolicy::NOT_LARGER) {
-    reduce_f = [](float a, float b) { return std::min(a, b); };
+    reduce_f = [](double a, double b) { return std::min(a, b); };
   } else {
-    reduce_f = [](float a, float b) { return std::max(a, b); };
+    reduce_f = [](double a, double b) { return std::max(a, b); };
   }
 
   bool has_unknown_dim = false;
@@ -54,14 +54,16 @@ void KeepAspectRatioHelper(
       has_unknown_dim = true;
       break;
     }
-    float s = sizes_data[i] / static_cast<float>(input_shape.dim(d).dim_value());
+    double s = sizes_data[i] / static_cast<double>(input_shape.dim(d).dim_value());
     scale = reduce_f(scale, s);
   }
   // If there's at least one unknown dim we can't infer the output shape, since it
   // will depend on the original aspect ratio of the input.
   for (size_t i = 0; i < sizes_data.size(); i++) {
     int d = axes.empty() ? i : axes[i];
-    sizes_data[i] = has_unknown_dim ? -1 : std::roundf(scale * input_shape.dim(d).dim_value());
+    sizes_data[i] = has_unknown_dim
+        ? -1
+        : static_cast<int64_t>(std::round(scale * static_cast<double>(input_shape.dim(d).dim_value())));
   }
 }
 

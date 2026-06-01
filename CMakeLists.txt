@@ -293,6 +293,8 @@ if(NOT ONNX_PROTOC_EXECUTABLE)
     # Read dependency URLs/hashes from sbom.cdx.json (single source of truth).
     sbom_get_dep("abseil-cpp" _absl)
     sbom_get_dep("protobuf" _protobuf)
+    # Assign ${Protobuf_VERSION} to the version read from sbom.cdx.json like `find_package(Protobuf)` would do.
+    set(Protobuf_VERSION ${_protobuf_VERSION})
     if(NOT DEFINED ABSL_ENABLE_INSTALL)
       if(ONNX_BUILD_PYTHON)
         set(ABSL_ENABLE_INSTALL OFF CACHE BOOL "Enable installation of Abseil targets")

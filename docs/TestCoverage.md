@@ -6,7 +6,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 187/199 (93.97%, 5 generators excluded) common operators.
+Node tests have covered 189/201 (94.03%, 5 generators excluded) common operators.
 
 Node tests have covered 1/1 (100.00%, 0 generators excluded) experimental operators.
 
@@ -5544,6 +5544,371 @@ for from_type, to_type in test_cases:
         outputs=[output],
         name="test_castlike_no_saturate_" + from_type + "_to_" + to_type,
     )
+```
+
+</details>
+
+
+### CausalConvWithState
+There are 13 test cases, listed as following:
+<details>
+<summary>b1_c1_degenerate</summary>
+
+```python
+# Mamba/GDN inner-head edge case: B=1, C=1.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 1, 1, 6, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_b1_c1_degenerate",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_basic",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>decode_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 1, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
+
+expect(
+    node,
+    inputs=[input_, weight, bias, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_decode_step",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+weight = np.random.rand(channels, 1, k).astype(np.float16)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>kernel_size_one</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 1
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_kernel_size_one",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>short_input_no_past_state</summary>
+
+```python
+# L < k-1 with no past_state: zero-pad is wider than the input.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 2, 5
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_short_input_no_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>silu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight, activation="silu")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>silu_fp16</summary>
+
+```python
+# fp16 + SiLU: the reference upcasts Sigmoid/Mul to float32, so the
+# function-body expansion must do the same to stay numerically faithful.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+weight = np.random.rand(channels, 1, k).astype(np.float16)
+
+output, present_state = _compute(input_, weight, activation="silu")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>silu_with_past_state</summary>
+
+```python
+# Fused activation combined with concat-from-past variant of PaddedInput.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "", "past_state"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, past_state=past_state, activation="silu"
+)
+
+expect(
+    node,
+    inputs=[input_, weight, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu_with_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>swish_alias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="swish",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight, activation="swish")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_swish_alias",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>with_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+
+output, present_state = _compute(input_, weight, bias=bias)
+
+expect(
+    node,
+    inputs=[input_, weight, bias],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>with_bias_and_past_state</summary>
+
+```python
+# Multi-token (T>1) path through Concat(past, input) -> Conv(+bias).
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
+
+expect(
+    node,
+    inputs=[input_, weight, bias, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_bias_and_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+<details>
+<summary>with_past_state</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(input_, weight, past_state=past_state)
+
+expect(
+    node,
+    inputs=[input_, weight, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
 ```
 
 </details>
@@ -12639,6 +13004,535 @@ expect(node, inputs=[x, y], outputs=[z], name="test_less_equal_bcast")
 </details>
 
 
+### LinearAttention
+There are 14 test cases, listed as following:
+<details>
+<summary>decode_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 1, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.random.randn(b, h_kv, d_k, d_v).astype(np.float32) * 0.1
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_decode_step",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "", "beta"],
+    outputs=["output", "present_state"],
+    update_rule="delta",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="delta",
+)
+expect(
+    node,
+    inputs=[query, key, value, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_delta",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>explicit_scale</summary>
+
+```python
+scale = 0.25
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+    scale=scale,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    scale=scale,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_explicit_scale",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float16)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float16), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float16)
+decay = (-np.abs(np.random.randn(b, t, h_kv * d_k)) * 0.1).astype(np.float16)
+beta = np.random.rand(b, t, h_kv).astype(np.float16)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_fp16",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>gated</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay"],
+    outputs=["output", "present_state"],
+    update_rule="gated",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+# Per-key-dim decay in log-space (negative -> decay).
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="gated",
+)
+expect(
+    node,
+    inputs=[query, key, value, decay],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>gated_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>gated_delta_beta_scalar</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, 1).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_beta_scalar",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>gated_delta_gqa</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_gqa",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>gated_delta_mqa</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=1,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 1, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_mqa",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>gated_per_head_decay</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay"],
+    outputs=["output", "present_state"],
+    update_rule="gated",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+# Per-head scalar decay.
+decay = -np.abs(np.random.randn(b, t, h_kv)).astype(np.float32) * 0.1
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="gated",
+)
+expect(
+    node,
+    inputs=[query, key, value, decay],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_per_head_decay",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value"],
+    outputs=["output", "present_state"],
+    update_rule="linear",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="linear",
+)
+expect(
+    node,
+    inputs=[query, key, value],
+    outputs=[output, present_state],
+    name="test_linear_attention_linear",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>linear_t1_no_past</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value"],
+    outputs=["output", "present_state"],
+    update_rule="linear",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 1, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="linear",
+)
+expect(
+    node,
+    inputs=[query, key, value],
+    outputs=[output, present_state],
+    name="test_linear_attention_linear_t1_no_past",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>no_past_explicit_zeros</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.zeros((b, h_kv, d_k, d_v), dtype=np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_no_past_explicit_zeros",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+<details>
+<summary>prefill_with_past</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.random.randn(b, h_kv, d_k, d_v).astype(np.float32) * 0.1
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_prefill_with_past",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
 ### Log
 There are 1 test cases, listed as following:
 <details>
@@ -18134,7 +19028,60 @@ expect(
 
 
 ### Range
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
+<details>
+<summary>range_bfloat16_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Range",
+    inputs=["start", "limit", "delta"],
+    outputs=["output"],
+)
+
+start = np.array(1.0, dtype=ml_dtypes.bfloat16)
+limit = np.array(5.0, dtype=ml_dtypes.bfloat16)
+delta = np.array(2.0, dtype=ml_dtypes.bfloat16)
+
+output = np.arange(1.0, 5.0, 2.0, dtype=np.float32).astype(
+    ml_dtypes.bfloat16
+)  # expected output [1.0, 3.0] as bfloat16
+
+expect(
+    node,
+    inputs=[start, limit, delta],
+    outputs=[output],
+    name="test_range_bfloat16_type_positive_delta",
+)
+```
+
+</details>
+<details>
+<summary>range_float16_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Range",
+    inputs=["start", "limit", "delta"],
+    outputs=["output"],
+)
+
+start = np.float16(1)
+limit = np.float16(5)
+delta = np.float16(2)
+
+output = np.arange(
+    start, limit, delta, dtype=np.float16
+)  # expected output [1.0, 3.0]
+expect(
+    node,
+    inputs=[start, limit, delta],
+    outputs=[output],
+    name="test_range_float16_type_positive_delta",
+)
+```
+
+</details>
 <details>
 <summary>range_float_type_positive_delta</summary>
 
@@ -23093,7 +24040,7 @@ expect(
 
 
 ### Scan
-There are 2 test cases, listed as following:
+There are 4 test cases, listed as following:
 <details>
 <summary>scan_8</summary>
 
@@ -23101,35 +24048,19 @@ There are 2 test cases, listed as following:
 # Given an input sequence [x1, ..., xN], sum up its elements using a scan
 # returning the final state (x1+x2+...+xN) as well the scan_output
 # [x1, x1+x2, ..., x1+x2+...+xN]
-#
-# create graph to represent scan body
-sum_in = onnx.helper.make_tensor_value_info(
-    "sum_in", onnx.TensorProto.FLOAT, [2]
-)
-next_ = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
-sum_out = onnx.helper.make_tensor_value_info(
-    "sum_out", onnx.TensorProto.FLOAT, [2]
-)
-scan_out = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [2]
-)
-add_node = onnx.helper.make_node(
-    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
-)
-id_node = onnx.helper.make_node(
-    "Identity", inputs=["sum_out"], outputs=["scan_out"]
-)
-scan_body = onnx.helper.make_graph(
-    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
-)
-# create scan op node
-no_sequence_lens = ""  # optional input, not supplied
-node = onnx.helper.make_node(
-    "Scan",
-    inputs=[no_sequence_lens, "initial", "x"],
-    outputs=["y", "z"],
-    num_scan_inputs=1,
-    body=scan_body,
+# Note: the first input (sequence_lens) is optional and omitted via "".
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan ("", initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] next)
+            => (float[2] sum_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
 )
 # create inputs for batch-size 1, sequence-length 3, inner dimension 2
 initial = np.array([0, 0]).astype(np.float32).reshape((1, 2))
@@ -23156,34 +24087,18 @@ expect(
 # Given an input sequence [x1, ..., xN], sum up its elements using a scan
 # returning the final state (x1+x2+...+xN) as well the scan_output
 # [x1, x1+x2, ..., x1+x2+...+xN]
-#
-# create graph to represent scan body
-sum_in = onnx.helper.make_tensor_value_info(
-    "sum_in", onnx.TensorProto.FLOAT, [2]
-)
-next_ = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
-sum_out = onnx.helper.make_tensor_value_info(
-    "sum_out", onnx.TensorProto.FLOAT, [2]
-)
-scan_out = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [2]
-)
-add_node = onnx.helper.make_node(
-    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
-)
-id_node = onnx.helper.make_node(
-    "Identity", inputs=["sum_out"], outputs=["scan_out"]
-)
-scan_body = onnx.helper.make_graph(
-    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
-)
-# create scan op node
-node = onnx.helper.make_node(
-    "Scan",
-    inputs=["initial", "x"],
-    outputs=["y", "z"],
-    num_scan_inputs=1,
-    body=scan_body,
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan (initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] next)
+            => (float[2] sum_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
 )
 # create inputs for sequence-length 3, inner dimension 2
 initial = np.array([0, 0]).astype(np.float32).reshape((2,))
@@ -23198,6 +24113,87 @@ expect(
     inputs=[initial, x],
     outputs=[y, z],
     name="test_scan9_sum",
+    opset_imports=[onnx.helper.make_opsetid("", 9)],
+)
+```
+
+</details>
+<details>
+<summary>scan_9_multi_state</summary>
+
+```python
+# Scan with two state variables: running sum and running product.
+# This exercises the case where num_loop_state_vars (2) differs from
+# num_scan_inputs (1).
+#
+# Body inputs:  sum_in (state), prod_in (state), next (scan)
+# Body outputs: sum_out (state), prod_out (state), scan_out (scan)
+node = onnx.parser.parse_node(
+    """
+    y_sum, y_prod, z = Scan (initial_sum, initial_prod, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] prod_in, float[2] next)
+            => (float[2] sum_out, float[2] prod_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            prod_out = Mul(prod_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
+)
+# x = [[1, 2], [3, 4], [5, 6]]
+initial_sum = np.array([0, 0]).astype(np.float32)
+initial_prod = np.array([1, 1]).astype(np.float32)
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((3, 2))
+# final sum = [1+3+5, 2+4+6] = [9, 12]
+y_sum = np.array([9, 12]).astype(np.float32)
+# final product = [1*3*5, 2*4*6] = [15, 48]
+y_prod = np.array([15, 48]).astype(np.float32)
+# scan output (running sum) = [[1,2], [4,6], [9,12]]
+z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((3, 2))
+
+expect(
+    node,
+    inputs=[initial_sum, initial_prod, x],
+    outputs=[y_sum, y_prod, z],
+    name="test_scan9_multi_state",
+    opset_imports=[onnx.helper.make_opsetid("", 9)],
+)
+```
+
+</details>
+<details>
+<summary>scan_9_scalar</summary>
+
+```python
+# Scan with scalar state and scan output to verify that output
+# shapes are not distorted (e.g. (T,) not (T, 1)).
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan (initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float sum_in, float next)
+            => (float sum_out, float scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
+)
+initial = np.float32(0.0)
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+# final state = 1+2+3+4+5 = 15
+y = np.float32(15.0)
+# scan output = [1, 3, 6, 10, 15], shape (5,)
+z = np.array([1, 3, 6, 10, 15]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[initial, x],
+    outputs=[y, z],
+    name="test_scan9_scalar",
     opset_imports=[onnx.helper.make_opsetid("", 9)],
 )
 ```
