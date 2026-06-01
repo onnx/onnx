@@ -11,10 +11,6 @@ on:
         required: false
         type: string
         default: "preview"
-      protobuf_version:
-        required: false
-        type: string
-        default: "33.6"
   workflow_dispatch:
 
 permissions:
@@ -28,13 +24,18 @@ jobs:
   build:
     runs-on: ubuntu-24.04
 
-    env:
-      PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
-
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
+
+      - name: Read protobuf version from sbom.cdx.json
+        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
 
       - name: Set preview version
         if: inputs.build_mode != 'release'
@@ -53,10 +54,6 @@ jobs:
         run: |
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
           tar -xf protobuf.tar.gz
-
-      - name: Patch sbom.cdx.json with actual protobuf version and hash
-        shell: bash
-        run: python .github/scripts/patch_sbom.py
 
       - name: Set SOURCE_DATE_EPOCH for reproducible builds
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV

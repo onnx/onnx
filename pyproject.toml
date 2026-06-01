@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [build-system]
-requires = ["scikit-build-core>=0.11", "protobuf>=4.25.1"]
+requires = ["scikit-build-core>=0.11", "protobuf==4.25.1"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -52,6 +52,7 @@ sdist.include = [
     "README.md",
     "CMakeLists.txt",
     "VERSION_NUMBER",
+    "sbom.cdx.json",
     "cmake/**",
     "tools/**",
     "onnx/**",
