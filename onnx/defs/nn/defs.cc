@@ -93,6 +93,14 @@ ONNX_API void convPoolShapeInference(
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    if (kernel_shape.size() != n_input_dims) {
+      fail_shape_inference(
+          "Number of spatial dimensions in the weight tensor (",
+          kernel_shape.size(),
+          ") does not match the number of spatial dimensions in the input tensor (",
+          n_input_dims,
+          ").");
+    }
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;

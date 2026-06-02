@@ -2551,6 +2551,28 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, None)]
         )
 
+    @parameterized.expand([("opset1_to_11", 11), ("opset19", 19), ("latest", 22)])
+    def test_conv_weight_spatial_rank_mismatch_raises(
+        self, _: str, version: int
+    ) -> None:
+        # Weight has more spatial dims than input and no explicit kernel_shape
+        # attribute, so kernel_shape is derived from the weight. This must fail
+        # rather than reading past the end of the dilations vector.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8)),
+                ("w", TensorProto.FLOAT, (5, 4, 3, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
             [
