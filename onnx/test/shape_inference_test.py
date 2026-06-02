@@ -2551,8 +2551,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, None)]
         )
 
-    @parameterized.expand([("opset1_to_11", 11), ("opset19", 19), ("latest", 22)])
-    def test_conv_weight_spatial_rank_mismatch_raises(
+    @parameterized.expand(
+        [
+            # opset <= 10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            ("opset1_to_10", 10),
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            ("opset19", 19),
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            ("latest", defs.get_schema("Conv").since_version),
+        ]
+    )
+    def test_conv_weight_more_spatial_dims_than_input_raises(
         self, _: str, version: int
     ) -> None:
         # Weight has more spatial dims than input and no explicit kernel_shape
@@ -2566,8 +2575,41 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "w"], "z")],
             [],
         )
-        self.assertRaises(
+        self.assertRaisesRegex(
             onnx.shape_inference.InferenceError,
+            "weight tensor",
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(
+        [
+            # opset <= 10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            ("opset1_to_10", 10),
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            ("opset19", 19),
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            ("latest", defs.get_schema("Conv").since_version),
+        ]
+    )
+    def test_conv_weight_fewer_spatial_dims_than_input_raises(
+        self, _: str, version: int
+    ) -> None:
+        # Weight has fewer spatial dims than input and no explicit kernel_shape
+        # attribute, so kernel_shape is derived from the weight. This must fail
+        # rather than silently inferring an inconsistent shape.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8, 8)),
+                ("w", TensorProto.FLOAT, (5, 4, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            "weight tensor",
             self._inferred,
             graph,
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],

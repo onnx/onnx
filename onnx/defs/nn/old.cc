@@ -172,6 +172,7 @@ static void convPoolShapeInference_opset19(
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    // Reject weight/input spatial-rank mismatch; prevents OOB read of dilations/pads below.
     if (kernel_shape.size() != n_input_dims) {
       fail_shape_inference(
           "Number of spatial dimensions in the weight tensor (",
@@ -1970,6 +1971,7 @@ static void convPoolShapeInference_opset1_to_11(
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    // Reject weight/input spatial-rank mismatch; prevents OOB read of dilations/pads below.
     if (kernel_shape.size() != n_input_dims) {
       fail_shape_inference(
           "Number of spatial dimensions in the weight tensor (",

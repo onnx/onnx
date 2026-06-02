@@ -93,6 +93,7 @@ ONNX_API void convPoolShapeInference(
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    // Reject weight/input spatial-rank mismatch; prevents OOB read of dilations/pads below.
     if (kernel_shape.size() != n_input_dims) {
       fail_shape_inference(
           "Number of spatial dimensions in the weight tensor (",
