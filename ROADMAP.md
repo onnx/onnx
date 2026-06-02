@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
 # ONNX 12-Month Roadmap (Q3 2026 – Q2 2027)
 
 > This is a living document and a starting point — not yet a complete picture of all ONNX SIGs and Working Groups.
-> Every group is invited to add or update their milestones below.  
+> Every group is invited to add or update their milestones below.
 > Milestones are **estimations**, not commitments, unless stated otherwise.
 
 ---
@@ -83,7 +83,7 @@ SPDX-License-Identifier: Apache-2.0
 
 ### [SIG/WG Name]
 
-**Lead(s):** _TBD_  
+**Lead(s):** _TBD_
 **Last updated:** _YYYY-MM-DD_
 
 #### Q3 2026
