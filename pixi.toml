@@ -84,7 +84,7 @@ cmd = "cd docs/docsgen && make html"
 
 [dependencies]
 libdate = ">=3.0.1,<4"
-libprotobuf = "*"
+libprotobuf = "<7"  # libprotobuf>=7 has breaking changes which need a dedicated PR
 make = "*"
 ml_dtypes = ">=0.5.1"
 nanobind = ">=2.8.0"
