@@ -45,13 +45,12 @@ static void globalPoolTypeShapeInference_opset2(InferenceContext& ctx) {
 static std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator_opset2(const char* op_type, const char* op) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
-        ReplaceAll(doc, "{op_type}", op_type);
-        ReplaceAll(doc, "{op}", op););
+                        ReplaceAll(doc, "{op_type}", op_type);
+                        ReplaceAll(doc, "{op}", op););
     schema.SetDoc(doc);
     schema.Attr(
         "p", "p value of the Lp norm used to pool over the input data.", AttributeProto::INT, static_cast<int64_t>(2));
@@ -136,8 +135,8 @@ static void convPoolShapeInference_opset19(
   }
 
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -150,6 +149,9 @@ static void convPoolShapeInference_opset19(
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
       fail_shape_inference("Attribute dilations has incorrect size");
+    }
+    if (std::any_of(dilations.begin(), dilations.end(), [](int64_t d) { return d <= 0; })) {
+      fail_shape_inference("Attribute dilations must only contain positive values");
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -183,6 +185,10 @@ static void convPoolShapeInference_opset19(
     }
   }
 
+  if (std::any_of(kernel_shape.begin(), kernel_shape.end(), [](int64_t k) { return k <= 0; })) {
+    fail_shape_inference("kernel_shape values must be positive");
+  }
+
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
@@ -193,6 +199,9 @@ static void convPoolShapeInference_opset19(
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
+    }
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute pads must not contain negative values");
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -207,9 +216,10 @@ static void convPoolShapeInference_opset19(
             continue;
           }
           residual = input_shape.dim(2 + i).dim_value();
-          while (residual >= stride) {
-            residual -= stride;
+          if (residual <= 0) {
+            continue;
           }
+          residual %= stride;
         }
         if (i >= effective_kernel_shape.size()) {
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
@@ -552,13 +562,12 @@ static void globalPoolTypeShapeInference_opset1(InferenceContext& ctx) {
 static std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator_opset1(const char* op_type, const char* op) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
-        ReplaceAll(doc, "{op_type}", op_type);
-        ReplaceAll(doc, "{op}", op););
+                        ReplaceAll(doc, "{op_type}", op_type);
+                        ReplaceAll(doc, "{op}", op););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -630,7 +639,10 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute dilations has incorrect size");
+    }
+    if (std::any_of(dilations.begin(), dilations.end(), [](int64_t d) { return d <= 0; })) {
+      fail_shape_inference("Attribute dilations must only contain positive values");
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -639,7 +651,10 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute strides has incorrect size");
+    }
+    if (std::any_of(strides.begin(), strides.end(), [](int64_t s) { return s <= 0; })) {
+      fail_shape_inference("Attribute strides must only contain positive values");
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -648,7 +663,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute kernel_shape has incorrect size");
     }
   } else {
     for (int i = 2; i < weight_shape.dim_size(); ++i) {
@@ -658,8 +673,12 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
       kernel_shape.push_back(weight_shape.dim(i).dim_value());
     }
     if (kernel_shape.size() != n_input_dims) {
-      return; // weight rank mismatch
+      fail_shape_inference("weight tensor spatial rank does not match input tensor spatial rank");
     }
+  }
+
+  if (std::any_of(kernel_shape.begin(), kernel_shape.end(), [](int64_t k) { return k <= 0; })) {
+    fail_shape_inference("kernel_shape values must be positive");
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
@@ -672,6 +691,9 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
+    }
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute pads must not contain negative values");
     }
     const auto* const auto_pad_attr = ctx.getAttribute("auto_pad");
     if (nullptr != auto_pad_attr && auto_pad_attr->s() != "NOTSET") {
@@ -702,7 +724,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
     if (output_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute output_shape has incorrect size");
     }
   } else {
     output_shape_presented = false;
@@ -711,7 +733,7 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   std::vector<int64_t> output_padding;
   if (getRepeatedAttribute(ctx, "output_padding", output_padding)) {
     if (output_padding.size() != n_input_dims) { // Added only to one side.
-      return;
+      fail_shape_inference("Attribute output_padding has incorrect size");
     }
   } else {
     output_padding.assign(n_input_dims, 0);
@@ -848,8 +870,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_opset11(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.
 
@@ -864,7 +885,7 @@ output_shape can also be explicitly specified in which case pads values are auto
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
-        ReplaceAll(doc, "{filter_desc}", filter_desc););
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -971,11 +992,10 @@ ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 11, OpSchema().FillUsing(ConvTransposeOp
 static std::function<void(OpSchema&)> ConvOpSchemaGenerator_opset11(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
-        ReplaceAll(doc, "{filter_desc}", filter_desc););
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -1084,8 +1104,8 @@ static void roiPoolTypeShapeInference_opset1(InferenceContext& ctx) {
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
 
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
   if (rios_shape.dim_size() != 2) {
     fail_shape_inference("RoIs tensor must have 2 dimensions");
@@ -1115,12 +1135,11 @@ static void roiPoolTypeShapeInference_opset1(InferenceContext& ctx) {
 static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator_opset1(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  ROI {name} pool consumes an input tensor X and region of interests (RoIs) to
  apply {name} pooling across each RoI, to produce output 4-D tensor of shape
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
-        ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("pooled_shape", "ROI pool output shape (height, width).", AttributeProto::INTS);
     schema.Attr(
@@ -1172,8 +1191,7 @@ ONNX_OPERATOR_SET_SCHEMA(MaxRoiPool, 1, OpSchema().FillUsing(RoiPoolOpSchemaGene
 static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset18(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
@@ -1197,7 +1215,7 @@ static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset18(const char
  ```
  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + {kernelSpatialShape} - input_spatial_shape[i]
  ```)DOC";
-        ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS);
     schema.Attr(
@@ -1879,20 +1897,19 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {types::Float16, types::Float, types::Double},
             "Constrain input and output types to all numeric tensors.")
-        .FunctionBody(
-            FunctionBodyHelper::BuildNodes(
-                {// nodes: {outputs, op, inputs, attributes}
-                 FunctionBodyHelper::Const<float>("Exponent", 2.0f),
-                 FunctionBodyHelper::Const<float>("Epsilon", static_cast<float>(1e-9)),
-                 {{"X_RM"}, "ReduceMean", {"X"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
-                 {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
-                 {{"X_squared"}, "Pow", {"X", "Exponent"}},
-                 {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
-                 {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
-                 {{"STD"}, "Sqrt", {"Variance"}},
-                 {{"X_variance"}, "Sub", {"X", "X_RM"}},
-                 {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
-                 {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
+        .FunctionBody(FunctionBodyHelper::BuildNodes(
+            {// nodes: {outputs, op, inputs, attributes}
+             FunctionBodyHelper::Const<float>("Exponent", 2.0f),
+             FunctionBodyHelper::Const<float>("Epsilon", static_cast<float>(1e-9)),
+             {{"X_RM"}, "ReduceMean", {"X"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
+             {{"EX_squared"}, "Pow", {"X_RM", "Exponent"}},
+             {{"X_squared"}, "Pow", {"X", "Exponent"}},
+             {{"E_Xsquared"}, "ReduceMean", {"X_squared"}, {MakeRefAttribute("axes", AttributeProto::INTS)}},
+             {{"Variance"}, "Sub", {"E_Xsquared", "EX_squared"}},
+             {{"STD"}, "Sqrt", {"Variance"}},
+             {{"X_variance"}, "Sub", {"X", "X_RM"}},
+             {{"Processed_STD"}, "Add", {"STD", "Epsilon"}},
+             {{"Y"}, "Div", {"X_variance", "Processed_STD"}}})));
 
 constexpr const char* pads_doc2 =
     "Padding for the beginning and ending along each spatial axis, it can take any value greater "
@@ -1935,8 +1952,8 @@ static void convPoolShapeInference_opset1_to_11(
   }
 
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -1949,6 +1966,9 @@ static void convPoolShapeInference_opset1_to_11(
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
       fail_shape_inference("Attribute dilations has incorrect size");
+    }
+    if (std::any_of(dilations.begin(), dilations.end(), [](int64_t d) { return d <= 0; })) {
+      fail_shape_inference("Attribute dilations must only contain positive values");
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -1982,6 +2002,10 @@ static void convPoolShapeInference_opset1_to_11(
     }
   }
 
+  if (std::any_of(kernel_shape.begin(), kernel_shape.end(), [](int64_t k) { return k <= 0; })) {
+    fail_shape_inference("kernel_shape values must be positive");
+  }
+
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
   for (size_t i = 0; i < kernel_shape.size(); i++) {
     // accounting for dilation, how big is the kernel in this dimension
@@ -1992,6 +2016,9 @@ static void convPoolShapeInference_opset1_to_11(
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
+    }
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute pads must not contain negative values");
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -2006,9 +2033,10 @@ static void convPoolShapeInference_opset1_to_11(
             continue;
           }
           residual = input_shape.dim(2 + i).dim_value();
-          while (residual >= stride) {
-            residual -= stride;
+          if (residual <= 0) {
+            continue;
           }
+          residual %= stride;
         }
         int64_t total_pad = residual == 0 ? effective_kernel_shape[i] - stride : effective_kernel_shape[i] - residual;
         total_pad = std::max<int64_t>(total_pad, 0);
@@ -2079,8 +2107,7 @@ static std::function<void(OpSchema&)>
 PoolOpSchemaGenerator_opset1_to_8(const char* name, const char* opName, const char* additionalDescription) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
@@ -2103,9 +2130,9 @@ PoolOpSchemaGenerator_opset1_to_8(const char* name, const char* opName, const ch
  ```
  {additionalDescription}
  )DOC";
-        ReplaceAll(doc, "{name}", name);
-        ReplaceAll(doc, "{opName}", opName);
-        ReplaceAll(doc, "{additionalDescription}", additionalDescription););
+                        ReplaceAll(doc, "{name}", name);
+                        ReplaceAll(doc, "{opName}", opName);
+                        ReplaceAll(doc, "{additionalDescription}", additionalDescription););
     schema.SetDoc(doc);
     schema.Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS);
     schema.Attr("strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL_VALUE);
@@ -2733,14 +2760,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset2(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
-        ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS);
     schema.Attr("strides", "Stride along each spatial axis.", AttributeProto::INTS, OPTIONAL_VALUE);
@@ -2786,14 +2812,13 @@ static constexpr const char* GlobalLpPool_ver1_doc = R"DOC(
 static std::function<void(OpSchema&)> LpPoolOpSchemaGenerator_opset11(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
-        ReplaceAll(doc, "{name}", name););
+                        ReplaceAll(doc, "{name}", name););
     schema.SetDoc(doc);
     schema.Attr("kernel_shape", "The size of the kernel along each axis.", AttributeProto::INTS);
     schema.Attr(
@@ -2846,11 +2871,10 @@ ONNX_OPERATOR_SET_SCHEMA(LpPool, 11, OpSchema().FillUsing(LpPoolOpSchemaGenerato
 static std::function<void(OpSchema&)> ConvOpSchemaGenerator_opset1(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
-        ReplaceAll(doc, "{filter_desc}", filter_desc););
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -2946,7 +2970,10 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute dilations has incorrect size");
+    }
+    if (std::any_of(dilations.begin(), dilations.end(), [](int64_t d) { return d <= 0; })) {
+      fail_shape_inference("Attribute dilations must only contain positive values");
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -2955,7 +2982,10 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute strides has incorrect size");
+    }
+    if (std::any_of(strides.begin(), strides.end(), [](int64_t s) { return s <= 0; })) {
+      fail_shape_inference("Attribute strides must only contain positive values");
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -2964,7 +2994,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute kernel_shape has incorrect size");
     }
   } else {
     for (int i = 2; i < weight_shape.dim_size(); ++i) {
@@ -2974,8 +3004,12 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
       kernel_shape.push_back(weight_shape.dim(i).dim_value());
     }
     if (kernel_shape.size() != n_input_dims) {
-      return; // weight rank mismatch
+      fail_shape_inference("weight tensor spatial rank does not match input tensor spatial rank");
     }
+  }
+
+  if (std::any_of(kernel_shape.begin(), kernel_shape.end(), [](int64_t k) { return k <= 0; })) {
+    fail_shape_inference("kernel_shape values must be positive");
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
@@ -2988,6 +3022,9 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
+    }
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute pads must not contain negative values");
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -3014,7 +3051,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
     if (output_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute output_shape has incorrect size");
     }
   } else {
     output_shape_presented = false;
@@ -3023,7 +3060,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   std::vector<int64_t> output_padding;
   if (getRepeatedAttribute(ctx, "output_padding", output_padding)) {
     if (output_padding.size() != n_input_dims) { // Added only to one side.
-      return;
+      fail_shape_inference("Attribute output_padding has incorrect size");
     }
   } else {
     output_padding.assign(n_input_dims, 0);
@@ -3067,8 +3104,7 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
 static std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator_opset1(const char* filter_desc) {
   return [=](OpSchema& schema) {
     std::string doc;
-    POPULATE_OP_DOC_STR(
-        doc = R"DOC(
+    POPULATE_OP_DOC_STR(doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.
 
@@ -3083,7 +3119,7 @@ output_shape can also be explicitly specified in which case pads values are auto
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
     )DOC";
-        ReplaceAll(doc, "{filter_desc}", filter_desc););
+                        ReplaceAll(doc, "{filter_desc}", filter_desc););
     schema.SetDoc(doc);
     schema.Input(
         0,
