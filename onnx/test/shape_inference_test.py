@@ -2683,6 +2683,54 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", kernel_shape=[-1, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     @parameterized.expand(all_versions_for("MaxPool"))
     def test_maxpool_negative_dilations(self, _: str, version: int) -> None:
         if version < 10:
