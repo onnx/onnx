@@ -2734,7 +2734,7 @@ class TestShapeInference(TestShapeInferenceHelper):
     @parameterized.expand(all_versions_for("MaxPool"))
     def test_maxpool_negative_dilations(self, _: str, version: int) -> None:
         if version < 10:
-            return  # dilations attribute not supported before MaxPool-10
+            self.skipTest("dilations not supported before MaxPool-10")
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
             [
@@ -2838,6 +2838,55 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
             ],
             [make_node("ConvTranspose", ["x", "w"], "z", pads=[-1, 0, 0, 0])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_output_padding(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [
+                make_node(
+                    "ConvTranspose",
+                    ["x", "w"],
+                    "z",
+                    strides=[2, 2],
+                    output_padding=[-1, 0],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_output_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [
+                make_node(
+                    "ConvTranspose",
+                    ["x", "w"],
+                    "z",
+                    output_shape=[-1, 6],
+                )
+            ],
             [],
         )
         self.assertRaises(
@@ -5809,6 +5858,23 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 2, 2))]
+        )
+
+    @parameterized.expand(all_versions_for("MaxRoiPool"))
+    def test_roipool_negative_pooled_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (5, 3, 4, 4)),
+                ("rois", TensorProto.INT64, (2, 5)),
+            ],
+            [make_node("MaxRoiPool", ["X", "rois"], ["Y"], pooled_shape=[-1, 2])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_lp_norm(self) -> None:
