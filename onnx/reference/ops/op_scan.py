@@ -15,6 +15,10 @@ class Scan(OpRun):
             raise RuntimeError(
                 f"Parameter 'body' must have a method 'run', type {type(self.body)}."
             )
+        if self.num_scan_inputs <= 0:
+            raise RuntimeError(
+                f"Scan requires num_scan_inputs > 0, got {self.num_scan_inputs}."
+            )
         self.input_directions_ = [
             (
                 0
@@ -24,11 +28,12 @@ class Scan(OpRun):
             )
             for i in range(self.num_scan_inputs)
         ]
-        max_dir_in = max(self.input_directions_)
-        if max_dir_in != 0:
-            raise RuntimeError(
-                "Scan is not implemented for other output input_direction than 0."
-            )
+        if self.input_directions_:
+            max_dir_in = max(self.input_directions_)
+            if max_dir_in != 0:
+                raise RuntimeError(
+                    "Scan is not implemented for other output input_direction than 0."
+                )
         self.input_axes_ = [
             (
                 0
@@ -37,15 +42,25 @@ class Scan(OpRun):
             )
             for i in range(self.num_scan_inputs)
         ]
-        max_axe_in = max(self.input_axes_)
-        if max_axe_in != 0:
-            raise RuntimeError("Scan is not implemented for other input axes than 0.")
+        if self.input_axes_:
+            max_axe_in = max(self.input_axes_)
+            if max_axe_in != 0:
+                raise RuntimeError(
+                    "Scan is not implemented for other input axes than 0."
+                )
         self.input_names = self.body.input_names
         self.output_names = self.body.output_names
 
+    def need_context(self) -> bool:
+        """Scan body subgraphs may reference names from the enclosing graph
+        (lexical capture, per the ONNX spec). Request the outer-scope
+        context so those names resolve at body-evaluation time.
+        """
+        return True
+
     def _common_run_shape(self, *args):
         num_loop_state_vars = len(args) - self.num_scan_inputs
-        num_scan_outputs = len(args) - num_loop_state_vars
+        num_scan_outputs = len(self.output_names) - num_loop_state_vars
 
         output_directions = [
             (
@@ -56,7 +71,7 @@ class Scan(OpRun):
             )
             for i in range(num_scan_outputs)
         ]
-        max_dir_out = max(output_directions)
+        max_dir_out = max(output_directions) if output_directions else 0
         if max_dir_out != 0:
             raise RuntimeError(
                 "Scan is not implemented for other output output_direction than 0."
@@ -69,17 +84,17 @@ class Scan(OpRun):
             )
             for i in range(num_scan_outputs)
         ]
-        max_axe_out = max(output_axes)
+        max_axe_out = max(output_axes) if output_axes else 0
         if max_axe_out != 0:
             raise RuntimeError("Scan is not implemented for other output axes than 0.")
 
-        state_names_in = self.input_names[: self.num_scan_inputs]
+        state_names_in = self.input_names[:num_loop_state_vars]
         state_names_out = self.output_names[: len(state_names_in)]
         scan_names_in = self.input_names[num_loop_state_vars:]
         scan_names_out = self.output_names[num_loop_state_vars:]
         scan_values = args[num_loop_state_vars:]
 
-        states = args[:num_loop_state_vars]
+        states = list(args[:num_loop_state_vars])
 
         return (
             num_loop_state_vars,
@@ -99,6 +114,7 @@ class Scan(OpRun):
     def _run(  # type: ignore[override]
         self,
         *args,
+        context=None,
         body=None,  # noqa: ARG002
         num_scan_inputs=None,  # noqa: ARG002
         scan_input_axes=None,  # noqa: ARG002
@@ -127,7 +143,13 @@ class Scan(OpRun):
         results = [[] for _ in scan_names_out]
 
         for it in range(max_iter):
-            inputs = dict(zip(state_names_in, states, strict=False))
+            # Seed with outer-scope values first; per-iteration state and
+            # scan-slice inputs (added below) shadow any same-named outer
+            # values, matching ONNX's lexical-capture semantics.
+            inputs: dict = {}
+            if context is not None:
+                inputs.update(context)
+            inputs.update(dict(zip(state_names_in, states, strict=False)))
             inputs.update(
                 {
                     name: value[it]
@@ -147,7 +169,13 @@ class Scan(OpRun):
             for i, name in enumerate(scan_names_out):
                 results[i].append(np.expand_dims(outputs[name], axis=0))
 
+        if max_iter == 0 and results:
+            # Zero-trip Scan with scan outputs is not supported: the per-iteration
+            # element shape/dtype cannot be reliably inferred without executing
+            # the body. Treat as an error rather than guessing.
+            raise RuntimeError(
+                "Scan with zero scan-input length and scan outputs is not supported."
+            )
         for res in results:
-            conc = np.vstack(res)
-            states.append(conc)
+            states.append(np.concatenate(res, axis=0))
         return self._check_and_fix_outputs(tuple(states))

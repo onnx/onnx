@@ -1153,21 +1153,25 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr("beta", "Scalar multiplier for input tensor C.", AttributeProto::FLOAT, 1.0f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 2)) {
-            auto transAAttr = ctx.getAttribute("transA");
-            bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-            auto transBAttr = ctx.getAttribute("transB");
-            bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-            auto& first_input_shape = getInputShape(ctx, 0);
-            auto& second_input_shape = getInputShape(ctx, 1);
-            if (first_input_shape.dim_size() != 2) {
-              fail_shape_inference("First input does not have rank 2");
-            }
-            if (second_input_shape.dim_size() != 2) {
-              fail_shape_inference("Second input does not have rank 2");
-            }
-            updateOutputShape(ctx, 0, {first_input_shape.dim(transA ? 1 : 0), second_input_shape.dim(transB ? 0 : 1)});
+          auto transAAttr = ctx.getAttribute("transA");
+          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+          auto transBAttr = ctx.getAttribute("transB");
+          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+          // Gemm computes Y = alpha * A' * B' + beta * C
+          // A' is A or A^T depending on transA; B' is B or B^T depending on transB
+          Dim M, N, K;
+          if (transA) {
+            unifyInputShape(ctx, 0, {K, M});
+          } else {
+            unifyInputShape(ctx, 0, {M, K});
           }
+          if (transB) {
+            unifyInputShape(ctx, 1, {N, K});
+          } else {
+            unifyInputShape(ctx, 1, {K, N});
+          }
+          // Output shape is (M, N)
+          updateOutputShape(ctx, 0, {M, N});
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
