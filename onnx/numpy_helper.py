@@ -113,6 +113,13 @@ def _unpack_4bit(
     if result.size == np.prod(dims, dtype=np.int64) + 1:
         # handle single-element padding due to odd number of elements
         result = result[:-1]
+    expected_elements = np.prod(dims, dtype=np.int64)
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 4-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 
@@ -150,6 +157,13 @@ def _unpack_2bit(
     if result.size > np.prod(dims, dtype=np.int64):
         # handle padding due to non multiple of 4 elements
         result = result[: np.prod(dims, dtype=np.int64)]
+    expected_elements = np.prod(dims, dtype=np.int64)
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 2-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 
