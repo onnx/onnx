@@ -72,10 +72,10 @@ if(NOT DEFINED ONNX_VERIFY_PROTO3)
 endif()
 
 if(NOT DEFINED CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD 20)
 else()
-  if(CMAKE_CXX_STANDARD VERSION_LESS 17)
-    message(FATAL_ERROR "At least C++17 is required.")
+  if(CMAKE_CXX_STANDARD VERSION_LESS 20)
+    message(FATAL_ERROR "At least C++20 is required.")
   endif()
 endif()
 

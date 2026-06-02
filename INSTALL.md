@@ -63,7 +63,7 @@ pixi run pytest
 
 Before building from source uninstall any existing versions of ONNX via `pip uninstall onnx`.
 
-C++17 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
+C++20 or higher C++ compiler version is required to build ONNX from source. Still, users can specify their own `CMAKE_CXX_STANDARD` version for building ONNX.
 
 Protobuf is required for ONNX. If you don't have Protobuf installed, ONNX will internally download and build Protobuf for ONNX build.
 
@@ -97,7 +97,7 @@ pip install -e . -v
 
 #### Old instructions
 
-If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building Protobuf locally also lets you control the version of Protobuf. The tested and recommended version is 5.29.2.
+If you are building ONNX from source, it is recommended that you also build Protobuf locally as a static library. The version distributed with conda-forge is a DLL, but ONNX expects it to be a static library. Building Protobuf locally also lets you control the version of Protobuf. The tested and recommended version is 6.33.6.
 
 The instructions in this README assume you are using Visual Studio 2019. It is recommended that you run all the commands from a shell started from "x64 Native Tools Command Prompt for VS 2019" and keep the build system generator for cmake (e.g., cmake -G "Visual Studio 16 2019") consistent while building Protobuf as well as ONNX.
 
@@ -106,7 +106,7 @@ You can build Protobuf from source by running the following commands:
 ```bat
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v5.29.2
+git checkout v33.6
 git submodule update --init --recursive
 cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_INSTALL_PREFIX=<protobuf_install_dir> -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_BUILD_EXAMPLES=OFF
 cmake --build . --config Release --target install
@@ -139,9 +139,9 @@ pip install -e . -v
 
 ### Linux
 
-First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 4.25.1. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
+First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 6.30. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
-Ubuntu 20.04 (and newer) users may choose to install Protobuf (which is usually lower than 4.25.1) via
+Ubuntu 20.04 (and newer) users may choose to install Protobuf (which is usually lower than 6.30) via
 
 ```sh
 apt-get install python3-pip python3-dev libprotobuf-dev protobuf-compiler
@@ -156,7 +156,7 @@ A better way is to build and install the required Protobuf version from source. 
 ```sh
   git clone https://github.com/protocolbuffers/protobuf.git
   cd protobuf
-  git checkout v5.29.2
+  git checkout v33.6
   git submodule update --init --recursive
   mkdir build_source && cd build_source
   cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
@@ -187,7 +187,7 @@ brew update
 brew install cmake
 git clone https://github.com/protocolbuffers/protobuf.git
 cd protobuf
-git checkout v5.29.2
+git checkout v33.6
 git submodule update --init --recursive
 mkdir build_source && cd build_source
 cmake -Dprotobuf_BUILD_SHARED_LIBS=OFF -Dprotobuf_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
