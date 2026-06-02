@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "onnx/common/safe_math.h"
 #include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
@@ -162,13 +163,20 @@ UnaryFloatMathOpGenerator(const char* doc, const char* output_description, std::
   };
 }
 
-int MathOpTwoIntegers(const std::string& op_type, int a, int b) {
+int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
+  int64_t result;
   if (op_type == "Add") {
-    return a + b;
+    if (checked_add_overflow(a, b, &result)) {
+      fail_shape_inference("Integer overflow in Add during data propagation");
+    }
+    return result;
   } else if (op_type == "Sub") {
     return a - b;
   } else if (op_type == "Mul") {
-    return a * b;
+    if (checked_mul_overflow(a, b, &result)) {
+      fail_shape_inference("Integer overflow in Mul during data propagation");
+    }
+    return result;
   }
   fail_shape_inference("Wrong op_type name for running propagation: ", op_type);
 }

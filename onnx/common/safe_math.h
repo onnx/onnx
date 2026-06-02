@@ -30,6 +30,21 @@ inline bool checked_mul_overflow(int64_t a, int64_t b, int64_t* result) {
 #endif
 }
 
+// Returns true on overflow. Precondition: a and b must be non-negative.
+// The MSVC fallback only handles non-negative inputs correctly.
+inline bool checked_add_overflow(int64_t a, int64_t b, int64_t* result) {
+#if defined(__GNUC__) || defined(__clang__)
+  return __builtin_add_overflow(a, b, result);
+#else
+  assert(a >= 0 && b >= 0 && "checked_add_overflow requires non-negative inputs on MSVC");
+  if (b > std::numeric_limits<int64_t>::max() - a) {
+    return true;
+  }
+  *result = a + b;
+  return false;
+#endif
+}
+
 // Safe product of dims over an iterator range. Calls on_error(const char*) on
 // negative dim or overflow. on_error must not return (i.e. must throw or abort).
 template <typename Iter, typename ErrorHandler>
