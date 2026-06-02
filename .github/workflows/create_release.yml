@@ -439,7 +439,7 @@ jobs:
               --repo "${{ github.repository }}")
             bundle=$(ls "$tmpdir"/*.sigstore.bundle 2>/dev/null | head -1)
             if [ -n "$bundle" ]; then
-              mv "$bundle" "attestation-bundles/${filename}.sigstore.bundle"
+              mv "$bundle" "attestation-bundles/${filename}.sigstore"
             else
               echo "ERROR: no bundle produced for $filename" && exit 1
             fi
