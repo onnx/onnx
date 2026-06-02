@@ -2553,7 +2553,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(
         [
-            # opset <= 10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
             ("opset1_to_10", 10),
             # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
             ("opset19", 19),
@@ -2585,7 +2585,7 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     @parameterized.expand(
         [
-            # opset <= 10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
             ("opset1_to_10", 10),
             # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
             ("opset19", 19),
