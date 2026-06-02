@@ -5758,6 +5758,57 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (25, 32, 32, 32))]
         )
 
+    def test_conv_transpose_group_not_divisible_opset22(self) -> None:
+        # ConvTranspose with input channels not divisible by group should raise
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (1, 32, 14, 14)),
+                ("W", TensorProto.FLOAT, (32, 64, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", group=3)],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 22)],
+        )
+
+    def test_conv_transpose_group_not_divisible_opset11(self) -> None:
+        # ConvTranspose with input channels not divisible by group should raise
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (1, 32, 14, 14)),
+                ("W", TensorProto.FLOAT, (32, 64, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", group=3)],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
+        )
+
+    def test_conv_transpose_group_not_divisible_opset1(self) -> None:
+        # ConvTranspose with input channels not divisible by group should raise
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (1, 32, 14, 14)),
+                ("W", TensorProto.FLOAT, (32, 64, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", group=3)],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 1)],
+        )
+
     def test_mvn_function_output_shape(self) -> None:
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (25, 48, 16, 16))],

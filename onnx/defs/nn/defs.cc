@@ -1096,7 +1096,21 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
 
   int64_t group = getAttribute(ctx, "group", 1);
 
+  // Validate group attribute
+  if (group < 1) {
+    fail_shape_inference("group must be greater than or equal to 1, got: ", group);
+  }
+
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  // Validate that input channels are divisible by group
+  if (input_shape.dim(1).has_dim_value()) {
+    int64_t in_channels = input_shape.dim(1).dim_value();
+    if (in_channels % group != 0) {
+      fail_shape_inference(
+          "The number of input channels (", in_channels,
+          ") is not divisible by the group attribute (", group, ").");
+    }
+  }
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
