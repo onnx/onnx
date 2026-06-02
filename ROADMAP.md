@@ -1,6 +1,12 @@
+<!--
+SPDX-FileCopyrightText: Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # ONNX 12-Month Roadmap (Q3 2026 – Q2 2027)
 
-> This is a living document and a starting point — not yet a complete picture of all ONNX SIGs and Working Groups.  
+> This is a living document and a starting point — not yet a complete picture of all ONNX SIGs and Working Groups.
 > Every group is invited to add or update their milestones below.  
 > Milestones are **estimations**, not commitments, unless stated otherwise.
 
@@ -20,7 +26,7 @@
 
 ### SONNX Working Group
 
-**Lead(s):** Eric JENN, Jean SOUYRIS  
+**Lead(s):** Eric JENN, Jean SOUYRIS
 **Last updated:** 2026-06-01
 
 #### Q3 2026
@@ -50,7 +56,7 @@
 
 ### SIG Architecture & Infrastructure
 
-**Lead(s):** Andreas Fehlner (TRUMPF Laser), Christian Bourjau (QuantCo)  
+**Lead(s):** Andreas Fehlner (TRUMPF Laser), Christian Bourjau (QuantCo)
 **Last updated:** 2026-06-02
 
 #### Q3 2026
