@@ -4,7 +4,7 @@ lintrunner-adapters>=0.13.0
 ruff==0.15.14
 # MYPY
 mypy==2.1.0
-types-protobuf==6.32.1.20260221
+types-protobuf==7.34.1.20260518
 # CLANG-FORMAT
 clang-format==22.1.5
 # EDITORCONFIG-CHECKER
