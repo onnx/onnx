@@ -52,6 +52,7 @@ sdist.include = [
     "README.md",
     "CMakeLists.txt",
     "VERSION_NUMBER",
+    "sbom.cdx.json",
     "cmake/**",
     "tools/**",
     "onnx/**",
