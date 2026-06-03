@@ -1227,8 +1227,8 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
     if (output_shape.size() != n_input_dims) {
       fail_shape_inference("Attribute output_shape has incorrect size");
     }
-    if (std::any_of(output_shape.begin(), output_shape.end(), [](int64_t s) { return s <= 0; })) {
-      fail_shape_inference("Attribute output_shape must only contain positive values");
+    if (std::any_of(output_shape.begin(), output_shape.end(), [](int64_t s) { return s < 0; })) {
+      fail_shape_inference("Attribute output_shape must not contain negative values");
     }
   } else {
     output_shape_presented = false;

@@ -2896,6 +2896,23 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
             [
