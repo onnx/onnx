@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import contextlib
 import itertools
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -13233,6 +13235,56 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
         # clean up
         onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
+
+    def test_python_inference_function_no_segfault_on_exit(self) -> None:
+        # Regression test for onnx/onnx#7508: registering a Python
+        # type-and-shape-inference callback and running shape inference
+        # without deregistering the schema must not segfault at process exit.
+        # The bug was that the callback was bound via std::function<...>, whose
+        # destructor decref'd a Python object after the interpreter had begun
+        # tearing down. Binding via nb::callable fixes the GIL-aware lifetime.
+        script = (
+            "import onnx\n"
+            "from onnx.defs import OpSchema\n"
+            "def infer(ctx):\n"
+            "    t = ctx.get_input_type(0)\n"
+            "    out = ctx.get_output_type(0)\n"
+            "    out.tensor_type.elem_type = t.tensor_type.elem_type\n"
+            "    out.tensor_type.shape.CopyFrom(t.tensor_type.shape)\n"
+            "    ctx.set_output_type(0, out)\n"
+            "schema = OpSchema(\n"
+            "    name='Issue7508Op', domain='com.example.issue7508', since_version=1,\n"
+            "    inputs=[OpSchema.FormalParameter('input', 'float', 'input')],\n"
+            "    outputs=[OpSchema.FormalParameter('output', 'float', 'output')],\n"
+            ")\n"
+            "schema.set_type_and_shape_inference_function(infer)\n"
+            "onnx.defs.register_schema(schema)\n"
+            "input_tensor = onnx.helper.make_tensor_value_info('input', onnx.TensorProto.FLOAT, [1, 3])\n"
+            "output_tensor = onnx.helper.make_tensor_value_info('output', onnx.TensorProto.FLOAT, [1, 3])\n"
+            "node = onnx.helper.make_node('Issue7508Op', inputs=['input'], outputs=['output'], domain='com.example.issue7508')\n"
+            "graph = onnx.helper.make_graph(nodes=[node], name='G', inputs=[input_tensor], outputs=[output_tensor])\n"
+            "model = onnx.helper.make_model(\n"
+            "    graph,\n"
+            "    opset_imports=[\n"
+            "        onnx.helper.make_operatorsetid('', 17),\n"
+            "        onnx.helper.make_operatorsetid('com.example.issue7508', 1),\n"
+            "    ],\n"
+            ")\n"
+            "onnx.shape_inference.infer_shapes(model)\n"
+            "# Intentionally do NOT deregister the schema; the original bug\n"
+            "# surfaced as a crash during interpreter teardown.\n"
+        )
+        result = subprocess.run(  # noqa: S603
+            [sys.executable, "-c", script],
+            capture_output=True,
+            timeout=60,
+            check=False,
+        )
+        self.assertEqual(
+            result.returncode,
+            0,
+            f"Subprocess exited with {result.returncode}\nstdout: {result.stdout!r}\nstderr: {result.stderr!r}",
+        )
 
 
 if __name__ == "__main__":
