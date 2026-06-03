@@ -2738,6 +2738,68 @@ class TestVersionConverter(unittest.TestCase):
         attr = next(a for a in split.attribute if a.name == "split")
         assert list(attr.ints) == [1, 3]
 
+    # Range 26 -> 27: CompatibleAdapter (forward upgrade, no attribute changes)
+    def test_range_26_27_float_success(self) -> None:
+        nodes = [helper.make_node("Range", ["start", "limit", "delta"], ["output"])]
+        graph = helper.make_graph(
+            nodes,
+            "range_26_27",
+            [
+                helper.make_tensor_value_info("start", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("limit", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("delta", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, None)],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 26), 27)
+        assert converted.opset_import[0].version == 27
+
+    # Range 27 -> 26: stash_type attribute must be removed on downgrade
+    def test_range_27_26_stash_type_removed(self) -> None:
+        nodes = [
+            helper.make_node(
+                "Range", ["start", "limit", "delta"], ["output"], stash_type=1
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "range_27_26",
+            [
+                helper.make_tensor_value_info("start", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("limit", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("delta", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, None)],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 27), 26)
+        assert converted.opset_import[0].version == 26
+        range_node = next(n for n in converted.graph.node if n.op_type == "Range")
+        assert not any(a.name == "stash_type" for a in range_node.attribute)
+
+    # Range 27 -> 26: float16 and bfloat16 inputs must be rejected
+    @parameterized.parameterized.expand(
+        [
+            ("float16", TensorProto.FLOAT16),
+            ("bfloat16", TensorProto.BFLOAT16),
+        ]
+    )
+    def test_range_27_26_low_precision_fails(self, _: str, dtype: int) -> None:
+        def test() -> None:
+            nodes = [helper.make_node("Range", ["start", "limit", "delta"], ["output"])]
+            graph = helper.make_graph(
+                nodes,
+                "range_27_26_fp16",
+                [
+                    helper.make_tensor_value_info("start", dtype, []),
+                    helper.make_tensor_value_info("limit", dtype, []),
+                    helper.make_tensor_value_info("delta", dtype, []),
+                ],
+                [helper.make_tensor_value_info("output", dtype, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 27), 26)
+
+        self.assertRaises(RuntimeError, test)
+
 
 if __name__ == "__main__":
     unittest.main()

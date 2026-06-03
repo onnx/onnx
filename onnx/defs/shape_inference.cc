@@ -4,6 +4,7 @@
 
 #include "onnx/defs/shape_inference.h"
 
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -532,7 +533,16 @@ std::pair<int, int> getAttributeProtoElemTypeAndLength(const AttributeProto* att
       fail_type_inference(
           "Attribute ", attr_proto->name(), " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
     }
-    return {attr_proto->t().data_type(), attr_proto->t().dims(0)};
+    const int64_t dim0 = attr_proto->t().dims(0);
+    if (dim0 < 0 || dim0 > static_cast<int64_t>(std::numeric_limits<int>::max())) {
+      fail_type_inference(
+          "Attribute ",
+          attr_proto->name(),
+          " has tensor dimension ",
+          dim0,
+          " which is out of valid range [0, INT_MAX]");
+    }
+    return {attr_proto->t().data_type(), static_cast<int>(dim0)};
   }
   return {TensorProto::UNDEFINED, 0};
 }
