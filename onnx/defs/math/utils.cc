@@ -171,7 +171,10 @@ int64_t MathOpTwoIntegers(const std::string& op_type, int64_t a, int64_t b) {
     }
     return result;
   } else if (op_type == "Sub") {
-    return a - b;
+    if (checked_sub_overflow(a, b, &result)) {
+      fail_shape_inference("Integer overflow in Sub during data propagation");
+    }
+    return result;
   } else if (op_type == "Mul") {
     if (checked_mul_overflow(a, b, &result)) {
       fail_shape_inference("Integer overflow in Mul during data propagation");
