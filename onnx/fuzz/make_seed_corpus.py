@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import sys
 import zipfile
+from typing import TYPE_CHECKING
 
 from onnx import TensorProto, helper
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 def _make_model(
@@ -150,13 +154,18 @@ agraph (float[1] X) => (float[1] Y)
 }
 
 
-def _write_zip(path: str, entries: dict[str, bytes | str]) -> None:
+def _write_zip(path: str, entries: Mapping[str, bytes | str]) -> None:
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for name, entry in entries.items():
             zf.writestr(name, entry.encode() if isinstance(entry, str) else entry)
 
 
 def main() -> int:
+    if len(sys.argv) != 3:
+        sys.stderr.write(
+            f"Usage: {sys.argv[0]} <version_converter_out.zip> <parser_out.zip>\n"
+        )
+        return 1
     version_converter_out = sys.argv[1]
     parser_out = sys.argv[2]
 
