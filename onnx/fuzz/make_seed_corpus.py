@@ -165,7 +165,7 @@ def main() -> int:
         sys.stderr.write(
             f"Usage: {sys.argv[0]} <version_converter_out.zip> <parser_out.zip>\n"
         )
-        return 1
+        return 2
     version_converter_out = sys.argv[1]
     parser_out = sys.argv[2]
 
