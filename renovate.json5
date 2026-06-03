@@ -6,10 +6,17 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   // Only enable specific managers to avoid overlap with dependabot
   // Dependabot handles: pip (Python), github-actions
-  // Renovate handles: pixi lockfile, nanobind, googletest
+  // Renovate handles: nanobind, googletest, and pixi lockfile (lock-file maintenance only -- see
+  // packageRules below; the version pins in pixi.toml are managed manually)
   "enabledManagers": ["custom.regex", "pixi"],
   // Disable the Dependency Dashboard issue
   "dependencyDashboard": false,
+  // Regenerate lock files (pixi.lock) on a schedule to pull in newer versions
+  // permitted by the existing constraints, without editing the manifest.
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["on the first day of the month"]
+  },
   // Wait one week after a release before creating an update PR
   "minimumReleaseAge": "7 days",
   // Apply labels to all Renovate PRs:
@@ -19,7 +26,7 @@
   // Add a note to every Renovate PR body explaining the update context
   "prBodyNotes": [
     "This PR was automatically created by [Renovate Bot](https://docs.renovatebot.com/) to keep build dependencies up to date.",
-    "Renovate manages dependencies **not** handled by Dependabot: manylinux Docker images, nanobind (via CMake FetchContent), and googletest (release tarball + SHA256).",
+    "Renovate manages dependencies **not** handled by Dependabot: manylinux Docker images, nanobind (via CMake FetchContent), googletest (release tarball + SHA256), and the Pixi lockfile.",
     "Please review the linked changelog/release notes before merging. A one-week stabilization period (`minimumReleaseAge`) has already elapsed since the new version was published."
   ],
   // Custom managers for dependencies not auto-detected by Renovate
@@ -80,10 +87,14 @@
       "groupName": "manylinux docker images"
     },
     {
-      // Group all pixi dependencies into a single monthly PR
+      // Do not bump the version pins in pixi.toml. Renovate only refreshes
+      // pixi.lock via lockFileMaintenance (configured above); the manifest
+      // constraints are managed manually. We disable every dependency-bump
+      // update type for the pixi manager but leave lockFileMaintenance on
+      // (it is a separate update type, not matched here).
       "matchManagers": ["pixi"],
-      "groupName": "pixi dependencies",
-      "schedule": ["on the first day of the month"]
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest"],
+      "enabled": false
     }
   ]
 }
