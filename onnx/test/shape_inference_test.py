@@ -2551,6 +2551,70 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, None)]
         )
 
+    @parameterized.expand(
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            ("opset1_to_10", 10),
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            ("opset19", 19),
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            ("latest", defs.get_schema("Conv").since_version),
+        ]
+    )
+    def test_conv_weight_more_spatial_dims_than_input_raises(
+        self, _: str, version: int
+    ) -> None:
+        # Weight has more spatial dims than input and no explicit kernel_shape
+        # attribute, so kernel_shape is derived from the weight. This must fail
+        # rather than reading past the end of the dilations vector.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8)),
+                ("w", TensorProto.FLOAT, (5, 4, 3, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            "weight tensor",
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            ("opset1_to_10", 10),
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            ("opset19", 19),
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            ("latest", defs.get_schema("Conv").since_version),
+        ]
+    )
+    def test_conv_weight_fewer_spatial_dims_than_input_raises(
+        self, _: str, version: int
+    ) -> None:
+        # Weight has fewer spatial dims than input and no explicit kernel_shape
+        # attribute, so kernel_shape is derived from the weight. This must fail
+        # rather than silently inferring an inconsistent shape.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8, 8)),
+                ("w", TensorProto.FLOAT, (5, 4, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            "weight tensor",
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
             [
@@ -8110,6 +8174,80 @@ class TestShapeInference(TestShapeInferenceHelper):
         )  # Missing 'delta' initializer
         self._assert_inferred(
             graph, [make_tensor_value_info("output", TensorProto.INT32, (None,))]
+        )
+
+    def test_range_float16(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT16, ()),
+                ("limit", TensorProto.FLOAT16, ()),
+                ("delta", TensorProto.FLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT16, (), (5,)),
+                make_tensor("delta", TensorProto.FLOAT16, (), (2,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT16, (None,))]
+        )
+
+    def test_range_bfloat16(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.BFLOAT16, ()),
+                ("limit", TensorProto.BFLOAT16, ()),
+                ("delta", TensorProto.BFLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.BFLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.BFLOAT16, (), (5,)),
+                make_tensor("delta", TensorProto.BFLOAT16, (), (2,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.BFLOAT16, (None,))]
+        )
+
+    def test_range_float16_rank_inference(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT16, ()),
+                ("limit", TensorProto.FLOAT16, ()),
+                ("delta", TensorProto.FLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT16, (), (5,)),
+            ],
+        )  # Missing 'delta' initializer
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT16, (None,))]
+        )
+
+    def test_range_bfloat16_rank_inference(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.BFLOAT16, ()),
+                ("limit", TensorProto.BFLOAT16, ()),
+                ("delta", TensorProto.BFLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.BFLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.BFLOAT16, (), (5,)),
+            ],
+        )  # Missing 'delta' initializer
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.BFLOAT16, (None,))]
         )
 
     def test_gathernd(self) -> None:
