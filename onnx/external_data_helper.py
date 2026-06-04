@@ -144,12 +144,13 @@ def _validate_external_data_file_bounds(
 
 def _write_zero_padding(data_file: IO[bytes], padding_size: int) -> None:
     """Write zero padding without allocating the whole padding range at once."""
-    zero_chunk = b"\0" * min(padding_size, _ZERO_PADDING_CHUNK_SIZE)
+    zero_chunk = b"\0" * _ZERO_PADDING_CHUNK_SIZE
     remaining = padding_size
-    while remaining > 0:
-        chunk_size = min(remaining, len(zero_chunk))
-        data_file.write(zero_chunk[:chunk_size])
-        remaining -= chunk_size
+    while remaining >= _ZERO_PADDING_CHUNK_SIZE:
+        data_file.write(zero_chunk)
+        remaining -= _ZERO_PADDING_CHUNK_SIZE
+    if remaining:
+        data_file.write(b"\0" * remaining)
 
 
 def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:

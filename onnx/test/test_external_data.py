@@ -1329,8 +1329,9 @@ class TestSaveExternalDataPadding(unittest.TestCase):
             def __init__(self) -> None:
                 self.write_sizes: list[int] = []
 
-            def write(self, data: bytes) -> None:
+            def write(self, data: bytes) -> int:
                 self.write_sizes.append(len(data))
+                return len(data)
 
         writer = CountingWriter()
         padding_size = _ZERO_PADDING_CHUNK_SIZE * 2 + 17
