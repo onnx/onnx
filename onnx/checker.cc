@@ -181,11 +181,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
       case TensorProto::UINT4:
       case TensorProto::INT4:
       case TensorProto::FLOAT4E2M1:
-        expected_bytes = (nelem + 1) / 2;  // 2 elements per byte, ceiling division
+        expected_bytes = (nelem + 1) / 2; // 2 elements per byte, ceiling division
         break;
       case TensorProto::UINT2:
       case TensorProto::INT2:
-        expected_bytes = (nelem + 3) / 4;  // 4 elements per byte, ceiling division
+        expected_bytes = (nelem + 3) / 4; // 4 elements per byte, ceiling division
         break;
       default:
         break;
