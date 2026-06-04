@@ -1324,7 +1324,7 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
 
 
 class TestSaveExternalDataPadding(unittest.TestCase):
-    def test_zero_padding_is_written_in_bounded_chunks(self) -> None:
+    def _write_padding_sizes(self, padding_size: int) -> list[int]:
         class CountingWriter:
             def __init__(self) -> None:
                 self.write_sizes: list[int] = []
@@ -1334,13 +1334,23 @@ class TestSaveExternalDataPadding(unittest.TestCase):
                 return len(data)
 
         writer = CountingWriter()
+        _write_zero_padding(writer, padding_size)
+        return writer.write_sizes
+
+    def test_zero_padding_is_written_in_bounded_chunks(self) -> None:
         padding_size = _ZERO_PADDING_CHUNK_SIZE * 2 + 17
 
-        _write_zero_padding(writer, padding_size)
+        self.assertEqual(
+            self._write_padding_sizes(padding_size),
+            [_ZERO_PADDING_CHUNK_SIZE, _ZERO_PADDING_CHUNK_SIZE, 17],
+        )
+
+    def test_zero_padding_exact_chunk_multiple_has_no_partial_write(self) -> None:
+        padding_size = _ZERO_PADDING_CHUNK_SIZE * 2
 
         self.assertEqual(
-            writer.write_sizes,
-            [_ZERO_PADDING_CHUNK_SIZE, _ZERO_PADDING_CHUNK_SIZE, 17],
+            self._write_padding_sizes(padding_size),
+            [_ZERO_PADDING_CHUNK_SIZE, _ZERO_PADDING_CHUNK_SIZE],
         )
 
 
