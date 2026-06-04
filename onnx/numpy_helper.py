@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -110,7 +111,7 @@ def _unpack_4bit(
     array_high >>= np.uint8(4)
     result[0::2] = array_low
     result[1::2] = array_high
-    expected_elements = int(np.prod(dims, dtype=object))
+    expected_elements = math.prod(dims)
     if result.size == expected_elements + 1:
         # handle single-element padding due to odd number of elements
         result = result[:-1]
@@ -154,7 +155,7 @@ def _unpack_2bit(
     result[1::4] = (data >> 2) & 0x03
     result[2::4] = (data >> 4) & 0x03
     result[3::4] = (data >> 6) & 0x03
-    expected_elements = int(np.prod(dims, dtype=object))
+    expected_elements = math.prod(dims)
     if result.size > expected_elements:
         # handle padding due to non multiple of 4 elements
         result = result[:expected_elements]
