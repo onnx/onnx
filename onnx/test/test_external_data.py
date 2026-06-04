@@ -28,6 +28,8 @@ from onnx import (
 )
 from onnx.external_data_helper import (
     _ALLOWED_EXTERNAL_DATA_KEYS,
+    _ZERO_PADDING_CHUNK_SIZE,
+    _write_zero_padding,
     ExternalDataInfo,
     convert_model_from_external_data,
     convert_model_to_external_data,
@@ -1319,6 +1321,26 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
 
         load_external_data_for_tensor(tensor, self.temp_dir)
         self.assertEqual(tensor.raw_data, raw)
+
+
+class TestSaveExternalDataPadding(unittest.TestCase):
+    def test_zero_padding_is_written_in_bounded_chunks(self) -> None:
+        class CountingWriter:
+            def __init__(self) -> None:
+                self.write_sizes: list[int] = []
+
+            def write(self, data: bytes) -> None:
+                self.write_sizes.append(len(data))
+
+        writer = CountingWriter()
+        padding_size = _ZERO_PADDING_CHUNK_SIZE * 2 + 17
+
+        _write_zero_padding(writer, padding_size)
+
+        self.assertEqual(
+            writer.write_sizes,
+            [_ZERO_PADDING_CHUNK_SIZE, _ZERO_PADDING_CHUNK_SIZE, 17],
+        )
 
 
 if __name__ == "__main__":
