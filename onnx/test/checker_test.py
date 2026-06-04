@@ -1198,6 +1198,93 @@ class TestChecker(unittest.TestCase):
         tensor3.name = "t"
         checker.check_tensor(tensor3)
 
+    def test_check_tensor_packed_subbyte_raw_data(self) -> None:
+        """Reject packed sub-byte tensors whose raw_data payload is too small."""
+        # 4-bit types (INT4, UINT4, FLOAT4E2M1): 2 elements per byte.
+        # 10 elements need ceil(10/2) = 5 bytes; 4 bytes is too small.
+        for dtype in (TensorProto.INT4, TensorProto.UINT4, TensorProto.FLOAT4E2M1):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 4  # 1 byte too short
+            self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+            # Exactly enough bytes must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([10])
+            tensor2.name = "t"
+            tensor2.raw_data = b"\x00" * 5  # ceil(10/2) = 5 bytes
+            checker.check_tensor(tensor2)
+
+        # 2-bit types (INT2, UINT2): 4 elements per byte.
+        # 10 elements need ceil(10/4) = 3 bytes; 2 bytes is too small.
+        for dtype in (TensorProto.INT2, TensorProto.UINT2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.raw_data = b"\x00" * 2  # 1 byte too short
+            self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+            # Exactly enough bytes must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([10])
+            tensor2.name = "t"
+            tensor2.raw_data = b"\x00" * 3  # ceil(10/4) = 3 bytes
+            checker.check_tensor(tensor2)
+
+    def test_check_tensor_packed_subbyte_int32_data(self) -> None:
+        """Reject packed sub-byte tensors whose int32_data payload is too small."""
+        # 4-bit types: 8 elements per int32.
+        # 10 elements need ceil(10/8) = 2 int32 values; 1 is too small.
+        for dtype in (TensorProto.INT4, TensorProto.UINT4, TensorProto.FLOAT4E2M1):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([10])
+            tensor.name = "t"
+            tensor.int32_data.extend([0])  # 1 int32, need 2
+            self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+            # Exactly enough int32 values must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([10])
+            tensor2.name = "t"
+            tensor2.int32_data.extend([0, 0])  # ceil(10/8) = 2
+            checker.check_tensor(tensor2)
+
+        # 2-bit types: 16 elements per int32.
+        # 20 elements need ceil(20/16) = 2 int32 values; 1 is too small.
+        for dtype in (TensorProto.INT2, TensorProto.UINT2):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([20])
+            tensor.name = "t"
+            tensor.int32_data.extend([0])  # 1 int32, need 2
+            self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+            # Exactly enough int32 values must pass.
+            tensor2 = TensorProto()
+            tensor2.data_type = dtype
+            tensor2.dims.extend([20])
+            tensor2.name = "t"
+            tensor2.int32_data.extend([0, 0])  # ceil(20/16) = 2
+            checker.check_tensor(tensor2)
+
+    def test_check_tensor_packed_subbyte_zero_elems(self) -> None:
+        """Zero-element packed tensors with empty payload must be valid."""
+        for dtype in (
+            TensorProto.INT4,
+            TensorProto.UINT4,
+            TensorProto.FLOAT4E2M1,
+            TensorProto.INT2,
+            TensorProto.UINT2,
+        ):
+            tensor = TensorProto()
+            tensor.data_type = dtype
+            tensor.dims.extend([0])
+            tensor.name = "t"
+            checker.check_tensor(tensor)
+
 
 if __name__ == "__main__":
     unittest.main()
