@@ -71,11 +71,9 @@ class TestBasicFunctions(unittest.TestCase):
 class TestRoundTrip(unittest.TestCase):
     """parse -> print -> parse -> print round-trip checks.
 
-    These moved here from the C++ parser_test.cc ``Parse`` helper when the text
-    printer was reimplemented in pure Python (onnx/printer.py). Like the C++
-    check, we do not compare the printed text to the original input (they differ
-    in white-space and syntactic sugar); instead we print once, parse that, print
-    again, and require the two printed forms to be identical.
+    The printed text is not compared to the original input, since the two differ
+    in white-space and other syntactic sugar. Instead we print once, parse that,
+    print again, and require the two printed forms to be identical.
     """
 
     def _check(self, parse_fn, text0: str):

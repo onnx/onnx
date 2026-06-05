@@ -12,8 +12,7 @@ namespace ONNX_NAMESPACE {
 namespace Test {
 
 // Parses `input` into `parsedData`, asserting it parses cleanly and consumes all
-// input. The parse -> print -> parse round-trip check lives in the Python printer
-// tests (onnx/test/printer_test.py), as the text printer is now pure Python.
+// of the input.
 template <typename T>
 static void Parse(T& parsedData, const char* input) {
   OnnxParser parser(input);
