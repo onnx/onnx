@@ -1,3 +1,9 @@
+<!--
+Copyright (c) ONNX Project Contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # ONNX OSS-Fuzz Harnesses
 
 This directory contains [atheris](https://github.com/google/atheris)-based Python fuzz
