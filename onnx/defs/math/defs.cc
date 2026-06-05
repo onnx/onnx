@@ -1934,34 +1934,27 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
 
           const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-          const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
 
           const int input_rank = static_cast<int>(input_shape.dim_size());
-          const int target_rank = static_cast<int>(target_shape.dim_size());
+          const int target_rank = input_rank - 1;
 
           if (input_rank < 2) {
             fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
           }
-          if (target_rank != input_rank - 1) {
-            fail_shape_inference(
-                "Target rank must be 1 less than the input rank. input_rank=",
-                input_rank,
-                ", target_rank=",
-                target_rank);
-          }
+          checkInputRank(ctx, 1, target_rank);
 
-          // Unify N (batch) and C (class) dims
-          Dim N, C;
-          unifyInputShapePrefix(ctx, 0, {N, C});
-          // target[0] should match N
-          unifyInputDim(ctx, 1, 0, N);
-
-          // Unify spatial dimensions: input[2..] should match target[1..]
-          for (int i = 1; i < target_rank; i++) {
-            Dim d;
-            unifyInputDim(ctx, 0, i + 1, d);
-            unifyInputDim(ctx, 1, i, d);
+          // input: [N, C, d1, ..., dk], target: [N, d1, ..., dk]
+          // Build dims array for target shape: [N, d1, ..., dk]
+          Dim C;
+          std::vector<Dim> target_dims(target_rank);
+          // Unify target dims against both inputs
+          for (int i = 0; i < target_rank; i++) {
+            unifyInputDim(ctx, 1, i, target_dims[i]);
+            // input[0]=N matches target[0], input[2..]=d1..dk matches target[1..]
+            int input_i = (i == 0) ? 0 : i + 1;
+            unifyInputDim(ctx, 0, input_i, target_dims[i]);
           }
+          unifyInputDim(ctx, 0, 1, C);
 
           // Optional weight input: [C]
           if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
@@ -1971,9 +1964,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (getAttribute(ctx, "reduction", "mean") == "none") {
             // output tensor is of shape (N, d1, d2, ..., dk)
             TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-            *output_shape->add_dim() = N;
-            for (int i = 1; i < target_rank; i++) {
-              *output_shape->add_dim() = target_shape.dim(i);
+            for (int i = 0; i < target_rank; i++) {
+              *output_shape->add_dim() = target_dims[i];
             }
           }
           // otherwise output is a scalar.
