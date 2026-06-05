@@ -307,13 +307,15 @@ def _write_zip(path: str, entries: Mapping[str, bytes | str]) -> None:
             zf.writestr(name, entry.encode() if isinstance(entry, str) else entry)
 
 
+_USAGE = (
+    "Usage: {prog} <version_converter_out.zip> <parser_out.zip>"
+    " <checker_out.zip> <shape_inference_out.zip>\n"
+)
+
+
 def main() -> int:
     if len(sys.argv) != 5:
-        sys.stderr.write(
-            f"Usage: {sys.argv[0]} "
-            "<version_converter_out.zip> <parser_out.zip> "
-            "<checker_out.zip> <shape_inference_out.zip>\n"
-        )
+        sys.stderr.write(_USAGE.format(prog=sys.argv[0]))
         return 2
     version_converter_out = sys.argv[1]
     parser_out = sys.argv[2]
