@@ -24,6 +24,58 @@ SPDX-License-Identifier: Apache-2.0
 
 ---
 
+### SIG Architecture & Infrastructure
+
+**Lead(s):** Andreas Fehlner (TRUMPF Laser), Christian Bourjau (QuantCo)
+
+**Last updated:** 2026-06-02
+
+#### Q3 2026
+- Remove test files from release packages (reduce package size and install surface)
+- Automate and improve SBOM generation and publication
+- Immutable releases (tamper-evident, verifiable artifacts)
+- Convert deprecated branch protection rules to Rules within Github
+- newer minimal protobuf
+
+#### Q4 2026
+
+- Begin C++ hardening (compiler flags, static analysis integration)
+- Integrate fuzz testing into CI
+
+#### Q1 2027
+- Move to C++20
+- OpenSSF Gold Badge
+- Achieve SLSA Build Level 3 compliance
+
+#### Q2 2027
+- Improved conformance test suite (parameterized, filterable, usable from non-Python runtimes)
+- Continued C++ hardening improvements
+
+---
+
+### Operator SIG
+
+**Lead(s):** Eric JENN, Jean SOUYRIS
+
+**Last updated:** 2026-06-01
+
+#### Q3 2026:
+- Attention op (fix causal-mask position-anchoring issue)
+- Attention op (add support for local window)
+- Attention op (add support for pre-softcap additive bias)
+
+#### Q4 2026:
+- Variable length scan support
+- LinearAttention (support for Gated DeltaNet-2)
+
+#### Q1 2027:
+- Support Mixture-of-Exports (possibly via Grouped MatMul operator)
+- RotaryEmbedding for visual models (2D)
+
+#### Q2 2027:
+- Support for ternary-value quantization and single-bit quantization
+- FlexAttention
+
 ### SONNX Working Group
 
 **Lead(s):** Eric JENN, Jean SOUYRIS
@@ -54,32 +106,6 @@ SPDX-License-Identifier: Apache-2.0
 
 ---
 
-### SIG Architecture & Infrastructure
-
-**Lead(s):** Andreas Fehlner (TRUMPF Laser), Christian Bourjau (QuantCo)
-**Last updated:** 2026-06-02
-
-#### Q3 2026
-- Remove test files from release packages (reduce package size and install surface)
-- Automate and improve SBOM generation and publication
-- Immutable releases (tamper-evident, verifiable artifacts)
-- Convert deprecated branch protection rules to Rules within Github
-- Move to C++20, newer minimal protobuf
-
-#### Q4 2026
-
-- Begin C++ hardening (compiler flags, static analysis integration)
-- Integrate fuzz testing into CI
-
-#### Q1 2027
-- OpenSSF Gold Badge
-- Achieve SLSA Build Level 3 compliance
-
-#### Q2 2027
-- Improved conformance test suite (parameterized, filterable, usable from non-Python runtimes)
-- Continued C++ hardening improvements
-
----
 
 ### [SIG/WG Name]
 
