@@ -646,18 +646,15 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  // X: [N, C, H, W, ...], rois: [num_rois, 5]
+  // X: [N, C, H, W], rois: [num_rois, 5]
   Dim N, C, H, W, num_rois, five;
   five.set_dim_value(5);
-  unifyInputShapePrefix(ctx, 0, {N, C, H, W});
+  unifyInputShape(ctx, 0, {N, C, H, W});
   unifyInputShape(ctx, 1, {num_rois, five});
-
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
   std::vector<int64_t> pooled_shape;
   if (getRepeatedAttribute(ctx, "pooled_shape", pooled_shape)) {
-    if (pooled_shape.size() != n_input_dims) {
+    if (pooled_shape.size() != 2) {
       fail_shape_inference("Attribute pooled_shape has incorrect length");
     }
     for (auto dim : pooled_shape) {
@@ -669,13 +666,11 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
     fail_shape_inference("Attribute pooled_shape must be specified");
   }
 
-  // output: (num_rois, C, pooled_shape[0], pooled_shape[1], ...)
-  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-  *output_shape->add_dim() = num_rois;
-  *output_shape->add_dim() = C;
-  for (size_t i = 0; i < n_input_dims; ++i) {
-    output_shape->add_dim()->set_dim_value(pooled_shape[i]);
-  }
+  // output: (num_rois, C, pooled_shape[0], pooled_shape[1])
+  Dim pooled_h, pooled_w;
+  pooled_h.set_dim_value(pooled_shape[0]);
+  pooled_w.set_dim_value(pooled_shape[1]);
+  updateOutputShape(ctx, 0, {num_rois, C, pooled_h, pooled_w});
 }
 
 static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
