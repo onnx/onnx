@@ -22,15 +22,15 @@ class Softmax_13_12 final : public Adapter {
     (void)graph; // Suppress unused parameter warning
     ONNX_ASSERTM(node->inputs().size() >= 1, "Softmax node must have at least 1 input")
 
-    int new_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : -1;
+    int new_axis = node->hasAttribute(kaxis) ? static_cast<int>(node->i(kaxis)) : -1;
 
     // Handle Softmax on the last axis (default behavior in opset 13)
     if (new_axis == -1) {
-      new_axis = node->inputs()[0]->sizes().size() - 1;
+      new_axis = static_cast<int>(node->inputs()[0]->sizes().size()) - 1;
       node->i_(kaxis, new_axis);
     } else if (new_axis < 0) {
       // Handle negative axis by converting it to positive
-      int input_rank = node->inputs()[0]->sizes().size();
+      int input_rank = static_cast<int>(node->inputs()[0]->sizes().size());
       new_axis = input_rank + new_axis;
       node->i_(kaxis, new_axis);
     }

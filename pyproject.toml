@@ -52,6 +52,7 @@ sdist.include = [
     "README.md",
     "CMakeLists.txt",
     "VERSION_NUMBER",
+    "sbom.cdx.json",
     "cmake/**",
     "tools/**",
     "onnx/**",
@@ -266,6 +267,13 @@ required-imports = ["from __future__ import annotations"]
 "onnx/test/reference_evaluator_test.py" = ["C408"]  # dict(...) -> { ... }
 "onnx/test/**" = ["PLR2004", "S311", "T20"] # Magic numbers, non-crypto random, print allowed in tests
 "onnx/onnx_cpp2py_export/defs.pyi" = ["N802"]
+"onnx/fuzz/**" = [
+    "N802",     # TestOneInput is the required atheris entry-point name
+    "BLE001",   # Broad except is intentional: fuzz harnesses swallow all expected errors
+    "PLR2004",  # Magic numbers are fine in low-level fuzz scaffolding
+    "S112",     # try-except-continue is the correct pattern for per-version fuzzing
+    "PERF203",  # try-except in loop is unavoidable in the version-converter harness
+]
 "onnx/gen_proto.py" = ["T20"] # Build script uses print for progress
 "onnx/defs/gen_*.py" = ["T20"] # Code generators use print for output
 "tools/**" = ["T20"] # Build tools use print for progress

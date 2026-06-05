@@ -75,6 +75,7 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
 // Define type casters for common ONNX proto types
 ONNX_DEFINE_TYPE_CASTER(AttributeProto, "onnx.AttributeProto")
 ONNX_DEFINE_TYPE_CASTER(TypeProto, "onnx.TypeProto")
+ONNX_DEFINE_TYPE_CASTER(TensorShapeProto, "onnx.TensorShapeProto")
 ONNX_DEFINE_TYPE_CASTER(TensorProto, "onnx.TensorProto")
 ONNX_DEFINE_TYPE_CASTER(SparseTensorProto, "onnx.SparseTensorProto")
 ONNX_DEFINE_TYPE_CASTER(ValueInfoProto, "onnx.ValueInfoProto")
@@ -86,16 +87,35 @@ ONNX_DEFINE_TYPE_CASTER(FunctionProto, "onnx.FunctionProto")
 namespace ONNX_NAMESPACE {
 namespace nb = nanobind;
 
+// Serialize a proto message into Python bytes.
+static nb::bytes ProtoToBytes(const BASE_PROTO_TYPE& proto) {
+  std::string out = proto.SerializeAsString();
+  return nb::bytes(out.data(), out.size());
+}
+
+// Parse a vector of Python bytes into a vector of protos.
+template <typename ProtoType>
+static std::vector<ProtoType> ParseProtoVector(const std::vector<nb::bytes>& bytes_vec) {
+  std::vector<ProtoType> protos(bytes_vec.size());
+  for (size_t i = 0; i < bytes_vec.size(); ++i) {
+    ParseProtoFromPyBytes(&protos[i], bytes_vec[i]);
+  }
+  return protos;
+}
+
+// Cast a proto pointer to a Python object, returning None when null.
+template <typename T>
+static nb::object CastOrNone(const T* ptr) {
+  return ptr ? nb::cast(*ptr) : nb::none();
+}
+
 template <typename ProtoType>
 static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
   ProtoType proto{};
   OnnxParser parser(cstr);
   auto status = parser.Parse(proto);
-  std::string out;
-  proto.SerializeToString(&out);
   const std::string& error_msg = status.ErrorMessage();
-  return std::make_tuple(
-      status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), nb::bytes(out.c_str(), out.size()));
+  return std::make_tuple(status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), ProtoToBytes(proto));
 }
 
 template <typename ProtoType>
@@ -159,9 +179,7 @@ static std::unordered_map<std::string, nb::bytes> CallNodeInferenceFunction(
   for (size_t i = 0; i < ctx.allOutputTypes_.size(); i++) {
     const auto& proto = ctx.allOutputTypes_[i];
     if (proto.IsInitialized()) {
-      std::string s;
-      proto.SerializeToString(&s);
-      typeProtoBytes[node.output(static_cast<int>(i))] = nb::bytes(s.c_str(), s.size());
+      typeProtoBytes[node.output(static_cast<int>(i))] = ProtoToBytes(proto);
     }
   }
 
@@ -185,6 +203,19 @@ static std::tuple<std::vector<T>, std::vector<const T*>> ConvertPyObjToPtr(const
   return std::make_tuple(std::move(objs), std::move(ptrs));
 }
 
+// Build a binding that parses a proto from Python bytes and runs the given
+// checker function on it. The proto type and the trailing context arguments
+// are deduced from the checker's signature, so this covers both the 2-arg
+// (CheckerContext) and 3-arg (CheckerContext + LexicalScopeContext) checkers.
+template <typename ProtoType, typename... Ctx>
+static auto MakeChecker(void (*check_fn)(const ProtoType&, const Ctx&...)) {
+  return [check_fn](const nb::bytes& bytes, const Ctx&... ctx) {
+    ProtoType proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    check_fn(proto, ctx...);
+  };
+}
+
 NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   // Disabling nanobind leak warnings
   // TODO(#7283): Avoid leaks if possible
@@ -199,9 +230,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       false
 #endif // ONNX_ML
   );
-
-  // Avoid Segmentation fault if we not free the python function in Custom Schema
-  // onnx_cpp2py_export.attr("_cleanup") = nb::capsule(+[] { OpSchemaRegistry::OpSchemaDeregisterAll(); });
 
   // Submodule `schema`
   auto defs = onnx_cpp2py_export.def_submodule("defs");
@@ -280,12 +308,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_ro("description", &OpSchema::Attribute::description)
       .def_ro("type", &OpSchema::Attribute::type)
       .def_prop_ro(
-          "_default_value",
-          [](OpSchema::Attribute* attr) -> nb::bytes {
-            std::string out;
-            attr->default_value.SerializeToString(&out);
-            return nb::bytes(out.c_str(), out.size());
-          })
+          "_default_value", [](OpSchema::Attribute* attr) -> nb::bytes { return ProtoToBytes(attr->default_value); })
       .def_ro("required", &OpSchema::Attribute::required);
 
   nb::class_<OpSchema::TypeConstraintParam>(op_schema, "TypeConstraintParam")
@@ -362,11 +385,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               self->Output(static_cast<int>(i), std::move(outputs[i]));
             }
             // Add type constraints
-            for (auto& type_constraint : type_constraints) {
-              std::string type_str;
-              std::vector<std::string> constraints;
-              std::string description;
-              tie(type_str, constraints, description) = std::move(type_constraint);
+            for (auto& [type_str, constraints, description] : type_constraints) {
               self->TypeConstraint(std::move(type_str), std::move(constraints), std::move(description));
             }
             // Add attributes
@@ -441,20 +460,13 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_prop_ro(
           "_function_body",
           [](OpSchema* op) -> nb::bytes {
-            std::string bytes;
-            if (op->HasFunction())
-              op->GetFunction()->SerializeToString(&bytes);
-            return nb::bytes(bytes.c_str(), bytes.size());
+            return op->HasFunction() ? ProtoToBytes(*op->GetFunction()) : nb::bytes("", 0);
           })
       .def(
           "get_function_with_opset_version",
           [](OpSchema* op, int opset_version) -> nb::bytes {
-            std::string bytes;
             const FunctionProto* function_proto = op->GetFunction(opset_version);
-            if (function_proto) {
-              function_proto->SerializeToString(&bytes);
-            }
-            return nb::bytes(bytes.c_str(), bytes.size());
+            return function_proto ? ProtoToBytes(*function_proto) : nb::bytes("", 0);
           })
       .def_prop_ro("has_context_dependent_function", &OpSchema::HasContextDependentFunction)
       .def(
@@ -462,21 +474,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](OpSchema* op, const nb::bytes& bytes, const std::vector<nb::bytes>& input_types_bytes) -> nb::bytes {
             NodeProto proto{};
             ParseProtoFromPyBytes(&proto, bytes);
-            std::string func_bytes;
             if (op->HasContextDependentFunction()) {
-              std::vector<TypeProto> input_types;
-              input_types.reserve(input_types_bytes.size());
-              for (const auto& type_bytes : input_types_bytes) {
-                TypeProto type_proto{};
-                ParseProtoFromPyBytes(&type_proto, type_bytes);
-                input_types.push_back(type_proto);
-              }
+              std::vector<TypeProto> input_types = ParseProtoVector<TypeProto>(input_types_bytes);
               FunctionBodyBuildContextImpl ctx(proto, input_types);
               FunctionProto func_proto;
               op->BuildContextDependentFunction(ctx, func_proto);
-              func_proto.SerializeToString(&func_bytes);
+              return ProtoToBytes(func_proto);
             }
-            return nb::bytes(func_bytes.c_str(), func_bytes.size());
+            return nb::bytes("", 0);
           })
       .def(
           "get_context_dependent_function_with_opset_version",
@@ -484,21 +489,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
               -> nb::bytes {
             NodeProto proto{};
             ParseProtoFromPyBytes(&proto, bytes);
-            std::string func_bytes;
             if (op->HasContextDependentFunctionWithOpsetVersion(opset_version)) {
-              std::vector<TypeProto> input_types;
-              input_types.reserve(input_types_bytes.size());
-              for (const auto& type_bytes : input_types_bytes) {
-                TypeProto type_proto{};
-                ParseProtoFromPyBytes(&type_proto, type_bytes);
-                input_types.push_back(type_proto);
-              }
+              std::vector<TypeProto> input_types = ParseProtoVector<TypeProto>(input_types_bytes);
               FunctionBodyBuildContextImpl ctx(proto, input_types);
               FunctionProto func_proto;
               op->BuildContextDependentFunction(ctx, func_proto, opset_version);
-              func_proto.SerializeToString(&func_bytes);
+              return ProtoToBytes(func_proto);
             }
-            return nb::bytes(func_bytes.c_str(), func_bytes.size());
+            return nb::bytes("", 0);
           })
       .def(
           "set_type_and_shape_inference_function",
@@ -609,63 +607,13 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       checker,
       "ValidationError");
 
-  checker.def("check_value_info", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    ValueInfoProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::check_value_info(proto, ctx);
-  });
-
-  checker.def("check_tensor", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    TensorProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::check_tensor(proto, ctx);
-  });
-
-  checker.def("check_sparse_tensor", [](const nb::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    SparseTensorProto proto{};
-    ParseProtoFromPyBytes(&proto, bytes);
-    checker::check_sparse_tensor(proto, ctx);
-  });
-
-  checker.def(
-      "check_attribute",
-      [](const nb::bytes& bytes,
-         const checker::CheckerContext& ctx,
-         const checker::LexicalScopeContext& lex_ctx) -> void {
-        AttributeProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-        checker::check_attribute(proto, ctx, lex_ctx);
-      });
-
-  checker.def(
-      "check_node",
-      [](const nb::bytes& bytes,
-         const checker::CheckerContext& ctx,
-         const checker::LexicalScopeContext& lex_ctx) -> void {
-        NodeProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-        checker::check_node(proto, ctx, lex_ctx);
-      });
-
-  checker.def(
-      "check_function",
-      [](const nb::bytes& bytes,
-         const checker::CheckerContext& ctx,
-         const checker::LexicalScopeContext& lex_ctx) -> void {
-        FunctionProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-        checker::check_function(proto, ctx, lex_ctx);
-      });
-
-  checker.def(
-      "check_graph",
-      [](const nb::bytes& bytes,
-         const checker::CheckerContext& ctx,
-         const checker::LexicalScopeContext& lex_ctx) -> void {
-        GraphProto proto{};
-        ParseProtoFromPyBytes(&proto, bytes);
-        checker::check_graph(proto, ctx, lex_ctx);
-      });
+  checker.def("check_value_info", MakeChecker(checker::check_value_info));
+  checker.def("check_tensor", MakeChecker(checker::check_tensor));
+  checker.def("check_sparse_tensor", MakeChecker(checker::check_sparse_tensor));
+  checker.def("check_attribute", MakeChecker(checker::check_attribute));
+  checker.def("check_node", MakeChecker(checker::check_node));
+  checker.def("check_function", MakeChecker(checker::check_function));
+  checker.def("check_graph", MakeChecker(checker::check_graph));
 
   checker.def(
       "check_model",
@@ -703,10 +651,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
     shape_inference::InferShapes(proto);
-    auto result = version_conversion::ConvertVersion(proto, target);
-    std::string out;
-    result.SerializeToString(&out);
-    return nb::bytes(out.c_str(), out.size());
+    return ProtoToBytes(version_conversion::ConvertVersion(proto, target));
   });
 
   // Submodule `inliner`
@@ -717,9 +662,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     ModelProto model{};
     ParseProtoFromPyBytes(&model, bytes);
     inliner::InlineLocalFunctions(model, convert_version);
-    std::string out;
-    model.SerializeToString(&out);
-    return nb::bytes(out.c_str(), out.size());
+    return ProtoToBytes(model);
   });
 
   // inline_selected_functions: Inlines all functions specified in function_ids, unless
@@ -732,9 +675,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ParseProtoFromPyBytes(&model, bytes);
         auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
         inliner::InlineSelectedLocalFunctions(model, *function_id_set);
-        std::string out;
-        model.SerializeToString(&out);
-        return nb::bytes(out.c_str(), out.size());
+        return ProtoToBytes(model);
       });
 
   inliner.def(
@@ -744,9 +685,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ParseProtoFromPyBytes(&model, bytes);
         auto function_id_set = inliner::FunctionIdSet::Create(std::move(function_ids), exclude);
         inliner::InlineSelectedFunctions(model, *function_id_set, nullptr);
-        std::string out;
-        model.SerializeToString(&out);
-        return nb::bytes(out.c_str(), out.size());
+        return ProtoToBytes(model);
       });
 
   // Submodule `shape_inference`
@@ -758,37 +697,18 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   nb::class_<InferenceContext> inference_context(shape_inference, "InferenceContext", "Inference context");
 
-  inference_context.def("get_attribute", [](InferenceContext& self, const std::string& name) -> nb::object {
-    const auto* const attr = self.getAttribute(name);
-    if (attr == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*attr);
+  inference_context.def("get_attribute", [](InferenceContext& self, const std::string& name) {
+    return CastOrNone(self.getAttribute(name));
   });
   inference_context.def("get_num_inputs", &InferenceContext::getNumInputs);
-  inference_context.def("get_input_type", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* const type = self.getInputType(idx);
-    if (type == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*type);
-  });
+  inference_context.def(
+      "get_input_type", [](InferenceContext& self, size_t idx) { return CastOrNone(self.getInputType(idx)); });
   inference_context.def("has_input", &InferenceContext::hasInput);
-  inference_context.def("get_input_data", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* const tensor = self.getInputData(idx);
-    if (tensor == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*tensor);
-  });
+  inference_context.def(
+      "get_input_data", [](InferenceContext& self, size_t idx) { return CastOrNone(self.getInputData(idx)); });
   inference_context.def("get_num_outputs", &InferenceContext::getNumOutputs);
-  inference_context.def("get_output_type", [](InferenceContext& self, size_t idx) -> nb::object {
-    auto* const type = self.getOutputType(idx);
-    if (type == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*type);
-  });
+  inference_context.def(
+      "get_output_type", [](InferenceContext& self, size_t idx) { return CastOrNone(self.getOutputType(idx)); });
   inference_context.def("set_output_type", [](InferenceContext& self, size_t idx, const TypeProto& src) {
     auto* dst = self.getOutputType(idx);
     if (dst == nullptr) {
@@ -802,20 +722,11 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "get_graph_attribute_inferencer",
       &InferenceContext::getGraphAttributeInferencer,
       nb::rv_policy::reference_internal);
-  inference_context.def("get_input_sparse_data", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* const sparse = self.getInputSparseData(idx);
-    if (sparse == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*sparse);
+  inference_context.def("get_input_sparse_data", [](InferenceContext& self, size_t idx) {
+    return CastOrNone(self.getInputSparseData(idx));
   });
-  inference_context.def("get_symbolic_input", [](InferenceContext& self, size_t idx) -> nb::object {
-    const auto* const shape = self.getSymbolicInput(idx);
-    if (shape == nullptr) {
-      return nb::none();
-    }
-    return nb::cast(*shape);
-  });
+  inference_context.def(
+      "get_symbolic_input", [](InferenceContext& self, size_t idx) { return CastOrNone(self.getSymbolicInput(idx)); });
   inference_context.def("get_display_name", &InferenceContext::getDisplayName);
 
   nb::class_<GraphInferencer> graph_inferencer(shape_inference, "GraphInferencer", "Graph Inferencer");
@@ -841,9 +752,7 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ParseProtoFromPyBytes(&proto, bytes);
         ShapeInferenceOptions options{check_type, strict_mode ? 1 : 0, data_prop};
         shape_inference::InferShapes(proto, OpSchemaRegistry::Instance(), options);
-        std::string out;
-        proto.SerializeToString(&out);
-        return nb::bytes(out.c_str(), out.size());
+        return ProtoToBytes(proto);
       },
       nb::arg("bytes"),
       nb::arg("check_type") = false,
@@ -869,29 +778,14 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         FunctionProto proto{};
         ParseProtoFromPyBytes(&proto, function_proto_bytes);
 
-        std::vector<TypeProto> input_types;
-        input_types.reserve(input_types_bytes.size());
-        for (const nb::bytes& bytes : input_types_bytes) {
-          TypeProto type;
-          ParseProtoFromPyBytes(&type, bytes);
-          input_types.push_back(type);
-        }
-
-        std::vector<AttributeProto> attributes;
-        attributes.reserve(attributes_bytes.size());
-        for (const nb::bytes& bytes : attributes_bytes) {
-          AttributeProto attr;
-          ParseProtoFromPyBytes(&attr, bytes);
-          attributes.push_back(attr);
-        }
+        std::vector<TypeProto> input_types = ParseProtoVector<TypeProto>(input_types_bytes);
+        std::vector<AttributeProto> attributes = ParseProtoVector<AttributeProto>(attributes_bytes);
 
         std::vector<TypeProto> output_types = shape_inference::InferFunctionOutputTypes(proto, input_types, attributes);
         std::vector<nb::bytes> result;
         result.reserve(output_types.size());
-        for (auto& type_proto : output_types) {
-          std::string out;
-          type_proto.SerializeToString(&out);
-          result.emplace_back(out.c_str(), out.size());
+        for (const auto& type_proto : output_types) {
+          result.push_back(ProtoToBytes(type_proto));
         }
         return result;
       });
