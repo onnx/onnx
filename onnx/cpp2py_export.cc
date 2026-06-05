@@ -24,7 +24,6 @@
 #include "onnx/checker.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/defs/parser.h"
-#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/inliner/inliner.h"
@@ -96,13 +95,6 @@ static std::tuple<bool, nb::bytes, nb::bytes> Parse(const char* cstr) {
   const std::string& error_msg = status.ErrorMessage();
   return std::make_tuple(
       status.IsOK(), nb::bytes(error_msg.c_str(), error_msg.size()), nb::bytes(out.c_str(), out.size()));
-}
-
-template <typename ProtoType>
-static std::string ProtoBytesToText(const nb::bytes& bytes) {
-  ProtoType proto{};
-  ParseProtoFromPyBytes(&proto, bytes);
-  return ProtoToString(proto);
 }
 
 template <typename T, typename Ts = std::remove_const_t<T>>
@@ -904,15 +896,6 @@ NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   parser.def("parse_graph", Parse<GraphProto>);
   parser.def("parse_function", Parse<FunctionProto>);
   parser.def("parse_node", Parse<NodeProto>);
-
-  // Submodule `printer`
-  auto printer = onnx_cpp2py_export.def_submodule("printer");
-  printer.doc() = "Printer submodule";
-
-  printer.def("model_to_text", ProtoBytesToText<ModelProto>);
-  printer.def("function_to_text", ProtoBytesToText<FunctionProto>);
-  printer.def("graph_to_text", ProtoBytesToText<GraphProto>);
-  printer.def("node_to_text", ProtoBytesToText<NodeProto>);
 }
 
 } // namespace ONNX_NAMESPACE
