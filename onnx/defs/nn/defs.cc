@@ -647,9 +647,9 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
   }
 
   // X: [N, C, H, W, ...], rois: [num_rois, 5]
-  Dim N, C, num_rois, five;
+  Dim N, C, H, W, num_rois, five;
   five.set_dim_value(5);
-  unifyInputShapePrefix(ctx, 0, {N, C});
+  unifyInputShapePrefix(ctx, 0, {N, C, H, W});
   unifyInputShape(ctx, 1, {num_rois, five});
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
