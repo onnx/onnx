@@ -646,17 +646,13 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
     return;
   }
 
+  // X: [N, C, H, W, ...], rois: [num_rois, 5]
+  Dim N, C, num_rois, five;
+  five.set_dim_value(5);
+  unifyInputShapePrefix(ctx, 0, {N, C});
+  unifyInputShape(ctx, 1, {num_rois, five});
+
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
-
-  if (input_shape.dim_size() < 4) {
-    fail_shape_inference("Input tensor must have at least 4 dimensions");
-  }
-  if (rios_shape.dim_size() != 2) {
-    fail_shape_inference("RoIs tensor must have 2 dimensions");
-  }
-
-  // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
   std::vector<int64_t> pooled_shape;
@@ -673,13 +669,13 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
     fail_shape_inference("Attribute pooled_shape must be specified");
   }
 
-  // (num_rois, channels, pooled_shape[0], pooled_shape[1])
+  // output: (num_rois, C, pooled_shape[0], pooled_shape[1], ...)
   auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-  *output_shape->add_dim() = rios_shape.dim(0);
-  *output_shape->add_dim() = input_shape.dim(1);
-  output_shape->add_dim()->set_dim_value(pooled_shape[0]);
-  output_shape->add_dim()->set_dim_value(pooled_shape[1]);
+  *output_shape->add_dim() = num_rois;
+  *output_shape->add_dim() = C;
+  for (size_t i = 0; i < n_input_dims; ++i) {
+    output_shape->add_dim()->set_dim_value(pooled_shape[i]);
+  }
 }
 
 static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
@@ -1507,13 +1503,14 @@ ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  // first dim is the batch axis and the next is the number of channels.
-  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+  // X: [N, C, D1, ..., Dn] -> Y: [N, C, 1, 1, ..., 1]
+  Dim N, C;
+  unifyInputShapePrefix(ctx, 0, {N, C});
 
-  // (N, C, 1, 1, ..., 1)
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
   auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-  *output_shape->add_dim() = input_shape.dim(0);
-  *output_shape->add_dim() = input_shape.dim(1);
+  *output_shape->add_dim() = N;
+  *output_shape->add_dim() = C;
 
   for (size_t i = 0; i < n_input_dims; ++i) {
     output_shape->add_dim()->set_dim_value(1);
