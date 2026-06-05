@@ -11,9 +11,8 @@ with atheris.instrument_imports():
 
 
 def TestOneInput(data):
-    fdp = atheris.FuzzedDataProvider(data)
-    text = fdp.ConsumeUnicode(sys.maxsize)
     try:
+        text = data.decode("utf-8", "surrogatepass")
         parser.parse_model(text)
     except Exception:
         return

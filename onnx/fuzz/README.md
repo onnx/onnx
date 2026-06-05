@@ -45,7 +45,7 @@ python onnx/fuzz/fuzz_version_converter.py -runs=1000
 To generate the seed corpora that OSS-Fuzz uses as starting inputs:
 
 ```bash
-python onnx/fuzz/make_seed_corpus.py /tmp/vc_seeds.zip /tmp/parser_seeds.zip
+python onnx/fuzz/make_seed_corpus.py /tmp/vc_seeds.zip /tmp/parser_seeds.zip /tmp/checker_seeds.zip
 ```
 
 ## Design notes
@@ -77,13 +77,6 @@ the last byte of the input:
 
 This lets a single harness cover both the protobuf-parser path and the recursive
 subgraph visitor without needing separate fuzzers.
-
-### Recursion limit in `fuzz_shape_inference.py`
-
-`sys.setrecursionlimit(1000)` guards against a known unbounded-recursion
-vulnerability in `shape_inference` with deeply-nested subgraphs. This keeps the
-fuzzer process alive so it can continue finding other bugs. Remove the line once
-the upstream fix lands.
 
 ## Adding a new harness
 

@@ -29,13 +29,6 @@ with atheris.instrument_imports():
     import onnx
     from onnx import TensorProto, helper, shape_inference
 
-# Cap Python recursion well below CPython's C stack ceiling. A known
-# unbounded-recursion DoS in shape_inference (deeply nested subgraphs)
-# would otherwise crash the fuzzer process on every iteration that mutates
-# into a deep graph, preventing discovery of unrelated bugs. Remove once
-# the upstream fix lands.
-sys.setrecursionlimit(1000)
-
 # Elementwise unary ops with trivial shape inference rules. Useful as
 # filler nodes so generated graphs have non-trivial bodies that exercise
 # the per-op inference dispatch table.
@@ -142,12 +135,10 @@ def _build_branch(fdp, depth, max_depth):
 def _build_model(fdp):
     # Top-level graph mirrors a branch but lives at depth 0 and chooses its
     # own opset version so different shape-inference codepaths (per-opset
-    # schemas) are reached. The 80-deep cap leaves comfortable headroom under
-    # the 1000-frame Python recursion limit for builder calls while still
-    # producing graphs deep enough to stress the recursive C++ visitor.
+    # schemas) are reached.
     max_depth = fdp.ConsumeIntInRange(0, 80)
     graph = _build_branch(fdp, depth=0, max_depth=max_depth)
-    opset = fdp.ConsumeIntInRange(7, 20)
+    opset = fdp.ConsumeIntInRange(7, 27)
     return helper.make_model(
         graph,
         opset_imports=[helper.make_opsetid("", opset)],
@@ -181,10 +172,6 @@ def TestOneInput(data):
             check_type=check_type,
             strict_mode=strict,
         )
-    except RecursionError:
-        # Known unbounded-recursion DoS in shape_inference; intentionally
-        # suppressed so the fuzzer continues hunting unrelated bugs.
-        return
     except Exception:
         # Malformed fuzz inputs raise a broad set of expected exceptions
         # (ValidationError, InferenceError, DecodeError, ValueError, ...).

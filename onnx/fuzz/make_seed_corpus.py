@@ -161,13 +161,14 @@ def _write_zip(path: str, entries: Mapping[str, bytes | str]) -> None:
 
 
 def main() -> int:
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 4:
         sys.stderr.write(
-            f"Usage: {sys.argv[0]} <version_converter_out.zip> <parser_out.zip>\n"
+            f"Usage: {sys.argv[0]} <version_converter_out.zip> <parser_out.zip> <checker_out.zip>\n"
         )
         return 2
     version_converter_out = sys.argv[1]
     parser_out = sys.argv[2]
+    checker_out = sys.argv[3]
 
     version_converter_seeds = {
         "cast_9_missing_input.onnx": _make_model(
@@ -180,8 +181,21 @@ def main() -> int:
         "upsample_9_valid.onnx": _make_model("Upsample", 9, ["X", "scales"]),
     }
 
+    # Seed models for fuzz_checker: valid serialized ModelProtos covering a
+    # range of op types and opset versions so the checker reaches real
+    # validation logic rather than dying at protobuf parse on every iteration.
+    checker_seeds = {
+        "relu_15.onnx": _make_model("Relu", 15, ["X"]),
+        "sigmoid_13.onnx": _make_model("Sigmoid", 13, ["X"]),
+        "tanh_13.onnx": _make_model("Tanh", 13, ["X"]),
+        "abs_13.onnx": _make_model("Abs", 13, ["X"]),
+        "cast_19.onnx": _make_model("Cast", 19, ["X"], {"to": TensorProto.INT64}),
+        "softmax_13.onnx": _make_model("Softmax", 13, ["X"]),
+    }
+
     _write_zip(version_converter_out, version_converter_seeds)
     _write_zip(parser_out, _PARSER_SEEDS)
+    _write_zip(checker_out, checker_seeds)
     return 0
 
 
