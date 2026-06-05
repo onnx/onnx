@@ -75,6 +75,7 @@ using BASE_PROTO_TYPE = ::google::protobuf::Message;
 // Define type casters for common ONNX proto types
 ONNX_DEFINE_TYPE_CASTER(AttributeProto, "onnx.AttributeProto")
 ONNX_DEFINE_TYPE_CASTER(TypeProto, "onnx.TypeProto")
+ONNX_DEFINE_TYPE_CASTER(TensorShapeProto, "onnx.TensorShapeProto")
 ONNX_DEFINE_TYPE_CASTER(TensorProto, "onnx.TensorProto")
 ONNX_DEFINE_TYPE_CASTER(SparseTensorProto, "onnx.SparseTensorProto")
 ONNX_DEFINE_TYPE_CASTER(ValueInfoProto, "onnx.ValueInfoProto")
