@@ -24,11 +24,17 @@ inline bool checked_mul_overflow(int64_t a, int64_t b, int64_t* result) {
   }
   // INT64_MIN cannot be negated safely; its only non-overflowing multiplier is 1.
   if (a == std::numeric_limits<int64_t>::min()) {
-    if (b == 1) { *result = a; return false; }
+    if (b == 1) {
+      *result = a;
+      return false;
+    }
     return true;
   }
   if (b == std::numeric_limits<int64_t>::min()) {
-    if (a == 1) { *result = b; return false; }
+    if (a == 1) {
+      *result = b;
+      return false;
+    }
     return true;
   }
   const int64_t abs_a = a < 0 ? -a : a;
