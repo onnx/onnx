@@ -54,6 +54,8 @@ extern const char kDoc_PRelu_ver7[];
 extern const char kDoc_RandomNormal_ver1[];
 extern const char kDoc_RandomNormalLike_ver1[];
 extern const char kDoc_RandomUniform_ver1[];
+extern const char kDoc_Range_ver11[];
+extern const char kDoc_Range_ver27[];
 extern const char kDoc_RandomUniformLike_ver1[];
 extern const char kDoc_Reciprocal_ver6[];
 extern const char kDoc_Relu_ver6[];

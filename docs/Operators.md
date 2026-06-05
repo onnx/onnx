@@ -174,6 +174,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Bernoulli">Bernoulli</a>|<a href="Changelog.md#Bernoulli-22">22</a>, <a href="Changelog.md#Bernoulli-15">15</a>|22|
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
+|<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-27">27</a>|27|
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-12">12</a>|12|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
@@ -189,13 +190,14 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|17, 18|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
+|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
 |<a href="#NegativeLogLikelihoodLoss">NegativeLogLikelihoodLoss</a>|<a href="Changelog.md#NegativeLogLikelihoodLoss-22">22</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-13">13</a>, <a href="Changelog.md#NegativeLogLikelihoodLoss-12">12</a>|22|
 |<a href="#PRelu">PRelu</a>|<a href="Changelog.md#PRelu-16">16</a>, <a href="Changelog.md#PRelu-9">9</a>, <a href="Changelog.md#PRelu-7">7</a>, <a href="Changelog.md#PRelu-6">6</a>, <a href="Changelog.md#PRelu-1">1</a>|16|
 |<a href="#RMSNormalization">RMSNormalization</a>|<a href="Changelog.md#RMSNormalization-23">23</a>|23|
-|<a href="#Range">Range</a>|<a href="Changelog.md#Range-11">11</a>|11|
+|<a href="#Range">Range</a>|<a href="Changelog.md#Range-27">27</a>, <a href="Changelog.md#Range-11">11</a>|27|
 |<a href="#ReduceL1">ReduceL1</a>|<a href="Changelog.md#ReduceL1-18">18</a>, <a href="Changelog.md#ReduceL1-13">13</a>, <a href="Changelog.md#ReduceL1-11">11</a>, <a href="Changelog.md#ReduceL1-1">1</a>|18|
 |<a href="#ReduceL2">ReduceL2</a>|<a href="Changelog.md#ReduceL2-18">18</a>, <a href="Changelog.md#ReduceL2-13">13</a>, <a href="Changelog.md#ReduceL2-11">11</a>, <a href="Changelog.md#ReduceL2-1">1</a>|18|
 |<a href="#ReduceLogSum">ReduceLogSum</a>|<a href="Changelog.md#ReduceLogSum-18">18</a>, <a href="Changelog.md#ReduceLogSum-13">13</a>, <a href="Changelog.md#ReduceLogSum-11">11</a>, <a href="Changelog.md#ReduceLogSum-1">1</a>|18|
@@ -212,6 +214,12 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Softsign">Softsign</a>|<a href="Changelog.md#Softsign-22">22</a>, <a href="Changelog.md#Softsign-1">1</a>|18|
 |<a href="#Swish">Swish</a>|<a href="Changelog.md#Swish-24">24</a>|24|
 |<a href="#ThresholdedRelu">ThresholdedRelu</a>|<a href="Changelog.md#ThresholdedRelu-22">22</a>, <a href="Changelog.md#ThresholdedRelu-10">10</a>|18|
+
+### ai.onnx.preview
+|**Operator**|**Since version**||
+|-|-|-|
+|**Function**|**Since version**|**Function version**|
+|<sub>experimental</sub> <a href="#ai.onnx.preview.FlexAttention">ai.onnx.preview.FlexAttention</a>|<a href="Changelog.md#ai.onnx.preview.FlexAttention-1">1</a>|1|
 
 ### ai.onnx.preview.training
 |**Operator**|**Since version**||
@@ -1679,9 +1687,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
         |          |          |
         ---MatMul---          |
               |               |
-   at_mask---Add              |
-              |               |
     softcap (if provided)     |
+              |               |
+   at_mask---Add              |
               |               |
            Softmax            |
               |               |
@@ -1707,7 +1715,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output includes the addition of the attention mask to the output of qk matmul. If set to `2`, qk_matmul_output is the output after the softcap operation. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -2616,7 +2624,7 @@ node = onnx.helper.make_node(
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -2636,7 +2644,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     past_value=past_value,
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -2663,7 +2671,7 @@ node = onnx.helper.make_node(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 past_sequence_length = 12
@@ -2684,7 +2692,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     q_num_heads=q_num_heads,
     kv_num_heads=kv_num_heads,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -3633,6 +3641,99 @@ expect(
 
 
 <details>
+<summary>attention_softcap_with_neginf_mask</summary>
+
+```python
+"""Softcap + -inf mask: verifies softcap is applied BEFORE mask/bias.
+
+If ordering were wrong (mask then softcap), tanh(-inf/softcap) = -1,
+so softcap * tanh(-inf/softcap) = -softcap (finite).  That leaks
+probability to masked positions.  With correct ordering (softcap then
+mask), the -inf mask values survive to softmax and yield zero weight.
+"""
+np.random.seed(42)
+B, H, S_q, S_kv, D = 1, 1, 4, 6, 8
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+
+# All Q positions are blocked from KV positions 4 and 5.
+attn_mask = np.zeros((S_q, S_kv), dtype=np.float32)
+attn_mask[:, 4:] = -np.inf
+
+softcap = 0.5
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    softcap=softcap,
+)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_softcap_neginf_mask",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_softcap_with_neginf_mask_poison</summary>
+
+```python
+"""Softcap + -inf mask + poison values at masked KV positions.
+
+V has value 1000 at the masked positions (4 and 5).  With correct
+ordering the output stays in [0, 1] because the mask zeros out those
+positions.  With wrong ordering the output explodes (> 50), making
+the failure obvious even with loose tolerances.
+"""
+np.random.seed(42)
+B, H, S_q, S_kv, D = 1, 1, 4, 6, 8
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+
+# Block all Q positions from KV positions 4 and 5.
+attn_mask = np.zeros((S_q, S_kv), dtype=np.float32)
+attn_mask[:, 4:] = -np.inf
+
+# Poison: if attention leaks to masked positions, output >> 1.
+V[:, :, 4:, :] = 1000.0
+
+softcap = 0.5
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    softcap=softcap,
+)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask, softcap=softcap)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_4d_softcap_neginf_mask_poison",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_with_past_and_present</summary>
 
 ```python
@@ -3718,7 +3819,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3736,7 +3837,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3759,7 +3860,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3777,7 +3878,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3800,7 +3901,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3819,7 +3920,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3843,7 +3944,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 past_sequence_length = 12
@@ -3861,7 +3962,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3884,7 +3985,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask", "past_key", "past_value"],
     outputs=["Y", "present_key", "present_value", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3903,7 +4004,7 @@ Y, present_key, present_value, qk_matmul_output = _compute_attention(
     attn_mask=attn_mask,
     past_key=past_key,
     past_value=past_value,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
     is_causal=1,
 )
 
@@ -3955,7 +4056,7 @@ node = onnx.helper.make_node(
     "Attention",
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -3968,7 +4069,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     K,
     V,
     attn_mask=attn_mask,
-    qk_matmul_output_mode=1,
+    qk_matmul_output_mode=2,
 )
 
 expect(
@@ -3992,7 +4093,7 @@ node = onnx.helper.make_node(
     inputs=["Q", "K", "V", "attn_mask"],
     outputs=["Y", "", "", "qk_matmul_output"],
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
@@ -4006,7 +4107,7 @@ Y, _, _, qk_matmul_output = _compute_attention(
     V,
     attn_mask=attn_mask,
     softcap=2.0,
-    qk_matmul_output_mode=2,
+    qk_matmul_output_mode=1,
 )
 
 expect(
@@ -6180,8 +6281,8 @@ expect(
   | NaN               | NaN           | NaN                    |
   | Inf               | E8M0_MAX      | NaN                    |
   | x > E8M0_MAX      | E8M0_MAX      | NaN                    |
-  | x \< E8M0_MIN     | E8M0_MIN      | NaN                    |
-  | x \< 0            | Unspecified   | Unspecified            |
+  | x < E8M0_MIN      | E8M0_MIN      | NaN                    |
+  | x < 0             | Unspecified   | Unspecified            |
 
 #### Version
 
@@ -6978,6 +7079,457 @@ for from_type, to_type in test_cases:
         outputs=[output],
         name="test_castlike_no_saturate_" + from_type + "_to_" + to_type,
     )
+```
+
+</details>
+
+
+### <a name="CausalConvWithState"></a><a name="causalconvwithstate">**CausalConvWithState**</a>
+
+  Stateful causal 1D depthwise convolution.
+
+  Used by Gated DeltaNet (Qwen3.5) and Mamba (Jamba, FalconMamba) as a preprocessing step.
+  Replaces the 3-op pattern (Concat + Conv + Slice) with a single fused operation.
+
+  The convolution is causal (looks only at current and past positions) and depthwise
+  (each channel is convolved independently with its own kernel).
+
+  The input, weight, past_state, output, and present_state tensors are rank-3 with
+  shape (batch_size, channels, length). The optional bias input is rank-1 with
+  shape (channels). For higher-dimensional data, use Reshape nodes before and
+  after this operator to pack extra dimensions into the batch or channel axis.
+
+  Weight layout: (channels, 1, k) for depthwise convolution.
+  The carry state stores the last (k-1) positions for incremental decode.
+
+  The optional activation attribute supports fused SiLU/Swish activation.
+
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string (default is none)</dt>
+<dd>Fused activation function. One of: 'silu', 'swish', 'none'. Default is 'none'.</dd>
+</dl>
+
+#### Inputs (2 - 4)
+
+<dl>
+<dt><tt>input</tt> (differentiable) : T</dt>
+<dd>Input tensor with shape (batch_size, channels, length). Channels-first layout.</dd>
+<dt><tt>weight</tt> (differentiable) : T</dt>
+<dd>Depthwise convolution kernel with shape (channels, 1, k) where k is the kernel size. The middle dim of size 1 follows the ONNX `Conv` weight layout `(M, C/group, k1, ..., kn)`: since this op is always depthwise, `group = channels`, so `C/group = 1`. Keeping this layout makes the weight tensor a drop-in for a depthwise `Conv(group=channels)` weight, so `Conv` <-> `CausalConvWithState` rewrites require no reshape.</dd>
+<dt><tt>bias</tt> (optional, differentiable) : T</dt>
+<dd>Optional per-channel bias with shape (channels).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : T</dt>
+<dd>Carry state from previous step with shape (batch_size, channels, k - 1). If not provided, padding is zero.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Convolution output with same shape as input.</dd>
+<dt><tt>present_state</tt> (non-differentiable) : T</dt>
+<dd>Updated carry state with shape (batch_size, channels, k - 1). Contains the last (k - 1) values of the effective padded/concatenated sequence along the causal axis, including any values from past_state or zero-padding when the current input is shorter than k - 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(float16), tensor(bfloat16)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>b1_c1_degenerate</summary>
+
+```python
+# Mamba/GDN inner-head edge case: B=1, C=1.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 1, 1, 6, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_b1_c1_degenerate",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>basic</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_basic",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>decode_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 1, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
+
+expect(
+    node,
+    inputs=[input_, weight, bias, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_decode_step",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+weight = np.random.rand(channels, 1, k).astype(np.float16)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>kernel_size_one</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 1
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_kernel_size_one",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>short_input_no_past_state</summary>
+
+```python
+# L < k-1 with no past_state: zero-pad is wider than the input.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 2, 5
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight)
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_short_input_no_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight, activation="silu")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu_fp16</summary>
+
+```python
+# fp16 + SiLU: the reference upcasts Sigmoid/Mul to float32, so the
+# function-body expansion must do the same to stay numerically faithful.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.rand(batch_size, channels, length).astype(np.float16)
+weight = np.random.rand(channels, 1, k).astype(np.float16)
+
+output, present_state = _compute(input_, weight, activation="silu")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu_fp16",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>silu_with_past_state</summary>
+
+```python
+# Fused activation combined with concat-from-past variant of PaddedInput.
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "", "past_state"],
+    outputs=["output", "present_state"],
+    activation="silu",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, past_state=past_state, activation="silu"
+)
+
+expect(
+    node,
+    inputs=[input_, weight, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_silu_with_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>swish_alias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight"],
+    outputs=["output", "present_state"],
+    activation="swish",
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+
+output, present_state = _compute(input_, weight, activation="swish")
+
+expect(
+    node,
+    inputs=[input_, weight],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_swish_alias",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bias</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+
+output, present_state = _compute(input_, weight, bias=bias)
+
+expect(
+    node,
+    inputs=[input_, weight, bias],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_bias",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_bias_and_past_state</summary>
+
+```python
+# Multi-token (T>1) path through Concat(past, input) -> Conv(+bias).
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "bias", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+bias = np.random.randn(channels).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(
+    input_, weight, bias=bias, past_state=past_state
+)
+
+expect(
+    node,
+    inputs=[input_, weight, bias, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_bias_and_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>with_past_state</summary>
+
+```python
+node = onnx.helper.make_node(
+    "CausalConvWithState",
+    inputs=["input", "weight", "", "past_state"],
+    outputs=["output", "present_state"],
+)
+
+batch_size, channels, length, k = 2, 4, 8, 4
+input_ = np.random.randn(batch_size, channels, length).astype(np.float32)
+weight = np.random.randn(channels, 1, k).astype(np.float32)
+past_state = np.random.randn(batch_size, channels, k - 1).astype(np.float32)
+
+output, present_state = _compute(input_, weight, past_state=past_state)
+
+expect(
+    node,
+    inputs=[input_, weight, past_state],
+    outputs=[output, present_state],
+    name="test_causal_conv_with_state_with_past_state",
+    opset_imports=[onnx.helper.make_opsetid("", 27)],
+)
 ```
 
 </details>
@@ -17600,6 +18152,643 @@ Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
 </dl>
 
 
+### <a name="LinearAttention"></a><a name="linearattention">**LinearAttention**</a>
+
+  Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
+
+  The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
+  [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
+  kv_num_heads are always required and are used to unpack to 4D internally for computation.
+  The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
+
+  Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
+  kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
+  attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
+  shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
+  special case kv_num_heads == 1).
+
+  The update_rule attribute selects the recurrence type:
+  - "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+  - "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+  - "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+  - "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+
+  where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
+
+  Semantics: Equivalent to running the recurrent update sequentially for each token,
+  but may be implemented using chunk-parallel algorithms for GPU efficiency.
+
+
+#### Version
+
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>chunk_size</tt> : int (default is 64)</dt>
+<dd>Chunk size for the chunk-parallel WY decomposition during prefill (T>1). Tuning hint; does not affect output correctness.</dd>
+<dt><tt>kv_num_heads</tt> : int (required)</dt>
+<dd>Number of key/value heads. Always required.</dd>
+<dt><tt>q_num_heads</tt> : int (required)</dt>
+<dd>Number of query heads. Always required.</dd>
+<dt><tt>scale</tt> : float (default is 0.0)</dt>
+<dd>Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads and uses 1/sqrt(d_k). Set explicitly to override.</dd>
+<dt><tt>update_rule</tt> : string (default is gated_delta)</dt>
+<dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>query</tt> (differentiable) : T</dt>
+<dd>Query vectors with 3D packed shape (B, T, H_q * d_k). Heads are packed into the last dimension.</dd>
+<dt><tt>key</tt> (differentiable) : T</dt>
+<dd>Key vectors with 3D packed shape (B, T, H_kv * d_k). Should be L2-normalized for delta/gated_delta modes.</dd>
+<dt><tt>value</tt> (differentiable) : T</dt>
+<dd>Value vectors with 3D packed shape (B, T, H_kv * d_v).</dd>
+<dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
+<dd>Recurrent state from previous step with shape (B, H_kv, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dt><tt>decay</tt> (optional, differentiable) : T</dt>
+<dd>Exponential decay gate in log-space. 3D packed shape: (B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or (B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). Required for 'gated' and 'gated_delta' modes.</dd>
+<dt><tt>beta</tt> (optional, differentiable) : T</dt>
+<dd>Update rate (sigmoid output). 3D packed shape: (B, T, H_kv) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> (differentiable) : T</dt>
+<dd>Attention output with 3D packed shape (B, T, H_q * d_v).</dd>
+<dt><tt>present_state</tt> (non-differentiable) : S</dt>
+<dd>Updated recurrent state with shape (B, H_kv, d_k, d_v). Always 4D.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain activation input and output types to float16, bfloat16, or float32 tensors.</dd>
+<dt><tt>S</tt> : tensor(float16), tensor(bfloat16), tensor(float)</dt>
+<dd>Constrain state types to float16, bfloat16, or float32 tensors. Should be float32 or the same as T for numerical stability on long sequences.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>decode_step</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 1, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.random.randn(b, h_kv, d_k, d_v).astype(np.float32) * 0.1
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_decode_step",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "", "beta"],
+    outputs=["output", "present_state"],
+    update_rule="delta",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="delta",
+)
+expect(
+    node,
+    inputs=[query, key, value, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_delta",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>explicit_scale</summary>
+
+```python
+scale = 0.25
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+    scale=scale,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    scale=scale,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_explicit_scale",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>fp16</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float16)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float16), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float16)
+decay = (-np.abs(np.random.randn(b, t, h_kv * d_k)) * 0.1).astype(np.float16)
+beta = np.random.rand(b, t, h_kv).astype(np.float16)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_fp16",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay"],
+    outputs=["output", "present_state"],
+    update_rule="gated",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+# Per-key-dim decay in log-space (negative -> decay).
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="gated",
+)
+expect(
+    node,
+    inputs=[query, key, value, decay],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta_beta_scalar</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, 1).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_beta_scalar",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta_gqa</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_gqa",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta_mqa</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=8,
+    kv_num_heads=1,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 8, 1, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_mqa",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_per_head_decay</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay"],
+    outputs=["output", "present_state"],
+    update_rule="gated",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+# Per-head scalar decay.
+decay = -np.abs(np.random.randn(b, t, h_kv)).astype(np.float32) * 0.1
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="gated",
+)
+expect(
+    node,
+    inputs=[query, key, value, decay],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_per_head_decay",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>linear</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value"],
+    outputs=["output", "present_state"],
+    update_rule="linear",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="linear",
+)
+expect(
+    node,
+    inputs=[query, key, value],
+    outputs=[output, present_state],
+    name="test_linear_attention_linear",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>linear_t1_no_past</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value"],
+    outputs=["output", "present_state"],
+    update_rule="linear",
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 1, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = np.random.randn(b, t, h_kv * d_k).astype(np.float32)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+    update_rule="linear",
+)
+expect(
+    node,
+    inputs=[query, key, value],
+    outputs=[output, present_state],
+    name="test_linear_attention_linear_t1_no_past",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>no_past_explicit_zeros</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.zeros((b, h_kv, d_k, d_v), dtype=np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_no_past_explicit_zeros",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>prefill_with_past</summary>
+
+```python
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "past_state", "decay", "beta"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+past_state = np.random.randn(b, h_kv, d_k, d_v).astype(np.float32) * 0.1
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    past_state=past_state,
+    decay=decay,
+    beta=beta,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, past_state, decay, beta],
+    outputs=[output, present_state],
+    name="test_linear_attention_prefill_with_past",
+    opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
 ### <a name="Log"></a><a name="log">**Log**</a>
 
   Calculates the natural log of the given input tensor, element-wise.
@@ -24127,7 +25316,7 @@ for quant_type_name in ["uint8", "int8"]:
         )
 
         if quant_type == np.int8:
-            output = np.array([[41, -12, -9], [1, -75, 20]])
+            output = np.array([[41, -12, -9], [1, -75, -128]])
         else:
             output = np.array([[168, 115, 255], [1, 66, 151]])
         output = output.astype(quant_type)
@@ -24183,20 +25372,12 @@ for quant_type_name in ["uint8", "int8"]:
         )
 
         if quant_type == np.int8:
-            if dtype == np.float32:
-                output = np.array(
-                    [
-                        [[-86, 117, 120], [115, 39, -121]],
-                        [[-86, 117, 120], [115, 39, -121]],
-                    ]
-                )
-            else:
-                output = np.array(
-                    [
-                        [[-86, 116, 119], [115, 39, -121]],
-                        [[-86, 116, 119], [115, 39, -121]],
-                    ]
-                )
+            output = np.array(
+                [
+                    [[-86, -128, -128], [115, 39, -121]],
+                    [[-86, -128, -128], [115, 39, -121]],
+                ]
+            )
         else:
             output = np.array(
                 [
@@ -25541,36 +26722,44 @@ Other versions of this operator: <a href="Changelog.md#RandomUniformLike-1">1</a
   up to `limit` (exclusive).
 
   The number of elements in the output of range is computed as below:
-
   ```
   number_of_elements = max( ceil( (limit - start) / delta ) , 0 )
   ```
-
   The pseudocode determining the contents of the output is shown below:
-
   ```
   for(int i=0; i<number_of_elements; ++i) {
     output[i] =  start + (i * delta);
   }
   ```
-
-  Example 1
-
+  Example 1:
   ```
   Inputs: start = 3, limit = 9, delta = 3
   Output: [3, 6]
   ```
-
-  Example 2
-
+  Example 2:
   ```
   Inputs: start = 10, limit = 4, delta = -2
   Output: [10, 8, 6]
   ```
 
+  For `float16` and `bfloat16` inputs, the `stash_type` attribute controls the precision used for
+  intermediate accumulation. Setting `stash_type` to `1` (float) causes `start`, `limit`, and
+  `delta` to be cast to 32-bit float before the loop, with the output cast back to the original
+  type. This avoids precision loss for large ranges where successive additions in float16 or
+  bfloat16 would otherwise be inexact (e.g. `x + 1 == x` for large `x`).
+
 #### Version
 
-This version of the operator has been available since version 11 of the default ONNX operator set.
+This version of the operator has been available since version 27 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Range-11">11</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>stash_type</tt> : int (default is 1)</dt>
+<dd>The data type used for intermediate computation when T is float16 or bfloat16. Defaults to 1 (float). Has no effect for other types.</dd>
+</dl>
 
 #### Inputs
 
@@ -25593,12 +26782,69 @@ This version of the operator has been available since version 11 of the default 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(bfloat16)</dt>
 <dd>Constrain input types to common numeric type tensors.</dd>
 </dl>
 
 
 #### Examples
+
+<details>
+<summary>range_bfloat16_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Range",
+    inputs=["start", "limit", "delta"],
+    outputs=["output"],
+)
+
+start = np.array(1.0, dtype=ml_dtypes.bfloat16)
+limit = np.array(5.0, dtype=ml_dtypes.bfloat16)
+delta = np.array(2.0, dtype=ml_dtypes.bfloat16)
+
+output = np.arange(1.0, 5.0, 2.0, dtype=np.float32).astype(
+    ml_dtypes.bfloat16
+)  # expected output [1.0, 3.0] as bfloat16
+
+expect(
+    node,
+    inputs=[start, limit, delta],
+    outputs=[output],
+    name="test_range_bfloat16_type_positive_delta",
+)
+```
+
+</details>
+
+
+<details>
+<summary>range_float16_type_positive_delta</summary>
+
+```python
+node = onnx.helper.make_node(
+    "Range",
+    inputs=["start", "limit", "delta"],
+    outputs=["output"],
+)
+
+start = np.float16(1)
+limit = np.float16(5)
+delta = np.float16(2)
+
+output = np.arange(
+    start, limit, delta, dtype=np.float16
+)  # expected output [1.0, 3.0]
+expect(
+    node,
+    inputs=[start, limit, delta],
+    outputs=[output],
+    name="test_range_float16_type_positive_delta",
+)
+```
+
+</details>
+
 
 <details>
 <summary>range_float_type_positive_delta</summary>
@@ -32098,35 +33344,19 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">8</a>, <a href="C
 # Given an input sequence [x1, ..., xN], sum up its elements using a scan
 # returning the final state (x1+x2+...+xN) as well the scan_output
 # [x1, x1+x2, ..., x1+x2+...+xN]
-#
-# create graph to represent scan body
-sum_in = onnx.helper.make_tensor_value_info(
-    "sum_in", onnx.TensorProto.FLOAT, [2]
-)
-next_ = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
-sum_out = onnx.helper.make_tensor_value_info(
-    "sum_out", onnx.TensorProto.FLOAT, [2]
-)
-scan_out = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [2]
-)
-add_node = onnx.helper.make_node(
-    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
-)
-id_node = onnx.helper.make_node(
-    "Identity", inputs=["sum_out"], outputs=["scan_out"]
-)
-scan_body = onnx.helper.make_graph(
-    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
-)
-# create scan op node
-no_sequence_lens = ""  # optional input, not supplied
-node = onnx.helper.make_node(
-    "Scan",
-    inputs=[no_sequence_lens, "initial", "x"],
-    outputs=["y", "z"],
-    num_scan_inputs=1,
-    body=scan_body,
+# Note: the first input (sequence_lens) is optional and omitted via "".
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan ("", initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] next)
+            => (float[2] sum_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
 )
 # create inputs for batch-size 1, sequence-length 3, inner dimension 2
 initial = np.array([0, 0]).astype(np.float32).reshape((1, 2))
@@ -32155,34 +33385,18 @@ expect(
 # Given an input sequence [x1, ..., xN], sum up its elements using a scan
 # returning the final state (x1+x2+...+xN) as well the scan_output
 # [x1, x1+x2, ..., x1+x2+...+xN]
-#
-# create graph to represent scan body
-sum_in = onnx.helper.make_tensor_value_info(
-    "sum_in", onnx.TensorProto.FLOAT, [2]
-)
-next_ = onnx.helper.make_tensor_value_info("next", onnx.TensorProto.FLOAT, [2])
-sum_out = onnx.helper.make_tensor_value_info(
-    "sum_out", onnx.TensorProto.FLOAT, [2]
-)
-scan_out = onnx.helper.make_tensor_value_info(
-    "scan_out", onnx.TensorProto.FLOAT, [2]
-)
-add_node = onnx.helper.make_node(
-    "Add", inputs=["sum_in", "next"], outputs=["sum_out"]
-)
-id_node = onnx.helper.make_node(
-    "Identity", inputs=["sum_out"], outputs=["scan_out"]
-)
-scan_body = onnx.helper.make_graph(
-    [add_node, id_node], "scan_body", [sum_in, next_], [sum_out, scan_out]
-)
-# create scan op node
-node = onnx.helper.make_node(
-    "Scan",
-    inputs=["initial", "x"],
-    outputs=["y", "z"],
-    num_scan_inputs=1,
-    body=scan_body,
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan (initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] next)
+            => (float[2] sum_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
 )
 # create inputs for sequence-length 3, inner dimension 2
 initial = np.array([0, 0]).astype(np.float32).reshape((2,))
@@ -32197,6 +33411,91 @@ expect(
     inputs=[initial, x],
     outputs=[y, z],
     name="test_scan9_sum",
+    opset_imports=[onnx.helper.make_opsetid("", 9)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>scan_9_multi_state</summary>
+
+```python
+# Scan with two state variables: running sum and running product.
+# This exercises the case where num_loop_state_vars (2) differs from
+# num_scan_inputs (1).
+#
+# Body inputs:  sum_in (state), prod_in (state), next (scan)
+# Body outputs: sum_out (state), prod_out (state), scan_out (scan)
+node = onnx.parser.parse_node(
+    """
+    y_sum, y_prod, z = Scan (initial_sum, initial_prod, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float[2] sum_in, float[2] prod_in, float[2] next)
+            => (float[2] sum_out, float[2] prod_out, float[2] scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            prod_out = Mul(prod_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
+)
+# x = [[1, 2], [3, 4], [5, 6]]
+initial_sum = np.array([0, 0]).astype(np.float32)
+initial_prod = np.array([1, 1]).astype(np.float32)
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((3, 2))
+# final sum = [1+3+5, 2+4+6] = [9, 12]
+y_sum = np.array([9, 12]).astype(np.float32)
+# final product = [1*3*5, 2*4*6] = [15, 48]
+y_prod = np.array([15, 48]).astype(np.float32)
+# scan output (running sum) = [[1,2], [4,6], [9,12]]
+z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((3, 2))
+
+expect(
+    node,
+    inputs=[initial_sum, initial_prod, x],
+    outputs=[y_sum, y_prod, z],
+    name="test_scan9_multi_state",
+    opset_imports=[onnx.helper.make_opsetid("", 9)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>scan_9_scalar</summary>
+
+```python
+# Scan with scalar state and scan output to verify that output
+# shapes are not distorted (e.g. (T,) not (T, 1)).
+node = onnx.parser.parse_node(
+    """
+    y, z = Scan (initial, x) <
+        num_scan_inputs = 1,
+        body = scan_body (float sum_in, float next)
+            => (float sum_out, float scan_out)
+        {
+            sum_out  = Add(sum_in, next)
+            scan_out = Identity(sum_out)
+        }
+    >
+    """
+)
+initial = np.float32(0.0)
+x = np.array([1, 2, 3, 4, 5]).astype(np.float32)
+# final state = 1+2+3+4+5 = 15
+y = np.float32(15.0)
+# scan output = [1, 3, 6, 10, 15], shape (5,)
+z = np.array([1, 3, 6, 10, 15]).astype(np.float32)
+
+expect(
+    node,
+    inputs=[initial, x],
+    outputs=[y, z],
+    name="test_scan9_scalar",
     opset_imports=[onnx.helper.make_opsetid("", 9)],
 )
 ```
@@ -32588,6 +33887,37 @@ expect(
     inputs=[data, indices, updates],
     outputs=[y],
     name="test_scatter_elements_with_reduction_min",
+)
+```
+
+</details>
+
+
+<details>
+<summary>scatter_elements_with_reduction_mul</summary>
+
+```python
+axis = 1
+node = onnx.helper.make_node(
+    "ScatterElements",
+    inputs=["data", "indices", "updates"],
+    outputs=["y"],
+    axis=axis,
+    reduction="mul",
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 1]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = scatter_elements(data, indices, updates, axis, reduction="mul")
+# print(y) produces
+# [[1.0, 4.62, 3.0, 4.0, 5.0]]
+
+expect(
+    node,
+    inputs=[data, indices, updates],
+    outputs=[y],
+    name="test_scatter_elements_with_reduction_mul",
 )
 ```
 
@@ -38219,7 +39549,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
-<dd>Input is ether string UTF-8 or int32/int64</dd>
+<dd>Input is either string UTF-8 or int32/int64</dd>
 <dt><tt>T1</tt> : tensor(float)</dt>
 <dd>1-D tensor of floats</dd>
 </dl>
@@ -40471,6 +41801,553 @@ x = (np.random.randn(1, 4, 1, 6) > 0).astype(bool)
 y = (np.random.randn(3, 1, 5, 6) > 0).astype(bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z], name="test_xor_bcast4v4d")
+```
+
+</details>
+
+
+## ai.onnx.preview
+### <sub>experimental</sub> <a name="ai.onnx.preview.FlexAttention"></a><a name="ai.onnx.preview.flexattention">**ai.onnx.preview.FlexAttention**</a>
+
+  Computes scaled dot-product attention over rank-4 (batched, multi-head) inputs,
+  with optional user-provided customization subgraphs at two stages:
+
+  1. score_mod: Modify the attention score tensor after Q·K^T
+  2. prob_mod: Modify the probability tensor after Softmax
+
+  This operator mirrors the capabilities of PyTorch's flex_attention:
+  https://docs.pytorch.org/docs/stable/nn.attention.flex_attention.html
+
+  Input Shapes (MUST be rank-4 tensors):
+  - Q: `(batch_size, q_num_heads, q_sequence_length, head_size)`
+  - K: `(batch_size, kv_num_heads, kv_sequence_length, head_size)`
+  - V: `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)`
+
+  Output Shape:
+  - Y: `(batch_size, q_num_heads, q_sequence_length, v_head_size)`
+
+  FlexAttention Computation:
+  ```
+  Scores = (Q @ K^T) * scale
+  Scores = score_mod(Scores)             # if 'score_mod' is provided
+  Probs = Softmax(Scores, axis=-1)
+  Probs = prob_mod(Probs)                # if 'prob_mod' is provided
+  Y = Probs @ V
+  ```
+
+  Grouped Query Attention (GQA):
+  When `q_num_heads != kv_num_heads`, each K/V head is shared by a contiguous
+  group of query heads in head-index order. Let
+  `group_size = q_num_heads / kv_num_heads`; then query head `h` uses K/V head
+  `floor(h / group_size)`. `q_num_heads` must be a multiple of
+  `kv_num_heads`.
+
+  Modifier Subgraphs (score_mod, prob_mod):
+  Each modifier subgraph takes exactly one rank-4 tensor input and must produce
+  exactly one rank-4 tensor output of the same shape and element type.
+  - score_mod input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  - prob_mod  input/output shape: `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`
+  The element type is determined by softmax_precision (defaults to float32 for
+  non-double inputs, otherwise double).
+
+  Masking can be expressed in score_mod by writing masked positions as -inf (or a
+  large negative value appropriate for the target precision).
+
+#### Version
+
+No versioning maintained for experimental ops.
+#### Attributes
+
+<dl>
+<dt><tt>prob_mod</tt> : graph</dt>
+<dd>Optional probability modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (probs) -> probs_out. probs has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scaling factor for Q*K^T. Defaults to 1/sqrt(head_size).</dd>
+<dt><tt>score_mod</tt> : graph</dt>
+<dd>Optional score modifier subgraph with 1 rank-4 tensor input and 1 rank-4 tensor output of the same shape and element type: (scores) -> scores_out. scores has softmax_precision element type and shape (B, Hq, L, S). The output must preserve the input shape.</dd>
+<dt><tt>softmax_precision</tt> : int</dt>
+<dd>Floating-point precision for softmax computation. Defaults to float32 for non-double inputs, otherwise uses double. Must be explicitly specified for non-float types.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>Q</tt> : T1</dt>
+<dd>Query tensor with shape `(batch_size, q_num_heads, q_seq_len, head_size)`.</dd>
+<dt><tt>K</tt> : T1</dt>
+<dd>Key tensor with shape `(batch_size, kv_num_heads, kv_seq_len, head_size)`.</dd>
+<dt><tt>V</tt> : T1</dt>
+<dd>Value tensor with shape `(batch_size, kv_num_heads, kv_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Output tensor with shape `(batch_size, q_num_heads, q_seq_len, v_head_size)`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(bfloat16), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain Q, K, V to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>flexattention</summary>
+
+```python
+"""Basic FlexAttention test with default settings."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_causal_mask</summary>
+
+```python
+"""FlexAttention with causal masking score_mod (Qwen-3, Gemma-3, Llama-3 pattern)."""
+score_mod_graph = _make_score_mod_causal_mask_graph(TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with causal masking
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+# Apply causal mask: set future positions to -inf
+q_idx = np.arange(L).reshape(1, 1, L, 1)
+k_idx = np.arange(S).reshape(1, 1, 1, S)
+mask = q_idx >= k_idx
+scores = np.where(mask, scores, -np.inf)
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_causal_mask",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_diff_head_sizes</summary>
+
+```python
+"""FlexAttention with different head sizes for Q/K vs V."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 32  # V has different head size
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_diff_head_sizes",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_double</summary>
+
+```python
+"""FlexAttention with double precision inputs."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float64)
+K = np.random.rand(B, Hq, S, E).astype(np.float64)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float64)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_double",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_fp16</summary>
+
+```python
+"""FlexAttention with float16 inputs."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float16)
+K = np.random.rand(B, Hq, S, E).astype(np.float16)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float16)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_fp16",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_gqa</summary>
+
+```python
+"""FlexAttention with Grouped Query Attention (GQA)."""
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, Hkv, L, S, E, Ev = 2, 8, 2, 4, 6, 16, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hkv, S, E).astype(np.float32)
+V = np.random.rand(B, Hkv, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_gqa",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_prob_mod</summary>
+
+```python
+"""FlexAttention with prob_mod subgraph (scales probabilities)."""
+scale_value = 0.5
+prob_mod_graph = _make_prob_mod_scale_graph(scale_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+prob_mod_attr = helper.make_attribute("prob_mod", prob_mod_graph)
+node.attribute.append(prob_mod_attr)
+
+B, Hq, L, E = 1, 2, 3, 4
+S, Ev = 3, 4
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+probs = probs * scale_value
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_prob_mod",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_relative_positional</summary>
+
+```python
+"""FlexAttention with relative positional bias score_mod."""
+score_mod_graph = _make_score_mod_relative_positional_graph(TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with relative positional bias
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+q_idx = np.arange(L).reshape(-1, 1)
+k_idx = np.arange(S).reshape(1, -1)
+rel_pos = (q_idx - k_idx).astype(np.float32)
+scores = scores + rel_pos
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_relative_positional",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_scaled</summary>
+
+```python
+"""FlexAttention with explicit scale attribute."""
+scale = 0.1
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    scale=scale,
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+
+B, Hq, L, E = 2, 4, 8, 16
+S, Ev = 6, 16
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+(Y,) = _compute_flex_attention(Q, K, V, scale=scale)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_scaled",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_score_mod</summary>
+
+```python
+"""FlexAttention with score_mod subgraph (adds bias to scores)."""
+bias_value = 0.5
+score_mod_graph = _make_score_mod_bias_graph(bias_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+# Add score_mod as a graph attribute
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 3, 4
+S, Ev = 3, 4
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+scores = scores + bias_value  # score_mod: add bias
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_score_mod",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
+```
+
+</details>
+
+
+<details>
+<summary>flexattention_soft_cap</summary>
+
+```python
+"""FlexAttention with soft capping score_mod (Gemma-2 pattern)."""
+cap_value = 20.0
+score_mod_graph = _make_score_mod_soft_cap_graph(cap_value, TensorProto.FLOAT)
+
+node = helper.make_node(
+    "FlexAttention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    domain=AI_ONNX_PREVIEW_DOMAIN,
+)
+score_mod_attr = helper.make_attribute("score_mod", score_mod_graph)
+node.attribute.append(score_mod_attr)
+
+B, Hq, L, E = 1, 2, 4, 8
+S, Ev = 4, 8
+
+Q = np.random.rand(B, Hq, L, E).astype(np.float32)
+K = np.random.rand(B, Hq, S, E).astype(np.float32)
+V = np.random.rand(B, Hq, S, Ev).astype(np.float32)
+
+# Manually compute expected output with soft capping
+scale = 1.0 / np.sqrt(E)
+scores = np.einsum("bhle,bhse->bhls", Q, K) * scale
+scores = np.tanh(scores / cap_value) * cap_value
+probs = np.exp(scores - scores.max(axis=-1, keepdims=True))
+probs = probs / probs.sum(axis=-1, keepdims=True)
+Y = np.einsum("bhls,bhsv->bhlv", probs, V).astype(np.float32)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_flexattention_soft_cap",
+    opset_imports=[
+        helper.make_opsetid("", 26),
+        helper.make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+    ],
+)
 ```
 
 </details>
