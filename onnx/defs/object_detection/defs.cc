@@ -89,9 +89,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           Dim N, C, H, W, num_rois, four;
           four.set_dim_value(4);
 
-          unifyInputShape(ctx, input_param, {N, C, H, W});
-          unifyInputShape(ctx, rois_param, {num_rois, four});
-          unifyInputShape(ctx, batch_index_param, {num_rois});
+          ctx.unifyInputShape(input_param, {N, C, H, W});
+          ctx.unifyInputShape(rois_param, {num_rois, four});
+          ctx.unifyInputShape(batch_index_param, {num_rois});
 
           Dim ht, width;
           unifyDim(ht, getAttribute(ctx, "output_height", 1));

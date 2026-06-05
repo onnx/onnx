@@ -1238,14 +1238,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           // A' is A or A^T depending on transA; B' is B or B^T depending on transB
           Dim M, N, K;
           if (transA) {
-            unifyInputShape(ctx, 0, {K, M});
+            ctx.unifyInputShape(0, {K, M});
           } else {
-            unifyInputShape(ctx, 0, {M, K});
+            ctx.unifyInputShape(0, {M, K});
           }
           if (transB) {
-            unifyInputShape(ctx, 1, {N, K});
+            ctx.unifyInputShape(1, {N, K});
           } else {
-            unifyInputShape(ctx, 1, {K, N});
+            ctx.unifyInputShape(1, {K, N});
           }
           // Output shape is (M, N)
           updateOutputShape(ctx, 0, {M, N});
@@ -1958,7 +1958,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Optional weight input: [C]
           if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-            unifyInputShape(ctx, 2, {C});
+            ctx.unifyInputShape(2, {C});
           }
 
           if (getAttribute(ctx, "reduction", "mean") == "none") {

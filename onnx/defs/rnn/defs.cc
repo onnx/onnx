@@ -28,9 +28,9 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
 
   // X: [seq_length, batch_size, input_size] (layout=0) or [batch_size, seq_length, input_size] (layout=1)
   if (layout_value == 0) {
-    unifyInputShape(ctx, 0, {seq_length, batch_size, input_size});
+    ctx.unifyInputShape(0, {seq_length, batch_size, input_size});
   } else {
-    unifyInputShape(ctx, 0, {batch_size, seq_length, input_size});
+    ctx.unifyInputShape(0, {batch_size, seq_length, input_size});
   }
 
   auto num_outputs = ctx.getNumOutputs();
