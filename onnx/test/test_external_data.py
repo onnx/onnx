@@ -28,8 +28,6 @@ from onnx import (
 )
 from onnx.external_data_helper import (
     _ALLOWED_EXTERNAL_DATA_KEYS,
-    _ZERO_PADDING_CHUNK_SIZE,
-    _write_zero_padding,
     ExternalDataInfo,
     convert_model_from_external_data,
     convert_model_to_external_data,
@@ -1324,34 +1322,28 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
 
 
 class TestSaveExternalDataPadding(unittest.TestCase):
-    def _write_padding_sizes(self, padding_size: int) -> list[int]:
-        class CountingWriter:
-            def __init__(self) -> None:
-                self.write_sizes: list[int] = []
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.mkdtemp()
 
-            def write(self, data: bytes) -> int:
-                self.write_sizes.append(len(data))
-                return len(data)
+    def tearDown(self) -> None:
+        shutil.rmtree(self.temp_dir)
 
-        writer = CountingWriter()
-        _write_zero_padding(writer, padding_size)
-        return writer.write_sizes
+    def test_save_external_data_honors_offset_without_explicit_padding(self) -> None:
+        array = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        raw = tensor.raw_data
+        offset = 2 * 1024 * 1024 + 17
 
-    def test_zero_padding_is_written_in_bounded_chunks(self) -> None:
-        padding_size = _ZERO_PADDING_CHUNK_SIZE * 2 + 17
+        set_external_data(tensor, location="weights.bin", offset=offset)
 
-        self.assertEqual(
-            self._write_padding_sizes(padding_size),
-            [_ZERO_PADDING_CHUNK_SIZE, _ZERO_PADDING_CHUNK_SIZE, 17],
-        )
+        save_external_data(tensor, self.temp_dir)
 
-    def test_zero_padding_exact_chunk_multiple_has_no_partial_write(self) -> None:
-        padding_size = _ZERO_PADDING_CHUNK_SIZE * 2
-
-        self.assertEqual(
-            self._write_padding_sizes(padding_size),
-            [_ZERO_PADDING_CHUNK_SIZE, _ZERO_PADDING_CHUNK_SIZE],
-        )
+        data_path = os.path.join(self.temp_dir, "weights.bin")
+        self.assertEqual(os.path.getsize(data_path), offset + len(raw))
+        with open(data_path, "rb") as data_file:
+            self.assertEqual(data_file.read(16), b"\0" * 16)
+            data_file.seek(offset)
+            self.assertEqual(data_file.read(len(raw)), raw)
 
 
 if __name__ == "__main__":

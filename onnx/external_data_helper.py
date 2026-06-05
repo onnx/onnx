@@ -52,9 +52,6 @@ _ALLOWED_EXTERNAL_DATA_KEYS = frozenset(
 _SORTED_ALLOWED_KEYS = sorted(_ALLOWED_EXTERNAL_DATA_KEYS)
 _MAX_UNKNOWN_KEYS_IN_WARNING = 10
 _MAX_KEY_DISPLAY_LENGTH = 100
-_ZERO_PADDING_CHUNK_SIZE = 1024 * 1024
-
-
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
         self.location = ""
@@ -140,17 +137,6 @@ def _validate_external_data_file_bounds(
             )
         return data_file.read(info.length)
     return data_file.read()
-
-
-def _write_zero_padding(data_file: IO[bytes], padding_size: int) -> None:
-    """Write zero padding without allocating the whole padding range at once."""
-    zero_chunk = b"\0" * _ZERO_PADDING_CHUNK_SIZE
-    remaining = padding_size
-    while remaining >= _ZERO_PADDING_CHUNK_SIZE:
-        data_file.write(zero_chunk)
-        remaining -= _ZERO_PADDING_CHUNK_SIZE
-    if remaining:
-        data_file.write(b"\0" * remaining)
 
 
 def load_external_data_for_tensor(tensor: TensorProto, base_dir: str) -> None:
@@ -307,10 +293,9 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     with os.fdopen(fd, "r+b") as data_file:
         data_file.seek(0, 2)
         if info.offset is not None:
-            # Pad file to required offset if needed
             file_size = data_file.tell()
             if info.offset > file_size:
-                _write_zero_padding(data_file, info.offset - file_size)
+                data_file.truncate(info.offset)
 
             data_file.seek(info.offset)
         offset = data_file.tell()
