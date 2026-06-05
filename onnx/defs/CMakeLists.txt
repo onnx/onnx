@@ -17,8 +17,6 @@ target_sources(onnx_core PRIVATE
     operator_sets_training.h
     parser.cc
     parser.h
-    printer.cc
-    printer.h
     schema.cc
     schema.h
     shape_inference.cc

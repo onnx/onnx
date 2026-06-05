@@ -68,5 +68,150 @@ class TestBasicFunctions(unittest.TestCase):
             printer.to_text(onnx.AttributeProto())
 
 
+class TestRoundTrip(unittest.TestCase):
+    """parse -> print -> parse -> print round-trip checks.
+
+    These moved here from the C++ parser_test.cc ``Parse`` helper when the text
+    printer was reimplemented in pure Python (onnx/printer.py). Like the C++
+    check, we do not compare the printed text to the original input (they differ
+    in white-space and syntactic sugar); instead we print once, parse that, print
+    again, and require the two printed forms to be identical.
+    """
+
+    def _check(self, parse_fn, text0: str):
+        proto1 = parse_fn(text0)
+        text1 = printer.to_text(proto1)
+        proto2 = parse_fn(text1)
+        text2 = printer.to_text(proto2)
+        self.assertEqual(text1, text2)
+        return proto2
+
+    def test_model_roundtrip(self) -> None:
+        self._check(
+            parser.parse_model,
+            """
+            <
+              ir_version: 7,
+              opset_import: [ "ai.onnx.ml" : 10 ],
+              producer_name: "ParserTest",
+              producer_version: "1.0",
+              domain: "ai.onnx.ml",
+              model_version: 1,
+              doc_string: "A parser test case model.",
+              metadata_props: [ "somekey" : "somevalue", "key2" : "value2" ]
+            >
+            agraph (float[N] y, float[N] z) => (float[N] w)
+            {
+                x = foo(y, z)
+                w = bar(x, y)
+            }
+            """,
+        )
+
+    def test_if_subgraph_roundtrip(self) -> None:
+        self._check(
+            parser.parse_model,
+            """
+            <ir_version: 7, opset_import: [ "" : 13 ]>
+            iftest (bool b, float[128] X, float[128] Y) => (float[128] Z)
+            {
+              Z = If (b) <
+                  then_branch = g1 () => (float[128] z_then) { z_then = Identity(X) },
+                  else_branch = g2 () => (float[128] z_else) { z_else = Identity(Y) }
+                  >
+            }
+            """,
+        )
+
+    def test_functions_roundtrip(self) -> None:
+        self._check(
+            parser.parse_model,
+            """
+            <ir_version: 8, opset_import: [ "" : 10, "local" : 1 ]>
+            agraph (float[N, 128] X, float[128,10] W, float[10] B) => (float[N] C)
+            {
+              T = local.foo (X, W, B)
+              C = local.square(T)
+            }
+            <opset_import: [ "" : 10 ], domain: "local", doc_string: "Function foo.">
+            foo (x, w, b) => (c) {
+              T = MatMul(x, w)
+              S = Add(T, b)
+              c = Softmax(S)
+            }
+            <opset_import: [ "" : 10 ], domain: "local">
+            square (x) => (y) { y = Mul (x, x) }
+            """,
+        )
+
+    def test_function_with_attr_ref_roundtrip(self) -> None:
+        # Exercises the attr-ref printer path (name: type = @ref) and a declared
+        # function attribute with a default value.
+        self._check(
+            parser.parse_function,
+            """
+            <domain: "custom_domain", opset_import: [ "" : 15]>
+            foo <alpha: float=4.0, gamma> (X) => (C)
+            {
+                ca = Constant<value_float: float=@alpha>()
+                cg = Constant<value_float: float=@gamma>()
+                cax = Mul(ca, X)
+                C = Add(cax, cg)
+            }
+            """,
+        )
+
+    def test_graph_initializers_roundtrip(self) -> None:
+        graph = self._check(
+            parser.parse_graph,
+            """
+            agraph (float[N] x) => (float[N] y)
+            <int32[2] i = {3, 4}, float[2] f = {1.5, 2.5}, float[3] s>
+            {
+              y = Identity(x)
+            }
+            """,
+        )
+        # i and f carry values (initializers); s has no value (value_info).
+        self.assertEqual(len(graph.initializer), 2)
+        self.assertEqual(len(graph.value_info), 1)
+
+    def test_node_attributes_roundtrip(self) -> None:
+        node = self._check(
+            parser.parse_node,
+            'r = foo <d = [5, 10], e = [0.55, 0.66], f = ["str1", "str2"], '
+            'g = "txt", h = 3, t = float[2] {1.0, 2.0}> (y, z)',
+        )
+        self.assertEqual(node.op_type, "foo")
+
+    def test_domain_qualified_node_roundtrip(self) -> None:
+        node = self._check(parser.parse_node, "r = com.example.foo(x, y)")
+        self.assertEqual(node.domain, "com.example")
+
+    def test_types_model_roundtrip(self) -> None:
+        # seq / optional / sparse_tensor / map value-info types.
+        self._check(
+            parser.parse_model,
+            """
+            <ir_version: 8, opset_import: [ "" : 17 ]>
+            g (float[N] x) => (float[N] y)
+            <seq(float[]) sq, optional(float[2]) op, sparse_tensor(float[8]) sp>
+            {
+              y = Identity(x)
+            }
+            """,
+        )
+
+    def test_quoted_identifiers_roundtrip(self) -> None:
+        graph = self._check(
+            parser.parse_graph,
+            'agraph (float["M + N"] "in put") => (float["M + N"] "out put") '
+            '{ "out put" = Identity("in put") }',
+        )
+        text = printer.to_text(graph)
+        self.assertIn('"M + N"', text)
+        self.assertIn('"in put"', text)
+
+
 if __name__ == "__main__":
     unittest.main()

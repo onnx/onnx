@@ -15,7 +15,6 @@
 #include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/parser.h"
-#include "onnx/defs/printer.h"
 #include "onnx/defs/schema.h"
 #include "onnx/shape_inference/implementation.h"
 
@@ -213,7 +212,7 @@ struct FunctionTypeChecker {
       ostr << pair.first << " = " << *pair.second << ", ";
     }
     for (const auto& attr : attrs) {
-      ostr << attr << ", ";
+      ostr << attr.name() << ", ";
     }
     ostr << "}\n" << error << "\n";
     errors.push_back(ostr.str());
@@ -225,7 +224,7 @@ struct FunctionTypeChecker {
       std::cout << pair.first << " = " << *pair.second << ", ";
     }
     for (const auto& attr : attrs) {
-      std::cout << attr << ", ";
+      std::cout << attr.name() << ", ";
     }
     std::cout << "}\n";
   }
