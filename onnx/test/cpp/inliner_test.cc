@@ -29,14 +29,12 @@ static void InlineFunctions(
   checker::check_model(model, false, true);
   shape_inference::InferShapes(model);
 
-  // std::cout << "Before inlining:\n" << ProtoToString(model) << "\n";
   if (schema_registry != nullptr)
     inliner::InlineSelectedFunctions(model, *to_inline, schema_registry);
   else if (to_inline != nullptr)
     inliner::InlineSelectedFunctions(model, *to_inline);
   else
     inliner::InlineLocalFunctions(model, true);
-  // std::cout << "After inlining:\n" << ProtoToString(model) << "\n";
 
   // The following will ensure basic safety checks hold after inlining, including
   // absence of duplicate names (multiple assignments to same name).
