@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import math
 import sys
 from typing import TYPE_CHECKING, Any
 
@@ -110,9 +111,16 @@ def _unpack_4bit(
     array_high >>= np.uint8(4)
     result[0::2] = array_low
     result[1::2] = array_high
-    if result.size == np.prod(dims, dtype=np.int64) + 1:
+    expected_elements = math.prod(dims)
+    if result.size == expected_elements + 1:
         # handle single-element padding due to odd number of elements
         result = result[:-1]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 4-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 
@@ -147,9 +155,16 @@ def _unpack_2bit(
     result[1::4] = (data >> 2) & 0x03
     result[2::4] = (data >> 4) & 0x03
     result[3::4] = (data >> 6) & 0x03
-    if result.size > np.prod(dims, dtype=np.int64):
+    expected_elements = math.prod(dims)
+    if result.size > expected_elements:
         # handle padding due to non multiple of 4 elements
-        result = result[: np.prod(dims, dtype=np.int64)]
+        result = result[:expected_elements]
+    if expected_elements > result.size:
+        raise ValueError(
+            f"Packed 2-bit data ({data.size} bytes, {result.size} elements unpacked) "
+            f"is too small for the declared shape {list(dims)} "
+            f"({expected_elements} elements required)."
+        )
     result.resize(dims, refcheck=False)
     return result
 

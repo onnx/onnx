@@ -111,11 +111,9 @@ wheel = ">=0.45.1"
 zizmor = ">=1.24.1,<2"
 
 [feature.reference.dependencies]
-# follows requirements-reference.txt
 pillow = ">=11.2.1,<12"
 
 [feature.oldies.dependencies]
-# follows requirements-min.txt
 protobuf = "==4.25.1"
 python = "3.10.*"
 numpy = "==1.23.2"

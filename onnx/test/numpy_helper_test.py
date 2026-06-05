@@ -273,6 +273,72 @@ class TestNumpyHelper(unittest.TestCase):
             numpy_helper.from_dict({1.5: np.array(1), 2.5: np.array(2)})
         self.assertIn("Unsupported map key type", str(cm.exception))
 
+    @parameterized.parameterized.expand(
+        [
+            ("uint4", onnx.TensorProto.UINT4),
+            ("int4", onnx.TensorProto.INT4),
+            ("float4e2m1", onnx.TensorProto.FLOAT4E2M1),
+        ]
+    )
+    def test_to_array_4bit_payload_too_small_raw_data(
+        self, _: str, data_type: int
+    ) -> None:
+        tensor = onnx.TensorProto()
+        tensor.data_type = data_type
+        tensor.dims.extend([1000])
+        tensor.raw_data = b"\x00"  # encodes 2 elements, not 1000
+        with self.assertRaises(ValueError, msg="payload too small for declared dims"):
+            numpy_helper.to_array(tensor)
+
+    @parameterized.parameterized.expand(
+        [
+            ("uint4", onnx.TensorProto.UINT4),
+            ("int4", onnx.TensorProto.INT4),
+            ("float4e2m1", onnx.TensorProto.FLOAT4E2M1),
+        ]
+    )
+    def test_to_array_4bit_payload_too_small_int32_data(
+        self, _: str, data_type: int
+    ) -> None:
+        tensor = onnx.TensorProto()
+        tensor.data_type = data_type
+        tensor.dims.extend([1000])
+        tensor.int32_data.append(0)  # encodes 8 elements, not 1000
+        with self.assertRaises(ValueError, msg="payload too small for declared dims"):
+            numpy_helper.to_array(tensor)
+
+    @parameterized.parameterized.expand(
+        [
+            ("uint2", onnx.TensorProto.UINT2),
+            ("int2", onnx.TensorProto.INT2),
+        ]
+    )
+    def test_to_array_2bit_payload_too_small_raw_data(
+        self, _: str, data_type: int
+    ) -> None:
+        tensor = onnx.TensorProto()
+        tensor.data_type = data_type
+        tensor.dims.extend([1000])
+        tensor.raw_data = b"\x00"  # encodes 4 elements, not 1000
+        with self.assertRaises(ValueError, msg="payload too small for declared dims"):
+            numpy_helper.to_array(tensor)
+
+    @parameterized.parameterized.expand(
+        [
+            ("uint2", onnx.TensorProto.UINT2),
+            ("int2", onnx.TensorProto.INT2),
+        ]
+    )
+    def test_to_array_2bit_payload_too_small_int32_data(
+        self, _: str, data_type: int
+    ) -> None:
+        tensor = onnx.TensorProto()
+        tensor.data_type = data_type
+        tensor.dims.extend([1000])
+        tensor.int32_data.append(0)  # encodes 16 elements, not 1000
+        with self.assertRaises(ValueError, msg="payload too small for declared dims"):
+            numpy_helper.to_array(tensor)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
