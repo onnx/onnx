@@ -114,6 +114,21 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
         """,
         )
 
+    def test_LinearAttention_opset28_downgrade_fails(self) -> None:
+        # LinearAttention opset 28 cannot be downgraded below opset 27; the
+        # op didn't exist before that version.
+        self._test_model_conversion_fails(
+            to_opset=26,
+            model="""
+            <ir_version: 10, opset_import: [ "" : 28]>
+            linear_attention28 (float[2, 4, 64] Q, float[2, 4, 64] K, float[2, 4, 64] V)
+                => (float[2, 4, 64] output, float[2, 4, 16, 16] present_state)
+            {
+                output, present_state = LinearAttention <q_num_heads = 4, kv_num_heads = 4, update_rule = "linear"> (Q, K, V)
+            }
+        """,
+        )
+
     def test_CausalConvWithState_downgrade_fails(self) -> None:
         # CausalConvWithState was introduced at opset 27; no decomposition
         # adapter exists for downgrading to opset 24. The version converter

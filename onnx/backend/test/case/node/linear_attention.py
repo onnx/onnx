@@ -13,6 +13,7 @@ from onnx.reference.ops.op_linear_attention import (
 )
 
 _OPSET = [onnx.helper.make_opsetid("", 27)]
+_OPSET28 = [onnx.helper.make_opsetid("", 28)]
 
 
 def _compute(
@@ -22,6 +23,7 @@ def _compute(
     past_state=None,
     decay=None,
     beta=None,
+    erase_gate=None,
     *,
     q_num_heads,
     kv_num_heads,
@@ -37,6 +39,7 @@ def _compute(
         past_state,
         decay,
         beta,
+        erase_gate,
         chunk_size=chunk_size,
         kv_num_heads=kv_num_heads,
         q_num_heads=q_num_heads,
@@ -504,6 +507,49 @@ class LinearAttention(Base):
             outputs=[output, present_state],
             name="test_linear_attention_fp16",
             opset_imports=_OPSET,
+        )
+
+    # ------------------------------------------------------------------
+    # Opset 28: erase_gate (Gated DeltaNet-2 / GDN-2 recurrence)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def export_gated_delta_erase_gate() -> None:
+        # GDN-2 recurrence: erase_gate b_t ∈ [0,1]^{d_k} decouples the key
+        # used in the erase term (S'^T (b_t ⊙ k_t)) from the key used in the
+        # write outer product (k_t ⊗ ...).  The write gate w_t is pre-folded
+        # into value by the caller (v ← w_t ⊙ v_t) before passing to the op.
+        node = onnx.helper.make_node(
+            "LinearAttention",
+            inputs=["query", "key", "value", "", "decay", "beta", "erase_gate"],
+            outputs=["output", "present_state"],
+            q_num_heads=4,
+            kv_num_heads=4,
+        )
+        b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+        query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+        key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+        value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+        decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+        beta = np.random.rand(b, t, h_kv).astype(np.float32)
+        # erase_gate ∈ [0,1]^{d_k} per head — sigmoid output in practice.
+        erase_gate = np.random.rand(b, t, h_kv * d_k).astype(np.float32)
+
+        output, present_state = _compute(
+            query,
+            key,
+            value,
+            decay=decay,
+            beta=beta,
+            erase_gate=erase_gate,
+            q_num_heads=h_q,
+            kv_num_heads=h_kv,
+        )
+        expect(
+            node,
+            inputs=[query, key, value, decay, beta, erase_gate],
+            outputs=[output, present_state],
+            name="test_linear_attention_gated_delta_erase_gate",
+            opset_imports=_OPSET28,
         )
 
     # ------------------------------------------------------------------

@@ -190,7 +190,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#LayerNormalization">LayerNormalization</a>|<a href="Changelog.md#LayerNormalization-17">17</a>|17, 18|
 |<a href="#LeakyRelu">LeakyRelu</a>|<a href="Changelog.md#LeakyRelu-16">16</a>, <a href="Changelog.md#LeakyRelu-6">6</a>, <a href="Changelog.md#LeakyRelu-1">1</a>|16|
 |<a href="#LessOrEqual">LessOrEqual</a>|<a href="Changelog.md#LessOrEqual-16">16</a>, <a href="Changelog.md#LessOrEqual-12">12</a>|16|
-|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-27">27</a>|27|
+|<a href="#LinearAttention">LinearAttention</a>|<a href="Changelog.md#LinearAttention-28">28</a>, <a href="Changelog.md#LinearAttention-27">27</a>|28|
 |<a href="#LogSoftmax">LogSoftmax</a>|<a href="Changelog.md#LogSoftmax-13">13</a>, <a href="Changelog.md#LogSoftmax-11">11</a>, <a href="Changelog.md#LogSoftmax-1">1</a>|13, 18|
 |<a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>|<a href="Changelog.md#MeanVarianceNormalization-13">13</a>, <a href="Changelog.md#MeanVarianceNormalization-9">9</a>|13, 18|
 |<a href="#Mish">Mish</a>|<a href="Changelog.md#Mish-22">22</a>, <a href="Changelog.md#Mish-18">18</a>|22|
@@ -18156,8 +18156,8 @@ Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
 
   Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
 
-  The query, key, value, and (where applicable) decay/beta inputs use 3D packed format
-  [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
+  The query, key, value, and (where applicable) decay/beta/erase_gate inputs use 3D packed
+  format [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
   kv_num_heads are always required and are used to unpack to 4D internally for computation.
   The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
 
@@ -18170,10 +18170,18 @@ Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
   The update_rule attribute selects the recurrence type:
   - "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
   - "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
-  - "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t); o_t = scale * q_t^T S_t
-  - "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t); o_t = scale * q_t^T S_t
+  - "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t^erase); o_t = scale * q_t^T S_t
+  - "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t^erase); o_t = scale * q_t^T S_t
 
-  where g_t is the decay (in log-space), β_t is the update rate, and ⊗ denotes outer product.
+  where g_t is the decay (in log-space), β_t is the update rate, ⊗ denotes outer product,
+  and k_t^erase = erase_gate_t ⊙ k_t when the optional erase_gate input is provided,
+  else k_t^erase = k_t.
+
+  The erase_gate input decouples the key used in the erase (retrieval) term from the key
+  used in the write outer product. This enables architectures such as Gated DeltaNet-2,
+  where k_t^erase = b_t ⊙ k_t with b_t ∈ [0,1]^{d_k} controls which state channels are
+  erased independently of the write. The write always uses the original k_t.
+  erase_gate is only valid for 'delta' and 'gated_delta' update rules.
 
   Semantics: Equivalent to running the recurrent update sequentially for each token,
   but may be implemented using chunk-parallel algorithms for GPU efficiency.
@@ -18181,7 +18189,9 @@ Other versions of this operator: <a href="Changelog.md#LessOrEqual-12">12</a>
 
 #### Version
 
-This version of the operator has been available since version 27 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LinearAttention-27">27</a>
 
 #### Attributes
 
@@ -18198,7 +18208,7 @@ This version of the operator has been available since version 27 of the default 
 <dd>The update rule for the linear attention recurrence. One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.</dd>
 </dl>
 
-#### Inputs (3 - 6)
+#### Inputs (3 - 7)
 
 <dl>
 <dt><tt>query</tt> (differentiable) : T</dt>
@@ -18208,11 +18218,13 @@ This version of the operator has been available since version 27 of the default 
 <dt><tt>value</tt> (differentiable) : T</dt>
 <dd>Value vectors with 3D packed shape (B, T, H_kv * d_v).</dd>
 <dt><tt>past_state</tt> (optional, non-differentiable) : S</dt>
-<dd>Recurrent state from previous step with shape (B, H_kv, d_k, d_v). Always 4D. If not provided, defaults to zeros.</dd>
+<dd>Recurrent state from the previous step with shape (B, H_kv, d_k, d_v). When absent the state is initialized to zeros.</dd>
 <dt><tt>decay</tt> (optional, differentiable) : T</dt>
 <dd>Exponential decay gate in log-space. 3D packed shape: (B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or (B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). Required for 'gated' and 'gated_delta' modes.</dd>
 <dt><tt>beta</tt> (optional, differentiable) : T</dt>
 <dd>Update rate (sigmoid output). 3D packed shape: (B, T, H_kv) or (B, T, 1). Required for 'delta' and 'gated_delta' modes.</dd>
+<dt><tt>erase_gate</tt> (optional, differentiable) : T</dt>
+<dd>Channel-wise erase gate applied to the key before retrieval. 3D packed shape: (B, T, H_kv * d_k). When provided, the retrieval key becomes erase_gate_t ⊙ k_t while the write outer product continues to use the original k_t. Optional for 'delta' and 'gated_delta' modes only.</dd>
 </dl>
 
 #### Outputs
@@ -18509,6 +18521,52 @@ expect(
     outputs=[output, present_state],
     name="test_linear_attention_gated_delta_beta_scalar",
     opset_imports=_OPSET,
+)
+```
+
+</details>
+
+
+<details>
+<summary>gated_delta_erase_gate</summary>
+
+```python
+# GDN-2 recurrence: erase_gate b_t ∈ [0,1]^{d_k} decouples the key
+# used in the erase term (S'^T (b_t ⊙ k_t)) from the key used in the
+# write outer product (k_t ⊗ ...).  The write gate w_t is pre-folded
+# into value by the caller (v ← w_t ⊙ v_t) before passing to the op.
+node = onnx.helper.make_node(
+    "LinearAttention",
+    inputs=["query", "key", "value", "", "decay", "beta", "erase_gate"],
+    outputs=["output", "present_state"],
+    q_num_heads=4,
+    kv_num_heads=4,
+)
+b, t, h_q, h_kv, d_k, d_v = 2, 4, 4, 4, 8, 8
+query = np.random.randn(b, t, h_q * d_k).astype(np.float32)
+key = _l2_normalize(np.random.randn(b, t, h_kv * d_k).astype(np.float32), h_kv)
+value = np.random.randn(b, t, h_kv * d_v).astype(np.float32)
+decay = -np.abs(np.random.randn(b, t, h_kv * d_k)).astype(np.float32) * 0.1
+beta = np.random.rand(b, t, h_kv).astype(np.float32)
+# erase_gate ∈ [0,1]^{d_k} per head — sigmoid output in practice.
+erase_gate = np.random.rand(b, t, h_kv * d_k).astype(np.float32)
+
+output, present_state = _compute(
+    query,
+    key,
+    value,
+    decay=decay,
+    beta=beta,
+    erase_gate=erase_gate,
+    q_num_heads=h_q,
+    kv_num_heads=h_kv,
+)
+expect(
+    node,
+    inputs=[query, key, value, decay, beta, erase_gate],
+    outputs=[output, present_state],
+    name="test_linear_attention_gated_delta_erase_gate",
+    opset_imports=_OPSET28,
 )
 ```
 

@@ -4700,4 +4700,695 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Output 1: present_state (B, H_kv, d_k, d_v) — always 4D.
           updateOutputShape(ctx, 1, {B, Hkv, Dk, Dv});
         }));
+
+// ---------------------------------------------------------------------------
+// LinearAttention opset 28 — adds optional erase_gate input (index 6).
+// ---------------------------------------------------------------------------
+static constexpr const char* LinearAttention_ver28_doc = R"DOC(
+Unified linear attention operator for autoregressive decoding (T=1) and prefill (T>1).
+
+The query, key, value, and (where applicable) decay/beta/erase_gate inputs use 3D packed
+format [B, T, H*D], where heads are flattened into the last dimension; q_num_heads and
+kv_num_heads are always required and are used to unpack to 4D internally for computation.
+The optional past_state and present_state are 4D with shape (B, H_kv, d_k, d_v).
+
+Group-query attention (GQA) is supported: q_num_heads must be a positive multiple of
+kv_num_heads. When q_num_heads == kv_num_heads this reduces to multi-headed linear
+attention; when q_num_heads > kv_num_heads each KV head (and its recurrent state) is
+shared by `q_num_heads / kv_num_heads` query heads (multi-query attention is the
+special case kv_num_heads == 1).
+
+The update_rule attribute selects the recurrence type:
+- "linear": S_t = S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+- "gated": S_t = exp(g_t) * S_{t-1} + k_t ⊗ v_t; o_t = scale * q_t^T S_t
+- "delta": S_t = S_{t-1} + β_t * k_t ⊗ (v_t - S_{t-1}^T k_t^erase); o_t = scale * q_t^T S_t
+- "gated_delta": S_t = exp(g_t) * S_{t-1} + β_t * k_t ⊗ (v_t - exp(g_t) * S_{t-1}^T k_t^erase); o_t = scale * q_t^T S_t
+
+where g_t is the decay (in log-space), β_t is the update rate, ⊗ denotes outer product,
+and k_t^erase = erase_gate_t ⊙ k_t when the optional erase_gate input is provided,
+else k_t^erase = k_t.
+
+The erase_gate input decouples the key used in the erase (retrieval) term from the key
+used in the write outer product. This enables architectures such as Gated DeltaNet-2,
+where k_t^erase = b_t ⊙ k_t with b_t ∈ [0,1]^{d_k} controls which state channels are
+erased independently of the write. The write always uses the original k_t.
+erase_gate is only valid for 'delta' and 'gated_delta' update rules.
+
+Semantics: Equivalent to running the recurrent update sequentially for each token,
+but may be implemented using chunk-parallel algorithms for GPU efficiency.
+
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    LinearAttention,
+    28,
+    OpSchema()
+        .SetDoc(LinearAttention_ver28_doc)
+        .Attr(
+            "update_rule",
+            "The update rule for the linear attention recurrence. "
+            "One of: 'linear', 'gated', 'delta', 'gated_delta'. Default is 'gated_delta'.",
+            AttributeProto::STRING,
+            std::string("gated_delta"))
+        .Attr(
+            "scale",
+            "Output scaling factor. When 0.0 (default), derives d_k = query.shape[-1] / q_num_heads "
+            "and uses 1/sqrt(d_k). Set explicitly to override.",
+            AttributeProto::FLOAT,
+            0.0f)
+        .Attr("q_num_heads", "Number of query heads. Always required.", AttributeProto::INT)
+        .Attr("kv_num_heads", "Number of key/value heads. Always required.", AttributeProto::INT)
+        .Attr(
+            "chunk_size",
+            "Chunk size for the chunk-parallel WY decomposition during prefill (T>1). "
+            "Tuning hint; does not affect output correctness.",
+            AttributeProto::INT,
+            static_cast<int64_t>(64))
+        .Input(
+            0,
+            "query",
+            "Query vectors with 3D packed shape (B, T, H_q * d_k). "
+            "Heads are packed into the last dimension.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            1,
+            "key",
+            "Key vectors with 3D packed shape (B, T, H_kv * d_k). "
+            "Should be L2-normalized for delta/gated_delta modes.",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            2,
+            "value",
+            "Value vectors with 3D packed shape (B, T, H_kv * d_v).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            3,
+            "past_state",
+            "Recurrent state from the previous step with shape (B, H_kv, d_k, d_v). "
+            "When absent the state is initialized to zeros.",
+            "S",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .Input(
+            4,
+            "decay",
+            "Exponential decay gate in log-space. 3D packed shape: "
+            "(B, T, H_kv * d_k) for per-key-dimension decay (GLA/RWKV-6), or "
+            "(B, T, H_kv) for per-head scalar decay (DeltaNet/RetNet). "
+            "Required for 'gated' and 'gated_delta' modes.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            5,
+            "beta",
+            "Update rate (sigmoid output). 3D packed shape: "
+            "(B, T, H_kv) or (B, T, 1). "
+            "Required for 'delta' and 'gated_delta' modes.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Input(
+            6,
+            "erase_gate",
+            "Channel-wise erase gate applied to the key before retrieval. "
+            "3D packed shape: (B, T, H_kv * d_k). "
+            "When provided, the retrieval key becomes erase_gate_t ⊙ k_t while the "
+            "write outer product continues to use the original k_t. "
+            "Optional for 'delta' and 'gated_delta' modes only.",
+            "T",
+            OpSchema::Optional,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            0,
+            "output",
+            "Attention output with 3D packed shape (B, T, H_q * d_v).",
+            "T",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::Differentiable)
+        .Output(
+            1,
+            "present_state",
+            "Updated recurrent state with shape (B, H_kv, d_k, d_v). Always 4D.",
+            "S",
+            OpSchema::Single,
+            true,
+            1,
+            OpSchema::NonDifferentiable)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(bfloat16)", "tensor(float)"},
+            "Constrain activation input and output types to float16, bfloat16, or float32 tensors.")
+        .TypeConstraint(
+            "S",
+            {"tensor(float16)", "tensor(bfloat16)", "tensor(float)"},
+            "Constrain state types to float16, bfloat16, or float32 tensors. "
+            "Should be float32 or the same as T for numerical stability on long sequences.")
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) {
+              // LinearAttention <update_rule, scale, q_num_heads, kv_num_heads, chunk_size>
+              //   (query, key, value, past_state?, decay?, beta?, erase_gate?)
+              //   => (output, present_state)
+              //
+              // Reference decomposition (sequential recurrence via Scan):
+              //   1. Reshape/transpose 3D packed inputs (B, T, H*D) -> 4D (B, H, T, D)
+              //   2. Initialize state (past_state or zeros), shape (B, H_kv, d_k, d_v)
+              //   3. Compute scale factor (attribute or 1/sqrt(d_k))
+              //   4. Run Scan over T axis with body implementing one recurrence step
+              //   5. Transpose/reshape 4D outputs back to 3D (B, T, H_q*d_v)
+
+              // --- Step 1: Extract attributes and validate ---
+              auto* update_rule_attr = ctx.getAttribute("update_rule");
+              std::string update_rule =
+                  (update_rule_attr != nullptr && update_rule_attr->has_s()) ? update_rule_attr->s() : "gated_delta";
+
+              auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+              auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+              if (q_num_heads_attr == nullptr || !q_num_heads_attr->has_i() || kv_num_heads_attr == nullptr ||
+                  !kv_num_heads_attr->has_i()) {
+                return false;
+              }
+              int64_t q_num_heads = q_num_heads_attr->i();
+              int64_t kv_num_heads = kv_num_heads_attr->i();
+
+              auto* scale_attr = ctx.getAttribute("scale");
+              float scale = (scale_attr != nullptr && scale_attr->has_f()) ? scale_attr->f() : 0.0f;
+
+              // Per-rule presence of optional inputs
+              bool has_decay = (update_rule == "gated" || update_rule == "gated_delta");
+              bool has_beta = (update_rule == "delta" || update_rule == "gated_delta");
+              bool has_erase_gate = ctx.hasInput(6);
+
+              // Need query type (for CastLike on zero state) — checked indirectly via input 0 presence.
+              if (ctx.getInputType(0) == nullptr) {
+                return false;
+              }
+
+              // GQA: q_num_heads must be a positive multiple of kv_num_heads.
+              if (q_num_heads <= 0 || kv_num_heads <= 0 || q_num_heads % kv_num_heads != 0) {
+                return false;
+              }
+              int64_t group_size = q_num_heads / kv_num_heads;
+
+              FunctionBuilder builder(functionProto);
+
+              // --- Step 2: Pre-Scan 3D -> 4D reshape and transpose ---
+              builder.Const1D("NegOne1D", static_cast<int64_t>(-1))
+                  .Const1D("One1D", static_cast<int64_t>(1))
+                  .Const1D("HqConst", q_num_heads)
+                  .Const1D("HkvConst", kv_num_heads)
+                  .Add(R"ONNX(
+                BatchDim = Shape <start = 0, end = 1> (query)
+                SeqLenDim = Shape <start = 1, end = 2> (query)
+              )ONNX");
+
+              builder.Add(R"ONNX(
+                QShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HqConst, NegOne1D)
+                QReshaped = Reshape (query, QShape4D)
+                Q4D = Transpose <perm = [1, 0, 2, 3]> (QReshaped)
+              )ONNX");
+
+              builder.Add(R"ONNX(
+                KVShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, HkvConst, NegOne1D)
+                KReshaped = Reshape (key, KVShape4D)
+                K4D = Transpose <perm = [1, 0, 2, 3]> (KReshaped)
+                VReshaped = Reshape (value, KVShape4D)
+                V4D = Transpose <perm = [1, 0, 2, 3]> (VReshaped)
+              )ONNX");
+
+              if (has_decay) {
+                builder.Add(R"ONNX(
+                  DecayReshaped = Reshape (decay, KVShape4D)
+                  Decay4D = Transpose <perm = [1, 0, 2, 3]> (DecayReshaped)
+                )ONNX");
+              }
+
+              if (has_beta) {
+                builder.Add(R"ONNX(
+                  BetaShape4D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D, One1D)
+                  BetaReshaped = Reshape (beta, BetaShape4D)
+                  Beta4D = Transpose <perm = [1, 0, 2, 3]> (BetaReshaped)
+                )ONNX");
+              }
+
+              if (has_erase_gate) {
+                // erase_gate has shape (B, T, H_kv * d_k) — same layout as per-key-dim decay.
+                builder.Add(R"ONNX(
+                  EraseGateReshaped = Reshape (erase_gate, KVShape4D)
+                  EraseGate4D = Transpose <perm = [1, 0, 2, 3]> (EraseGateReshaped)
+                )ONNX");
+              }
+
+              // --- Step 3: Initialize recurrence state (B, H_kv, d_k, d_v) ---
+              builder.Add(R"ONNX(
+                QLastDim = Shape <start = 2, end = 3> (query)
+                VLastDim = Shape <start = 2, end = 3> (value)
+                DkDim = Div (QLastDim, HqConst)
+                DvDim = Div (VLastDim, HkvConst)
+              )ONNX");
+
+              if (ctx.hasInput(3)) {
+                builder.Add("State0 = Cast <to = 1> (past_state)");
+              } else {
+                builder.Add(R"ONNX(
+                  StateShape = Concat <axis = 0> (BatchDim, HkvConst, DkDim, DvDim)
+                  State0 = ConstantOfShape (StateShape)
+                )ONNX");
+              }
+
+              // --- Step 4: Compute scale factor (scalar, float32) ---
+              if (scale != 0.0f) {
+                builder.Const("ScaleFactor", scale);
+              } else {
+                builder.Add(R"ONNX(
+                  DkScalar = Squeeze (DkDim)
+                  DkFloat = Cast <to = 1> (DkScalar)
+                  SqrtDk = Sqrt (DkFloat)
+                  ScaleFactor = Reciprocal (SqrtDk)
+                )ONNX");
+              }
+
+              // --- Step 4b: Precompute GQA expand/read shapes ---
+              if (group_size > 1) {
+                builder.Const1D("GroupSize", group_size).Const1D("Two1D", static_cast<int64_t>(2)).Add(R"ONNX(
+                  StateExpandShape = Concat <axis = 0> (BatchDim, HkvConst, GroupSize, DkDim, DvDim)
+                  StateReadShape = Concat <axis = 0> (BatchDim, HqConst, DkDim, DvDim)
+                )ONNX");
+              }
+
+              // --- Step 5: Scan node with body subgraph ---
+              builder.Const1D("NegTwo1D", static_cast<int64_t>(-2));
+
+              const std::string read_block = (group_size > 1) ? R"ONNX(
+                StateUnsq = Unsqueeze (state_out, Two1D)
+                StateExpanded = Expand (StateUnsq, StateExpandShape)
+                StateForRead = Reshape (StateExpanded, StateReadShape)
+                QtRow = Unsqueeze (q_t_f, NegTwo1D)
+                ReadOut = MatMul (QtRow, StateForRead)
+                ReadSq = Squeeze (ReadOut, NegTwo1D)
+                output_t_f = Mul (ScaleFactor, ReadSq)
+                output_t = CastLike (output_t_f, q_t)
+              )ONNX"
+                                                              : R"ONNX(
+                QtRow = Unsqueeze (q_t_f, NegTwo1D)
+                ReadOut = MatMul (QtRow, state_out)
+                ReadSq = Squeeze (ReadOut, NegTwo1D)
+                output_t_f = Mul (ScaleFactor, ReadSq)
+                output_t = CastLike (output_t_f, q_t)
+              )ONNX";
+
+              std::string body;
+              std::string body_inputs;
+              std::string scan_inputs;
+              int64_t num_scan_inputs;
+              if (update_rule == "linear") {
+                body_inputs = "state_in, q_t, k_t, v_t";
+                scan_inputs = "State0, Q4D, K4D, V4D";
+                num_scan_inputs = 3;
+                body = R"ONNX(
+                q_t_f = Cast <to = 1> (q_t)
+                k_t_f = Cast <to = 1> (k_t)
+                v_t_f = Cast <to = 1> (v_t)
+                KtCol = Unsqueeze (k_t_f, NegOne1D)
+                WriteRow = Unsqueeze (v_t_f, NegTwo1D)
+                Outer = MatMul (KtCol, WriteRow)
+                state_out = Add (state_in, Outer)
+              )ONNX";
+              } else if (update_rule == "gated") {
+                body_inputs = "state_in, q_t, k_t, v_t, decay_t";
+                scan_inputs = "State0, Q4D, K4D, V4D, Decay4D";
+                num_scan_inputs = 4;
+                body = R"ONNX(
+                q_t_f = Cast <to = 1> (q_t)
+                k_t_f = Cast <to = 1> (k_t)
+                v_t_f = Cast <to = 1> (v_t)
+                decay_t_f = Cast <to = 1> (decay_t)
+                DecayExp = Exp (decay_t_f)
+                DecayExpUnsq = Unsqueeze (DecayExp, NegOne1D)
+                DecayedState = Mul (state_in, DecayExpUnsq)
+                KtCol = Unsqueeze (k_t_f, NegOne1D)
+                WriteRow = Unsqueeze (v_t_f, NegTwo1D)
+                Outer = MatMul (KtCol, WriteRow)
+                state_out = Add (DecayedState, Outer)
+              )ONNX";
+              } else if (update_rule == "delta") {
+                if (has_erase_gate) {
+                  body_inputs = "state_in, q_t, k_t, v_t, beta_t, erase_gate_t";
+                  scan_inputs = "State0, Q4D, K4D, V4D, Beta4D, EraseGate4D";
+                  num_scan_inputs = 5;
+                  body = R"ONNX(
+                  q_t_f = Cast <to = 1> (q_t)
+                  k_t_f = Cast <to = 1> (k_t)
+                  v_t_f = Cast <to = 1> (v_t)
+                  beta_t_f = Cast <to = 1> (beta_t)
+                  erase_gate_t_f = Cast <to = 1> (erase_gate_t)
+                  GatedK = Mul (erase_gate_t_f, k_t_f)
+                  GatedKCol = Unsqueeze (GatedK, NegOne1D)
+                  KtCol = Unsqueeze (k_t_f, NegOne1D)
+                  StateT = Transpose <perm = [0, 1, 3, 2]> (state_in)
+                  Retrieved = MatMul (StateT, GatedKCol)
+                  RetrievedSq = Squeeze (Retrieved, NegOne1D)
+                  Diff = Sub (v_t_f, RetrievedSq)
+                  Delta = Mul (beta_t_f, Diff)
+                  WriteRow = Unsqueeze (Delta, NegTwo1D)
+                  Outer = MatMul (KtCol, WriteRow)
+                  state_out = Add (state_in, Outer)
+                )ONNX";
+                } else {
+                  body_inputs = "state_in, q_t, k_t, v_t, beta_t";
+                  scan_inputs = "State0, Q4D, K4D, V4D, Beta4D";
+                  num_scan_inputs = 4;
+                  body = R"ONNX(
+                  q_t_f = Cast <to = 1> (q_t)
+                  k_t_f = Cast <to = 1> (k_t)
+                  v_t_f = Cast <to = 1> (v_t)
+                  beta_t_f = Cast <to = 1> (beta_t)
+                  KtCol = Unsqueeze (k_t_f, NegOne1D)
+                  StateT = Transpose <perm = [0, 1, 3, 2]> (state_in)
+                  Retrieved = MatMul (StateT, KtCol)
+                  RetrievedSq = Squeeze (Retrieved, NegOne1D)
+                  Diff = Sub (v_t_f, RetrievedSq)
+                  Delta = Mul (beta_t_f, Diff)
+                  WriteRow = Unsqueeze (Delta, NegTwo1D)
+                  Outer = MatMul (KtCol, WriteRow)
+                  state_out = Add (state_in, Outer)
+                )ONNX";
+                }
+              } else { // gated_delta
+                if (has_erase_gate) {
+                  body_inputs = "state_in, q_t, k_t, v_t, decay_t, beta_t, erase_gate_t";
+                  scan_inputs = "State0, Q4D, K4D, V4D, Decay4D, Beta4D, EraseGate4D";
+                  num_scan_inputs = 6;
+                  body = R"ONNX(
+                  q_t_f = Cast <to = 1> (q_t)
+                  k_t_f = Cast <to = 1> (k_t)
+                  v_t_f = Cast <to = 1> (v_t)
+                  decay_t_f = Cast <to = 1> (decay_t)
+                  beta_t_f = Cast <to = 1> (beta_t)
+                  erase_gate_t_f = Cast <to = 1> (erase_gate_t)
+                  DecayExp = Exp (decay_t_f)
+                  DecayExpUnsq = Unsqueeze (DecayExp, NegOne1D)
+                  DecayedState = Mul (state_in, DecayExpUnsq)
+                  GatedK = Mul (erase_gate_t_f, k_t_f)
+                  GatedKCol = Unsqueeze (GatedK, NegOne1D)
+                  KtCol = Unsqueeze (k_t_f, NegOne1D)
+                  StateT = Transpose <perm = [0, 1, 3, 2]> (DecayedState)
+                  Retrieved = MatMul (StateT, GatedKCol)
+                  RetrievedSq = Squeeze (Retrieved, NegOne1D)
+                  Diff = Sub (v_t_f, RetrievedSq)
+                  Delta = Mul (beta_t_f, Diff)
+                  WriteRow = Unsqueeze (Delta, NegTwo1D)
+                  Outer = MatMul (KtCol, WriteRow)
+                  state_out = Add (DecayedState, Outer)
+                )ONNX";
+                } else {
+                  body_inputs = "state_in, q_t, k_t, v_t, decay_t, beta_t";
+                  scan_inputs = "State0, Q4D, K4D, V4D, Decay4D, Beta4D";
+                  num_scan_inputs = 5;
+                  body = R"ONNX(
+                  q_t_f = Cast <to = 1> (q_t)
+                  k_t_f = Cast <to = 1> (k_t)
+                  v_t_f = Cast <to = 1> (v_t)
+                  decay_t_f = Cast <to = 1> (decay_t)
+                  beta_t_f = Cast <to = 1> (beta_t)
+                  DecayExp = Exp (decay_t_f)
+                  DecayExpUnsq = Unsqueeze (DecayExp, NegOne1D)
+                  DecayedState = Mul (state_in, DecayExpUnsq)
+                  KtCol = Unsqueeze (k_t_f, NegOne1D)
+                  StateT = Transpose <perm = [0, 1, 3, 2]> (DecayedState)
+                  Retrieved = MatMul (StateT, KtCol)
+                  RetrievedSq = Squeeze (Retrieved, NegOne1D)
+                  Diff = Sub (v_t_f, RetrievedSq)
+                  Delta = Mul (beta_t_f, Diff)
+                  WriteRow = Unsqueeze (Delta, NegTwo1D)
+                  Outer = MatMul (KtCol, WriteRow)
+                  state_out = Add (DecayedState, Outer)
+                )ONNX";
+                }
+              }
+
+              std::string scan_text =
+                  "FinalState, OutputAccum = Scan <\n"
+                  "  num_scan_inputs = " +
+                  std::to_string(num_scan_inputs) +
+                  ",\n"
+                  "  body = linear_attn_step (" +
+                  body_inputs + ") => (state_out, output_t) {\n" + body + read_block +
+                  "              }\n"
+                  "> (" +
+                  scan_inputs + ")";
+
+              builder.Add(scan_text.c_str());
+
+              // --- Step 6: Post-Scan 4D -> 3D reshape and present_state ---
+              builder.Add(R"ONNX(
+                OutputTransposed = Transpose <perm = [1, 0, 2, 3]> (OutputAccum)
+                OutputShape3D = Concat <axis = 0> (BatchDim, SeqLenDim, NegOne1D)
+                output = Reshape (OutputTransposed, OutputShape3D)
+              )ONNX");
+              if (ctx.hasInput(3)) {
+                builder.Add("present_state = CastLike (FinalState, past_state)");
+              } else {
+                builder.Add("present_state = CastLike (FinalState, query)");
+              }
+
+              schema.BuildFunction(functionProto);
+              return true;
+            })
+        .TypeAndShapeInferenceFunction([](ONNX_NAMESPACE::InferenceContext& ctx) {
+          // Read required attributes
+          auto* q_num_heads_attr = ctx.getAttribute("q_num_heads");
+          auto* kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
+          int64_t q_num_heads = (q_num_heads_attr && q_num_heads_attr->has_i()) ? q_num_heads_attr->i() : 0;
+          int64_t kv_num_heads = (kv_num_heads_attr && kv_num_heads_attr->has_i()) ? kv_num_heads_attr->i() : 0;
+
+          if (q_num_heads <= 0) {
+            fail_type_inference("q_num_heads must be > 0, got ", q_num_heads);
+          }
+          if (kv_num_heads <= 0) {
+            fail_type_inference("kv_num_heads must be > 0, got ", kv_num_heads);
+          }
+          if (q_num_heads % kv_num_heads != 0) {
+            fail_type_inference(
+                "q_num_heads (", q_num_heads, ") must be a multiple of kv_num_heads (", kv_num_heads, ")");
+          }
+
+          auto* update_rule_attr = ctx.getAttribute("update_rule");
+          std::string update_rule = (update_rule_attr != nullptr) ? update_rule_attr->s() : "gated_delta";
+
+          if (update_rule != "linear" && update_rule != "gated" && update_rule != "delta" &&
+              update_rule != "gated_delta") {
+            fail_type_inference("update_rule must be one of: 'linear', 'gated', 'delta', 'gated_delta'");
+          }
+
+          const bool has_past_state = ctx.hasInput(3);
+          const bool has_decay = ctx.hasInput(4);
+          const bool has_beta = ctx.hasInput(5);
+          const bool has_erase_gate = ctx.hasInput(6);
+
+          if (update_rule == "linear") {
+            if (has_decay) {
+              fail_type_inference("update_rule 'linear' forbids decay input");
+            }
+            if (has_beta) {
+              fail_type_inference("update_rule 'linear' forbids beta input");
+            }
+            if (has_erase_gate) {
+              fail_type_inference("update_rule 'linear' forbids erase_gate input");
+            }
+          } else if (update_rule == "gated") {
+            if (!has_decay) {
+              fail_type_inference("update_rule 'gated' requires decay input");
+            }
+            if (has_beta) {
+              fail_type_inference("update_rule 'gated' forbids beta input");
+            }
+            if (has_erase_gate) {
+              fail_type_inference("update_rule 'gated' forbids erase_gate input");
+            }
+          } else if (update_rule == "delta") {
+            if (has_decay) {
+              fail_type_inference("update_rule 'delta' forbids decay input");
+            }
+            if (!has_beta) {
+              fail_type_inference("update_rule 'delta' requires beta input");
+            }
+          } else if (update_rule == "gated_delta") {
+            if (!has_decay) {
+              fail_type_inference("update_rule 'gated_delta' requires decay input");
+            }
+            if (!has_beta) {
+              fail_type_inference("update_rule 'gated_delta' requires beta input");
+            }
+          }
+
+          // Type propagation
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (has_past_state && ctx.getInputType(3) != nullptr && ctx.getInputType(3)->has_tensor_type()) {
+            propagateElemTypeFromInputToOutput(ctx, 3, 1);
+          } else {
+            propagateElemTypeFromInputToOutput(ctx, 0, 1);
+          }
+
+          // Shape inference via dimension unification
+          Dim B, T, QPack, KPack, VPack, Hkv, Dk, Dv;
+          if (kv_num_heads > 0) {
+            Hkv.set_dim_value(kv_num_heads);
+          }
+          unifyInputShape(ctx, 0, {B, T, QPack});
+          unifyInputShape(ctx, 1, {B, T, KPack});
+          unifyInputShape(ctx, 2, {B, T, VPack});
+          if (has_past_state) {
+            unifyInputShape(ctx, 3, {B, Hkv, Dk, Dv});
+          }
+          if (has_decay) {
+            Dim DecayLast;
+            unifyInputShape(ctx, 4, {B, T, DecayLast});
+          }
+          if (has_beta) {
+            Dim BetaLast;
+            unifyInputShape(ctx, 5, {B, T, BetaLast});
+          }
+          if (has_erase_gate) {
+            // erase_gate: (B, T, H_kv * d_k) — strictly per-key-dim, no per-head shorthand.
+            Dim EraseGateLast;
+            unifyInputShape(ctx, 6, {B, T, EraseGateLast});
+          }
+
+          if (q_num_heads > 0 && QPack.has_dim_value()) {
+            if (QPack.dim_value() % q_num_heads != 0) {
+              fail_shape_inference(
+                  "Packed query last dim (",
+                  QPack.dim_value(),
+                  ") must be divisible by q_num_heads (",
+                  q_num_heads,
+                  ")");
+            }
+            unifyDim(Dk, QPack.dim_value() / q_num_heads);
+          }
+          if (kv_num_heads > 0 && KPack.has_dim_value()) {
+            if (KPack.dim_value() % kv_num_heads != 0) {
+              fail_shape_inference(
+                  "Packed key last dim (",
+                  KPack.dim_value(),
+                  ") must be divisible by kv_num_heads (",
+                  kv_num_heads,
+                  ")");
+            }
+            unifyDim(Dk, KPack.dim_value() / kv_num_heads);
+          }
+          if (kv_num_heads > 0 && VPack.has_dim_value()) {
+            if (VPack.dim_value() % kv_num_heads != 0) {
+              fail_shape_inference(
+                  "Packed value last dim (",
+                  VPack.dim_value(),
+                  ") must be divisible by kv_num_heads (",
+                  kv_num_heads,
+                  ")");
+            }
+            unifyDim(Dv, VPack.dim_value() / kv_num_heads);
+          }
+
+          // Validate decay last dim
+          if (has_decay && kv_num_heads > 0) {
+            auto* decay_type = ctx.getInputType(4);
+            if (decay_type != nullptr && decay_type->has_tensor_type() && decay_type->tensor_type().has_shape() &&
+                decay_type->tensor_type().shape().dim_size() == 3 &&
+                decay_type->tensor_type().shape().dim(2).has_dim_value()) {
+              const int64_t decay_last = decay_type->tensor_type().shape().dim(2).dim_value();
+              if (Dk.has_dim_value()) {
+                const int64_t dk = Dk.dim_value();
+                if (decay_last != kv_num_heads && decay_last != kv_num_heads * dk) {
+                  fail_shape_inference(
+                      "decay last dim (",
+                      decay_last,
+                      ") must be kv_num_heads (",
+                      kv_num_heads,
+                      ") or kv_num_heads * d_k (",
+                      kv_num_heads * dk,
+                      ")");
+                }
+              } else if (decay_last != kv_num_heads && decay_last % kv_num_heads != 0) {
+                fail_shape_inference(
+                    "decay last dim (",
+                    decay_last,
+                    ") must be kv_num_heads (",
+                    kv_num_heads,
+                    ") or a multiple of kv_num_heads");
+              }
+            }
+          }
+
+          // Validate beta last dim
+          if (has_beta && kv_num_heads > 0) {
+            auto* beta_type = ctx.getInputType(5);
+            if (beta_type != nullptr && beta_type->has_tensor_type() && beta_type->tensor_type().has_shape() &&
+                beta_type->tensor_type().shape().dim_size() == 3 &&
+                beta_type->tensor_type().shape().dim(2).has_dim_value()) {
+              const int64_t beta_last = beta_type->tensor_type().shape().dim(2).dim_value();
+              if (beta_last != 1 && beta_last != kv_num_heads) {
+                fail_shape_inference("beta last dim (", beta_last, ") must be 1 or kv_num_heads (", kv_num_heads, ")");
+              }
+            }
+          }
+
+          // Validate erase_gate last dim: must be H_kv * d_k (no per-head shorthand).
+          if (has_erase_gate && kv_num_heads > 0) {
+            auto* eg_type = ctx.getInputType(6);
+            if (eg_type != nullptr && eg_type->has_tensor_type() && eg_type->tensor_type().has_shape() &&
+                eg_type->tensor_type().shape().dim_size() == 3 &&
+                eg_type->tensor_type().shape().dim(2).has_dim_value()) {
+              const int64_t eg_last = eg_type->tensor_type().shape().dim(2).dim_value();
+              if (Dk.has_dim_value()) {
+                if (eg_last != kv_num_heads * Dk.dim_value()) {
+                  fail_shape_inference(
+                      "erase_gate last dim (",
+                      eg_last,
+                      ") must be kv_num_heads * d_k (",
+                      kv_num_heads * Dk.dim_value(),
+                      ")");
+                }
+              } else if (eg_last % kv_num_heads != 0) {
+                fail_shape_inference(
+                    "erase_gate last dim (",
+                    eg_last,
+                    ") must be a multiple of kv_num_heads (",
+                    kv_num_heads,
+                    ")");
+              }
+            }
+          }
+
+          // Output 0: (B, T, H_q * d_v) — 3D packed.
+          Dim OutLast;
+          if (q_num_heads > 0 && Dv.has_dim_value()) {
+            OutLast.set_dim_value(q_num_heads * Dv.dim_value());
+          }
+          updateOutputShape(ctx, 0, {B, T, OutLast});
+
+          // Output 1: present_state (B, H_kv, d_k, d_v) — always 4D.
+          updateOutputShape(ctx, 1, {B, Hkv, Dk, Dv});
+        }));
 } // namespace ONNX_NAMESPACE
