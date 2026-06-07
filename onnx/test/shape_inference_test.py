@@ -13123,7 +13123,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.checker.ValidationError):
+        with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
