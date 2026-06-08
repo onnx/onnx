@@ -159,12 +159,13 @@ def TestOneInput(data: bytes) -> None:
         except Exception:
             return
     else:
-        if len(body) < 4:
+        if len(body) <= 4:
             return
         (m1_len,) = struct.unpack(">I", body[:4])
-        # Clamp into range so libFuzzer mutations of the length field still
-        # produce a usable split instead of an empty m2 on every iteration.
-        m1_len %= len(body) - 3
+        # Clamp into the payload length (len(body) - 4) so libFuzzer mutations
+        # of the length field still split into a non-empty m1 and m2 instead of
+        # an empty m2 on every iteration.
+        m1_len %= len(body) - 4
         m1_bytes = body[4 : 4 + m1_len]
         m2_bytes = body[4 + m1_len :]
         try:
@@ -192,6 +193,7 @@ def TestOneInput(data: bytes) -> None:
 
 
 def main() -> None:
+    atheris.instrument_all()
     atheris.Setup(sys.argv, TestOneInput, enable_python_coverage=True)
     atheris.Fuzz()
 
