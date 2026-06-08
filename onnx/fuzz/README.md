@@ -1,7 +1,6 @@
-<!--
-Copyright (c) ONNX Project Contributors
-SPDX-License-Identifier: Apache-2.0
--->
+<!-- Copyright (c) ONNX Project Contributors -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
 # ONNX OSS-Fuzz Harnesses
 This directory contains [atheris](https://github.com/google/atheris)-based Python fuzz
 targets used by [OSS-Fuzz](https://github.com/google/oss-fuzz) to continuously test ONNX

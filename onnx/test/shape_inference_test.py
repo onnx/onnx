@@ -24,6 +24,7 @@ from onnx import (
     OperatorSetIdProto,
     SparseTensorProto,
     TensorProto,
+    TensorShapeProto,
     TypeProto,
     ValueInfoProto,
     checker,
@@ -42,6 +43,7 @@ from onnx.defs import (
 from onnx.helper import (
     make_empty_tensor_value_info,
     make_graph,
+    make_model,
     make_node,
     make_opsetid,
     make_tensor,
@@ -13121,7 +13123,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.checker.ValidationError):
+        with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
@@ -13548,6 +13550,51 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
         # clean up
         onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
+
+    def test_get_symbolic_input_returns_tensor_shape_proto(self) -> None:
+        # Regression test: when data propagation feeds a symbolic shape into a
+        # node input, ctx.get_symbolic_input(...) must return a TensorShapeProto
+        # (the binding casts TensorShapeProto, which needs a registered caster).
+        op_type = "ReadSymbolicInput"
+        domain = "test.symbolic_input"
+        captured: dict[str, object] = {}
+
+        schema = OpSchema(
+            op_type,
+            domain,
+            1,
+            inputs=[OpSchema.FormalParameter("s", "T")],
+            outputs=[OpSchema.FormalParameter("y", "T")],
+            type_constraints=[("T", ["tensor(int64)"], "")],
+        )
+
+        def infer(ctx: onnx.shape_inference.InferenceContext) -> None:
+            captured["sym"] = ctx.get_symbolic_input(0)
+            ctx.set_output_type(0, ctx.get_input_type(0))
+
+        schema.set_type_and_shape_inference_function(infer)
+        onnx.defs.register_schema(schema)
+        try:
+            graph = make_graph(
+                [
+                    make_node("Shape", ["x"], ["s"]),
+                    make_node(op_type, ["s"], ["y"], domain=domain),
+                ],
+                "g",
+                [make_tensor_value_info("x", TensorProto.FLOAT, [2, 3])],
+                [make_tensor_value_info("y", TensorProto.INT64, None)],
+            )
+            model = make_model(
+                graph,
+                opset_imports=[make_opsetid("", 21), make_opsetid(domain, 1)],
+            )
+            onnx.shape_inference.infer_shapes(model, data_prop=True, strict_mode=True)
+
+            sym = captured["sym"]
+            self.assertIsInstance(sym, TensorShapeProto)
+            self.assertEqual([d.dim_value for d in sym.dim], [2, 3])
+        finally:
+            onnx.defs.deregister_schema(op_type, 1, domain)
 
 
 if __name__ == "__main__":

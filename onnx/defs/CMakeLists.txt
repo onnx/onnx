@@ -1,7 +1,7 @@
 # Copyright (c) ONNX Project Contributors
 # SPDX-License-Identifier: Apache-2.0
 
-target_sources(onnx_core PRIVATE
+target_sources(onnx PRIVATE
     attr_proto_util.cc
     attr_proto_util.h
     data_propagators.h
@@ -49,6 +49,6 @@ add_subdirectory(training)
 
 # These files exhibit issues in unity builds, so we disable them.
 set_source_files_properties(schema.cc tensor_proto_util.cc
-    TARGET_DIRECTORY onnx_core
+    TARGET_DIRECTORY onnx
     PROPERTIES SKIP_UNITY_BUILD_INCLUSION TRUE
 )

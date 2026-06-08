@@ -620,6 +620,7 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
     if ((expected == AttributeProto_AttributeType_FLOAT) && (attr.type() == AttributeProto_AttributeType_INT)) {
       attr.set_type(AttributeProto_AttributeType_FLOAT);
       attr.set_f(static_cast<float>(attr.i()));
+      attr.clear_i();
     } else {
       return ParseError(
           "Mismatch between expected type ",
