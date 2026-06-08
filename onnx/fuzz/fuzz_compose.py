@@ -130,7 +130,8 @@ def _build_model(fdp: atheris.FuzzedDataProvider, tag: str):
 def _make_io_map(fdp, toggles, m1_out, m2_in):
     """Derive an io_map from real names (high merge-logic coverage) or, when
     requested or when either side has no names, emit a random one (stresses
-    io_map / collision validation error paths)."""
+    io_map / collision validation error paths).
+    """
     if (toggles & _TOG_RANDOM_IOMAP) or not (m1_out and m2_in):
         pairs = []
         for _ in range(fdp.ConsumeIntInRange(0, 4)):
@@ -178,13 +179,11 @@ def TestOneInput(data: bytes) -> None:
 
     io_map = _make_io_map(fdp, toggles, m1_out, m2_in)
 
-    kwargs = {}
-    if toggles & _TOG_PREFIX:
-        kwargs["prefix1"] = "p1/"
-        kwargs["prefix2"] = "p2/"
+    prefix1 = "p1/" if toggles & _TOG_PREFIX else ""
+    prefix2 = "p2/" if toggles & _TOG_PREFIX else ""
 
     try:
-        compose.merge_models(m1, m2, io_map=io_map, **kwargs)
+        compose.merge_models(m1, m2, io_map=io_map, prefix1=prefix1, prefix2=prefix2)
     except Exception:
         # Expected: ValidationError, InferenceError, DecodeError, ValueError,
         # KeyError, IndexError, RecursionError on hostile input. Only crashes
