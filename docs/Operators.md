@@ -1658,7 +1658,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
   Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
   1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: a query attends only keys at or before its true sequence position. Concretely, the query at in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the number of valid keys preceding the current query block (`offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length`, per batch, when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` for the initial full prefill, which reduces to the standard lower-triangular mask). In valid usage `nonpad_kv_seqlen >= q_sequence_length` so `offset >= 0` (the current query tokens are already written into the cache before this operator runs); a negative offset is out of contract. This applies regardless of the `attn_mask` input.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: a query attends only keys at or before its true sequence position. Concretely, the query at in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the number of valid keys preceding the current query block (`offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length`, per batch, when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` for the initial full prefill, which reduces to the standard lower-triangular mask). The causal frontier is computed independently of the `attn_mask` input; when both `is_causal` and `attn_mask` are set, the two validities are then intersected: a position is attended only if it is allowed by both the causal frontier and `attn_mask`. In valid usage `nonpad_kv_seqlen >= q_sequence_length` so `offset >= 0` (the current query tokens are already written into the cache before this operator runs); a negative offset is out of contract. A fully-masked query row (no key allowed by the combined constraints) produces a zero output row (matching prevailing runtime practice), not `NaN`.
+
+  Errata (in-place behavioral correction, no opset bump): when `is_causal` is composed with a boolean `attn_mask`, the boolean mask is converted to an additive bias by selection (attended -> 0, masked -> -inf) rather than by multiplication, and a fully-masked query row now produces a zero output row instead of `NaN`. This only replaces previously-undefined `NaN` outputs; every well-defined result is unchanged.
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -1715,7 +1717,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. Default value is 0.</dd>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. In mode `3`, a fully-masked query row (every key disallowed) is the raw softmax and stays `NaN`, even though the corresponding row of the primary output `Y` is zeroed; this debug output is not subject to the fully-masked-row guard. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -1787,6 +1789,59 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_4d",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_23_boolmask_fullymasked_row_nan_robustness</summary>
+
+```python
+"""Opset-23 fully-masked boolean ``attn_mask`` row -> zero (not ``NaN``).
+
+This locks the opset-23 / ``old.cc`` function-body fully-masked-row guard
+against future regressions. In opset 23 the only in-contract fully-masked
+row comes from an all-``False`` boolean ``attn_mask`` row (``is_causal`` is
+not set here): every key for that query is disallowed, so ``softmax`` over an
+all-``-inf`` bias row is ``NaN``. The guard zeros that row's probabilities
+before the ``P @ V`` contraction so the output row is exactly ``0``, while
+rows with at least one allowed key are unchanged.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(4)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked (Bug-2 empty row). Row 1: both keys
+# allowed -> finite, unchanged by the guard.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask)
+
+# Fully-masked row 0 is exactly zero (not NaN); every other cell is finite.
+assert np.all(np.isfinite(Y)), "non-masked rows must be finite"
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked row must be zero (Bug-2)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_23_boolmask_fullymasked_row_nan_robustness",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
@@ -3236,6 +3291,74 @@ expect(
     outputs=[Y],
     name="test_attention_4d_causal",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_causal_boolmask_nan_robustness</summary>
+
+```python
+"""Composed ``is_causal`` + boolean ``attn_mask`` NaN-robustness.
+
+The causal frontier (lower-triangular here, offset 0) and the boolean
+``attn_mask`` are intersected: a key is attended only if allowed by both.
+This exercises two pre-fix NaN sources on the same forward pass:
+
+* **Bug-1 (allowed cells stay finite).**  Query 0 is allowed key 0 by both
+  the causal frontier (``{0}``) and the mask (``True`` at key 0).  The old
+  ``(1 - attn_mask) * -inf`` conversion computes ``0 * -inf = NaN`` at that
+  allowed cell, poisoning the row.  The select conversion
+  ``where(attn_mask, 0, -inf)`` keeps it finite.
+* **Bug-2 (fully-masked row -> 0).**  Query 1 is allowed keys ``{0, 1}`` by
+  the causal frontier but the mask is ``False`` at both, so the combined
+  constraint allows no key.  ``softmax`` of an all-``-inf`` row is ``NaN``;
+  the fully-masked-row guard zeros it before the ``P @ V`` contraction so
+  the output row is ``0``.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(3)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: key 0 allowed (Bug-1 allowed cell). Row 1: no key allowed -> fully
+# masked once intersected with the causal frontier (Bug-2 empty row).
+attn_mask = np.array([[True, False], [False, False]], dtype=np.bool_)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    is_causal=1,
+)
+
+# Bug-1: allowed cells are finite (no NaN anywhere). Bug-2: the fully-masked
+# query row is exactly zero, not NaN.
+assert np.all(np.isfinite(Y)), "allowed cells must be finite (Bug-1)"
+assert np.array_equal(Y[:, :, 1, :], np.zeros_like(Y[:, :, 1, :])), (
+    "fully-masked row must be zero (Bug-2)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y],
+    name="test_attention_causal_boolmask_nan_robustness",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 

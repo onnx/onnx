@@ -137,7 +137,13 @@ def _compute_attention(
     #   * neither:                             offset = 0  (degenerate initial prefill)
     if is_causal:
         if attn_mask is not None and attn_mask.dtype == np.bool_:
-            attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
+            # Convert the boolean mask to an additive bias with select-not-multiply:
+            # True (attend) -> 0, False (mask) -> -inf. The previous
+            # (1 - attn_mask) * -inf form computes 0 * -inf = NaN at allowed cells.
+            # This matches the function body's Where(attn_mask, ScalarZero, FloatNegInf)
+            # in AttentionAppendFunctionCausalMask (utils.cc) so the reference and
+            # _expanded agree exactly.
+            attn_mask = np.where(attn_mask, Q.dtype.type(0), Q.dtype.type(-np.inf))
         base = (
             np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
             if attn_mask is None
@@ -244,8 +250,23 @@ def _compute_attention(
         )
     qk_softmax = _softmax(qk_with_bias)
     if qk_matmul_output_mode == 3:
+        # Mode 3 exposes the raw softmax (pre-guard) for inspection, so a fully-masked
+        # row stays NaN here even though Y is zeroed by the guard below. This is
+        # intentional and matches the function body (Identity of the pre-guard softmax),
+        # preserving primary == _expanded parity for the qk_matmul_output debug output.
         qk_matmul_output = qk_softmax
     qk_matmul_output = qk_matmul_output.astype(Q.dtype)
+
+    # Fully-masked-row guard: a query row whose additive bias is entirely -inf
+    # (every key disallowed by the combined causal + attn_mask constraints)
+    # softmaxes to NaN. Detect such rows on the additive bias and zero their
+    # probabilities with select-not-multiply (NaN * 0 = NaN) BEFORE the P @ V
+    # contraction so 0 @ V = 0. Mirrored in the function body for primary ==
+    # _expanded parity.
+    row_all_masked = np.isneginf(
+        np.max(attn_bias, axis=-1, keepdims=True)
+    )  # (..., q, 1)
+    qk_softmax = np.where(row_all_masked, 0, qk_softmax)
 
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
     if input_shape_len == 3:

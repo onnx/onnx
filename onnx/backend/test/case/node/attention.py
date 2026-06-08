@@ -2173,3 +2173,112 @@ class Attention(Base):
             name="test_attention_4d_causal_with_past_and_present",
             opset_imports=[onnx.helper.make_opsetid("", 24)],
         )
+
+    @staticmethod
+    def export_attention_causal_boolmask_nan_robustness() -> None:
+        """Composed ``is_causal`` + boolean ``attn_mask`` NaN-robustness.
+
+        The causal frontier (lower-triangular here, offset 0) and the boolean
+        ``attn_mask`` are intersected: a key is attended only if allowed by both.
+        This exercises two pre-fix NaN sources on the same forward pass:
+
+        * **Bug-1 (allowed cells stay finite).**  Query 0 is allowed key 0 by both
+          the causal frontier (``{0}``) and the mask (``True`` at key 0).  The old
+          ``(1 - attn_mask) * -inf`` conversion computes ``0 * -inf = NaN`` at that
+          allowed cell, poisoning the row.  The select conversion
+          ``where(attn_mask, 0, -inf)`` keeps it finite.
+        * **Bug-2 (fully-masked row -> 0).**  Query 1 is allowed keys ``{0, 1}`` by
+          the causal frontier but the mask is ``False`` at both, so the combined
+          constraint allows no key.  ``softmax`` of an all-``-inf`` row is ``NaN``;
+          the fully-masked-row guard zeros it before the ``P @ V`` contraction so
+          the output row is ``0``.
+
+        4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+        them would make the function body treat the input as 3D).
+        """
+        np.random.seed(3)
+        B, H, S, D = 1, 2, 2, 8
+
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask"],
+            outputs=["Y"],
+            is_causal=1,
+        )
+
+        Q = np.random.rand(B, H, S, D).astype(np.float32)
+        K = np.random.rand(B, H, S, D).astype(np.float32)
+        V = np.random.rand(B, H, S, D).astype(np.float32)
+        # Row 0: key 0 allowed (Bug-1 allowed cell). Row 1: no key allowed -> fully
+        # masked once intersected with the causal frontier (Bug-2 empty row).
+        attn_mask = np.array([[True, False], [False, False]], dtype=np.bool_)
+
+        Y, _, _, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            is_causal=1,
+        )
+
+        # Bug-1: allowed cells are finite (no NaN anywhere). Bug-2: the fully-masked
+        # query row is exactly zero, not NaN.
+        assert np.all(np.isfinite(Y)), "allowed cells must be finite (Bug-1)"
+        assert np.array_equal(Y[:, :, 1, :], np.zeros_like(Y[:, :, 1, :])), (
+            "fully-masked row must be zero (Bug-2)"
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask],
+            outputs=[Y],
+            name="test_attention_causal_boolmask_nan_robustness",
+            opset_imports=[onnx.helper.make_opsetid("", 24)],
+        )
+
+    @staticmethod
+    def export_attention_23_boolmask_fullymasked_row_nan_robustness() -> None:
+        """Opset-23 fully-masked boolean ``attn_mask`` row -> zero (not ``NaN``).
+
+        This locks the opset-23 / ``old.cc`` function-body fully-masked-row guard
+        against future regressions. In opset 23 the only in-contract fully-masked
+        row comes from an all-``False`` boolean ``attn_mask`` row (``is_causal`` is
+        not set here): every key for that query is disallowed, so ``softmax`` over an
+        all-``-inf`` bias row is ``NaN``. The guard zeros that row's probabilities
+        before the ``P @ V`` contraction so the output row is exactly ``0``, while
+        rows with at least one allowed key are unchanged.
+
+        4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+        them would make the function body treat the input as 3D).
+        """
+        np.random.seed(4)
+        B, H, S, D = 1, 2, 2, 8
+
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask"],
+            outputs=["Y"],
+        )
+
+        Q = np.random.rand(B, H, S, D).astype(np.float32)
+        K = np.random.rand(B, H, S, D).astype(np.float32)
+        V = np.random.rand(B, H, S, D).astype(np.float32)
+        # Row 0: no key allowed -> fully masked (Bug-2 empty row). Row 1: both keys
+        # allowed -> finite, unchanged by the guard.
+        attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+        Y, _, _, _ = _compute_attention(Q, K, V, attn_mask=attn_mask)
+
+        # Fully-masked row 0 is exactly zero (not NaN); every other cell is finite.
+        assert np.all(np.isfinite(Y)), "non-masked rows must be finite"
+        assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+            "fully-masked row must be zero (Bug-2)"
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask],
+            outputs=[Y],
+            name="test_attention_23_boolmask_fullymasked_row_nan_robustness",
+            opset_imports=[onnx.helper.make_opsetid("", 23)],
+        )
