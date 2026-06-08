@@ -45,7 +45,7 @@ def _make_model(
 _PARSER_SEEDS: dict[str, str] = {
     # Minimal 3-op linear model; exercises basic node and graph parsing.
     "basic_matmul_softmax.txt": """\
-<
+
   ir_version: 7,
   opset_import: ["" : 10]
 >
@@ -58,7 +58,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
 """,
     # Multiple opset imports; exercises opset_import list parsing.
     "multi_opset.txt": """\
-<
+
   ir_version: 7,
   opset_import: ["" : 10, "com.microsoft" : 1]
 >
@@ -71,7 +71,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
 """,
     # All top-level metadata fields; exercises producer_name, doc_string, etc.
     "model_with_metadata.txt": """\
-<
+
   ir_version: 9,
   opset_import: ["" : 15],
   producer_name: "oss-fuzz-seed",
@@ -87,7 +87,7 @@ agraph (float[N] x) => (float[N] y)
     # Model with a local function definition and attribute references;
     # exercises the function-proto and attribute-default parsing paths.
     "function_with_attributes.txt": """\
-<
+
   ir_version: 9,
   opset_import: ["" : 15, "custom_domain" : 1],
   producer_name: "oss-fuzz-seed",
@@ -99,7 +99,7 @@ agraph (float[N] x) => (float[N] out)
 {
    out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x)
 }
-<
+
   domain: "custom_domain",
   opset_import: ["" : 15],
   doc_string: "custom Selu function"
@@ -125,12 +125,12 @@ Selu
 """,
     # Cast op with a type initializer; exercises initializer and attribute parsing.
     "cast_with_initializer.txt": """\
-<
+
   ir_version: 10,
   opset_import: ["" : 19]
 >
 agraph (float[N] X) => (int64[N] C)
-<
+
   int64[1] weight = {0}
 >
 {
@@ -140,7 +140,7 @@ agraph (float[N] X) => (int64[N] C)
     # Special float literal values (inf, -inf, nan); exercises the float
     # literal parser branches that differ from ordinary decimal parsing.
     "float_special_values.txt": """\
-<
+
   ir_version: 8,
   opset_import: ["" : 18]
 >
@@ -155,12 +155,12 @@ agraph (float[1] X) => (float[1] Y)
 }
 
 
-# Seed models for fuzz_shape_inference. The harness reads a trailing toggle
-# byte (strict_mode / check_type / structured-vs-raw path); seeds use 0x00,
-# which selects the raw-bytes path. Each seed is a valid serialized
-# ModelProto + one trailing 0x00 byte so the harness slices the toggle off
-# and passes the rest to onnx.load_model_from_string.
-_SHAPE_INFERENCE_TOGGLE_RAW = bytes([0x00])
+# Seed models for fuzz_shape_inference. Each seed is a complete serialized
+# ModelProto with no trailing bytes: the harness's raw path passes the full
+# input to onnx.load_model_from_string, which rejects any trailing bytes, so
+# the toggle byte comes from the model bytes themselves (libFuzzer mutates
+# it freely). When the toggle's structured bit is clear, the seed loads and
+# reaches infer_shapes directly.
 
 
 def _si_linear() -> bytes:
@@ -473,17 +473,16 @@ def main() -> int:
 
     # Seed models for fuzz_shape_inference covering both the per-op dispatch
     # table (Concat / MatMul / Reshape data propagation, unary chains) and the
-    # recursive subgraph visitor (If / Loop). Each seed is a serialized
-    # ModelProto with a trailing 0x00 toggle byte, which the harness reads
-    # as (strict=False, check_type=False, use_structured=False) and slices
-    # off before parsing.
+    # recursive subgraph visitor (If / Loop). Each seed is a complete
+    # serialized ModelProto with no trailing bytes, so the harness's raw path
+    # loads it directly via onnx.load_model_from_string.
     shape_inference_seeds = {
-        "linear_relu_sigmoid.onnx": _si_linear() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "concat_axis0.onnx": _si_concat() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "matmul_4x8_8x2.onnx": _si_matmul() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "reshape_2x4_to_8x1.onnx": _si_reshape() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "if_then_else.onnx": _si_if() + _SHAPE_INFERENCE_TOGGLE_RAW,
-        "loop_scan_output.onnx": _si_loop() + _SHAPE_INFERENCE_TOGGLE_RAW,
+        "linear_relu_sigmoid.onnx": _si_linear(),
+        "concat_axis0.onnx": _si_concat(),
+        "matmul_4x8_8x2.onnx": _si_matmul(),
+        "reshape_2x4_to_8x1.onnx": _si_reshape(),
+        "if_then_else.onnx": _si_if(),
+        "loop_scan_output.onnx": _si_loop(),
     }
 
     _write_zip(version_converter_out, version_converter_seeds)
