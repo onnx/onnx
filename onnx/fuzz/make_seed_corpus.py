@@ -317,8 +317,8 @@ def _compose_model(graph):
 
 
 def _compose_pack(m1, m2, toggle: int) -> bytes:
-    b1 = m1.SerializeToString()
-    b2 = m2.SerializeToString()
+    b1: bytes = m1.SerializeToString()
+    b2: bytes = m2.SerializeToString()
     return struct.pack(">I", len(b1)) + b1 + b2 + bytes([toggle])
 
 
@@ -373,7 +373,8 @@ def _compose_multi() -> bytes:
 
 def _compose_if() -> bytes:
     """m2 contains an If whose branches reference its input; exercises the
-    recursive connect_io subgraph rewrite during merge."""
+    recursive connect_io subgraph rewrite during merge.
+    """
     m1 = _compose_model(
         helper.make_graph(
             [helper.make_node("Relu", ["X"], ["Y"])],
@@ -417,7 +418,8 @@ def _compose_if() -> bytes:
 def _compose_prefix() -> bytes:
     """Identical model merged with itself; all names collide, so the seed
     sets the prefix toggle (0x01) to exercise add_prefix collision
-    resolution."""
+    resolution.
+    """
     graph = helper.make_graph(
         [helper.make_node("Add", ["A", "B"], ["C"])],
         "m",
