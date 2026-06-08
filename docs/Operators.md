@@ -1658,7 +1658,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
   Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
   1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-  2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: a query attends only keys at or before its true sequence position. Concretely, the query at in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the number of valid keys preceding the current query block (`offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length`, per batch, when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` for the initial full prefill, which reduces to the standard lower-triangular mask). In valid usage `nonpad_kv_seqlen >= q_sequence_length` so `offset >= 0` (the current query tokens are already written into the cache before this operator runs); a negative offset is out of contract. This applies regardless of the `attn_mask` input.
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -1709,7 +1709,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 
 <dl>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dd>If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys preceding the query block (`past_sequence_length` for an internal `past_key` cache, or `nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` this reduces to the lower-triangular (top-left) mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
@@ -2754,6 +2754,100 @@ expect(
 
 
 <details>
+<summary>attention_4d_causal_nonpad_continued_prefill</summary>
+
+```python
+"""Continued / chunked prefill (S_q=2) into a partially-filled static cache.
+
+With ``nonpad_kv_seqlen = [4]`` and ``S_q = 2`` the bottom-right offset is
+``4 - 2 = 2``: query 0 attends keys ``{0,1,2}`` and query 1 attends
+``{0,1,2,3}``.  The old top-left alignment would mask everything past the
+diagonal (``{0}`` and ``{0,1}``), so this test fails pre-fix.
+"""
+np.random.seed(1)
+B, H, L, D = 1, 2, 4, 8
+S_q = 2
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_continued_prefill",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_causal_with_past_and_present</summary>
+
+```python
+"""Regression guard: internal (past_key) cache + is_causal.
+
+This exercises the unchanged scalar bottom-right path (offset =
+past_sequence_length).  Its golden output must remain identical to the
+pre-fix behavior, proving the external-cache change does not touch the
+past_key path.
+"""
+np.random.seed(2)
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    is_causal=1,
+)
+
+past_sequence_length = 3
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 4, 8).astype(np.float32)
+V = np.random.rand(2, 3, 4, 8).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    past_key=past_key,
+    past_value=past_value,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_4d_causal_with_past_and_present",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_4d_diff_heads_mask4d_padded_kv</summary>
 
 ```python
@@ -2782,6 +2876,94 @@ expect(
     inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
     outputs=[Y],
     name="test_attention_4d_diff_heads_mask4d_padded_kv",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_gqa_causal_nonpad_decode</summary>
+
+```python
+"""External/static-cache decode (S_q=1) with per-batch valid lengths.
+
+K/V are the full static cache buffer; ``nonpad_kv_seqlen`` marks how many
+leading keys are valid per batch.  With bottom-right (offset-aware) causal
+masking the single decode query attends keys ``0..nonpad[b]-1``.  Under the
+old top-left alignment it would attend only key 0, so this test fails
+pre-fix and passes post-fix.
+"""
+np.random.seed(0)
+B, H_q, H_kv, L, D = 2, 4, 2, 8, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H_q, 1, D).astype(np.float32)
+K = np.random.rand(B, H_kv, L, D).astype(np.float32)
+V = np.random.rand(B, H_kv, L, D).astype(np.float32)
+# Batch 0 has all 8 keys valid, batch 1 only the first 5.
+nonpad_kv_seqlen = np.array([8, 5], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_gqa_causal_nonpad_decode",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_gqa_causal_nonpad_decode_fp16</summary>
+
+```python
+"""fp16 variant of the external-cache decode case (locks -inf dtype handling)."""
+np.random.seed(0)
+B, H_q, H_kv, L, D = 2, 4, 2, 8, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H_q, 1, D).astype(np.float16)
+K = np.random.rand(B, H_kv, L, D).astype(np.float16)
+V = np.random.rand(B, H_kv, L, D).astype(np.float16)
+nonpad_kv_seqlen = np.array([8, 5], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_gqa_causal_nonpad_decode_fp16",
     opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```

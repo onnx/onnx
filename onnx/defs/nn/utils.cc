@@ -205,12 +205,16 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
     builder.Add("AttnBias = ConstantOfShape(AttnBiasShape)");
   }
 
-  // If is_causal set to true, the attention masking is a lower triangular matrix when the mask
-  // is a square matrix. The attention masking has the form of the upper left causal bias due to
-  // the alignment when the mask is a non-square matrix.
+  // If is_causal is set to true, causal masking is applied with bottom-right
+  // (offset-aware) alignment: a query at in-block index i attends key j iff
+  // j <= i + offset, where offset is the number of valid keys preceding the query block.
+  // For an internal past_key cache offset is the scalar PastKVSeqLen; for an external
+  // (static) cache (nonpad_kv_seqlen present, no past_key) offset is per batch and the
+  // builder scope holds CausalOffsetPerBatch (= nonpad_kv_seqlen - q_len).
   // An error is thrown if both attn_mask and is_causal are set.
   const auto* const is_causal_attr = ctx.getAttribute("is_causal");
   int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
+  const bool external_cache_offset = (is_causal == 1) && ctx.hasInput(6) && !ctx.hasInput(4);
   if (is_causal == 1) {
     builder.Const1D("Zero", static_cast<int64_t>(0))
         .Const1D("One", static_cast<int64_t>(1))
@@ -221,10 +225,24 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
         .Add("RangeRow = Range(ZeroNoDim, SequenceLength, OneNoDim)")
         .Add("RangeRow2D = Unsqueeze(RangeRow, One)")
         .Add("RangeCol = Range(ZeroNoDim, TotalSequenceLength, OneNoDim)")
-        .Add("RangeCol2D = Unsqueeze(RangeCol, Zero)")
-        .Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
-        .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)")
-        .Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
+        .Add("RangeCol2D = Unsqueeze(RangeCol, Zero)");
+    if (external_cache_offset) {
+      // Per-batch bottom-right frontier: broadcast the (batch,) offset into a 4D
+      // (batch, 1, q, total) boolean mask so it composes with the (batch,1,1,kv)
+      // padding mask added by the caller.
+      builder.Const("Axes01", std::vector<int64_t>{0, 1})
+          .Const("Axes123", std::vector<int64_t>{1, 2, 3})
+          .Add("RangeRow4D = Unsqueeze(RangeRow2D, Axes01)") // (1, 1, q, 1)
+          .Add("RangeCol4D = Unsqueeze(RangeCol2D, Axes01)") // (1, 1, 1, total)
+          .Add("OffsetB4D = Unsqueeze(CausalOffsetPerBatch, Axes123)") // (batch, 1, 1, 1)
+          .Add("RowPlusOff = Add(RangeRow4D, OffsetB4D)") // (batch, 1, q, 1)
+          .Add("BoolMaskTri = Less(RowPlusOff, RangeCol4D)"); // (batch, 1, q, total)
+    } else {
+      // Internal cache / no cache: scalar offset (PastKVSeqLen), 2D (q, total) mask.
+      builder.Add("RangeRow2DPast = Add(RangeRow2D, PastKVSeqLen)")
+          .Add("BoolMaskTri = Less(RangeRow2DPast, RangeCol2D)");
+    }
+    builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
         .Add("AttnBiasCausalOrNot = Add(AttnBias, MaskTri)");
   } else {
     builder.Add("AttnBiasCausalOrNot = Identity(AttnBias)");

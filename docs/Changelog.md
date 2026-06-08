@@ -28272,7 +28272,7 @@ This version of the operator has been available since version 22 of the default 
   3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
   Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
-  1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
+  1) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask.
   2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
 
   Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
@@ -28308,7 +28308,7 @@ This version of the operator has been available since version 23 of the default 
 
 <dl>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dd>If set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>
@@ -29841,7 +29841,7 @@ This version of the operator has been available since version 23 of the default 
 
   Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
   1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-  2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: a query attends only keys at or before its true sequence position. Concretely, the query at in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the number of valid keys preceding the current query block (`offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length`, per batch, when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` for the initial full prefill, which reduces to the standard lower-triangular mask). In valid usage `nonpad_kv_seqlen >= q_sequence_length` so `offset >= 0` (the current query tokens are already written into the cache before this operator runs); a negative offset is out of contract. This applies regardless of the `attn_mask` input.
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -29890,7 +29890,7 @@ This version of the operator has been available since version 24 of the default 
 
 <dl>
 <dt><tt>is_causal</tt> : int (default is 0)</dt>
-<dd>If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.</dd>
+<dd>If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys preceding the query block (`past_sequence_length` for an internal `past_key` cache, or `nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` this reduces to the lower-triangular (top-left) mask.</dd>
 <dt><tt>kv_num_heads</tt> : int</dt>
 <dd>Number of heads of key and value. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>q_num_heads</tt> : int</dt>

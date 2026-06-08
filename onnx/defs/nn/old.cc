@@ -4207,7 +4207,7 @@ This operator also covers the 3 following variants based on the number of heads:
 3) Multi-query Attention (MQA): Described in the paper https://arxiv.org/pdf/1911.02150, `q_num_heads > kv_num_heads`, `kv_num_heads=1`.
 
 Attention bias to be added is calculated based on `attn_mask` input and `is_causal attribute`, only one of which can be provided.
-1) If `is_causal` is set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. The attention masking has the form of the upper left causal bias due to the alignment.
+1) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in `past_key`); for a square Q/K this is the standard lower-triangular mask.
 2) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
 
 Both past and present state key/values are optional. They shall be used together, and not allowed to use only one of them.
@@ -4243,8 +4243,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Attention_ver23_doc)
         .Attr(
             "is_causal",
-            "If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. "
-            "The attention masking has the form of the upper left causal bias due to the alignment.",
+            "If set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: "
+            "query `i` attends key `j` iff `j <= i + past_sequence_length` (the count of cached keys in "
+            "`past_key`); for a square Q/K this is the standard lower-triangular mask.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(

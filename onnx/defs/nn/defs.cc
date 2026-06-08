@@ -3339,7 +3339,7 @@ This operator also covers the 3 following variants based on the number of heads:
 
 Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
 1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-2) If `is_causal` is set to `1`, attention scores above the diagonal are masked out, regardless of the `attn_mask` input.
+2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: a query attends only keys at or before its true sequence position. Concretely, the query at in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the number of valid keys preceding the current query block (`offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length`, per batch, when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` for the initial full prefill, which reduces to the standard lower-triangular mask). In valid usage `nonpad_kv_seqlen >= q_sequence_length` so `offset >= 0` (the current query tokens are already written into the cache before this operator runs); a negative offset is out of contract. This applies regardless of the `attn_mask` input.
 
 With respect to KV cache update, this operator allows the following two use cases:
 
@@ -3388,8 +3388,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Attention_ver24_doc)
         .Attr(
             "is_causal",
-            "If set to `1`, the attention masking is a lower triangular matrix when the mask is a square matrix. "
-            "The attention masking has the form of the upper left causal bias due to the alignment.",
+            "If set to `1`, causal masking is applied. For a square Q/K (no cache offset) this is a "
+            "lower-triangular matrix. In general the mask is bottom-right (offset-aware): query in-block "
+            "index `i` attends key `j` iff `j <= i + offset`, where `offset` is the count of valid keys "
+            "preceding the query block (`past_sequence_length` for an internal `past_key` cache, or "
+            "`nonpad_kv_seqlen - q_sequence_length` per batch for an external cache). When `offset = 0` "
+            "this reduces to the lower-triangular (top-left) mask.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
@@ -3547,6 +3551,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           int64_t q_num_heads = (q_num_heads_attr != nullptr) ? q_num_heads_attr->i() : 0;
           auto kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
           int64_t kv_num_heads = (kv_num_heads_attr != nullptr) ? kv_num_heads_attr->i() : 0;
+          auto is_causal_attr_outer = ctx.getAttribute("is_causal");
+          int64_t is_causal = (is_causal_attr_outer != nullptr) ? is_causal_attr_outer->i() : 0;
 
           // Determine if input is 3D (requires reshape and transpose) or 4D (direct reshape)
           bool is_3d_input = (q_num_heads > 0 && kv_num_heads > 0);
@@ -3609,6 +3615,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             builder.Add("PresentKey = Identity (KReshaped)");
             builder.Const1D("PastKVSeqLen", static_cast<int64_t>(0));
+          }
+          // External/static cache bottom-right offset (per batch): nonpad_kv_seqlen - q_len.
+          // Only meaningful when is_causal=1, nonpad present (input 6), and no past_key (input 4).
+          if (is_causal == 1 && ctx.hasInput(6) && !ctx.hasInput(4)) {
+            builder.Add("CausalOffsetPerBatch = Sub(nonpad_kv_seqlen, QSeqLen)"); // (batch,)
           }
           if (ctx.hasOutput(1)) {
             builder.Add("present_key = Identity (PresentKey)");

@@ -127,22 +127,44 @@ def _compute_attention(
                 attn_mask, pad_shape, mode="constant", constant_values=pad_value
             )
 
-    # First case: If is_causal is provided
-    # If set to true, the attention masking is a lower triangular matrix when the mask
-    # is a square matrix. The attention masking has the form of the upper left causal
-    # bias due to the alignment when the mask is a non-square matrix.
+    # First case: If is_causal is provided.
+    # Causal masking is bottom-right / offset-aligned: a query at in-block index i attends
+    # key j iff  j <= i + offset, where offset is the number of valid keys that precede this
+    # query block. offset is derived per batch from the cache representation:
+    #   * past_key present (internal cache):   offset = past_key.shape[2]   (same for all b)
+    #   * nonpad_kv_seqlen present, no past_key (external/static cache):
+    #                                          offset[b] = nonpad_kv_seqlen[b] - q_len
+    #   * neither:                             offset = 0  (degenerate initial prefill)
     if is_causal:
-        if attn_mask is None:
-            temp_mask = np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
-            attn_bias = _apply_causal(
-                temp_mask,
-                past_sequence_length=past_key.shape[2] if past_key is not None else 0,
-            )
+        if attn_mask is not None and attn_mask.dtype == np.bool_:
+            attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
+        base = (
+            np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
+            if attn_mask is None
+            else attn_mask.copy()
+        )
+        if past_key is None and nonpad_kv_seqlen is not None:
+            # External/static cache: per-batch bottom-right frontier
+            #   j <= i + (nonpad_kv_seqlen[b] - q_len).
+            offsets = nonpad_kv_seqlen.reshape(-1) - q_sequence_length  # (batch,)
+            i_idx = np.arange(q_sequence_length).reshape(
+                1, q_sequence_length, 1
+            )  # (1, q, 1)
+            j_idx = np.arange(kv_sequence_length).reshape(
+                1, 1, kv_sequence_length
+            )  # (1, 1, kv)
+            allowed = j_idx <= (i_idx + offsets.reshape(-1, 1, 1))  # (batch, q, kv)
+            causal = np.where(
+                allowed, Q.dtype.type(0), Q.dtype.type(-np.inf)
+            )  # (batch, q, kv)
+            # Promote to 4D (batch, 1, q, kv) so the later padding-mask block is a no-op reshape.
+            attn_bias = base.reshape(
+                (1,) * (4 - base.ndim) + base.shape
+            ) + causal.reshape(batch_size, 1, q_sequence_length, kv_sequence_length)
         else:
-            if attn_mask.dtype == np.bool_:
-                attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
+            # Internal cache (past_key) or no cache: scalar offset -- bit-identical path.
             attn_bias = _apply_causal(
-                attn_mask.copy(),
+                base,
                 past_sequence_length=past_key.shape[2] if past_key is not None else 0,
             )
     elif attn_mask is not None:
