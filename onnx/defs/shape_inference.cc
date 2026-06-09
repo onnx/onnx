@@ -566,9 +566,7 @@ std::pair<int, int> getAttributeElementTypeAndLength(
   return {elem_type, length};
 }
 
-void InferenceContext::unifyInputShape(
-    size_t input_index,
-    std::initializer_list<std::reference_wrapper<Dim>> dims) {
+void InferenceContext::unifyInputShape(size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims) {
   if (!hasInputShape(*this, input_index)) {
     return;
   }
