@@ -4283,6 +4283,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
             "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
             "If set to `3`, qk_matmul_output is the output after the softmax operation. "
+            "In mode `3`, a fully-masked query row (every key disallowed, e.g. an all-`False` boolean `attn_mask` row) "
+            "is the raw softmax and stays `NaN`, even though the corresponding row of the primary output `Y` is "
+            "zeroed; this debug output is not subject to the fully-masked-row guard. "
             "Default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
