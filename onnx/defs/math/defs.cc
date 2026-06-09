@@ -1238,14 +1238,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           // A' is A or A^T depending on transA; B' is B or B^T depending on transB
           Dim M, N, K;
           if (transA) {
-            unifyInputShape(ctx, 0, {K, M});
+            ctx.unifyInputShape(0, {K, M});
           } else {
-            unifyInputShape(ctx, 0, {M, K});
+            ctx.unifyInputShape(0, {M, K});
           }
           if (transB) {
-            unifyInputShape(ctx, 1, {N, K});
+            ctx.unifyInputShape(1, {N, K});
           } else {
-            unifyInputShape(ctx, 1, {K, N});
+            ctx.unifyInputShape(1, {K, N});
           }
           // Output shape is (M, N)
           updateOutputShape(ctx, 0, {M, N});
@@ -1731,30 +1731,24 @@ ONNX_OPERATOR_SET_SCHEMA(
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-          // Shape inference
+          // Shape inference: input [..., M, M] -> output [...]
           if (hasInputShape(ctx, 0)) {
             const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             const int rank = static_cast<int>(input_shape.dim_size());
 
             if (rank < 2) {
               fail_shape_inference("Input rank must be >= 2.");
             }
 
-            const auto mat_w = input_shape.dim(rank - 1);
-            const auto mat_h = input_shape.dim(rank - 2);
-            if (mat_w.has_dim_value() && mat_h.has_dim_value() && (mat_w.dim_value() != mat_h.dim_value())) {
-              fail_shape_inference(
-                  "The inner-most 2 dimensions must have the same size (mat_w:",
-                  mat_w.dim_value(),
-                  " != mat_h:",
-                  mat_h.dim_value(),
-                  ").");
-            }
+            // Validate the inner-most 2 dims are square
+            Dim M;
+            unifyDim(input_shape.dim(rank - 2), M);
+            unifyDim(input_shape.dim(rank - 1), M);
 
+            // Output is the batch prefix (all dims except the last 2)
+            TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
             for (int i = 0; i < rank - 2; ++i) {
-              auto dim = output_shape->add_dim();
-              *dim = input_shape.dim(i);
+              *output_shape->add_dim() = input_shape.dim(i);
             }
           }
         }));
@@ -1934,60 +1928,48 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
           // Shape inference
-          if (hasNInputShapes(ctx, 2)) {
-            const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
-            const TensorShapeProto& target_shape = ctx.getInputType(1)->tensor_type().shape();
+          // input: [N, C, d1, ..., dk], target: [N, d1, ..., dk], weight (optional): [C]
+          if (!hasNInputShapes(ctx, 2)) {
+            return;
+          }
 
-            const int input_rank = static_cast<int>(input_shape.dim_size());
-            const int target_rank = static_cast<int>(target_shape.dim_size());
+          const TensorShapeProto& input_shape = ctx.getInputType(0)->tensor_type().shape();
 
-            if (input_rank < 2) {
-              fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
-            }
-            if (target_rank != input_rank - 1) {
-              fail_shape_inference(
-                  "Target rank must be 1 less than the input rank. input_rank=",
-                  input_rank,
-                  ", target_rank=",
-                  target_rank);
-            }
+          const int input_rank = static_cast<int>(input_shape.dim_size());
+          const int target_rank = input_rank - 1;
 
-            // match input dimensions (N, C, d1, ..., dk) with target
-            // dimensions of (C, d1, ..., dk)
-            for (int dim = 0; dim < target_rank; dim++) {
-              const auto input_dim = dim == 0 ? input_shape.dim(dim) : input_shape.dim(dim + 1);
-              const auto target_dim = target_shape.dim(dim);
-              if (input_dim.has_dim_value() && target_dim.has_dim_value() &&
-                  input_dim.dim_value() != target_dim.dim_value())
-                fail_shape_inference(
-                    "Input and target dimension value mismatch. input_dim_value=",
-                    input_dim.dim_value(),
-                    " target_dim_value=",
-                    target_dim.dim_value());
-            }
+          if (input_rank < 2) {
+            fail_shape_inference("Input rank must be >= 2. input_rank=", input_rank);
+          }
+          checkInputRank(ctx, 1, target_rank);
 
-            if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-              const TensorShapeProto& weight_shape = ctx.getInputType(2)->tensor_type().shape();
-              const auto weight_rank = weight_shape.dim_size();
-              if (weight_rank != 1) {
-                fail_shape_inference("Weight rank must be 1. weight_rank=", weight_rank);
-              }
-            }
+          // input: [N, C, d1, ..., dk], target: [N, d1, ..., dk]
+          // Build dims array for target shape: [N, d1, ..., dk]
+          Dim C;
+          std::vector<Dim> target_dims(target_rank);
+          // Unify target dims against both inputs
+          for (int i = 0; i < target_rank; i++) {
+            unifyInputDim(ctx, 1, i, target_dims[i]);
+            // input[0]=N matches target[0], input[2..]=d1..dk matches target[1..]
+            int input_i = (i == 0) ? 0 : i + 1;
+            unifyInputDim(ctx, 0, input_i, target_dims[i]);
+          }
+          unifyInputDim(ctx, 0, 1, C);
 
+          // Optional weight input: shape [C]
+          if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
+            ctx.unifyInputShape(2, {C});
+          }
+
+          if (getAttribute(ctx, "reduction", "mean") == "none") {
+            // output tensor is of shape (N, d1, d2, ..., dk)
             TensorShapeProto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-            if (getAttribute(ctx, "reduction", "mean") == "none") {
-              // output tensor is of shape (N, d1, d2, ..., dk) if
-              // reduction attribute is "none".
-              for (int i = 0; i < input_rank - 1; i++) {
-                auto dim = output_shape->add_dim();
-                if (i == 0)
-                  *dim = input_shape.dim(i);
-                else
-                  *dim = input_shape.dim(i + 1);
-              }
+            for (int i = 0; i < target_rank; i++) {
+              *output_shape->add_dim() = target_dims[i];
             }
-            // otherwise output is a scalar.
+          } else {
+            // output is a scalar (empty shape)
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           }
         }));
 

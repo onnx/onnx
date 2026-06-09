@@ -646,22 +646,15 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
-
-  if (input_shape.dim_size() < 4) {
-    fail_shape_inference("Input tensor must have at least 4 dimensions");
-  }
-  if (rios_shape.dim_size() != 2) {
-    fail_shape_inference("RoIs tensor must have 2 dimensions");
-  }
-
-  // first dim is the batch axis and the next is the number of channels.
-  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+  // X: [N, C, H, W], rois: [num_rois, 5]
+  Dim N, C, H, W, num_rois, five;
+  five.set_dim_value(5);
+  ctx.unifyInputShape(0, {N, C, H, W});
+  ctx.unifyInputShape(1, {num_rois, five});
 
   std::vector<int64_t> pooled_shape;
   if (getRepeatedAttribute(ctx, "pooled_shape", pooled_shape)) {
-    if (pooled_shape.size() != n_input_dims) {
+    if (pooled_shape.size() != 2) {
       fail_shape_inference("Attribute pooled_shape has incorrect length");
     }
     for (auto dim : pooled_shape) {
@@ -673,13 +666,11 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
     fail_shape_inference("Attribute pooled_shape must be specified");
   }
 
-  // (num_rois, channels, pooled_shape[0], pooled_shape[1])
-  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-  *output_shape->add_dim() = rios_shape.dim(0);
-  *output_shape->add_dim() = input_shape.dim(1);
-  output_shape->add_dim()->set_dim_value(pooled_shape[0]);
-  output_shape->add_dim()->set_dim_value(pooled_shape[1]);
+  // output: (num_rois, C, pooled_shape[0], pooled_shape[1])
+  Dim pooled_h, pooled_w;
+  pooled_h.set_dim_value(pooled_shape[0]);
+  pooled_w.set_dim_value(pooled_shape[1]);
+  updateOutputShape(ctx, 0, {num_rois, C, pooled_h, pooled_w});
 }
 
 static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
@@ -1507,13 +1498,14 @@ ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  // first dim is the batch axis and the next is the number of channels.
-  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+  // X: [N, C, D1, ..., Dn] -> Y: [N, C, 1, 1, ..., 1]
+  Dim N, C;
+  ctx.unifyInputShapePrefix(0, {N, C});
 
-  // (N, C, 1, 1, ..., 1)
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
   auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-  *output_shape->add_dim() = input_shape.dim(0);
-  *output_shape->add_dim() = input_shape.dim(1);
+  *output_shape->add_dim() = N;
+  *output_shape->add_dim() = C;
 
   for (size_t i = 0; i < n_input_dims; ++i) {
     output_shape->add_dim()->set_dim_value(1);
@@ -3912,13 +3904,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // K between weight and past_state).
           Dim B, C, L, One, K, KMinus1;
           One.set_dim_value(1);
-          unifyInputShape(ctx, 0, {B, C, L});
-          unifyInputShape(ctx, 1, {C, One, K});
+          ctx.unifyInputShape(0, {B, C, L});
+          ctx.unifyInputShape(1, {C, One, K});
           if (ctx.hasInput(2)) {
-            unifyInputShape(ctx, 2, {C});
+            ctx.unifyInputShape(2, {C});
           }
           if (ctx.hasInput(3)) {
-            unifyInputShape(ctx, 3, {B, C, KMinus1});
+            ctx.unifyInputShape(3, {B, C, KMinus1});
           }
 
           // Connect KMinus1 to K (when K is known) using Dim arithmetic.
@@ -4612,22 +4604,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (kv_num_heads > 0) {
             Hkv.set_dim_value(kv_num_heads);
           }
-          unifyInputShape(ctx, 0, {B, T, QPack});
-          unifyInputShape(ctx, 1, {B, T, KPack});
-          unifyInputShape(ctx, 2, {B, T, VPack});
+          ctx.unifyInputShape(0, {B, T, QPack});
+          ctx.unifyInputShape(1, {B, T, KPack});
+          ctx.unifyInputShape(2, {B, T, VPack});
           if (has_past_state) {
-            unifyInputShape(ctx, 3, {B, Hkv, Dk, Dv});
+            ctx.unifyInputShape(3, {B, Hkv, Dk, Dv});
           }
           // decay shape: (B, T, H_kv * d_k) for per-key-dim or (B, T, H_kv) for
           // per-head. Both are rank-3; we only constrain B and T.
           if (has_decay) {
             Dim DecayLast;
-            unifyInputShape(ctx, 4, {B, T, DecayLast});
+            ctx.unifyInputShape(4, {B, T, DecayLast});
           }
           // beta shape: (B, T, H_kv) or (B, T, 1). Both rank-3; only B, T checked.
           if (has_beta) {
             Dim BetaLast;
-            unifyInputShape(ctx, 5, {B, T, BetaLast});
+            ctx.unifyInputShape(5, {B, T, BetaLast});
           }
 
           // Derive d_k from Q (via q_num_heads) and K (via kv_num_heads).

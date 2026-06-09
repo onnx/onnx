@@ -11,7 +11,7 @@
 
 namespace ONNX_NAMESPACE {
 ONNX_API void RNNShapeInference(InferenceContext& ctx) {
-  TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
+  Dim num_directions, seq_length, batch_size, hidden_size, input_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
   if ((direction == "forward") || (direction == "reverse"))
@@ -26,13 +26,11 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
 
   auto layout_value = getAttribute(ctx, "layout", 0);
 
-  if (hasInputShape(ctx, 0)) {
-    const auto& first_input_shape = getInputShape(ctx, 0);
-    if (first_input_shape.dim_size() != 3) {
-      fail_shape_inference("First input tensor must have rank 3");
-    }
-    seq_length = first_input_shape.dim((layout_value == 0) ? 0 : 1);
-    batch_size = first_input_shape.dim((layout_value == 0) ? 1 : 0);
+  // X: [seq_length, batch_size, input_size] (layout=0) or [batch_size, seq_length, input_size] (layout=1)
+  if (layout_value == 0) {
+    ctx.unifyInputShape(0, {seq_length, batch_size, input_size});
+  } else {
+    ctx.unifyInputShape(0, {batch_size, seq_length, input_size});
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -42,11 +40,9 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
     if (layout_value == 0) {
-      auto dims = {seq_length, num_directions, batch_size, hidden_size};
-      updateOutputShape(ctx, 0, dims);
+      updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
     } else {
-      auto dims = {batch_size, seq_length, num_directions, hidden_size};
-      updateOutputShape(ctx, 0, dims);
+      updateOutputShape(ctx, 0, {batch_size, seq_length, num_directions, hidden_size});
     }
   }
 
@@ -55,11 +51,9 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
     propagateElemTypeFromInputToOutput(ctx, 0, 1);
 
     if (layout_value == 0) {
-      auto dims = {num_directions, batch_size, hidden_size};
-      updateOutputShape(ctx, 1, dims);
+      updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
     } else {
-      auto dims = {batch_size, num_directions, hidden_size};
-      updateOutputShape(ctx, 1, dims);
+      updateOutputShape(ctx, 1, {batch_size, num_directions, hidden_size});
     }
   }
 
@@ -68,11 +62,9 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
     propagateElemTypeFromInputToOutput(ctx, 0, 2);
 
     if (layout_value == 0) {
-      auto dims = {num_directions, batch_size, hidden_size};
-      updateOutputShape(ctx, 2, dims);
+      updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
     } else {
-      auto dims = {batch_size, num_directions, hidden_size};
-      updateOutputShape(ctx, 2, dims);
+      updateOutputShape(ctx, 2, {batch_size, num_directions, hidden_size});
     }
   }
 }
