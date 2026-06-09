@@ -2294,7 +2294,7 @@ class Attention(Base):
         attends keys ``0..(sq - 2)``, so rows 0 and 1 have an empty key set.  Their
         ``softmax`` over an all-``-inf`` bias row is ``NaN``; the fully-masked-row
         guard zeros those rows before the ``P @ V`` contraction so the output rows are
-        exactly ``0``, while rows 2 and 3 (offsets ``{0}`` and ``{0,1}``) stay finite
+        exactly ``0``, while rows 2 and 3 (attending keys ``{0}`` and ``{0,1}``) stay finite
         and nonzero.  A ``nonpad_kv_seqlen[b] < q_sequence_length`` input is out of
         the contract's intended use, but its result is still well-defined (zeroed
         rows) rather than ``NaN``; this test pins that defined behavior.
@@ -2397,7 +2397,9 @@ class Attention(Base):
         assert np.all(np.isnan(qk_matmul_output[:, :, 0, :])), (
             "mode-3 raw softmax row for a fully-masked query must stay NaN"
         )
-        assert np.all(np.isfinite(Y)), "non-masked primary output rows must be finite"
+        assert np.all(np.isfinite(Y)), (
+            "all Y rows are finite (the fully-masked row is guarded to 0.0)"
+        )
 
         expect(
             node,
