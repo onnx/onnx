@@ -1956,9 +1956,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           unifyInputDim(ctx, 0, 1, C);
 
-          // Optional weight input: [C]
+          // Optional weight input: must be rank 1
           if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-            ctx.unifyInputShape(2, {C});
+            checkInputRank(ctx, 2, 1);
           }
 
           if (getAttribute(ctx, "reduction", "mean") == "none") {
@@ -1967,8 +1967,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             for (int i = 0; i < target_rank; i++) {
               *output_shape->add_dim() = target_dims[i];
             }
+          } else {
+            // output is a scalar (empty shape)
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           }
-          // otherwise output is a scalar.
         }));
 
 static void einsumShapeInference(ONNX_NAMESPACE::InferenceContext& ctx, std::string const& equation) {
