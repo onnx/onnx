@@ -1956,9 +1956,9 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
           unifyInputDim(ctx, 0, 1, C);
 
-          // Optional weight input: must be rank 1
+          // Optional weight input: shape [C]
           if (ctx.getNumInputs() == 3 && hasInputShape(ctx, 2)) {
-            checkInputRank(ctx, 2, 1);
+            ctx.unifyInputShape(2, {C});
           }
 
           if (getAttribute(ctx, "reduction", "mean") == "none") {
