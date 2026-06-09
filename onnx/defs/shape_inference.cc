@@ -566,14 +566,12 @@ std::pair<int, int> getAttributeElementTypeAndLength(
   return {elem_type, length};
 }
 
-void unifyInputShape(
-    InferenceContext& ctx,
-    size_t input_index,
-    std::initializer_list<std::reference_wrapper<Dim>> dims) {
-  if (!hasInputShape(ctx, input_index)) {
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void InferenceContext::unifyInputShape(size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims) {
+  if (!hasInputShape(*this, input_index)) {
     return;
   }
-  const auto& input_shape = getInputShape(ctx, input_index);
+  const auto& input_shape = getInputShape(*this, input_index);
   if (static_cast<size_t>(input_shape.dim_size()) != dims.size()) {
     fail_shape_inference(
         "Input ",
@@ -583,7 +581,7 @@ void unifyInputShape(
         " but has rank ",
         input_shape.dim_size(),
         " in ",
-        ctx.getDisplayName(),
+        getDisplayName(),
         ".");
   }
   int i = 0;
@@ -594,14 +592,14 @@ void unifyInputShape(
   }
 }
 
-void unifyInputShapePrefix(
-    InferenceContext& ctx,
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void InferenceContext::unifyInputShapePrefix(
     size_t input_index,
     std::initializer_list<std::reference_wrapper<Dim>> prefix) {
-  if (!hasInputShape(ctx, input_index)) {
+  if (!hasInputShape(*this, input_index)) {
     return;
   }
-  const auto& input_shape = getInputShape(ctx, input_index);
+  const auto& input_shape = getInputShape(*this, input_index);
   if (static_cast<size_t>(input_shape.dim_size()) < prefix.size()) {
     fail_shape_inference(
         "Input ",
@@ -611,7 +609,7 @@ void unifyInputShapePrefix(
         " but has rank ",
         input_shape.dim_size(),
         " in ",
-        ctx.getDisplayName(),
+        getDisplayName(),
         ".");
   }
   int i = 0;
