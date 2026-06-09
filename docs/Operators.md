@@ -1660,7 +1660,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
   1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
   2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: a query attends only keys at or before its true sequence position. Concretely, the query at in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the number of valid keys preceding the current query block (`offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length`, per batch, when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` for the initial full prefill, which reduces to the standard lower-triangular mask). The causal frontier is computed independently of the `attn_mask` input and is then composed with it additively, by summing their attention biases: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. In valid usage `nonpad_kv_seqlen >= q_sequence_length` so `offset >= 0` (the current query tokens are already written into the cache before this operator runs); a negative offset is out of contract. A fully-masked query row (every key's combined additive bias is `-inf`, so no key is attended) produces a zero output row (matching prevailing runtime practice), not `NaN`.
 
-  Errata (in-place behavioral correction, no opset bump): when `is_causal` is composed with a boolean `attn_mask`, the boolean mask is converted to an additive bias by selection (attended -> 0, masked -> -inf) rather than by multiplication, and a fully-masked query row now produces a zero output row instead of `NaN`. This only replaces previously-undefined `NaN` outputs; every well-defined result is unchanged.
+  Changed behavior (pre-release, no opset bump): when `is_causal` is composed with a boolean `attn_mask`, the boolean mask is converted to an additive bias by selection (attended -> 0, masked -> -inf) rather than by multiplication, and a fully-masked query row produces a zero output row instead of `NaN`. opset 24 is in development (pre-release), so this is a refinement of the in-development specification rather than an erratum to a published one; it only replaces previously-undefined `NaN` outputs, and every well-defined result is unchanged.
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -1842,6 +1842,72 @@ expect(
     inputs=[Q, K, V, attn_mask],
     outputs=[Y],
     name="test_attention_23_boolmask_fullymasked_row_nan_robustness",
+    opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_23_fullymasked_qk_matmul_output_mode3_nan</summary>
+
+```python
+"""Opset-23 ``qk_matmul_output_mode=3`` fully-masked row stays ``NaN``.
+
+Mode ``3`` exposes the raw post-softmax matrix as the optional
+``qk_matmul_output``.  For a fully-masked query row (all-``False`` boolean
+``attn_mask`` row), that raw softmax over an all-``-inf`` bias row is ``NaN``
+and is intentionally **not** subject to the fully-masked-row guard, so the
+mode-3 debug output keeps the ``NaN`` even though the primary output ``Y`` row
+is zeroed by the guard.  This pins the documented divergence between the
+guarded primary output and the raw mode-3 output at opset 23.
+
+The backend comparator (``np.testing.assert_allclose``) defaults to
+``equal_nan=True``, so the ``NaN`` golden compares equal to a conformant
+backend's ``NaN``.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(13)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+)
+
+# Primary output row 0 is guarded to zero; the raw mode-3 row 0 stays NaN.
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked primary output row must be zero"
+)
+assert np.all(np.isnan(qk_matmul_output[:, :, 0, :])), (
+    "mode-3 raw softmax row for a fully-masked query must stay NaN"
+)
+assert np.all(np.isfinite(Y)), "non-masked primary output rows must be finite"
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_23_fullymasked_qk_matmul_output_mode3_nan",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
 )
 ```
@@ -2809,6 +2875,136 @@ expect(
 
 
 <details>
+<summary>attention_4d_causal_nonpad_attn_mask_composition</summary>
+
+```python
+"""Compose ``is_causal`` + ``nonpad_kv_seqlen`` + boolean ``attn_mask``.
+
+The existing nonpad tests use no ``attn_mask`` and the existing mask tests
+use no ``nonpad_kv_seqlen``; this is the first to activate all three
+constraints together on the external-cache path with ``batch > 1``.  The
+per-batch bottom-right causal frontier (offsets ``[2, 3]``), the padding
+bound (``nonpad_kv_seqlen = [4, 5]``) and the explicit boolean mask are
+intersected.  The mask is chosen to leave at least one allowed key on every
+query row, so this exercises the *intersection* of the three constraints with
+finite outputs (the fully-masked-row guard is covered by the M2/M4 tests).
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(11)
+B, H, L, D = 2, 2, 6, 8
+S_q = 2
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4, 5], dtype=np.int64)  # offsets [2, 3]
+# Per-batch (B, 1, S_q, L) bool mask; each row keeps >=1 allowed key.
+attn_mask = np.array(
+    [
+        [
+            [
+                [True, True, False, False, False, False],
+                [True, True, True, False, False, False],
+            ]
+        ],
+        [
+            [
+                [True, True, True, False, False, False],
+                [True, True, True, True, False, False],
+            ]
+        ],
+    ],
+    dtype=np.bool_,
+)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+# The chosen mask leaves >=1 allowed key per row, so the composition stays
+# finite (no fully-masked row in this case).
+assert np.all(np.isfinite(Y)), "composed-constraint output must be finite"
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_attn_mask_composition",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_causal_nonpad_batch_prefill</summary>
+
+```python
+"""Batch>1 continued prefill with distinct per-batch bottom-right offsets.
+
+The batched generalization of the ``batch == 1`` continued-prefill case: with
+``nonpad_kv_seqlen = [4, 5, 6]`` and ``S_q = 2`` the per-batch bottom-right
+offsets are ``[2, 3, 4]`` (all ``>= 0``), so each batch realigns its causal
+frontier to its own valid-key prefix.  This pins that the per-batch offset is
+applied independently across the batch dimension.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(12)
+B, H, L, D = 3, 2, 6, 8
+S_q = 2
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+nonpad_kv_seqlen = np.array([4, 5, 6], dtype=np.int64)  # offsets [2, 3, 4]
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+assert np.all(np.isfinite(Y)), "per-batch prefill output must be finite"
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_batch_prefill",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_4d_causal_nonpad_continued_prefill</summary>
 
 ```python
@@ -2848,6 +3044,76 @@ expect(
     inputs=[Q, K, V, nonpad_kv_seqlen],
     outputs=[Y],
     name="test_attention_4d_causal_nonpad_continued_prefill",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_4d_causal_nonpad_negative_offset_structural_empty</summary>
+
+```python
+"""Negative bottom-right offset: structurally-empty early query rows -> zero.
+
+This is the onnx-node twin of the ORT gtest
+``Attention_Causal_NonPadKVSeqLen_StructuralEmptyRow_Zero`` /
+``StructuralEmptyRows_Zero_CUDA``.  With ``nonpad_kv_seqlen = [2]`` and
+``S_q = 4`` the bottom-right offset is ``2 - 4 = -2``: query row ``sq``
+attends keys ``0..(sq - 2)``, so rows 0 and 1 have an empty key set.  Their
+``softmax`` over an all-``-inf`` bias row is ``NaN``; the fully-masked-row
+guard zeros those rows before the ``P @ V`` contraction so the output rows are
+exactly ``0``, while rows 2 and 3 (offsets ``{0}`` and ``{0,1}``) stay finite
+and nonzero.  A ``nonpad_kv_seqlen[b] < q_sequence_length`` input is out of
+the contract's intended use, but its result is still well-defined (zeroed
+rows) rather than ``NaN``; this test pins that defined behavior.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(7)
+B, H, L, D = 1, 2, 4, 8
+S_q = 4
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, L, D).astype(np.float32)
+V = np.random.rand(B, H, L, D).astype(np.float32)
+# offset = nonpad - S_q = 2 - 4 = -2 -> rows 0,1 structurally empty.
+nonpad_kv_seqlen = np.array([2], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+)
+
+# Structurally-empty early rows are exactly zero (not NaN); later rows finite.
+assert np.all(np.isfinite(Y)), "all output rows must be finite"
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "structurally-empty row 0 must be zero"
+)
+assert np.array_equal(Y[:, :, 1, :], np.zeros_like(Y[:, :, 1, :])), (
+    "structurally-empty row 1 must be zero"
+)
+assert np.any(Y[:, :, 2, :] != 0) and np.any(Y[:, :, 3, :] != 0), (
+    "rows with a non-empty key set must be nonzero"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_4d_causal_nonpad_negative_offset_structural_empty",
     opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
