@@ -45,8 +45,7 @@ def _make_model(
 _PARSER_SEEDS: dict[str, str] = {
     # Minimal 3-op linear model; exercises basic node and graph parsing.
     "basic_matmul_softmax.txt": """\
-
-  ir_version: 7,
+< ir_version: 7,
   opset_import: ["" : 10]
 >
 agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
@@ -58,8 +57,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
 """,
     # Multiple opset imports; exercises opset_import list parsing.
     "multi_opset.txt": """\
-
-  ir_version: 7,
+< ir_version: 7,
   opset_import: ["" : 10, "com.microsoft" : 1]
 >
 agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
@@ -71,8 +69,7 @@ agraph (float[N, 128] X, float[128, 10] W, float[10] B) => (float[N] C)
 """,
     # All top-level metadata fields; exercises producer_name, doc_string, etc.
     "model_with_metadata.txt": """\
-
-  ir_version: 9,
+< ir_version: 9,
   opset_import: ["" : 15],
   producer_name: "oss-fuzz-seed",
   producer_version: "1.0",
@@ -87,8 +84,7 @@ agraph (float[N] x) => (float[N] y)
     # Model with a local function definition and attribute references;
     # exercises the function-proto and attribute-default parsing paths.
     "function_with_attributes.txt": """\
-
-  ir_version: 9,
+< ir_version: 9,
   opset_import: ["" : 15, "custom_domain" : 1],
   producer_name: "oss-fuzz-seed",
   producer_version: "1.0",
@@ -99,8 +95,7 @@ agraph (float[N] x) => (float[N] out)
 {
    out = custom_domain.Selu<alpha=2.0, gamma=3.0>(x)
 }
-
-  domain: "custom_domain",
+< domain: "custom_domain",
   opset_import: ["" : 15],
   doc_string: "custom Selu function"
 >
@@ -125,13 +120,11 @@ Selu
 """,
     # Cast op with a type initializer; exercises initializer and attribute parsing.
     "cast_with_initializer.txt": """\
-
-  ir_version: 10,
+< ir_version: 10,
   opset_import: ["" : 19]
 >
 agraph (float[N] X) => (int64[N] C)
-
-  int64[1] weight = {0}
+< int64[1] weight = {0}
 >
 {
    C = Cast<to=7>(X)
@@ -140,8 +133,7 @@ agraph (float[N] X) => (int64[N] C)
     # Special float literal values (inf, -inf, nan); exercises the float
     # literal parser branches that differ from ordinary decimal parsing.
     "float_special_values.txt": """\
-
-  ir_version: 8,
+< ir_version: 8,
   opset_import: ["" : 18]
 >
 agraph (float[1] X) => (float[1] Y)
