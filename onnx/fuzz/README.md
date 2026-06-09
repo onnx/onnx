@@ -2,10 +2,13 @@
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 
 # ONNX OSS-Fuzz Harnesses
+
 This directory contains [atheris](https://github.com/google/atheris)-based Python fuzz
 targets used by [OSS-Fuzz](https://github.com/google/oss-fuzz) to continuously test ONNX
 for crashes, hangs, and sanitizer violations.
+
 ## Harnesses
+
 | File | Entry point fuzzed | Input path |
 |---|---|---|
 | `fuzz_checker.py` | `checker.check_model` | Raw bytes → protobuf parser |
@@ -15,15 +18,20 @@ for crashes, hangs, and sanitizer violations.
 | `fuzz_shape_inference.py` | `shape_inference.infer_shapes` | Raw bytes **and** structured model (toggle byte) |
 | `fuzz_version_converter.py` | `version_converter.convert_version` | Raw bytes → protobuf parser |
 | `make_seed_corpus.py` | *(seed generator, not a fuzzer)* | Produces seed zips for OSS-Fuzz |
+
 ## How OSS-Fuzz uses these files
+
 The companion OSS-Fuzz project ([google/oss-fuzz#15382](https://github.com/google/oss-fuzz/pull/15382))
 clones this repository and runs each `fuzz_*.py` file via `compile_python_fuzzer`.
 The `build.sh` in that repo references these files from `$SRC/onnx/fuzz/` so that the
 harnesses are version-controlled here alongside the code they test.
+
 ## Running a harness locally
+
 Atheris requires a libFuzzer-instrumented Python build; the easiest way is via the
 OSS-Fuzz Docker image. For quick local smoke-tests you can run without fuzzing by
 passing `-runs=0` (just loads the harness):
+
 ```bash
 pip install atheris
 python onnx/fuzz/fuzz_checker.py -runs=1000
@@ -32,45 +40,62 @@ python onnx/fuzz/fuzz_parser.py -runs=1000
 python onnx/fuzz/fuzz_shape_inference.py -runs=1000
 python onnx/fuzz/fuzz_version_converter.py -runs=1000
 ```
+
 To generate the seed corpora that OSS-Fuzz uses as starting inputs:
+
 ```bash
 python onnx/fuzz/make_seed_corpus.py \
     /tmp/vc_seeds.zip /tmp/parser_seeds.zip /tmp/checker_seeds.zip \
     /tmp/shape_inference_seeds.zip /tmp/compose_seeds.zip
 ```
+
 ## Design notes
+
 ### Why `except Exception: return`?
+
 Fuzz targets must never crash on expected errors — only on *unexpected* ones
 (memory corruption, hangs, sanitizer reports). All protobuf parse failures,
 `ValidationError`, `InferenceError`, `DecodeError`, etc. are expected when the
 fuzzer feeds random bytes. Swallowing them lets libFuzzer keep searching for
 inputs that cause real bugs.
+
 ### Why `TestOneInput`?
+
 `TestOneInput` is the [required entry-point name](https://github.com/google/atheris#usage)
 for atheris harnesses. Ruff's `N802` (lowercase function names) is suppressed for
 `onnx/fuzz/**` in `pyproject.toml` for this reason.
+
 ### `fuzz_shape_inference.py` toggle byte
+
 The shape inference harness exercises two code paths per iteration, selected by
 the last byte of the input:
+
 | Bit | Meaning |
 |---|---|
 | `0x01` | `strict_mode=True` |
 | `0x02` | `check_type=True` |
 | `0x04` | Use structured model builder (If/Loop/Scan subgraphs) instead of raw bytes |
+
 This lets a single harness cover both the protobuf-parser path and the recursive
 subgraph visitor without needing separate fuzzers.
+
 ### `fuzz_compose.py` toggle byte
+
 The compose harness drives two ModelProtos plus an io_map into
 `compose.merge_models`. The last byte selects the input strategy:
+
 | Bit | Meaning |
 |---|---|
 | `0x01` | pass `prefix1`/`prefix2` (collision-resolution path) |
 | `0x04` | structured: build both models from `FuzzedDataProvider` (else raw: a 4-byte length prefix splits the remaining bytes into m1 \| m2) |
 | `0x08` | random io_map (else derive it from m1's output names and m2's input names) |
+
 `merge_models` transitively exercises `merge_graphs`, `check_overlapping_names`,
 the recursive `connect_io` subgraph rewrite, `add_prefix`, and a final
 `checker.check_model` on the merged result.
+
 ## Adding a new harness
+
 1. Create `onnx/fuzz/fuzz_<name>.py` following the pattern of an existing harness.
 2. If the fuzzer benefits from seed inputs, add them to `make_seed_corpus.py` and
    wire up the output zip in the OSS-Fuzz `build.sh`.
