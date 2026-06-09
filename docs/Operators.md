@@ -2883,18 +2883,36 @@ expect(
 The existing nonpad tests use no ``attn_mask`` and the existing mask tests
 use no ``nonpad_kv_seqlen``; this is the first to activate all three
 constraints together on the external-cache path with ``batch > 1``.  The
-per-batch bottom-right causal frontier (offsets ``[2, 3]``), the padding
-bound (``nonpad_kv_seqlen = [4, 5]``) and the explicit boolean mask are
-intersected.  The mask is chosen to leave at least one allowed key on every
-query row, so this exercises the *intersection* of the three constraints with
-finite outputs (the fully-masked-row guard is covered by the M2/M4 tests).
+three biases are summed additively and a key is attended only if allowed by
+all three.  Crucially the inputs are designed so that **each constraint is
+independently necessary** -- removing any one changes the golden -- to avoid a
+degenerate test that a backend ignoring ``is_causal`` and/or
+``nonpad_kv_seqlen`` could still pass:
+
+* **``is_causal`` binds.**  Each batch has a key that the boolean mask allows
+  (``True``) but the bottom-right causal frontier disallows
+  (``j > i + offset``); only ``is_causal`` masks it (batch 0 row 0 key 2,
+  batch 1 row 0 key 3).
+* **``attn_mask`` binds.**  Each batch has a key the causal frontier and the
+  padding bound both allow but the boolean mask sets ``False`` (batch 0 row 2
+  key 1, batch 1 row 2 key 2); only the mask masks it.
+* **``nonpad_kv_seqlen`` binds.**  ``nonpad_kv_seqlen`` sets the per-batch
+  causal *offset* (``offset = nonpad_kv_seqlen - q_sequence_length``), so
+  dropping it collapses the frontier to top-left (``offset = 0``) and shifts
+  which keys are attended.  (Under ``is_causal=1`` the causal frontier already
+  subsumes the ``j < nonpad`` padding bound, so ``nonpad_kv_seqlen`` binds
+  through the offset it induces rather than through a redundant padding cut.)
+
+The mask is chosen to leave at least one allowed key on every query row, so
+this exercises the *intersection* of the three constraints with finite outputs
+(the fully-masked-row guard is covered by the M2/M4 tests).
 
 4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
 them would make the function body treat the input as 3D).
 """
 np.random.seed(11)
 B, H, L, D = 2, 2, 6, 8
-S_q = 2
+S_q = 3
 
 node = onnx.helper.make_node(
     "Attention",
@@ -2906,20 +2924,25 @@ node = onnx.helper.make_node(
 Q = np.random.rand(B, H, S_q, D).astype(np.float32)
 K = np.random.rand(B, H, L, D).astype(np.float32)
 V = np.random.rand(B, H, L, D).astype(np.float32)
-nonpad_kv_seqlen = np.array([4, 5], dtype=np.int64)  # offsets [2, 3]
-# Per-batch (B, 1, S_q, L) bool mask; each row keeps >=1 allowed key.
+nonpad_kv_seqlen = np.array([4, 5], dtype=np.int64)  # offsets [1, 2]
+# Per-batch (B, 1, S_q, L) bool mask. Each batch is laid out so all three
+# constraints uniquely bind (see the docstring): a causal-only-masked key
+# (mask True, j > i + offset), a mask-only-masked key (mask False, causal +
+# nonpad allow it), and >=1 allowed key per row.
 attn_mask = np.array(
     [
         [
             [
-                [True, True, False, False, False, False],
                 [True, True, True, False, False, False],
+                [True, True, True, False, False, False],
+                [True, False, True, True, False, False],
             ]
         ],
         [
             [
-                [True, True, True, False, False, False],
                 [True, True, True, True, False, False],
+                [True, True, True, True, False, False],
+                [True, True, False, True, True, False],
             ]
         ],
     ],
@@ -2938,6 +2961,29 @@ Y, _, _, _ = _compute_attention(
 # The chosen mask leaves >=1 allowed key per row, so the composition stays
 # finite (no fully-masked row in this case).
 assert np.all(np.isfinite(Y)), "composed-constraint output must be finite"
+
+# Non-degeneracy: each constraint is independently necessary. Removing any one
+# of the three (is_causal, attn_mask, nonpad_kv_seqlen) must change the result,
+# so a backend that ignores is_causal or nonpad_kv_seqlen cannot reproduce the
+# golden by applying only the most restrictive mask.
+y_no_causal, _, _, _ = _compute_attention(
+    Q, K, V, attn_mask=attn_mask, nonpad_kv_seqlen=nonpad_kv_seqlen, is_causal=0
+)
+y_no_mask, _, _, _ = _compute_attention(
+    Q, K, V, nonpad_kv_seqlen=nonpad_kv_seqlen, is_causal=1
+)
+y_no_nonpad, _, _, _ = _compute_attention(
+    Q, K, V, attn_mask=attn_mask, is_causal=1
+)
+assert not np.allclose(Y, y_no_causal, equal_nan=True), (
+    "is_causal must bind: dropping it changes the result"
+)
+assert not np.allclose(Y, y_no_mask, equal_nan=True), (
+    "attn_mask must bind: dropping it changes the result"
+)
+assert not np.allclose(Y, y_no_nonpad, equal_nan=True), (
+    "nonpad_kv_seqlen must bind (via the causal offset): dropping it changes the result"
+)
 
 expect(
     node,
