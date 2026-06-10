@@ -2233,7 +2233,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "antialias",
             "If set to 1, \"linear\" and \"cubic\" interpolation modes will use an antialiasing filter when downscaling. "
-            "Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale) for each dimension, where the scales for each dimension may be provided explicitly through the \"scales\" input   or implicitly derived from the ratio of output size to input size when the \"sizes\" input is used. This means that when downsampling, more input pixels contribute to an output pixel.",
+            "Antialiasing is achieved by stretching the resampling filter by a factor max(1, 1 / scale) for each dimension, "
+            "where the scale for each dimension may be provided explicitly through the \"scales\" input "
+            "or implicitly derived from the ratio of output size to input size when the \"sizes\" input is used. "
+            "This means that when downsampling, more input pixels contribute to an output pixel.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
