@@ -21,7 +21,9 @@ cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-dep
 [tasks.install.env]
 ONNX_ML="1"
 ONNX_BUILD_TESTS="1"
-CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_HARDENING=ON -DONNX_WERROR=ON"
+# -GNinja overrides the CMAKE_GENERATOR="Visual Studio 17 2022" exported by the
+# conda-forge vs2022 activation, which fails on runners that only have a newer VS.
+CMAKE_EXTRA_ARGS="-GNinja -DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_HARDENING=ON -DONNX_WERROR=ON"
 
 [tasks.gen-docs]
 cmd = "python onnx/defs/gen_doc.py"
@@ -42,8 +44,8 @@ depends-on = ["gen-docs", "gen-operator-coverage", "gen-proto", "gen-test-data-f
 [tasks.gtest]
 cmd = ".setuptools-cmake-build/onnx_gtests"
 [target.win-64.tasks.gtest]
-# Different path on Windows
-cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
+# Ninja is single-config, so no Release/ subdir; only the suffix differs
+cmd = ".setuptools-cmake-build/onnx_gtests.exe"
 
 [tasks.pytest]
 cmd = "pytest"
