@@ -1114,7 +1114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 74 test cases, listed as following:
+There are 76 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -1248,6 +1248,139 @@ expect(
     outputs=[Y, qk_matmul_output],
     name="test_attention_23_fullymasked_qk_matmul_output_mode3_zero",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_24_fullymasked_qk_matmul_output_mode3_zero</summary>
+
+```python
+"""Opset-24 ``qk_matmul_output_mode=3`` fully-masked row is a zero row.
+
+The opset-24 twin of
+``export_attention_23_fullymasked_qk_matmul_output_mode3_zero``.  Mode ``3``
+exposes the post-softmax matrix as the optional ``qk_matmul_output``.  For a
+fully-masked query row (all-``False`` boolean ``attn_mask`` row), the
+fully-masked-row guard is applied before this output is produced, so the
+mode-3 row is zeroed, consistent with the primary output ``Y`` row (both are
+``0``).  This pins the mandated agreement between the guarded primary output
+and the mode-3 output at opset 24.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(13)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+)
+
+# Primary output row 0 and the mode-3 row 0 are both guarded to zero.
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked primary output row must be zero"
+)
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+assert np.all(np.isfinite(Y)), (
+    "all Y rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_24_fullymasked_qk_matmul_output_mode3_zero",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+<details>
+<summary>attention_24_qk_matmul_output_mode3_softmax_precision</summary>
+
+```python
+"""Mode-3 ``qk_matmul_output`` is emitted at the output precision ``T1``.
+
+``qk_matmul_output_mode=3`` exposes the post-softmax probabilities.  When
+``softmax_precision`` differs from the operator's output type ``T1`` (here
+``T1 = float16`` with softmax computed in ``float32``), the mode-3 output is
+cast back to ``T1`` -- matching the reference implementation, which casts the
+exposed matrix to ``Q.dtype``.  This locks both the dtype contract and the
+fully-masked-row zeroing under a non-default ``softmax_precision``.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(17)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+    softmax_precision=int(onnx.TensorProto.FLOAT),
+)
+
+# T1 = float16; softmax runs in float32, so the mode-3 output is cast back to
+# float16 on emission.
+Q = np.random.rand(B, H, S, D).astype(np.float16)
+K = np.random.rand(B, H, S, D).astype(np.float16)
+V = np.random.rand(B, H, S, D).astype(np.float16)
+# Row 0: fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+    softmax_precision=int(onnx.TensorProto.FLOAT),
+)
+
+# The mode-3 output is emitted at T1 (float16), not the float32 softmax
+# precision, matching the operator's output type.
+assert qk_matmul_output.dtype == np.float16, (
+    "mode-3 qk_matmul_output must be emitted at the output precision T1 (float16)"
+)
+# The fully-masked row is still guarded to zero, consistent with Y.
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_24_qk_matmul_output_mode3_softmax_precision",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -2196,7 +2329,9 @@ degenerate test that a backend ignoring ``is_causal`` and/or
 
 The mask is chosen to leave at least one allowed key on every query row, so
 this exercises the *intersection* of the three constraints with finite outputs
-(the fully-masked-row guard is covered by the M2/M4 tests).
+(the fully-masked-row guard is covered by
+``test_attention_4d_causal_nonpad_negative_offset_structural_empty`` and
+``test_attention_24_fullymasked_qk_matmul_output_mode3_zero``).
 
 4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
 them would make the function body treat the input as 3D).

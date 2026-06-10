@@ -134,7 +134,7 @@ def _compute_attention(
     #   * past_key present (internal cache):   offset = past_key.shape[2]   (same for all b)
     #   * nonpad_kv_seqlen present, no past_key (external/static cache):
     #                                          offset[b] = nonpad_kv_seqlen[b] - q_len
-    #   * neither:                             offset = 0  (degenerate initial prefill)
+    #   * neither:                             offset = 0  (no-cache case)
     if is_causal:
         if attn_mask is not None and attn_mask.dtype == np.bool_:
             # Convert the boolean mask to an additive bias with select-not-multiply:
@@ -248,7 +248,12 @@ def _compute_attention(
         qk_with_bias = qk_with_bias.astype(
             onnx.helper.tensor_dtype_to_np_dtype(softmax_precision)
         )
-    qk_softmax = _softmax(qk_with_bias)
+    # A fully-masked query row has an all-`-inf` bias, so `_softmax` evaluates
+    # `exp(-inf - (-inf)) = NaN` for it; this is expected on valid inputs (e.g. a
+    # negative bottom-right offset or an all-`False` mask row) and is overwritten by
+    # the fully-masked-row guard below, so suppress the resulting NumPy warning.
+    with np.errstate(invalid="ignore"):
+        qk_softmax = _softmax(qk_with_bias)
 
     # Fully-masked-row guard: a query row whose additive bias is entirely -inf
     # (every key disallowed by the combined causal + attn_mask constraints)

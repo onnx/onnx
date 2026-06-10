@@ -1658,9 +1658,9 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
   Attention bias to be added is calculated based on `attn_mask` input and `is_causal` attribute:
   1) `attn_mask`: A boolean mask where a value of `True` indicates that the element should take part in attention or a float mask of the same type as query, key, value that is added to the attention score.
-  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: a query attends only keys at or before its true sequence position. Concretely, the query at in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the number of valid keys preceding the current query block (`offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length`, per batch, when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` for the initial full prefill, which reduces to the standard lower-triangular mask). The causal frontier is computed independently of the `attn_mask` input and is then composed with it additively, by summing their attention biases: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. In valid usage `nonpad_kv_seqlen >= q_sequence_length` so `offset >= 0` (the current query tokens are already written into the cache before this operator runs); a negative offset is out of contract. A fully-masked query row (every key's combined additive bias is `-inf`, so no key is attended) produces a zero output row (matching prevailing runtime practice), not `NaN`.
+  2) If `is_causal` is set to `1`, causal masking is applied with bottom-right (offset-aware) alignment: a query attends only keys at or before its true sequence position. Concretely, the query at in-block index `i` attends key `j` iff `j <= i + offset`, where `offset` is the number of valid keys preceding the current query block (`offset = past_sequence_length` when `past_key` is provided; `offset = nonpad_kv_seqlen - q_sequence_length`, per batch, when an external cache is indicated by `nonpad_kv_seqlen` without `past_key`; `offset = 0` when neither `past_key` nor `nonpad_kv_seqlen` is provided (the no-cache case), which reduces to the standard lower-triangular mask). The causal frontier is computed independently of the `attn_mask` input and is then composed with it additively, by summing their attention biases: a boolean `attn_mask` intersects the allowed set (its disallowed positions contribute `-inf` to the bias), while a float `attn_mask` is added to the attention scores rather than disabling positions. In typical usage `nonpad_kv_seqlen >= q_sequence_length` so `offset >= 0` (the current query tokens are already written into the cache before this operator runs). When `offset < 0` (for example `nonpad_kv_seqlen < q_sequence_length`, i.e. more query tokens than cached keys), the leading query rows have an empty key set and are fully masked; such rows produce a zero output row for both `Y` and, in mode `3`, the `qk_matmul_output` debug output, consistent with the fully-masked-row behavior below, rather than `NaN`. A fully-masked query row (every key's combined additive bias is `-inf`, so no key is attended) produces a zero output row (matching prevailing runtime practice), not `NaN`.
 
-  Errata (in-place behavioral correction, no opset bump): when `is_causal` is composed with a boolean `attn_mask`, the boolean mask is converted to an additive bias by selection (attended -> 0, masked -> -inf) rather than by multiplication, and a fully-masked query row now produces a zero output row instead of `NaN`. This only replaces previously-undefined `NaN` outputs; every well-defined result is unchanged.
+  Errata (in-place behavioral correction, no opset bump): this corrects under-specified or incorrect behaviors of Attention-24 as originally released, without changing any numerically useful, well-defined result that the released opset guaranteed. (1) External-cache causal alignment: when `is_causal` is set with an external/static cache (`nonpad_kv_seqlen` provided without `past_key`), the causal frontier is now anchored bottom-right (`offset = nonpad_kv_seqlen - q_sequence_length`) instead of top-left (`offset = 0`); this changes finite (non-`NaN`) outputs on that path. The prior top-left behavior made a static-cache causal decode attend only the leading cached key(s), which is not a useful or intended result, so no meaningful guarantee is lost. (2) Fully-masked rows: a fully-masked query row (every key's combined additive bias is `-inf`, e.g. an all-`False` boolean `attn_mask` row, with or without `is_causal`) now produces a zero output row instead of `NaN`, and a boolean `attn_mask` composed with `is_causal` is converted to an additive bias by selection (attended -> `0`, masked -> `-inf`) rather than by multiplication; this only replaces previously-`NaN` outputs, and the same zero-row guard applies to the mode-`3` `qk_matmul_output` debug output. (3) `qk_matmul_output` precision: the mode-`3` `qk_matmul_output` is now emitted at the operator's output precision (`T1`), matching the reference implementation, which affects only its dtype and only when `softmax_precision` differs from `T1`.
 
   With respect to KV cache update, this operator allows the following two use cases:
 
@@ -1717,7 +1717,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`: the fully-masked-row guard is applied before this output is produced. Default value is 0.</dd>
+<dd>If set to `0`, qk_matmul_output is the output of qk matmul. If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. If set to `3`, qk_matmul_output is the output after the softmax operation. In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`: the fully-masked-row guard is applied before this output is produced. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`. Default value is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -1909,6 +1909,143 @@ expect(
     outputs=[Y, qk_matmul_output],
     name="test_attention_23_fullymasked_qk_matmul_output_mode3_zero",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_24_fullymasked_qk_matmul_output_mode3_zero</summary>
+
+```python
+"""Opset-24 ``qk_matmul_output_mode=3`` fully-masked row is a zero row.
+
+The opset-24 twin of
+``export_attention_23_fullymasked_qk_matmul_output_mode3_zero``.  Mode ``3``
+exposes the post-softmax matrix as the optional ``qk_matmul_output``.  For a
+fully-masked query row (all-``False`` boolean ``attn_mask`` row), the
+fully-masked-row guard is applied before this output is produced, so the
+mode-3 row is zeroed, consistent with the primary output ``Y`` row (both are
+``0``).  This pins the mandated agreement between the guarded primary output
+and the mode-3 output at opset 24.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(13)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+)
+
+Q = np.random.rand(B, H, S, D).astype(np.float32)
+K = np.random.rand(B, H, S, D).astype(np.float32)
+V = np.random.rand(B, H, S, D).astype(np.float32)
+# Row 0: no key allowed -> fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+)
+
+# Primary output row 0 and the mode-3 row 0 are both guarded to zero.
+assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
+    "fully-masked primary output row must be zero"
+)
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+assert np.all(np.isfinite(Y)), (
+    "all Y rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_24_fullymasked_qk_matmul_output_mode3_zero",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_24_qk_matmul_output_mode3_softmax_precision</summary>
+
+```python
+"""Mode-3 ``qk_matmul_output`` is emitted at the output precision ``T1``.
+
+``qk_matmul_output_mode=3`` exposes the post-softmax probabilities.  When
+``softmax_precision`` differs from the operator's output type ``T1`` (here
+``T1 = float16`` with softmax computed in ``float32``), the mode-3 output is
+cast back to ``T1`` -- matching the reference implementation, which casts the
+exposed matrix to ``Q.dtype``.  This locks both the dtype contract and the
+fully-masked-row zeroing under a non-default ``softmax_precision``.
+
+4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
+them would make the function body treat the input as 3D).
+"""
+np.random.seed(17)
+B, H, S, D = 1, 2, 2, 8
+
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask"],
+    outputs=["Y", "", "", "qk_matmul_output"],
+    qk_matmul_output_mode=3,
+    softmax_precision=int(onnx.TensorProto.FLOAT),
+)
+
+# T1 = float16; softmax runs in float32, so the mode-3 output is cast back to
+# float16 on emission.
+Q = np.random.rand(B, H, S, D).astype(np.float16)
+K = np.random.rand(B, H, S, D).astype(np.float16)
+V = np.random.rand(B, H, S, D).astype(np.float16)
+# Row 0: fully masked. Row 1: both keys allowed -> finite.
+attn_mask = np.array([[False, False], [True, True]], dtype=np.bool_)
+
+Y, _, _, qk_matmul_output = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    qk_matmul_output_mode=3,
+    softmax_precision=int(onnx.TensorProto.FLOAT),
+)
+
+# The mode-3 output is emitted at T1 (float16), not the float32 softmax
+# precision, matching the operator's output type.
+assert qk_matmul_output.dtype == np.float16, (
+    "mode-3 qk_matmul_output must be emitted at the output precision T1 (float16)"
+)
+# The fully-masked row is still guarded to zero, consistent with Y.
+assert np.array_equal(
+    qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+assert np.all(np.isfinite(qk_matmul_output)), (
+    "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask],
+    outputs=[Y, qk_matmul_output],
+    name="test_attention_24_qk_matmul_output_mode3_softmax_precision",
+    opset_imports=[onnx.helper.make_opsetid("", 24)],
 )
 ```
 
@@ -2905,7 +3042,9 @@ degenerate test that a backend ignoring ``is_causal`` and/or
 
 The mask is chosen to leave at least one allowed key on every query row, so
 this exercises the *intersection* of the three constraints with finite outputs
-(the fully-masked-row guard is covered by the M2/M4 tests).
+(the fully-masked-row guard is covered by
+``test_attention_4d_causal_nonpad_negative_offset_structural_empty`` and
+``test_attention_24_fullymasked_qk_matmul_output_mode3_zero``).
 
 4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
 them would make the function body treat the input as 3D).
