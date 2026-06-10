@@ -10259,7 +10259,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(checker.ValidationError, self._inferred, graph)
+        self.assertRaises(
+            (checker.ValidationError, onnx.shape_inference.InferenceError),
+            self._inferred,
+            graph,
+        )
 
     def test_softmax_cross_entropy_none(self) -> None:
         graph = self._make_graph(

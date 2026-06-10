@@ -85,28 +85,19 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           size_t input_param = 0, rois_param = 1, batch_index_param = 2;
 
-          checkInputRank(ctx, input_param, 4);
-          checkInputRank(ctx, rois_param, 2);
-          checkInputRank(ctx, batch_index_param, 1);
+          // X: [N, C, H, W], rois: [num_rois, 4], batch_indices: [num_rois]
+          Dim N, C, H, W, num_rois, four;
+          four.set_dim_value(4);
 
-          // Output dimensions, initialized to an unknown-dimension-value
-          Dim num_rois, C, ht, width;
+          ctx.unifyInputShape(input_param, {N, C, H, W});
+          ctx.unifyInputShape(rois_param, {num_rois, four});
+          ctx.unifyInputShape(batch_index_param, {num_rois});
 
-          // Get value of C from dim 1 of input_param, if available
-          unifyInputDim(ctx, input_param, 1, C);
-
-          // Get value of num_rois from dim 0 of rois_param, if available
-          unifyInputDim(ctx, rois_param, 0, num_rois);
-          // ... or from dim 0 of batch_index_param, if available
-          unifyInputDim(ctx, batch_index_param, 0, num_rois);
-
-          // Get height from attribute, using default-value of 1
+          Dim ht, width;
           unifyDim(ht, getAttribute(ctx, "output_height", 1));
-
-          // Get width from attribute, using default-value of 1
           unifyDim(width, getAttribute(ctx, "output_width", 1));
 
-          // set output shape:
+          // output: [num_rois, C, output_height, output_width]
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 

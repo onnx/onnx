@@ -55,14 +55,18 @@ SPDX-License-Identifier: Apache-2.0
 
 ### Operator SIG
 
-**Lead(s):** Eric JENN, Jean SOUYRIS
+**Lead(s):** G. Ramalingam, Michal Karzynski
 
-**Last updated:** 2026-06-01
+**Last updated:** 2026-06-08
+
+Note: The items below may be reprioritized as needed. It may be better to view the following as
+an unprioritized list of items for the next year.
 
 #### Q3 2026:
 - Attention op (fix causal-mask position-anchoring issue)
 - Attention op (add support for local window)
 - Attention op (add support for pre-softcap additive bias)
+- Support symbolic shape inference
 
 #### Q4 2026:
 - Variable length scan support
