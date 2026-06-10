@@ -249,24 +249,26 @@ def _compute_attention(
             onnx.helper.tensor_dtype_to_np_dtype(softmax_precision)
         )
     qk_softmax = _softmax(qk_with_bias)
-    if qk_matmul_output_mode == 3:
-        # Mode 3 exposes the raw softmax (pre-guard) for inspection, so a fully-masked
-        # row stays NaN here even though Y is zeroed by the guard below. This is
-        # intentional and matches the function body (Identity of the pre-guard softmax),
-        # preserving primary == _expanded parity for the qk_matmul_output debug output.
-        qk_matmul_output = qk_softmax
-    qk_matmul_output = qk_matmul_output.astype(Q.dtype)
 
     # Fully-masked-row guard: a query row whose additive bias is entirely -inf
     # (every key disallowed by the combined causal + attn_mask constraints)
     # softmaxes to NaN. Detect such rows on the additive bias and zero their
     # probabilities with select-not-multiply (NaN * 0 = NaN) BEFORE the P @ V
-    # contraction so 0 @ V = 0. Mirrored in the function body for primary ==
-    # _expanded parity.
+    # contraction so 0 @ V = 0. The guard runs before the mode-3 capture so the
+    # exposed qk_matmul_output row is also zeroed, consistent with Y. Mirrored in
+    # the function body for primary == _expanded parity.
     row_all_masked = np.isneginf(
         np.max(attn_bias, axis=-1, keepdims=True)
     )  # (..., q, 1)
     qk_softmax = np.where(row_all_masked, 0, qk_softmax)
+
+    if qk_matmul_output_mode == 3:
+        # Mode 3 exposes the post-softmax probabilities; a fully-masked row is
+        # zeroed by the guard above, consistent with the primary output Y (both
+        # are 0). This matches the function body (Identity of the guarded softmax),
+        # preserving primary == _expanded parity for the qk_matmul_output output.
+        qk_matmul_output = qk_softmax
+    qk_matmul_output = qk_matmul_output.astype(Q.dtype)
 
     output = np.matmul(qk_softmax, V).astype(Q.dtype)
     if input_shape_len == 3:

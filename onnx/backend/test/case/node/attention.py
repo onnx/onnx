@@ -2348,20 +2348,15 @@ class Attention(Base):
         )
 
     @staticmethod
-    def export_attention_23_fullymasked_qk_matmul_output_mode3_nan() -> None:
-        """Opset-23 ``qk_matmul_output_mode=3`` fully-masked row stays ``NaN``.
+    def export_attention_23_fullymasked_qk_matmul_output_mode3_zero() -> None:
+        """Opset-23 ``qk_matmul_output_mode=3`` fully-masked row is a zero row.
 
-        Mode ``3`` exposes the raw post-softmax matrix as the optional
+        Mode ``3`` exposes the post-softmax matrix as the optional
         ``qk_matmul_output``.  For a fully-masked query row (all-``False`` boolean
-        ``attn_mask`` row), that raw softmax over an all-``-inf`` bias row is ``NaN``
-        and is intentionally **not** subject to the fully-masked-row guard, so the
-        mode-3 debug output keeps the ``NaN`` even though the primary output ``Y`` row
-        is zeroed by the guard.  This pins the documented divergence between the
-        guarded primary output and the raw mode-3 output at opset 23.
-
-        The backend comparator (``np.testing.assert_allclose``) defaults to
-        ``equal_nan=True``, so the ``NaN`` golden compares equal to a conformant
-        backend's ``NaN``.
+        ``attn_mask`` row), the fully-masked-row guard is applied before this output
+        is produced, so the mode-3 row is zeroed, consistent with the primary output
+        ``Y`` row (both are ``0``).  This pins the mandated agreement between the
+        guarded primary output and the mode-3 output at opset 23.
 
         4D Q/K/V is used so ``q_num_heads``/``kv_num_heads`` are omitted (passing
         them would make the function body treat the input as 3D).
@@ -2390,12 +2385,15 @@ class Attention(Base):
             qk_matmul_output_mode=3,
         )
 
-        # Primary output row 0 is guarded to zero; the raw mode-3 row 0 stays NaN.
+        # Primary output row 0 and the mode-3 row 0 are both guarded to zero.
         assert np.array_equal(Y[:, :, 0, :], np.zeros_like(Y[:, :, 0, :])), (
             "fully-masked primary output row must be zero"
         )
-        assert np.all(np.isnan(qk_matmul_output[:, :, 0, :])), (
-            "mode-3 raw softmax row for a fully-masked query must stay NaN"
+        assert np.array_equal(
+            qk_matmul_output[:, :, 0, :], np.zeros_like(qk_matmul_output[:, :, 0, :])
+        ), "mode-3 output row for a fully-masked query must be zero (consistent with Y)"
+        assert np.all(np.isfinite(qk_matmul_output)), (
+            "all mode-3 rows are finite (the fully-masked row is guarded to 0.0)"
         )
         assert np.all(np.isfinite(Y)), (
             "all Y rows are finite (the fully-masked row is guarded to 0.0)"
@@ -2405,7 +2403,7 @@ class Attention(Base):
             node,
             inputs=[Q, K, V, attn_mask],
             outputs=[Y, qk_matmul_output],
-            name="test_attention_23_fullymasked_qk_matmul_output_mode3_nan",
+            name="test_attention_23_fullymasked_qk_matmul_output_mode3_zero",
             opset_imports=[onnx.helper.make_opsetid("", 23)],
         )
 

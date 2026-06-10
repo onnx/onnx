@@ -3423,9 +3423,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If set to `1`, qk_matmul_output is the output after the softcap operation (before mask addition). "
             "If set to `2`, qk_matmul_output includes the attention mask and softcap (if provided) applied to the output of qk matmul. "
             "If set to `3`, qk_matmul_output is the output after the softmax operation. "
-            "In mode `3`, a fully-masked query row (every key disallowed) is the raw softmax "
-            "and stays `NaN`, even though the corresponding row of the primary output `Y` is "
-            "zeroed; this debug output is not subject to the fully-masked-row guard. "
+            "In mode `3`, a fully-masked query row (every key disallowed) is a zero row, "
+            "consistent with the corresponding row of the primary output `Y`: the "
+            "fully-masked-row guard is applied before this output is produced. "
             "Default value is 0.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
@@ -3727,6 +3727,21 @@ ONNX_OPERATOR_SET_SCHEMA(
               .Add("AttnWeightSoftmax = Softmax (SoftmaxCast)")
               .Add("SoftmaxOut = Cast (AttnWeightSoftmax)", "to", T1);
 
+          // Fully-masked-row guard: a query row whose additive bias (AttnBiasT) is
+          // entirely -inf (every key disallowed by the combined causal + attn_mask
+          // constraints) softmaxes to NaN. Detect such rows on the additive bias
+          // row-max and zero their probabilities with Where (not Mul; NaN * 0 = NaN)
+          // BEFORE the P @ V contraction so 0 @ V = 0. The guard runs before the
+          // mode-3 output capture so the exposed qk_matmul_output row is also zeroed,
+          // consistent with Y. Mirrors the reference impl so primary == _expanded
+          // bit-for-bit; a no-op for rows with any allowed key.
+          builder.Add("BiasRowMaxAxes = Constant <value = int64[1] {-1}> ()")
+              .Add("BiasRowMax = ReduceMax(AttnBiasT, BiasRowMaxAxes)") // keepdims=1 (default)
+              .Add("FloatNegInfT = CastLike(FloatNegInf, AttnBiasT)")
+              .Add("RowAllMasked = Equal(BiasRowMax, FloatNegInfT)")
+              .Add("ZeroProbT = CastLike(ScalarZero, SoftmaxOut)")
+              .Add("SoftmaxOutSafe = Where(RowAllMasked, ZeroProbT, SoftmaxOut)");
+
           // QK MatMul output if required
           auto qk_matmul_output_mode_attr = ctx.getAttribute("qk_matmul_output_mode");
           int64_t qk_matmul_output_mode = (qk_matmul_output_mode_attr != nullptr) ? qk_matmul_output_mode_attr->i() : 0;
@@ -3743,24 +3758,13 @@ ONNX_OPERATOR_SET_SCHEMA(
               // Mode 2: QK + softcap + bias (after softcap + bias addition)
               builder.Add("qk_matmul_output = Identity(QKAttnWeightSoftcap)");
             } else if (qk_matmul_output_mode == 3) {
-              builder.Add("qk_matmul_output = Identity(AttnWeightSoftmax)");
+              // Mode 3: post-softmax, after the fully-masked-row guard (a fully-masked
+              // row is zeroed, consistent with the primary output Y).
+              builder.Add("qk_matmul_output = Identity(SoftmaxOutSafe)");
             } else {
               builder.Add("qk_matmul_output = Identity(QKAttnWeight)");
             }
           }
-
-          // Fully-masked-row guard: a query row whose additive bias (AttnBiasT) is
-          // entirely -inf (every key disallowed by the combined causal + attn_mask
-          // constraints) softmaxes to NaN. Detect such rows on the additive bias
-          // row-max and zero their probabilities with Where (not Mul; NaN * 0 = NaN)
-          // BEFORE the P @ V contraction so 0 @ V = 0. Mirrors the reference impl so
-          // primary == _expanded bit-for-bit; a no-op for rows with any allowed key.
-          builder.Add("BiasRowMaxAxes = Constant <value = int64[1] {-1}> ()")
-              .Add("BiasRowMax = ReduceMax(AttnBiasT, BiasRowMaxAxes)") // keepdims=1 (default)
-              .Add("FloatNegInfT = CastLike(FloatNegInf, AttnBiasT)")
-              .Add("RowAllMasked = Equal(BiasRowMax, FloatNegInfT)")
-              .Add("ZeroProbT = CastLike(ScalarZero, SoftmaxOut)")
-              .Add("SoftmaxOutSafe = Where(RowAllMasked, ZeroProbT, SoftmaxOut)");
 
           builder.Add("YPreReshape = MatMul(SoftmaxOutSafe, VAttentionInput)");
           // Reshape Y to 3D if input is a 3D tensor
