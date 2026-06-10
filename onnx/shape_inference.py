@@ -59,10 +59,10 @@ def infer_shapes(
             model_str, check_type, strict_mode, data_prop
         )
         return onnx.load_from_string(inferred_model_str)
-    if isinstance(model, str):
+    if isinstance(model, (str, os.PathLike)):
         raise TypeError(
             "infer_shapes only accepts ModelProto or bytes,"
-            "you can use infer_shapes_path for the model path (String)."
+            " For Model paths (str or os.PathLike), use infer_shapes_path()."
         )
 
     raise TypeError(

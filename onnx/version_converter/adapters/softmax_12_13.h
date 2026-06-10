@@ -19,8 +19,9 @@ class Softmax_12_13 final : public Adapter {
   explicit Softmax_12_13(const std::string& op_name) : Adapter(op_name, OpSetID(12), OpSetID(13)) {}
 
   void adapt_softmax_12_13(const std::shared_ptr<Graph>& graph, Node* node) const {
-    int old_axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 1;
-    int input_rank = node->inputs()[0]->sizes().size();
+    ONNX_ASSERTM(node->inputs().size() >= 1, "Softmax node must have at least 1 input")
+    int old_axis = node->hasAttribute(kaxis) ? static_cast<int>(node->i(kaxis)) : 1;
+    int input_rank = static_cast<int>(node->inputs()[0]->sizes().size());
 
     if (old_axis < 0)
       old_axis = input_rank + old_axis;

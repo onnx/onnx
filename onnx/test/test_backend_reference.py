@@ -100,8 +100,6 @@ backend_test = onnx.backend.test.BackendTest(
     },
 )
 
-if os.getenv("APPVEYOR"):
-    backend_test.exclude("(test_vgg19|test_zfnet)")
 if platform.architecture()[0] == "32bit":
     backend_test.exclude("(test_vgg19|test_zfnet|test_bvlc_alexnet)")
 if platform.system() == "Windows":
@@ -113,6 +111,8 @@ backend_test.exclude(
     "|test_if_opt"
     "|test_loop16_seq_none"
     "|test_range_float_type_positive_delta_expanded"
+    "|test_range_float16_type_positive_delta_expanded"
+    "|test_range_bfloat16_type_positive_delta_expanded"
     "|test_range_int32_type_negative_delta_expanded"
     "|test_scan_sum)"
 )
@@ -141,16 +141,13 @@ backend_test.exclude("test_adam_multiple")  # 1e-2
 
 # Currently Pillow is not supported on Win32 and is required for the reference implementation of RegexFullMatch.
 if sys.platform == "win32":
-    backend_test.exclude("test_regex_full_match_basic_cpu")
-    backend_test.exclude("test_regex_full_match_email_domain_cpu")
-    backend_test.exclude("test_regex_full_match_empty_cpu")
-    backend_test.exclude("test_image_decoder_decode_")
+    backend_test.exclude(
+        "(test_regex_full_match_basic_cpu"
+        "|test_regex_full_match_email_domain_cpu"
+        "|test_regex_full_match_empty_cpu"
+        "|test_image_decoder_decode_)"
+    )
 
-
-if sys.platform == "darwin":
-    # FIXME: https://github.com/onnx/onnx/issues/5792
-    backend_test.exclude("test_qlinearmatmul_3D_int8_float16_cpu")
-    backend_test.exclude("test_qlinearmatmul_3D_int8_float32_cpu")
 
 if version_utils.pillow_older_than("10.0"):
     backend_test.exclude("test_image_decoder_decode_webp_rgb")
@@ -161,6 +158,10 @@ if version_utils.numpy_older_than("2.0"):
     backend_test.exclude(r"test_cast.*(FLOAT8|BFLOAT16|FLOAT4|INT4)")
     backend_test.exclude(r"test_quantizelinear_e4m3fn")
     backend_test.exclude(r"test_quantizelinear_float4e2m1")
+    # float16 is a native NumPy dtype and works with assert_allclose in all NumPy versions;
+    # only bfloat16 (ml_dtypes) requires NumPy >= 2.0.
+    backend_test.exclude(r"test_range_bfloat16_type_positive_delta")
+    backend_test.exclude(r"test_range_bfloat16_type_positive_delta_expanded")
 
 # The documentation does not explicitly say that is_causal=1 and attn_mask is not None
 # is not allowed. The expansion (based on the function definition in ONNX)

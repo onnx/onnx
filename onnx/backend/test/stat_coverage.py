@@ -278,7 +278,7 @@ def main() -> None:
 
     has_ml = is_ml(schemas)
     fname = os.path.join(docs_dir, "TestCoverage.md")
-    with open(fname, "w+", newline="", encoding="utf-8") as f:  # type: ignore
+    with open(fname, "w+", newline="", encoding="utf-8") as f:  # type: ignore[assignment]
         gen_spdx(f)
         gen_outlines(f, False)
         gen_node_test_coverage(schemas, f, False)
@@ -287,7 +287,7 @@ def main() -> None:
 
     if has_ml:
         fname = os.path.join(docs_dir, "TestCoverage-ml.md")
-        with open(fname, "w+", newline="", encoding="utf-8") as f:  # type: ignore
+        with open(fname, "w+", newline="", encoding="utf-8") as f:  # type: ignore[assignment]
             gen_spdx(f)
             gen_outlines(f, True)
             gen_node_test_coverage(schemas, f, True)

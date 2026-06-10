@@ -21,7 +21,7 @@ class Scatter_10_11 final : public Adapter {
     const ArrayRef<Value*>& inputs = node->inputs();
     ONNX_ASSERTM(inputs.size() >= 3, "Scatter in opset 10 needs to have at least 3 inputs.")
 
-    int axis = node->hasAttribute(kaxis) ? node->i(kaxis) : 0;
+    int axis = node->hasAttribute(kaxis) ? static_cast<int>(node->i(kaxis)) : 0;
 
     // Replace the node with an equivalent ScatterElements node
     Node* scatter_elements = graph->create(kScatterElements);

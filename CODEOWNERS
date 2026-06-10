@@ -1,3 +1,8 @@
+# ONNX Project Code Owners
+# See https://github.com/orgs/onnx/teams for team structure
+#
+# https://github.com/onnx/sigs/blob/main/CONTRIBUTORS
+
 * @onnx/sig-archinfra-approvers
 /community  @onnx/steering-committee
 /onnx/defs  @onnx/sig-operators-approvers

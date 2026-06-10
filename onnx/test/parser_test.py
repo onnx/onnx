@@ -220,6 +220,25 @@ class TestBasicFunctions(unittest.TestCase):
         self.assertEqual(node.domain, "SomeDomain")
         self.assertEqual(node.op_type, "SomeOp")
 
+    def test_parse_float_attribute_from_int_literal(self):
+        model = onnx.parser.parse_model(
+            """
+            <
+              ir_version: 9,
+              opset_import: [ "" : 18, "custom_domain" : 1]
+            >
+            agraph (float[N] x) => (float[N] out)
+            {
+              out = custom_domain.Foo<ord: float = 2>(x)
+            }
+            """
+        )
+        attr = model.graph.node[0].attribute[0]
+        self.assertEqual(attr.type, onnx.AttributeProto.FLOAT)
+        self.assertTrue(attr.HasField("f"))
+        self.assertFalse(attr.HasField("i"))
+        self.assertEqual(attr.f, 2.0)
+
     def test_missing_identifier(self):
         node = onnx.parser.parse_node("= SomeOp ()")
         self.assertEqual(list(node.input), [])
@@ -241,6 +260,18 @@ class TestBasicFunctions(unittest.TestCase):
         node = onnx.parser.parse_node('"",x = SomeOp ("",y)')
         self.assertEqual(list(node.input), ["", "y"])
         self.assertEqual(list(node.output), ["", "x"])
+
+    def test_quoted_string_symbolic_dim(self):
+        # Test parsing a quoted string as a symbolic dimension (non-identifier dim_param)
+        graph = onnx.parser.parse_graph(
+            'agraph (float["M + N"] x) => (float["M + N"] y) { y = Identity(x) }'
+        )
+        self.assertEqual(
+            graph.input[0].type.tensor_type.shape.dim[0].dim_param, "M + N"
+        )
+        self.assertEqual(
+            graph.output[0].type.tensor_type.shape.dim[0].dim_param, "M + N"
+        )
 
     @parameterized.expand(
         [

@@ -6,16 +6,15 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
-
-static const char* const RoiAlign_ver16_doc = kDoc_RoiAlign_ver16;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     16,
     OpSchema()
-        .SetDoc(RoiAlign_ver16_doc)
+        .SetDoc(kDoc_RoiAlign_ver16)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -79,11 +78,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(num_rois, C, output_height, output_width). The r-th batch element Y[r-1] "
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
+        .TypeConstraint("T1", {types::Float16, types::Float, types::Double}, "Constrain types to float tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -114,13 +110,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
 
-static const char* const RoiAlign_ver10_doc = RoiAlign_ver16_doc;
-
 ONNX_OPERATOR_SET_SCHEMA(
     RoiAlign,
     10,
     OpSchema()
-        .SetDoc(RoiAlign_ver10_doc)
+        .SetDoc(kDoc_RoiAlign_ver16)
         .Attr(
             "spatial_scale",
             "Multiplicative spatial scale factor to translate ROI coordinates "
@@ -176,11 +170,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(num_rois, C, output_height, output_width). The r-th batch element Y[r-1] "
             "is a pooled feature map corresponding to the r-th RoI X[r-1].",
             "T1")
-        .TypeConstraint(
-            "T1",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain types to float tensors.")
-        .TypeConstraint("T2", {"tensor(int64)"}, "Constrain types to int tensors.")
+        .TypeConstraint("T1", {types::Float16, types::Float, types::Double}, "Constrain types to float tensors.")
+        .TypeConstraint("T2", {types::Int64}, "Constrain types to int tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
@@ -210,8 +201,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           // set output shape:
           updateOutputShape(ctx, 0, {num_rois, C, ht, width});
         }));
-
-static const char* const NonMaxSuppression_ver10_doc = kDoc_NonMaxSuppression_ver10;
 
 ONNX_OPERATOR_SET_SCHEMA(
     NonMaxSuppression,
@@ -254,7 +243,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "1 - the box data is supplied as [x_center, y_center, width, height]. Mostly used for Pytorch models.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
-        .SetDoc(NonMaxSuppression_ver10_doc)
+        .SetDoc(kDoc_NonMaxSuppression_ver10)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
           selected_indices_type->set_elem_type(::ONNX_NAMESPACE::TensorProto_DataType::TensorProto_DataType_INT64);

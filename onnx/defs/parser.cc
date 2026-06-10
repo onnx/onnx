@@ -216,6 +216,11 @@ Common::Status OnnxParser::Parse(TensorShapeProto& shape) {
   do {
     if (Matches('?')) {
       shape.add_dim();
+    } else if (NextChar() == '"') {
+      // Check for a quoted string as symbolic dim ...
+      std::string id;
+      CHECK_PARSER_STATUS(ParserBase::Parse(id));
+      shape.add_dim()->set_dim_param(id);
     } else {
       // Check for a symbolic identifier ...
       auto id = ParseOptionalIdentifier();
@@ -615,6 +620,7 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
     if ((expected == AttributeProto_AttributeType_FLOAT) && (attr.type() == AttributeProto_AttributeType_INT)) {
       attr.set_type(AttributeProto_AttributeType_FLOAT);
       attr.set_f(static_cast<float>(attr.i()));
+      attr.clear_i();
     } else {
       return ParseError(
           "Mismatch between expected type ",

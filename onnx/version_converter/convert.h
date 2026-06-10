@@ -38,12 +38,15 @@
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
+#include "onnx/version_converter/adapters/range_27_26.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
 #include "onnx/version_converter/adapters/scan_8_9.h"
 #include "onnx/version_converter/adapters/scan_9_8.h"
 #include "onnx/version_converter/adapters/scatter_10_11.h"
+#include "onnx/version_converter/adapters/scatter_16_15.h"
+#include "onnx/version_converter/adapters/scatter_18_17.h"
 #include "onnx/version_converter/adapters/slice_9_10.h"
 #include "onnx/version_converter/adapters/softmax_12_13.h"
 #include "onnx/version_converter/adapters/softmax_13_12.h"
@@ -534,6 +537,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("LeakyRelu", OpSetID(15), OpSetID(16)));
     registerAdapter(std::make_unique<CompatibleAdapter>("PRelu", OpSetID(15), OpSetID(16)));
 
+    /******** 16 -> 15 ********/
+    const std::vector<TensorProto_DataType> bfloat16_not_allowed = {TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<TypeRestriction>("Where", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<Scatter_16_15>("ScatterElements", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<Scatter_16_15>("ScatterND", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("Scan", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LessOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(
+        std::make_unique<TypeRestriction>("GreaterOrEqual", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("LeakyRelu", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+    registerAdapter(std::make_unique<TypeRestriction>("PRelu", OpSetID(16), OpSetID(15), bfloat16_not_allowed));
+
     /******** 17 -> 18 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Pad", OpSetID(17), OpSetID(18)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Resize", OpSetID(17), OpSetID(18)));
@@ -563,6 +578,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceMin", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceProd", OpSetID(18), OpSetID(17)));
     registerAdapter(std::make_unique<AxesInputToAttribute>("ReduceSumSquare", OpSetID(18), OpSetID(17)));
+    registerAdapter(std::make_unique<Scatter_18_17>("ScatterElements"));
+    registerAdapter(std::make_unique<Scatter_18_17>("ScatterND"));
 
     /******** 18 -> 19 ********/
     registerAdapter(std::make_unique<CompatibleAdapter>("Equal", OpSetID(18), OpSetID(19)));
@@ -753,7 +770,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("GridSample", OpSetID(21), OpSetID(22)));
 
     /******** 22 -> 21 ********/
-    const std::vector<TensorProto_DataType> bfloat16_not_allowed = {TensorProto_DataType_BFLOAT16};
     registerAdapter(std::make_unique<TypeRestriction>("EyeLike", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("AveragePool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
     registerAdapter(std::make_unique<TypeRestriction>("MaxPool", OpSetID(22), OpSetID(21), bfloat16_not_allowed));
@@ -951,6 +967,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+
+    /******** 26 -> 27 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
+
+    /******** 27 -> 26 ********/
+    // Range v27 added FLOAT16/BFLOAT16 and stash_type; Range v11 (opset 26) supports neither.
+    const std::vector<TensorProto_DataType> range_27_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

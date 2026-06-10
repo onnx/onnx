@@ -16,7 +16,7 @@
 namespace ONNX_NAMESPACE {
 // onnx/defs/controlflow/old.cc
 // NOLINTNEXTLINE(misc-use-internal-linkage)
-void ScanInferenceFunctionOpset8(InferenceContext& ctx);
+void ScanInferenceFunction_opset8(InferenceContext& ctx);
 // onnx/defs/controlflow/defs.cc
 // NOLINTNEXTLINE(misc-use-internal-linkage)
 void ScanInferenceFunction(InferenceContext& ctx);
@@ -488,7 +488,7 @@ static void doInferencingTest(bool use_scan_opset8) {
 
   shape_inference::InferenceContextImpl ctx(scan, valueTypesByName, {}, {}, options, {}, &graphInfCtx);
   if (use_scan_opset8)
-    ScanInferenceFunctionOpset8(ctx);
+    ScanInferenceFunction_opset8(ctx);
   else
     ScanInferenceFunction(ctx);
 
@@ -611,7 +611,7 @@ agraph (float[1, 196608] m) => (float[?, ?, ?] z)
 
 TEST(ShapeInferenceTest, CheckShapesAndTypesTest) {
 #ifndef ONNX_NO_EXCEPTIONS
-  // Tensor element types mis-match should cause an exception.
+  // Tensor element types mismatch should cause an exception.
   TypeProto tensor_infer;
   auto* tensor_infer_type = tensor_infer.mutable_tensor_type();
   tensor_infer_type->set_elem_type(TensorProto_DataType_FLOAT);
