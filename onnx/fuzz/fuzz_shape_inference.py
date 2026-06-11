@@ -1,5 +1,6 @@
 # Copyright (c) ONNX Project Contributors
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
 """Atheris fuzz harness for onnx.shape_inference.
 
 Two input paths are exercised per iteration, selected by a fuzzer-controlled
@@ -18,8 +19,6 @@ candidate for the raw-bytes path):
 
 Both strict_mode values and both check_type values are sampled.
 """
-
-from __future__ import annotations
 
 import sys
 
