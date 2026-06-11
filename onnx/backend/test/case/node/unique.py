@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import ml_dtypes
 import numpy as np
 
 import onnx
@@ -226,4 +227,26 @@ class Unique(Base):
             inputs=[x],
             outputs=[y, indices, inverse_indices, counts],
             name="test_unique_length_1",
+        )
+
+    @staticmethod
+    def export_unique_bfloat16_sorted_without_axis() -> None:
+        node_sorted = onnx.helper.make_node(
+            "Unique",
+            inputs=["X"],
+            outputs=["Y", "indices", "inverse_indices", "counts"],
+            sorted=1,
+        )
+        x = np.array([2.0, 1.0, 1.0, 3.0, 4.0, 3.0], dtype=ml_dtypes.bfloat16)
+        y, indices, inverse_indices, counts = np.unique(
+            x, return_index=True, return_inverse=True, return_counts=True
+        )
+        indices, inverse_indices, counts = specify_int64(
+            indices, inverse_indices, counts
+        )
+        expect(
+            node_sorted,
+            inputs=[x],
+            outputs=[y, indices, inverse_indices, counts],
+            name="test_unique_bfloat16_sorted_without_axis",
         )

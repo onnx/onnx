@@ -2671,7 +2671,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
-    11,
+    28,
     OpSchema()
         .SetDoc(kDoc_Compress_ver9)
         .Attr(
@@ -2703,7 +2703,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::Differentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Constrain input and output types to all tensor types.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Constrain input and output types to all tensor types.")
         .TypeConstraint("T1", {types::Bool}, "Constrain to boolean tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
@@ -2736,33 +2736,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static constexpr const char* OneHot_ver11_doc = R"DOC(
-    Produces a one-hot tensor based on inputs.
-    The locations represented by the index values in the 'indices' input tensor will have 'on_value'
-    and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
-    are specified as part of required input argument 'values', which is a two-element tensor of format
-    [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
-    input tensor. The additional dimension is for one-hot representation. The additional dimension will
-    be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
-    dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
-    dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
-    as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
-    the range [-depth, depth-1] will result in one-hot representation with all 'off_value' values in the
-    output tensor.
-
-    when axis = 0:
-    output[input[i, j, k], i, j, k] = 1 for all i, j, k and 0 otherwise.
-
-    when axis = -1:
-    output[i, j, k, input[i, j, k]] = 1 for all i, j, k and 0 otherwise.
-
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     OneHot,
-    11,
+    28,
     OpSchema()
-        .SetDoc(OneHot_ver11_doc)
+        .SetDoc(kDoc_OneHot_ver11)
         .Attr(
             "axis",
             "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
@@ -2821,7 +2799,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::NonDifferentiable)
         .TypeConstraint("T1", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
         .TypeConstraint("T2", OpSchema::all_numeric_types(), "Constrain input to only numeric types.")
-        .TypeConstraint("T3", OpSchema::all_tensor_types(), "Constrain to any tensor type.")
+        .TypeConstraint("T3", OpSchema::all_tensor_types_ir4(), "Constrain to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Check that the node has three inputs.
           if (ctx.getNumInputs() != 3) {
@@ -3028,47 +3006,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, output_shape);
         }));
 
-static constexpr const char* ReverseSequence_ver10_doc = R"DOC(
-Reverse batch of sequences having different lengths specified by `sequence_lens`.
-
-For each slice i iterating on batch axis, the operator reverses the first sequence_lens[i] elements on time axis,
-and copies elements whose index's beyond sequence_lens[i] to the output. So the output slice i contains reversed
-sequences on the first sequence_lens[i] elements, then have original values copied for the other elements.
-
-Example 1:
-  input = [[0.0, 4.0, 8.0,  12.0],
-           [1.0, 5.0, 9.0,  13.0],
-           [2.0, 6.0, 10.0, 14.0],
-           [3.0, 7.0, 11.0, 15.0]]
-  sequence_lens = [4, 3, 2, 1]
-  time_axis = 0
-  batch_axis = 1
-
-  output = [[3.0, 6.0, 9.0,  12.0],
-            [2.0, 5.0, 8.0,  13.0],
-            [1.0, 4.0, 10.0, 14.0],
-            [0.0, 7.0, 11.0, 15.0]]
-
-Example 2:
-  input = [[0.0,  1.0,  2.0,  3.0 ],
-           [4.0,  5.0,  6.0,  7.0 ],
-           [8.0,  9.0,  10.0, 11.0],
-           [12.0, 13.0, 14.0, 15.0]]
-  sequence_lens = [1, 2, 3, 4]
-  time_axis = 1
-  batch_axis = 0
-
-  output = [[0.0,  1.0,  2.0,  3.0 ],
-            [5.0,  4.0,  6.0,  7.0 ],
-            [10.0, 9.0,  8.0,  11.0],
-            [15.0, 14.0, 13.0, 12.0]]
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     ReverseSequence,
-    10,
+    28,
     OpSchema()
-        .SetDoc(ReverseSequence_ver10_doc)
+        .SetDoc(kDoc_ReverseSequence_ver10)
         .Attr(
             "time_axis",
             "(Optional) Specify which axis is time axis. Must be one of 0 (default), or 1.",
@@ -3087,7 +3029,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(int64)",
             OpSchema::Single)
         .Output(0, "Y", "Tensor with same shape of input.", "T", OpSchema::Single)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input and output types can be of any tensor type.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input and output types can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 2)) {
@@ -3106,111 +3048,11 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
-static constexpr const char* Unique_ver11_doc = R"DOC(
-Find the unique elements of a tensor. When an optional attribute 'axis' is provided, unique subtensors sliced along the 'axis' are returned.
-Otherwise the input tensor is flattened and unique values of the flattened tensor are returned.
-
-This operator returns the unique values or sliced unique subtensors of the input tensor and three optional outputs.
-The first output tensor 'Y' contains all unique values or subtensors of the input.
-The second optional output tensor 'indices' contains indices of 'Y' elements' first occurrence in 'X'.
-The third optional output tensor 'inverse_indices' contains, for elements of 'X', its corresponding indices in 'Y'.
-The fourth optional output tensor 'counts' contains the count of each element of 'Y' in the input.
-
-Outputs are either sorted in ascending order or optionally in the order of the first occurrence of the values in the input.
-
-https://docs.scipy.org/doc/numpy/reference/generated/numpy.unique.html
-
-Example 1:
-```
-input_X = [2, 1, 1, 3, 4, 3]
-attribute_sorted = 0
-attribute_axis = None
-output_Y = [2, 1, 3, 4]
-output_indices = [0, 1, 3, 4]
-output_inverse_indices = [0, 1, 1, 2, 3, 2]
-output_counts = [1, 2, 2, 1]
-```
-
-Example 2:
-```
-input_X = [[1, 3], [2, 3]]
-attribute_sorted = 1
-attribute_axis = None
-output_Y = [1, 2, 3]
-output_indices = [0, 2, 1]
-output_inverse_indices = [0, 2, 1, 2]
-output_counts = [1, 1, 2]
-```
-
-Example 3:
-```
-input_X = [[1, 0, 0], [1, 0, 0], [2, 3, 4]]
-attribute_sorted = 1
-attribute_axis = 0
-output_Y = [[1, 0, 0], [2, 3, 4]]
-output_indices = [0, 2]
-output_inverse_indices = [0, 0, 1]
-output_counts = [2, 1]
-```
-
-Example 4:
-```
-input_x = [[[1., 1.], [0., 1.], [2., 1.], [0., 1.]],
-            [[1., 1.], [0., 1.], [2., 1.], [0., 1.]]]
-attribute_sorted = 1
-attribute_axis = 1
-```
-
-intermediate data are presented below for better understanding:
-there are 4 subtensors sliced along axis 1 of input_x (shape = (2, 4, 2)):
-```
-A: [[1, 1], [1, 1]],
-   [[0, 1], [0, 1]],
-   [[2, 1], [2, 1]],
-   [[0, 1], [0, 1]].
-```
-
-there are 3 unique subtensors:
-```
-[[1, 1], [1, 1]],
-[[0, 1], [0, 1]],
-[[2, 1], [2, 1]].
-```
-
-sorted unique subtensors:
-```
-B: [[0, 1], [0, 1]],
-   [[1, 1], [1, 1]],
-   [[2, 1], [2, 1]].
-```
-
-output_Y is constructed from B:
-```
-[[[0. 1.], [1. 1.], [2. 1.]],
- [[0. 1.], [1. 1.], [2. 1.]]]
-```
-
-output_indices is to map from B to A:
-```
-[1, 0, 2]
-```
-
-output_inverse_indices is to map from A to B:
-```
-[1, 0, 2, 0]
-```
-
-output_counts:
-```
-[2, 1, 1]
-```
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Unique,
-    11,
+    28,
     OpSchema()
-        .SetDoc(Unique_ver11_doc)
+        .SetDoc(kDoc_Unique_ver11)
         .Attr(
             "sorted",
             "(Optional) Whether to sort the unique elements in ascending order before returning as output. "
@@ -3279,7 +3121,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true,
             1,
             OpSchema::NonDifferentiable)
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "Input can be of any tensor type.")
+        .TypeConstraint("T", OpSchema::all_tensor_types_ir4(), "Input can be of any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
