@@ -6280,7 +6280,7 @@ class TestReferenceEvaluator(unittest.TestCase):
 
     def test_apply_causal(self):
         m = np.ones((3, 3), dtype=np.float16)
-        _apply_causal(m, 0)
+        m = _apply_causal(m, 0)
         self.assertEqual(m.dtype, np.float16)
         assert_allclose(
             np.array(
@@ -6290,7 +6290,7 @@ class TestReferenceEvaluator(unittest.TestCase):
         )
 
         m = np.zeros((3, 4), dtype=np.float16)
-        _apply_causal(m, 1)
+        m = _apply_causal(m, 1)
         self.assertEqual(m.dtype, np.float16)
         assert_allclose(
             np.array(
