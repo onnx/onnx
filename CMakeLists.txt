@@ -556,6 +556,7 @@ if(ONNX_BUILD_PYTHON)
       GIT_REPOSITORY ${_nanobind_URL}
       GIT_TAG v${_nanobind_VERSION}
       GIT_SHALLOW TRUE
+      PATCH_COMMAND git checkout . && git apply --whitespace=fix --ignore-space-change --ignore-whitespace ${CMAKE_CURRENT_SOURCE_DIR}/cmake/external/nanobind_aix.patch
     )
     FetchContent_MakeAvailable(nanobind)
   endif()
