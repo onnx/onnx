@@ -1,5 +1,5 @@
---- ./src/nb_func_orig.cpp	2026-05-18 10:28:14.994072323 -0500
-+++ ./src/nb_func.cpp	2026-05-18 10:28:32.076587784 -0500
+--- src/nb_func_orig.cpp	2026-05-18 10:28:14.994072323 -0500
++++ src/nb_func.cpp	2026-05-18 10:28:32.076587784 -0500
 @@ -18,6 +18,10 @@
  #  include <cxxabi.h>
  #endif
@@ -12,8 +12,8 @@
  #  pragma warning(disable: 4706) // assignment within conditional expression
  #  pragma warning(disable: 6255) // _alloca indicates failure by raising a stack overflow exception
 
---- ./src/nb_internals_orig.h	2026-05-18 10:12:39.850505790 -0500
-+++ ./src/nb_internals.h	2026-05-18 10:12:46.870504034 -0500
+--- src/nb_internals_orig.h	2026-05-18 10:12:39.850505790 -0500
++++ src/nb_internals.h	2026-05-18 10:12:46.870504034 -0500
 @@ -21,6 +21,10 @@
  #include <functional>
  #include "hash.h"
@@ -26,8 +26,8 @@
  #  error nanobind depends on tsl::robin_map, in particular version >= 1.3.0, <2.0.0
  #endif
 
---- ./src/nb_internals_orig.cpp	2026-05-18 10:12:09.312772129 -0500
-+++ ./src/nb_internals.cpp	2026-05-18 10:12:16.285096192 -0500
+--- src/nb_internals_orig.cpp	2026-05-18 10:12:09.312772129 -0500
++++ src/nb_internals.cpp	2026-05-18 10:12:16.285096192 -0500
 @@ -13,6 +13,10 @@
  #include "nb_abi.h"
  #include <thread>
@@ -40,8 +40,8 @@
  #  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
  #endif
 
---- ./cmake/nanobind-config_orig.cmake	2026-05-18 11:33:10.531870221 -0500
-+++ ./cmake/nanobind-config.cmake	2026-05-18 11:26:20.930507133 -0500
+--- cmake/nanobind-config_orig.cmake	2026-05-18 11:33:10.531870221 -0500
++++ cmake/nanobind-config.cmake	2026-05-18 11:26:20.930507133 -0500
 @@ -207,7 +207,7 @@
      nanobind_lto(${TARGET_NAME})
 
@@ -62,8 +62,8 @@
      INTERPROCEDURAL_OPTIMIZATION_RELEASE ON
      INTERPROCEDURAL_OPTIMIZATION_MINSIZEREL ON)
 
---- ./include/nanobind/nb_call_orig.h	2026-05-24 07:19:48.602347481 -0500
-+++ ./include/nanobind/nb_call.h	2026-05-24 07:20:32.628186792 -0500
+--- include/nanobind/nb_call_orig.h	2026-05-24 07:19:48.602347481 -0500
++++ include/nanobind/nb_call.h	2026-05-24 07:20:32.628186792 -0500
 @@ -15,6 +15,10 @@
  #  pragma warning(disable: 6255) // _alloca indicates failure by raising a stack overflow exception
  #endif
@@ -76,8 +76,8 @@
  public:
      explicit kwargs_proxy(handle h) : handle(h) { }
 
---- ./src/nb_ft_orig.cpp	2026-05-24 07:24:39.565601284 -0500
-+++ ./src/nb_ft.cpp	2026-05-24 07:24:57.041888001 -0500
+--- src/nb_ft_orig.cpp	2026-05-24 07:24:39.565601284 -0500
++++ src/nb_ft.cpp	2026-05-24 07:24:57.041888001 -0500
 @@ -12,6 +12,10 @@
      op->ob_ref_shared = 0;
  }
