@@ -24,23 +24,47 @@ def _softcap(X, softcap):
     return X
 
 
-def _apply_causal(mask, past_sequence_length):
-    """Applies a causal mask on the input `mask`:
-    ``mask[i, j] = -inf if past_sequence_length + i > j else 0``.
-    Because a softmax is applied on the mask, -inf becomes 0 and 0 becomes 1.
-    The modification is done inplace.
+def _apply_causal(base, offset):
+    """Adds an offset-aligned (bottom-right) causal bias to `base`.
+
+    A query at in-block index ``i`` attends key ``j`` iff ``j <= i + offset``;
+    attended positions contribute ``0`` and masked positions ``-inf`` (a softmax
+    then maps ``-inf`` to 0 and 0 to 1). This is the select-not-multiply form that
+    mirrors the function body's ``Where(allowed, 0, -inf)`` in ``utils.cc``, so the
+    reference and the ``_expanded`` graph agree bit-for-bit.
+
+    ``offset`` is either:
+
+    * a scalar -- the same causal frontier for every batch. Used for the internal
+      cache (``offset = past_key.shape[2]``) and the no-cache case (``offset = 0``,
+      i.e. ordinary top-left causal). The result keeps the 2-D ``(q, kv)`` shape of
+      ``base``.
+    * a 1-D per-batch array of shape ``(batch,)`` -- the external/static cache,
+      where ``offset[b] = nonpad_kv_seqlen[b] - q_len``. The result is promoted to
+      ``(batch, 1, q, kv)`` so the downstream padding-mask block is a no-op reshape.
+
+    Note: ``offset`` is intentionally not clamped to ``>= 0``. A negative offset
+    (the over-long-query / out-of-contract regime) fully masks the affected rows,
+    which the caller's fully-masked-row guard then zeroes -- matching the spec's
+    fully-masked ``Y = 0`` / mode-3 ``= 0`` behavior. Clamping would change that
+    result, so it is deliberately omitted.
     """
-    q_sequence_length, total_sequence_length = mask.shape[-2:]
-    triu = np.triu(
-        np.ones(
-            (q_sequence_length, total_sequence_length - past_sequence_length),
-            dtype=mask.dtype,
-        ),
-        k=1,
-    )
-    triu[triu == 1] = -np.inf
-    mask[..., :, past_sequence_length:] += triu
-    return mask
+    q_sequence_length, kv_sequence_length = base.shape[-2:]
+    i_idx = np.arange(q_sequence_length).reshape(q_sequence_length, 1)  # (q, 1)
+    j_idx = np.arange(kv_sequence_length).reshape(1, kv_sequence_length)  # (1, kv)
+    per_batch = np.ndim(offset) > 0
+    if per_batch:
+        offsets = np.reshape(offset, (-1, 1, 1))  # (batch, 1, 1)
+        allowed = j_idx <= (i_idx + offsets)  # (batch, q, kv)
+    else:
+        allowed = j_idx <= (i_idx + int(offset))  # (q, kv)
+    causal = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
+    if per_batch:
+        # Promote base to (batch, 1, q, kv) and add the per-batch causal bias.
+        return base.reshape((1,) * (4 - base.ndim) + base.shape) + causal.reshape(
+            causal.shape[0], 1, q_sequence_length, kv_sequence_length
+        )
+    return base + causal
 
 
 def _compute_attention(
@@ -152,27 +176,12 @@ def _compute_attention(
         if past_key is None and nonpad_kv_seqlen is not None:
             # External/static cache: per-batch bottom-right frontier
             #   j <= i + (nonpad_kv_seqlen[b] - q_len).
-            offsets = nonpad_kv_seqlen.reshape(-1) - q_sequence_length  # (batch,)
-            i_idx = np.arange(q_sequence_length).reshape(
-                1, q_sequence_length, 1
-            )  # (1, q, 1)
-            j_idx = np.arange(kv_sequence_length).reshape(
-                1, 1, kv_sequence_length
-            )  # (1, 1, kv)
-            allowed = j_idx <= (i_idx + offsets.reshape(-1, 1, 1))  # (batch, q, kv)
-            causal = np.where(
-                allowed, Q.dtype.type(0), Q.dtype.type(-np.inf)
-            )  # (batch, q, kv)
-            # Promote to 4D (batch, 1, q, kv) so the later padding-mask block is a no-op reshape.
-            attn_bias = base.reshape(
-                (1,) * (4 - base.ndim) + base.shape
-            ) + causal.reshape(batch_size, 1, q_sequence_length, kv_sequence_length)
+            offset = nonpad_kv_seqlen.reshape(-1) - q_sequence_length  # (batch,)
+            attn_bias = _apply_causal(base, offset)
         else:
             # Internal cache (past_key) or no cache: scalar offset -- bit-identical path.
-            attn_bias = _apply_causal(
-                base,
-                past_sequence_length=past_key.shape[2] if past_key is not None else 0,
-            )
+            offset = past_key.shape[2] if past_key is not None else 0
+            attn_bias = _apply_causal(base, offset)
     elif attn_mask is not None:
         if attn_mask.dtype == np.bool_:
             attn_mask = (1 - attn_mask).astype(Q.dtype)
@@ -249,9 +258,11 @@ def _compute_attention(
             onnx.helper.tensor_dtype_to_np_dtype(softmax_precision)
         )
     # A fully-masked query row has an all-`-inf` bias, so `_softmax` evaluates
-    # `exp(-inf - (-inf)) = NaN` for it; this is expected on valid inputs (e.g. a
-    # negative bottom-right offset or an all-`False` mask row) and is overwritten by
-    # the fully-masked-row guard below, so suppress the resulting NumPy warning.
+    # `exp(-inf - (-inf)) = NaN` for it. This arises in two cases: a valid
+    # fully-masked row (e.g. an all-`False` boolean `attn_mask` row), and the
+    # out-of-contract negative bottom-right offset regime (`nonpad_kv_seqlen <
+    # q_sequence_length`). Both are overwritten by the fully-masked-row guard
+    # below (producing 0), so suppress the resulting NumPy warning.
     with np.errstate(invalid="ignore"):
         qk_softmax = _softmax(qk_with_bias)
 

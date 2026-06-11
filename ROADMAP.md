@@ -63,7 +63,7 @@ Note: The items below may be reprioritized as needed. It may be better to view t
 an unprioritized list of items for the next year.
 
 #### Q3 2026:
-- ~~Attention op (fix causal-mask position-anchoring issue)~~ (landed in [#8068](https://github.com/onnx/onnx/pull/8068))
+- ~~Attention op (fix causal-mask position-anchoring issue)~~ (landing in [#8068](https://github.com/onnx/onnx/pull/8068))
 - Attention op (add support for local window)
 - Attention op (add support for pre-softcap additive bias)
 - Support symbolic shape inference

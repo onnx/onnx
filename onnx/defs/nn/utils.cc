@@ -211,8 +211,10 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
   // For an internal past_key cache offset is the scalar PastKVSeqLen; for an external
   // (static) cache (nonpad_kv_seqlen present, no past_key) offset is per batch and the
   // builder scope holds CausalOffsetPerBatch (= nonpad_kv_seqlen - q_len).
-  // When both attn_mask and is_causal are set, the two are composed (intersected):
-  // a position is attended only if it is allowed by both the causal frontier and attn_mask.
+  // When both attn_mask and is_causal are set, the two are combined: a boolean
+  // attn_mask intersects with the causal frontier (a position is attended only if
+  // allowed by both), while a float attn_mask is added as a bias to the causal
+  // bias rather than strictly disabling positions (matching defs.cc).
   const auto* const is_causal_attr = ctx.getAttribute("is_causal");
   int64_t is_causal = (is_causal_attr != nullptr) ? is_causal_attr->i() : 0;
   const bool external_cache_offset = (is_causal == 1) && ctx.hasInput(6) && !ctx.hasInput(4);
