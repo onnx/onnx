@@ -44,7 +44,7 @@ The ONNX project, going forward, will plan to release roughly on a four month ca
 
 * Go to "Actions" -> select ["Create Releases"](https://github.com/onnx/onnx/actions/workflows/create_release.yml) -> Push the button "Run workflow" with the following config:
 
-<img width="1078" height="1584" alt="RunWorkflow" src="https://github.com/user-attachments/assets/59c89418-395e-4c52-b0c6-a75ed4a6333b" />
+<img width="339" height="586" alt="make-release-config" src="https://github.com/user-attachments/assets/9e2ab1df-3db5-4161-9d2e-fa95153e189a" />
 
 RC-Candidates
 
