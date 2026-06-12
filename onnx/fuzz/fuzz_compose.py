@@ -160,7 +160,7 @@ def TestOneInput(data: bytes) -> None:
         except Exception:
             return
     else:
-       if len(body) <= 4:
+        if len(body) <= 4:
             return
         payload_len = len(body) - 4
         if payload_len < 2:
