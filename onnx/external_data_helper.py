@@ -52,6 +52,8 @@ _ALLOWED_EXTERNAL_DATA_KEYS = frozenset(
 _SORTED_ALLOWED_KEYS = sorted(_ALLOWED_EXTERNAL_DATA_KEYS)
 _MAX_UNKNOWN_KEYS_IN_WARNING = 10
 _MAX_KEY_DISPLAY_LENGTH = 100
+
+
 class ExternalDataInfo:
     def __init__(self, tensor: TensorProto) -> None:
         self.location = ""
