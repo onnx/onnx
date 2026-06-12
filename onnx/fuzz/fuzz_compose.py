@@ -160,13 +160,16 @@ def TestOneInput(data: bytes) -> None:
         except Exception:
             return
     else:
-        if len(body) <= 4:
+       if len(body) <= 4:
+            return
+        payload_len = len(body) - 4
+        if payload_len < 2:
             return
         (m1_len,) = struct.unpack(">I", body[:4])
-        # Clamp into the payload length (len(body) - 4) so libFuzzer mutations
-        # of the length field still split into a non-empty m1 and m2 instead of
-        # an empty m2 on every iteration.
-        m1_len %= len(body) - 4
+        # Clamp m1_len into [1, payload_len - 1] so libFuzzer mutations of the
+        # length field still split into a non-empty m1 AND a non-empty m2,
+        # rather than producing an empty model on either side.
+        m1_len = (m1_len % (payload_len - 1)) + 1
         m1_bytes = body[4 : 4 + m1_len]
         m2_bytes = body[4 + m1_len :]
         try:
