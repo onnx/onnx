@@ -41,12 +41,14 @@ python onnx/fuzz/fuzz_shape_inference.py -runs=1000
 python onnx/fuzz/fuzz_version_converter.py -runs=1000
 ```
 
-To generate the seed corpora that OSS-Fuzz uses as starting inputs:
+To generate the seed corpora that OSS-Fuzz uses as starting inputs. The 5th
+argument (`compose_seeds.zip`) is optional, so existing 4-zip invocations keep
+working unchanged:
 
 ```bash
 python onnx/fuzz/make_seed_corpus.py \
     /tmp/vc_seeds.zip /tmp/parser_seeds.zip /tmp/checker_seeds.zip \
-    /tmp/shape_inference_seeds.zip /tmp/compose_seeds.zip
+    /tmp/shape_inference_seeds.zip [/tmp/compose_seeds.zip]  # 5th arg optional
 ```
 
 ## Design notes
