@@ -167,6 +167,12 @@ TEST(ParserTest, AttributeTest) {
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
   EXPECT_FLOAT_EQ(attr.f(), 0.625);
 
+  Parse(attr, "x : float = 2");
+  EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_FLOAT);
+  EXPECT_TRUE(attr.has_f());
+  EXPECT_FALSE(attr.has_i());
+  EXPECT_FLOAT_EQ(attr.f(), 2.0);
+
   Parse(attr, "x = [2, 4, 6]");
   EXPECT_EQ(attr.type(), AttributeProto_AttributeType::AttributeProto_AttributeType_INTS);
   EXPECT_EQ(attr.ints_size(), 3);

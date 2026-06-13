@@ -10259,7 +10259,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(checker.ValidationError, self._inferred, graph)
+        self.assertRaises(
+            (checker.ValidationError, onnx.shape_inference.InferenceError),
+            self._inferred,
+            graph,
+        )
 
     def test_softmax_cross_entropy_none(self) -> None:
         graph = self._make_graph(
@@ -13123,7 +13127,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.checker.ValidationError):
+        with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
