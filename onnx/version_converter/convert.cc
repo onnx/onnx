@@ -115,6 +115,9 @@ void DefaultVersionConverter::convert_graph(
     }
     // Update model version
     curr_version += step;
+    ONNX_ASSERTM(
+        !g->opset_versions_mutable().empty(),
+        "Graph has no opset version information; model may be missing opset_import")
     g->opset_versions_mutable()[domain_index].incrementVersion(step);
   }
 }
