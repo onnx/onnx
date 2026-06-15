@@ -242,6 +242,103 @@ class TestNumpyHelper(unittest.TestCase):
             0xFF,
         )
 
+    def test_from_array_object_invalid_type(self) -> None:
+        a = np.array([42], dtype=object)
+        with self.assertRaises(NotImplementedError) as cm:
+            numpy_helper.from_array(a)
+        self.assertIn("int", str(cm.exception))
+
+    def test_from_list_explicit_dtype(self) -> None:
+        # Verify explicit dtype is honored, not auto-detected
+        seq = numpy_helper.from_list([], dtype=onnx.SequenceProto.MAP)
+        self.assertEqual(seq.elem_type, onnx.SequenceProto.MAP)
+        # Without dtype, empty list defaults to TENSOR
+        seq2 = numpy_helper.from_list([])
+        self.assertEqual(seq2.elem_type, onnx.SequenceProto.TENSOR)
+
+    def test_to_dict_mismatched_lengths(self) -> None:
+        # Build a valid map then add an extra key to create a mismatch
+        m = numpy_helper.from_dict({1: np.array(1.0), 2: np.array(2.0)})
+        m.keys.append(3)
+        with self.assertRaises(IndexError) as cm:
+            numpy_helper.to_dict(m)
+        self.assertIn("not the same", str(cm.exception))
+
+    def test_from_dict_empty(self) -> None:
+        with self.assertRaises(ValueError):
+            numpy_helper.from_dict({})
+
+    def test_from_dict_unsupported_key_type(self) -> None:
+        with self.assertRaises(TypeError) as cm:
+            numpy_helper.from_dict({1.5: np.array(1), 2.5: np.array(2)})
+        self.assertIn("Unsupported map key type", str(cm.exception))
+
+    @parameterized.parameterized.expand(
+        [
+            ("uint4", onnx.TensorProto.UINT4),
+            ("int4", onnx.TensorProto.INT4),
+            ("float4e2m1", onnx.TensorProto.FLOAT4E2M1),
+        ]
+    )
+    def test_to_array_4bit_payload_too_small_raw_data(
+        self, _: str, data_type: int
+    ) -> None:
+        tensor = onnx.TensorProto()
+        tensor.data_type = data_type
+        tensor.dims.extend([1000])
+        tensor.raw_data = b"\x00"  # encodes 2 elements, not 1000
+        with self.assertRaises(ValueError, msg="payload too small for declared dims"):
+            numpy_helper.to_array(tensor)
+
+    @parameterized.parameterized.expand(
+        [
+            ("uint4", onnx.TensorProto.UINT4),
+            ("int4", onnx.TensorProto.INT4),
+            ("float4e2m1", onnx.TensorProto.FLOAT4E2M1),
+        ]
+    )
+    def test_to_array_4bit_payload_too_small_int32_data(
+        self, _: str, data_type: int
+    ) -> None:
+        tensor = onnx.TensorProto()
+        tensor.data_type = data_type
+        tensor.dims.extend([1000])
+        tensor.int32_data.append(0)  # encodes 8 elements, not 1000
+        with self.assertRaises(ValueError, msg="payload too small for declared dims"):
+            numpy_helper.to_array(tensor)
+
+    @parameterized.parameterized.expand(
+        [
+            ("uint2", onnx.TensorProto.UINT2),
+            ("int2", onnx.TensorProto.INT2),
+        ]
+    )
+    def test_to_array_2bit_payload_too_small_raw_data(
+        self, _: str, data_type: int
+    ) -> None:
+        tensor = onnx.TensorProto()
+        tensor.data_type = data_type
+        tensor.dims.extend([1000])
+        tensor.raw_data = b"\x00"  # encodes 4 elements, not 1000
+        with self.assertRaises(ValueError, msg="payload too small for declared dims"):
+            numpy_helper.to_array(tensor)
+
+    @parameterized.parameterized.expand(
+        [
+            ("uint2", onnx.TensorProto.UINT2),
+            ("int2", onnx.TensorProto.INT2),
+        ]
+    )
+    def test_to_array_2bit_payload_too_small_int32_data(
+        self, _: str, data_type: int
+    ) -> None:
+        tensor = onnx.TensorProto()
+        tensor.data_type = data_type
+        tensor.dims.extend([1000])
+        tensor.int32_data.append(0)  # encodes 16 elements, not 1000
+        with self.assertRaises(ValueError, msg="payload too small for declared dims"):
+            numpy_helper.to_array(tensor)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -20,6 +20,7 @@ from onnx import (
     ModelProto,
     OptionalProto,
     SequenceProto,
+    SparseTensorProto,
     TensorProto,
     TypeProto,
     checker,
@@ -73,6 +74,37 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         attr = helper.make_attribute("a", "value", "doc")
         self.assertEqual(attr.name, "a")
         self.assertEqual(attr.doc_string, "doc")
+
+    def test_make_attribute_ref(self) -> None:
+        attr = helper.make_attribute_ref(
+            "alpha", AttributeProto.FLOAT, ref_attr_name="parent_alpha"
+        )
+        self.assertEqual(attr.name, "alpha")
+        self.assertEqual(attr.type, AttributeProto.FLOAT)
+        self.assertEqual(attr.ref_attr_name, "parent_alpha")
+        # A reference attribute carries no data; it is resolved from the parent
+        # function's attribute at instantiation time.
+        with self.assertRaises(ValueError):
+            helper.get_attribute_value(attr)
+
+    def test_make_attribute_ref_doc_string(self) -> None:
+        attr = helper.make_attribute_ref(
+            "alpha",
+            AttributeProto.FLOAT,
+            doc_string="doc",
+            ref_attr_name="parent_alpha",
+        )
+        self.assertEqual(attr.ref_attr_name, "parent_alpha")
+        self.assertEqual(attr.doc_string, "doc")
+
+    def test_make_attribute_ref_doc_string_positional(self) -> None:
+        attr = helper.make_attribute_ref("alpha", AttributeProto.FLOAT, "doc")
+        self.assertEqual(attr.ref_attr_name, "alpha")
+        self.assertEqual(attr.doc_string, "doc")
+
+    def test_make_attribute_ref_requires_ref_attr_name(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_attribute_ref("alpha", AttributeProto.FLOAT, ref_attr_name="")
 
     def test_attr_string(self) -> None:
         # bytes
@@ -134,63 +166,50 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.tensors), tensors)
         checker.check_attribute(attr)
 
-    def test_attr_sparse_tensor_proto(self) -> None:
-        dense_shape = [3, 3]
-        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
+    @staticmethod
+    def _make_sparse_tensor() -> SparseTensorProto:
         values_tensor = helper.make_tensor(
             name="sparse_values",
             data_type=TensorProto.FLOAT,
-            dims=[len(sparse_values)],
-            vals=np.array(sparse_values).astype(np.float32),
+            dims=[3],
+            vals=np.array(
+                [1.764052391052246, 0.40015721321105957, 0.978738009929657],
+                dtype=np.float32,
+            ),
             raw=False,
         )
-
-        linear_indices = [2, 3, 5]
         indices_tensor = helper.make_tensor(
             name="indices",
             data_type=TensorProto.INT64,
-            dims=[len(linear_indices)],
-            vals=np.array(linear_indices).astype(np.int64),
+            dims=[3],
+            vals=np.array([2, 3, 5], dtype=np.int64),
             raw=False,
         )
-        sparse_tensor = helper.make_sparse_tensor(
-            values_tensor, indices_tensor, dense_shape
-        )
+        return helper.make_sparse_tensor(values_tensor, indices_tensor, [3, 3])
 
+    def test_attr_sparse_tensor_proto(self) -> None:
+        sparse_tensor = self._make_sparse_tensor()
         attr = helper.make_attribute("sparse_attr", sparse_tensor)
         self.assertEqual(attr.name, "sparse_attr")
         checker.check_sparse_tensor(helper.get_attribute_value(attr))
         checker.check_attribute(attr)
 
     def test_attr_sparse_tensor_repeated_protos(self) -> None:
-        dense_shape = [3, 3]
-        sparse_values = [1.764052391052246, 0.40015721321105957, 0.978738009929657]
-        values_tensor = helper.make_tensor(
-            name="sparse_values",
-            data_type=TensorProto.FLOAT,
-            dims=[len(sparse_values)],
-            vals=np.array(sparse_values).astype(np.float32),
-            raw=False,
-        )
-
-        linear_indices = [2, 3, 5]
-        indices_tensor = helper.make_tensor(
-            name="indices",
-            data_type=TensorProto.INT64,
-            dims=[len(linear_indices)],
-            vals=np.array(linear_indices).astype(np.int64),
-            raw=False,
-        )
-        sparse_tensor = helper.make_sparse_tensor(
-            values_tensor, indices_tensor, dense_shape
-        )
-
-        repeated_sparse = [sparse_tensor, sparse_tensor]
-        attr = helper.make_attribute("sparse_attrs", repeated_sparse)
+        sparse_tensor = self._make_sparse_tensor()
+        attr = helper.make_attribute("sparse_attrs", [sparse_tensor, sparse_tensor])
         self.assertEqual(attr.name, "sparse_attrs")
         checker.check_attribute(attr)
         for s in helper.get_attribute_value(attr):
             checker.check_sparse_tensor(s)
+
+    def test_printable_attribute_sparse_tensor(self) -> None:
+        sparse_tensor = self._make_sparse_tensor()
+
+        attr = helper.make_attribute("st", sparse_tensor)
+        self.assertIn("<Sparse Tensor>", helper.printable_attribute(attr))
+
+        attr = helper.make_attribute("sts", [sparse_tensor, sparse_tensor])
+        self.assertIn("[<Sparse Tensor>, ...]", helper.printable_attribute(attr))
 
     def test_attr_repeated_graph_proto(self) -> None:
         graphs = [GraphProto(), GraphProto()]
@@ -780,6 +799,70 @@ class TestHelperTensorFunctions(unittest.TestCase):
         # scalar value
         vi = helper.make_sparse_tensor_value_info("Y", TensorProto.FLOAT, ())
         checker.check_value_info(vi)
+
+    def test_make_tensor_mismatched_dims_raises_error(self) -> None:
+        with self.assertRaises(ValueError) as context:
+            helper.make_tensor(
+                name="mismatch_test",
+                data_type=TensorProto.FLOAT,
+                dims=(2, 2),  # Expects 4 elements
+                vals=[1.0, 2.0, 3.0],  # Only 3 elements provided
+                raw=False,
+            )
+        self.assertIn("Number of values", str(context.exception))
+        self.assertIn("does not match tensor dimensions", str(context.exception))
+
+    def test_make_tensor_too_many_values_raises_error(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="too_many_test",
+                data_type=TensorProto.FLOAT,
+                dims=(2,),
+                vals=[1.0, 2.0, 3.0],
+                raw=False,
+            )
+
+    def test_make_tensor_scalar_dims(self) -> None:
+        tensor = helper.make_tensor(
+            name="scalar_test",
+            data_type=TensorProto.FLOAT,
+            dims=(),
+            vals=[42.0],
+            raw=False,
+        )
+        self.assertEqual(tensor.dims, [])
+        self.assertEqual(tensor.float_data, [42.0])
+
+    def test_make_tensor_zero_dims(self) -> None:
+        tensor = helper.make_tensor(
+            name="zero_dim_test",
+            data_type=TensorProto.FLOAT,
+            dims=(0,),
+            vals=[],
+            raw=False,
+        )
+        self.assertEqual(tensor.dims, [0])
+        self.assertEqual(len(tensor.float_data), 0)
+
+    def test_make_tensor_mismatched_dims_int4(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="mismatch_int4",
+                data_type=TensorProto.INT4,
+                dims=(2,),
+                vals=[1],  # Expects 2
+                raw=False,
+            )
+
+    def test_make_tensor_mismatched_dims_complex(self) -> None:
+        with self.assertRaises(ValueError):
+            helper.make_tensor(
+                name="mismatch_complex",
+                data_type=TensorProto.COMPLEX64,
+                dims=(2,),
+                vals=[1.0 + 2.0j],  # Expects 2
+                raw=False,
+            )
 
 
 class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):

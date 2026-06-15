@@ -4,6 +4,7 @@
 
 #include "onnx/defs/shape_inference.h"
 
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -532,7 +533,16 @@ std::pair<int, int> getAttributeProtoElemTypeAndLength(const AttributeProto* att
       fail_type_inference(
           "Attribute ", attr_proto->name(), " expected to be a 1D tensor but was ", attr_proto->t().dims_size(), "D");
     }
-    return {attr_proto->t().data_type(), attr_proto->t().dims(0)};
+    const int64_t dim0 = attr_proto->t().dims(0);
+    if (dim0 < 0 || dim0 > static_cast<int64_t>(std::numeric_limits<int>::max())) {
+      fail_type_inference(
+          "Attribute ",
+          attr_proto->name(),
+          " has tensor dimension ",
+          dim0,
+          " which is out of valid range [0, INT_MAX]");
+    }
+    return {attr_proto->t().data_type(), static_cast<int>(dim0)};
   }
   return {TensorProto::UNDEFINED, 0};
 }
@@ -554,6 +564,60 @@ std::pair<int, int> getAttributeElementTypeAndLength(
     }
   }
   return {elem_type, length};
+}
+
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void InferenceContext::unifyInputShape(size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims) {
+  if (!hasInputShape(*this, input_index)) {
+    return;
+  }
+  const auto& input_shape = getInputShape(*this, input_index);
+  if (static_cast<size_t>(input_shape.dim_size()) != dims.size()) {
+    fail_shape_inference(
+        "Input ",
+        input_index,
+        " expected to have rank ",
+        dims.size(),
+        " but has rank ",
+        input_shape.dim_size(),
+        " in ",
+        getDisplayName(),
+        ".");
+  }
+  int i = 0;
+  for (const auto& dim_ref : dims) {
+    const Dim& input_dim = input_shape.dim(i);
+    unifyDim(input_dim, dim_ref.get());
+    ++i;
+  }
+}
+
+// NOLINTNEXTLINE(readability-make-member-function-const)
+void InferenceContext::unifyInputShapePrefix(
+    size_t input_index,
+    std::initializer_list<std::reference_wrapper<Dim>> prefix) {
+  if (!hasInputShape(*this, input_index)) {
+    return;
+  }
+  const auto& input_shape = getInputShape(*this, input_index);
+  if (static_cast<size_t>(input_shape.dim_size()) < prefix.size()) {
+    fail_shape_inference(
+        "Input ",
+        input_index,
+        " expected to have rank >= ",
+        prefix.size(),
+        " but has rank ",
+        input_shape.dim_size(),
+        " in ",
+        getDisplayName(),
+        ".");
+  }
+  int i = 0;
+  for (const auto& dim_ref : prefix) {
+    const Dim& input_dim = input_shape.dim(i);
+    unifyDim(input_dim, dim_ref.get());
+    ++i;
+  }
 }
 
 } // namespace ONNX_NAMESPACE

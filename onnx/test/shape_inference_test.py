@@ -7,6 +7,7 @@ from __future__ import annotations
 import contextlib
 import itertools
 import unittest
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -23,6 +24,7 @@ from onnx import (
     OperatorSetIdProto,
     SparseTensorProto,
     TensorProto,
+    TensorShapeProto,
     TypeProto,
     ValueInfoProto,
     checker,
@@ -41,6 +43,7 @@ from onnx.defs import (
 from onnx.helper import (
     make_empty_tensor_value_info,
     make_graph,
+    make_model,
     make_node,
     make_opsetid,
     make_tensor,
@@ -1239,6 +1242,82 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
+    def _check_keep_aspect_ratio_precision(
+        self,
+        version: int,
+        policy: str,
+        dims: tuple[int, ...],
+        sizes: tuple[int, ...],
+        expected: tuple[int, ...],
+    ) -> None:
+        # Shared body for KeepAspectRatioHelper precision regression tests.
+        # Builds a Resize graph using the sizes-input path with the given
+        # keep_aspect_ratio_policy and asserts the inferred output shape.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.INT32, dims),
+                ("roi", TensorProto.FLOAT, (2 * len(dims),)),
+                ("sizes", TensorProto.INT64, (len(sizes),)),
+            ],
+            [
+                make_node(
+                    "Resize",
+                    ["x", "roi", "", "sizes"],
+                    ["y"],
+                    keep_aspect_ratio_policy=policy,
+                )
+            ],
+            [],
+            initializer=[make_tensor("sizes", TensorProto.INT64, (len(sizes),), sizes)],
+        )
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info("y", TensorProto.INT32, expected)],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_keep_aspect_ratio_precision_not_larger(self, _, version) -> None:
+        # Regression: KeepAspectRatioHelper computed `sizes_data[i] /
+        # static_cast<float>(dim_value)` and `roundf(scale * dim_value)`.
+        # With float32, 2**24 + 1 = 16_777_217 is unrepresentable, so a 1:1
+        # request collapses the inferred dim to 16_777_216.
+        self.skipIf(version < 18, "keep_aspect_ratio_policy is from Version 18")
+        self._check_keep_aspect_ratio_precision(
+            version,
+            "not_larger",
+            dims=(16777217, 16777217),
+            sizes=(16777217, 16777217),
+            expected=(16777217, 16777217),
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_keep_aspect_ratio_precision_not_smaller(self, _, version) -> None:
+        # Same float32 mantissa boundary, NOT_SMALLER policy path.
+        self.skipIf(version < 18, "keep_aspect_ratio_policy is from Version 18")
+        self._check_keep_aspect_ratio_precision(
+            version,
+            "not_smaller",
+            dims=(16777217, 16777217),
+            sizes=(16777217, 16777217),
+            expected=(16777217, 16777217),
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_keep_aspect_ratio_precision_non_unit_scale(
+        self, _, version
+    ) -> None:
+        # Non-unit scale path: dim 16_777_217 scaled by 2 should produce
+        # 33_554_434. With float32 the result collapses to 33_554_432.
+        self.skipIf(version < 18, "keep_aspect_ratio_policy is from Version 18")
+        self._check_keep_aspect_ratio_precision(
+            version,
+            "not_larger",
+            dims=(16777217,),
+            sizes=(33554434,),
+            expected=(33554434,),
+        )
+
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_scale(self, _, version) -> None:
         self.skipIf(version < 11, "roi input is from Version 11")
@@ -1324,6 +1403,52 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_tensor_value_info("y", TensorProto.INT32, (2, 3, 9, 9))],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
+
+    def _check_resize_scale_precision(
+        self,
+        version: int,
+        scales: tuple[float, ...],
+        expected_last_dim: int,
+    ) -> None:
+        # Shared body for #4919 regression tests. Builds a Resize graph whose
+        # last input dim is 16_777_217 (= 2**24 + 1, the smallest int that
+        # float32 cannot represent) and asserts the inferred output last dim.
+        if version >= 11:
+            inputs = [
+                ("x", TensorProto.INT32, (1, 1, 1, 16777217)),
+                ("roi", TensorProto.FLOAT, (8,)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ]
+            node = make_node("Resize", ["x", "roi", "scales"], ["y"])
+        else:
+            inputs = [
+                ("x", TensorProto.INT32, (1, 1, 1, 16777217)),
+                ("scales", TensorProto.FLOAT, (4,)),
+            ]
+            node = make_node("Resize", ["x", "scales"], ["y"])
+        graph = self._make_graph(
+            inputs,
+            [node],
+            [],
+            initializer=[make_tensor("scales", TensorProto.FLOAT, (4,), scales)],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info(
+                    "y", TensorProto.INT32, (1, 1, 1, expected_last_dim)
+                )
+            ],
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Resize"))
+    def test_resize_scale_precision_large_dim(self, _, version) -> None:
+        # Regression for #4919, current-version helper
+        for scale in [1, 2]:
+            self._check_resize_scale_precision(
+                version, (1.0, 1.0, 1.0, float(scale)), 16777217 * scale
+            )
 
     @parameterized.expand(all_versions_for("Resize"))
     def test_resize_scale_and_size_but_one_is_empty(self, _, version) -> None:
@@ -2428,6 +2553,368 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, None)]
         )
 
+    @parameterized.expand(
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            ("opset1_to_10", 10),
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            ("opset19", 19),
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            ("latest", defs.get_schema("Conv").since_version),
+        ]
+    )
+    def test_conv_weight_more_spatial_dims_than_input_raises(
+        self, _: str, version: int
+    ) -> None:
+        # Weight has more spatial dims than input and no explicit kernel_shape
+        # attribute, so kernel_shape is derived from the weight. This must fail
+        # rather than reading past the end of the dilations vector.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8)),
+                ("w", TensorProto.FLOAT, (5, 4, 3, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            "weight tensor",
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            ("opset1_to_10", 10),
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            ("opset19", 19),
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            ("latest", defs.get_schema("Conv").since_version),
+        ]
+    )
+    def test_conv_weight_fewer_spatial_dims_than_input_raises(
+        self, _: str, version: int
+    ) -> None:
+        # Weight has fewer spatial dims than input and no explicit kernel_shape
+        # attribute, so kernel_shape is derived from the weight. This must fail
+        # rather than silently inferring an inconsistent shape.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8, 8)),
+                ("w", TensorProto.FLOAT, (5, 4, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            "weight tensor",
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_zero_dilations(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", dilations=[0, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_dilations(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", dilations=[-1, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_pads(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", pads=[-1, 0, 0, 0])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_input_too_few_dims(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1)),
+                ("y", TensorProto.FLOAT, (1, 1, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z")],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", kernel_shape=[-1, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_negative_dilations(self, _: str, version: int) -> None:
+        if version < 10:
+            self.skipTest("dilations not supported before MaxPool-10")
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[3, 3],
+                    dilations=[-1, 1],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_negative_pads(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[3, 3],
+                    pads=[-1, 0, 0, 0],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_weight_spatial_rank_mismatch(
+        self, _: str, version: int
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_dilations(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", dilations=[-1, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_zero_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", strides=[0, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_pads(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", pads=[-1, 0, 0, 0])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_output_padding(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [
+                make_node(
+                    "ConvTranspose",
+                    ["x", "w"],
+                    "z",
+                    strides=[2, 2],
+                    output_padding=[-1, 0],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_output_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [
+                make_node(
+                    "ConvTranspose",
+                    ["x", "w"],
+                    "z",
+                    output_shape=[-1, 6],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
             [
@@ -2466,6 +2953,666 @@ class TestShapeInference(TestShapeInferenceHelper):
                 )
             ],
         )
+
+    def test_linear_attention_basic_mha(self) -> None:
+        # update_rule="linear" with no optional inputs: baseline shape/dtype plumbing.
+        # H_q == H_kv == 4, d_k == d_v == 16. Output is 3D packed; state is 4D.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 64)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 4, 16, 16)
+                ),
+            ],
+        )
+
+    def test_linear_attention_gated_delta(self) -> None:
+        # Default update_rule with both decay (per-keydim) and beta required.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,64] decay, float[2,4,4] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, "", decay, beta)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 64)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 4, 16, 16)
+                ),
+            ],
+        )
+
+    def test_linear_attention_gqa(self) -> None:
+        # H_q=8, H_kv=2 (4 query heads share each KV head). Output last dim must
+        # be H_q * d_v while present_state's H dim must be H_kv. This is the
+        # highest-risk regression for confusing q vs kv head counts.
+        # Q: 8 * 16 = 128. K, V: 2 * 16 = 32.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,128] Q, float[2,4,32] K, float[2,4,32] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=8, kv_num_heads=2, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 128)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 2, 16, 16)
+                ),
+            ],
+        )
+
+    def test_linear_attention_mqa(self) -> None:
+        # Multi-query attention: kv_num_heads == 1.
+        # Q: 4 * 16 = 64. K, V: 1 * 16 = 16.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,16] K, float[2,4,16] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=1, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 64)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 1, 16, 16)
+                ),
+            ],
+        )
+
+    def test_linear_attention_with_past_state(self) -> None:
+        # past_state has dtype S (FLOAT16) different from T (FLOAT). present_state
+        # must inherit dtype from past_state, not from query.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,1,64] Q, float[2,1,64] K, float[2,1,64] V,
+               float16[2,4,16,16] past_state,
+               float[2,1,64] decay, float[2,1,4] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, past_state, decay, beta)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 1, 64)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT16, (2, 4, 16, 16)
+                ),
+            ],
+        )
+
+    def test_linear_attention_per_head_decay(self) -> None:
+        # update_rule="gated" with per-head scalar decay shape (B, T, H_kv).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,16] Q, float[2,3,16] K, float[2,3,16] V,
+               float[2,3,2] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="gated"
+                > (Q, K, V, "", decay)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 16)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 2, 8, 8)
+                ),
+            ],
+        )
+
+    def test_linear_attention_per_keydim_decay(self) -> None:
+        # update_rule="gated" with per-key-dimension decay shape (B, T, H_kv * d_k).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,16] Q, float[2,3,16] K, float[2,3,16] V,
+               float[2,3,16] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="gated"
+                > (Q, K, V, "", decay)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 3, 16)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 2, 8, 8)
+                ),
+            ],
+        )
+
+    def test_linear_attention_dynamic_T(self) -> None:
+        # Symbolic batch and sequence-length dims must propagate to output and state.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[B,T,64] Q, float[B,T,64] K, float[B,T,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, ("B", "T", 64)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, ("B", 4, 16, 16)
+                ),
+            ],
+        )
+
+    def test_linear_attention_unknown_value_last_dim(self) -> None:
+        # value's last dim is symbolic: output last dim and state's d_v are unknown,
+        # but rank stays 3/4 and known dims (B, T, H_kv, d_k) are still computed.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,VLast] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, None)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 4, 16, None)
+                ),
+            ],
+        )
+
+    def test_linear_attention_unknown_qkv_with_past_state(self) -> None:
+        # Q/K/V have no shapes; only past_state has a shape. Dim unification
+        # propagates B, d_k, d_v from past_state into both output and
+        # present_state (only T remains unknown for output). Uses _make_graph
+        # because shapeless graph inputs are rejected by the model checker;
+        # _make_graph wraps them behind a Reshape so the shape-erasure happens
+        # inside the graph.
+        graph = self._make_graph(
+            [
+                ("Q", TensorProto.FLOAT, None),
+                ("K", TensorProto.FLOAT, None),
+                ("V", TensorProto.FLOAT, None),
+                ("past_state", TensorProto.FLOAT, (2, 4, 16, 16)),
+            ],
+            [
+                make_node(
+                    "LinearAttention",
+                    ["Q", "K", "V", "past_state"],
+                    ["output", "present_state"],
+                    q_num_heads=4,
+                    kv_num_heads=4,
+                    update_rule="linear",
+                )
+            ],
+            [],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, None, 64)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 4, 16, 16)
+                ),
+            ],
+        )
+
+    def test_linear_attention_query_rank_not_3(self) -> None:
+        # Query given as rank-4 (internal layout leaked to op boundary).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,4,16] Q, float[2,4,64] K, float[2,4,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_past_state_rank_not_4(self) -> None:
+        # past_state must be rank 4.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,1,64] Q, float[2,1,64] K, float[2,1,64] V,
+               float[2,4,16] past_state)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V, past_state)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_decay_rank_not_3(self) -> None:
+        # decay must be rank 3 (3D packed).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,16] Q, float[2,3,16] K, float[2,3,16] V,
+               float[2,3] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="gated"
+                > (Q, K, V, "", decay)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_gqa_indivisible(self) -> None:
+        # q_num_heads must be a positive multiple of kv_num_heads.
+        # Q: 6 * 16 = 96. K, V: 4 * 16 = 64.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,96] Q, float[2,4,64] K, float[2,4,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=6, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_gated_delta_missing_decay(self) -> None:
+        # gated_delta requires decay; only beta provided.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,4] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, "", "", beta)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_gated_delta_missing_beta(self) -> None:
+        # gated_delta requires beta; only decay provided.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,64] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, "", decay)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_linear_with_decay(self) -> None:
+        # update_rule="linear" forbids decay.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,64] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V, "", decay)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_linear_with_beta(self) -> None:
+        # update_rule="linear" forbids beta.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V,
+               float[2,4,4] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="linear"
+                > (Q, K, V, "", "", beta)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_unknown_update_rule(self) -> None:
+        # Only "linear", "gated", "delta", and "gated_delta" are accepted.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,64] Q, float[2,4,64] K, float[2,4,64] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="forza inter"
+                > (Q, K, V)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_q_num_heads_zero(self) -> None:
+        # Non-positive head counts must be rejected explicitly, not silently
+        # skipped by the GQA divisibility check (0 % anything == 0).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,16] Q, float[2,3,16] K, float[2,3,16] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=0, kv_num_heads=2, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_qpack_indivisible(self) -> None:
+        # Packed query last dim must be divisible by q_num_heads so the
+        # function body can reshape (B, T, H_q * d_k) to (B, T, H_q, d_k).
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,15] Q, float[2,3,16] K, float[2,3,16] V)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=2, kv_num_heads=2, update_rule="linear"
+                > (Q, K, V)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_decay_last_dim_wrong(self) -> None:
+        # With H_kv=4 and d_k=16, decay last dim must be 4 (per-head) or 64
+        # (per-key-dim). 7 is neither and must be rejected.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,64] Q, float[2,3,64] K, float[2,3,64] V,
+               float[2,3,7] decay)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated"
+                > (Q, K, V, "", decay)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_linear_attention_beta_last_dim_wrong(self) -> None:
+        # With H_kv=4, beta last dim must be 1 (broadcast) or 4 (per-head).
+        # 3 is neither and must be rejected.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,3,64] Q, float[2,3,64] K, float[2,3,64] V,
+               float[2,3,4] decay, float[2,3,3] beta)
+                => (output, present_state)
+            {
+                output, present_state = LinearAttention <
+                    q_num_heads=4, kv_num_heads=4, update_rule="gated_delta"
+                > (Q, K, V, "", decay, beta)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_causal_conv_with_state_static(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 3)),
+            ],
+        )
+
+    def test_causal_conv_with_state_dynamic_length(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[B,C,L] input, float[C,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, ("B", "C", "L")),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, ("B", "C", 3)
+                ),
+            ],
+        )
+
+    def test_causal_conv_with_state_dynamic_kernel(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,k] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
+                make_tensor_value_info(
+                    "present_state", TensorProto.FLOAT, (2, 4, None)
+                ),
+            ],
+        )
+
+    def test_causal_conv_with_state_input_rank2_fails(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4] input, float[4,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_causal_conv_with_state_kernel_zero_fails(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,0] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_causal_conv_with_state_weight_rank2_fails(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+
+    def test_causal_conv_with_state_kernel_size_one(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,1] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 0)),
+            ],
+        )
+
+    def test_causal_conv_with_state_fp16_type_propagation(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float16[2,4,8] input, float16[4,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (input, weight)
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT16, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT16, (2, 4, 3)),
+            ],
+        )
+
+    def test_causal_conv_with_state_all_optional_inputs(self) -> None:
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,4] weight,
+               float[4] bias, float[2,4,3] past_state)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState (
+                    input, weight, bias, past_state
+                )
+            }
+            """
+        )
+        self._assert_inferred(
+            model,
+            [
+                make_tensor_value_info("output", TensorProto.FLOAT, (2, 4, 8)),
+                make_tensor_value_info("present_state", TensorProto.FLOAT, (2, 4, 3)),
+            ],
+        )
+
+    def test_causal_conv_with_state_unknown_activation_fails(self) -> None:
+        # Only "none", "silu", and "swish" are accepted; anything else must be
+        # rejected by shape inference rather than silently inlined as Identity.
+        model = onnx.parser.parse_model(
+            """
+            <ir_version: 10, opset_import: ["" : 27]>
+            g (float[2,4,8] input, float[4,1,4] weight)
+                => (output, present_state)
+            {
+                output, present_state = CausalConvWithState <activation = "forza inter"> (input, weight)
+            }
+            """
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
 
     def test_flex_attention_basic(self) -> None:
         """Test FlexAttention basic shape inference with symbolic dimensions."""
@@ -4732,6 +5879,23 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 2, 2))]
         )
 
+    @parameterized.expand(all_versions_for("MaxRoiPool"))
+    def test_roipool_negative_pooled_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (5, 3, 4, 4)),
+                ("rois", TensorProto.INT64, (2, 5)),
+            ],
+            [make_node("MaxRoiPool", ["X", "rois"], ["Y"], pooled_shape=[-1, 2])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
     def test_lp_norm(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5, 6, 7))],
@@ -5562,6 +6726,164 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, None)]
+        )
+
+    def test_maxunpool_rank0_indices_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("xI", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank0_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, ()),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (), [0.0]),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank1_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, (9,)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (9,), list(range(9))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank2_weight_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, (48, 32)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (48, 32), list(range(48 * 32))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank2_input_raises(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48)),
+                ("W", TensorProto.FLOAT, (48, 32, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("X", TensorProto.FLOAT, (25, 48), list(range(25 * 48))),
+            ],
+        )
+        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+
+    def test_conv_transpose_rank0_weight_raises_opset11(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, ()),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (), [0.0]),
+            ],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
+        )
+
+    def test_conv_transpose_rank0_weight_raises_opset1(self) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (25, 48, 16, 16)),
+                ("W", TensorProto.FLOAT, ()),
+            ],
+            [make_node("ConvTranspose", ["X", "W"], "Y", strides=[2, 2])],
+            [],
+            initializer=[
+                make_tensor("W", TensorProto.FLOAT, (), [0.0]),
+            ],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 1)],
+        )
+
+    def test_maxunpool_rank0_indices_raises_opset9(self) -> None:
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("xI", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
+        )
+
+    def test_maxunpool_rank0_indices_raises_opset11(self) -> None:
+        graph = self._make_graph(
+            [
+                ("xT", TensorProto.FLOAT, (1, 1, 2, 2)),
+                ("xI", TensorProto.INT64, ()),
+            ],
+            [
+                make_node(
+                    "MaxUnpool", ["xT", "xI"], "Y", kernel_shape=[2, 2], strides=[2, 2]
+                )
+            ],
+            [],
+            initializer=[
+                make_tensor("xI", TensorProto.INT64, (), [0]),
+            ],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
         )
 
     def test_onehot_without_axis(self) -> None:
@@ -7169,6 +8491,80 @@ class TestShapeInference(TestShapeInferenceHelper):
         )  # Missing 'delta' initializer
         self._assert_inferred(
             graph, [make_tensor_value_info("output", TensorProto.INT32, (None,))]
+        )
+
+    def test_range_float16(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT16, ()),
+                ("limit", TensorProto.FLOAT16, ()),
+                ("delta", TensorProto.FLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT16, (), (5,)),
+                make_tensor("delta", TensorProto.FLOAT16, (), (2,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT16, (None,))]
+        )
+
+    def test_range_bfloat16(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.BFLOAT16, ()),
+                ("limit", TensorProto.BFLOAT16, ()),
+                ("delta", TensorProto.BFLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.BFLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.BFLOAT16, (), (5,)),
+                make_tensor("delta", TensorProto.BFLOAT16, (), (2,)),
+            ],
+        )
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.BFLOAT16, (None,))]
+        )
+
+    def test_range_float16_rank_inference(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.FLOAT16, ()),
+                ("limit", TensorProto.FLOAT16, ()),
+                ("delta", TensorProto.FLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.FLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.FLOAT16, (), (5,)),
+            ],
+        )  # Missing 'delta' initializer
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.FLOAT16, (None,))]
+        )
+
+    def test_range_bfloat16_rank_inference(self) -> None:
+        graph = self._make_graph(
+            [
+                ("start", TensorProto.BFLOAT16, ()),
+                ("limit", TensorProto.BFLOAT16, ()),
+                ("delta", TensorProto.BFLOAT16, ()),
+            ],
+            [make_node("Range", ["start", "limit", "delta"], ["output"])],
+            [],
+            initializer=[
+                make_tensor("start", TensorProto.BFLOAT16, (), (1,)),
+                make_tensor("limit", TensorProto.BFLOAT16, (), (5,)),
+            ],
+        )  # Missing 'delta' initializer
+        self._assert_inferred(
+            graph, [make_tensor_value_info("output", TensorProto.BFLOAT16, (None,))]
         )
 
     def test_gathernd(self) -> None:
@@ -8863,7 +10259,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(checker.ValidationError, self._inferred, graph)
+        self.assertRaises(
+            (checker.ValidationError, onnx.shape_inference.InferenceError),
+            self._inferred,
+            graph,
+        )
 
     def test_softmax_cross_entropy_none(self) -> None:
         graph = self._make_graph(
@@ -11727,7 +13127,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.checker.ValidationError):
+        with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
@@ -11869,16 +13269,23 @@ class TestShapeInference(TestShapeInferenceHelper):
         with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
-    def test_conv_transpose_undersized_weight_does_not_crash(self):
-        # Weight rank < input spatial rank → empty kernel_shape would OOB-index later.
+    def test_conv_transpose_undersized_weight_raises(self):
+        # Weight rank < 3 violates ConvTranspose spec (C x M/group x k1...kn).
         model = onnx.parser.parse_model(
             """
             <ir_version: 8, opset_import: [ "" : 11 ]>
             g (float[1,1,5] X, float[1,3] W) => (float[1,1,?] Y) { Y = ConvTranspose(X, W) }
             """
         )
-        # Graceful return without output shape inference is acceptable; must not crash.
-        onnx.shape_inference.infer_shapes(model, strict_mode=True)
+        with self.assertRaises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(model, strict_mode=True)
+
+    def test_infer_shapes_pathlike_error(self) -> None:
+        with self.assertRaisesRegex(
+            TypeError,
+            r"For Model paths \(str or os.PathLike\), use infer_shapes_path\(\)\.",
+        ):
+            onnx.shape_inference.infer_shapes(Path("model.onnx"))
 
 
 class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
@@ -12147,6 +13554,51 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
         # clean up
         onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
+
+    def test_get_symbolic_input_returns_tensor_shape_proto(self) -> None:
+        # Regression test: when data propagation feeds a symbolic shape into a
+        # node input, ctx.get_symbolic_input(...) must return a TensorShapeProto
+        # (the binding casts TensorShapeProto, which needs a registered caster).
+        op_type = "ReadSymbolicInput"
+        domain = "test.symbolic_input"
+        captured: dict[str, object] = {}
+
+        schema = OpSchema(
+            op_type,
+            domain,
+            1,
+            inputs=[OpSchema.FormalParameter("s", "T")],
+            outputs=[OpSchema.FormalParameter("y", "T")],
+            type_constraints=[("T", ["tensor(int64)"], "")],
+        )
+
+        def infer(ctx: onnx.shape_inference.InferenceContext) -> None:
+            captured["sym"] = ctx.get_symbolic_input(0)
+            ctx.set_output_type(0, ctx.get_input_type(0))
+
+        schema.set_type_and_shape_inference_function(infer)
+        onnx.defs.register_schema(schema)
+        try:
+            graph = make_graph(
+                [
+                    make_node("Shape", ["x"], ["s"]),
+                    make_node(op_type, ["s"], ["y"], domain=domain),
+                ],
+                "g",
+                [make_tensor_value_info("x", TensorProto.FLOAT, [2, 3])],
+                [make_tensor_value_info("y", TensorProto.INT64, None)],
+            )
+            model = make_model(
+                graph,
+                opset_imports=[make_opsetid("", 21), make_opsetid(domain, 1)],
+            )
+            onnx.shape_inference.infer_shapes(model, data_prop=True, strict_mode=True)
+
+            sym = captured["sym"]
+            self.assertIsInstance(sym, TensorShapeProto)
+            self.assertEqual([d.dim_value for d in sym.dim], [2, 3])
+        finally:
+            onnx.defs.deregister_schema(op_type, 1, domain)
 
 
 if __name__ == "__main__":

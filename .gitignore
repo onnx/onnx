@@ -79,7 +79,6 @@ onnx.egg-info
 compile_commands.json
 
 # generated files
-onnx/version.py
 compile_commands.json
 
 # test generated files
