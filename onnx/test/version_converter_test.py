@@ -2800,28 +2800,31 @@ class TestVersionConverter(unittest.TestCase):
 
         self.assertRaises(RuntimeError, test)
 
-    # Regression tests for OSS-Fuzz crash: null-dereference in Scan adapters
-    # (issue #523734453 — WRITE at 0x60 via Value::Value when node->graph_ is null)
-
     def test_scan_8_9_rejects_no_inputs(self) -> None:
-        # A Scan node in opset 8 with no inputs at all should raise RuntimeError
-        # rather than triggering undefined behaviour when accessing inputs[0].
+        # Scan in opset 8 must have at least 1 input; zero inputs is UB (inputs[0] OOB).
         def test() -> None:
-            nodes = [helper.make_node("Scan", inputs=[], outputs=["y"], body=helper.make_graph([], "body", [], []))]
+            nodes = [
+                helper.make_node(
+                    "Scan",
+                    inputs=[],
+                    outputs=["y"],
+                    body=helper.make_graph([], "body", [], []),
+                )
+            ]
             graph = helper.make_graph(
                 nodes,
                 "test_scan_no_inputs",
                 [],
                 [helper.make_tensor_value_info("y", TensorProto.FLOAT, None)],
             )
-            model = helper.make_model(graph, opset_imports=[helper.make_operatorsetid("", 8)])
+            model = helper.make_model(
+                graph, opset_imports=[helper.make_operatorsetid("", 8)]
+            )
             onnx.version_converter.convert_version(model, 9)
 
         self.assertRaises(RuntimeError, test)
 
     def test_scan_9_8_with_valid_node(self) -> None:
-        # Verify that a well-formed Scan node converts 9->8 without crashing.
-        # This exercises the code path guarded by the null-graph assertion.
         data_type = TensorProto.FLOAT
         node1 = helper.make_node("Add", inputs=["sum_in", "next"], outputs=["sum_out"])
         node2 = helper.make_node("Identity", inputs=["sum_out"], outputs=["scan_out"])

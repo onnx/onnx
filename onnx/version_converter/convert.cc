@@ -56,13 +56,17 @@ void DefaultVersionConverter::convert_graph(
   } else {
     step = -1;
   }
-  // Identify index of this domain in g.opset_versions
-  unsigned int domain_index = 0;
-  for (unsigned int i = 0; i < g->opset_versions_mutable().size(); i++) {
-    if (g->opset_versions_mutable()[i].domain().empty()) {
+  // Identify index of the default domain ("" or "ai.onnx") in g.opset_versions.
+  // Both spellings are treated as equivalent by ConvertVersion and ImportModelProto.
+  int domain_index = -1;
+  for (int i = 0; i < static_cast<int>(g->opset_versions_mutable().size()); i++) {
+    const std::string& dom = g->opset_versions_mutable()[i].domain();
+    if (dom.empty() || dom == "ai.onnx") {
       domain_index = i;
+      break;
     }
   }
+  ONNX_ASSERTM(domain_index >= 0, "Graph has no default-domain (\"\" or \"ai.onnx\") opset entry")
   while (curr_version != target_version.version()) {
     debug(
         "curr_version: " + ONNX_NAMESPACE::to_string(curr_version) +
@@ -115,10 +119,7 @@ void DefaultVersionConverter::convert_graph(
     }
     // Update model version
     curr_version += step;
-    ONNX_ASSERTM(
-        !g->opset_versions_mutable().empty(),
-        "Graph has no opset version information; model may be missing opset_import")
-    g->opset_versions_mutable()[domain_index].incrementVersion(step);
+    g->opset_versions_mutable()[static_cast<size_t>(domain_index)].incrementVersion(step);
   }
 }
 
