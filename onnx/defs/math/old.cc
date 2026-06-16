@@ -3163,12 +3163,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // should be enforced)
           if (nullptr != k && axis_dim.has_dim_value()) {
             int64_t k_value = 0;
-            int64_t k_element_count = 1;
             for (int i = 0; i < k->dims_size(); ++i) {
-              k_element_count *= k->dims(i);
-            }
-            if (k_element_count != 1) {
-              fail_shape_inference("K input must contain exactly one element.");
+              if (k->dims(i) < 0) {
+                fail_shape_inference("K input dimensions must not be negative.");
+              }
+              if (k->dims(i) != 1) {
+                fail_shape_inference("K input must contain exactly one element.");
+              }
             }
 
             if (k->data_type() == TensorProto::INT64) {
@@ -3178,8 +3179,8 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("K input must be of type int64.");
             }
 
-            if (k_value < 0) {
-              fail_shape_inference("K input must not be negative.");
+            if (k_value <= 0) {
+              fail_shape_inference("K input must be positive.");
             }
 
             if (axis_dim.dim_value() < k_value) {
