@@ -1,5 +1,5 @@
---- src/nb_func_orig.cpp	2026-05-18 10:28:14.994072323 -0500
-+++ src/nb_func.cpp	2026-05-18 10:28:32.076587784 -0500
+--- src/nb_func.cpp
++++ src/nb_func.cpp
 @@ -18,6 +18,10 @@
  #  include <cxxabi.h>
  #endif
