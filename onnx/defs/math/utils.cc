@@ -116,14 +116,21 @@ std::function<void(OpSchema&)> TopKOpGenerator(std::vector<std::string> allowed_
           // should be enforced)
           if (nullptr != k && axis_dim.has_dim_value()) {
             int64_t k_value = 0;
-            if (k->dims_size() != 1 || k->dims(0) != 1) {
-              fail_shape_inference("K input must be a one-dimensional tensor of size 1.");
+            int64_t k_element_count = 1;
+            for (int i = 0; i < k->dims_size(); ++i) {
+              k_element_count *= k->dims(i);
+            }
+            if (k_element_count != 1) {
+              fail_shape_inference("K input must contain exactly one element.");
             }
             if (k->data_type() == TensorProto::INT64) {
               const auto data = ParseData<int64_t>(k);
               k_value = data[0];
             } else {
               fail_shape_inference("K input must be of type int64.");
+            }
+            if (k_value < 0) {
+              fail_shape_inference("K input must not be negative.");
             }
             if (axis_dim.dim_value() < k_value) {
               fail_shape_inference("Axis has less than the requested k elements.");
