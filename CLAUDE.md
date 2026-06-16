@@ -74,7 +74,7 @@ Edit `.in.proto` files, **not** `.proto` files. When adding/changing operator sc
 
 ## C++/Python Boundary
 
-Core validation (`checker`), shape inference, and version conversion are C++ exposed via pybind11 (`onnx_cpp2py_export/`). Operator schemas are defined in C++ under `onnx/defs/`. Helper utilities, reference implementation, parser, and compose are pure Python.
+Core validation (`checker`), shape inference, and version conversion are C++ exposed via nanobind (`onnx_cpp2py_export/`). Operator schemas are defined in C++ under `onnx/defs/`. Helper utilities, reference implementation, parser, and compose are pure Python.
 
 **ONNX_ML flag** (on by default): controls traditional ML types (sequences, maps, sparse tensors). When enabled, builds use `onnx-ml.in.proto` instead of `onnx.in.proto`.
 
