@@ -6,8 +6,12 @@ SPDX-License-Identifier: Apache-2.0
 
 # Security Policy
 
+
 ## Reporting a Vulnerability
-If you believe you have discovered a security vulnerability in ONNX, please report it privately using GitHub Security Advisories.
+
+Bugs, even safety-critical ones, that are easily discoverer using widely available tooling are considered as publicly known.
+Please open a public issue or PR if you discovered an issue in this manner.
+If you believe you have discovered a non-trivial security vulnerability in ONNX, please report it privately using GitHub Security Advisories.
 
 👉 Open a private report: https://github.com/onnx/onnx/security/advisories/new
 
@@ -20,6 +24,7 @@ After your report is received, a maintainer will acknowledge it, work with you t
 Please do not disclose the vulnerability publicly until a fix and advisory have been released.
 
 ## Security announcements
+
 Security advisories are published via GitHub Security Advisories. Users depending on ONNX will be notified automatically via GitHub's dependency graph.
 
 ## Security Requirements

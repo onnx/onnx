@@ -6,8 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX Security Assurance Case
 
-**Version:** 1.0 *(DRAFT)*
-**Date:** February 2026
+**Version:** 1.1 *(DRAFT)*
+**Date:** June 2026
 **Project:** ONNX (Open Neural Network Exchange)
 **Scope:** ONNX Core (`onnx/onnx`) and the produced Python wheel
 
@@ -17,45 +17,16 @@ This document provides the security assurance case for ONNX Core, supporting the
 
 ---
 
-## 1. Threat Model
+## Scope and assurances
 
-> **Note**: No specific threat modeling template (e.g. STRIDE, PASTA) was used. The threats below are identified based on the system's attack surface and known risks for serialization/parsing libraries.
+The onnx package strives to allow memory-safe parsing of untrusted protobuf bytes.
+Using shape/type inference, version update utilities, and model validation is also considered memory-safe.
+Resource exhaustion, however, may be triggered from within these utilities and users are advised to guard against this accordingly.
 
-ONNX Core is the reference implementation of the ONNX standard, consisting of the IR specification, model validator ([checker.cc](https://github.com/onnx/onnx/blob/main/onnx/checker.cc)), shape inference, protobuf serialization, and Python bindings.
+Validation utilities such as `onnx.checker.check_model` are provided on a best-effort basis (e.g. a validated `ModelProto` object may contain `NodeProto` objects that do not adhere to the ONNX specification).
 
-### 1.1 Key Threats
+The onnx reference implementation is not considered safe for production use on untrusted inputs, yet.
 
-| ID | Threat | Impact | Likelihood |
-|----|--------|--------|------------|
-| T1 | Malicious model file causing code execution | Critical | Medium |
-| T2 | Model deserialization causing memory corruption | High | Medium |
-| T3 | DoS via crafted model (resource exhaustion during parsing) | Medium | High |
-| T4 | Supply chain compromise (malicious dependency or build) | Critical | Low |
-| T5 | Information disclosure via model inspection | Medium | Medium |
-| T6 | Compromised PyPI packages | High | Low |
-
-### 1.2 Trust Boundaries
-
-```
-┌─────────────────────────────────────────────────────┐
-│  Untrusted Zone                                     │
-│  - User-provided ONNX models, third-party deps      │
-└────────────────┬────────────────────────────────────┘
-                 │ Boundary #1  (validation, schema checks, size limits)
-                 ▼
-┌─────────────────────────────────────────────────────┐
-│  ONNX Core Processing Environment                   │
-│  - Model parser/deserializer (protobuf)             │
-│  - Model validator (checker.cc), shape inference    │
-└────────────────┬────────────────────────────────────┘
-                 │ Boundary #2  (RAII, bounds checking)
-                 ▼
-┌─────────────────────────────────────────────────────┐
-│  System Resources (file system, memory)             │
-└─────────────────────────────────────────────────────┘
-```
-
-**Boundary #3 (Build → Distribution):** SLSA provenance, code signing, checksum verification.
 
 ---
 
@@ -106,14 +77,6 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 **Code review**: All changes require maintainer review; security-sensitive changes require Architecture SIG review; one approval for dependency updates; automated checks must pass before merge ([CODEOWNERS](https://github.com/onnx/onnx/blob/main/CODEOWNERS)).
 
 **Build & distribution**: artifacts signed with Sigstore; PyPI Trusted Publishing with 2FA required for maintainers; SHA256 checksums published; actions pinned to SHA in CI.
-
----
-
-## 6. Known Limitations
-
-1. **Model encryption**: Not provided; users must handle externally
-2. **Formal verification**: Limited formal verification of checker and shape inference logic
-3. **Sandboxing**: No built-in sandboxing of model parsing; relies on OS/container isolation
 
 ---
 
