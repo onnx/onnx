@@ -19,6 +19,8 @@ updates:
       # Only update them manually since updating them might break compatibility
       - dependency-name: "numpy"
       - dependency-name: "protobuf"
+      - dependency-name: "typing_extensions"
+      - dependency-name: "ml_dtypes"
     open-pull-requests-limit: 10
     labels:
       - "python"
