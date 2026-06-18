@@ -23,6 +23,8 @@ This document provides the security assurance case for ONNX Core, supporting the
 
 ONNX Core is the reference implementation of the ONNX standard, consisting of the IR specification, model validator ([checker.cc](https://github.com/onnx/onnx/blob/main/onnx/checker.cc)), shape inference, protobuf serialization, and Python bindings.
 
+> **Dispute-deciding authority:** this threat model describes ONNX's attack surface and known risks; for any given advisory, whether a finding is *in scope to fix*, *how severe* it is, and *whether it warrants embargo* is decided by the **Threat model** section of [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md).
+
 ### 1.1 Key Threats
 
 | ID | Threat | Impact | Likelihood |
@@ -41,7 +43,7 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 │  Untrusted Zone                                     │
 │  - User-provided ONNX models, third-party deps      │
 └────────────────┬────────────────────────────────────┘
-                 │ Boundary #1  (validation, schema checks, size limits)
+                 │ Boundary #1  (validation, schema checks, size limits (best-effort))
                  ▼
 ┌─────────────────────────────────────────────────────┐
 │  ONNX Core Processing Environment                   │
@@ -57,6 +59,14 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 
 **Boundary #3 (Build → Distribution):** SLSA provenance, code signing, checksum verification.
 
+> **Boundary #1 is best-effort, not a guarantee.** The validation, schema checks, and "size
+> limits" at Boundary #1 are **best-effort structural checks, not a security guarantee** (see
+> [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md) Threat model, Clause 1). In
+> particular the "size limits" wording overstates the assurance: GHSA-538c-55jv-c5g9 had to ship
+> the external-data offset/length bound that this boundary implied already existed. Passing these
+> checks is not a guarantee that a model is safe to process; downstream consumers must still
+> validate structural fields they rely on.
+
 ---
 
 ## 2. Secure Design Principles (Saltzer & Schroeder)
@@ -65,7 +75,7 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 |-----------|--------------------------|
 | Economy of Mechanism | Protocol Buffers for serialization; validation centralized in checker.cc; minimal dependencies |
 | Fail-Safe Defaults | Validation on by default; must opt out with `check_model=False`; unknown protobuf fields rejected |
-| Complete Mediation | Every model load goes through the validation pipeline; all operator inputs are type- and shape-checked |
+| Complete Mediation | Every model load goes through the validation pipeline; all operator inputs are type- and shape-checked (best-effort; not a guarantee — see [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md) Threat model / Clause 1) |
 | Least Privilege | No elevated privileges required; no network access; file I/O restricted to explicitly specified paths |
 | Separation of Privilege | External data loading requires both model reference and file system access; releases require SLSA attestation |
 | Least Common Mechanism | No global mutable state; validation is stateless; each API call operates independently |
@@ -77,10 +87,10 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 
 | CWE | Mitigation |
 |-----|-----------|
-| CWE-787/125 Out-of-bounds R/W | Modern C++ (std::vector, RAII); ASan in CI |
-| CWE-20 Input Validation | Comprehensive model validation on load; protobuf schema enforcement; operator shape/type checking |
+| CWE-787/125 Out-of-bounds R/W | Modern C++ (std::vector, RAII); ASan in CI. Mitigations applied (best-effort; not a guarantee — see [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md) Threat model / Clause 1) |
+| CWE-20 Input Validation | Comprehensive model validation on load; protobuf schema enforcement; operator shape/type checking (best-effort; not a guarantee — see [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md) Threat model / Clause 1) |
 | CWE-416 Use After Free | RAII/smart pointers (unique_ptr, shared_ptr); ASan in CI; code review |
-| CWE-190 Integer Overflow | Checked size arithmetic in tensor allocation; UBSan in CI |
+| CWE-190 Integer Overflow | Checked size arithmetic in tensor allocation; UBSan in CI. Mitigations applied (best-effort; not a guarantee — see [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md) Threat model / Clause 1) |
 | CWE-22 Path Traversal | External data paths validated and normalized; no auto-resolution outside model directory |
 | CWE-78 Command Injection | No shell execution in ONNX Core; no system()/exec() usage; enforced by code review and static analysis |
 | OWASP A06 Supply Chain | Dependabot; Sigstore signing; minimal dependency footprint; SBOM generation |
