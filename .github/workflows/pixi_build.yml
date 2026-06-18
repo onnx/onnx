@@ -26,21 +26,43 @@ jobs:
       matrix:
         os:
           - ubuntu-24.04-arm
-          - windows-latest
+          - windows-2022
     steps:
       - name: Checkout branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@1b2de7f3351f171c8b4dfeb558c639cb58ed4ec0 # v0.9.5
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
         with:
           environments: default reuse
       - name: Install repository
         run: pixi run install
       - name: Lint
         run: pixi run lint --show-diff-on-failure
+
+  xcode-build:
+    # Guards against regressions in CMake's Xcode generator (issue #8053), which
+    # downstream consumers such as onnxruntime use for their iOS/macOS framework
+    # builds. The other jobs build with Ninja and so do not exercise the
+    # Xcode-specific code paths.
+    name: Xcode generator build
+    runs-on: macos-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
+        with:
+          environments: default
+      - name: Build with the Xcode generator
+        run: |
+          pixi run cmake -G Xcode -B .xcode-cmake-build -S . -DONNX_BUILD_PYTHON=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON
+          pixi run cmake --build .xcode-cmake-build
 
   install-and-test:
     name: Install and test (${{ matrix.os }}, ${{ matrix.environment }})
@@ -56,18 +78,18 @@ jobs:
           - ubuntu-24.04-arm
           - ubuntu-latest
           - macos-latest
-          - windows-latest
+          - windows-2022
         environment:
           - default
           - oldies
     steps:
       - name: Checkout branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up pixi
-        uses: prefix-dev/setup-pixi@1b2de7f3351f171c8b4dfeb558c639cb58ed4ec0 # v0.9.5
+        uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
         with:
           environments: ${{ matrix.environment }}
       - name: Install repository

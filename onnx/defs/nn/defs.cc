@@ -57,8 +57,8 @@ ONNX_API void convPoolShapeInference(
   }
 
   auto input_shape = ctx.getInputType(input1Idx)->tensor_type().shape();
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
+  if (input_shape.dim_size() < 3) {
+    fail_shape_inference("Input tensor must have at least 3 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -71,6 +71,9 @@ ONNX_API void convPoolShapeInference(
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
       fail_shape_inference("Attribute dilations has incorrect size");
+    }
+    if (std::any_of(dilations.begin(), dilations.end(), [](int64_t d) { return d <= 0; })) {
+      fail_shape_inference("Attribute dilations must only contain positive values");
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -93,6 +96,19 @@ ONNX_API void convPoolShapeInference(
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
+    // Reject weight/input spatial-rank mismatch; prevents OOB read of dilations/pads below.
+    if (kernel_shape.size() != n_input_dims) {
+      fail_shape_inference(
+          "Number of spatial dimensions in the weight tensor (",
+          kernel_shape.size(),
+          ") does not match the number of spatial dimensions in the input tensor (",
+          n_input_dims,
+          ").");
+    }
+  }
+
+  if (std::any_of(kernel_shape.begin(), kernel_shape.end(), [](int64_t k) { return k <= 0; })) {
+    fail_shape_inference("Attribute kernel_shape must only contain positive values");
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
@@ -105,6 +121,9 @@ ONNX_API void convPoolShapeInference(
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
+    }
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute pads must not contain negative values");
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -119,9 +138,10 @@ ONNX_API void convPoolShapeInference(
             continue;
           }
           residual = input_shape.dim(2 + i).dim_value();
-          while (residual >= stride) {
-            residual -= stride;
+          if (residual < 0) {
+            continue;
           }
+          residual %= stride;
         }
         if (i >= static_cast<int>(effective_kernel_shape.size())) {
           fail_shape_inference("kernel shape should have ", input_dims_size, " values in ", ctx.getDisplayName(), ".");
@@ -626,35 +646,31 @@ static void roiPoolTypeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
-  auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
-
-  if (input_shape.dim_size() < 2) {
-    fail_shape_inference("Input tensor must have at least 2 dimensions");
-  }
-  if (rios_shape.dim_size() != 2) {
-    fail_shape_inference("RoIs tensor must have 2 dimensions");
-  }
-
-  // first dim is the batch axis and the next is the number of channels.
-  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+  // X: [N, C, H, W], rois: [num_rois, 5]
+  Dim N, C, H, W, num_rois, five;
+  five.set_dim_value(5);
+  ctx.unifyInputShape(0, {N, C, H, W});
+  ctx.unifyInputShape(1, {num_rois, five});
 
   std::vector<int64_t> pooled_shape;
   if (getRepeatedAttribute(ctx, "pooled_shape", pooled_shape)) {
-    if (pooled_shape.size() != n_input_dims) {
+    if (pooled_shape.size() != 2) {
       fail_shape_inference("Attribute pooled_shape has incorrect length");
+    }
+    for (auto dim : pooled_shape) {
+      if (dim <= 0) {
+        fail_shape_inference("Attribute pooled_shape must only contain positive values");
+      }
     }
   } else {
     fail_shape_inference("Attribute pooled_shape must be specified");
   }
 
-  // (num_rois, channels, pooled_shape[0], pooled_shape[1])
-  auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-
-  *output_shape->add_dim() = rios_shape.dim(0);
-  *output_shape->add_dim() = input_shape.dim(1);
-  output_shape->add_dim()->set_dim_value(pooled_shape[0]);
-  output_shape->add_dim()->set_dim_value(pooled_shape[1]);
+  // output: (num_rois, C, pooled_shape[0], pooled_shape[1])
+  Dim pooled_h, pooled_w;
+  pooled_h.set_dim_value(pooled_shape[0]);
+  pooled_w.set_dim_value(pooled_shape[1]);
+  updateOutputShape(ctx, 0, {num_rois, C, pooled_h, pooled_w});
 }
 
 static std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
@@ -1115,7 +1131,10 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute dilations has incorrect size");
+    }
+    if (std::any_of(dilations.begin(), dilations.end(), [](int64_t d) { return d <= 0; })) {
+      fail_shape_inference("Attribute dilations must only contain positive values");
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -1124,7 +1143,10 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute strides has incorrect size");
+    }
+    if (std::any_of(strides.begin(), strides.end(), [](int64_t s) { return s <= 0; })) {
+      fail_shape_inference("Attribute strides must only contain positive values");
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -1133,7 +1155,7 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute kernel_shape has incorrect size");
     }
   } else {
     for (int i = 2; i < weight_shape.dim_size(); ++i) {
@@ -1143,8 +1165,12 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
       kernel_shape.push_back(weight_shape.dim(i).dim_value());
     }
     if (kernel_shape.size() != n_input_dims) {
-      return; // weight rank mismatch
+      fail_shape_inference("Weight tensor spatial rank does not match input tensor spatial rank");
     }
+  }
+
+  if (std::any_of(kernel_shape.begin(), kernel_shape.end(), [](int64_t k) { return k <= 0; })) {
+    fail_shape_inference("Attribute kernel_shape must only contain positive values");
   }
 
   std::vector<int64_t> effective_kernel_shape = kernel_shape;
@@ -1157,6 +1183,9 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
+    }
+    if (std::any_of(pads.begin(), pads.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute pads must not contain negative values");
     }
     const auto* const auto_pad_attr = ctx.getAttribute("auto_pad");
     if (nullptr != auto_pad_attr && auto_pad_attr->s() != "NOTSET") {
@@ -1187,7 +1216,10 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
     if (output_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute output_shape has incorrect size");
+    }
+    if (std::any_of(output_shape.begin(), output_shape.end(), [](int64_t s) { return s < 0; })) {
+      fail_shape_inference("Attribute output_shape must not contain negative values");
     }
   } else {
     output_shape_presented = false;
@@ -1196,7 +1228,10 @@ ONNX_API void convTransposeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> output_padding;
   if (getRepeatedAttribute(ctx, "output_padding", output_padding)) {
     if (output_padding.size() != n_input_dims) { // Added only to one side.
-      return;
+      fail_shape_inference("Attribute output_padding has incorrect size");
+    }
+    if (std::any_of(output_padding.begin(), output_padding.end(), [](int64_t p) { return p < 0; })) {
+      fail_shape_inference("Attribute output_padding must not contain negative values");
     }
   } else {
     output_padding.assign(n_input_dims, 0);
@@ -1463,13 +1498,14 @@ ONNX_API void globalPoolTypeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  // first dim is the batch axis and the next is the number of channels.
-  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+  // X: [N, C, D1, ..., Dn] -> Y: [N, C, 1, 1, ..., 1]
+  Dim N, C;
+  ctx.unifyInputShapePrefix(0, {N, C});
 
-  // (N, C, 1, 1, ..., 1)
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
   auto* output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-  *output_shape->add_dim() = input_shape.dim(0);
-  *output_shape->add_dim() = input_shape.dim(1);
+  *output_shape->add_dim() = N;
+  *output_shape->add_dim() = C;
 
   for (size_t i = 0; i < n_input_dims; ++i) {
     output_shape->add_dim()->set_dim_value(1);
@@ -3839,13 +3875,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // K between weight and past_state).
           Dim B, C, L, One, K, KMinus1;
           One.set_dim_value(1);
-          unifyInputShape(ctx, 0, {B, C, L});
-          unifyInputShape(ctx, 1, {C, One, K});
+          ctx.unifyInputShape(0, {B, C, L});
+          ctx.unifyInputShape(1, {C, One, K});
           if (ctx.hasInput(2)) {
-            unifyInputShape(ctx, 2, {C});
+            ctx.unifyInputShape(2, {C});
           }
           if (ctx.hasInput(3)) {
-            unifyInputShape(ctx, 3, {B, C, KMinus1});
+            ctx.unifyInputShape(3, {B, C, KMinus1});
           }
 
           // Connect KMinus1 to K (when K is known) using Dim arithmetic.
@@ -4539,22 +4575,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (kv_num_heads > 0) {
             Hkv.set_dim_value(kv_num_heads);
           }
-          unifyInputShape(ctx, 0, {B, T, QPack});
-          unifyInputShape(ctx, 1, {B, T, KPack});
-          unifyInputShape(ctx, 2, {B, T, VPack});
+          ctx.unifyInputShape(0, {B, T, QPack});
+          ctx.unifyInputShape(1, {B, T, KPack});
+          ctx.unifyInputShape(2, {B, T, VPack});
           if (has_past_state) {
-            unifyInputShape(ctx, 3, {B, Hkv, Dk, Dv});
+            ctx.unifyInputShape(3, {B, Hkv, Dk, Dv});
           }
           // decay shape: (B, T, H_kv * d_k) for per-key-dim or (B, T, H_kv) for
           // per-head. Both are rank-3; we only constrain B and T.
           if (has_decay) {
             Dim DecayLast;
-            unifyInputShape(ctx, 4, {B, T, DecayLast});
+            ctx.unifyInputShape(4, {B, T, DecayLast});
           }
           // beta shape: (B, T, H_kv) or (B, T, 1). Both rank-3; only B, T checked.
           if (has_beta) {
             Dim BetaLast;
-            unifyInputShape(ctx, 5, {B, T, BetaLast});
+            ctx.unifyInputShape(5, {B, T, BetaLast});
           }
 
           // Derive d_k from Q (via q_num_heads) and K (via kv_num_heads).

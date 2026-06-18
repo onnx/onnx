@@ -4,7 +4,7 @@
 # Sources directly in onnx/
 # Note: cpp2py_export.cc is excluded — it is compiled separately into the
 # onnx_cpp2py_export Python extension module.
-target_sources(onnx_core PRIVATE
+target_sources(onnx PRIVATE
     checker.cc
     checker.h
     onnx_pb.h

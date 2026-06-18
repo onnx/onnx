@@ -24,6 +24,7 @@ from onnx import (
     OperatorSetIdProto,
     SparseTensorProto,
     TensorProto,
+    TensorShapeProto,
     TypeProto,
     ValueInfoProto,
     checker,
@@ -42,6 +43,7 @@ from onnx.defs import (
 from onnx.helper import (
     make_empty_tensor_value_info,
     make_graph,
+    make_model,
     make_node,
     make_opsetid,
     make_tensor,
@@ -2549,6 +2551,368 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("z", TensorProto.FLOAT, None)]
+        )
+
+    @parameterized.expand(
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            ("opset1_to_10", 10),
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            ("opset19", 19),
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            ("latest", defs.get_schema("Conv").since_version),
+        ]
+    )
+    def test_conv_weight_more_spatial_dims_than_input_raises(
+        self, _: str, version: int
+    ) -> None:
+        # Weight has more spatial dims than input and no explicit kernel_shape
+        # attribute, so kernel_shape is derived from the weight. This must fail
+        # rather than reading past the end of the dilations vector.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8)),
+                ("w", TensorProto.FLOAT, (5, 4, 3, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            "weight tensor",
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(
+        [
+            # opset 1-10 -> Conv-1 -> convPoolShapeInference_opset1_to_11
+            ("opset1_to_10", 10),
+            # opset 11-21 -> Conv-11 -> convPoolShapeInference_opset19
+            ("opset19", 19),
+            # opset 22+ -> Conv-22 -> convPoolShapeInference
+            ("latest", defs.get_schema("Conv").since_version),
+        ]
+    )
+    def test_conv_weight_fewer_spatial_dims_than_input_raises(
+        self, _: str, version: int
+    ) -> None:
+        # Weight has fewer spatial dims than input and no explicit kernel_shape
+        # attribute, so kernel_shape is derived from the weight. This must fail
+        # rather than silently inferring an inconsistent shape.
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 4, 8, 8, 8)),
+                ("w", TensorProto.FLOAT, (5, 4, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError,
+            "weight tensor",
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_zero_dilations(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", dilations=[0, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_dilations(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", dilations=[-1, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_pads(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", pads=[-1, 0, 0, 0])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_input_too_few_dims(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1)),
+                ("y", TensorProto.FLOAT, (1, 1, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z")],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("Conv"))
+    def test_conv_negative_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 5, 5)),
+                ("y", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("Conv", ["x", "y"], "z", kernel_shape=[-1, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_negative_dilations(self, _: str, version: int) -> None:
+        if version < 10:
+            self.skipTest("dilations not supported before MaxPool-10")
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[3, 3],
+                    dilations=[-1, 1],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("MaxPool"))
+    def test_maxpool_negative_pads(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (1, 1, 5, 5))],
+            [
+                make_node(
+                    "MaxPool",
+                    ["X"],
+                    ["Y"],
+                    kernel_shape=[3, 3],
+                    pads=[-1, 0, 0, 0],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_weight_spatial_rank_mismatch(
+        self, _: str, version: int
+    ) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z")],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_dilations(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", dilations=[-1, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_zero_strides(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", strides=[0, 1])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_pads(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", pads=[-1, 0, 0, 0])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_output_padding(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [
+                make_node(
+                    "ConvTranspose",
+                    ["x", "w"],
+                    "z",
+                    strides=[2, 2],
+                    output_padding=[-1, 0],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_negative_output_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [
+                make_node(
+                    "ConvTranspose",
+                    ["x", "w"],
+                    "z",
+                    output_shape=[-1, 6],
+                )
+            ],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+        )
+
+    @parameterized.expand(all_versions_for("ConvTranspose"))
+    def test_conv_transpose_zero_kernel_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("x", TensorProto.FLOAT, (1, 1, 4, 4)),
+                ("w", TensorProto.FLOAT, (1, 1, 3, 3)),
+            ],
+            [make_node("ConvTranspose", ["x", "w"], "z", kernel_shape=[0, 3])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_attention_4d(self) -> None:
@@ -5513,6 +5877,23 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 2, 2))]
+        )
+
+    @parameterized.expand(all_versions_for("MaxRoiPool"))
+    def test_roipool_negative_pooled_shape(self, _: str, version: int) -> None:
+        graph = self._make_graph(
+            [
+                ("X", TensorProto.FLOAT, (5, 3, 4, 4)),
+                ("rois", TensorProto.INT64, (2, 5)),
+            ],
+            [make_node("MaxRoiPool", ["X", "rois"], ["Y"], pooled_shape=[-1, 2])],
+            [],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError,
+            self._inferred,
+            graph,
+            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
         )
 
     def test_lp_norm(self) -> None:
@@ -9878,7 +10259,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(checker.ValidationError, self._inferred, graph)
+        self.assertRaises(
+            (checker.ValidationError, onnx.shape_inference.InferenceError),
+            self._inferred,
+            graph,
+        )
 
     def test_softmax_cross_entropy_none(self) -> None:
         graph = self._make_graph(
@@ -12742,7 +13127,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.checker.ValidationError):
+        with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
@@ -13169,6 +13554,51 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
         # clean up
         onnx.defs.deregister_schema(schema.name, schema.since_version, schema.domain)
+
+    def test_get_symbolic_input_returns_tensor_shape_proto(self) -> None:
+        # Regression test: when data propagation feeds a symbolic shape into a
+        # node input, ctx.get_symbolic_input(...) must return a TensorShapeProto
+        # (the binding casts TensorShapeProto, which needs a registered caster).
+        op_type = "ReadSymbolicInput"
+        domain = "test.symbolic_input"
+        captured: dict[str, object] = {}
+
+        schema = OpSchema(
+            op_type,
+            domain,
+            1,
+            inputs=[OpSchema.FormalParameter("s", "T")],
+            outputs=[OpSchema.FormalParameter("y", "T")],
+            type_constraints=[("T", ["tensor(int64)"], "")],
+        )
+
+        def infer(ctx: onnx.shape_inference.InferenceContext) -> None:
+            captured["sym"] = ctx.get_symbolic_input(0)
+            ctx.set_output_type(0, ctx.get_input_type(0))
+
+        schema.set_type_and_shape_inference_function(infer)
+        onnx.defs.register_schema(schema)
+        try:
+            graph = make_graph(
+                [
+                    make_node("Shape", ["x"], ["s"]),
+                    make_node(op_type, ["s"], ["y"], domain=domain),
+                ],
+                "g",
+                [make_tensor_value_info("x", TensorProto.FLOAT, [2, 3])],
+                [make_tensor_value_info("y", TensorProto.INT64, None)],
+            )
+            model = make_model(
+                graph,
+                opset_imports=[make_opsetid("", 21), make_opsetid(domain, 1)],
+            )
+            onnx.shape_inference.infer_shapes(model, data_prop=True, strict_mode=True)
+
+            sym = captured["sym"]
+            self.assertIsInstance(sym, TensorShapeProto)
+            self.assertEqual([d.dim_value for d in sym.dim], [2, 3])
+        finally:
+            onnx.defs.deregister_schema(op_type, 1, domain)
 
 
 if __name__ == "__main__":

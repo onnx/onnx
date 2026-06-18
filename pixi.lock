@@ -4407,9 +4407,6 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls: []
-  run_exports:
-    weak:
-    - libprotobuf >=6.33.5,<6.33.6.0a0
   size: 3675765
   timestamp: 1780003831209
 - conda: https://conda.anaconda.org/conda-forge/linux-64/librsvg-2.62.2-h4c96295_0.conda
@@ -5110,7 +5107,6 @@ packages:
   license_family: BSD
   purls:
   - pkg:pypi/protobuf?source=hash-mapping
-  run_exports: {}
   size: 491842
   timestamp: 1773265994654
 - conda: https://conda.anaconda.org/conda-forge/linux-64/psutil-7.2.2-py310h139afa4_0.conda
@@ -7233,9 +7229,6 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls: []
-  run_exports:
-    weak:
-    - libprotobuf >=6.33.5,<6.33.6.0a0
   size: 3502676
   timestamp: 1780003320814
 - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/librsvg-2.62.2-hf685517_0.conda
@@ -7931,7 +7924,6 @@ packages:
   license_family: BSD
   purls:
   - pkg:pypi/protobuf?source=hash-mapping
-  run_exports: {}
   size: 501138
   timestamp: 1773266040567
 - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/psutil-7.2.2-py310hef25091_0.conda
@@ -11374,9 +11366,6 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls: []
-  run_exports:
-    weak:
-    - libprotobuf >=6.33.5,<6.33.6.0a0
   size: 2768714
   timestamp: 1780004273744
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/librsvg-2.62.2-he8aa2a2_0.conda
@@ -12034,7 +12023,6 @@ packages:
   license_family: BSD
   purls:
   - pkg:pypi/protobuf?source=hash-mapping
-  run_exports: {}
   size: 473978
   timestamp: 1773265431848
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/psutil-7.2.2-py310haea493c_0.conda
@@ -13204,9 +13192,6 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls: []
-  run_exports:
-    weak:
-    - libprotobuf >=6.33.5,<6.33.6.0a0
   size: 7162612
   timestamp: 1780005438640
 - conda: https://conda.anaconda.org/conda-forge/win-64/libsqlite-3.53.1-hf5d6505_0.conda
@@ -13873,7 +13858,6 @@ packages:
   license_family: BSD
   purls:
   - pkg:pypi/protobuf?source=hash-mapping
-  run_exports: {}
   size: 498409
   timestamp: 1773266588160
 - conda: https://conda.anaconda.org/conda-forge/win-64/psutil-7.2.2-py310h1637853_0.conda
