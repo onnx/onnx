@@ -225,9 +225,16 @@ class Runner:
                     np.testing.assert_array_equal(outputs[i], ref_outputs[i])
                 else:
                     np.testing.assert_equal(outputs[i].dtype, ref_outputs[i].dtype)
-                    np.testing.assert_allclose(
-                        outputs[i], ref_outputs[i], rtol=rtol, atol=atol
-                    )
+                    out = outputs[i]
+                    ref = ref_outputs[i]
+                    # np.testing.assert_allclose uses np.isclose which calls
+                    # result_type(y, 1.) internally.  This fails for dtypes
+                    # that NumPy cannot promote with Python float, such as
+                    # bfloat16 from ml_dtypes.  Cast to float32 to work around.
+                    if out.dtype.name == "bfloat16":
+                        out = out.astype(np.float32)
+                        ref = ref.astype(np.float32)
+                    np.testing.assert_allclose(out, ref, rtol=rtol, atol=atol)
 
     @classmethod
     @retry_execute(3)
