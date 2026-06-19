@@ -621,11 +621,23 @@ static void convTransposeShapeInference_opset11(InferenceContext& ctx) {
   }
 
   int64_t group = getAttribute(ctx, "group", 1);
+  if (group <= 0) {
+    fail_shape_inference("Attribute group must be > 0 for ConvTranspose. group=", group, ".");
+  }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
+  }
+  const auto& input_channels_dim = input_shape.dim(1);
+  if (input_channels_dim.has_dim_value() && input_channels_dim.dim_value() % group != 0) {
+    fail_shape_inference(
+        "Input channels C must be divisible by group for ConvTranspose. C=",
+        input_channels_dim.dim_value(),
+        " group=",
+        group,
+        ".");
   }
 
   // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
@@ -2972,11 +2984,23 @@ static void convTransposeShapeInference_opset1(InferenceContext& ctx) {
   }
 
   int64_t group = getAttribute(ctx, "group", 1);
+  if (group <= 0) {
+    fail_shape_inference("Attribute group must be > 0 for ConvTranspose. group=", group, ".");
+  }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 3) {
     fail_shape_inference(
         "Input tensor must have at least 3 dimensions (N x C x D1...Dn). Got: ", input_shape.dim_size());
+  }
+  const auto& input_channels_dim = input_shape.dim(1);
+  if (input_channels_dim.has_dim_value() && input_channels_dim.dim_value() % group != 0) {
+    fail_shape_inference(
+        "Input channels C must be divisible by group for ConvTranspose. C=",
+        input_channels_dim.dim_value(),
+        " group=",
+        group,
+        ".");
   }
 
   // Weight tensor (input 1) must also have at least 3 dimensions (C x M/group x k1...kn).
