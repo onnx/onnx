@@ -21,7 +21,9 @@ This section is ONNX's security threat model: the boundary statement below defin
 > depth bound is physically grounded in the message's own byte size* (see Clause 2); a
 > resource-exhaustion closable only by a global cap that rejects legitimate large models
 > (ReDoS, quadratic / exponential compute) and a **pure crash** (SIGSEGV/abort without memory
-> corruption) are out of scope. The
+> corruption) are out of scope. A **sandbox / filesystem escape** (path traversal or
+> external-data handling that reads or writes outside the model's own directory) is a Tier-2
+> in-scope finding. The
 > **reference runtime is not intended for untrusted input and is out of scope entirely.**
 
 ### Scope clauses
@@ -43,52 +45,33 @@ This section is ONNX's security threat model: the boundary statement below defin
 
 > **Clause 2 — resource-exhaustion (one decidable gate: the behavior-preserving-bound
 > discriminator).** A resource-exhaustion / DoS is **in scope if and only if a *constant
-> number* of O(1) bounds** — a small fixed set of size / length / offset / count /
-> nesting-depth comparisons, or one constant allocation / recursion-depth cap — that are
-> **cheap *and* behavior-preserving** remove the unbounded growth. "Behavior-preserving" means
-> the bound rejects **only impossible / malformed inputs** (e.g. a declared `length` exceeding
-> the bytes actually available), **never legitimate large inputs**. **In** (named primitives):
-> size-driven **over-allocation** — precedent GHSA-538c-55jv-c5g9, whose shipped fix is exactly
-> this shape: a **constant set of four** O(1) field-checks (`offset ≥ 0`, `length ≥ 0`,
-> `offset ≤ file_size`, `length ≤ file_size − offset` in `onnx/external_data_helper.py`), each
-> rejecting only a physically-impossible read. The strongest IN case is therefore one whose
-> bound is **physically determined by the input itself** (declared length vs. bytes that
-> actually exist), where "impossible" is decided by the file, not by policy. **Attacker-controlled-depth
-> recursion / stack overflow** is IN **only when** its depth bound is likewise physically
-> grounded — i.e. when a maximum nesting depth is **implied by the message's own byte size**
-> (a deeper structure cannot be encoded in the bytes present), so the bound rejects only
-> structures that cannot physically exist. This is **distinct from a *configurable* recursion
-> cap** (e.g. protobuf's tunable `SetRecursionLimit`, default 100): a configurable policy cap
-> is a *defense knob*, not a behavior-preserving bound, and exceeding it is not by itself a
-> security bug. A **bare policy depth-constant** (`MAX_DEPTH` chosen by fiat) is therefore
-> **not** automatically behavior-preserving: it can reject a legitimately deep machine-generated
-> graph, so whether a given depth cap qualifies is a **maintainer-ratification call** — ONNX does **not** claim recursion is as cleanly decidable as
-> over-allocation. **Unit of "constant number of bounds":** a **fixed set of O(1) checks
-> applied per parsed object / field *before* any attacker-amplified allocation** — *not* a
-> count over the whole model. Validating N external-data records with the same four per-record
-> O(1) checks is still a "constant set" (the check template is fixed; it runs once per object
-> it guards), so a reporter cannot reclassify a per-object over-allocation as "O(n), therefore
-> out." **Out:** ReDoS and quadratic / exponential
-> compute — because **no cheap behavior-preserving bound exists**: the only available "bound"
-> is a **global size cap** (a max input length / `MAX_NODES`) that rejects **legitimate large
-> models**, not merely impossible ones, so it is **not** behavior-preserving (the backtracking
-> / blowup occurs at input sizes a real producer emits). **Discriminator (sole gate,
-> agent-decidable):** *does a fixed set of cheap, behavior-preserving O(1) checks — applied
-> per parsed object / field, rejecting only impossible / malformed inputs, never legitimate
-> large inputs — remove the unbounded growth? YES → in; NO → out.* Anti-gaming: a reporter **cannot** argue "one global
-> `MAX_NODES` cap is an O(1) bound, so my quadratic blowup is IN" — a global cap rejects
-> legitimate large models, so it is not behavior-preserving and does not qualify; conversely
-> ReDoS stays out for the same reason. `memory-safety-adjacency` is the **rationale** for where
-> the line is drawn, **not** a second required gate.
-> *(Separate **policy** line, not part of this scope test: ONNX also declines to add a new
-> third-party dependency solely for DoS hardening; this is a
-> policy stance, not the reason ReDoS is out of scope.)*
+> number* of cheap, behavior-preserving O(1) bounds** — a small fixed set of size / length /
+> offset / count / nesting-depth comparisons, or one constant allocation / recursion-depth cap —
+> remove the unbounded growth. "Behavior-preserving" means the bound rejects **only impossible /
+> malformed inputs** (e.g. a declared `length` exceeding the bytes actually available), **never
+> legitimate large inputs**.
 >
-> **Why the IN primitive must be named:** a Tier-2 *component*
-> carve-out **alone does not suffice** — without naming size-driven over-allocation as an IN
-> primitive, a plain "classify by primitive" routes GHSA-538c-55jv-c5g9's over-allocation to
-> "DoS → out" and would **contradict ONNX's own shipped fix**. The named primitive, not the
-> component, is load-bearing.
+> - **In — size-driven over-allocation:** precedent GHSA-538c-55jv-c5g9, whose shipped fix is a
+>   **constant set of four** O(1) field-checks (`offset ≥ 0`, `length ≥ 0`, `offset ≤ file_size`,
+>   `length ≤ file_size − offset` in `onnx/external_data_helper.py`), each rejecting only a
+>   physically-impossible read.
+> - **In — recursion / stack overflow:** only when its depth bound is **physically grounded in
+>   the message's own byte size** (a deeper structure cannot be encoded in the bytes present). A
+>   **bare policy depth-constant** (`MAX_DEPTH` chosen by fiat) is **not** automatically
+>   behavior-preserving — it can reject a legitimately deep machine-generated graph — so whether a
+>   given depth cap qualifies is a **maintainer-ratification call**.
+> - **Out — ReDoS / quadratic / exponential compute:** **no cheap behavior-preserving bound
+>   exists**; the only available "bound" is a **global size cap** (max input length / `MAX_NODES`)
+>   that rejects **legitimate large models**, not merely impossible ones.
+>
+> **Counting unit (operative anti-gaming rule):** the "constant number" is counted **per parsed
+> object / field, before any attacker-amplified allocation — not across the whole model**.
+> Validating N external-data records with the same four per-record O(1) checks is still a constant
+> set, so a per-object over-allocation **cannot** be reclassified "O(n), therefore out."
+>
+> **Discriminator (sole gate, agent-decidable):** *does a fixed set of cheap, behavior-preserving
+> O(1) checks — applied per parsed object / field, rejecting only impossible / malformed inputs,
+> never legitimate large inputs — remove the unbounded growth? YES → in; NO → out.*
 
 > **Clause 3 — disclosure & embargo trigger.** Tool-found, easily reproduced findings are
 > handled **publicly**, via a normal one-advisory-per-PR fix. Embargo applies on **either**
@@ -101,6 +84,9 @@ This section is ONNX's security threat model: the boundary statement below defin
 > not-yet-weaponized but non-trivially-discovered issue is not 0-dayed by a public report.
 > (Trigger B is the same precaution stated in the Reporting a Vulnerability section above,
 > restated here so the clause and the reporting guidance embargo on the same two prongs.)
+> Disclosure (public vs embargo) is decided **here alone** — it is **independent of** the
+> scope / tier axis (Clauses 1–2, 4) and the severity / CVSS band: a finding's tier or score
+> does not move it into or out of embargo, and this clause does not change a finding's scope.
 
 > **Clause 4 — memory-safety vs. pure crash (evidence & disposition).** A crash whose root
 > cause is shown to be an OOB read/write is memory-corruption (IN scope) even if the only
@@ -127,8 +113,7 @@ This section is ONNX's security threat model: the boundary statement below defin
 > - **Sanitizer-confirmed** corruption → **`in_scope` (Tier-1)**.
 > - **Neither evidence nor reproducer** → **`provisional_dos_out`** (tracked, reopenable).
 > - **A clean sanitizer run** does **not** prove benignity — it only fails to confirm on the
->   *executed path*, and ASan/UBSan in particular **miss in-allocation OOB reads and
->   uninitialized-memory leaks** (which need targeted review or MSan). For an OOB-read /
+>   *executed path*. For an OOB-read /
 >   info-leak claim a clean run triggers root-cause review; otherwise it routes back to
 >   **`provisional_dos_out`** (reopenable via `reopen_if`). `out_of_scope` is reserved as
 >   **terminal only** for a primitive proven benign (null deref / uncaught exception /
@@ -139,11 +124,11 @@ This section is ONNX's security threat model: the boundary statement below defin
 > memory-safety / corruption to `out_of_scope` or `provisional_dos_out` is a status-changing,
 > down-ranking call that **requires human maintainer sign-off** — never an autonomous AI
 > decision (see AI-assisted triage guardrails). Every `provisional_dos_out` item is
-> **re-reviewed within the publish-or-dismiss window** (90-day default, after PyTorch; see the
+> **re-reviewed within the publish-or-dismiss window** (proposed 90-day default, after PyTorch; see the
 > publish-or-dismiss SLA below) — reopened on new corruption evidence or confirmed
 > `out_of_scope` — so "tracked, reopenable" is enforceable on a concrete clock, not aspirational.
 
-> **Downstream-relations policy (ratified; not a triage clause).** For a verified crash-only, malformed-model
+> **Downstream-relations policy (not a triage clause).** For a verified crash-only, malformed-model
 > robustness bug, ONNX upstream will typically handle it as a public robustness issue rather
 > than embargo it or request a CVE. This reflects ONNX's own threat model and is **not** a
 > judgment that the bug is unimportant downstream: redistributors, distributions, and CNAs
@@ -199,6 +184,10 @@ report is returned for evidence. This is a **rule application, not a judgment ab
 reporter.**
 
 ### Publish-or-dismiss window (SLA)
+
+> **Proposed (pending ratification in #8081).** The window length, the embargo-extension valve,
+> and the escalation cap below are **proposed defaults**, not yet-settled policy — they are
+> ratified together with the threat model in #8081.
 
 Every embargoed advisory is, within a **fixed window**, either **published** (fix shipped +
 CVE) or **dismissed** (downgraded to a public robustness bug and re-filed). PyTorch's

@@ -51,7 +51,7 @@ Severity is based on [CVSS v3.1](https://www.first.org/cvss/) scores and assesse
 1. Merge fix and release patched version
 2. Publish the GitHub Security Advisory — this requests a CVE and serves as the public announcement
 
-**Publish-or-dismiss SLA.** Every embargoed advisory is, within a fixed window (**90-day** default, after PyTorch), either **published** (fix shipped + CVE) or **dismissed** (downgraded to a public robustness bug and re-filed). A confirmed in-scope but not-yet-fixed advisory may receive a **logged, bounded embargo extension** (documented maintainer approval, recorded on the advisory) rather than being force-disclosed unfixed. A `provisional_dos_out` item is re-reviewed within the same window. See [SECURITY.md](SECURITY.md) for the full SLA.
+**Publish-or-dismiss SLA.** *Proposed (pending ratification in #8081).* Every embargoed advisory is, within a fixed window (**proposed default 90 days**, after PyTorch), either **published** (fix shipped + CVE) or **dismissed** (downgraded to a public robustness bug and re-filed). A confirmed in-scope but not-yet-fixed advisory may receive a **logged, bounded embargo extension** (documented maintainer approval, recorded on the advisory) rather than being force-disclosed unfixed. A `provisional_dos_out` item is re-reviewed within the same window. See [SECURITY.md](SECURITY.md) for the full SLA.
 
 ### 5. Learn
 - Blameless postmortem within 2 weeks
@@ -97,7 +97,7 @@ This converts a contested all-in-one batch into a **transparent, per-advisory pu
 
 Disputes over triage, scope, severity, or disposition follow this chain:
 
-**Maintainer triage → infra SIG → Steering Committee.**
+**Maintainer triage → infra SIG → Steering Committee.** *(Proposed (pending ratification in #8081); the escalation chain is a proposed default, not yet-settled policy.)*
 
 A maintainer MAY downgrade or close an advisory by citing the specific clause, tier, or missing-grounding item. An unresolved dispute escalates to the infra SIG, and then to the Steering Committee if still unresolved.
 

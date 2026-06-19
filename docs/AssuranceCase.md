@@ -6,8 +6,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX Security Assurance Case
 
-**Version:** 1.0 *(DRAFT)*
-**Date:** February 2026
+**Version:** 1.1 *(DRAFT)*
+**Date:** June 2026
 **Project:** ONNX (Open Neural Network Exchange)
 **Scope:** ONNX Core (`onnx/onnx`) and the produced Python wheel
 
@@ -140,5 +140,5 @@ ONNX Core is the reference implementation of the ONNX standard, consisting of th
 ---
 
 **Document Maintainer**: ONNX Architecture & Infrastructure SIG
-**Last Updated**: February 2026
+**Last Updated**: June 2026
 **Review Cycle**: Annual (or upon significant architectural changes)
