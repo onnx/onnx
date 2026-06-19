@@ -11,8 +11,17 @@ from onnx.reference.op_run import OpRun
 
 def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_max = np.max(x, axis=axis, keepdims=True)
-    tmp = np.exp(x - x_max)
+    # A fully-masked row is all `-inf`, so `x_max` is `-inf` and the naive
+    # `exp(x - x_max)` evaluates `exp(-inf - (-inf)) = NaN`. Such a row has no
+    # attendable key; by convention it softmaxes to all-zero probabilities.
+    # Detect those rows on `x_max` and return 0 for them directly (instead of
+    # computing NaN and overwriting it), so `_softmax` never emits a NaN/warning
+    # and the all-`-inf` case is independently unit-testable.
+    row_all_masked = np.isneginf(x_max)
+    safe_max = np.where(row_all_masked, 0, x_max)
+    tmp = np.exp(x - safe_max)
     s = np.sum(tmp, axis=axis, keepdims=True)
+    s = np.where(s == 0, 1, s)  # avoid 0/0 for fully-masked rows (kept at 0)
     return tmp / s
 
 
@@ -257,22 +266,20 @@ def _compute_attention(
         qk_with_bias = qk_with_bias.astype(
             onnx.helper.tensor_dtype_to_np_dtype(softmax_precision)
         )
-    # A fully-masked query row has an all-`-inf` bias, so `_softmax` evaluates
-    # `exp(-inf - (-inf)) = NaN` for it. This arises in two cases: a valid
-    # fully-masked row (e.g. an all-`False` boolean `attn_mask` row), and the
-    # out-of-contract negative bottom-right offset regime (`nonpad_kv_seqlen <
-    # q_sequence_length`). Both are overwritten by the fully-masked-row guard
-    # below (producing 0), so suppress the resulting NumPy warning.
-    with np.errstate(invalid="ignore"):
-        qk_softmax = _softmax(qk_with_bias)
+    # `_softmax` is warning-free for an all-`-inf` (fully-masked) row: it returns
+    # 0 instead of computing `exp(-inf - (-inf)) = NaN`. The fully-masked-row
+    # semantics, however, are decided on the additive bias below (not on the
+    # logits), so masking stays correct even when a masked row's raw QK score is
+    # non-`-inf` (e.g. `+inf + (-inf) = NaN`).
+    qk_softmax = _softmax(qk_with_bias)
 
     # Fully-masked-row guard: a query row whose additive bias is entirely -inf
-    # (every key disallowed by the combined causal + attn_mask constraints)
-    # softmaxes to NaN. Detect such rows on the additive bias and zero their
-    # probabilities with select-not-multiply (NaN * 0 = NaN) BEFORE the P @ V
-    # contraction so 0 @ V = 0. The guard runs before the mode-3 capture so the
-    # exposed qk_matmul_output row is also zeroed, consistent with Y. Mirrored in
-    # the function body for primary == _expanded parity.
+    # (every key disallowed by the combined causal + attn_mask constraints) has no
+    # attendable key. Decide this on the additive bias -- not the (possibly NaN)
+    # logits -- and zero those rows with select-not-multiply (NaN * 0 = NaN) BEFORE
+    # the P @ V contraction so 0 @ V = 0. The guard runs before the mode-3 capture
+    # so the exposed qk_matmul_output row is also zeroed, consistent with Y, and
+    # mirrors the function body's bias-based guard for primary == _expanded parity.
     row_all_masked = np.isneginf(
         np.max(attn_bias, axis=-1, keepdims=True)
     )  # (..., q, 1)

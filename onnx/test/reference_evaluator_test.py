@@ -16,6 +16,7 @@ import importlib
 import itertools
 import math
 import unittest
+import warnings
 from contextlib import redirect_stdout
 from functools import wraps
 from io import StringIO
@@ -62,7 +63,7 @@ from onnx.reference.ops import load_op
 from onnx.reference.ops._op_common_indices import _get_indices, _is_out
 from onnx.reference.ops._op_list import Cast_19, Celu
 from onnx.reference.ops.aionnx_preview_training._op_list import Adam
-from onnx.reference.ops.op_attention import _apply_causal
+from onnx.reference.ops.op_attention import _apply_causal, _softmax
 from onnx.reference.ops.op_celu import _vcelu1
 from onnx.reference.ops.op_col2im import (
     _col2im_naive_implementation_2d,
@@ -6299,6 +6300,19 @@ class TestReferenceEvaluator(unittest.TestCase):
             ),
             m,
         )
+
+    def test_softmax_fully_masked_row_returns_zero(self):
+        # A fully-masked row (all `-inf`) must softmax to all-zeros without
+        # producing NaN or emitting a NumPy warning.
+        x = np.array([[0.0, 1.0, 2.0], [-np.inf, -np.inf, -np.inf]], dtype=np.float64)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            got = _softmax(x)
+        self.assertFalse(np.isnan(got).any())
+        assert_allclose(got[1], np.zeros(3, dtype=np.float64))
+        # Unmasked rows still produce a valid probability distribution.
+        assert_allclose(got[0].sum(), 1.0)
+        assert_allclose(got[0], _softmax(x[:1])[0])
 
     def test_center_crop_pad_no_change_when_shape_equals_dim(self):
         """Test CenterCropPad when target shape equals current dimension.
