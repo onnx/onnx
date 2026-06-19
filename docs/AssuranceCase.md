@@ -13,24 +13,42 @@ SPDX-License-Identifier: Apache-2.0
 
 This document provides the security assurance case for ONNX Core, supporting the OpenSSF Best Practices Badge application.
 
-> **Out of scope**: Inference engines and execution providers that consume ONNX models (e.g. ONNX Runtime) are separate projects and are not covered by this document.
+## General scope and assurances
 
----
-
-## Scope and assurances
-
-The onnx package strives to allow memory-safe parsing of untrusted protobuf bytes.
+The onnx package aims to provide memory-safe parsing of untrusted protobuf bytes.
 Using shape/type inference, version update utilities, and model validation is also considered memory-safe.
 Resource exhaustion, however, may be triggered from within these utilities and users are advised to guard against this accordingly.
 
 Validation utilities such as `onnx.checker.check_model` are provided on a best-effort basis (e.g. a validated `ModelProto` object may contain `NodeProto` objects that do not adhere to the ONNX specification).
 
-The onnx reference implementation is not considered safe for production use on untrusted inputs, yet.
+The onnx reference implementation is not yet considered safe for production use on untrusted inputs.
 
 
----
+## Threat Model
 
-## 2. Secure Design Principles (Saltzer & Schroeder)
+### Malicious model file
+
+The attacker supplies a malicious ONNX/protobuf file to a user who parses, validates, or runs type/shape inference or version-conversion on it.
+
+- **In scope:** memory safety while parsing, type/shape inference, version conversion, and validation of untrusted model bytes.
+- **Out of scope:** resource exhaustion (DoS) from those utilities, and the reference runtime executing untrusted models.
+
+### Supply chain
+
+The attacker compromises a dependency, the build pipeline, or the published artifact — so that a user installing `onnx` (e.g. from PyPI) receives malicious code.
+
+- **In scope:** integrity of the published wheels and statically compiled dependencies.
+- **Out of scope:** compromise of a user's own machine or CI, and vulnerabilities in transitive dependencies' upstream code itself.
+
+### External data references
+
+A malicious model references external tensor data via attacker-controlled file paths, attempting to read files outside the model's directory.
+
+- **In scope:** external-data paths are validated and normalized; no resolution outside the model directory.
+- **Out of scope:** files the user has explicitly granted the model directory access to.
+
+
+## Secure Design Principles (Saltzer & Schroeder)
 
 | Principle | Application in ONNX Core |
 |-----------|--------------------------|
@@ -42,9 +60,8 @@ The onnx reference implementation is not considered safe for production use on u
 | Least Common Mechanism | No global mutable state; validation is stateless; each API call operates independently |
 | Psychological Acceptability | Secure defaults need no configuration; clear validation error messages; type-annotated Python API |
 
----
 
-## 3. Common Weaknesses Mitigated
+## Common Weaknesses Mitigated
 
 | CWE | Mitigation |
 |-----|-----------|
@@ -57,9 +74,8 @@ The onnx reference implementation is not considered safe for production use on u
 | OWASP A06 Supply Chain | Dependabot; Sigstore signing; minimal dependency footprint; SBOM generation |
 | CWE-79/89/352/434 | Not applicable — ONNX Core is not a web application or database |
 
----
 
-## 4. Security Testing
+## Security Testing
 
 | Method | Details |
 |--------|---------|
@@ -68,9 +84,8 @@ The onnx reference implementation is not considered safe for production use on u
 | Fuzzing | not yet |
 | Dependency scanning | Dependabot, OpenSSF Scorecard |
 
----
 
-## 5. Security Processes
+## Security Processes
 
 **Vulnerability disclosure**: Reports via GitHub Security Advisories (preferred) or onnx-security@lists.lfaidata.foundation as a fallback; CVE assignment through Linux Foundation CNA. See [SECURITY.md](https://github.com/onnx/onnx/blob/main/SECURITY.md).
 
@@ -78,7 +93,6 @@ The onnx reference implementation is not considered safe for production use on u
 
 **Build & distribution**: artifacts signed with Sigstore; PyPI Trusted Publishing with 2FA required for maintainers; SHA256 checksums published; actions pinned to SHA in CI.
 
----
 
 ## References
 
@@ -93,5 +107,5 @@ The onnx reference implementation is not considered safe for production use on u
 ---
 
 **Document Maintainer**: ONNX Architecture & Infrastructure SIG
-**Last Updated**: February 2026
+**Last Updated**: June 2026
 **Review Cycle**: Annual (or upon significant architectural changes)

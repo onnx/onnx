@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0
 
 ## Reporting a Vulnerability
 
-Bugs, even safety-critical ones, that are easily discoverer using widely available tooling are considered as publicly known.
+Bugs, even safety-critical ones, that are easily discovered using widely available tooling are considered publicly known.
 Please open a public issue or PR if you discovered an issue in this manner.
 If you believe you have discovered a non-trivial security vulnerability in ONNX, please report it privately using GitHub Security Advisories.
 
