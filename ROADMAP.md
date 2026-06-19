@@ -35,12 +35,13 @@ SPDX-License-Identifier: Apache-2.0
 - Automate and improve SBOM generation and publication
 - Immutable releases (tamper-evident, verifiable artifacts)
 - Convert deprecated branch protection rules to Rules within Github
-- newer minimal protobuf
+- Newer minimal protobuf
 
 #### Q4 2026
 
 - Begin C++ hardening (compiler flags, static analysis integration)
 - Integrate fuzz testing into CI
+- Define a stable C-API
 
 #### Q1 2027
 - Move to C++20
