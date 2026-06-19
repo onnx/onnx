@@ -10,6 +10,7 @@ on:
   pull_request:
     paths:
       - "**/*.md"
+      - ".github/workflows/check_urls.yml"
   schedule:
     # Run every month
     - cron:  '0 0 1 * *'
@@ -31,5 +32,16 @@ jobs:
       with:
         environments: link-checker
 
+    - name: Restore lychee cache
+      id: restore-cache
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: .lycheecache
+        # We don't hit the 'key' directly in subsequent
+        # commits. Instead we fall back to the latest 'restore-key'
+        # match and will store a new cached file when done.
+        key: cache-lychee-${{ github.sha }}
+        restore-keys: cache-lychee-
+
     - name: Check links
-      run: pixi run link-checker
+      run: pixi run -e link-checker lychee --root-dir . --cache-exclude-status=400..599 --cache .
