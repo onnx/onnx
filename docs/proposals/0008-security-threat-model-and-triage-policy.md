@@ -122,8 +122,37 @@ taxonomy; the reference evaluator is the sole Tier-3 example.)*
 
 > **The behavior-preserving-bound rule (resource-exhaustion scope).** A resource-exhaustion / DoS is **in scope if and only if a constant number of cheap, behavior-preserving O(1) bounds — rejecting only impossible or malformed inputs (e.g. a declared length exceeding the bytes that exist), never legitimate large inputs — removes the unbounded growth.** By this rule, **size-driven over-allocation is in scope** (precedent: the shipped external-data bounds fix, GHSA-538c-55jv-c5g9 — a constant set of four O(1) field-checks). The "constant number" is counted per parsed object/field, before any attacker-amplified allocation — not across the whole model: validating N external-data records with the same four per-record O(1) checks is still a constant set, so a per-object over-allocation cannot be reclassified "O(n), therefore out." **Attacker-controlled-depth recursion / stack overflow is in scope only when its depth bound is physically grounded in the message's own byte size**; a configurable depth cap (e.g. protobuf `SetRecursionLimit`, default 100) is a defense knob, not behavior-preserving, so whether a bare depth cap qualifies is a **maintainer-ratification call**. **Out of scope:** resource-exhaustion closable only by a global cap that rejects legitimate large models (ReDoS, quadratic / exponential compute).
 
-This is the only scope rule stated inline; the full numbered clause set (1, 3–6) that operationalizes
+This is the only scope rule stated inline; the full numbered clause set (Clauses 1, 3, and 4) that operationalizes
 the model lands in the follow-up PR.
+
+**Why the rule is drawn here (defense of Clause 2).** This is the part that needs ratification,
+so the reasoning behind each boundary is set out here rather than in the landing docs:
+
+- **The strongest in-scope case is grounded in the input itself.** The clearest "in" is a bound
+  *physically determined by the input* — a declared length versus the bytes that actually exist —
+  where "impossible" is decided by the file, not by policy. That is exactly the shape of
+  GHSA-538c-55jv-c5g9's shipped fix, which is why naming size-driven over-allocation as an *in*
+  primitive is load-bearing: without it, a plain "classify by primitive" routes ONNX's own shipped
+  fix to "DoS → out" and **contradicts the project's own security history**. The named primitive,
+  not the component, carries the decision.
+- **A configurable cap is a defense knob, not a behavior-preserving bound.** A tunable recursion
+  cap (e.g. protobuf's `SetRecursionLimit`, default 100) is a hardening knob; exceeding it is not
+  by itself a security bug. A bare `MAX_DEPTH` chosen by fiat can reject a legitimately deep
+  machine-generated graph, so it is not automatically behavior-preserving — hence a depth cap's
+  status is a maintainer-ratification call rather than an automatic "in."
+- **Anti-gaming: the global-cap argument is closed in both directions.** A reporter cannot argue
+  "one global `MAX_NODES` cap is an O(1) bound, so my quadratic blowup is in" — a global cap
+  rejects legitimate large models, so it is not behavior-preserving and does not qualify; conversely
+  ReDoS stays out for the same reason. `memory-safety-adjacency` is the *rationale* for where the
+  line sits, not a second required gate.
+- **Dependency policy is separate from the scope test.** ONNX also declines to add a new
+  third-party dependency solely for DoS hardening; this is a policy stance, not the reason ReDoS is
+  out of scope. It is stated here only to keep the two from being conflated.
+- **Clean sanitizer runs are not dispositive (evidentiary limit).** Even under the existing ASan/UBSan
+  CI, a clean run does not prove benignity — it only fails to confirm on the executed path, and
+  ASan/UBSan in particular miss in-allocation OOB reads and uninitialized-memory leaks (which need
+  targeted review or MSan). This is why the burden of corruption evidence rests on the reporter and
+  why undetermined memory bugs are tracked as reopenable provisional states rather than closed.
 
 ### Severity baseline
 
