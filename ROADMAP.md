@@ -35,12 +35,13 @@ SPDX-License-Identifier: Apache-2.0
 - Automate and improve SBOM generation and publication
 - Immutable releases (tamper-evident, verifiable artifacts)
 - Convert deprecated branch protection rules to Rules within Github
-- newer minimal protobuf
+- Newer minimal protobuf
 
 #### Q4 2026
 
 - Begin C++ hardening (compiler flags, static analysis integration)
 - Integrate fuzz testing into CI
+- Define a stable C-API
 
 #### Q1 2027
 - Move to C++20
@@ -63,7 +64,7 @@ Note: The items below may be reprioritized as needed. It may be better to view t
 an unprioritized list of items for the next year.
 
 #### Q3 2026:
-- Attention op (fix causal-mask position-anchoring issue)
+- ~~Attention op (fix causal-mask position-anchoring issue)~~ (landing in [#8068](https://github.com/onnx/onnx/pull/8068))
 - Attention op (add support for local window)
 - Attention op (add support for pre-softcap additive bias)
 - Support symbolic shape inference
