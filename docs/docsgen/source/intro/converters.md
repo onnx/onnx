@@ -32,7 +32,7 @@ Here is a short list:
 - [tensorflow-onnx](https://github.com/onnx/tensorflow-onnx):
   converts models from [tensorflow](https://www.tensorflow.org/),
 - [jax2onnx](https://github.com/enpasos/jax2onnx):
-  converts JAX-derived callables and models to ONNX,
+  converts models from [JAX](https://docs.jax.dev/),
 - [onnxmltools](https://github.com/onnx/onnxmltools):
   converts models from [lightgbm](https://lightgbm.readthedocs.io/),
   [xgboost](https://xgboost.readthedocs.io/en/stable/),
