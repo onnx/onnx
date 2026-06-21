@@ -626,7 +626,7 @@ static void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto& v, Value& n) {
   }
 }
 
-void encodeGraph(GraphProto& p_g, const std::shared_ptr<Graph>& g) {
+static void encodeGraph(GraphProto& p_g, const std::shared_ptr<Graph>& g) {
   if (g->has_name()) {
     p_g.set_name(g->name());
   }
