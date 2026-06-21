@@ -298,244 +298,101 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Atanh,
     9,
-    OpSchema()
-        .SetDoc(kDoc_Atanh_ver9)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The hyperbolic arctangent values of the input tensor "
-            "computed element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Atanh_ver9,
+            "The hyperbolic arctangent values of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Acosh,
     9,
-    OpSchema()
-        .SetDoc(kDoc_Acosh_ver9)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The hyperbolic arccosine values of the input tensor "
-            "computed element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Acosh_ver9,
+            "The hyperbolic arccosine values of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Asinh,
     9,
-    OpSchema()
-        .SetDoc(kDoc_Asinh_ver9)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The hyperbolic arcsine values of the input tensor "
-            "computed element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Asinh_ver9,
+            "The hyperbolic arcsine values of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cosh,
     9,
-    OpSchema()
-        .SetDoc(kDoc_Cosh_ver9)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The hyperbolic cosine values of the input tensor "
-            "computed element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Cosh_ver9,
+            "The hyperbolic cosine values of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sinh,
     9,
-    OpSchema()
-        .SetDoc(kDoc_Sinh_ver9)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The hyperbolic sine values of the input tensor "
-            "computed element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Sinh_ver9,
+            "The hyperbolic sine values of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Atan,
     7,
-    OpSchema()
-        .SetDoc(kDoc_Atan_ver7)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The arctangent of the input tensor computed "
-            "element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Atan_ver7,
+            "The arctangent of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Acos,
     7,
-    OpSchema()
-        .SetDoc(kDoc_Acos_ver7)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The arccosine of the input tensor computed "
-            "element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Acos_ver7,
+            "The arccosine of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Asin,
     7,
-    OpSchema()
-        .SetDoc(kDoc_Asin_ver7)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The arcsine of the input tensor computed "
-            "element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Asin_ver7,
+            "The arcsine of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tan,
     7,
-    OpSchema()
-        .SetDoc(kDoc_Tan_ver7)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The tangent of the input tensor computed "
-            "element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Tan_ver7,
+            "The tangent of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Cos,
     7,
-    OpSchema()
-        .SetDoc(kDoc_Cos_ver7)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The cosine of the input tensor computed "
-            "element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Cos_ver7,
+            "The cosine of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sin,
     7,
-    OpSchema()
-        .SetDoc(kDoc_Sin_ver7)
-        .Input(0, "input", "Input tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Output(
-            0,
-            "output",
-            "The sine of the input tensor computed "
-            "element-wise",
-            "T",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
-            {types::Float16, types::Float, types::Double},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    OpSchema().FillUsing(
+        defs::math::utils::UnaryFloatMathOpGenerator(
+            kDoc_Sin_ver7,
+            "The sine of the input tensor computed element-wise",
+            {types::Float16, types::Float, types::Double})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Softplus,

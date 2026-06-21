@@ -11,10 +11,6 @@ on:
         required: false
         type: string
         default: "preview"
-      protobuf_version:
-        required: false
-        type: string
-        default: "33.6"
   workflow_dispatch:
 
 permissions:
@@ -28,13 +24,13 @@ jobs:
   build:
     runs-on: ubuntu-24.04
 
-    env:
-      PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
+
+      - name: Read protobuf version from sbom.cdx.json
+        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -47,9 +43,6 @@ jobs:
         run: |
           sed -i'' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
           echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
-
-      - name: Install cibuildwheel
-        run: python -m pip install -q cibuildwheel>=2.21
 
       - name: Download protoc for host
         run: |
@@ -66,7 +59,7 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d  # v4.0.0
         with:
           output-dir: dist/
         env:
@@ -84,7 +77,7 @@ jobs:
             -DCMAKE_CXX_FLAGS='-Wno-error=deprecated-builtins'
             "
 
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: wheels-pyodide
           path: dist/*.whl

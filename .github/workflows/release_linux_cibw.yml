@@ -11,10 +11,6 @@ on:
         required: false
         type: string
         default: "preview"
-      protobuf_version:
-        required: false
-        type: string
-        default: "25.1"
   workflow_dispatch:
 
 permissions:
@@ -41,13 +37,13 @@ jobs:
 
     runs-on: ${{ contains(matrix.build, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
 
-    env:
-      PROTOBUF_VERSION: ${{ inputs.protobuf_version }}
-
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
+
+      - name: Read protobuf version from sbom.cdx.json
+        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -76,7 +72,7 @@ jobs:
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
+        uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d  # v4.0.0
         with:
           output-dir: dist/
           only: ${{ matrix.build }}
@@ -90,7 +86,7 @@ jobs:
             -DONNX_WERROR=ON
             "
 
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: wheels-linux-${{ matrix.build }}
           path: dist/*.whl
@@ -103,28 +99,3 @@ jobs:
             check-wheel-contents "$whl"
             python -m abi3audit -v "$whl"
           done
-
-  test-min-deps:
-    needs: build
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: wheels-linux-cp312-manylinux_x86_64
-          path: dist
-
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.12"
-
-      - name: Verify with minimum supported packages
-        run: |
-          python -m pip install -q pytest
-          python -m pip install -q dist/*.whl
-          python -m pip install -q -r requirements-min.txt
-          pytest

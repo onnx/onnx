@@ -112,6 +112,16 @@ struct InferenceContext {
   virtual std::string getDisplayName() const {
     return "";
   }
+
+  // Non-virtual convenience methods for shape inference.
+
+  // unifyInputShape: unifies all dimensions of an input with the given dim references.
+  // Requires the input to have rank exactly equal to the number of dims provided.
+  void unifyInputShape(size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims);
+
+  // unifyInputShapePrefix: unifies the first N dimensions of an input with the given dim references.
+  // Requires the input to have rank at least equal to the number of dims provided.
+  void unifyInputShapePrefix(size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> prefix);
 };
 
 // We use data propagation to perform partial evaluation of the model, to compute statically
@@ -244,6 +254,26 @@ inline TensorShapeProto::Dimension operator/(const TensorShapeProto::Dimension& 
   if (dim1.has_dim_value()) {
     result.set_dim_value(dim1.dim_value() / dim2);
   } else if (dim2 == 1) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator+(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() + dim2);
+  } else if (dim2 == 0) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator-(const TensorShapeProto::Dimension& dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() - dim2);
+  } else if (dim2 == 0) {
     return dim1;
   }
   return result;
@@ -904,6 +934,22 @@ inline void unifyInputDim(const InferenceContext& ctx, size_t input_index, int d
     // Now, unify dim and input_dim:
     unifyDim(input_dim, dim);
   }
+}
+
+// unifyInputShape: unifies all dimensions of an input with the given dim references.
+// Requires the input to have rank exactly equal to the number of dims provided.
+inline void
+unifyInputShape(InferenceContext& ctx, size_t input_index, std::initializer_list<std::reference_wrapper<Dim>> dims) {
+  ctx.unifyInputShape(input_index, dims);
+}
+
+// unifyInputShapePrefix: unifies the first N dimensions of an input with the given dim references.
+// Requires the input to have rank at least equal to the number of dims provided.
+inline void unifyInputShapePrefix(
+    InferenceContext& ctx,
+    size_t input_index,
+    std::initializer_list<std::reference_wrapper<Dim>> prefix) {
+  ctx.unifyInputShapePrefix(input_index, prefix);
 }
 
 // unifyDim: unifies a dimension with a constant value. If the dimension

@@ -38,7 +38,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         submodules: recursive
         persist-credentials: false
@@ -55,7 +55,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+      uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
       with:
         languages: ${{ matrix.language }}
         config: |
@@ -78,13 +78,11 @@ jobs:
     - name: Install ONNX
       if: matrix.language != 'actions'
       run: |
-        source workflow_scripts/protobuf/build_protobuf_unix.sh $(nproc)
-        python -m pip install --quiet scikit-build-core "protobuf==4.25.1"
         export ONNX_ML=1
         export ONNX_BUILD_TESTS=1
         pip install .
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
+      uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
       with:
         category: "/language:${{matrix.language}}"

@@ -84,7 +84,7 @@ cmd = "cd docs/docsgen && make html"
 
 [dependencies]
 libdate = ">=3.0.1,<4"
-libprotobuf = "*"
+libprotobuf = "<7"  # libprotobuf>=7 has breaking changes which need a dedicated PR
 make = "*"
 ml_dtypes = ">=0.5.1"
 nanobind = ">=2.8.0"
@@ -111,11 +111,9 @@ wheel = ">=0.45.1"
 zizmor = ">=1.24.1,<2"
 
 [feature.reference.dependencies]
-# follows requirements-reference.txt
 pillow = ">=11.2.1,<12"
 
 [feature.oldies.dependencies]
-# follows requirements-min.txt
 protobuf = "==4.25.1"
 python = "3.10.*"
 numpy = "==1.23.2"
@@ -167,8 +165,14 @@ cmd = "pixi exec lychee --root-dir . ."
 
 [feature.reuse.dependencies]
 # Isolate REUSE since it does not play nice with `pip check` in the
-# default environment.
-reuse = ">=5.1.1,<7"
+# default environment. Furthermore, conda-forge's reuse has a hard
+# dependency on libmagic which is unix-only. There are fallbacks in
+# reuse if it is not available though.
+python = ">=3.14.5,<3.15"
+[feature.reuse.target.unix.dependencies]
+reuse = ">=6.2.0,<7"
+[feature.reuse.target.win-64.pypi-dependencies]
+reuse = ">=6.2.0, <7"
 [feature.reuse.tasks.reuse]
 cmd = "reuse"
 
