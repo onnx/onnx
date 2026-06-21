@@ -1285,6 +1285,33 @@ class TestChecker(unittest.TestCase):
             tensor.name = "t"
             checker.check_tensor(tensor)
 
+    def test_convtranspose_input_channels_must_be_divisible_by_group(self):
+        node = helper.make_node("ConvTranspose", ["X", "W"], ["Y"], group=3)
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [
+                helper.make_tensor_value_info(
+                    "X", TensorProto.FLOAT, ["N", 32, 14, 14]
+                ),
+                helper.make_tensor_value_info("W", TensorProto.FLOAT, [32, 64, 3, 3]),
+            ],
+            [
+                helper.make_tensor_value_info(
+                    "Y", TensorProto.FLOAT, ["N", None, None, None]
+                )
+            ],
+        )
+        model = helper.make_model(
+            graph, opset_imports=[helper.make_opsetid("", 17)], ir_version=7
+        )
+
+        with self.assertRaisesRegex(
+            shape_inference.InferenceError,
+            r"Input channels C must be divisible by group for ConvTranspose",
+        ):
+            checker.check_model(model, full_check=True)
+
 
 if __name__ == "__main__":
     unittest.main()
