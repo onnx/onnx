@@ -223,6 +223,7 @@ class ScatterND(Base):
             outputs=[output],
             name="test_scatternd_min",
         )
+        
     @staticmethod
     def export_scatternd_max_with_element_indices() -> None:
         node = onnx.helper.make_node(
