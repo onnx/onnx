@@ -26,9 +26,13 @@ def scatter_nd_impl(
         elif reduction == "mul":
             output[tuple(indices[i])] *= updates[i]
         elif reduction == "max":
-            output[tuple(indices[i])] = np.maximum(output[tuple(indices[i])], updates[i])
+            output[tuple(indices[i])] = np.maximum(
+                output[tuple(indices[i])], updates[i]
+            )
         elif reduction == "min":
-            output[tuple(indices[i])] = np.minimum(output[tuple(indices[i])], updates[i])
+            output[tuple(indices[i])] = np.minimum(
+                output[tuple(indices[i])], updates[i]
+            )
         else:
             output[tuple(indices[i])] = updates[i]
     return output
@@ -223,7 +227,7 @@ class ScatterND(Base):
             outputs=[output],
             name="test_scatternd_min",
         )
-        
+
     @staticmethod
     def export_scatternd_max_with_element_indices() -> None:
         node = onnx.helper.make_node(
