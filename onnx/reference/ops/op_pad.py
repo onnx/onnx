@@ -26,6 +26,16 @@ def _pad_impl(data, raw_pads, mode, constant_values=0.0, axes=None):
         pad_end = raw_pads[num_axes + i]
         pad_width[axis] = (pad_begin, pad_end)
 
+    # Negative pads crop; numpy.pad rejects them, so slice the crop out first.
+    if any(begin < 0 or end < 0 for begin, end in pad_width):
+        data = data[
+            tuple(
+                slice(-begin if begin < 0 else None, end if end < 0 else None)
+                for begin, end in pad_width
+            )
+        ]
+        pad_width = [(max(begin, 0), max(end, 0)) for begin, end in pad_width]
+
     if mode == "constant":
         return np.pad(
             data, pad_width=pad_width, mode=mode, constant_values=constant_values
