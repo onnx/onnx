@@ -175,7 +175,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#BlackmanWindow">BlackmanWindow</a>|<a href="Changelog.md#BlackmanWindow-17">17</a>|17|
 |<a href="#CastLike">CastLike</a>|<a href="Changelog.md#CastLike-25">25</a>, <a href="Changelog.md#CastLike-24">24</a>, <a href="Changelog.md#CastLike-23">23</a>, <a href="Changelog.md#CastLike-21">21</a>, <a href="Changelog.md#CastLike-19">19</a>, <a href="Changelog.md#CastLike-15">15</a>|25|
 |<a href="#CausalConvWithState">CausalConvWithState</a>|<a href="Changelog.md#CausalConvWithState-27">27</a>|27|
-|<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-27">27</a>, <a href="Changelog.md#Celu-12">12</a>|22|
+|<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-28">28</a>, <a href="Changelog.md#Celu-12">12</a>|28|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
@@ -8399,7 +8399,7 @@ expect(node, inputs=[x], outputs=[y], name="test_ceil")
 
 #### Version
 
-This version of the operator has been available since version 27 of the default ONNX operator set.
+This version of the operator has been available since version 28 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Celu-12">12</a>
 

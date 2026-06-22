@@ -70,12 +70,12 @@ class TestSchema(unittest.TestCase):
                 if t.type_param_str == "T"
             )
 
-        celu27 = defs.get_schema("Celu", 27)
+        celu28 = defs.get_schema("Celu", 28)
         self.assertEqual(
-            allowed(celu27),
+            allowed(celu28),
             {"tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"},
         )
-        self.assertTrue(celu27.has_function)
+        self.assertTrue(celu28.has_function)
         self.assertEqual(allowed(defs.get_schema("Celu", 12)), {"tensor(float)"})
 
     def test_range_supported_types(self) -> None:

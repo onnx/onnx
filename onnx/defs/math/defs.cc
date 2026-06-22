@@ -433,7 +433,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         )ONNX")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static constexpr const char* celu_ver27_doc = R"DOC(
+static constexpr const char* celu_ver28_doc = R"DOC(
 Continuously Differentiable Exponential Linear Units:
 Perform the linear unit element-wise on the input tensor X
 using formula:
@@ -445,9 +445,9 @@ max(0,x) + min(0,alpha*(exp(x/alpha)-1))
 
 ONNX_OPERATOR_SET_SCHEMA(
     Celu,
-    27,
+    28,
     OpSchema()
-        .SetDoc(celu_ver27_doc)
+        .SetDoc(celu_ver28_doc)
         .Attr(
             "alpha",
             "The Alpha value in Celu formula which control the shape of "
@@ -468,9 +468,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             EluResult = Elu <alpha = 1.0> (XScaled)
             Y = Mul (AlphaCast, EluResult)
           }
-        )ONNX",
-            // Must be >= 22: the body's Elu gained bfloat16/float16 support at opset 22.
-            22));
+        )ONNX"));
 
 static constexpr const char* gelu_ver20_doc = R"DOC(
 Gelu takes one input data (Tensor<T>) and produces one
