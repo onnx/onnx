@@ -62,6 +62,22 @@ class TestSchema(unittest.TestCase):
         )
         self.assertTrue(if_schema.non_deterministic)
 
+    def test_celu_type_constraints(self) -> None:
+        def allowed(schema):
+            return next(
+                set(t.allowed_type_strs)
+                for t in schema.type_constraints
+                if t.type_param_str == "T"
+            )
+
+        celu27 = defs.get_schema("Celu", 27)
+        self.assertEqual(
+            allowed(celu27),
+            {"tensor(bfloat16)", "tensor(float16)", "tensor(float)", "tensor(double)"},
+        )
+        self.assertTrue(celu27.has_function)
+        self.assertEqual(allowed(defs.get_schema("Celu", 12)), {"tensor(float)"})
+
     def test_range_supported_types(self) -> None:
         """Test Range operator supports all expected numeric types."""
         range_schema = defs.get_schema("Range")

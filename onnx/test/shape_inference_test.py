@@ -10321,6 +10321,17 @@ class TestShapeInference(TestShapeInferenceHelper):
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (25, 48, 16, 16))]
         )
 
+    def test_celu_float16_and_bfloat16(self) -> None:
+        for elem_type in (TensorProto.FLOAT16, TensorProto.BFLOAT16):
+            graph = self._make_graph(
+                [("X", elem_type, (3, 4))],
+                [make_node("Celu", ["X"], ["Y"], alpha=2.0)],
+                [],
+            )
+            self._assert_inferred(
+                graph, [make_tensor_value_info("Y", elem_type, (3, 4))]
+            )
+
     def prepare_input_initializer_tensors(self, initializer_shape, input_shape):
         nodes = [make_node("Add", ["x", "y"], "z")]
         if initializer_shape is None:
