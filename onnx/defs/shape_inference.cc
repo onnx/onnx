@@ -424,6 +424,9 @@ void propagateElemTypeWithValidation(const TypeProto* input_type, TypeProto* out
   if (nullptr == input_type) {
     fail_type_inference("Input type was null");
   }
+  if (nullptr == output_type) {
+    fail_type_inference("Output type was null");
+  }
 
   const auto input_value_case = input_type->value_case();
   if (input_value_case == TypeProto::kTensorType || input_value_case == TypeProto::kSparseTensorType) {
