@@ -246,14 +246,14 @@ class InliningRenamer : public internal::MutableVisitor {
   }
 
   // Process a node:
-  bool ProcessNode(NodeProto* node) override {
-    if (!node->name().empty())
-      node->set_name(MakeUnique(node->name()));
+  bool ProcessNode(NodeProto& node) override {
+    if (!node.name().empty())
+      node.set_name(MakeUnique(node.name()));
 
-    for (auto& x : *node->mutable_input()) {
+    for (auto& x : *node.mutable_input()) {
       LookupOrRename(x, false);
     }
-    for (auto& y : *node->mutable_output()) {
+    for (auto& y : *node.mutable_output()) {
       LookupOrRename(y, true);
     }
     return true; // Process attribute subgraphs in traversal
@@ -262,16 +262,16 @@ class InliningRenamer : public internal::MutableVisitor {
   // Process a sub-graph, contained as an attribute in a control-flow op node.
   // Since we need both pre-processing and post-processing in the traversal, we
   // override the VisitGraph method.
-  void VisitGraph(GraphProto* graph) override {
+  void VisitGraph(GraphProto& graph) override {
     rename_scopes.emplace_back();
-    for (auto& x : *graph->mutable_input())
+    for (auto& x : *graph.mutable_input())
       Rename(*x.mutable_name());
-    for (auto& init : *graph->mutable_initializer())
+    for (auto& init : *graph.mutable_initializer())
       Rename(*init.mutable_name());
-    for (auto& y : *graph->mutable_output())
+    for (auto& y : *graph.mutable_output())
       Rename(*y.mutable_name());
-    for (auto& n : *graph->mutable_node())
-      VisitNode(&n);
+    for (auto& n : *graph.mutable_node())
+      VisitNode(n);
     rename_scopes.pop_back();
   }
 
@@ -313,7 +313,7 @@ class InliningRenamer : public internal::MutableVisitor {
     renamer.Bind<false>(*callee.mutable_input(), callnode.input());
     renamer.Bind<true>(*callee.mutable_output(), callnode.output());
 
-    renamer.VisitFunction(&callee);
+    renamer.VisitFunction(callee);
     for (auto& v : *callee.mutable_value_info())
       renamer.LookupOrRename(*v.mutable_name(), false);
   }
@@ -780,7 +780,7 @@ class Renamer::Impl {
 
   void RenameNode(NodeProto& node) {
     // Use the InliningRenamer's ProcessNode method which handles graph-value attributes
-    renamer_.ProcessNode(&node);
+    renamer_.ProcessNode(node);
   }
 };
 
