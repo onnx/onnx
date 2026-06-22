@@ -22,7 +22,9 @@ def one_hot(indices, depth, axis=-1, dtype=np.float32):
     targets = np.reshape(
         depth_range, (1,) * len(ls) + depth_range.shape + (1,) * len(rs)
     )
-    values = np.reshape(np.mod(values, depth), (*ls, 1, *rs))
+    # Wrap negative in-range indices; leave out-of-range ones unmatched (all off_value).
+    values = np.where(values < 0, values + depth, values)
+    values = np.reshape(values, (*ls, 1, *rs))
     return np.asarray(targets == values, dtype=dtype)
 
 
