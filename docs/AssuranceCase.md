@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 
 # ONNX Security Assurance Case
 
-**Version:** 1.1 *(DRAFT)*
+**Version:** 1.1
 **Date:** June 2026
 **Project:** ONNX (Open Neural Network Exchange)
 **Scope:** ONNX Core (`onnx/onnx`) and the produced Python wheel

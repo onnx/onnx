@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 
 # Security Policy
 
-
 ## Reporting a Vulnerability
 
 Bugs, even safety-critical ones, that are easily discovered using widely available tooling are considered publicly known.
@@ -19,9 +18,22 @@ This allows maintainers to triage the issue, collaborate on a fix, and coordinat
 
 If you are unable to use GitHub for reporting, you may contact the maintainers at onnx-security@lists.lfaidata.foundation as a fallback.
 
-After your report is received, a maintainer will acknowledge it, work with you to understand impact and remediation, and keep you informed about progress toward a fix and public disclosure.
+After your report is received, a maintainer will acknowledge it, work with you to understand impact and remediation, and keep you informed about progress toward a fix and public disclosure. We aim to provide an initial response within 14 business days. ONNX is a volunteer-driven open-source project, so response times may vary.
 
 Please do not disclose the vulnerability publicly until a fix and advisory have been released.
+
+Reporters are credited in the published advisory unless they request to remain anonymous.
+
+## Response Process
+
+Once a report is received, maintainers follow this process:
+
+1. **Confirm.** Verify the report describes a genuine security issue (not an ordinary bug or feature request) and assign an incident lead from the security team (the GitHub team with access to private advisories). The GitHub Security Advisory draft serves as the private coordination channel.
+2. **Triage.** Assess severity case by case using [CVSS](https://www.first.org/cvss/) (v4.0 or v3.1). The security team decides per incident whether the fix warrants an out-of-cycle patch release or can be included in the next scheduled release. Not every report results in a CVE — a CVE is issued only when there is a confirmed, exploitable vulnerability with real-world impact. Reports describing expected behavior, unrealistic preconditions, or issues outside the project's threat model may be closed without a CVE.
+3. **Fix.** A patch is developed in a private fork or Security Advisory draft and reviewed by a second maintainer.
+4. **Disclose.** Merge the fix and release the patched version, then publish the GitHub Security Advisory — this requests a CVE and serves as the public announcement.
+
+Out-of-cycle releases are triggered for confirmed Critical/High vulnerabilities or active exploitation.
 
 ## Security announcements
 
@@ -30,6 +42,8 @@ Security advisories are published via GitHub Security Advisories. Users dependin
 ## Security Requirements
 
 Open Neural Network Exchange (ONNX) manages reported vulnerabilities according to its documented security policy and delivers remediations in maintained releases. The project employs established secure development practices such as automated testing, continuous integration, and tooling intended to identify defects during development. Third-party dependencies and build components are periodically reviewed and updated to address known issues and to mitigate supply-chain risk. ONNX does not guarantee that models or inputs are trustworthy, and operators are responsible for validating provenance and applying appropriate isolation, resource limits, and runtime safeguards when executing untrusted workloads.
+
+For the project's threat model, secure design principles, and the weaknesses they mitigate, see the [Security Assurance Case](docs/AssuranceCase.md).
 
 ## Supply Chain Security
 
