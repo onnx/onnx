@@ -2080,6 +2080,39 @@ class TestAutomaticUpgrade(automatic_conversion_test_base.TestAutomaticConversio
             },
         )
 
+    def test_LinearAttention_erase_gate(self) -> None:
+        # opset 28: optional erase_gate input decouples retrieval key from write
+        # key (GDN-2 recurrence).  Shape: (B, T, H_kv * d_k) = (2, 4, 64).
+        self._test_op_upgrade(
+            "LinearAttention",
+            28,
+            [
+                [2, 4, 64],  # query  (B=2, T=4, H_q*d_k = 4*16 = 64)
+                [2, 4, 64],  # key
+                [2, 4, 64],  # value
+                "",  # past_state: absent
+                [2, 4, 64],  # decay: per-key-dim (H_kv*d_k = 4*16 = 64)
+                [2, 4, 4],  # beta: (B, T, H_kv=4)
+                [2, 4, 64],  # erase_gate: (B, T, H_kv*d_k = 64)
+            ],
+            [[2, 4, 64], [2, 4, 16, 16]],
+            [
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+                TensorProto.FLOAT,
+            ],
+            [TensorProto.FLOAT, TensorProto.FLOAT],
+            attrs={
+                "q_num_heads": 4,
+                "kv_num_heads": 4,
+                "update_rule": "gated_delta",
+            },
+        )
+
     def test_ops_tested(self) -> None:
         # NOTE: This test is order dependent and needs to run last in this class
         all_schemas = onnx.defs.get_all_schemas()

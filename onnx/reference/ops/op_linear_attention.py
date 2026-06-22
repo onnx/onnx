@@ -28,6 +28,7 @@ class LinearAttention(OpRun):
         past_state=None,
         decay=None,
         beta=None,
+        erase_gate=None,
         chunk_size=None,  # noqa: ARG002 — tuning hint, no effect on output
         kv_num_heads=None,
         q_num_heads=None,
@@ -61,6 +62,8 @@ class LinearAttention(OpRun):
             raise ValueError(f"update_rule '{update_rule}' requires beta input.")
         if not delta_correction and beta is not None:
             raise ValueError(f"update_rule '{update_rule}' forbids beta input.")
+        if erase_gate is not None and not delta_correction:
+            raise ValueError(f"update_rule '{update_rule}' forbids erase_gate input.")
 
         for name, arr in (("query", query), ("key", key), ("value", value)):
             if arr.ndim != 3:
@@ -111,6 +114,18 @@ class LinearAttention(OpRun):
             beta4 = beta.reshape(b, t, beta_last, 1).transpose(0, 2, 1, 3)
             beta4 = beta4.astype(np.float32)
 
+        # --- Step 4b: unpack erase_gate (B, T, H_kv*d_k) -> (B, H_kv, T, d_k) ---
+        if erase_gate is not None:
+            if erase_gate.ndim != 3:
+                raise ValueError(f"erase_gate must be rank 3, got shape {erase_gate.shape}.")
+            eg_last = erase_gate.shape[-1]
+            if kv_num_heads > 0 and eg_last % kv_num_heads != 0:
+                raise ValueError(
+                    f"erase_gate last dim {eg_last} must be a multiple of "
+                    f"kv_num_heads ({kv_num_heads})."
+                )
+            erase_gate4 = _unpack_3d_to_4d(erase_gate, kv_num_heads).astype(np.float32)
+
         # --- Step 5: initialize state in float32 ---
         # TODO(review): The proposal allows S != T (e.g., float32 state with
         # float16/bfloat16 activations). We accumulate internally in float32
@@ -151,10 +166,11 @@ class LinearAttention(OpRun):
                 g_t = decay4[:, :, i, :]  # (B, H_kv, 1) or (B, H_kv, d_k)
                 state = state * np.exp(g_t)[..., None]  # broadcast over d_v
 
-            # Delta correction: v_t <- beta_t * (v_t - S^T @ k_t)
+            # Delta correction: v_t <- beta_t * (v_t - S^T @ k_erase_t)
+            # where k_erase_t = erase_gate_t ⊙ k_t when erase_gate is provided, else k_t.
             if delta_correction:
-                # retrieved[b, h, m] = sum_d state[b, h, d, m] * k_t[b, h, d]
-                retrieved = np.einsum("bhdm,bhd->bhm", state, k_t)
+                k_erase_t = erase_gate4[:, :, i, :] * k_t if erase_gate is not None else k_t
+                retrieved = np.einsum("bhdm,bhd->bhm", state, k_erase_t)
                 v_t = beta4[:, :, i, :] * (v_t - retrieved)
 
             # Write: state += k_t ⊗ v_t  (outer product over last dims)

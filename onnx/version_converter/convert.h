@@ -976,6 +976,16 @@ class DefaultVersionConverter : public BaseVersionConverter {
     const std::vector<TensorProto_DataType> range_27_unallowed_types = {
         TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16};
     registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
+
+    /******** 27 -> 28 ********/
+    // LinearAttention v28 adds optional erase_gate (input 6); upgrading from v27 is always
+    // compatible — the new input is absent and the existing semantics are unchanged.
+    registerAdapter(std::make_unique<CompatibleAdapter>("LinearAttention", OpSetID(27), OpSetID(28)));
+
+    /******** 28 -> 27 ********/
+    // LinearAttention v28 -> v27: compatible when erase_gate is absent. Models that use
+    // erase_gate will produce an invalid opset-27 model; validation will catch that.
+    registerAdapter(std::make_unique<CompatibleAdapter>("LinearAttention", OpSetID(28), OpSetID(27)));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)
