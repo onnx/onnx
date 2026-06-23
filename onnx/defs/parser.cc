@@ -106,7 +106,7 @@ float LocaleIndependentStof(const std::string& s) {
 #else
   float val = strtof_l(s.c_str(), &end, cloc.loc);
 #endif
-  if (end != s.c_str() + s.size() || errno == ERANGE) {
+  if (end == s.c_str() || end != s.c_str() + s.size() || errno == ERANGE) {
     ONNX_THROW("Failed to parse float from string: " + s);
   }
   return val;
@@ -124,7 +124,7 @@ double LocaleIndependentStod(const std::string& s) {
 #else
   double val = strtod_l(s.c_str(), &end, cloc.loc);
 #endif
-  if (end != s.c_str() + s.size() || errno == ERANGE) {
+  if (end == s.c_str() || end != s.c_str() + s.size() || errno == ERANGE) {
     ONNX_THROW("Failed to parse double from string: " + s);
   }
   return val;
