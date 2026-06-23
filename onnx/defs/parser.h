@@ -8,9 +8,12 @@
 #pragma once
 
 #include <cctype>
+#include <charconv>
+#include <cstdlib>
 #include <string>
 #include <unordered_map>
 
+#include "onnx/common/common.h"
 #include "onnx/common/status.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
@@ -37,6 +40,28 @@ using StringStringList = google::protobuf::RepeatedPtrField<StringStringEntryPro
     if (!local_status_.IsOK())      \
       return local_status_;         \
   }
+
+// Locale-independent string-to-float/double conversion.
+// std::stof/std::stod use the current C locale for decimal point parsing,
+// which breaks under non-US locales (e.g. German uses ',' instead of '.').
+// std::from_chars is guaranteed to be locale-independent (always uses '.').
+inline float LocaleIndependentStof(const std::string& s) {
+  float val = 0.0f;
+  auto result = std::from_chars(s.data(), s.data() + s.size(), val);
+  if (result.ec != std::errc{}) {
+    ONNX_THROW("Failed to parse float from string: " + s);
+  }
+  return val;
+}
+
+inline double LocaleIndependentStod(const std::string& s) {
+  double val = 0.0;
+  auto result = std::from_chars(s.data(), s.data() + s.size(), val);
+  if (result.ec != std::errc{}) {
+    ONNX_THROW("Failed to parse double from string: " + s);
+  }
+  return val;
+}
 
 template <typename Map>
 // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
@@ -300,7 +325,7 @@ class ParserBase {
     switch (literal.type) {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
-        val = std::stof(literal.value);
+        val = LocaleIndependentStof(literal.value);
         break;
       default:
         return ParseError("Unexpected literal type.");
@@ -314,7 +339,7 @@ class ParserBase {
     switch (literal.type) {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
-        val = std::stod(literal.value);
+        val = LocaleIndependentStod(literal.value);
         break;
       default:
         return ParseError("Unexpected literal type.");

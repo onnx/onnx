@@ -71,7 +71,7 @@ Common::Status ParserBase::Parse(Literal& result) {
         ++next_;
       }
       ONNX_TRY {
-        static_cast<void>(std::stof(std::string(from, next_ - from)));
+        static_cast<void>(LocaleIndependentStof(std::string(from, next_ - from)));
         result.type = LiteralType::FLOAT_LITERAL;
         result.value = std::string(from, next_ - from);
       }
@@ -584,7 +584,7 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
         Literal literal;
         PARSE_TOKEN(literal);
         attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(std::stof(literal.value));
+        attr.set_f(LocaleIndependentStof(literal.value));
       } else {
         attr.set_type(AttributeProto_AttributeType_GRAPH);
         PARSE(*attr.mutable_g());
@@ -602,11 +602,11 @@ Common::Status OnnxParser::ParseSingleAttributeValue(AttributeProto& attr, Attri
         return ParseError("Internal error");
       case LiteralType::INT_LITERAL:
         attr.set_type(AttributeProto_AttributeType_INT);
-        attr.set_i(std::stol(literal.value));
+        attr.set_i(std::stoll(literal.value));
         break;
       case LiteralType::FLOAT_LITERAL:
         attr.set_type(AttributeProto_AttributeType_FLOAT);
-        attr.set_f(std::stof(literal.value));
+        attr.set_f(LocaleIndependentStof(literal.value));
         break;
       case LiteralType::STRING_LITERAL:
         attr.set_type(AttributeProto_AttributeType_STRING);
