@@ -29,6 +29,16 @@ std::vector<int64_t> getConvPoolStrides(InferenceContext& ctx, size_t n_input_di
 void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
+  // Validate local_window_size early so invalid values are rejected during
+  // model checking / shape inference, before the function body builder runs.
+  const auto* const lws_attr = ctx.getAttribute("local_window_size");
+  if (lws_attr != nullptr) {
+    int64_t lws = lws_attr->i();
+    if (lws != -1 && lws <= 0) {
+      fail_shape_inference("local_window_size must be -1 or positive, got ", lws);
+    }
+  }
+
   int64_t kv_sequence_length = -1;
   ONNX_NAMESPACE::TensorShapeProto output_shape;
   ONNX_NAMESPACE::TensorShapeProto qk_matmul_shape;

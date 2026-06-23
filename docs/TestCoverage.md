@@ -1114,7 +1114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 76 test cases, listed as following:
+There are 81 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -1942,6 +1942,39 @@ expect(
     outputs=[Y, present_key, present_value],
     name="test_attention_3d_gqa_with_past_and_present",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_3d_local_window</summary>
+
+```python
+"""Sliding window attention with 3D inputs (q_num_heads, kv_num_heads)."""
+local_window_size = 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    q_num_heads=3,
+    kv_num_heads=3,
+    local_window_size=local_window_size,
+)
+
+Q = np.random.rand(2, 4, 24).astype(np.float32)
+K = np.random.rand(2, 6, 24).astype(np.float32)
+V = np.random.rand(2, 6, 24).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, q_num_heads=3, kv_num_heads=3, local_window_size=local_window_size
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_3d_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
 )
 ```
 
@@ -3554,6 +3587,143 @@ expect(
     outputs=[Y, present_key, present_value],
     name="test_attention_4d_gqa_with_past_and_present_fp16",
     opset_imports=[onnx.helper.make_opsetid("", 23)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window</summary>
+
+```python
+"""Sliding window attention (local_window_size=3, no explicit is_causal).
+
+Window implies causal: each query at position p attends only keys j
+satisfying 0 <= p - j < 3. Future positions are always masked.
+"""
+local_window_size = 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    local_window_size=local_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, local_window_size=local_window_size
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_causal</summary>
+
+```python
+"""is_causal=1 + local_window_size=3 produces bit-identical result to
+local_window_size=3 alone (window is strict subset of causal)."""
+local_window_size = 3
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    is_causal=1,
+    local_window_size=local_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, is_causal=1, local_window_size=local_window_size
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_default</summary>
+
+```python
+"""local_window_size=-1 (default/disabled) behaves identically to ver24."""
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V"],
+    outputs=["Y"],
+    local_window_size=-1,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 6, 8).astype(np.float32)
+V = np.random.rand(2, 3, 6, 8).astype(np.float32)
+
+Y, _, _, _ = _compute_attention(
+    Q, K, V, local_window_size=-1
+)
+
+expect(
+    node,
+    inputs=[Q, K, V],
+    outputs=[Y],
+    name="test_attention_local_window_default",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_with_past</summary>
+
+```python
+"""Sliding window with internal KV cache (past_key/past_value)."""
+local_window_size = 3
+past_sequence_length = 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "", "past_key", "past_value"],
+    outputs=["Y", "present_key", "present_value"],
+    local_window_size=local_window_size,
+)
+
+Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
+K = np.random.rand(2, 3, 2, 8).astype(np.float32)
+V = np.random.rand(2, 3, 2, 8).astype(np.float32)
+past_key = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+past_value = np.random.rand(2, 3, past_sequence_length, 8).astype(np.float32)
+
+Y, present_key, present_value, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    past_key=past_key,
+    past_value=past_value,
+    local_window_size=local_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, past_key, past_value],
+    outputs=[Y, present_key, present_value],
+    name="test_attention_local_window_with_past",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
 )
 ```
 

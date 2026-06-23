@@ -76,6 +76,34 @@ def _apply_causal(base, offset):
     return base + causal
 
 
+def _apply_sliding_window(base, local_window_size, offset):
+    """Adds a sliding-window bias to ``base``.
+
+    Window condition: each query at absolute position ``p = offset + i`` attends
+    key ``j`` iff ``0 <= p - j < local_window_size``.  This is a strict subset of
+    the causal condition (``p - j >= 0``), so future positions are always masked.
+
+    ``offset`` semantics match ``_apply_causal``: scalar for internal/no cache,
+    1-D ``(batch,)`` for external cache.
+    """
+    q_sequence_length, kv_sequence_length = base.shape[-2:]
+    i_idx = np.arange(q_sequence_length).reshape(q_sequence_length, 1)  # (q, 1)
+    j_idx = np.arange(kv_sequence_length).reshape(1, kv_sequence_length)  # (1, kv)
+    per_batch = np.ndim(offset) > 0
+    if per_batch:
+        offsets = np.reshape(offset, (-1, 1, 1))  # (batch, 1, 1)
+        diff = (i_idx + offsets) - j_idx  # (batch, q, kv)
+    else:
+        diff = (i_idx + int(offset)) - j_idx  # (q, kv)
+    allowed = (diff >= 0) & (diff < local_window_size)
+    window = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
+    if per_batch:
+        return base.reshape((1,) * (4 - base.ndim) + base.shape) + window.reshape(
+            window.shape[0], 1, q_sequence_length, kv_sequence_length
+        )
+    return base + window
+
+
 def _compute_attention(
     Q: np.ndarray,
     K: np.ndarray,
@@ -91,7 +119,16 @@ def _compute_attention(
     softmax_precision=None,
     softcap=None,
     qk_matmul_output_mode=None,
+    local_window_size=None,
 ) -> np.ndarray:
+    if (
+        local_window_size is not None
+        and local_window_size != -1
+        and local_window_size <= 0
+    ):
+        raise ValueError(
+            f"local_window_size must be -1 or positive, got {local_window_size}"
+        )
     assert len(Q.shape) == len(K.shape) == len(V.shape)
     # Set input tensors (Q, K, V) to the correct shape if input shape is 3D
     # NewShapeQ (batch_size, q_num_heads, q_sequence_length, head_size)
@@ -196,6 +233,16 @@ def _compute_attention(
             attn_mask = (1 - attn_mask).astype(Q.dtype)
             attn_mask[attn_mask == 1] = -np.inf
         attn_bias = attn_bias + attn_mask
+
+    # Apply sliding window mask (layered on top of causal/attn_mask)
+    if local_window_size is not None and local_window_size > 0:
+        if past_key is None and nonpad_kv_seqlen is not None:
+            win_offset = nonpad_kv_seqlen.reshape(-1) - q_sequence_length
+        elif past_key is not None:
+            win_offset = past_key.shape[2]
+        else:
+            win_offset = 0
+        attn_bias = _apply_sliding_window(attn_bias, local_window_size, win_offset)
 
     if nonpad_kv_seqlen is not None:
         attn_bias = attn_bias.reshape(
@@ -317,6 +364,7 @@ class Attention(OpRun):
         softmax_precision=None,
         softcap=None,
         qk_matmul_output_mode=None,
+        local_window_size=None,
     ) -> np.ndarray:
         return _compute_attention(
             Q,
@@ -333,4 +381,5 @@ class Attention(OpRun):
             softmax_precision=softmax_precision,
             softcap=softcap,
             qk_matmul_output_mode=qk_matmul_output_mode,
+            local_window_size=local_window_size,
         )

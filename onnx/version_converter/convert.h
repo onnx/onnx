@@ -18,6 +18,7 @@
 
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/Attention_24_23.h"
+#include "onnx/version_converter/adapters/Attention_25_24.h"
 #include "onnx/version_converter/adapters/axes_attribute_to_input.h"
 #include "onnx/version_converter/adapters/axes_input_to_attribute.h"
 #include "onnx/version_converter/adapters/axis_attribute_to_input.h"
@@ -924,6 +925,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         std::make_unique<TypeRestriction>("SplitToSequence", OpSetID(24), OpSetID(23), bfloat16_not_allowed));
 
     /******** 24 -> 25 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Attention", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Cast", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("CastLike", OpSetID(24), OpSetID(25)));
     registerAdapter(std::make_unique<CompatibleAdapter>("Constant", OpSetID(24), OpSetID(25)));
@@ -944,6 +946,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<CompatibleAdapter>("QuantizeLinear", OpSetID(24), OpSetID(25)));
 
     /******** 25 -> 24 ********/
+    registerAdapter(std::make_unique<Attention_25_24>());
     const std::vector<TensorProto_DataType> ir13_types_not_in_ir12 = {
         TensorProto_DataType_UINT2, TensorProto_DataType_INT2};
     registerAdapter(std::make_unique<TypeRestriction>("Cast", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
