@@ -11,6 +11,7 @@
 #include <charconv>
 #include <cstdlib>
 #include <string>
+#include <system_error>
 #include <unordered_map>
 
 #ifndef __cpp_lib_to_chars_floating_point

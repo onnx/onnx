@@ -778,11 +778,11 @@ namespace {
 class LocaleGuard {
  public:
   LocaleGuard() {
-    const char* loc = std::setlocale(LC_ALL, nullptr);
+    const char* loc = std::setlocale(LC_NUMERIC, nullptr);
     saved_ = loc ? loc : "C";
   }
   ~LocaleGuard() {
-    std::setlocale(LC_ALL, saved_.c_str());
+    std::setlocale(LC_NUMERIC, saved_.c_str());
   }
   LocaleGuard(const LocaleGuard&) = delete;
   LocaleGuard& operator=(const LocaleGuard&) = delete;
@@ -806,7 +806,7 @@ TEST(ParserTest, LocaleIndependentFloatParsing) {
 
   bool locale_set = false;
   for (const auto* candidate : locale_candidates) {
-    if (std::setlocale(LC_ALL, candidate) != nullptr) {
+    if (std::setlocale(LC_NUMERIC, candidate) != nullptr) {
       locale_set = true;
       break;
     }

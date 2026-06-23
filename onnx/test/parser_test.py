@@ -375,10 +375,10 @@ class TestBasicFunctions(unittest.TestCase):
 
         See https://github.com/onnx/onnx/issues/8111
         """
-        original_locale = locale.setlocale(locale.LC_ALL, None)
+        original_locale = locale.setlocale(locale.LC_NUMERIC, None)
 
         def restore_locale() -> None:
-            locale.setlocale(locale.LC_ALL, original_locale)
+            locale.setlocale(locale.LC_NUMERIC, original_locale)
 
         # Try to set a locale with comma as decimal separator.
         # Use platform-appropriate locale names.
@@ -391,7 +391,7 @@ class TestBasicFunctions(unittest.TestCase):
         locale_set = False
         for candidate in candidates:
             try:
-                locale.setlocale(locale.LC_ALL, candidate)
+                locale.setlocale(locale.LC_NUMERIC, candidate)
                 locale_set = True
                 break
             except locale.Error:
