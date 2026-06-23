@@ -7,13 +7,119 @@
 
 #include "onnx/defs/parser.h"
 
+#include <locale.h>
+
 #include <cctype>
+#include <cerrno>
+#include <charconv>
 #include <limits>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <unordered_map>
 
 #include "onnx/common/common.h"
+
+namespace {
+
+// Locale-independent float/double parsing implementation.
+// Uses std::from_chars when the stdlib supports it (__cpp_lib_to_chars >= 201611L),
+// otherwise falls back to strtof_l/strtod_l with an explicit "C" locale.
+
+#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
+
+float LocaleIndependentStof(const std::string& s) {
+  float val = 0.0f;
+  const char* const begin = s.data();
+  const char* const end = begin + s.size();
+  auto result = std::from_chars(begin, end, val);
+  if (result.ec != std::errc{} || result.ptr != end) {
+    ONNX_THROW("Failed to parse float from string: " + s);
+  }
+  return val;
+}
+
+double LocaleIndependentStod(const std::string& s) {
+  double val = 0.0;
+  const char* const begin = s.data();
+  const char* const end = begin + s.size();
+  auto result = std::from_chars(begin, end, val);
+  if (result.ec != std::errc{} || result.ptr != end) {
+    ONNX_THROW("Failed to parse double from string: " + s);
+  }
+  return val;
+}
+
+#else // Fallback for platforms without floating-point from_chars (e.g. Apple Clang)
+
+#ifdef _WIN32
+struct CLocale {
+  _locale_t loc;
+  CLocale() : loc(_create_locale(LC_ALL, "C")) {}
+  ~CLocale() {
+    if (loc)
+      _free_locale(loc);
+  }
+  CLocale(const CLocale&) = delete;
+  CLocale& operator=(const CLocale&) = delete;
+};
+#else // POSIX (Linux, macOS)
+struct CLocale {
+  locale_t loc;
+  CLocale() : loc(newlocale(LC_ALL_MASK, "C", nullptr)) {}
+  ~CLocale() {
+    if (loc)
+      freelocale(loc);
+  }
+  CLocale(const CLocale&) = delete;
+  CLocale& operator=(const CLocale&) = delete;
+};
+#endif
+
+const CLocale& GetCLocale() {
+  static const CLocale instance;
+  return instance;
+}
+
+float LocaleIndependentStof(const std::string& s) {
+  const auto& cloc = GetCLocale();
+  if (!cloc.loc) {
+    ONNX_THROW("Failed to create C locale for float parsing");
+  }
+  char* end = nullptr;
+  errno = 0;
+#ifdef _WIN32
+  float val = _strtof_l(s.c_str(), &end, cloc.loc);
+#else
+  float val = strtof_l(s.c_str(), &end, cloc.loc);
+#endif
+  if (end != s.c_str() + s.size() || errno == ERANGE) {
+    ONNX_THROW("Failed to parse float from string: " + s);
+  }
+  return val;
+}
+
+double LocaleIndependentStod(const std::string& s) {
+  const auto& cloc = GetCLocale();
+  if (!cloc.loc) {
+    ONNX_THROW("Failed to create C locale for double parsing");
+  }
+  char* end = nullptr;
+  errno = 0;
+#ifdef _WIN32
+  double val = _strtod_l(s.c_str(), &end, cloc.loc);
+#else
+  double val = strtod_l(s.c_str(), &end, cloc.loc);
+#endif
+  if (end != s.c_str() + s.size() || errno == ERANGE) {
+    ONNX_THROW("Failed to parse double from string: " + s);
+  }
+  return val;
+}
+
+#endif // __cpp_lib_to_chars
+
+} // anonymous namespace
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
 #define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))
