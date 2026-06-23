@@ -20,13 +20,13 @@
 
 #include "onnx/common/common.h"
 
-namespace {
-
 // Locale-independent float/double parsing implementation.
 // Uses std::from_chars when the stdlib supports it (__cpp_lib_to_chars >= 201611L),
 // otherwise falls back to strtof_l/strtod_l with an explicit "C" locale.
 
 #if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
+
+namespace ONNX_NAMESPACE {
 
 float LocaleIndependentStof(const std::string& s) {
   float val = 0.0f;
@@ -50,7 +50,11 @@ double LocaleIndependentStod(const std::string& s) {
   return val;
 }
 
+} // namespace ONNX_NAMESPACE
+
 #else // Fallback for platforms without floating-point from_chars (e.g. Apple Clang)
+
+namespace {
 
 #ifdef _WIN32
 struct CLocale {
@@ -80,6 +84,10 @@ const CLocale& GetCLocale() {
   static const CLocale instance;
   return instance;
 }
+
+} // anonymous namespace
+
+namespace ONNX_NAMESPACE {
 
 float LocaleIndependentStof(const std::string& s) {
   const auto& cloc = GetCLocale();
@@ -117,9 +125,9 @@ double LocaleIndependentStod(const std::string& s) {
   return val;
 }
 
-#endif // __cpp_lib_to_chars
+} // namespace ONNX_NAMESPACE
 
-} // anonymous namespace
+#endif // __cpp_lib_to_chars
 
 #define PARSE_TOKEN(x) CHECK_PARSER_STATUS(ParserBase::Parse(x))
 #define PARSE(...) CHECK_PARSER_STATUS(Parse(__VA_ARGS__))

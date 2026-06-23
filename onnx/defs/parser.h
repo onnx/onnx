@@ -18,6 +18,10 @@
 
 namespace ONNX_NAMESPACE {
 
+// Locale-independent string-to-float/double conversion (defined in parser.cc).
+float LocaleIndependentStof(const std::string& s);
+double LocaleIndependentStod(const std::string& s);
+
 using IdList = google::protobuf::RepeatedPtrField<std::string>;
 
 using NodeList = google::protobuf::RepeatedPtrField<NodeProto>;
