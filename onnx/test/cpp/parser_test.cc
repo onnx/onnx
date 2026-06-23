@@ -835,12 +835,11 @@ TEST(ParserTest, LocaleIndependentFloatParsing) {
   float alpha = node.attribute(0).f();
   EXPECT_NEAR(alpha, 0.123f, 1e-6f) << "Float attribute misparsed under non-US locale";
 
-  // Also test parsing a standalone float value.
-  float parsed_float = 0.0f;
-  OnnxParser float_parser("3.14159");
-  status = float_parser.Parse(parsed_float);
-  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
-  EXPECT_NEAR(parsed_float, 3.14159f, 1e-4f) << "Standalone float misparsed under non-US locale";
+  // Also test the locale-independent conversion helpers directly.
+  EXPECT_NEAR(LocaleIndependentStof("3.14159"), 3.14159f, 1e-4f)
+      << "LocaleIndependentStof misparsed under non-US locale";
+  EXPECT_NEAR(LocaleIndependentStod("2.71828"), 2.71828, 1e-10)
+      << "LocaleIndependentStod misparsed under non-US locale";
 }
 
 } // namespace Test
