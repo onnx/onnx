@@ -7,7 +7,11 @@
 
 #include "onnx/defs/parser.h"
 
-#include <locale.h>
+// POSIX locale extensions (newlocale, freelocale, strtof_l, strtod_l) are needed
+// for the fallback path on platforms without floating-point std::from_chars.
+#if !defined(__cpp_lib_to_chars) || __cpp_lib_to_chars < 201611L
+#include <locale.h> // NOLINT(modernize-deprecated-headers)
+#endif
 
 #include <cctype>
 #include <cerrno>
