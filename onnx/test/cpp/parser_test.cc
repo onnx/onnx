@@ -773,6 +773,7 @@ TEST(ParserTest, QuotedIdentifierTest2) {
 
 // Test that float parsing works correctly under a locale that uses comma as decimal separator.
 // This is a regression test for https://github.com/onnx/onnx/issues/8111
+namespace {
 // RAII helper to restore locale on scope exit, ensuring no locale leaks to other tests.
 class LocaleGuard {
  public:
@@ -789,6 +790,7 @@ class LocaleGuard {
  private:
   std::string saved_;
 };
+} // namespace
 
 TEST(ParserTest, LocaleIndependentFloatParsing) {
   LocaleGuard locale_guard; // Restores locale on any exit path
