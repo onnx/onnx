@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import ctypes
 import locale
 import platform
 import unittest
@@ -376,40 +375,27 @@ class TestBasicFunctions(unittest.TestCase):
 
         See https://github.com/onnx/onnx/issues/8111
         """
-        is_windows = platform.system() == "Windows"
-
-        if is_windows:
-            # On Windows, ctypes.cdll.msvcrt.setlocale returns a c_char_p-compatible value.
-            # We need to declare the return type to get a usable Python bytes object.
-            _setlocale = ctypes.cdll.msvcrt.setlocale
-            _setlocale.restype = ctypes.c_char_p
-            _setlocale.argtypes = [ctypes.c_int, ctypes.c_char_p]
-            original_locale = _setlocale(0, None)
-        else:
-            original_locale = locale.setlocale(locale.LC_ALL, None)
+        original_locale = locale.setlocale(locale.LC_ALL, None)
 
         def restore_locale() -> None:
-            if is_windows:
-                _setlocale(0, original_locale)
-            else:
-                locale.setlocale(locale.LC_ALL, original_locale)
+            locale.setlocale(locale.LC_ALL, original_locale)
 
-        # Try to set a locale with comma as decimal separator
+        # Try to set a locale with comma as decimal separator.
+        # Use platform-appropriate locale names.
+        is_windows = platform.system() == "Windows"
+        candidates = (
+            ("German_Germany.1252", "French_France.1252")
+            if is_windows
+            else ("de_DE.UTF-8", "fr_FR.UTF-8")
+        )
         locale_set = False
-        if is_windows:
+        for candidate in candidates:
             try:
-                result = _setlocale(0, b"German_Germany.1252")
-                locale_set = result is not None
-            except OSError:
-                pass
-        else:
-            for candidate in ("de_DE.UTF-8", "fr_FR.UTF-8"):
-                try:
-                    locale.setlocale(locale.LC_ALL, candidate)
-                    locale_set = True
-                    break
-                except locale.Error:
-                    continue
+                locale.setlocale(locale.LC_ALL, candidate)
+                locale_set = True
+                break
+            except locale.Error:
+                continue
 
         if not locale_set:
             restore_locale()

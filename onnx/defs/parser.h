@@ -62,8 +62,10 @@ using StringStringList = google::protobuf::RepeatedPtrField<StringStringEntryPro
 
 inline float LocaleIndependentStof(const std::string& s) {
   float val = 0.0f;
-  auto result = std::from_chars(s.data(), s.data() + s.size(), val);
-  if (result.ec != std::errc{}) {
+  const char* const begin = s.data();
+  const char* const end = begin + s.size();
+  auto result = std::from_chars(begin, end, val);
+  if (result.ec != std::errc{} || result.ptr != end) {
     ONNX_THROW("Failed to parse float from string: " + s);
   }
   return val;
@@ -71,8 +73,10 @@ inline float LocaleIndependentStof(const std::string& s) {
 
 inline double LocaleIndependentStod(const std::string& s) {
   double val = 0.0;
-  auto result = std::from_chars(s.data(), s.data() + s.size(), val);
-  if (result.ec != std::errc{}) {
+  const char* const begin = s.data();
+  const char* const end = begin + s.size();
+  auto result = std::from_chars(begin, end, val);
+  if (result.ec != std::errc{} || result.ptr != end) {
     ONNX_THROW("Failed to parse double from string: " + s);
   }
   return val;
