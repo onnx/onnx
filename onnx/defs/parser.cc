@@ -12,6 +12,7 @@
 #include <cctype>
 #include <cerrno>
 #include <charconv>
+#include <cstdlib>
 #include <limits>
 #include <string>
 #include <string_view>
