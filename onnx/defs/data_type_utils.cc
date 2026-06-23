@@ -243,7 +243,8 @@ int32_t DataTypeUtils::FromDataTypeString(const std::string& type_str) {
 
 namespace {
 
-StringRange::StringRange(const char* p_data, size_t p_size) : view_(p_data, p_size) {
+StringRange::StringRange(const char* p_data, size_t p_size)
+    : view_(p_data != nullptr ? std::string_view{p_data, p_size} : std::string_view{}) {
   assert(p_data != nullptr);
   LAndRStrip();
 }
