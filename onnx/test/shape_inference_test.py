@@ -6106,6 +6106,72 @@ class TestShapeInference(TestShapeInferenceHelper):
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 8)],
         )
 
+    def test_scan_num_scan_inputs_out_of_range(self) -> None:
+        # num_scan_inputs exceeding the input count must fail, not underflow.
+        subgraph = helper.make_graph(
+            [make_node("Add", ["a", "b"], ["c"])],
+            "subgraph",
+            [
+                make_tensor_value_info("a", TensorProto.UNDEFINED, None),
+                make_tensor_value_info("b", TensorProto.UNDEFINED, None),
+            ],
+            [make_tensor_value_info("c", TensorProto.UNDEFINED, None)],
+        )
+        graph = self._make_graph(
+            [
+                ("in0", TensorProto.FLOAT, (2,)),
+                ("in1", TensorProto.FLOAT, (3, 2)),
+            ],
+            [
+                make_node(
+                    "Scan",
+                    ["in0", "in1"],
+                    ["out"],
+                    num_scan_inputs=9,
+                    body=subgraph,
+                )
+            ],
+            [],
+        )
+        with self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError, "num_scan_inputs"
+        ):
+            self._inferred(graph)
+
+    def test_scan_loop_state_vars_exceed_outputs(self) -> None:
+        # More loop state vars than outputs must fail, not underflow.
+        subgraph = helper.make_graph(
+            [make_node("Identity", ["a"], ["c"])],
+            "subgraph",
+            [
+                make_tensor_value_info("a", TensorProto.UNDEFINED, None),
+                make_tensor_value_info("s0", TensorProto.UNDEFINED, None),
+                make_tensor_value_info("s1", TensorProto.UNDEFINED, None),
+            ],
+            [make_tensor_value_info("c", TensorProto.UNDEFINED, None)],
+        )
+        graph = self._make_graph(
+            [
+                ("in0", TensorProto.FLOAT, (2,)),
+                ("in1", TensorProto.FLOAT, (2,)),
+                ("in2", TensorProto.FLOAT, (3, 2)),
+            ],
+            [
+                make_node(
+                    "Scan",
+                    ["in0", "in1", "in2"],
+                    ["out"],
+                    num_scan_inputs=1,
+                    body=subgraph,
+                )
+            ],
+            [],
+        )
+        with self.assertRaisesRegex(
+            onnx.shape_inference.InferenceError, "loop state variables"
+        ):
+            self._inferred(graph)
+
     def test_scan_opset9(self) -> None:
         # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
         # the Scan outputs are left untyped so that shape inference must compute their type/shape.
