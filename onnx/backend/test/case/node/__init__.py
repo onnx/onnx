@@ -139,13 +139,23 @@ def function_testcase_helper(
         # No opset in the model. We take the most recent definition.
         schema = onnx.defs.get_schema(test_op, domain=node.domain)
     else:
-        # We take the function coming defined in the specific version mentioned
-        # in the model.
-        if len(opset_imports) != 1:
+        # We take the function defined in the specific version mentioned
+        # in the model. Find the opset_import matching the node's domain.
+        node_domain = node.domain or ""
+        matching_opset = None
+        for opset in opset_imports:
+            opset_domain = opset.domain or ""
+            if opset_domain == node_domain or (
+                node_domain in {"", "ai.onnx"} and opset_domain in {"", "ai.onnx"}
+            ):
+                matching_opset = opset
+                break
+        if matching_opset is None:
             raise ValueError(
-                f"Only one domain is allowed but {len(opset_imports)} found."
+                f"No matching opset_import found for domain {node_domain!r} "
+                f"in {[o.domain for o in opset_imports]}."
             )
-        version = opset_imports[0].version
+        version = matching_opset.version
         schema = onnx.defs.get_schema(test_op, version, domain=node.domain)
 
     # an op schema may have several functions, each for one opset version
@@ -418,16 +428,35 @@ def collect_diff_testcases() -> list[TestCase]:
 
 def get_diff_op_types():
     cwd_path = Path.cwd()
-    # git fetch first for git diff on GitHub Action
-    subprocess.run(
-        ["git", "fetch", "origin", "main:main"],
+    # Resolve the upstream main branch from the canonical onnx/onnx repository
+    # to avoid depending on local branch or remote naming conventions.
+    upstream_url = "https://github.com/onnx/onnx.git"
+    ls_remote = subprocess.run(
+        ["git", "ls-remote", upstream_url, "refs/heads/main"],
         cwd=cwd_path,
         capture_output=True,
         check=True,
     )
-    # obtain list of added or modified files in this PR
+    upstream_main_hash = ls_remote.stdout.split()[0].decode("utf-8")
+    # Fetch the upstream main commit so merge-base works even if the
+    # local repo hasn't fetched recently.
+    subprocess.run(
+        ["git", "fetch", upstream_url, upstream_main_hash],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    # Find the fork point from upstream main
+    merge_base = subprocess.run(
+        ["git", "merge-base", "HEAD", upstream_main_hash],
+        cwd=cwd_path,
+        capture_output=True,
+        check=True,
+    )
+    base_commit = merge_base.stdout.strip().decode("utf-8")
+    # obtain list of added or modified files since the fork point
     result = subprocess.run(
-        ["git", "diff", "--name-only", "--diff-filter=AM", "origin/main", "HEAD"],
+        ["git", "diff", "--name-only", "--diff-filter=AM", base_commit, "HEAD"],
         cwd=cwd_path,
         capture_output=True,
         check=True,
@@ -439,5 +468,7 @@ def get_diff_op_types():
         if file_name.startswith("onnx/backend/test/case/node/") and file_name.endswith(
             ".py"
         ):
-            changed_op_types.append(file_name.split("/")[-1].replace(".py", ""))
+            changed_op_types.append(
+                file_name.split("/")[-1].replace(".py", "").rstrip("_")
+            )
     return changed_op_types

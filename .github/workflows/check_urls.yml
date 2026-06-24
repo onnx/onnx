@@ -7,12 +7,16 @@ name: Check URLs
 on:
   push:
     branches:  [ "main", rel-* ]
+  pull_request:
+    paths:
+      - "**/*.md"
+      - ".github/workflows/check_urls.yml"
   schedule:
     # Run every month
     - cron:  '0 0 1 * *'
   workflow_dispatch:
 
-permissions:  # set top-level default permissions as security best practice
+permissions:
   contents: read
 
 jobs:
@@ -20,39 +24,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
         persist-credentials: false
-
-    - name: urls-checker-code
-      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4 # v0.0.34
+    - name: Set up pixi
+      uses: prefix-dev/setup-pixi@5185adfbffb4bd703da3010310260805d89ebb11 # v0.9.6
       with:
-        subfolder: onnx
-        file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
-        print_all: false
-        timeout: 2
-        retry_count : 2
-        exclude_urls: https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/
-        # exclude_patterns: https://...
-        force_pass: false
+        environments: link-checker
 
-    - name: urls-checker-docs
-      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4 # v0.0.34
+    - name: Restore lychee cache
+      id: restore-cache
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
       with:
-        subfolder: docs
-        file_types: .md,.py,.rst,.ipynb,.cc,.h,.cpp
-        print_all: false
-        timeout: 10
-        retry_count : 2
-        exclude_urls: https://github.com/onnx/onnx/blob/main/docs/Operators,https://github.com/onnx/onnx/pull/436,http://127.0.0.1:80,http://127.0.0.1:80/simple/
-        force_pass: false
+        path: .lycheecache
+        # We don't hit the 'key' directly in subsequent
+        # commits. Instead we fall back to the latest 'restore-key'
+        # match and will store a new cached file when done.
+        key: cache-lychee-${{ github.sha }}
+        restore-keys: cache-lychee-
 
-    - name: urls-checker-community
-      uses: urlstechie/urlchecker-action@b643b43e2ac605e1475331c7b67247d242b7dce4 # v0.0.34
-      with:
-        subfolder: community
-        file_types: .md,.py,.rst
-        print_all: false
-        timeout: 2
-        retry_count : 2
-        force_pass: false
+    - name: Check links
+      run: pixi run -e link-checker lychee --root-dir . --cache-exclude-status=400..599 --cache .

@@ -38,6 +38,7 @@
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/pad_10_11.h"
 #include "onnx/version_converter/adapters/q_dq_21_20.h"
+#include "onnx/version_converter/adapters/range_27_26.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/resize_10_11.h"
@@ -966,6 +967,24 @@ class DefaultVersionConverter : public BaseVersionConverter {
     registerAdapter(std::make_unique<TypeRestriction>("Unsqueeze", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
     registerAdapter(
         std::make_unique<TypeRestriction>("QuantizeLinear", OpSetID(25), OpSetID(24), ir13_types_not_in_ir12));
+
+    /******** 26 -> 27 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Range", OpSetID(26), OpSetID(27)));
+
+    /******** 27 -> 26 ********/
+    // Range v27 added FLOAT16/BFLOAT16 and stash_type; Range v11 (opset 26) supports neither.
+    const std::vector<TensorProto_DataType> range_27_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16};
+    registerAdapter(std::make_unique<Range_27_26>(range_27_unallowed_types));
+
+    /******** 27 -> 28 ********/
+    registerAdapter(std::make_unique<CompatibleAdapter>("Celu", OpSetID(27), OpSetID(28)));
+
+    /******** 28 -> 27 ********/
+    // Celu v28 widened T to all_float_types_ir4(); Celu v12 (opset 27) supports only FLOAT.
+    const std::vector<TensorProto_DataType> celu_28_unallowed_types = {
+        TensorProto_DataType_FLOAT16, TensorProto_DataType_BFLOAT16, TensorProto_DataType_DOUBLE};
+    registerAdapter(std::make_unique<TypeRestriction>("Celu", OpSetID(28), OpSetID(27), celu_28_unallowed_types));
   }
 
   ModelProto convert_version(const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version)

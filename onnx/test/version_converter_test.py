@@ -20,6 +20,7 @@ from onnx import (
     TensorProto,
     checker,
     helper,
+    shape_inference,
 )
 
 
@@ -274,6 +275,78 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Gemm"
         assert converted_model.opset_import[0].version == 1
+
+    def test_gemm_7_6_rejects_1d_input(self) -> None:
+        # Regression test: heap-buffer-overflow when B has rank < 2 (advisory)
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_7_6_rejects_1d_input",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (4, 3)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (28,)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 7), 6)
+
+        self.assertRaises(RuntimeError, test)
+
+    def test_gemm_6_7_rejects_1d_input(self) -> None:
+        # Regression test: heap-buffer-overflow when B has rank < 2 (same pattern, upward)
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_6_7_rejects_1d_input",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (4, 3)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (28,)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 6), 7)
+
+        self.assertRaises(RuntimeError, test)
+
+    def test_gemm_7_6_rejects_1d_A(self) -> None:
+        # Exercises the A-rank guard (B is valid rank-2, A is rank-1).
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_7_6_rejects_1d_A",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (12,)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (3, 4)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 7), 6)
+
+        self.assertRaises(RuntimeError, test)
+
+    def test_gemm_6_7_rejects_1d_A(self) -> None:
+        # Exercises the A-rank guard (B is valid rank-2, A is rank-1).
+        def test() -> None:
+            nodes = [helper.make_node("Gemm", ["A", "B", "C"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test_gemm_6_7_rejects_1d_A",
+                [
+                    helper.make_tensor_value_info("A", TensorProto.FLOAT, (12,)),
+                    helper.make_tensor_value_info("B", TensorProto.FLOAT, (3, 4)),
+                    helper.make_tensor_value_info("C", TensorProto.FLOAT, (4,)),
+                ],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 6), 7)
+
+        self.assertRaises(RuntimeError, test)
 
     # Test Relu Adapter: 5 -> 7
     def test_relu_5_7(self) -> None:
@@ -2117,6 +2190,75 @@ class TestVersionConverter(unittest.TestCase):
 
     @parameterized.parameterized.expand(
         [
+            (
+                "cast_9_8",
+                "Cast",
+                {"to": TensorProto.FLOAT},
+                9,
+                8,
+                TensorProto.FLOAT,
+                (1,),
+            ),
+            (
+                "softmax_12_13",
+                "Softmax",
+                {"axis": 1},
+                12,
+                13,
+                TensorProto.FLOAT,
+                (1,),
+            ),
+            (
+                "upsample_9_10",
+                "Upsample",
+                {"mode": "nearest"},
+                9,
+                10,
+                TensorProto.FLOAT,
+                (1, 1, 2, 2),
+            ),
+        ]
+    )
+    def test_rejects_missing_required_inputs(
+        self,
+        _: str,
+        op_type: str,
+        attrs: dict[str, int | str],
+        from_opset: int,
+        to_opset: int,
+        output_type: int,
+        output_shape: tuple[int, ...],
+    ) -> None:
+        def test() -> None:
+            nodes = [helper.make_node(op_type, [], ["Y"], **attrs)]
+            graph = helper.make_graph(
+                nodes,
+                f"test_{op_type.lower()}_{from_opset}_{to_opset}_rejects_missing_input",
+                [],
+                [helper.make_tensor_value_info("Y", output_type, output_shape)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", from_opset), to_opset)
+
+        self.assertRaises((RuntimeError, shape_inference.InferenceError), test)
+
+    def test_softmax_13_12_rejects_malformed_flatten_input(self) -> None:
+        def test() -> None:
+            nodes = [
+                helper.make_node("Flatten", [], ["F"], axis=1),
+                helper.make_node("Softmax", ["F"], ["Y"], axis=0),
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_softmax_13_12_rejects_malformed_flatten_input",
+                [],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 13), 12)
+
+        self.assertRaises((RuntimeError, shape_inference.InferenceError), test)
+
+    @parameterized.parameterized.expand(
+        [
             ("per_tensor", (16, 3), (1,), None, None, None, TensorProto.INT8, True),
             (
                 "per_axis_none_block_shape",
@@ -2482,6 +2624,212 @@ class TestVersionConverter(unittest.TestCase):
         graph = self._make_scatter_graph(op_name, TensorProto.FLOAT, reduction)
         converted = self._converted(graph, helper.make_operatorsetid("", 18), 17)
         checker.check_model(converted)
+
+    # raw_data INT64 initializers + dims/raw byte-length mismatch guard.
+
+    def test_split_13_12_raw_data_initializer(self) -> None:
+        split_init = helper.make_tensor(
+            "split", TensorProto.INT64, [2], np.array([1, 3], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0)],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+            initializer=[split_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "split")
+        assert list(attr.ints) == [1, 3]
+
+    def test_reshape_5_4_raw_data_initializer(self) -> None:
+        shape_init = helper.make_tensor(
+            "shape", TensorProto.INT64, [2], np.array([2, 5], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("Reshape", ["X", "shape"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (10,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 5))],
+            initializer=[shape_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 5), 4)
+        reshape = next(n for n in converted.graph.node if n.op_type == "Reshape")
+        attr = next(a for a in reshape.attribute if a.name == "shape")
+        assert list(attr.ints) == [2, 5]
+
+    def test_axes_input_to_attr_13_12_raw_data(self) -> None:
+        axes_init = helper.make_tensor(
+            "axes", TensorProto.INT64, [1], np.array([0], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("ReduceSum", ["X", "axes"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 5))],
+            initializer=[axes_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "axes")
+        assert list(attr.ints) == [0]
+
+    def test_dft_20_19_raw_data_axis(self) -> None:
+        axis_init = helper.make_tensor(
+            "axis", TensorProto.INT64, [], np.array([1], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [helper.make_node("DFT", ["X", "", "axis"], ["Y"])],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 8, 2))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 8, 2))],
+            initializer=[axis_init],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 20), 19)
+        attr = next(a for a in converted.graph.node[0].attribute if a.name == "axis")
+        assert attr.i == 1
+
+    def test_split_13_12_raw_data_dims_mismatch_rejected(self) -> None:
+        # dims=[2] vs 8-byte raw_data fed via a Constant node; old code OOB-read.
+        split_value = TensorProto(
+            data_type=TensorProto.INT64,
+            dims=[2],
+            raw_data=struct.pack("<q", 1),
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Constant", [], ["split"], value=split_value),
+                helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0),
+            ],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+        )
+        # Bypass checker to exercise the converter guard directly.
+        model = helper.make_model(
+            graph, opset_imports=[helper.make_operatorsetid("", 13)]
+        )
+        with self.assertRaises(RuntimeError):
+            onnx.version_converter.convert_version(model, 12)
+
+    def test_split_13_12_raw_data_constant_node(self) -> None:
+        split_value = helper.make_tensor(
+            "", TensorProto.INT64, [2], np.array([1, 3], dtype=np.int64), raw=True
+        )
+        graph = helper.make_graph(
+            [
+                helper.make_node("Constant", [], ["split"], value=split_value),
+                helper.make_node("Split", ["X", "split"], ["Y0", "Y1"], axis=0),
+            ],
+            "g",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (4, 2))],
+            [
+                helper.make_tensor_value_info("Y0", TensorProto.FLOAT, (1, 2)),
+                helper.make_tensor_value_info("Y1", TensorProto.FLOAT, (3, 2)),
+            ],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 13), 12)
+        split = next(n for n in converted.graph.node if n.op_type == "Split")
+        attr = next(a for a in split.attribute if a.name == "split")
+        assert list(attr.ints) == [1, 3]
+
+    # Range 26 -> 27: CompatibleAdapter (forward upgrade, no attribute changes)
+    def test_range_26_27_float_success(self) -> None:
+        nodes = [helper.make_node("Range", ["start", "limit", "delta"], ["output"])]
+        graph = helper.make_graph(
+            nodes,
+            "range_26_27",
+            [
+                helper.make_tensor_value_info("start", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("limit", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("delta", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, None)],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 26), 27)
+        assert converted.opset_import[0].version == 27
+
+    # Range 27 -> 26: stash_type attribute must be removed on downgrade
+    def test_range_27_26_stash_type_removed(self) -> None:
+        nodes = [
+            helper.make_node(
+                "Range", ["start", "limit", "delta"], ["output"], stash_type=1
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "range_27_26",
+            [
+                helper.make_tensor_value_info("start", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("limit", TensorProto.FLOAT, []),
+                helper.make_tensor_value_info("delta", TensorProto.FLOAT, []),
+            ],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, None)],
+        )
+        converted = self._converted(graph, helper.make_operatorsetid("", 27), 26)
+        assert converted.opset_import[0].version == 26
+        range_node = next(n for n in converted.graph.node if n.op_type == "Range")
+        assert not any(a.name == "stash_type" for a in range_node.attribute)
+
+    # Range 27 -> 26: float16 and bfloat16 inputs must be rejected
+    @parameterized.parameterized.expand(
+        [
+            ("float16", TensorProto.FLOAT16),
+            ("bfloat16", TensorProto.BFLOAT16),
+        ]
+    )
+    def test_range_27_26_low_precision_fails(self, _: str, dtype: int) -> None:
+        def test() -> None:
+            nodes = [helper.make_node("Range", ["start", "limit", "delta"], ["output"])]
+            graph = helper.make_graph(
+                nodes,
+                "range_27_26_fp16",
+                [
+                    helper.make_tensor_value_info("start", dtype, []),
+                    helper.make_tensor_value_info("limit", dtype, []),
+                    helper.make_tensor_value_info("delta", dtype, []),
+                ],
+                [helper.make_tensor_value_info("output", dtype, None)],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 27), 26)
+
+        self.assertRaises(RuntimeError, test)
+
+    def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
+        graph = helper.make_graph(
+            [node],
+            "celu",
+            [helper.make_tensor_value_info("X", dtype, [3, 4])],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_celu_float_27_28_and_28_27(self) -> None:
+        assert (
+            self._celu_converted(TensorProto.FLOAT, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._celu_converted(TensorProto.FLOAT, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    # Celu 28 -> 27: types added in v28 must be rejected
+    @parameterized.parameterized.expand(
+        [
+            ("float16", TensorProto.FLOAT16),
+            ("bfloat16", TensorProto.BFLOAT16),
+            ("double", TensorProto.DOUBLE),
+        ]
+    )
+    def test_celu_28_27_unsupported_type_fails(self, _: str, dtype: int) -> None:
+        self.assertRaises(RuntimeError, lambda: self._celu_converted(dtype, 28, 27))
 
 
 if __name__ == "__main__":

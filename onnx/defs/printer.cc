@@ -10,10 +10,11 @@
 #include "onnx/defs/tensor_proto_util.h"
 
 namespace ONNX_NAMESPACE {
+namespace {
 
 using StringStringEntryProtos = google::protobuf::RepeatedPtrField<StringStringEntryProto>;
 
-static bool IsValidIdentifier(const std::string& str) {
+bool IsValidIdentifier(const std::string& str) {
   // Check if str is a valid identifier
   const char* next_ = str.c_str();
   const char* end_ = next_ + str.size();
@@ -155,15 +156,16 @@ class ProtoPrinter {
 };
 
 void ProtoPrinter::print(const TensorShapeProto_Dimension& dim) {
-  if (dim.has_dim_value())
+  if (dim.has_dim_value()) {
     output_ << dim.dim_value();
-  else if (dim.has_dim_param()) {
+  } else if (dim.has_dim_param()) {
     if (IsValidIdentifier(dim.dim_param()))
       output_ << dim.dim_param();
     else
       printQuoted(dim.dim_param());
-  } else
+  } else {
     output_ << "?";
+  }
 }
 
 void ProtoPrinter::print(const TensorShapeProto& shape) {
@@ -490,6 +492,8 @@ void ProtoPrinter::print(const FunctionProto& fn) {
   output_ << "\n";
   print(fn.node());
 }
+
+} // namespace
 
 #define DEF_OP(T)                                              \
   std::ostream& operator<<(std::ostream& os, const T& proto) { \

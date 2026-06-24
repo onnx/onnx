@@ -11,11 +11,16 @@
 #include <string>
 #include <unordered_map>
 
+#include "onnx/common/common.h"
 #include "onnx/common/status.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
+
+// Locale-independent string-to-float/double conversion (defined in parser.cc).
+ONNX_API float LocaleIndependentStof(const std::string& s);
+ONNX_API double LocaleIndependentStod(const std::string& s);
 
 using IdList = google::protobuf::RepeatedPtrField<std::string>;
 
@@ -300,7 +305,7 @@ class ParserBase {
     switch (literal.type) {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
-        val = std::stof(literal.value);
+        val = LocaleIndependentStof(literal.value);
         break;
       default:
         return ParseError("Unexpected literal type.");
@@ -314,7 +319,7 @@ class ParserBase {
     switch (literal.type) {
       case LiteralType::INT_LITERAL:
       case LiteralType::FLOAT_LITERAL:
-        val = std::stod(literal.value);
+        val = LocaleIndependentStod(literal.value);
         break;
       default:
         return ParseError("Unexpected literal type.");
