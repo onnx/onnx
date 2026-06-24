@@ -104,6 +104,37 @@ class OneHot(Base):
         )
 
     @staticmethod
+    def export_with_out_of_range_indices() -> None:
+        axisValue = 1
+        on_value = 3
+        off_value = 1
+        output_type = np.float32
+        node = onnx.helper.make_node(
+            "OneHot",
+            inputs=["indices", "depth", "values"],
+            outputs=["y"],
+            axis=axisValue,
+        )
+        # Indices outside [-depth, depth-1] map to an all-off_value row.
+        indices = np.array([5, -6, -1], dtype=np.int64)
+
+        # print(y)
+        # [[1. 1. 1. 1. 1.]
+        #  [1. 1. 1. 1. 1.]
+        #  [1. 1. 1. 1. 3.]]
+
+        depth = np.float32(5)
+        values = np.array([off_value, on_value], dtype=output_type)
+        y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+        y = y * (on_value - off_value) + off_value
+        expect(
+            node,
+            inputs=[indices, depth, values],
+            outputs=[y],
+            name="test_onehot_out_of_range_indices",
+        )
+
+    @staticmethod
     def export_with_negative_axis() -> None:
         axisValue = -2
         on_value = 3
