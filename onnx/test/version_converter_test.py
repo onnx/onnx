@@ -2800,6 +2800,37 @@ class TestVersionConverter(unittest.TestCase):
 
         self.assertRaises(RuntimeError, test)
 
+    def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
+        graph = helper.make_graph(
+            [node],
+            "celu",
+            [helper.make_tensor_value_info("X", dtype, [3, 4])],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_celu_float_27_28_and_28_27(self) -> None:
+        assert (
+            self._celu_converted(TensorProto.FLOAT, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._celu_converted(TensorProto.FLOAT, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    # Celu 28 -> 27: types added in v28 must be rejected
+    @parameterized.parameterized.expand(
+        [
+            ("float16", TensorProto.FLOAT16),
+            ("bfloat16", TensorProto.BFLOAT16),
+            ("double", TensorProto.DOUBLE),
+        ]
+    )
+    def test_celu_28_27_unsupported_type_fails(self, _: str, dtype: int) -> None:
+        self.assertRaises(RuntimeError, lambda: self._celu_converted(dtype, 28, 27))
+
 
 if __name__ == "__main__":
     unittest.main()
