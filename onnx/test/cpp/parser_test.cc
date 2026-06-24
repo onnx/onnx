@@ -3,7 +3,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <clocale>
+#include <cmath>
 #include <string>
+#include <string_view>
 
 #include "gtest/gtest.h"
 #include "onnx/checker.h"
@@ -14,7 +16,7 @@ namespace ONNX_NAMESPACE {
 namespace Test {
 
 template <typename T>
-static void Parse(T& parsedData, const char* input) {
+static void Parse(T& parsedData, std::string_view input) {
   OnnxParser parser(input);
   auto status = parser.Parse(parsedData);
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
@@ -26,19 +28,21 @@ static void Parse(T& parsedData, const char* input) {
   // We cannot expect equality between text1 and input due to white-space and syntactic sugar,
   // so, we convert it once more, and check for equality.
   T temp;
-  status = OnnxParser::Parse(temp, text1.c_str());
+  // Pass a string_view so this resolves to the static Parse(T&, std::string_view)
+  // overload rather than a two-argument member overload.
+  status = OnnxParser::Parse(temp, std::string_view(text1));
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   std::string text2 = ProtoToString(temp);
   EXPECT_EQ(text1, text2);
 }
 
 template <typename T>
-static void ExpectParseFailure(T& parsedData, const char* input) {
+static void ExpectParseFailure(T& parsedData, std::string_view input) {
   auto status = OnnxParser::Parse(parsedData, input);
   EXPECT_FALSE(status.IsOK());
 }
 
-static void CheckModel(const char* code) {
+static void CheckModel(std::string_view code) {
   ModelProto model;
   Parse(model, code);
 
@@ -55,6 +59,19 @@ TEST(ParserTest, EscapeStringLiteral) {
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
   EXPECT_EQ(s, std::string("123\"56\\89"));
+}
+
+TEST(ParserTest, NonNulTerminatedStringView) {
+  // The view is just "inf"; the backing buffer continues with a digit. A buffer
+  // over-read past the view would see '9' and reject the valid float literal.
+  std::string backing = "inf9";
+  std::string_view view(backing.data(), 3);
+  OnnxParser parser(view);
+  float val = 0.0f;
+  auto status = parser.ParserBase::Parse(val);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+  EXPECT_TRUE(std::isinf(val));
+  EXPECT_TRUE(parser.EndOfInput()) << "Extra unparsed input unexpected.";
 }
 
 TEST(ParserTest, TypeTest) {
