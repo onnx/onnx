@@ -3770,7 +3770,12 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("WinLtW = Less(WinDiff, WindowSizeNoDim)")
                   .Add("WinOk = And(WinGe0, WinLtW)")
                   .Add("WinMask = Where(WinOk, ScalarZero, FloatNegInf)")
-                  .Add("AttnBiasCausalWindow = Add(AttnBiasCausalOrNot, WinMask)");
+                  // Promote AttnBiasCausalOrNot to 4D before Add so that a 3D
+                  // (batch, Sq, Skv) attn_mask broadcasts as (batch, 1, Sq, Skv)
+                  // instead of mis-broadcasting as (1, batch, Sq, Skv).
+                  .Add("WinBiasShape = Concat <axis = 0> (NegOne1D, One1D, QSeqLen, NewKVSeqLen)")
+                  .Add("AttnBias4DWin = Reshape(AttnBiasCausalOrNot, WinBiasShape)")
+                  .Add("AttnBiasCausalWindow = Add(AttnBias4DWin, WinMask)");
             } else {
               // Internal cache (scalar PastKVSeqLen) or no cache: 2D mask [Sq, Skv]
               builder

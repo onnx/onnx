@@ -70,7 +70,12 @@ def _apply_causal(base, offset):
     causal = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
     if per_batch:
         # Promote base to (batch, 1, q, kv) and add the per-batch causal bias.
-        return base.reshape((1,) * (4 - base.ndim) + base.shape) + causal.reshape(
+        # For 3D (batch, q, kv), insert head axis at dim 1; for 4D, keep as-is.
+        if base.ndim == 3:
+            base_4d = base.reshape(base.shape[0], 1, base.shape[1], base.shape[2])
+        else:
+            base_4d = base.reshape((1,) * (4 - base.ndim) + base.shape)
+        return base_4d + causal.reshape(
             causal.shape[0], 1, q_sequence_length, kv_sequence_length
         )
     return base + causal
@@ -98,7 +103,12 @@ def _apply_sliding_window(base, local_window_size, offset):
     allowed = (diff >= 0) & (diff < local_window_size)
     window = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
     if per_batch:
-        return base.reshape((1,) * (4 - base.ndim) + base.shape) + window.reshape(
+        # For 3D (batch, q, kv), insert head axis at dim 1; for 4D, keep as-is.
+        if base.ndim == 3:
+            base_4d = base.reshape(base.shape[0], 1, base.shape[1], base.shape[2])
+        else:
+            base_4d = base.reshape((1,) * (4 - base.ndim) + base.shape)
+        return base_4d + window.reshape(
             window.shape[0], 1, q_sequence_length, kv_sequence_length
         )
     return base + window

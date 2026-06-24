@@ -2817,6 +2817,48 @@ class Attention(Base):
         )
 
     @staticmethod
+    def export_attention_local_window_ext_cache_3d_mask() -> None:
+        """Sliding window + external cache + 3D attn_mask (no is_causal).
+
+        This exercises the per-batch code path in _apply_sliding_window when
+        base is 3D (batch, q, kv) because is_causal=0 means _apply_causal does
+        not run, so the mask stays 3D from the attn_mask addition.
+        """
+        local_window_size = 3
+        B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+        node = onnx.helper.make_node(
+            "Attention",
+            inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+            outputs=["Y"],
+            local_window_size=local_window_size,
+        )
+
+        Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+        K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+        V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+        # 3D mask: (batch, q, kv) — no head dimension
+        attn_mask = np.random.rand(B, S_q, S_kv).astype(np.float32)
+        # External cache: nonpad_kv_seqlen marks valid key count per batch
+        nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+        Y, _, _, _ = _compute_attention(
+            Q,
+            K,
+            V,
+            attn_mask=attn_mask,
+            nonpad_kv_seqlen=nonpad_kv_seqlen,
+            local_window_size=local_window_size,
+        )
+
+        expect(
+            node,
+            inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+            outputs=[Y],
+            name="test_attention_local_window_ext_cache_3d_mask",
+            opset_imports=[onnx.helper.make_opsetid("", 25)],
+        )
+
+    @staticmethod
     def export_attention_3d_local_window() -> None:
         """Sliding window attention with 3D inputs (q_num_heads, kv_num_heads)."""
         local_window_size = 3
