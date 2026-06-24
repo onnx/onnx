@@ -92,8 +92,10 @@ void DefaultVersionConverter::convert_graph(
         const auto schema_it = all_schemas.find(op_name);
         ONNX_ASSERTM(
             schema_it != all_schemas.end(),
-            "Op '%s' has no registered schema; cannot convert its version.",
-            op_name.c_str());
+            "Op '%s' has no registered schema; cannot convert it from version %lld to %lld.",
+            op_name.c_str(),
+            static_cast<long long>(curr_version),
+            static_cast<long long>(target_version.version()));
         const auto& op_domain_map = schema_it->second;
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
