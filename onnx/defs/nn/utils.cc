@@ -251,7 +251,7 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
           .Add("RowPlusOff = Add(RangeRow4D, OffsetB4D)") // (batch, 1, q, 1)
           .Add("BoolMaskTri = Less(RowPlusOff, RangeCol4D)"); // (batch, 1, q, total)
       // Promote AttnBias to 4D before adding 4D MaskTri: a 3D (batch, q, kv)
-      // attn_mask would mis-broadcast as (1, batch, q, kv) without this reshape.
+      // attn_mask would incorrectly broadcast as (1, batch, q, kv) without this.
       builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
           .Add("CausalBiasShape = Concat <axis = 0> (NegOne1D, One1D, QSeqLen, NewKVSeqLen)")
           .Add("AttnBias4DCausal = Reshape(AttnBias, CausalBiasShape)")
