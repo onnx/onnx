@@ -1790,17 +1790,17 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a 
 <dl>
 <dt><tt>Q</tt> : T1</dt>
 <dd>Query tensor with shape `(batch_size, q_sequence_length, input_hidden_size)` or `(batch_size, q_num_heads, q_sequence_length, head_size)`. 3D inputs require `q_num_heads` and `kv_num_heads` attributes to be set.</dd>
-<dt><tt>K</tt> : T2</dt>
+<dt><tt>K</tt> : T1</dt>
 <dd>Key tensor with shape `(batch_size, kv_sequence_length, input_hidden_size)` or `(batch_size, kv_num_heads, kv_sequence_length, head_size)`. 3D inputs require `q_num_heads` and `kv_num_heads` attributes to be set.</dd>
 <dt><tt>V</tt> : T2</dt>
 <dd>Value tensor with shape `(batch_size, kv_sequence_length, input_hidden_size)` or `(batch_size, kv_num_heads, kv_sequence_length, v_head_size)`. 3D inputs require `q_num_heads` and `kv_num_heads` attributes to be set.</dd>
 <dt><tt>attn_mask</tt> (optional) : U</dt>
 <dd>Attention mask. Boolean mask where a value of `True` indicates that element should take part in attention, or `False` indicates the element should be masked out. If not set, no attn_mask will be applied. In the case of a boolean mask, a `True` value indicates that the element should take part in attention. Or float type with the same type as query, key and value that is added to the attention score. Supports shapes: `(kv_sequence_length)`, `(q_sequence_length, kv_sequence_length)`, `(batch_size, q_sequence_length, kv_sequence_length)`, `(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`, `(batch_size, 1, q_sequence_length, kv_sequence_length)`, and `(1, 1, q_sequence_length, kv_sequence_length)`.</dd>
-<dt><tt>past_key</tt> (optional) : T2</dt>
+<dt><tt>past_key</tt> (optional) : T1</dt>
 <dd>Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. Must be used together with `past_value` input.</dd>
 <dt><tt>past_value</tt> (optional) : T2</dt>
 <dd>Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. Must be used together with `past_key` input.</dd>
-<dt><tt>nonpad_kv_seqlen</tt> (optional) : U</dt>
+<dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
 <dd>Number of non-padding tokens in each sample of the batch. Shape `(batch_size,)`.</dd>
 </dl>
 
@@ -1809,7 +1809,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a 
 <dl>
 <dt><tt>Y</tt> : T1</dt>
 <dd>Output tensor with shape `(batch_size, q_sequence_length, hidden_size)` for 3D inputs or `(batch_size, q_num_heads, q_sequence_length, v_head_size)` for 4D inputs.</dd>
-<dt><tt>present_key</tt> (optional) : T2</dt>
+<dt><tt>present_key</tt> (optional) : T1</dt>
 <dd>Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
 <dt><tt>present_value</tt> (optional) : T2</dt>
 <dd>Updated value cache with shape `(batch_size, kv_num_heads, total_sequence_length, v_head_size)` where `total_sequence_length = past_sequence_length + kv_sequence_length`.</dd>
@@ -4452,9 +4452,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _, _ = _compute_attention(
-    Q, K, V, local_window_size=local_window_size
-)
+Y, _, _, _ = _compute_attention(Q, K, V, local_window_size=local_window_size)
 
 expect(
     node,
@@ -4473,7 +4471,8 @@ expect(
 
 ```python
 """is_causal=1 + local_window_size=3 produces bit-identical result to
-local_window_size=3 alone (window is strict subset of causal)."""
+local_window_size=3 alone (window is strict subset of causal).
+"""
 local_window_size = 3
 node = onnx.helper.make_node(
     "Attention",
@@ -4519,9 +4518,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _, _ = _compute_attention(
-    Q, K, V, local_window_size=-1
-)
+Y, _, _, _ = _compute_attention(Q, K, V, local_window_size=-1)
 
 expect(
     node,

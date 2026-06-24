@@ -3533,7 +3533,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Key tensor with shape `(batch_size, kv_sequence_length, input_hidden_size)` "
             "or `(batch_size, kv_num_heads, kv_sequence_length, head_size)`. "
             "3D inputs require `q_num_heads` and `kv_num_heads` attributes to be set.",
-            "T2",
+            "T1",
             OpSchema::Single)
         .Input(
             2,
@@ -3564,7 +3564,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "past_key",
             "Past state for key with shape `(batch_size, kv_num_heads, past_sequence_length, head_size)`. "
             "Must be used together with `past_value` input.",
-            "T2",
+            "T1",
             OpSchema::Optional)
         .Input(
             5,
@@ -3577,7 +3577,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             6,
             "nonpad_kv_seqlen",
             "Number of non-padding tokens in each sample of the batch. Shape `(batch_size,)`.",
-            "U",
+            "tensor(int64)",
             OpSchema::Optional)
         .Output(
             0,
@@ -3591,7 +3591,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "present_key",
             "Updated key cache with shape `(batch_size, kv_num_heads, total_sequence_length, head_size)` "
             "where `total_sequence_length = past_sequence_length + kv_sequence_length`.",
-            "T2",
+            "T1",
             OpSchema::Optional)
         .Output(
             2,
