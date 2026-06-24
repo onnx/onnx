@@ -45,12 +45,12 @@ class Gemm_7_6 final : public Adapter {
     int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(MN, C_shape);
     ONNX_ASSERTM(
         req_broadcast != -1,
-        "%s being converted from %" PRId64 " to %" PRId64
-        " does "
-        "not have broadcastable inputs.",
-        name().c_str(),
+        name(),
+        " being converted from ",
         static_cast<int64_t>(initial_version().version()),
-        static_cast<int64_t>(target_version().version()))
+        " to ",
+        static_cast<int64_t>(target_version().version()),
+        " does not have broadcastable inputs.")
     if (req_broadcast == 1) {
       node->i_(kbroadcast, 1);
     }
