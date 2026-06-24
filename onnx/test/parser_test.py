@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import locale
+import platform
 import unittest
 
 from parameterized import parameterized
@@ -367,6 +369,57 @@ class TestBasicFunctions(unittest.TestCase):
            """
         graph = onnx.parser.parse_model(text_graph)
         self.assertEqual(len(graph.graph.node), 1)
+
+    def test_locale_independent_float_parsing(self) -> None:
+        """Regression test: float parsing must work under non-US locales.
+
+        See https://github.com/onnx/onnx/issues/8111
+        """
+        original_locale = locale.setlocale(locale.LC_NUMERIC, None)
+
+        def restore_locale() -> None:
+            locale.setlocale(locale.LC_NUMERIC, original_locale)
+
+        # Try to set a locale with comma as decimal separator.
+        # Use platform-appropriate locale names.
+        is_windows = platform.system() == "Windows"
+        candidates = (
+            ("German_Germany.1252", "French_France.1252")
+            if is_windows
+            else ("de_DE.UTF-8", "fr_FR.UTF-8")
+        )
+        locale_set = False
+        for candidate in candidates:
+            try:
+                locale.setlocale(locale.LC_NUMERIC, candidate)
+                locale_set = True
+                break
+            except locale.Error:
+                continue
+
+        if not locale_set:
+            restore_locale()
+            self.skipTest("No locale with comma decimal separator available")
+
+        try:
+            model_text = """
+            <ir_version: 7, opset_import: ["" : 13]>
+            agraph (float[1, 5] X) => (float[1, 5] Y) {
+                Y = LeakyRelu <alpha = 0.123> (X)
+            }
+            """
+            model = onnx.parser.parse_model(model_text)
+            node = model.graph.node[0]
+            self.assertEqual(node.attribute[0].name, "alpha")
+            alpha = node.attribute[0].f
+            self.assertAlmostEqual(
+                alpha,
+                0.123,
+                places=5,
+                msg="Float attribute misparsed under non-US locale",
+            )
+        finally:
+            restore_locale()
 
 
 if __name__ == "__main__":

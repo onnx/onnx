@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include <clocale>
 #include <string>
 
 #include "gtest/gtest.h"
@@ -768,6 +769,73 @@ TEST(ParserTest, QuotedIdentifierTest2) {
 
   FunctionProto fp;
   Parse(fp, code);
+}
+
+// Test that float parsing works correctly under a locale that uses comma as decimal separator.
+// This is a regression test for https://github.com/onnx/onnx/issues/8111
+namespace {
+// RAII helper to restore locale on scope exit, ensuring no locale leaks to other tests.
+class LocaleGuard {
+ public:
+  LocaleGuard() {
+    const char* loc = std::setlocale(LC_NUMERIC, nullptr);
+    saved_ = loc ? loc : "C";
+  }
+  ~LocaleGuard() {
+    std::setlocale(LC_NUMERIC, saved_.c_str());
+  }
+  LocaleGuard(const LocaleGuard&) = delete;
+  LocaleGuard& operator=(const LocaleGuard&) = delete;
+
+ private:
+  std::string saved_;
+};
+} // namespace
+
+TEST(ParserTest, LocaleIndependentFloatParsing) {
+  LocaleGuard locale_guard; // Restores locale on any exit path
+
+  // Try to set a locale with comma decimal separator.
+  // Different platforms have different locale names.
+  const char* locale_candidates[] = {
+      "de_DE.UTF-8", // Linux/macOS
+      "German_Germany.1252", // Windows
+      "fr_FR.UTF-8", // Linux/macOS alternative
+      "French_France.1252", // Windows alternative
+  };
+
+  bool locale_set = false;
+  for (const auto* candidate : locale_candidates) {
+    if (std::setlocale(LC_NUMERIC, candidate) != nullptr) {
+      locale_set = true;
+      break;
+    }
+  }
+
+  if (!locale_set) {
+    GTEST_SKIP() << "No locale with comma decimal separator available on this system";
+  }
+
+  // Parse a model with float literals under the comma-decimal locale.
+  const char* code = R"ONNX(
+    <ir_version: 7, opset_import: ["" : 13]>
+    agraph (float[1, 5] X) => (float[1, 5] Y) {
+        Y = LeakyRelu <alpha = 0.123> (X)
+    }
+  )ONNX";
+
+  ModelProto model;
+  OnnxParser parser(code);
+  auto status = parser.Parse(model);
+  EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
+
+  // Verify the float attribute was parsed correctly (not truncated at the decimal point).
+  ASSERT_EQ(model.graph().node_size(), 1);
+  const auto& node = model.graph().node(0);
+  ASSERT_EQ(node.attribute_size(), 1);
+  EXPECT_EQ(node.attribute(0).name(), "alpha");
+  float alpha = node.attribute(0).f();
+  EXPECT_NEAR(alpha, 0.123f, 1e-6f) << "Float attribute misparsed under non-US locale";
 }
 
 } // namespace Test
