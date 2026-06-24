@@ -3612,9 +3612,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _, _ = _compute_attention(
-    Q, K, V, local_window_size=local_window_size
-)
+Y, _, _, _ = _compute_attention(Q, K, V, local_window_size=local_window_size)
 
 expect(
     node,
@@ -3631,7 +3629,8 @@ expect(
 
 ```python
 """is_causal=1 + local_window_size=3 produces bit-identical result to
-local_window_size=3 alone (window is strict subset of causal)."""
+local_window_size=3 alone (window is strict subset of causal).
+"""
 local_window_size = 3
 node = onnx.helper.make_node(
     "Attention",
@@ -3675,9 +3674,7 @@ Q = np.random.rand(2, 3, 4, 8).astype(np.float32)
 K = np.random.rand(2, 3, 6, 8).astype(np.float32)
 V = np.random.rand(2, 3, 6, 8).astype(np.float32)
 
-Y, _, _, _ = _compute_attention(
-    Q, K, V, local_window_size=-1
-)
+Y, _, _, _ = _compute_attention(Q, K, V, local_window_size=-1)
 
 expect(
     node,
