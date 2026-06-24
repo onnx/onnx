@@ -57,7 +57,8 @@ void DefaultVersionConverter::convert_graph(
     step = -1;
   }
   // Identify index of the default domain ("" or "ai.onnx") in g.opset_versions.
-  // Both spellings are treated as equivalent by ConvertVersion and ImportModelProto.
+  // ImportModelProto preserves domain strings verbatim from the proto, so both
+  // spellings must be matched here (ConvertVersion also accepts both).
   int domain_index = -1;
   for (int i = 0; i < static_cast<int>(g->opset_versions_mutable().size()); i++) {
     const std::string& dom = g->opset_versions_mutable()[i].domain();
