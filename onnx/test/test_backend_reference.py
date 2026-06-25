@@ -97,6 +97,9 @@ backend_test = onnx.backend.test.BackendTest(
         "test_dft_inverse": {"atol": dft_atol},
         "test_dft_inverse_opset19": {"atol": dft_atol},
         "test_dft_opset19": {"atol": dft_atol},
+        # The Celu function body rounds every step to bfloat16, so the expanded
+        # form drifts ~1 bfloat16 ULP from the direct reference.
+        "test_celu_bfloat16_expanded": {"rtol": 1e-2, "atol": 1e-2},
     },
 )
 
@@ -162,6 +165,10 @@ if version_utils.numpy_older_than("2.0"):
     # only bfloat16 (ml_dtypes) requires NumPy >= 2.0.
     backend_test.exclude(r"test_range_bfloat16_type_positive_delta")
     backend_test.exclude(r"test_range_bfloat16_type_positive_delta_expanded")
+    # Both the direct and expanded bfloat16 forms use ml_dtypes; the per-test
+    # tolerance for the expanded case applies only on NumPy >= 2.0.
+    backend_test.exclude(r"test_celu_bfloat16_cpu")
+    backend_test.exclude(r"test_celu_bfloat16_expanded_cpu")
 
 # The documentation does not explicitly say that is_causal=1 and attn_mask is not None
 # is not allowed. The expansion (based on the function definition in ONNX)
