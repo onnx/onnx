@@ -3547,16 +3547,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             3,
             "attn_mask",
             "Attention mask. "
-            "Boolean mask where a value of `True` indicates that element should take part in attention, "
-            "or `False` indicates the element should be masked out. "
-            "If not set, no attn_mask will be applied. "
-            "In the case of a boolean mask, a `True` value indicates that the element should take part in attention. "
-            "Or float type with the same type as query, key and value that is added to the attention score. "
-            "Supports shapes: `(kv_sequence_length)`, `(q_sequence_length, kv_sequence_length)`, "
-            "`(batch_size, q_sequence_length, kv_sequence_length)`, "
-            "`(batch_size, q_num_heads, q_sequence_length, kv_sequence_length)`, "
-            "`(batch_size, 1, q_sequence_length, kv_sequence_length)`, and "
-            "`(1, 1, q_sequence_length, kv_sequence_length)`.",
+            "Shape must be broadcastable to "
+            "`(batch_size, q_num_heads, q_sequence_length, total_sequence_length)` "
+            "where `total_sequence_length = past_sequence_length + kv_sequence_length`. "
+            "The last dimension can also be shorter than `total_sequence_length` and will be "
+            "padded to `total_sequence_length` with negative infinity. "
+            "Two types of masks are supported: a boolean mask where a value of `True` indicates "
+            "that the element should take part in attention, "
+            "or a float mask of the same type as query, key, value that is added to the attention score.",
             "U",
             OpSchema::Optional)
         .Input(
