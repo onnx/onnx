@@ -31603,7 +31603,7 @@ This version of the operator has been available since version 25 of the default 
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>Determines what the optional 4th output contains: `0` (default): raw QK matmul result; `1`: after softcap (before bias addition); `2`: QK + softcap + bias; `3`: post-softmax probabilities (after fully-masked-row guard).</dd>
+<dd>Determines what the optional 4th output contains: `0` (default): raw QK matmul result; `1`: after softcap (before bias addition); `2`: QK + softcap + bias; `3`: post-softmax probabilities (after fully-masked-row guard). In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -31628,7 +31628,7 @@ This version of the operator has been available since version 25 of the default 
 <dt><tt>past_value</tt> (optional) : T2</dt>
 <dd>Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. Must be used together with `past_key` input.</dd>
 <dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
-<dd>Number of non-padding tokens in each sample of the batch. Shape `(batch_size,)`.</dd>
+<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (i.e., non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (see the KV cache use cases in the operator description).</dd>
 </dl>
 
 #### Outputs (1 - 4)

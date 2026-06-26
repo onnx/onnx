@@ -1776,7 +1776,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a 
 <dt><tt>q_num_heads</tt> : int</dt>
 <dd>Number of heads of query. Must be used with 3D inputs of Q, K and V. </dd>
 <dt><tt>qk_matmul_output_mode</tt> : int (default is 0)</dt>
-<dd>Determines what the optional 4th output contains: `0` (default): raw QK matmul result; `1`: after softcap (before bias addition); `2`: QK + softcap + bias; `3`: post-softmax probabilities (after fully-masked-row guard).</dd>
+<dd>Determines what the optional 4th output contains: `0` (default): raw QK matmul result; `1`: after softcap (before bias addition); `2`: QK + softcap + bias; `3`: post-softmax probabilities (after fully-masked-row guard). In mode `3`, a fully-masked query row (every key disallowed) is a zero row, consistent with the corresponding row of the primary output `Y`. The mode-`3` output is emitted at the operator's output precision (`T1`); when `softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.</dd>
 <dt><tt>scale</tt> : float</dt>
 <dd>Scaling factor applied to $Q*K^T$. Default value is `1/sqrt(head_size)`. To prevent [numerical overflow](https://tinyurl.com/sudb9s96), scale `Q`, `K` by `sqrt(scale)` before matmul.</dd>
 <dt><tt>softcap</tt> : float (default is 0.0)</dt>
@@ -1801,7 +1801,7 @@ Other versions of this operator: <a href="Changelog.md#Attention-23">23</a>, <a 
 <dt><tt>past_value</tt> (optional) : T2</dt>
 <dd>Past state for value with shape `(batch_size, kv_num_heads, past_sequence_length, v_head_size)`. Must be used together with `past_key` input.</dd>
 <dt><tt>nonpad_kv_seqlen</tt> (optional) : tensor(int64)</dt>
-<dd>Number of non-padding tokens in each sample of the batch. Shape `(batch_size,)`.</dd>
+<dd>A vector of integers of shape `(batch_size,)` that indicates the number of valid (i.e., non-padding) tokens in each sample. A padding mask can be derived from this. This should not be used together with `past_key` and `past_value` inputs or `present_key` and `present_value` outputs (see the KV cache use cases in the operator description).</dd>
 </dl>
 
 #### Outputs (1 - 4)
@@ -4184,6 +4184,49 @@ expect(
 
 
 <details>
+<summary>attention_ext_cache_3d_mask_no_window</summary>
+
+```python
+"""External cache + 3D attn_mask without sliding window or causal.
+
+Exercises the padding-mask path when neither causal nor window
+has promoted the bias to 4D, requiring the padding-mask step
+itself to handle 3D → 4D promotion.
+"""
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(B, S_q, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_ext_cache_3d_mask_no_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
 <summary>attention_fp16</summary>
 
 ```python
@@ -4495,6 +4538,55 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_local_window_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+
+
+<details>
+<summary>attention_local_window_causal_ext_cache_3d_mask</summary>
+
+```python
+"""is_causal=1 + sliding window + external cache + 3D attn_mask.
+
+Exercises the combined causal + window path with external cache
+and a 3D (batch, q, kv) mask. The causal path promotes the mask
+to 4D, and the window path must recognise this to avoid a
+redundant Unsqueeze that would produce a 5D tensor.
+"""
+local_window_size = 3
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    local_window_size=local_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(B, S_q, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    local_window_size=local_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_causal_ext_cache_3d_mask",
     opset_imports=[onnx.helper.make_opsetid("", 25)],
 )
 ```

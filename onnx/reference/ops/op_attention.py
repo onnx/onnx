@@ -255,9 +255,14 @@ def _compute_attention(
         attn_bias = _apply_sliding_window(attn_bias, local_window_size, win_offset)
 
     if nonpad_kv_seqlen is not None:
-        attn_bias = attn_bias.reshape(
-            (1,) * (4 - attn_bias.ndim) + attn_bias.shape
-        )  # broadcast to 4D
+        if attn_bias.ndim == 3:
+            attn_bias = attn_bias.reshape(
+                attn_bias.shape[0], 1, attn_bias.shape[1], attn_bias.shape[2]
+            )
+        else:
+            attn_bias = attn_bias.reshape(
+                (1,) * (4 - attn_bias.ndim) + attn_bias.shape
+            )  # broadcast to 4D
         padding_mask = np.arange(kv_sequence_length) < nonpad_kv_seqlen[:, np.newaxis]
         padding_mask = padding_mask.reshape(batch_size, 1, 1, kv_sequence_length)
         padding_mask = np.where(padding_mask, 0, -np.inf)
