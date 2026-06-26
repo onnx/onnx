@@ -56,7 +56,7 @@ void AttentionPropagateElemTypeFromInputToOutput(InferenceContext& ctx) {
       }
       const auto* const kv_num_heads_attr = ctx.getAttribute("kv_num_heads");
       if (kv_num_heads_attr == nullptr) {
-        fail_type_inference("3D inputs expected to have q_num_heads attribute.");
+        fail_type_inference("3D inputs expected to have kv_num_heads attribute.");
       }
     }
 
