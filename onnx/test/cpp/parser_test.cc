@@ -28,8 +28,7 @@ static void Parse(T& parsedData, std::string_view input) {
   // We cannot expect equality between text1 and input due to white-space and syntactic sugar,
   // so, we convert it once more, and check for equality.
   T temp;
-  // Pass a string_view so this resolves to the static Parse(T&, std::string_view)
-  // overload rather than a two-argument member overload.
+  // Pass a string_view to exercise the std::string_view overload explicitly.
   status = OnnxParser::Parse(temp, std::string_view(text1));
   EXPECT_TRUE(status.IsOK()) << status.ErrorMessage();
   std::string text2 = ProtoToString(temp);
