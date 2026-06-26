@@ -1114,7 +1114,7 @@ expect(node, inputs=[x], outputs=[y], name="test_atanh")
 
 
 ### Attention
-There are 82 test cases, listed as following:
+There are 84 test cases, listed as following:
 <details>
 <summary>attention</summary>
 
@@ -3360,6 +3360,47 @@ expect(
 
 </details>
 <details>
+<summary>attention_ext_cache_3d_mask_no_window</summary>
+
+```python
+"""External cache + 3D attn_mask without sliding window or causal.
+
+Exercises the padding-mask path when neither causal nor window
+has promoted the bias to 4D, requiring the padding-mask step
+itself to handle 3D → 4D promotion.
+"""
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(B, S_q, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_ext_cache_3d_mask_no_window",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
 <summary>attention_fp16</summary>
 
 ```python
@@ -3653,6 +3694,53 @@ expect(
     inputs=[Q, K, V],
     outputs=[Y],
     name="test_attention_local_window_causal",
+    opset_imports=[onnx.helper.make_opsetid("", 25)],
+)
+```
+
+</details>
+<details>
+<summary>attention_local_window_causal_ext_cache_3d_mask</summary>
+
+```python
+"""is_causal=1 + sliding window + external cache + 3D attn_mask.
+
+Exercises the combined causal + window path with external cache
+and a 3D (batch, q, kv) mask. The causal path promotes the mask
+to 4D, and the window path must recognise this to avoid a
+redundant Unsqueeze that would produce a 5D tensor.
+"""
+local_window_size = 3
+B, H, S_q, S_kv, D = 2, 3, 4, 8, 8
+node = onnx.helper.make_node(
+    "Attention",
+    inputs=["Q", "K", "V", "attn_mask", "", "", "nonpad_kv_seqlen"],
+    outputs=["Y"],
+    is_causal=1,
+    local_window_size=local_window_size,
+)
+
+Q = np.random.rand(B, H, S_q, D).astype(np.float32)
+K = np.random.rand(B, H, S_kv, D).astype(np.float32)
+V = np.random.rand(B, H, S_kv, D).astype(np.float32)
+attn_mask = np.random.rand(B, S_q, S_kv).astype(np.float32)
+nonpad_kv_seqlen = np.array([6, 7], dtype=np.int64)
+
+Y, _, _, _ = _compute_attention(
+    Q,
+    K,
+    V,
+    attn_mask=attn_mask,
+    nonpad_kv_seqlen=nonpad_kv_seqlen,
+    is_causal=1,
+    local_window_size=local_window_size,
+)
+
+expect(
+    node,
+    inputs=[Q, K, V, attn_mask, nonpad_kv_seqlen],
+    outputs=[Y],
+    name="test_attention_local_window_causal_ext_cache_3d_mask",
     opset_imports=[onnx.helper.make_opsetid("", 25)],
 )
 ```

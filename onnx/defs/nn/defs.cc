@@ -3505,7 +3505,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`0` (default): raw QK matmul result; "
             "`1`: after softcap (before bias addition); "
             "`2`: QK + softcap + bias; "
-            "`3`: post-softmax probabilities (after fully-masked-row guard).",
+            "`3`: post-softmax probabilities (after fully-masked-row guard). "
+            "In mode `3`, a fully-masked query row (every key disallowed) "
+            "is a zero row, consistent with the corresponding row of the primary output `Y`. "
+            "The mode-`3` output is emitted at the operator's output precision (`T1`); when "
+            "`softmax_precision` differs from `T1` this is a cast of the softmax result to `T1`.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
@@ -3574,7 +3578,11 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             6,
             "nonpad_kv_seqlen",
-            "Number of non-padding tokens in each sample of the batch. Shape `(batch_size,)`.",
+            "A vector of integers of shape `(batch_size,)` that indicates the number of valid "
+            "(i.e., non-padding) tokens in each sample. A padding mask can be derived from this. "
+            "This should not be used together with `past_key` and `past_value` inputs or "
+            "`present_key` and `present_value` outputs "
+            "(see the KV cache use cases in the operator description).",
             "tensor(int64)",
             OpSchema::Optional)
         .Output(
@@ -3816,6 +3824,31 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Add padding mask if kv_nonpad_seqlen is provided
           if (ctx.hasInput(6)) {
+            // Promote AttnBiasCausalWindow to 4D before adding the
+            // (batch, 1, 1, kv) padding mask.  When is_causal=1 or
+            // local_window_size>0 with an external cache the preceding
+            // causal/window paths already produced a 4D result.
+            // Otherwise a 3D (batch, q, kv) attn_mask would be
+            // left-padded by ONNX broadcast to (1, batch, q, kv),
+            // cross-contaminating batches.
+            bool already_promoted = !ctx.hasInput(4) && (is_causal == 1 || local_window_size > 0);
+            if (!already_promoted && ctx.hasInput(3)) {
+              int pad_mask_rank = -1;
+              const auto* pad_tp = ctx.getInputType(3);
+              if (pad_tp && pad_tp->has_tensor_type() && pad_tp->tensor_type().has_shape()) {
+                pad_mask_rank = pad_tp->tensor_type().shape().dim_size();
+              }
+              if (pad_mask_rank == 3) {
+                builder.Add("AttnBiasCW4D = Unsqueeze(AttnBiasCausalWindow, One1D)");
+              } else if (pad_mask_rank == 4) {
+                builder.Add("AttnBiasCW4D = Identity(AttnBiasCausalWindow)");
+              } else {
+                builder.Add("PadBiasShape = Concat <axis = 0> (NegOne1D, One1D, QSeqLen, NewKVSeqLen)")
+                    .Add("AttnBiasCW4D = Reshape(AttnBiasCausalWindow, PadBiasShape)");
+              }
+            } else {
+              builder.Add("AttnBiasCW4D = Identity(AttnBiasCausalWindow)");
+            }
             builder
                 .Add("KVSeqLenExpanded = Unsqueeze(nonpad_kv_seqlen, One1D)") // [batch_size, 1]
                 .Add("KVSeqLen0D = Squeeze(KVSeqLen)")
@@ -3826,7 +3859,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 .Add("PaddingMaskFloat = Where(PaddingMaskBool, ScalarZero, FloatNegInf)") // [batch_size, KVSeqLen]
                 .Add("PaddingMask3D = Unsqueeze(PaddingMaskFloat, One1D)") // [batch_size, 1, KVSeqLen]
                 .Add("PaddingMask4D = Unsqueeze(PaddingMask3D, One1D)") // [batch_size, 1, 1, KVSeqLen]
-                .Add("AttnBiasCausalPad = Add(AttnBiasCausalWindow, PaddingMask4D)");
+                .Add("AttnBiasCausalPad = Add(AttnBiasCW4D, PaddingMask4D)");
           } else {
             builder.Add("AttnBiasCausalPad = Identity(AttnBiasCausalWindow)");
           }
