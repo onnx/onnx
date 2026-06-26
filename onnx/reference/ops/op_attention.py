@@ -276,7 +276,7 @@ def _compute_attention(
         q_num_heads = Q.shape[1]
     if kv_num_heads is None:
         k_num_heads = K.shape[1]
-        v_num_heads = K.shape[1]
+        v_num_heads = V.shape[1]
     else:
         k_num_heads = kv_num_heads
         v_num_heads = kv_num_heads
