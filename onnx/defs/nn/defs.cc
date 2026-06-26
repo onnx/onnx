@@ -3767,13 +3767,28 @@ ONNX_OPERATOR_SET_SCHEMA(
                   .Add("WinGe0 = GreaterOrEqual(WinDiff, WinZeroNoDim)")
                   .Add("WinLtW = Less(WinDiff, WindowSizeNoDim)")
                   .Add("WinOk = And(WinGe0, WinLtW)")
-                  .Add("WinMask = Where(WinOk, ScalarZero, FloatNegInf)")
-                  // Promote AttnBiasCausalOrNot to 4D before Add so that a 3D
-                  // (batch, Sq, Skv) attn_mask broadcasts as (batch, 1, Sq, Skv)
-                  // instead of incorrectly broadcasting as (1, batch, Sq, Skv).
-                  .Add("WinBiasShape = Concat <axis = 0> (NegOne1D, One1D, QSeqLen, NewKVSeqLen)")
-                  .Add("AttnBias4DWin = Reshape(AttnBiasCausalOrNot, WinBiasShape)")
-                  .Add("AttnBiasCausalWindow = Add(AttnBias4DWin, WinMask)");
+                  .Add("WinMask = Where(WinOk, ScalarZero, FloatNegInf)");
+              // WinMask is 4D (batch, 1, Sq, Skv).  AttnBiasCausalOrNot may be
+              // 3D (batch, Sq, Skv) when is_causal=0 and attn_mask is 3D.  ONNX
+              // left-pads with 1s, giving (1, batch, Sq, Skv) which cross-
+              // contaminates batches.  Promote based on known mask rank.
+              int win_mask_rank = -1;
+              if (ctx.hasInput(3)) {
+                const auto* win_tp = ctx.getInputType(3);
+                if (win_tp && win_tp->has_tensor_type() && win_tp->tensor_type().has_shape()) {
+                  win_mask_rank = win_tp->tensor_type().shape().dim_size();
+                }
+              }
+              if (win_mask_rank == 3) {
+                builder.Const1D("WinUnsqDim", static_cast<int64_t>(1))
+                    .Add("CausalOrNot4D = Unsqueeze(AttnBiasCausalOrNot, WinUnsqDim)");
+              } else if (win_mask_rank == 4) {
+                builder.Add("CausalOrNot4D = Identity(AttnBiasCausalOrNot)");
+              } else {
+                builder.Add("WinBiasShape = Concat <axis = 0> (NegOne1D, One1D, QSeqLen, NewKVSeqLen)")
+                    .Add("CausalOrNot4D = Reshape(AttnBiasCausalOrNot, WinBiasShape)");
+              }
+              builder.Add("AttnBiasCausalWindow = Add(CausalOrNot4D, WinMask)");
             } else {
               // Internal cache (scalar PastKVSeqLen) or no cache: 2D mask [Sq, Skv]
               builder

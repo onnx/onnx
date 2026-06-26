@@ -250,11 +250,26 @@ bool AttentionAppendFunctionCausalMask(const FunctionBodyBuildContext& ctx, Func
           .Add("OffsetB4D = Unsqueeze(CausalOffsetPerBatch, Axes123)") // (batch, 1, 1, 1)
           .Add("RowPlusOff = Add(RangeRow4D, OffsetB4D)") // (batch, 1, q, 1)
           .Add("BoolMaskTri = Less(RowPlusOff, RangeCol4D)"); // (batch, 1, q, total)
-      // Promote AttnBias to 4D before adding 4D MaskTri: a 3D (batch, q, kv)
-      // attn_mask would incorrectly broadcast as (1, batch, q, kv) without this.
+      // MaskTri is 4D (batch, 1, q, total).  AttnBias may be 3D (batch, q, kv)
+      // which does not broadcast correctly against a 4D tensor (ONNX left-pads
+      // with 1s, giving (1, batch, q, kv) instead of (batch, 1, q, kv)).
+      // Promote AttnBias to 4D at build time based on the known rank of attn_mask.
+      int causal_mask_rank = -1;
+      if (ctx.hasInput(3)) {
+        const auto* mask_tp = ctx.getInputType(3);
+        if (mask_tp && mask_tp->has_tensor_type() && mask_tp->tensor_type().has_shape()) {
+          causal_mask_rank = mask_tp->tensor_type().shape().dim_size();
+        }
+      }
+      if (causal_mask_rank == 3) {
+        builder.Add("AttnBias4DCausal = Unsqueeze(AttnBias, One)");
+      } else if (causal_mask_rank == 4) {
+        builder.Add("AttnBias4DCausal = Identity(AttnBias)");
+      } else {
+        builder.Add("CausalBiasShape = Concat <axis = 0> (NegOne1D, One1D, QSeqLen, NewKVSeqLen)")
+            .Add("AttnBias4DCausal = Reshape(AttnBias, CausalBiasShape)");
+      }
       builder.Add("MaskTri = Where(BoolMaskTri, FloatNegInf, ScalarZero)")
-          .Add("CausalBiasShape = Concat <axis = 0> (NegOne1D, One1D, QSeqLen, NewKVSeqLen)")
-          .Add("AttnBias4DCausal = Reshape(AttnBias, CausalBiasShape)")
           .Add("AttnBiasCausalOrNot = Add(AttnBias4DCausal, MaskTri)");
     } else {
       // Internal cache / no cache: scalar offset (PastKVSeqLen), 2D (q, total) mask.
