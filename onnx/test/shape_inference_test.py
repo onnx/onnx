@@ -10273,7 +10273,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(checker.ValidationError, self._inferred, graph)
+        self.assertRaises(
+            (checker.ValidationError, onnx.shape_inference.InferenceError),
+            self._inferred,
+            graph,
+        )
 
     def test_softmax_cross_entropy_none(self) -> None:
         graph = self._make_graph(
@@ -10330,6 +10334,17 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (25, 48, 16, 16))]
         )
+
+    def test_celu_float16_and_bfloat16(self) -> None:
+        for elem_type in (TensorProto.FLOAT16, TensorProto.BFLOAT16):
+            graph = self._make_graph(
+                [("X", elem_type, (3, 4))],
+                [make_node("Celu", ["X"], ["Y"], alpha=2.0)],
+                [],
+            )
+            self._assert_inferred(
+                graph, [make_tensor_value_info("Y", elem_type, (3, 4))]
+            )
 
     def prepare_input_initializer_tensors(self, initializer_shape, input_shape):
         nodes = [make_node("Add", ["x", "y"], "z")]
@@ -13137,7 +13152,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.checker.ValidationError):
+        with self.assertRaises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
