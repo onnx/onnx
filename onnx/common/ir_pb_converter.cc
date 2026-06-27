@@ -8,7 +8,6 @@
 #include "onnx/common/ir_pb_converter.h"
 
 #include <memory>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -228,14 +227,16 @@ static std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE:
   return dims;
 }
 
-static void createDummyValue(
+static Value* createDummyValue(
     const std::unique_ptr<Graph>& g,
     const std::string& name,
     std::unordered_map<std::string, Value*>& value_by_name_of) {
   auto* undef = g->create(kCaptured, 1);
   g->appendNode(undef);
-  undef->outputs()[0]->setUniqueName(name);
-  value_by_name_of[name] = undef->outputs()[0];
+  Value* v = undef->outputs()[0];
+  v->setUniqueName(name);
+  value_by_name_of[name] = v;
+  return v;
 }
 
 std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
@@ -360,33 +361,36 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
       }
 
       if (!value_by_name_of.count(input)) {
-        std::ostringstream msg;
-        msg << "Input " << input << " is undefined!";
-        ONNX_THROW_EX(std::out_of_range(msg.str()));
+        fail_convert("Input ", input, " is undefined!");
       }
       n->addInput(value_by_name_of.at(input));
     }
   }
 
   for (int i = 0; i < gp.output_size(); i++) {
-    if (!value_by_name_of.count(gp.output(i).name()) && nested) {
-      // Same captured value logic as above. We can consider outputs of a
-      // graph to be "inputs" of a dummy "output" node. The same lexical
-      // scoping rules are valid here, thus we need to add a dummy node
-      // in the case of an undefined reference
-      createDummyValue(g, gp.output(i).name(), value_by_name_of);
+    const auto& output = gp.output(i);
+    const std::string& output_name = output.name();
+    auto it = value_by_name_of.find(output_name);
+    Value* output_value = nullptr;
+    if (it != value_by_name_of.end()) {
+      output_value = it->second;
+    } else if (nested) {
+      // Undefined reference: a value captured from an enclosing scope.
+      output_value = createDummyValue(g, output_name, value_by_name_of);
+    } else {
+      fail_convert("Output ", output_name, " is undefined!");
     }
-    const auto& output_tensor_type = gp.output(i).type().tensor_type();
+    const auto& output_tensor_type = output.type().tensor_type();
     if (output_tensor_type.has_elem_type()) {
-      value_by_name_of[gp.output(i).name()]->setElemType(output_tensor_type.elem_type());
+      output_value->setElemType(output_tensor_type.elem_type());
     }
     if (output_tensor_type.has_shape()) {
-      value_by_name_of[gp.output(i).name()]->setSizes(tensorShapeProtoToDimensions(output_tensor_type.shape()));
+      output_value->setSizes(tensorShapeProtoToDimensions(output_tensor_type.shape()));
     }
-    if (!gp.output(i).type().has_tensor_type()) {
-      value_by_name_of[gp.output(i).name()]->type() = std::make_unique<TypeProto>(gp.output(i).type());
+    if (!output.type().has_tensor_type()) {
+      output_value->type() = std::make_unique<TypeProto>(output.type());
     }
-    g->registerOutput(value_by_name_of[gp.output(i).name()]);
+    g->registerOutput(output_value);
   }
 
   for (int i = 0; i < gp.value_info_size(); i++) {
