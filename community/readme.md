@@ -44,6 +44,28 @@ Approvers are Contributors who are experienced with some aspect of the project a
 
 Approvers need to be active Contributors for at least 3 months and be sponsored by a SIG chair with no objections from other SIG chairs.
 
+### Release Manager
+
+> **Work in Progress:** This role definition is under active discussion. Details may change before ratification by the Steering Committee.
+
+A Release Manager is an active Contributor who takes responsibility for driving a single release cycle from branch cut to final publication. The role rotates each release; the same person may serve multiple consecutive cycles by mutual agreement. Release Managers are nominated by the SIG Architecture & Infra chairs and confirmed by the Steering Committee.
+
+**Eligibility:** Must be an active Contributor. Prior participation in at least one release cycle (in any capacity) is strongly encouraged but not required.
+
+**Duties for a release cycle:**
+
+* Announce the release timeline and branch-cut date on community channels (Slack, mailing list, GitHub discussion)
+* Create the release branch (`rel-X.Y.Z`) and update all version references in build scripts and metadata
+* Coordinate the RC1 build: trigger CI, publish the `-rc1` wheel to the test index, and announce the start of the two-week testing period
+* Communicate with each SIG during the RC period: share the RC build, solicit testing feedback, track open issues by SIG ownership, and report status back to the community in weekly updates
+* Triage incoming bug reports during RC testing; decide with SIG chairs which fixes are release-critical
+* Cut additional RC builds as needed (RC2, RC3) until no critical regressions remain
+* Finalize release notes, tag the release commit, and coordinate the PyPI publish
+* Update the release wiki page and announce the final release to community channels
+* Hand off any open patch-release tracking to the next cycle's Release Manager (or retain it by agreement)
+
+A Release Manager may delegate individual tasks to other Contributors or Approvers, but retains overall accountability for the release shipping on time and in good shape.
+
 ### Member Companies
 Member Companies are organizations that support ONNX in one or more of the following ways:
 * Having employees participate in SIGs, Working Groups, or the Steering Committee
@@ -55,6 +77,44 @@ Member Companies are organizations that support ONNX in one or more of the follo
 Member Companies do not have any voting rights, except via their employees who are Contributors. Affiliates and subsidiaries are considered part of the Member Company and not as separate organizations. Being a Member Company does not by itself confer any compliance or certification to the Member Company's products.
 
 Member Companies can request their logo be displayed on the website and other materials by following these [instructions](logo_request.md).
+
+## Contributor Ladder and GitHub Permissions
+
+> **Work in Progress:** The GitHub permission mappings and organization membership process below are under active discussion. The seat-limit policy in particular is not yet ratified.
+
+The community roles described above map directly to permissions in the ONNX GitHub organization. This table summarizes the full ladder from first-time participant to Steering Committee member.
+
+| Ladder rung | How to advance | GitHub org status | Repository access | SC election vote |
+|---|---|---|---|---|
+| **Member** | Engage with the community (issues, Slack, meetings) | Outside collaborator or none | Read (public repos are public) | No |
+| **Contributor** | Sponsored by 2 Approvers from different companies; active in last 12 months | Organization Member | Triage on repos owned by their SIG(s) | Yes — one vote per Member Company (individual votes roll up) |
+| **Approver** | Active Contributor ≥ 3 months; sponsored by a SIG chair; no objections from other SIG chairs | Organization Member | Write on repos/directories they approve for | Yes — same rule as Contributors |
+| **SIG Chair** | Appointed by Steering Committee from Approvers | Organization Member | Maintain on SIG-owned repos | Yes — same rule as Contributors |
+| **Steering Committee** | Self-nominated; elected by Contributors via Condorcet/Schulze ranked vote | Organization Owner | Admin (shared with SC) | N/A |
+
+> **Note on SC voting:** To be eligible to vote in a Steering Committee election, a Contributor must register their GitHub handle, email address, and affiliated company before the April deadline each year. Votes are tallied per-individual first, then rolled up to one vote per Member Company. See [sc-election-guidelines.md](sc-election-guidelines.md) for the full process.
+
+### Becoming an Organization Member (Contributor step)
+
+To request GitHub organization membership, open an issue in the `onnx/onnx` repository using the title `Contributor nomination: <your GitHub handle>` and include:
+
+* A brief summary of your contributions (PRs, reviews, issues, SIG participation)
+* The GitHub handles of the two Approvers from different companies who are sponsoring you
+
+One of your sponsors will add you to the organization once the nomination is confirmed.
+
+### GitHub Organization Seat Policy
+
+The ONNX GitHub organization has a **limited number of member seats**. Seats are a shared resource and must be actively managed.
+
+**Removal triggers** — a member is removed from the organization when any of the following apply:
+
+* No contribution activity (commits, PR reviews, issue comments, SIG meeting participation) for **12 consecutive months**, assessed at the annual review each January
+* The member explicitly resigns or notifies the SIG Architecture & Infra chairs that they are no longer active
+* The organization is approaching its seat limit: if fewer than 5 seats remain, the SIG Architecture & Infra chairs will audit activity and remove the least-recently-active members first to free capacity, notifying affected members at least 2 weeks in advance
+* A Code of Conduct violation results in a ruling by the Steering Committee
+
+**Process:** The SIG Architecture & Infra chairs are responsible for conducting the annual review and for acting on seat-pressure removals. Removed members retain their Contributor or Approver role in the governance sense and may be re-added to the GitHub organization when they become active again, subject to seat availability.
 
 ## Organizational Structure
 
