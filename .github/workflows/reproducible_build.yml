@@ -101,11 +101,19 @@ jobs:
         run: |
           fail=0
           for platform in linux macos windows; do
-            b1=$(ls /tmp/${platform}-build1/*.whl)
-            b2=$(ls /tmp/${platform}-build2/*.whl)
-            h1=$(sha256sum "$b1" | cut -d' ' -f1)
-            h2=$(sha256sum "$b2" | cut -d' ' -f1)
-            echo "[$platform] build1 $h1  $(basename $b1)"
+            b1=(/tmp/${platform}-build1/*.whl)
+            b2=(/tmp/${platform}-build2/*.whl)
+            if [ ${#b1[@]} -ne 1 ] || [ ! -f "${b1[0]}" ]; then
+              echo "[$platform] ERROR: expected exactly 1 wheel in build1, found ${#b1[@]}"
+              fail=1; continue
+            fi
+            if [ ${#b2[@]} -ne 1 ] || [ ! -f "${b2[0]}" ]; then
+              echo "[$platform] ERROR: expected exactly 1 wheel in build2, found ${#b2[@]}"
+              fail=1; continue
+            fi
+            h1=$(sha256sum "${b1[0]}" | cut -d' ' -f1)
+            h2=$(sha256sum "${b2[0]}" | cut -d' ' -f1)
+            echo "[$platform] build1 $h1  $(basename "${b1[0]}")"
             echo "[$platform] build2 $h2"
             if [ "$h1" = "$h2" ]; then
               echo "[$platform] OK"
