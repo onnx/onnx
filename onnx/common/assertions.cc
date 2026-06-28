@@ -16,7 +16,7 @@
 
 namespace ONNX_NAMESPACE {
 
-std::string barf(const char* fmt, ...) {
+std::string barf(const char* fmt, ...) { // NOLINT(modernize-avoid-variadic-functions)
   constexpr size_t buffer_size = 2048;
   std::array<char, buffer_size> msg{};
   va_list args;

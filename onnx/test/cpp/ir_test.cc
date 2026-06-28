@@ -28,7 +28,7 @@ static bool IsValidIdentifier(const std::string& name) {
 }
 
 TEST(IR, ValidIdentifierTest) {
-  Graph* g = new Graph();
+  Graph* g = new Graph(); // NOLINT(cppcoreguidelines-owning-memory)
   g->setName("test");
   Value* x = g->addInput();
   x->setUniqueName("x");
@@ -52,6 +52,20 @@ TEST(IR, ValidIdentifierTest) {
       EXPECT_TRUE(IsValidIdentifier(name));
     }
   }
+}
+
+// Regression test: Tensor::elem_num() and size_from_dim() must use 64-bit
+// arithmetic. Previously, std::accumulate used `1` (int) as the initial value,
+// causing 32-bit multiplication that silently overflowed for tensors whose
+// element count exceeded INT_MAX (~2.1B). Fixed by using int64_t{1}.
+TEST(Tensor, ElemNumLargeTensorNoOverflow) {
+  Tensor t;
+  // 50000 * 50000 = 2,500,000,000 which exceeds INT32_MAX (2,147,483,647)
+  t.sizes() = {50000, 50000};
+  const int64_t expected = static_cast<int64_t>(50000) * 50000;
+  EXPECT_EQ(t.elem_num(), expected);
+  EXPECT_EQ(t.size_from_dim(0), expected);
+  EXPECT_EQ(t.size_from_dim(1), int64_t{50000});
 }
 
 } // namespace Test

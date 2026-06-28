@@ -1,0 +1,97 @@
+# Copyright (c) ONNX Project Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: macOS Release
+
+on:
+  workflow_call:
+    inputs:
+      build_mode:
+        required: false
+        type: string
+        default: "preview"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - "cp310-macosx_universal2"
+          - "cp311-macosx_universal2"
+          - "cp312-macosx_universal2"
+          - "cp314t-macosx_universal2"
+
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Read protobuf version from sbom.cdx.json
+        run: echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Set preview version
+        if: inputs.build_mode != 'release'
+        shell: bash
+        run: |
+          sed -i '' 's/name = "onnx"/name = "onnx-weekly"/' pyproject.toml
+          echo "$(cat VERSION_NUMBER).dev$(date -u +%Y%m%d)" > VERSION_NUMBER
+
+      - name: Download protoc
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-osx-universal_binary.zip" -o protoc.zip
+          unzip -q protoc.zip -d protoc-host
+          chmod +x protoc-host/bin/protoc
+
+      - name: Download protobuf source
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          tar -xf protobuf.tar.gz
+
+      - name: Set SOURCE_DATE_EPOCH for reproducible builds
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@f03ac7617d6cff873ccf24cc0d567ef5ba5a9e6d  # v4.0.0
+        with:
+          output-dir: dist/
+          only: ${{ matrix.build }}
+        env:
+          CIBW_ENVIRONMENT: >-
+            MACOSX_DEPLOYMENT_TARGET=12.0
+            CMAKE_ARGS="
+            -DFETCHCONTENT_SOURCE_DIR_PROTOBUF=${{ github.workspace }}/protobuf-${{ env.PROTOBUF_VERSION }}
+            -DONNX_CUSTOM_PROTOC_EXECUTABLE=${{ github.workspace }}/protoc-host/bin/protoc
+            -DONNX_HARDENING=ON
+            -DONNX_USE_LITE_PROTO=ON
+            -DONNX_WERROR=ON
+            "
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: wheels-macos-${{ matrix.build }}
+          path: dist/*.whl
+
+      - name: Validate wheel
+        run: |
+          python -m pip install -q abi3audit check-wheel-contents
+          for whl in dist/*.whl; do
+            echo "Checking $whl"
+            check-wheel-contents "$whl"
+            python -m abi3audit -v "$whl"
+          done

@@ -60,6 +60,8 @@ Checks: >-
   -readability-use-anyofallof,
   -readability-use-anyofanyof,
 
+HeaderFilterRegex: 'onnx/(?!.*\.pb\.h)'
+
 CheckOptions:
   # `cppcoreguidelines-special-member-functions` is enabled, refer to https://en.cppreference.com/w/cpp/language/rule_of_three
   - key:             cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor

@@ -11,8 +11,17 @@ from onnx.reference.op_run import OpRun
 
 def _softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     x_max = np.max(x, axis=axis, keepdims=True)
-    tmp = np.exp(x - x_max)
+    # A fully-masked row is all `-inf`, so `x_max` is `-inf` and the naive
+    # `exp(x - x_max)` evaluates `exp(-inf - (-inf)) = NaN`. Such a row has no
+    # attendable key; by convention it softmaxes to all-zero probabilities.
+    # Detect those rows on `x_max` and return 0 for them directly (instead of
+    # computing NaN and overwriting it), so `_softmax` never emits a NaN/warning
+    # and the all-`-inf` case is independently unit-testable.
+    row_all_masked = np.isneginf(x_max)
+    safe_max = np.where(row_all_masked, 0, x_max)
+    tmp = np.exp(x - safe_max)
     s = np.sum(tmp, axis=axis, keepdims=True)
+    s = np.where(s == 0, 1, s)  # avoid 0/0 for fully-masked rows (kept at 0)
     return tmp / s
 
 
@@ -24,23 +33,47 @@ def _softcap(X, softcap):
     return X
 
 
-def _apply_causal(mask, past_sequence_length):
-    """Applies a causal mask on the input `mask`:
-    ``mask[i, j] = -inf if past_sequence_length + i > j else 0``.
-    Because a softmax is applied on the mask, -inf becomes 0 and 0 becomes 1.
-    The modification is done inplace.
+def _apply_causal(base, offset):
+    """Adds an offset-aligned (bottom-right) causal bias to `base`.
+
+    A query at in-block index ``i`` attends key ``j`` iff ``j <= i + offset``;
+    attended positions contribute ``0`` and masked positions ``-inf`` (a softmax
+    then maps ``-inf`` to 0 and 0 to 1). This is the select-not-multiply form that
+    mirrors the function body's ``Where(allowed, 0, -inf)`` in ``utils.cc``, so the
+    reference and the ``_expanded`` graph agree bit-for-bit.
+
+    ``offset`` is either:
+
+    * a scalar -- the same causal frontier for every batch. Used for the internal
+      cache (``offset = past_key.shape[2]``) and the no-cache case (``offset = 0``,
+      i.e. ordinary top-left causal). The result keeps the 2-D ``(q, kv)`` shape of
+      ``base``.
+    * a 1-D per-batch array of shape ``(batch,)`` -- the external/static cache,
+      where ``offset[b] = nonpad_kv_seqlen[b] - q_len``. The result is promoted to
+      ``(batch, 1, q, kv)`` so the downstream padding-mask block is a no-op reshape.
+
+    Note: ``offset`` is intentionally not clamped to ``>= 0``. A negative offset
+    (the over-long-query / out-of-contract regime) fully masks the affected rows,
+    which the caller's fully-masked-row guard then zeroes -- matching the spec's
+    fully-masked ``Y = 0`` / mode-3 ``= 0`` behavior. Clamping would change that
+    result, so it is deliberately omitted.
     """
-    q_sequence_length, total_sequence_length = mask.shape[-2:]
-    triu = np.triu(
-        np.ones(
-            (q_sequence_length, total_sequence_length - past_sequence_length),
-            dtype=mask.dtype,
-        ),
-        k=1,
-    )
-    triu[triu == 1] = -np.inf
-    mask[..., :, past_sequence_length:] += triu
-    return mask
+    q_sequence_length, kv_sequence_length = base.shape[-2:]
+    i_idx = np.arange(q_sequence_length).reshape(q_sequence_length, 1)  # (q, 1)
+    j_idx = np.arange(kv_sequence_length).reshape(1, kv_sequence_length)  # (1, kv)
+    per_batch = np.ndim(offset) > 0
+    if per_batch:
+        offsets = np.reshape(offset, (-1, 1, 1))  # (batch, 1, 1)
+        allowed = j_idx <= (i_idx + offsets)  # (batch, q, kv)
+    else:
+        allowed = j_idx <= (i_idx + int(offset))  # (q, kv)
+    causal = np.where(allowed, base.dtype.type(0), base.dtype.type(-np.inf))
+    if per_batch:
+        # Promote base to (batch, 1, q, kv) and add the per-batch causal bias.
+        return base.reshape((1,) * (4 - base.ndim) + base.shape) + causal.reshape(
+            causal.shape[0], 1, q_sequence_length, kv_sequence_length
+        )
+    return base + causal
 
 
 def _compute_attention(
@@ -127,24 +160,37 @@ def _compute_attention(
                 attn_mask, pad_shape, mode="constant", constant_values=pad_value
             )
 
-    # First case: If is_causal is provided
-    # If set to true, the attention masking is a lower triangular matrix when the mask
-    # is a square matrix. The attention masking has the form of the upper left causal
-    # bias due to the alignment when the mask is a non-square matrix.
+    # First case: If is_causal is provided.
+    # Causal masking is bottom-right / offset-aligned: a query at in-block index i attends
+    # key j iff  j <= i + offset, where offset is the number of valid keys that precede this
+    # query block. offset is derived per batch from the cache representation:
+    #   * past_key present (internal cache):   offset = past_key.shape[2]   (same for all b)
+    #   * nonpad_kv_seqlen present, no past_key (external/static cache):
+    #                                          offset[b] = nonpad_kv_seqlen[b] - q_len
+    #   * neither:                             offset = 0  (no-cache case)
     if is_causal:
-        if attn_mask is None:
-            temp_mask = np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
-            attn_bias = _apply_causal(
-                temp_mask,
-                past_sequence_length=past_key.shape[2] if past_key is not None else 0,
-            )
+        if attn_mask is not None and attn_mask.dtype == np.bool_:
+            # Convert the boolean mask to an additive bias with select-not-multiply:
+            # True (attend) -> 0, False (mask) -> -inf. The previous
+            # (1 - attn_mask) * -inf form computes 0 * -inf = NaN at allowed cells.
+            # This matches the function body's Where(attn_mask, ScalarZero, FloatNegInf)
+            # in AttentionAppendFunctionCausalMask (utils.cc) so the reference and
+            # _expanded agree exactly.
+            attn_mask = np.where(attn_mask, Q.dtype.type(0), Q.dtype.type(-np.inf))
+        base = (
+            np.zeros((q_sequence_length, kv_sequence_length), dtype=Q.dtype)
+            if attn_mask is None
+            else attn_mask.copy()
+        )
+        if past_key is None and nonpad_kv_seqlen is not None:
+            # External/static cache: per-batch bottom-right frontier
+            #   j <= i + (nonpad_kv_seqlen[b] - q_len).
+            offset = nonpad_kv_seqlen.reshape(-1) - q_sequence_length  # (batch,)
+            attn_bias = _apply_causal(base, offset)
         else:
-            if attn_mask.dtype == np.bool_:
-                attn_mask = (1 - attn_mask).astype(Q.dtype) * (-np.inf)
-            attn_bias = _apply_causal(
-                attn_mask.copy(),
-                past_sequence_length=past_key.shape[2] if past_key is not None else 0,
-            )
+            # Internal cache (past_key) or no cache: scalar offset -- bit-identical path.
+            offset = past_key.shape[2] if past_key is not None else 0
+            attn_bias = _apply_causal(base, offset)
     elif attn_mask is not None:
         if attn_mask.dtype == np.bool_:
             attn_mask = (1 - attn_mask).astype(Q.dtype)
@@ -191,9 +237,9 @@ def _compute_attention(
     #      |          |          |
     #      ---MatMul---          |
     #            |               |
-    # at_mask---Add              |
-    #            |               |
     #  softcap (if provided)     |
+    #            |               |
+    # at_mask---Add              |
     #            |               |
     #         Softmax            |
     #            |               |
@@ -202,22 +248,48 @@ def _compute_attention(
     #                    Y
     k_transpose = np.transpose(K, (0, 1, 3, 2))
     qk_matmul_output = np.matmul(Q * scale, k_transpose * scale)
-    qk_with_bias = qk_matmul_output + attn_bias
-    if qk_matmul_output_mode == 1:
-        qk_matmul_output = qk_with_bias.copy()
 
-    # Apply softcap
+    # Apply softcap before mask/bias addition.
+    # Softcap must be applied before mask so that -inf mask values remain -inf
+    # (yielding zero probability in softmax). If softcap were applied after mask,
+    # -inf would be mapped to -softcap (finite), leaking probability to masked positions.
     if softcap is not None:
-        qk_with_bias = _softcap(qk_with_bias, softcap)
-        if qk_matmul_output_mode == 2:
-            qk_matmul_output = qk_with_bias
+        qk_matmul_output = _softcap(qk_matmul_output, softcap)
+
+    qk_with_bias = qk_matmul_output + attn_bias
+    if qk_matmul_output_mode == 1 and softcap is not None:
+        pass  # qk_matmul_output already holds the softcapped-only value
+    elif qk_matmul_output_mode == 2:
+        qk_matmul_output = qk_with_bias.copy()
 
     if softmax_precision is not None:
         qk_with_bias = qk_with_bias.astype(
             onnx.helper.tensor_dtype_to_np_dtype(softmax_precision)
         )
+    # `_softmax` is warning-free for an all-`-inf` (fully-masked) row: it returns
+    # 0 instead of computing `exp(-inf - (-inf)) = NaN`. The fully-masked-row
+    # semantics, however, are decided on the additive bias below (not on the
+    # logits), so masking stays correct even when a masked row's raw QK score is
+    # non-`-inf` (e.g. `+inf + (-inf) = NaN`).
     qk_softmax = _softmax(qk_with_bias)
+
+    # Fully-masked-row guard: a query row whose additive bias is entirely -inf
+    # (every key disallowed by the combined causal + attn_mask constraints) has no
+    # attendable key. Decide this on the additive bias -- not the (possibly NaN)
+    # logits -- and zero those rows with select-not-multiply (NaN * 0 = NaN) BEFORE
+    # the P @ V contraction so 0 @ V = 0. The guard runs before the mode-3 capture
+    # so the exposed qk_matmul_output row is also zeroed, consistent with Y, and
+    # mirrors the function body's bias-based guard for primary == _expanded parity.
+    row_all_masked = np.isneginf(
+        np.max(attn_bias, axis=-1, keepdims=True)
+    )  # (..., q, 1)
+    qk_softmax = np.where(row_all_masked, 0, qk_softmax)
+
     if qk_matmul_output_mode == 3:
+        # Mode 3 exposes the post-softmax probabilities; a fully-masked row is
+        # zeroed by the guard above, consistent with the primary output Y (both
+        # are 0). This matches the function body (Identity of the guarded softmax),
+        # preserving primary == _expanded parity for the qk_matmul_output output.
         qk_matmul_output = qk_softmax
     qk_matmul_output = qk_matmul_output.astype(Q.dtype)
 
