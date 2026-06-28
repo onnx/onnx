@@ -217,7 +217,7 @@ void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_typ
 
 // TypeProto_Tensor or TypeProto_SparseTensor
 template <typename TensorTypeProto>
-void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table) {
+static void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table) {
   if (!inferred_type->has_shape()) {
     return;
   }
