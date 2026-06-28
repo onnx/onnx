@@ -456,20 +456,13 @@ struct DataPropagationContextImpl : public DataPropagationContext {
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
 };
 
-void checkShapesAndTypes(const TypeProto_Sequence& inferredType, const TypeProto_Sequence& existingType);
-
 void checkShapesAndTypes(const TypeProto& inferred_type, const TypeProto& existing_type);
-
-template <typename TensorTypeProto>
-void GenerateSymbolicShape(TensorTypeProto* inferred_type, SymbolTable& symbol_table);
 
 void MaterializeSymbolicShape(TypeProto* inferred_type, SymbolTable& symbol_table);
 
 void mergeShapesAndTypes(const TypeProto_Tensor& inferred_type, TypeProto_Tensor* existing_type);
 
 void mergeShapesAndTypes(const TypeProto_SparseTensor& inferred_type, TypeProto_SparseTensor* existing_type);
-
-void mergeShapesAndTypes(const TypeProto_Sequence& inferredType, TypeProto_Tensor* existingType);
 
 void mergeShapesAndTypes(const TypeProto& inferred_type, TypeProto* existing_type);
 

@@ -30,10 +30,6 @@
 #include "onnx/common/tensor.h"
 #include "onnx/string_utils.h"
 
-#define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName&) = delete;           \
-  TypeName& operator=(const TypeName&) = delete
-
 namespace ONNX_NAMESPACE {
 
 // internal/private API
@@ -61,9 +57,7 @@ class ResourceGuard final {
   std::function<void()> destructor_;
 
  public:
-  ONNX_DISALLOW_COPY_AND_ASSIGN(ResourceGuard);
-  ResourceGuard(ResourceGuard&&) = delete;
-  ResourceGuard& operator=(ResourceGuard&&) = delete;
+  ONNX_DISALLOW_COPY_ASSIGNMENT_AND_MOVE(ResourceGuard);
 
   explicit ResourceGuard(std::function<void()> destructor) : destructor_(std::move(destructor)) {}
 
@@ -294,7 +288,7 @@ using use_list = std::vector<Use>;
 using NodeKind = Symbol;
 
 struct Value final {
-  ONNX_DISALLOW_COPY_AND_ASSIGN(Value);
+  ONNX_DISALLOW_COPY_AND_ASSIGNMENT(Value);
   Value(Node* node_, size_t offset_);
   Value(Value&&) = default;
   Value& operator=(Value&&) = default;
@@ -397,7 +391,7 @@ struct Value final {
 };
 
 struct Node : public Attributes<Node> {
-  ONNX_DISALLOW_COPY_AND_ASSIGN(Node);
+  ONNX_DISALLOW_COPY_AND_ASSIGNMENT(Node);
   friend struct Graph;
   friend struct Value;
   friend graph_node_list;
@@ -902,7 +896,7 @@ class OpSetID final {
 };
 
 struct Graph final {
-  ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
+  ONNX_DISALLOW_COPY_AND_ASSIGNMENT(Graph);
   friend struct Node;
   friend struct Value;
 
