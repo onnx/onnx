@@ -57,7 +57,7 @@ struct Tensor final {
     if (dim < 0) {
       dim += static_cast<int>(sizes_.size());
     }
-    ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size())
+    ONNX_ASSERT(dim >= 0 && static_cast<size_t>(dim) < sizes_.size())
     return safe_dim_product(sizes_.begin() + dim, sizes_.end(), [](const char* msg) { throw tensor_error(msg); });
   }
 
