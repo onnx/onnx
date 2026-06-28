@@ -111,7 +111,7 @@ void DefaultVersionConverter::convert_graph(
           }
         }
       }
-      it++;
+      ++it;
     }
     // Update model version
     curr_version += step;
