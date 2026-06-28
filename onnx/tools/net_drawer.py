@@ -26,7 +26,6 @@ from typing import Any
 import pydot
 
 import onnx
-from onnx import GraphProto, NodeProto
 
 __all__ = [
     "BLOB_STYLE",
@@ -46,7 +45,7 @@ OP_STYLE = {
 
 BLOB_STYLE = {"shape": "octagon"}
 
-_NodeProducer = Callable[[NodeProto, int], pydot.Node]
+_NodeProducer = Callable[[onnx.NodeProto, int], pydot.Node]
 
 
 def _escape_label(name: str) -> str:
