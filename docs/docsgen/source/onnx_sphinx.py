@@ -74,7 +74,13 @@ def _get_diff_template():
     )
 
 
+_OP_NAME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+
+
 def _get_ops_template():
+    # autoescape=False is intentional: the template produces Markdown, not HTML.
+    # HTML-escaping would corrupt Markdown syntax (e.g. turning `<T>` into `&lt;T&gt;`).
+    # All data rendered here comes from ONNX schema definitions, not external input.
     return jinja2.Template(
         """\
 {% for sch in schemas %}
@@ -633,6 +639,11 @@ def get_onnx_example(op_name, domain):
     :param fmt: rendering format
     :return: dictionary
     """
+    if not _OP_NAME_RE.match(op_name):
+        raise ValueError(f"Invalid operator name for module lookup: {op_name!r}")
+    if domain is not None and not re.match(r"^[A-Za-z][A-Za-z0-9_.]*$", domain):
+        raise ValueError(f"Invalid domain for module lookup: {domain!r}")
+
     if domain in (None, "ai.onnx"):
         modules = [
             f"onnx.backend.test.case.node.{op_name.lower()}",
