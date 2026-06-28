@@ -40,6 +40,42 @@ def _make_model(
     return model.SerializeToString()
 
 
+def _make_model_unchecked(
+    op_type: str,
+    opset_version: int,
+    node_inputs: list[str],
+    node_outputs: list[str],
+    graph_inputs: list[str],
+    graph_outputs: list[str],
+    attrs=None,
+) -> bytes:
+    """Serialized ModelProto with explicit, possibly inconsistent graph I/O.
+
+    The graph output need not be produced by the node, so the result can carry
+    a topological gap (an output or node input that nothing produces) to seed
+    the version converter's undefined-name handling.
+    """
+    if attrs is None:
+        attrs = {}
+
+    def vi(name: str):
+        return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1])
+
+    node = helper.make_node(op_type, node_inputs, node_outputs, **attrs)
+    graph = helper.make_graph(
+        [node],
+        f"{op_type.lower()}-unchecked",
+        [vi(n) for n in graph_inputs],
+        [vi(n) for n in graph_outputs],
+    )
+    model = helper.make_model(
+        graph,
+        producer_name="oss-fuzz",
+        opset_imports=[helper.make_opsetid("", opset_version)],
+    )
+    return model.SerializeToString()
+
+
 # Text-format seeds for fuzz_parser, extracted from onnx/test/parser_test.py.
 # Each string is a valid input to onnx.parser.parse_model().
 _PARSER_SEEDS: dict[str, str] = {
@@ -451,6 +487,17 @@ def main() -> int:
         "upsample_6_missing_input.onnx": _make_model("Upsample", 6, []),
         "upsample_9_missing_scales.onnx": _make_model("Upsample", 9, ["X"]),
         "upsample_9_valid.onnx": _make_model("Upsample", 9, ["X", "scales"]),
+        # Models with a topological gap (an output or node input that nothing
+        # produces) seed graphProtoToGraph's undefined-name handling directly.
+        "identity_13_output_undefined.onnx": _make_model_unchecked(
+            "Identity", 13, ["X"], ["Y"], ["X"], ["Z"]
+        ),
+        "add_13_output_partial_undefined.onnx": _make_model_unchecked(
+            "Add", 13, ["X", "X"], ["Y"], ["X"], ["Y", "Z"]
+        ),
+        "add_13_node_input_undefined.onnx": _make_model_unchecked(
+            "Add", 13, ["X", "W"], ["Y"], ["X"], ["Y"]
+        ),
     }
 
     # Seed models for fuzz_checker: valid serialized ModelProtos covering a
