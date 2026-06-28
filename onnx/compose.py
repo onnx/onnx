@@ -224,6 +224,9 @@ def merge_graphs(
             for attr in node.attribute:
                 if attr.type == AttributeProto.GRAPH:
                     connect_io(attr.g, 0, len(attr.g.node))
+                elif attr.type == AttributeProto.GRAPHS:
+                    for sub_g in attr.graphs:
+                        connect_io(sub_g, 0, len(sub_g.node))
 
             for index, name_ in enumerate(node.input):
                 if name_ in reversed_io_map:
@@ -510,10 +513,12 @@ def add_prefix_graph(
         for n in g.node:
             n.name = _prefixed(prefix, n.name)
             for attribute in n.attribute:
-                if attribute.g:
+                if attribute.HasField("g"):
                     add_prefix_graph(
                         attribute.g, prefix, inplace=True, name_map=name_map
                     )
+                for sub_g in attribute.graphs:
+                    add_prefix_graph(sub_g, prefix, inplace=True, name_map=name_map)
 
     if rename_initializers:
         for init in g.initializer:

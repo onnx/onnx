@@ -10,11 +10,18 @@ name = "onnx"
 platforms = ["osx-arm64", "linux-64", "linux-aarch64", "win-64"]
 
 [tasks.install]
-cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation --editable .'
+# the compilation auto-generates .pyi files for the protobuf files
+# which are not checked into git/found in 'onnx/'. mypy adds the CWD
+# to the search pass meaning that it searches the 'onnx/' folder first
+# for the repecitive .py[i] files. When they are not found there, mypy
+# will complain. The proper fix would be to use to have a 'src' folder
+# structure. Until then, we simply copy the interface files to the
+# source directory after the build.
+cmd = 'export CMAKE_ARGS="$CMAKE_ARGS $CMAKE_EXTRA_ARGS" && pip install --no-deps --ignore-installed --verbose --no-build-isolation --force --editable . && cp .setuptools-cmake-build/onnx/onnx_pb.py .setuptools-cmake-build/onnx/*_pb2.pyi onnx/'
 [tasks.install.env]
 ONNX_ML="1"
 ONNX_BUILD_TESTS="1"
-CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_HARDENING=ON"
+CMAKE_EXTRA_ARGS="-DONNX_USE_PROTOBUF_SHARED_LIBS=ON -DONNX_HARDENING=ON -DONNX_WERROR=ON"
 
 [tasks.gen-docs]
 cmd = "python onnx/defs/gen_doc.py"
@@ -41,9 +48,34 @@ cmd = ".setuptools-cmake-build/Release/onnx_gtests.exe"
 [tasks.pytest]
 cmd = "pytest"
 
-[tasks.lintrunner-init]
+[feature.clang-tools.tasks.run-clang-tidy]
+description = "Run clang-tidy on the entire project"
+# Requires `.setuptools-cmake-build/compile_commands.json` which is produced in the build task.
+# The `-extra-arg=-Wno-unknown-warning-option` is needed in cases
+# where the compiler_commands.json file was created by/for gcc
+cmd = [
+  'python',
+  'tools/pretty_clang_tidy.py',
+  'run-clang-tidy',
+  '-p=.setuptools-cmake-build',
+  '-warnings-as-errors="*"',
+  '-extra-arg=-Wno-unknown-warning-option',
+  '-source-filter="{{ pixi.init_cwd }}/onnx"',
+  '-hide-progress',
+  '-quiet',
+  '-use-color',
+]
+
+[feature.lint.tasks.pre-commit-install]
+description = "Install prek hooks"
+cmd = "prek install"
+[feature.lint.tasks.lint]
+description = "Run linters against all files (requires a prior 'install')"
+cmd = "prek run -a"
+
+[feature.lintrunner.tasks.lintrunner-init]
 cmd = "lintrunner init"
-[tasks.lintrunner-run]
+[feature.lintrunner.tasks.lintrunner-run]
 cmd = "lintrunner --all-files"
 
 [feature.docs.tasks.docs-build]
@@ -52,7 +84,7 @@ cmd = "cd docs/docsgen && make html"
 
 [dependencies]
 libdate = ">=3.0.1,<4"
-libprotobuf = "*"
+libprotobuf = "<7"  # libprotobuf>=7 has breaking changes which need a dedicated PR
 make = "*"
 ml_dtypes = ">=0.5.1"
 nanobind = ">=2.8.0"
@@ -60,6 +92,7 @@ ninja = "*"
 packaging = ">=24.1"
 pip = ">=25.0"
 python = ">=3.10"
+scikit-build-core = ">=0.12.1"
 
 [feature.dev.dependencies]
 c-compiler = ">=1.8.0"
@@ -75,28 +108,39 @@ pytest-cov = ">=6.0.0"
 pytest-xdist = ">=3.6.1"
 setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
-"ruamel.yaml" = ">=0.19.1"
+zizmor = ">=1.24.1,<2"
 
 [feature.reference.dependencies]
-# follows requirements-reference.txt
 pillow = ">=11.2.1,<12"
 
 [feature.oldies.dependencies]
-# follows requirements-min.txt
 protobuf = "==4.25.1"
 python = "3.10.*"
 numpy = "==1.23.2"
 
 [feature.lint.dependencies]
-# follows requirements-lintrunner.txt
-ruff = "==0.13.1"
-mypy = "==1.17.1"
-types-protobuf = "==6.30.2.20250516"
-clang-format = ">=20.1.5"
-[feature.lint.pypi-dependencies]
+clang-format = ">=22.1.1"
+mypy = ">=1.19.1"
+prek = ">=0.3.9"
+prettier = ">=3.8.1,<4"
+ruff = ">=0.15.7"
+shellcheck = ">=0.11.0"
+types-protobuf = ">=6.32.1.20260221,<7"
+typos = ">=1.44.0,<2"
+
+[feature.lintrunner.pypi-dependencies]
 lintrunner = ">=0.10.7"
 lintrunner-adapters = ">=0.12.3"
 editorconfig-checker = "==3.2.1"
+
+[feature.clang-tools.dependencies]
+# We want to use a clang-tidy/clang-format version that is possibly
+# newer than the one provided by the default macos cxx-compiler
+# package. We thus install this into a separate environment.
+clang = ">=22"
+clang-tools = "*"
+clang-format = "*"
+python = "*"
 
 [feature.docs.dependencies]
 furo = "*"
@@ -108,7 +152,6 @@ pillow = "*"
 pydot = "*"
 sphinx = "<9"  # Seems to be required by sphinx-tabs?
 sphinx-copybutton = "*"
-sphinx-gallery = "*"
 sphinx-tabs = "*"
 setuptools = "<82"  # sphinx-tabs needs pkg_resources which was removed in 82
 linkify-it-py = "*"
@@ -120,6 +163,18 @@ lychee = ">=0.23.0"
 [feature.link-checker.tasks.link-checker]
 cmd = "pixi exec lychee --root-dir . ."
 
+[feature.reuse.dependencies]
+# Isolate REUSE since it does not play nice with `pip check` in the
+# default environment. Furthermore, conda-forge's reuse has a hard
+# dependency on libmagic which is unix-only. There are fallbacks in
+# reuse if it is not available though.
+python = ">=3.14.5,<3.15"
+[feature.reuse.target.unix.dependencies]
+reuse = ">=6.2.0,<7"
+[feature.reuse.target.win-64.pypi-dependencies]
+reuse = ">=6.2.0, <7"
+[feature.reuse.tasks.reuse]
+cmd = "reuse"
 
 [environments]
 default = ["dev", "lint", "reference"]
@@ -127,4 +182,7 @@ oldies = ["dev", "lint", "reference", "oldies"]
 # Keep a separate docs environment since some of those dependencies
 # may introduce upper bounds
 docs = ["dev", "lint", "reference", "docs"]
+clang-tools = {features=["clang-tools"], no-default-feature=true}
 link-checker = {features=["link-checker"], no-default-feature=true}
+lintrunner = ["dev", "reference", "lint", "lintrunner"]
+reuse = {features=["reuse"], no-default-feature=true}

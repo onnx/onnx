@@ -7,10 +7,11 @@
 
 #include "onnx/defs/doc_strings.h"
 #include "onnx/defs/schema.h"
+#include "onnx/defs/type_builders.h"
 
 namespace ONNX_NAMESPACE {
 ONNX_API void RNNShapeInference(InferenceContext& ctx) {
-  TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
+  Dim num_directions, seq_length, batch_size, hidden_size, input_size;
 
   auto direction = getAttribute(ctx, "direction", "forward");
   if ((direction == "forward") || (direction == "reverse"))
@@ -25,13 +26,11 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
 
   auto layout_value = getAttribute(ctx, "layout", 0);
 
-  if (hasInputShape(ctx, 0)) {
-    const auto& first_input_shape = getInputShape(ctx, 0);
-    if (first_input_shape.dim_size() != 3) {
-      fail_shape_inference("First input tensor must have rank 3");
-    }
-    seq_length = first_input_shape.dim((layout_value == 0) ? 0 : 1);
-    batch_size = first_input_shape.dim((layout_value == 0) ? 1 : 0);
+  // X: [seq_length, batch_size, input_size] (layout=0) or [batch_size, seq_length, input_size] (layout=1)
+  if (layout_value == 0) {
+    ctx.unifyInputShape(0, {seq_length, batch_size, input_size});
+  } else {
+    ctx.unifyInputShape(0, {batch_size, seq_length, input_size});
   }
 
   auto num_outputs = ctx.getNumOutputs();
@@ -41,11 +40,9 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
     if (layout_value == 0) {
-      auto dims = {seq_length, num_directions, batch_size, hidden_size};
-      updateOutputShape(ctx, 0, dims);
+      updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
     } else {
-      auto dims = {batch_size, seq_length, num_directions, hidden_size};
-      updateOutputShape(ctx, 0, dims);
+      updateOutputShape(ctx, 0, {batch_size, seq_length, num_directions, hidden_size});
     }
   }
 
@@ -54,11 +51,9 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
     propagateElemTypeFromInputToOutput(ctx, 0, 1);
 
     if (layout_value == 0) {
-      auto dims = {num_directions, batch_size, hidden_size};
-      updateOutputShape(ctx, 1, dims);
+      updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
     } else {
-      auto dims = {batch_size, num_directions, hidden_size};
-      updateOutputShape(ctx, 1, dims);
+      updateOutputShape(ctx, 1, {batch_size, num_directions, hidden_size});
     }
   }
 
@@ -67,11 +62,9 @@ ONNX_API void RNNShapeInference(InferenceContext& ctx) {
     propagateElemTypeFromInputToOutput(ctx, 0, 2);
 
     if (layout_value == 0) {
-      auto dims = {num_directions, batch_size, hidden_size};
-      updateOutputShape(ctx, 2, dims);
+      updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
     } else {
-      auto dims = {batch_size, num_directions, hidden_size};
-      updateOutputShape(ctx, 2, dims);
+      updateOutputShape(ctx, 2, {batch_size, num_directions, hidden_size});
     }
   }
 }
@@ -172,18 +165,16 @@ static std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         1,
         OpSchema::Differentiable);
     schema.TypeConstraint("T", OpSchema::all_float_types_ir4(), "Constrain input and output types to float tensors.");
-    schema.TypeConstraint("T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+    schema.TypeConstraint("T1", {types::Int32}, "Constrain seq_lens to integer tensor.");
     schema.TypeAndShapeInferenceFunction(RNNShapeInference);
   };
 }
-
-static const char* const RNN_ver22_doc = kDoc_RNN_ver14;
 
 ONNX_OPERATOR_SET_SCHEMA(
     RNN,
     22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(RNN_ver22_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_RNN_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "One (or two if bidirectional) activation function for "
@@ -227,13 +218,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("RNN")));
 
-static const char* const GRU_ver22_doc = kDoc_GRU_ver14;
-
 ONNX_OPERATOR_SET_SCHEMA(
     GRU,
     22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(GRU_ver22_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_GRU_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 2 (or 4 if bidirectional) activation functions "
@@ -285,13 +274,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::Differentiable)
         .FillUsing(RNNDocGenerator("GRU")));
 
-static const char* const LSTM_ver22_doc = kDoc_LSTM_ver14;
-
 ONNX_OPERATOR_SET_SCHEMA(
     LSTM,
     22,
     OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(LSTM_ver22_doc) + GenerateOptionalArgumentsDoc()))
+        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_LSTM_ver14) + GenerateOptionalArgumentsDoc()))
         .Attr(
             "activations",
             "A list of 3 (or 6 if bidirectional) activation functions "
