@@ -114,7 +114,7 @@ template <typename T, AttributeKind Kind>
 struct ScalarAttributeValue final : public AttributeValue {
   using ConstructorType = const T&;
   using ValueType = T;
-  ScalarAttributeValue(Symbol name, ConstructorType value_) : AttributeValue(name), value_(std::move(value_)) {}
+  ScalarAttributeValue(Symbol name, ConstructorType value_) : AttributeValue(name), value_(value_) {}
   ValueType& value() {
     return value_;
   }

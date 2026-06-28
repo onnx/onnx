@@ -1498,7 +1498,7 @@ int64_t open_external_data(
 
 #endif
 
-static std::unordered_set<std::string> experimental_ops = {
+static const std::unordered_set<std::string> experimental_ops = {
     "ATen",
     "Affine",
     "ConstantFill",

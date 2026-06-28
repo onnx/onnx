@@ -42,11 +42,11 @@ std::string barf(const char* fmt, ...) { // NOLINT(modernize-avoid-variadic-func
   return std::string(msg.data());
 }
 
-void throw_assert_error(std::string& msg) {
+void throw_assert_error(const std::string& msg) {
   ONNX_THROW_EX(assert_error(msg));
 }
 
-void throw_tensor_error(std::string& msg) {
+void throw_tensor_error(const std::string& msg) {
   ONNX_THROW_EX(tensor_error(msg));
 }
 
