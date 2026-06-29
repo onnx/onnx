@@ -7058,6 +7058,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         self._assert_inferred(
             model, [make_tensor_value_info("loop_output", TensorProto.FLOAT, (5, 3))]
         )
+
+    def test_constantofshape_with_input_shape(self) -> None:
         graph = self._make_graph(
             [],
             [
