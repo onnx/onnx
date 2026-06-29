@@ -27,9 +27,9 @@ __attribute__((format(printf, 1, 2)))
 #endif
 std::string barf(const char* fmt, ...);
 
-[[noreturn]] void throw_assert_error(std::string& /*msg*/);
+[[noreturn]] void throw_assert_error(const std::string& /*msg*/);
 
-[[noreturn]] void throw_tensor_error(std::string& /*msg*/);
+[[noreturn]] void throw_tensor_error(const std::string& /*msg*/);
 
 } // namespace ONNX_NAMESPACE
 

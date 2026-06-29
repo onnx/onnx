@@ -521,9 +521,9 @@ struct InlinerImpl {
         schema_registry(schema_registry_),
         name_generator(model_.graph()) {}
 
-  virtual ~InlinerImpl() = default;
+  ~InlinerImpl() = default;
 
-  virtual bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
+  bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
     const std::string& domain = node.domain();
     const std::string& function_name = node.op_type();
     if (!to_inline.Contains(domain, function_name)) {
@@ -643,6 +643,17 @@ struct InlinerImpl {
     Process(*nodes, *value_infos);
   }
 
+  // Erase every model-local function whose id appears in `inlined`.
+  static void RemoveInlinedFunctions(ModelProto& model, const FunctionMap& inlined) {
+    auto* local_functions = model.mutable_functions();
+    for (auto it = local_functions->begin(); it != local_functions->end();) {
+      if (inlined.count(GetFunctionImplId(*it)) > 0)
+        it = local_functions->erase(it);
+      else
+        ++it;
+    }
+  }
+
   static void InlineLocalFunctions(ModelProto& model, bool convert_version) {
     checker::check_function_call_cycles(model);
     FunctionIdVector empty_set;
@@ -673,15 +684,9 @@ struct InlinerImpl {
     InlinerImpl inliner(model, all_functions, &map, nullptr);
     inliner.ProcessGraph(*model.mutable_graph());
 
-    // Remove all model-local functions. We do not remove functions with a mismatched
-    // opset version. They need to be handled some other way, eg., using a version-adapter.
-    auto* local_functions = model.mutable_functions();
-    for (auto it = local_functions->begin(); it != local_functions->end();) {
-      if (map.count(GetFunctionImplId(*it)) > 0)
-        it = local_functions->erase(it);
-      else
-        ++it;
-    }
+    // Remove the model-local functions we inlined. Functions with a mismatched opset
+    // version are not in `map`, so they are left for other handling (eg. a version-adapter).
+    RemoveInlinedFunctions(model, map);
   }
 
   static void
@@ -712,13 +717,7 @@ struct InlinerImpl {
     }
 
     // Remove all inlined model-local functions.
-    auto* local_functions = model.mutable_functions();
-    for (auto it = local_functions->begin(); it != local_functions->end();) {
-      if (map.count(GetFunctionImplId(*it)) > 0)
-        it = local_functions->erase(it);
-      else
-        ++it;
-    }
+    RemoveInlinedFunctions(model, map);
   }
 
   static void InlineSelectedLocalFunctions(ModelProto& model, const FunctionIdSet& to_inline) {
