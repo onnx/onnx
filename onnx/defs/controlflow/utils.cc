@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "onnx/defs/tensor_proto_util.h"
+
 namespace ONNX_NAMESPACE {
 
 void ClearShape(TypeProto& input_type) {
@@ -136,6 +138,17 @@ void LoopInferenceFunction(InferenceContext& ctx) {
           num_outputs + 1);
     }
 
+    // Try to get the trip count from input 0 ('M') to use as the first
+    // dimension of scan outputs when the value is statically known.
+    int64_t trip_count = -1; // -1 means unknown
+    const auto* trip_count_data = ctx.getInputData(0);
+    if (trip_count_data != nullptr && trip_count_data->data_type() == TensorProto_DataType_INT64) {
+      const auto data = ParseData<int64_t>(trip_count_data);
+      if (data.size() == 1 && data[0] >= 0) {
+        trip_count = data[0];
+      }
+    }
+
     // check loop state values match. we should already have type/shape info
     for (size_t i = 0; i < num_outputs; ++i) {
       const auto* const subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
@@ -176,8 +189,11 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
           mutable_inferred_shape->clear_dim();
 
-          // add empty dimension for number of iterations
-          mutable_inferred_shape->add_dim();
+          // add dimension for number of iterations; use known trip count if available
+          auto* iter_dim = mutable_inferred_shape->add_dim();
+          if (trip_count >= 0) {
+            iter_dim->set_dim_value(trip_count);
+          }
 
           // add dimensions from subgraph output shape
           for (const auto& dim : subgraph_output_type->tensor_type().shape().dim()) {
