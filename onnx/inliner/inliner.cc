@@ -521,9 +521,9 @@ struct InlinerImpl {
         schema_registry(schema_registry_),
         name_generator(model_.graph()) {}
 
-  virtual ~InlinerImpl() = default;
+  ~InlinerImpl() = default;
 
-  virtual bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
+  bool GetCallee(const NodeProto& node, FunctionProto& callee, int64_t& target_version) {
     const std::string& domain = node.domain();
     const std::string& function_name = node.op_type();
     if (!to_inline.Contains(domain, function_name)) {
