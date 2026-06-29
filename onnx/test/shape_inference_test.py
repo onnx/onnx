@@ -7042,45 +7042,21 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_loop_with_known_trip_count(self) -> None:
         # Like test_loop_no_state but with a known-value trip count passed as an initializer.
         # The first dimension of each scan output should be inferred as the trip count.
-        input_value_infos = [
-            make_tensor_value_info("iter_num_in", TensorProto.INT64, (1,)),
-            make_tensor_value_info("cond_in", TensorProto.UNDEFINED, None),
-        ]
-        output_value_infos = [
-            make_tensor_value_info("cond_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("output", TensorProto.FLOAT, (3,)),
-        ]
-
-        subgraph = helper.make_graph(
-            [
-                make_node("Identity", ["cond_in"], ["cond_out"]),
-                make_node("Identity", ["outer_scope_input"], ["output"]),
-            ],
-            "subgraph",
-            input_value_infos,
-            output_value_infos,
-        )
-
-        graph = self._make_graph(
-            [
-                ("max_trip_count", TensorProto.INT64, (1,)),
-                ("cond_orig", TensorProto.FLOAT, (1,)),
-                ("outer_scope_input", TensorProto.FLOAT, (3,)),
-            ],
-            [
-                make_node(
-                    "Loop",
-                    ["max_trip_count", "cond_orig"],
-                    ["loop_output"],
-                    body=subgraph,
-                )
-            ],
-            [],
-            initializer=[make_tensor("max_trip_count", TensorProto.INT64, (1,), [5])],
-        )
-
+        model = onnx.parser.parse_model("""
+            <ir_version: 10, opset_import: ["" : 22]>
+            test (bool cond_orig, float[3] outer_scope_input) => (loop_output)
+            <int64[1] max_trip_count = {5}>
+            {
+                loop_output = Loop (max_trip_count, cond_orig) <
+                    body = subgraph (int64[1] iter_num_in, bool cond_in) => (bool cond_out, float[3] output) {
+                        cond_out = Identity(cond_in)
+                        output = Identity(outer_scope_input)
+                    }
+                >
+            }
+        """)
         self._assert_inferred(
-            graph, [make_tensor_value_info("loop_output", TensorProto.FLOAT, (5, 3))]
+            model, [make_tensor_value_info("loop_output", TensorProto.FLOAT, (5, 3))]
         )
         graph = self._make_graph(
             [],
