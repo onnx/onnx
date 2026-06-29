@@ -800,26 +800,6 @@ struct Node : public Attributes<Node> {
     this->next() = nullptr;
     this->prev() = nullptr;
   }
-
- protected:
-  // subclasses must override
-  // this function is used by createClone to initialize a new version
-  // of a node in another graph. It should allocate a new instance of the same
-  // concrete type as 'this', but in graph 'g' which might be different
-  // than graph_
-  virtual Node* allocNewInstance(Graph* g) {
-    return new Node(g, kind());
-  }
-  // create a copy of all properties of Node s into this.
-  // subclasses should extend if they have additional information to copy.
-  // 'this' will be allocated with s->allocNewInstance(g) so it should have
-  // the same concrete type as 's'
-  //
-  // NB: This does NOT clone stages.  You're expected to set the stage correctly
-  // if you are going to preserve it.
-  virtual void cloneFrom(Node* s) {
-    copyAttributes(*s);
-  }
 };
 
 // A class with the same properties as OperatorSetIdProto, but without protobuf
