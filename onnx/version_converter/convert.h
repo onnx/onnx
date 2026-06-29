@@ -90,9 +90,11 @@ class DefaultVersionConverter : public BaseVersionConverter {
   void assertInVersionRange(int64_t version) const {
     ONNX_ASSERTM(
         version >= version_range.first && version <= version_range.second,
-        "Warning: invalid version (must be between %d and %d)",
+        "Warning: invalid version (must be between ",
         version_range.first,
-        version_range.second)
+        " and ",
+        version_range.second,
+        ")")
   }
 
   void assertDefaultDomain(const std::string& initial_domain, const std::string& target_domain) const {
