@@ -284,7 +284,7 @@ using NodeKind = Symbol;
 
 struct Value final {
   ONNX_DISALLOW_COPY_AND_ASSIGNMENT(Value);
-  Value(Node* node_, size_t offset_);
+  Value(Node& node, size_t offset);
   Value(Value&&) = default;
   Value& operator=(Value&&) = default;
   ~Value() = default;
@@ -431,8 +431,8 @@ struct Node : public Attributes<Node> {
   bool has_overload_{false};
   std::string overload_;
 
- protected:
-  Node(Graph* graph_, NodeKind kind_); // defined after graph
+  // Constructed only by the friend Graph factory, so every Node stays graph-owned.
+  Node(Graph& graph, NodeKind kind); // defined after graph
 
  public:
   bool has_name() const {
@@ -1103,7 +1103,7 @@ struct Graph final {
   }
 
   Node* create(NodeKind kind, size_t num_outputs = 1) {
-    std::unique_ptr<Node> node_owner(new Node(this, kind));
+    std::unique_ptr<Node> node_owner(new Node(*this, kind));
     Node* n = node_owner.get();
     all_nodes.emplace(n, std::move(node_owner));
     for (size_t i = 0; i < num_outputs; i++)
@@ -1112,7 +1112,7 @@ struct Graph final {
   }
 
   // Allocate a Value owned by this graph.
-  Value* createValue(Node* node, size_t offset);
+  Value* createValue(Node& node, size_t offset);
 
   Node* create(NodeKind kind, ArrayRef<Value*> inputs, size_t num_outputs = 1) {
     auto* n = create(kind, num_outputs);
@@ -1243,8 +1243,8 @@ struct Graph final {
   }
 };
 
-inline Value::Value(Node* node, size_t offset)
-    : node_(node), offset_(offset), unique_(node->graph_->getNextUnique()), stage_(node->graph_->new_node_stage_) {}
+inline Value::Value(Node& node, size_t offset)
+    : node_(&node), offset_(offset), unique_(node.graph_->getNextUnique()), stage_(node.graph_->new_node_stage_) {}
 
 inline Graph* Value::owningGraph() {
   return node()->owningGraph();
@@ -1327,9 +1327,9 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
   assert(this->uses().empty());
 }
 
-inline Node::Node(Graph* graph, NodeKind kind) : kind_(kind), graph_(graph), stage_(graph->new_node_stage_) {}
+inline Node::Node(Graph& graph, NodeKind kind) : kind_(kind), graph_(&graph), stage_(graph.new_node_stage_) {}
 
-inline Value* Graph::createValue(Node* node, size_t offset) {
+inline Value* Graph::createValue(Node& node, size_t offset) {
   auto value = std::make_unique<Value>(node, offset);
   Value* v = value.get();
   all_values.emplace(v, std::move(value));
@@ -1337,7 +1337,7 @@ inline Value* Graph::createValue(Node* node, size_t offset) {
 }
 
 inline Value* Node::addOutput() {
-  Value* v = graph_->createValue(this, outputs_.size());
+  Value* v = graph_->createValue(*this, outputs_.size());
   outputs_.push_back(v);
   return v;
 }
