@@ -14337,6 +14337,49 @@ expect(
 
 
 <details>
+<summary>bidirectional</summary>
+
+```python
+"""Test case for direction=bidirectional attribute."""
+# seq_length=3, batch=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 5
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    "GRU",
+    inputs=["X", "W", "R"],
+    outputs=["Y", "Y_h"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+gru = GRUHelper(X=input, W=W, R=R, direction="bidirectional")
+Y, Y_h = gru.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+    name="test_gru_bidirectional",
+)
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -14413,6 +14456,48 @@ expect(
     inputs=[input, W, R, B],
     outputs=[Y_h.astype(np.float32)],
     name="test_gru_with_initial_bias",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+"""Test case for direction=reverse attribute."""
+# seq_length=3, batch=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 5
+weight_scale = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    "GRU",
+    inputs=["X", "W", "R"],
+    # Output Y to check ordering.
+    outputs=["Y", "Y_h"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+gru = GRUHelper(X=input, W=W, R=R, direction="reverse")
+Y, Y_h = gru.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
+    name="test_gru_reverse",
 )
 ```
 
@@ -18281,7 +18366,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">1</a>, <a href="C
 <dt><tt>initial_c</tt> (optional, non-differentiable) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>P</tt> (optional, differentiable) : T</dt>
-<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
 #### Outputs (0 - 3)
@@ -18335,12 +18420,54 @@ R = weight_scale * np.ones(
 ).astype(np.float32)
 
 lstm = LSTMHelper(X=input, W=W, R=R, layout=layout)
-Y, Y_h = lstm.step()
+Y, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R],
     outputs=[Y.astype(np.float32), Y_h.astype(np.float32)],
     name="test_lstm_batchwise",
+)
+```
+
+</details>
+
+
+<details>
+<summary>bidirectional</summary>
+
+```python
+# seq_length = 3, batch_size=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 3
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    "LSTM",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h", "Y_c"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scales * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+lstm = LSTMHelper(X=input, W=W, R=R, direction="bidirectional")
+_, Y_h, Y_c = lstm.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
+    name="test_lstm_bidirectional",
 )
 ```
 
@@ -18370,7 +18497,7 @@ R = weight_scale * np.ones(
 ).astype(np.float32)
 
 lstm = LSTMHelper(X=input, W=W, R=R)
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R],
@@ -18418,7 +18545,7 @@ R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTMHelper(X=input, W=W, R=R, B=B)
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R, B],
@@ -18469,12 +18596,52 @@ P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(
 lstm = LSTMHelper(
     X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h
 )
-_, Y_h = lstm.step()
+_, Y_h, _ = lstm.step()
 expect(
     node,
     inputs=[input, W, R, B, seq_lens, init_h, init_c, P],
     outputs=[Y_h.astype(np.float32)],
     name="test_lstm_with_peepholes",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+# seq_length = 3, batch_size=1, input_size=2
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 3
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    "LSTM",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h", "Y_c"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, input_size)
+).astype(np.float32)
+R = weight_scale * np.ones(
+    (1, number_of_gates * hidden_size, hidden_size)
+).astype(np.float32)
+
+lstm = LSTMHelper(X=input, W=W, R=R, direction="reverse")
+_, Y_h, Y_c = lstm.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32), Y_c.astype(np.float32)],
+    name="test_lstm_reverse",
 )
 ```
 
@@ -27292,6 +27459,42 @@ expect(
 
 
 <details>
+<summary>bidirectional</summary>
+
+```python
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scales = np.array([[[0.5]], [[2.0]]], dtype=np.float32)
+
+node = onnx.helper.make_node(
+    "RNN",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h"],
+    hidden_size=hidden_size,
+    direction="bidirectional",
+)
+
+# Multiply broadcasts in num_directions axis, to have different W & R
+# in each direction
+W = weight_scales * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scales * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNNHelper(X=input, W=W, R=R, direction="bidirectional")
+_, Y_h = rnn.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32)],
+    name="test_simple_rnn_bidirectional",
+)
+```
+
+</details>
+
+
+<details>
 <summary>defaults</summary>
 
 ```python
@@ -27356,6 +27559,40 @@ expect(
     inputs=[input, W, R, B],
     outputs=[Y_h.astype(np.float32)],
     name="test_simple_rnn_with_initial_bias",
+)
+```
+
+</details>
+
+
+<details>
+<summary>reverse</summary>
+
+```python
+input = np.array([[[1.0, 2.0]], [[3.0, 4.0]], [[5.0, 6.0]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    "RNN",
+    inputs=["X", "W", "R"],
+    outputs=["", "Y_h"],
+    hidden_size=hidden_size,
+    direction="reverse",
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNNHelper(X=input, W=W, R=R, direction="reverse")
+_, Y_h = rnn.step()
+expect(
+    node,
+    inputs=[input, W, R],
+    outputs=[Y_h.astype(np.float32)],
+    name="test_simple_rnn_reverse",
 )
 ```
 
