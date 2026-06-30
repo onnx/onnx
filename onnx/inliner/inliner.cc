@@ -414,7 +414,7 @@ const TypeProto& GetType(const ModelProto& model, const std::string& var) {
     if (vi.name() == var)
       return vi.type();
   }
-  ONNX_ASSERTM(false, "Type unknown for %s", var.c_str())
+  ONNX_ASSERTM(false, "Type unknown for ", var)
 }
 
 void ConvertVersion(ModelProto& model, const NodeProto& call_node, FunctionProto& function, int target_version) {

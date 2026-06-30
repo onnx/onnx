@@ -1654,10 +1654,10 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       if (OpSchemaRegistry::Instance()->GetLoadedSchemaVersion() == 0) {
         ONNX_ASSERTM(
             dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
-            "%zu schema were exposed from operator sets and automatically placed into the static registry.  "
-            "%zu were expected based on calls to registration macros. Operator set functions may need to be updated.",
             dbg_registered_schema_count,
-            ONNX_DBG_GET_COUNT_IN_OPSETS())
+            " schema were exposed from operator sets and automatically placed into the static registry.  ",
+            ONNX_DBG_GET_COUNT_IN_OPSETS(),
+            " were expected based on calls to registration macros. Operator set functions may need to be updated.")
       }
 #endif
     }
