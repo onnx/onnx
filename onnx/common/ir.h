@@ -256,13 +256,7 @@ struct Attributes {
   using const_iterator = std::vector<AVPtr>::const_iterator;
   const_iterator find(Symbol name, bool required) const {
     auto it = std::find_if(values_.begin(), values_.end(), [&](const AVPtr& v) { return v->name == name; });
-    ONNX_ASSERTM(
-        !required || it != values_.end(),
-        "%s:%u: %s: required undefined attribute '%s'",
-        __FILE__,
-        __LINE__,
-        __func__,
-        name.toString())
+    ONNX_ASSERTM(!required || it != values_.end(), "required undefined attribute '", name.toString(), "'")
     return it;
   }
 };
@@ -759,12 +753,12 @@ struct Node : public Attributes<Node> {
   }
   template <typename T>
   T* expect() {
-    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
+    ONNX_ASSERTM(T::Kind == kind(), "expected a ", T::Kind.toString(), " but found a ", kind().toString())
     return static_cast<T*>(this);
   }
   template <typename T>
   const T* expect() const {
-    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
+    ONNX_ASSERTM(T::Kind == kind(), "expected a ", T::Kind.toString(), " but found a ", kind().toString())
     return static_cast<const T*>(this);
   }
 
@@ -866,7 +860,7 @@ class OpSetID final {
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
-      ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()) });
+      ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: ", e.what()) });
     }
 
     // The control will never reach here.

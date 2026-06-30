@@ -378,12 +378,18 @@ class OpSchema final {
   // any structs used from ir.h
   ONNX_API OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
   InferenceFunction GetTypeAndShapeInferenceFunction() const {
-    return tensor_inference_function_ ? tensor_inference_function_ : dummyInferenceFunction;
+    if (tensor_inference_function_) {
+      return tensor_inference_function_;
+    }
+    return dummyInferenceFunction;
   }
 
   ONNX_API OpSchema& PartialDataPropagationFunction(DataPropagationFunction dataPropagationFunction);
   ONNX_API DataPropagationFunction GetDataPropagationFunction() const {
-    return data_propagation_function_ ? data_propagation_function_ : dummyDataPropagationFunction;
+    if (data_propagation_function_) {
+      return data_propagation_function_;
+    }
+    return dummyDataPropagationFunction;
   }
 
   // Set the support level for the op schema.
@@ -896,7 +902,7 @@ class ISchemaRegistry {
 
   ONNX_API virtual const OpSchema*
   // NOLINTNEXTLINE(google-default-arguments)
-  GetSchema(const std::string& key, const int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
+  GetSchema(const std::string& key, int maxInclusiveVersion, const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
 /**
