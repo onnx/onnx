@@ -156,7 +156,9 @@ When moving an operator schema to `old.cc`, avoid significant duplication of cod
 
 ### Checklist
 
-Use this checklist when updating an existing operator: https://github.com/onnx/onnx/wiki/Checklist-for-updating-an-existing-operator
+For a comprehensive guide on updating an existing operator, see the [Updating Operator Guide](UpdatingOperator.md).
+
+For the quick checklist, visit: https://github.com/onnx/onnx/wiki/Checklist-for-updating-an-existing-operator
 
 ## Removing operator or function
 
