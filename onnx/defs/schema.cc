@@ -502,7 +502,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                                                           \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -523,7 +523,7 @@ OpSchema& OpSchema::Attr(
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
@@ -539,7 +539,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype)                                                    \
   OpSchema& OpSchema::Attr(                                                                                            \
       std::string name, std::string description, AttributeProto::AttributeType attr_type, const type& default_value) { \
-    if (attrtype != attr_type) {                                                                                       \
+    if ((attrtype) != attr_type) {                                                                                     \
       fail_schema("Attribute specification type mismatch.");                                                           \
     }                                                                                                                  \
     AttributeProto a;                                                                                                  \
@@ -556,7 +556,7 @@ OpSchema& OpSchema::Attr(
       std::string description,                                              \
       AttributeProto::AttributeType attr_type,                              \
       const std::vector<type>& default_value) {                             \
-    if (attrtype != attr_type) {                                            \
+    if ((attrtype) != attr_type) {                                          \
       fail_schema("Attribute specification type mismatch.");                \
     }                                                                       \
     AttributeProto a;                                                       \
