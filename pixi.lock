@@ -1,9 +1,26 @@
 version: 7
 platforms:
 - name: linux-64
+  virtual-packages:
+  - __unix=0=0
+  - __linux=4.18
+  - __glibc=2.28
+  - __archspec=0=x86_64
 - name: linux-aarch64
+  virtual-packages:
+  - __unix=0=0
+  - __linux=4.18
+  - __glibc=2.28
+  - __archspec=0=aarch64
 - name: osx-arm64
+  virtual-packages:
+  - __unix=0=0
+  - __osx=13.0
+  - __archspec=0=m1
 - name: win-64
+  virtual-packages:
+  - __win=10.0
+  - __archspec=0=x86_64
 environments:
   clang-tools:
     channels:
@@ -3076,6 +3093,7 @@ packages:
   constrains:
   - __glibc >=2.17
   license: MIT
+  license_family: MIT
   purls:
   - pkg:pypi/ast-serialize?source=compressed-mapping
   run_exports: {}
@@ -5674,6 +5692,7 @@ packages:
   constrains:
   - __glibc >=2.17
   license: MIT
+  license_family: MIT
   purls: []
   run_exports: {}
   size: 6117199
@@ -5791,8 +5810,7 @@ packages:
   license: LGPL-3.0-only
   license_family: LGPL
   purls:
-  - pkg:pypi/pyside6?source=hash-mapping
-  - pkg:pypi/shiboken6?source=hash-mapping
+  - pkg:pypi/pyside6?source=compressed-mapping
   run_exports: {}
   size: 13821776
   timestamp: 1778933872780
@@ -6078,7 +6096,7 @@ packages:
   license: Apache-2.0
   license_family: Apache
   purls:
-  - pkg:pypi/tornado?source=compressed-mapping
+  - pkg:pypi/tornado?source=hash-mapping
   run_exports: {}
   size: 918368
   timestamp: 1781006801436
@@ -6577,6 +6595,7 @@ packages:
   constrains:
   - __glibc >=2.17
   license: MIT
+  license_family: MIT
   purls:
   - pkg:pypi/ast-serialize?source=hash-mapping
   run_exports: {}
@@ -9100,6 +9119,7 @@ packages:
   constrains:
   - __glibc >=2.17
   license: MIT
+  license_family: MIT
   purls: []
   run_exports: {}
   size: 5973762
@@ -10717,7 +10737,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/myst-parser?source=hash-mapping
+  - pkg:pypi/myst-parser?source=compressed-mapping
   run_exports: {}
   size: 74888
   timestamp: 1778696564508
@@ -11534,6 +11554,7 @@ packages:
   constrains:
   - __osx >=11.0
   license: MIT
+  license_family: MIT
   purls:
   - pkg:pypi/ast-serialize?source=compressed-mapping
   run_exports: {}
@@ -13845,6 +13866,7 @@ packages:
   constrains:
   - __osx >=11.0
   license: MIT
+  license_family: MIT
   purls: []
   run_exports: {}
   size: 5677093
@@ -14283,6 +14305,7 @@ packages:
   - _python_abi3_support 1.*
   - cpython >=3.10
   license: MIT
+  license_family: MIT
   purls:
   - pkg:pypi/ast-serialize?source=compressed-mapping
   run_exports: {}
@@ -16152,6 +16175,7 @@ packages:
   - vc14_runtime >=14.44.35208
   - ucrt >=10.0.20348.0
   license: MIT
+  license_family: MIT
   purls: []
   run_exports: {}
   size: 6537499
