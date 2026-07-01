@@ -164,17 +164,8 @@ lychee = ">=0.23.0"
 cmd = "pixi exec lychee --root-dir . ."
 
 [feature.reuse.dependencies]
-# Isolate REUSE since it does not play nice with `pip check` in the
-# default environment. Furthermore, conda-forge's reuse has a hard
-# dependency on libmagic which is unix-only. On Windows there is no
-# libmagic, so we depend on the `charset-normalizer` extra which
-# provides reuse's fallback encoding detector; without it reuse raises
-# NoEncodingModuleError on import.
 python = ">=3.14.5,<3.15"
-[feature.reuse.target.unix.dependencies]
 reuse = ">=6.2.0,<7"
-[feature.reuse.target.win-64.pypi-dependencies]
-reuse = { version = ">=6.2.0,<7", extras = ["charset-normalizer"] }
 [feature.reuse.tasks.reuse]
 cmd = "reuse"
 
