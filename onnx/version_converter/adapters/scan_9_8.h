@@ -62,7 +62,7 @@ struct Scan_9_8 final : public Adapter {
 
     node->removeAllInputs();
 
-    Value* v = new Value(node, 0);
+    Value* v = node->owningGraph()->createValue(*node, 0);
     v->setUniqueName("");
     v->setElemType(TensorProto_DataType::TensorProto_DataType_INT32);
     node->addInput(v);
