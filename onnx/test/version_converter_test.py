@@ -2935,6 +2935,38 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Scan"
         assert converted_model.opset_import[0].version == 8
 
+    def test_convert_version_ai_onnx_domain_spelling_preserves_custom_domain(
+        self,
+    ) -> None:
+        # convert_graph's default-domain lookup must match "ai.onnx" (not just ""),
+        # and must only increment that entry -- a custom-domain opset_import must
+        # be left untouched.
+        node = helper.make_node("Add", inputs=["X", "Y"], outputs=["Z"])
+        graph = helper.make_graph(
+            [node],
+            "test_default_domain_ai_onnx_spelling",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1]),
+            ],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("ai.onnx", 9),
+                helper.make_operatorsetid("custom.domain", 1),
+            ],
+        )
+        converted_model = onnx.version_converter.convert_version(model, 8)
+        checker.check_model(converted_model)
+
+        opset_by_domain = {
+            opset.domain: opset.version for opset in converted_model.opset_import
+        }
+        assert opset_by_domain["ai.onnx"] == 8
+        assert opset_by_domain["custom.domain"] == 1
+
     def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
         node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
         graph = helper.make_graph(
