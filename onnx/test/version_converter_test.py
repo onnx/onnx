@@ -94,6 +94,76 @@ class TestVersionConverter(unittest.TestCase):
 
         self.assertRaises(RuntimeError, test)
 
+    # A graph output that nothing produces must raise (ConvertError), not crash.
+    # Regression test for a SEGV in graphProtoToGraph when a top-level
+    # graph output name was absent from the value map.
+    def test_undefined_output(self) -> None:
+        def test() -> None:
+            nodes = [helper.make_node("Identity", ["X"], ["Y"])]
+            # "Z" is listed as a graph output but nothing produces it.
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+                [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1,))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 13), 14)
+
+        self.assertRaises(onnx.version_converter.ConvertError, test)
+
+    # A node input that nothing produces must raise, not crash.
+    def test_undefined_input(self) -> None:
+        def test() -> None:
+            # "W" is consumed but is neither a graph input nor an initializer.
+            nodes = [helper.make_node("Add", ["X", "W"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+            )
+            self._converted(graph, helper.make_operatorsetid("", 13), 14)
+
+        self.assertRaises(onnx.version_converter.ConvertError, test)
+
+    # A nested (subgraph) output that resolves to a value captured from the
+    # enclosing scope is handled via a dummy node, not a crash. Exercises the
+    # captured-value path of graphProtoToGraph (nested=True).
+    def test_nested_captured_output(self) -> None:
+        # Each If branch has no nodes and an output ("X") defined only in the
+        # enclosing graph, so the branch import hits the captured-value path.
+        then_branch = helper.make_graph(
+            [],
+            "then",
+            [],
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+        )
+        else_branch = helper.make_graph(
+            [],
+            "else",
+            [],
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,))],
+        )
+        if_node = helper.make_node(
+            "If", ["cond"], ["Y"], then_branch=then_branch, else_branch=else_branch
+        )
+        graph = helper.make_graph(
+            [if_node],
+            "test",
+            [
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, (1,)),
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, (1,)),
+            ],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1,))],
+        )
+        orig_model = helper.make_model(
+            graph,
+            producer_name="onnx-test",
+            opset_imports=[helper.make_operatorsetid("", 13)],
+        )
+        converted = onnx.version_converter.convert_version(orig_model, 14)
+        assert [o.name for o in converted.graph.output] == ["Y"]
+
     # Test Add Adapter: 8 -> 5
     def test_add_8_5(self) -> None:
         nodes = [helper.make_node("Add", ["X1", "X2"], ["Y"])]
@@ -2799,6 +2869,37 @@ class TestVersionConverter(unittest.TestCase):
             self._converted(graph, helper.make_operatorsetid("", 27), 26)
 
         self.assertRaises(RuntimeError, test)
+
+    def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
+        node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
+        graph = helper.make_graph(
+            [node],
+            "celu",
+            [helper.make_tensor_value_info("X", dtype, [3, 4])],
+            [helper.make_tensor_value_info("Y", dtype, [3, 4])],
+        )
+        return self._converted(graph, helper.make_operatorsetid("", src), dst)
+
+    def test_celu_float_27_28_and_28_27(self) -> None:
+        assert (
+            self._celu_converted(TensorProto.FLOAT, 27, 28).opset_import[0].version
+            == 28
+        )
+        assert (
+            self._celu_converted(TensorProto.FLOAT, 28, 27).opset_import[0].version
+            == 27
+        )
+
+    # Celu 28 -> 27: types added in v28 must be rejected
+    @parameterized.parameterized.expand(
+        [
+            ("float16", TensorProto.FLOAT16),
+            ("bfloat16", TensorProto.BFLOAT16),
+            ("double", TensorProto.DOUBLE),
+        ]
+    )
+    def test_celu_28_27_unsupported_type_fails(self, _: str, dtype: int) -> None:
+        self.assertRaises(RuntimeError, lambda: self._celu_converted(dtype, 28, 27))
 
 
 if __name__ == "__main__":

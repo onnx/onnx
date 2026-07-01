@@ -49,11 +49,13 @@ class TypeRestriction : public Adapter {
     ONNX_ASSERTM(
         std::find(std::begin(unallowed_types_), std::end(unallowed_types_), val->elemType()) ==
             std::end(unallowed_types_),
-        "DataType (%d) of Input or Output"
-        " of operator '%s' is unallowed for Opset Version %" PRId64 ".",
+        "DataType (",
         val->elemType(),
-        name().c_str(),
-        static_cast<int64_t>(target_version().version()))
+        ") of Input or Output of operator '",
+        name(),
+        "' is unallowed for Opset Version ",
+        static_cast<int64_t>(target_version().version()),
+        ".")
   }
 };
 

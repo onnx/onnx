@@ -28,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0
 
 **Lead(s):** Andreas Fehlner (TRUMPF Laser), Christian Bourjau (QuantCo)
 
-**Last updated:** 2026-06-02
+**Last updated:** 2026-06-24
 
 #### Q3 2026
 - Remove test files from release packages (reduce package size and install surface)
@@ -38,13 +38,12 @@ SPDX-License-Identifier: Apache-2.0
 - Newer minimal protobuf
 
 #### Q4 2026
-
+- Move to C++20
 - Begin C++ hardening (compiler flags, static analysis integration)
 - Integrate fuzz testing into CI
 - Define a stable C-API
 
 #### Q1 2027
-- Move to C++20
 - OpenSSF Gold Badge
 - Achieve SLSA Build Level 3 compliance
 
