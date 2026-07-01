@@ -295,10 +295,9 @@ def save_external_data(tensor: TensorProto, base_path: str) -> None:
     with os.fdopen(fd, "r+b") as data_file:
         data_file.seek(0, 2)
         if info.offset is not None:
-            # Pad file to required offset if needed
             file_size = data_file.tell()
             if info.offset > file_size:
-                data_file.write(b"\0" * (info.offset - file_size))
+                data_file.truncate(info.offset)
 
             data_file.seek(info.offset)
         offset = data_file.tell()

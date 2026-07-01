@@ -1321,5 +1321,30 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
         self.assertEqual(tensor.raw_data, raw)
 
 
+class TestSaveExternalDataPadding(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.mkdtemp()
+
+    def tearDown(self) -> None:
+        shutil.rmtree(self.temp_dir)
+
+    def test_save_external_data_honors_offset_without_explicit_padding(self) -> None:
+        array = np.array([1.0, 2.0, 3.0], dtype=np.float32)
+        tensor = from_array(array, name="weight")
+        raw = tensor.raw_data
+        offset = 2 * 1024 * 1024 + 17
+
+        set_external_data(tensor, location="weights.bin", offset=offset)
+
+        save_external_data(tensor, self.temp_dir)
+
+        data_path = os.path.join(self.temp_dir, "weights.bin")
+        self.assertEqual(os.path.getsize(data_path), offset + len(raw))
+        with open(data_path, "rb") as data_file:
+            self.assertEqual(data_file.read(16), b"\0" * 16)
+            data_file.seek(offset)
+            self.assertEqual(data_file.read(len(raw)), raw)
+
+
 if __name__ == "__main__":
     unittest.main()
