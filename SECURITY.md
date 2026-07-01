@@ -10,7 +10,7 @@ SPDX-License-Identifier: Apache-2.0
 
 Bugs, even safety-critical ones, that are easily discovered using widely available tooling are considered publicly known.
 Please open a public issue or PR if you discovered an issue in this manner.
-If you believe you have discovered a non-trivial security vulnerability in ONNX, please report it privately using GitHub Security Advisories.
+If you believe you have discovered a non-trivial security vulnerability in ONNX that does not fall into the above category, please report it privately using GitHub Security Advisories.
 
 👉 Open a private report: https://github.com/onnx/onnx/security/advisories/new
 
@@ -29,9 +29,11 @@ Reporters are credited in the published advisory unless they request to remain a
 Once a report is received, maintainers follow this process:
 
 1. **Confirm.** Verify the report describes a genuine security issue (not an ordinary bug or feature request) and assign an incident lead from the security team (the GitHub team with access to private advisories). The GitHub Security Advisory draft serves as the private coordination channel.
-2. **Triage.** Assess severity case by case using [CVSS](https://www.first.org/cvss/) (v4.0 or v3.1). The security team decides per incident whether the fix warrants an out-of-cycle patch release or can be included in the next scheduled release. Not every report results in a CVE — a CVE is issued only when there is a confirmed, exploitable vulnerability with real-world impact. Reports describing expected behavior, unrealistic preconditions, or issues outside the project's threat model may be closed without a CVE.
+2. **Triage.** Assess severity case by case using [CVSS](https://www.first.org/cvss/) (v3.1 is preferred, but v4.0 is also accepted).
+The security team decides per incident whether the fix warrants an out-of-cycle patch release or can be included in the next scheduled release. Not every report results in a CVE — a CVE is issued only when there is a confirmed, exploitable vulnerability with real-world impact.
+Reports describing expected behavior, unrealistic preconditions, or issues outside the project's threat model may be closed without a CVE.
 3. **Fix.** A patch is developed in a private fork or Security Advisory draft and reviewed by a second maintainer.
-4. **Disclose.** Merge the fix and release the patched version, then publish the GitHub Security Advisory — this requests a CVE and serves as the public announcement.
+4. **Disclose.** Merge the fix and release the patched version, then publish the GitHub Security Advisory — this requests a CVE if applicable and serves as the public announcement.
 
 Out-of-cycle releases are triggered for confirmed Critical/High vulnerabilities or active exploitation.
 
