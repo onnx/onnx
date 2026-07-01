@@ -46,70 +46,18 @@ static void MathOpDataPropagator(DataPropagationContext& ctx, const std::string&
   ctx.addOutputData(0, std::move(tsp));
 }
 
-static std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
-  return [=](OpSchema& schema) {
-    std::string doc;
-    if (std::string(name) == "division") {
-      POPULATE_OP_DOC_STR(
-          doc = R"DOC(
-Performs element-wise binary {name} (with Numpy-style broadcasting support).
-
-{broadcast_doc}
-
-For integer inputs, the result is computed using truncating division (rounding toward zero).
-(Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
-)DOC";
-          ReplaceAll(doc, "{name}", name);
-          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
-    } else {
-      POPULATE_OP_DOC_STR(
-          doc = R"DOC(
-Performs element-wise binary {name} (with Numpy-style broadcasting support).
-
-{broadcast_doc}
-
-(Opset 14 change): Extend supported types to include uint8, int8, uint16, and int16.
-)DOC";
-          ReplaceAll(doc, "{name}", name);
-          ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str()););
-    }
-    schema.SetDoc(doc);
-    schema.Input(0, "A", "First operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    schema.Input(1, "B", "Second operand.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable);
-    schema.Output(
-        0,
-        "C",
-        "Result, has same element type as two inputs",
-        "T",
-        OpSchema::Single,
-        true,
-        1,
-        OpSchema::Differentiable);
-    schema.TypeConstraint(
-        "T", OpSchema::all_numeric_types_ir4(), "Constrain input and output types to all numeric tensors.");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasNInputShapes(ctx, 2))
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-    });
-  };
-}
-
 ONNX_OPERATOR_SET_SCHEMA(
     Add,
     14,
-    OpSchema().FillUsing(MathDocGenerator("addition")).PartialDataPropagationFunction([](DataPropagationContext& ctx) {
-      MathOpDataPropagator(ctx, "Add");
-    }));
+    OpSchema()
+        .FillUsing(defs::math::utils::MathDocGenerator_v14("addition"))
+        .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Add"); }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sub,
     14,
     OpSchema()
-        .FillUsing(MathDocGenerator("subtraction"))
+        .FillUsing(defs::math::utils::MathDocGenerator_v14("subtraction"))
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Sub"); }));
 
 static constexpr const char* Mod_doc = R"DOC(
@@ -162,10 +110,10 @@ ONNX_OPERATOR_SET_SCHEMA(
     Mul,
     14,
     OpSchema()
-        .FillUsing(MathDocGenerator("multiplication"))
+        .FillUsing(defs::math::utils::MathDocGenerator_v14("multiplication"))
         .PartialDataPropagationFunction([](DataPropagationContext& ctx) { MathOpDataPropagator(ctx, "Mul"); }));
 
-ONNX_OPERATOR_SET_SCHEMA(Div, 14, OpSchema().FillUsing(MathDocGenerator("division")));
+ONNX_OPERATOR_SET_SCHEMA(Div, 14, OpSchema().FillUsing(defs::math::utils::MathDocGenerator_v14("division")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Neg,
@@ -625,25 +573,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
     15,
-    OpSchema()
-        .SetDoc(GET_OP_DOC_STR(std::string(kDoc_Pow_ver13) + GenerateBroadcastingDocMul()))
-        .Input(0, "X", "First operand, base of the exponent.", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .Input(
-            1,
-            "Y",
-            "Second operand, power of the exponent.",
-            "T1",
-            OpSchema::Single,
-            true,
-            1,
-            OpSchema::Differentiable)
-        .Output(0, "Z", "Output tensor", "T", OpSchema::Single, true, 1, OpSchema::Differentiable)
-        .TypeConstraint(
-            "T",
+    OpSchema().FillUsing(
+        defs::math::utils::PowOpGenerator(
             {types::Int32, types::Int64, types::Float16, types::Float, types::Double, types::BFloat16},
-            "Constrain input X and output types to float/int tensors.")
-        .TypeConstraint(
-            "T1",
             {types::UInt8,
              types::UInt16,
              types::UInt32,
@@ -655,16 +587,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              types::Float16,
              types::Float,
              types::Double,
-             types::BFloat16},
-            "Constrain input Y types to float/int tensors.")
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 2))
-            bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
-                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
-        }));
+             types::BFloat16})));
 
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
