@@ -4824,6 +4824,104 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
         )
 
+    def test_topk_scalar_k(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+            [],
+            initializer=[make_tensor("k", TensorProto.INT64, (), (2,))],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (3, 4, 2, 10)),
+                make_tensor_value_info("z", TensorProto.INT64, (3, 4, 2, 10)),
+            ],
+        )
+
+    def test_topk_scalar_k_opset10(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+            [],
+            initializer=[make_tensor("k", TensorProto.INT64, (), (2,))],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (3, 4, 2, 10)),
+                make_tensor_value_info("z", TensorProto.INT64, (3, 4, 2, 10)),
+            ],
+            opset_imports=[make_opsetid(ONNX_DOMAIN, 10)],
+        )
+
+    def test_topk_single_element_multi_dimensional_k(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+            [],
+            initializer=[make_tensor("k", TensorProto.INT64, (1, 1), (2,))],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (3, 4, 2, 10)),
+                make_tensor_value_info("z", TensorProto.INT64, (3, 4, 2, 10)),
+            ],
+        )
+
+    def test_topk_rejects_multi_element_k(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+            [],
+            initializer=[make_tensor("k", TensorProto.INT64, (2,), (1, 2))],
+        )
+        self.assertRaises(
+            onnx.shape_inference.InferenceError, self._inferred, graph
+        )
+
+    def test_topk_rejects_non_positive_k(self) -> None:
+        for k_value, opset_imports in itertools.product(
+            (0, -1), (None, [make_opsetid(ONNX_DOMAIN, 10)])
+        ):
+            with self.subTest(k_value=k_value, opset_imports=opset_imports):
+                graph = self._make_graph(
+                    [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
+                    [make_node("TopK", ["x", "k"], ["y", "z"], axis=2)],
+                    [],
+                    initializer=[make_tensor("k", TensorProto.INT64, (), (k_value,))],
+                )
+                kwargs = {}
+                if opset_imports is not None:
+                    kwargs["opset_imports"] = opset_imports
+                self.assertRaises(
+                    onnx.shape_inference.InferenceError,
+                    self._inferred,
+                    graph,
+                    **kwargs,
+                )
+
+    def test_topk_scalar_k_from_shape_gather_data_propagation(self) -> None:
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (3, 4, 5, 10))],
+            [
+                make_node("Shape", ["x"], ["x_shape"]),
+                make_node("Gather", ["x_shape", "axis"], ["k"], axis=0),
+                make_node("TopK", ["x", "k"], ["y", "z"], axis=2),
+            ],
+            [],
+            initializer=[make_tensor("axis", TensorProto.INT64, (), (2,))],
+        )
+        self._assert_inferred(
+            graph,
+            [
+                make_tensor_value_info("y", TensorProto.FLOAT, (3, 4, 5, 10)),
+                make_tensor_value_info("z", TensorProto.INT64, (3, 4, 5, 10)),
+            ],
+            data_prop=True,
+        )
+
     def test_topk_missing_k_value_output_rank_check(self) -> None:
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (3, 4, 5, 10)), ("k", TensorProto.INT64, (1,))],
