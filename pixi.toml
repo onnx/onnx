@@ -164,15 +164,8 @@ lychee = ">=0.23.0"
 cmd = "pixi exec lychee --root-dir . ."
 
 [feature.reuse.dependencies]
-# Isolate REUSE since it does not play nice with `pip check` in the
-# default environment. Furthermore, conda-forge's reuse has a hard
-# dependency on libmagic which is unix-only. There are fallbacks in
-# reuse if it is not available though.
 python = ">=3.14.5,<3.15"
-[feature.reuse.target.unix.dependencies]
 reuse = ">=6.2.0,<7"
-[feature.reuse.target.win-64.pypi-dependencies]
-reuse = ">=6.2.0, <7"
 [feature.reuse.tasks.reuse]
 cmd = "reuse"
 
