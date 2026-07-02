@@ -1278,7 +1278,7 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
         set_external_data(tensor, location="data.bin", offset=file_size + 100)
         tensor.ClearField("raw_data")
 
-        with pytest.raises(ValueError, match="offset.*exceeds file size"):
+        with pytest.raises(ValueError, match=r"offset.*exceeds file size"):
             load_external_data_for_tensor(tensor, self.temp_dir)
 
     def test_length_exceeds_available_data_raises(self) -> None:
@@ -1296,7 +1296,7 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
         set_external_data(tensor, location="data.bin", length=file_size * 1000)
         tensor.ClearField("raw_data")
 
-        with pytest.raises(ValueError, match="length.*exceeds available data"):
+        with pytest.raises(ValueError, match=r"length.*exceeds available data"):
             load_external_data_for_tensor(tensor, self.temp_dir)
 
     def test_valid_offset_and_length_load_correctly(self) -> None:

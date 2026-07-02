@@ -29,12 +29,12 @@ class TestSchema(unittest.TestCase):
 
     def test_attr_default_value(self) -> None:
         v = defs.get_schema("BatchNormalization").attributes["epsilon"].default_value
-        assert type(v) == onnx.AttributeProto
+        assert type(v) is onnx.AttributeProto
         assert v.type == onnx.AttributeProto.FLOAT
 
     def test_function_body(self) -> None:
         selu_schema = defs.get_schema("Selu")
-        assert type(selu_schema.function_body) == onnx.FunctionProto
+        assert type(selu_schema.function_body) is onnx.FunctionProto
         assert (
             selu_schema.node_determinism == defs.OpSchema.NodeDeterminism.Deterministic
         )
