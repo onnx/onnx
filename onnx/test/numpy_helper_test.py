@@ -237,9 +237,8 @@ class TestNumpyHelper(unittest.TestCase):
 
     def test_from_array_object_invalid_type(self) -> None:
         a = np.array([42], dtype=object)
-        with pytest.raises(NotImplementedError) as cm:
+        with pytest.raises(NotImplementedError, match="int"):
             numpy_helper.from_array(a)
-        assert "int" in str(cm.exception)
 
     def test_from_list_explicit_dtype(self) -> None:
         # Verify explicit dtype is honored, not auto-detected
@@ -253,18 +252,16 @@ class TestNumpyHelper(unittest.TestCase):
         # Build a valid map then add an extra key to create a mismatch
         m = numpy_helper.from_dict({1: np.array(1.0), 2: np.array(2.0)})
         m.keys.append(3)
-        with pytest.raises(IndexError) as cm:
+        with pytest.raises(IndexError, match="not the same"):
             numpy_helper.to_dict(m)
-        assert "not the same" in str(cm.exception)
 
     def test_from_dict_empty(self) -> None:
         with pytest.raises(ValueError):
             numpy_helper.from_dict({})
 
     def test_from_dict_unsupported_key_type(self) -> None:
-        with pytest.raises(TypeError) as cm:
+        with pytest.raises(TypeError, match="Unsupported map key type"):
             numpy_helper.from_dict({1.5: np.array(1), 2.5: np.array(2)})
-        assert "Unsupported map key type" in str(cm.exception)
 
     @parameterized.parameterized.expand(
         [

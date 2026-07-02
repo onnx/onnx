@@ -809,7 +809,9 @@ class TestHelperTensorFunctions(unittest.TestCase):
         checker.check_value_info(vi)
 
     def test_make_tensor_mismatched_dims_raises_error(self) -> None:
-        with pytest.raises(ValueError) as context:
+        with pytest.raises(
+            ValueError, match=r"Number of values (.*) does not match tensor dimensions"
+        ):
             helper.make_tensor(
                 name="mismatch_test",
                 data_type=TensorProto.FLOAT,
@@ -817,8 +819,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
                 vals=[1.0, 2.0, 3.0],  # Only 3 elements provided
                 raw=False,
             )
-        assert "Number of values" in str(context.exception)
-        assert "does not match tensor dimensions" in str(context.exception)
 
     def test_make_tensor_too_many_values_raises_error(self) -> None:
         with pytest.raises(ValueError):

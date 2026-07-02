@@ -1182,18 +1182,16 @@ class TestExternalDataInfoSecurity(unittest.TestCase):
         tensor = self._make_tensor_with_external_data(
             {"location": "weights.bin", "offset": "-1"}
         )
-        with pytest.raises(ValueError) as ctx:
+        with pytest.raises(ValueError, match="non-negative"):
             ExternalDataInfo(tensor)
-        assert "non-negative" in str(ctx.exception).lower()
 
     def test_negative_length_rejected(self) -> None:
         """Negative length must raise ValueError to prevent underflow attacks."""
         tensor = self._make_tensor_with_external_data(
             {"location": "weights.bin", "length": "-100"}
         )
-        with pytest.raises(ValueError) as ctx:
+        with pytest.raises(ValueError, match="non-negative"):
             ExternalDataInfo(tensor)
-        assert "non-negative" in str(ctx.exception).lower()
 
     def test_zero_offset_and_length_accepted(self) -> None:
         """Zero values for offset/length should be accepted (edge case for bounds check)."""

@@ -881,10 +881,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                 call_inference()
             else:
                 # Upsample is deprecated since Version 10.
-                with pytest.raises(onnx.checker.ValidationError) as cm:
+                with pytest.raises(
+                    onnx.checker.ValidationError, match="Upsample is deprecated"
+                ):
                     call_inference()
-                exception = cm.exception
-                assert "Upsample is deprecated" in str(exception)
 
     @parameterized.expand(all_versions_for("Upsample"))
     def test_upsample_raw_data(self, _, version) -> None:
@@ -929,10 +929,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                 call_inference()
             else:
                 # Upsample is deprecated since Version 10.
-                with pytest.raises(onnx.checker.ValidationError) as cm:
+                with pytest.raises(
+                    onnx.checker.ValidationError, match="Upsample is deprecated"
+                ):
                     call_inference()
-                exception = cm.exception
-                assert "Upsample is deprecated" in str(exception)
 
     @parameterized.expand(all_versions_for("Expand"))
     def test_expand(self, _, version) -> None:
@@ -1687,10 +1687,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scatter(self, _, version) -> None:
         if version >= 11:
             # Scatter is deprecated in domain_version of 11.
-            with pytest.raises(onnx.checker.ValidationError) as cm:
+            with pytest.raises(
+                onnx.checker.ValidationError, match="Scatter is deprecated"
+            ):
                 self._test_scatter(version)
-            exception = cm.exception
-            assert "Scatter is deprecated" in str(exception)
         else:
             self._test_scatter(version)
 
@@ -1714,10 +1714,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scatter_axis1(self, _, version) -> None:
         if version >= 11:
             # Scatter is deprecated in domain_version of 11.
-            with pytest.raises(onnx.checker.ValidationError) as cm:
+            with pytest.raises(
+                onnx.checker.ValidationError, match="Scatter is deprecated"
+            ):
                 self._test_scatter_axis1(version)
-            exception = cm.exception
-            assert "Scatter is deprecated" in str(exception)
         else:
             self._test_scatter_axis1(version)
 
