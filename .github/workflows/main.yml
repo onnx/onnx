@@ -5,8 +5,9 @@
 name: CI
 
 env:
-  ASAN_OPTIONS: detect_leaks=0:symbolize=1:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:check_initialization_order=true:debug=true:fast_unwind_on_malloc=1:verify_asan_link_order=0
+  ASAN_OPTIONS: detect_leaks=0:detect_stack_use_after_return=true:strict_init_order=true:detect_odr_violation=1:detect_container_overflow=0:verify_asan_link_order=0:alloc_dealloc_mismatch=1:abort_on_error=1
   UBSAN_OPTIONS: print_stacktrace=1
+  TSAN_OPTIONS: suppressions=./tsan.supp
 
 on:
   schedule:
@@ -43,6 +44,15 @@ jobs:
         include:
           # Ubuntu debug build runs with sanitizer
           - python_version: "3.14"
+            autogenerate_files: 0
+            debug_build: 1
+            onnx_ml: 1
+            os: "ubuntu-24.04"
+            protobuf_type: 'Internal'
+            unity_build: 0
+
+          # Ubuntu debug build with TSAN (free-threaded Python)
+          - python_version: "3.14t"
             autogenerate_files: 0
             debug_build: 1
             onnx_ml: 1
@@ -158,6 +168,13 @@ jobs:
           if [ "${{ matrix.protobuf_type }}" == "External" ]; then
             export CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
           fi
+          if [ "${{ matrix.debug_build }}" == "1" ]; then
+            if [ "${{ matrix.python_version }}" == "3.14t" ]; then
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=OFF -DONNX_USE_TSAN=ON"
+            else
+              export CMAKE_ARGS="$CMAKE_ARGS -DONNX_USE_ASAN=ON"
+            fi
+          fi
           pip install -e ".[reference]" -v
         env:
           DEBUG: ${{ matrix.debug_build }}
@@ -189,14 +206,19 @@ jobs:
         run: |
           pip freeze
 
-      - name: Setup GCC ASAN LD_PRELOAD
-        if: startsWith(matrix.os,'ubuntu') && (matrix.python_version != '3.13t')
-        run: |
-          export LD_PRELOAD="$(/usr/bin/c++ -print-file-name=libasan.so):$LD_PRELOAD"
-
       - name: Install test dependencies
         run: |
           python -m pip install -r requirements-release_test.txt
+
+      - name: Setup ASAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version != '3.14t') && (matrix.python_version != '3.10')
+        run: |
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libasan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
+
+      - name: Setup TSAN LD_PRELOAD
+        if: startsWith(matrix.os,'ubuntu') && (matrix.debug_build == 1) && (matrix.python_version == '3.14t')
+        run: |
+          echo "LD_PRELOAD=$(/usr/bin/c++ -print-file-name=libtsan.so):$(/usr/bin/c++ -print-file-name=libstdc++.so)" >> $GITHUB_ENV
 
       - name: Run Python tests
         # Prohibitively slow for Windows debug builds
@@ -206,7 +228,6 @@ jobs:
       - name: Run C++ tests
         if: startsWith(matrix.os,'ubuntu') || matrix.os == 'macos-latest'
         run: |
-          export LD_LIBRARY_PATH="./.setuptools-cmake-build/:$LD_LIBRARY_PATH"
           ./.setuptools-cmake-build/onnx_gtests
 
       - name: Run C++ extension test
