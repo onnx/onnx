@@ -309,7 +309,3 @@ class TestBasicFunctions(unittest.TestCase):
             function_repr,
             "FunctionProto('Selu', domain='custom_domain', opset_import={'': 15}, input=<1 inputs>, output=<1 outputs>, node=<13 nodes>)",
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

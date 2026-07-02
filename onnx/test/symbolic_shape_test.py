@@ -193,7 +193,3 @@ class TestSymbolicShape(unittest.TestCase):
         assert self._get_shape_from_name(
             inferred_model, "C"
         ) == self._get_shape_from_name(inferred_model, "output")
-
-
-if __name__ == "__main__":
-    unittest.main()

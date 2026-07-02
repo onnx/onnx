@@ -2174,7 +2174,3 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         oinf = ReferenceEvaluator(model)
         res = oinf.run(None, {"tokens": inputi})
         self.assertEqual(output.tolist(), res[0].tolist())
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
