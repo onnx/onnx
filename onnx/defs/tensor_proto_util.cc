@@ -105,7 +105,7 @@ namespace ONNX_NAMESPACE {
     std::copy_n(reinterpret_cast<const std::byte*>(raw_data.data()), required_bytes_sz, bytes);                      \
     /* swap byte order on big-endian hosts */                                                                        \
     if (!is_processor_little_endian()) {                                                                             \
-      for (type& element : res) {                                                                                    \
+      for (auto& element : res) {                                                                                    \
         std::byte* start_byte = reinterpret_cast<std::byte*>(&element);                                              \
         std::reverse(start_byte, start_byte + element_size);                                                         \
       }                                                                                                              \
