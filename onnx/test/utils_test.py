@@ -73,8 +73,6 @@ class TestUtilityFunctions(unittest.TestCase):
                 info.size = len(payload)
                 tar.addfile(info, io.BytesIO(payload))
 
-            with (
-                tarfile.open(tar_path) as tar,
-                self.assertRaisesRegex(RuntimeError, "directory traversal"),
-            ):
-                onnx.utils._tar_members_filter(tar, base)
+            with tarfile.open(tar_path) as tar:  # noqa: SIM117
+                with self.assertRaisesRegex(RuntimeError, "directory traversal"):
+                    onnx.utils._tar_members_filter(tar, base)
