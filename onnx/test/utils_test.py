@@ -78,7 +78,3 @@ class TestUtilityFunctions(unittest.TestCase):
                 self.assertRaisesRegex(RuntimeError, "directory traversal"),
             ):
                 onnx.utils._tar_members_filter(tar, base)
-
-
-if __name__ == "__main__":
-    unittest.main()

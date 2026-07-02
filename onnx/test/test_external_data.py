@@ -1319,7 +1319,3 @@ class TestLoadExternalDataFileSizeValidation(TestLoadExternalDataBase):
 
         load_external_data_for_tensor(tensor, self.temp_dir)
         self.assertEqual(tensor.raw_data, raw)
-
-
-if __name__ == "__main__":
-    unittest.main()

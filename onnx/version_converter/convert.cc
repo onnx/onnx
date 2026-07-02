@@ -89,7 +89,14 @@ void DefaultVersionConverter::convert_graph(
           std::cerr << "Warning: opset domain '" << cur_op->domain() << "' is not supported." << '\n';
         }
       } else if (op_name != "Undefined" && op_name != "Captured") {
-        const auto& op_domain_map = all_schemas.at(op_name);
+        const auto schema_it = all_schemas.find(op_name);
+        ONNX_ASSERTM(
+            schema_it != all_schemas.end(),
+            "Op '%s' has no registered schema; cannot convert it from version %lld to %lld.",
+            op_name.c_str(),
+            static_cast<long long>(curr_version),
+            static_cast<long long>(target_version.version()));
+        const auto& op_domain_map = schema_it->second;
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
         if (searchOpDomainMap(op_domain_map, curr_version, step)) {

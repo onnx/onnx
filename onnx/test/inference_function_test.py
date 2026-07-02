@@ -297,7 +297,3 @@ class TestInferenceFunctionCall(unittest.TestCase):
         model = onnx.parser.parse_model(model_script)
         # onnx.shape_inference.infer_shapes(model, strict_mode=False)
         onnx.shape_inference.infer_shapes(model, strict_mode=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

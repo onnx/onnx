@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import itertools
 import platform
-import unittest
 from typing import TYPE_CHECKING, Any
 
 import onnx.backend.base
@@ -119,6 +118,3 @@ if platform.architecture()[0] == "32bit":
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test.test_cases)
-
-if __name__ == "__main__":
-    unittest.main()

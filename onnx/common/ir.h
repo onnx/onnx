@@ -18,6 +18,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -256,13 +257,7 @@ struct Attributes {
   using const_iterator = std::vector<AVPtr>::const_iterator;
   const_iterator find(Symbol name, bool required) const {
     auto it = std::find_if(values_.begin(), values_.end(), [&](const AVPtr& v) { return v->name == name; });
-    ONNX_ASSERTM(
-        !required || it != values_.end(),
-        "%s:%u: %s: required undefined attribute '%s'",
-        __FILE__,
-        __LINE__,
-        __func__,
-        name.toString())
+    ONNX_ASSERTM(!required || it != values_.end(), "required undefined attribute '", name.toString(), "'")
     return it;
   }
 };
@@ -289,7 +284,7 @@ using NodeKind = Symbol;
 
 struct Value final {
   ONNX_DISALLOW_COPY_AND_ASSIGNMENT(Value);
-  Value(Node* node_, size_t offset_);
+  Value(Node& node, size_t offset);
   Value(Value&&) = default;
   Value& operator=(Value&&) = default;
   ~Value() = default;
@@ -436,8 +431,8 @@ struct Node : public Attributes<Node> {
   bool has_overload_{false};
   std::string overload_;
 
- protected:
-  Node(Graph* graph_, NodeKind kind_); // defined after graph
+  // Constructed only by the friend Graph factory, so every Node stays graph-owned.
+  Node(Graph& graph, NodeKind kind); // defined after graph
 
  public:
   bool has_name() const {
@@ -622,10 +617,7 @@ struct Node : public Attributes<Node> {
     }
   }
 
-  Value* addOutput() {
-    outputs_.push_back(new Value(this, outputs_.size()));
-    return outputs_.back();
-  }
+  Value* addOutput();
 
   void eraseOutput(size_t i);
 
@@ -759,12 +751,12 @@ struct Node : public Attributes<Node> {
   }
   template <typename T>
   T* expect() {
-    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
+    ONNX_ASSERTM(T::Kind == kind(), "expected a ", T::Kind.toString(), " but found a ", kind().toString())
     return static_cast<T*>(this);
   }
   template <typename T>
   const T* expect() const {
-    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString())
+    ONNX_ASSERTM(T::Kind == kind(), "expected a ", T::Kind.toString(), " but found a ", kind().toString())
     return static_cast<const T*>(this);
   }
 
@@ -806,26 +798,6 @@ struct Node : public Attributes<Node> {
     this->next() = nullptr;
     this->prev() = nullptr;
   }
-
- protected:
-  // subclasses must override
-  // this function is used by createClone to initialize a new version
-  // of a node in another graph. It should allocate a new instance of the same
-  // concrete type as 'this', but in graph 'g' which might be different
-  // than graph_
-  virtual Node* allocNewInstance(Graph* g) {
-    return new Node(g, kind());
-  }
-  // create a copy of all properties of Node s into this.
-  // subclasses should extend if they have additional information to copy.
-  // 'this' will be allocated with s->allocNewInstance(g) so it should have
-  // the same concrete type as 's'
-  //
-  // NB: This does NOT clone stages.  You're expected to set the stage correctly
-  // if you are going to preserve it.
-  virtual void cloneFrom(Node* s) {
-    copyAttributes(*s);
-  }
 };
 
 // A class with the same properties as OperatorSetIdProto, but without protobuf
@@ -866,7 +838,7 @@ class OpSetID final {
       return OpSetID(new_domain, new_version);
     }
     ONNX_CATCH(const std::runtime_error& e) {
-      ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: %s", e.what()) });
+      ONNX_HANDLE_EXCEPTION([&]() { ONNX_ASSERTM(false, "Error in fromString: ", e.what()) });
     }
 
     // The control will never reach here.
@@ -905,8 +877,8 @@ struct Graph final {
   // actual representation of Graph is done with
   // inputs, outputs, nodes
 
-  std::unordered_set<const Node*> all_nodes;
-  std::unordered_set<const Value*> all_values;
+  std::unordered_map<const Node*, std::unique_ptr<const Node>> all_nodes;
+  std::unordered_map<const Value*, std::unique_ptr<const Value>> all_values;
   size_t next_unique_{0};
 
   size_t new_node_stage_{0};
@@ -935,7 +907,8 @@ struct Graph final {
       return false;
     }
     const auto f = [&name](const Value* v) { return v->uniqueName() == name; };
-    for (const Node* node : all_nodes) {
+    for (const auto& node_entry : all_nodes) {
+      const Node* node = node_entry.first;
       for (const auto& attr : node->attributeNames()) {
         if (node->kindOf(attr) == AttributeKind::g) {
           const auto& subgraph = node->g(attr);
@@ -1130,12 +1103,16 @@ struct Graph final {
   }
 
   Node* create(NodeKind kind, size_t num_outputs = 1) {
-    // NB: Node constructor adds node to all_nodes
-    auto* n = new Node(this, kind);
+    std::unique_ptr<Node> node_owner(new Node(*this, kind));
+    Node* n = node_owner.get();
+    all_nodes.emplace(n, std::move(node_owner));
     for (size_t i = 0; i < num_outputs; i++)
       n->addOutput();
     return n;
   }
+
+  // Allocate a Value owned by this graph.
+  Value* createValue(Node& node, size_t offset);
 
   Node* create(NodeKind kind, ArrayRef<Value*> inputs, size_t num_outputs = 1) {
     auto* n = create(kind, num_outputs);
@@ -1186,12 +1163,7 @@ struct Graph final {
     }
   }
 
-  ~Graph() {
-    for (const Node* n : all_nodes)
-      delete n;
-    for (const Value* v : all_values)
-      delete v;
-  }
+  ~Graph() = default;
 
   std::string toString() const {
     std::ostringstream oss;
@@ -1217,7 +1189,8 @@ struct Graph final {
   void forSelfAndEachSubGraph(const std::function<void(Graph*)>& fn) {
     fn(this);
 
-    for (const Node* node : all_nodes) {
+    for (const auto& node_entry : all_nodes) {
+      const Node* node = node_entry.first;
       for (const auto& attr : node->attributeNames()) {
         if (node->kindOf(attr) == AttributeKind::g) {
           std::shared_ptr<Graph> subgraph = node->g(attr);
@@ -1261,21 +1234,17 @@ struct Graph final {
   void freeNode(Node* n) {
     auto it = all_nodes.find(n);
     ONNX_ASSERT(it != all_nodes.end())
-    delete *it;
     all_nodes.erase(it);
   }
   void freeValue(Value* v) {
     auto it = all_values.find(v);
     ONNX_ASSERT(it != all_values.end())
-    delete *it;
     all_values.erase(it);
   }
 };
 
-inline Value::Value(Node* node, size_t offset)
-    : node_(node), offset_(offset), unique_(node->graph_->getNextUnique()), stage_(node->graph_->new_node_stage_) {
-  node->graph_->all_values.emplace(this);
-}
+inline Value::Value(Node& node, size_t offset)
+    : node_(&node), offset_(offset), unique_(node.graph_->getNextUnique()), stage_(node.graph_->new_node_stage_) {}
 
 inline Graph* Value::owningGraph() {
   return node()->owningGraph();
@@ -1358,8 +1327,19 @@ inline void Value::replaceAllUsesWith(Value* newValue) {
   assert(this->uses().empty());
 }
 
-inline Node::Node(Graph* graph, NodeKind kind) : kind_(kind), graph_(graph), stage_(graph->new_node_stage_) {
-  graph_->all_nodes.emplace(this);
+inline Node::Node(Graph& graph, NodeKind kind) : kind_(kind), graph_(&graph), stage_(graph.new_node_stage_) {}
+
+inline Value* Graph::createValue(Node& node, size_t offset) {
+  auto value = std::make_unique<Value>(node, offset);
+  Value* v = value.get();
+  all_values.emplace(v, std::move(value));
+  return v;
+}
+
+inline Value* Node::addOutput() {
+  Value* v = graph_->createValue(*this, outputs_.size());
+  outputs_.push_back(v);
+  return v;
 }
 
 inline void Node::eraseOutput(size_t i) {

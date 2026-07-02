@@ -1126,7 +1126,3 @@ class TestComposeFunctions(unittest.TestCase):
             m1.graph.output[0].SerializeToString(),
             value_info_by_name["Y"].SerializeToString(),
         )
-
-
-if __name__ == "__main__":
-    unittest.main()
