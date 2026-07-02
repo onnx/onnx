@@ -51,9 +51,9 @@
     {
       "type": "library",
       "name": "nanobind",
-      "version": "2.12.0",
+      "version": "2.13.0",
       "bom-ref": "nanobind",
-      "purl": "pkg:github/wjakob/nanobind@v2.12.0",
+      "purl": "pkg:github/wjakob/nanobind@v2.13.0",
       "externalReferences": [
         {
           "type": "vcs",
