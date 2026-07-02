@@ -1311,7 +1311,3 @@ class TestChecker(unittest.TestCase):
             r"Input channels C must be divisible by group for ConvTranspose",
         ):
             checker.check_model(model, full_check=True)
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -2900,7 +2900,3 @@ class TestVersionConverter(unittest.TestCase):
     )
     def test_celu_28_27_unsupported_type_fails(self, _: str, dtype: int) -> None:
         self.assertRaises(RuntimeError, lambda: self._celu_converted(dtype, 28, 27))
-
-
-if __name__ == "__main__":
-    unittest.main()
