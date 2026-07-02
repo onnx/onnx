@@ -10,8 +10,7 @@
 
 #include "onnx/common/ir_pb_converter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 ModelProto ConvertVersion(const ModelProto& mp_in, int target_version) {
   // Get initial_opsetid from mp_in
@@ -152,5 +151,4 @@ ModelProto DefaultVersionConverter::convert_version(
   return mp_out;
 }
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

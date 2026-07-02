@@ -9,8 +9,7 @@
 #include "onnx/common/assertions.h"
 #include "onnx/common/tensor.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 constexpr int64_t kLargeDim = int64_t{1} << 62;
 
@@ -43,5 +42,4 @@ TEST(TensorTest, SizeFromDimOverflowThrows) {
   EXPECT_THROW(t.size_from_dim(1), tensor_error);
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test
