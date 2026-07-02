@@ -139,7 +139,7 @@ pip install -e . -v
 
 ### Linux
 
-First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 4.25.1. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
+First, you need to install Protobuf. The minimum Protobuf compiler (protoc) version required by ONNX is 6.31.1. Please note that old protoc versions might not work with `CMAKE_ARGS=-DONNX_USE_LITE_PROTO=ON`.
 
 Ubuntu 20.04 (and newer) users may choose to install Protobuf (which is usually lower than 4.25.1) via
 
