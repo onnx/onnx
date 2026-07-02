@@ -218,7 +218,7 @@ static auto MakeChecker(void (*check_fn)(const ProtoType&, const Ctx&...)) {
   };
 }
 
-NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+NB_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) { // NOLINT(cppcoreguidelines-pro-type-cstyle-cast)
   // Disabling nanobind leak warnings
   // TODO(#7283): Avoid leaks if possible
   nb::set_leak_warnings(false);

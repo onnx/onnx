@@ -22,7 +22,6 @@ Checks: >-
   -cppcoreguidelines-pro-bounds-constant-array-index,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-const-cast,
-  -cppcoreguidelines-pro-type-cstyle-cast,
   -cppcoreguidelines-pro-type-reinterpret-cast,
   -cppcoreguidelines-pro-type-vararg,
   -cppcoreguidelines-use-enum-class,
