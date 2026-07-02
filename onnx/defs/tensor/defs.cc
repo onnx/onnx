@@ -2007,7 +2007,58 @@ ONNX_OPERATOR_SET_SCHEMA(
               fail_shape_inference("Input tensor must be 4-dimensional");
             }
           }
-        }));
+        })
+        .SetContextDependentFunctionBodyBuilder(
+            [](const FunctionBodyBuildContext& ctx, const OpSchema& schema, FunctionProto& functionProto) -> bool {
+              auto* blocksize_attr = ctx.getAttribute("blocksize");
+              if (blocksize_attr == nullptr) {
+                return false;
+              }
+              int64_t blocksize = blocksize_attr->i();
+
+              auto* mode_attr = ctx.getAttribute("mode");
+              std::string mode = (mode_attr != nullptr) ? mode_attr->s() : "DCR";
+
+              FunctionBuilder builder(functionProto);
+              builder.AddOpset("", 13);
+
+              builder.Const1D("Ind0", (int64_t)0)
+                  .Const1D("Ind1", (int64_t)1)
+                  .Const1D("Ind2", (int64_t)2)
+                  .Const1D("Ind3", (int64_t)3)
+                  .Const1D("Blocksize", blocksize)
+                  .Const1D("BlocksizeSq", blocksize * blocksize)
+                  .Add(R"(
+              InputShape = Shape (input)
+              B = Gather (InputShape, Ind0)
+              C = Gather (InputShape, Ind1)
+              H = Gather (InputShape, Ind2)
+              W = Gather (InputShape, Ind3)
+              COut = Div (C, BlocksizeSq)
+              HOut = Mul (H, Blocksize)
+              WOut = Mul (W, Blocksize)
+              FinalShape = Concat <axis = 0> (B, COut, HOut, WOut)
+          )");
+
+              if (mode == "CRD") {
+                builder.Add(R"(
+            ReshapedShape = Concat <axis = 0> (B, COut, Blocksize, Blocksize, H, W)
+            Reshaped = Reshape (input, ReshapedShape)
+            Transposed = Transpose <perm = [0, 1, 4, 2, 5, 3]> (Reshaped)
+            output = Reshape (Transposed, FinalShape)
+        )");
+              } else {
+                builder.Add(R"(
+            ReshapedShape = Concat <axis = 0> (B, Blocksize, Blocksize, COut, H, W)
+            Reshaped = Reshape (input, ReshapedShape)
+            Transposed = Transpose <perm = [0, 3, 4, 1, 5, 2]> (Reshaped)
+            output = Reshape (Transposed, FinalShape)
+        )");
+              }
+
+              schema.BuildFunction(functionProto);
+              return true;
+            }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Tile,

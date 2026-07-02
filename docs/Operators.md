@@ -47,7 +47,6 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#CumSum">CumSum</a>|<a href="Changelog.md#CumSum-14">14</a>, <a href="Changelog.md#CumSum-11">11</a>|
 |<a href="#DFT">DFT</a>|<a href="Changelog.md#DFT-20">20</a>, <a href="Changelog.md#DFT-17">17</a>|
 |<a href="#DeformConv">DeformConv</a>|<a href="Changelog.md#DeformConv-22">22</a>, <a href="Changelog.md#DeformConv-19">19</a>|
-|<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|
 |<a href="#DequantizeLinear">DequantizeLinear</a>|<a href="Changelog.md#DequantizeLinear-25">25</a>, <a href="Changelog.md#DequantizeLinear-24">24</a>, <a href="Changelog.md#DequantizeLinear-23">23</a>, <a href="Changelog.md#DequantizeLinear-21">21</a>, <a href="Changelog.md#DequantizeLinear-19">19</a>, <a href="Changelog.md#DequantizeLinear-13">13</a>, <a href="Changelog.md#DequantizeLinear-10">10</a>|
 |<a href="#Det">Det</a>|<a href="Changelog.md#Det-22">22</a>, <a href="Changelog.md#Det-11">11</a>|
 |<a href="#Div">Div</a>|<a href="Changelog.md#Div-14">14</a>, <a href="Changelog.md#Div-13">13</a>, <a href="Changelog.md#Div-7">7</a>, <a href="Changelog.md#Div-6">6</a>, <a href="Changelog.md#Div-1">1</a>|
@@ -178,6 +177,7 @@ For an operator input/output's differentiability, it can be differentiable,
 |<a href="#Celu">Celu</a>|<a href="Changelog.md#Celu-28">28</a>, <a href="Changelog.md#Celu-12">12</a>|28|
 |<a href="#CenterCropPad">CenterCropPad</a>|<a href="Changelog.md#CenterCropPad-18">18</a>|18|
 |<a href="#Clip">Clip</a>|<a href="Changelog.md#Clip-13">13</a>, <a href="Changelog.md#Clip-12">12</a>, <a href="Changelog.md#Clip-11">11</a>, <a href="Changelog.md#Clip-6">6</a>, <a href="Changelog.md#Clip-1">1</a>|13|
+|<a href="#DepthToSpace">DepthToSpace</a>|<a href="Changelog.md#DepthToSpace-13">13</a>, <a href="Changelog.md#DepthToSpace-11">11</a>, <a href="Changelog.md#DepthToSpace-1">1</a>|13|
 |<a href="#DynamicQuantizeLinear">DynamicQuantizeLinear</a>|<a href="Changelog.md#DynamicQuantizeLinear-11">11</a>|11|
 |<a href="#Elu">Elu</a>|<a href="Changelog.md#Elu-22">22</a>, <a href="Changelog.md#Elu-6">6</a>, <a href="Changelog.md#Elu-1">1</a>|18|
 |<a href="#Gelu">Gelu</a>|<a href="Changelog.md#Gelu-20">20</a>|20|
@@ -12130,6 +12130,28 @@ y = np.array(
     ]
 ).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name="test_depthtospace_example")
+```
+
+</details>
+
+
+<details>
+<summary>nonsqure_matrix</summary>
+
+```python
+node = onnx.helper.make_node(
+    "DepthToSpace", inputs=["x"], outputs=["y"], blocksize=2, mode="DCR"
+)
+
+x = np.arange(1 * 8 * 2 * 4, dtype=np.float32).reshape(
+    1, 8, 2, 4
+)  # Define nonsqure shape where H != W to catch dim swap
+b, c, h, w = x.shape
+blocksize = 2
+tmp = x.reshape(b, blocksize, blocksize, c // (blocksize**2), h, w)
+tmp = tmp.transpose(0, 3, 4, 1, 5, 2)
+y = tmp.reshape(b, c // (blocksize**2), h * blocksize, w * blocksize)
+expect(node, inputs=[x], outputs=[y], name="test_depthtospace_dcr_nonsquare")
 ```
 
 </details>
