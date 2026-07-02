@@ -168,14 +168,32 @@ class TestShapeInferenceHelper(unittest.TestCase):
             else graph_or_model.graph
         )
         names_in_vis = {x.name for x in vis}
-        vis = [x for x in graph.value_info if x.name not in names_in_vis] + vis
+        # Expected type info: the explicitly provided `vis`, plus any pre-existing
+        # type info declared on the graph's value_info or outputs that `vis` does
+        # not override. Considering graph outputs (in addition to value_info) lets
+        # a test specify the whole model in one parser.parse_graph/parse_model call
+        # and still have its (graph-output) results checked.
+        expected = {
+            x.name: x
+            for x in itertools.chain(graph.value_info, graph.output)
+            if x.name not in names_in_vis
+        }
+        expected.update({x.name: x for x in vis})
         inferred_model = self._inferred(graph_or_model, **kwargs)
-        inferred_vis = list(inferred_model.graph.value_info)
-        vis = sorted(vis, key=lambda x: x.name)
-        inferred_vis = sorted(inferred_vis, key=lambda x: x.name)
-        assert len(vis) == len(inferred_vis)
-        for v, inferred_v in zip(vis, inferred_vis, strict=True):
-            self._compare_value_infos(v.type, inferred_v.type)
+        inferred_graph = inferred_model.graph
+        # Inferred type info may be recorded either in value_info (intermediate
+        # values, and outputs that were untyped in the input model) or directly on
+        # the graph outputs (outputs that were already typed). Merge both by name.
+        inferred = {
+            x.name: x
+            for x in itertools.chain(inferred_graph.value_info, inferred_graph.output)
+        }
+        assert expected.keys() == inferred.keys(), (
+            f"\nExpected value infos for: {sorted(expected)}"
+            f"\nInferred value infos for: {sorted(inferred)}\n"
+        )
+        for name, expected_vi in expected.items():
+            self._compare_value_infos(expected_vi.type, inferred[name].type)
 
     def _compare_value_infos(
         self, vi_type: TypeProto, inferred_vi_type: TypeProto
@@ -6150,288 +6168,141 @@ class TestShapeInference(TestShapeInferenceHelper):
         )
 
     def test_scan(self) -> None:
-        batch_size = 1
-        seq_len = "sequence"
-        input_size = 2
-        loop_state_size = 3
-
-        # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
-        # this breaks the subgraph inferencing as it expects the number of inputs passed from Scan to match
-        # the GraphProto, but Scan knows nothing about the additional inputs.
-        input_value_infos = [
-            make_tensor_value_info("loop_state_in", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("input", TensorProto.UNDEFINED, None),
-        ]
-        output_value_infos = [
-            make_tensor_value_info("loop_state_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("output", TensorProto.UNDEFINED, None),
-        ]
-
-        subgraph = helper.make_graph(
-            [
-                make_node("Identity", ["loop_state_in"], ["loop_state_out"]),
-                make_node("Identity", ["input"], ["output"]),
-            ],
-            "subgraph",
-            input_value_infos,
-            output_value_infos,
-        )
-
-        graph = self._make_graph(
-            [
-                ("loop_state_orig", TensorProto.FLOAT, (batch_size, loop_state_size)),
-                ("scan_input", TensorProto.FLOAT, (batch_size, seq_len, input_size)),
-            ],
-            [
-                make_node(
-                    "Scan",
-                    ["", "loop_state_orig", "scan_input"],
-                    ["loop_state_final", "scan_output"],
-                    num_scan_inputs=1,
-                    body=subgraph,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
+        # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        # The leading "" input is the (unused) optional sequence_lens input of opset-8 Scan.
+        graph = parse_graph("""
+            agraph (float[1, 3] loop_state_orig, float[1, sequence, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {
+                loop_state_final, scan_output = Scan <
+                    num_scan_inputs = 1,
+                    body = subgraph (loop_state_in, input) => (loop_state_out, output) {
+                        loop_state_out = Identity(loop_state_in)
+                        output = Identity(input)
+                    }
+                > ("", loop_state_orig, scan_input)
+            }
+        """)
 
         self._assert_inferred(
             graph,
             [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (1, 3)),
                 make_tensor_value_info(
-                    "loop_state_final", TensorProto.FLOAT, (batch_size, loop_state_size)
-                ),
-                make_tensor_value_info(
-                    "scan_output", TensorProto.FLOAT, (batch_size, seq_len, input_size)
+                    "scan_output", TensorProto.FLOAT, (1, "sequence", 2)
                 ),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 8)],
         )
 
     def test_scan_opset9(self) -> None:
-        seq_len = "sequence"
-        input_size = 2
-        loop_state_size = 3
-
-        # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
-        # this breaks the subgraph inferencing as it expects the number of inputs passed from Scan to match
-        # the GraphProto, but Scan knows nothing about the additional inputs.
-        input_value_infos = [
-            make_tensor_value_info("loop_state_in", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("input", TensorProto.UNDEFINED, None),
-        ]
-        output_value_infos = [
-            make_tensor_value_info("loop_state_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("output", TensorProto.UNDEFINED, None),
-        ]
-
-        subgraph = helper.make_graph(
-            [
-                make_node("Identity", ["loop_state_in"], ["loop_state_out"]),
-                make_node("Identity", ["input"], ["output"]),
-            ],
-            "subgraph",
-            input_value_infos,
-            output_value_infos,
-        )
-
-        graph = self._make_graph(
-            [
-                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
-                ("scan_input", TensorProto.FLOAT, (seq_len, input_size)),
-            ],
-            [
-                make_node(
-                    "Scan",
-                    ["loop_state_orig", "scan_input"],
-                    ["loop_state_final", "scan_output"],
-                    num_scan_inputs=1,
-                    body=subgraph,
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
+        # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        graph = parse_graph("""
+            agraph (float[3] loop_state_orig, float[sequence, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {
+                loop_state_final, scan_output = Scan <
+                    num_scan_inputs = 1,
+                    body = subgraph (loop_state_in, input) => (loop_state_out, output) {
+                        loop_state_out = Identity(loop_state_in)
+                        output = Identity(input)
+                    }
+                > (loop_state_orig, scan_input)
+            }
+        """)
 
         self._assert_inferred(
             graph,
             [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
                 make_tensor_value_info(
-                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
-                ),
-                make_tensor_value_info(
-                    "scan_output", TensorProto.FLOAT, (seq_len, input_size)
+                    "scan_output", TensorProto.FLOAT, ("sequence", 2)
                 ),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
         )
 
     def test_scan_opset9_axes(self) -> None:
-        axis_0_len = "axis0"
-        seq_len = "sequence"
-        input_size = 2
-        loop_state_size = 3
-
-        # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
-        # this breaks the subgraph inferencing as it expects the number of inputs passed from Scan to match
-        # the GraphProto, but Scan knows nothing about the additional inputs.
-        input_value_infos = [
-            make_tensor_value_info("loop_state_in", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("input", TensorProto.UNDEFINED, None),
-        ]
-        output_value_infos = [
-            make_tensor_value_info("loop_state_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("output", TensorProto.UNDEFINED, None),
-        ]
-
-        subgraph = helper.make_graph(
-            [
-                make_node("Identity", ["loop_state_in"], ["loop_state_out"]),
-                make_node("Identity", ["input"], ["output"]),
-            ],
-            "subgraph",
-            input_value_infos,
-            output_value_infos,
-        )
-
-        graph = self._make_graph(
-            [
-                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
-                ("scan_input", TensorProto.FLOAT, (axis_0_len, seq_len, input_size)),
-            ],
-            [
-                make_node(
-                    "Scan",
-                    ["loop_state_orig", "scan_input"],
-                    ["loop_state_final", "scan_output"],
-                    num_scan_inputs=1,
-                    body=subgraph,
-                    scan_input_axes=[1],
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
+        # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        graph = parse_graph("""
+            agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {
+                loop_state_final, scan_output = Scan <
+                    num_scan_inputs = 1, scan_input_axes = [1],
+                    body = subgraph (loop_state_in, input) => (loop_state_out, output) {
+                        loop_state_out = Identity(loop_state_in)
+                        output = Identity(input)
+                    }
+                > (loop_state_orig, scan_input)
+            }
+        """)
 
         self._assert_inferred(
             graph,
             [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
                 make_tensor_value_info(
-                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
-                ),
-                make_tensor_value_info(
-                    "scan_output", TensorProto.FLOAT, (seq_len, axis_0_len, input_size)
+                    "scan_output", TensorProto.FLOAT, ("sequence", "axis0", 2)
                 ),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
         )
 
     def test_scan_opset9_output_axes(self) -> None:
-        axis_0_len = "axis0"
-        seq_len = "sequence"
-        input_size = 2
-        loop_state_size = 3
-
-        input_value_infos = [
-            make_tensor_value_info("loop_state_in", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("input", TensorProto.UNDEFINED, None),
-        ]
-        output_value_infos = [
-            make_tensor_value_info("loop_state_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("output", TensorProto.UNDEFINED, None),
-        ]
-
-        subgraph = helper.make_graph(
-            [
-                make_node("Identity", ["loop_state_in"], ["loop_state_out"]),
-                make_node("Identity", ["input"], ["output"]),
-            ],
-            "subgraph",
-            input_value_infos,
-            output_value_infos,
-        )
-
-        graph = self._make_graph(
-            [
-                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
-                ("scan_input", TensorProto.FLOAT, (axis_0_len, seq_len, input_size)),
-            ],
-            [
-                make_node(
-                    "Scan",
-                    ["loop_state_orig", "scan_input"],
-                    ["loop_state_final", "scan_output"],
-                    num_scan_inputs=1,
-                    body=subgraph,
-                    scan_input_axes=[1],
-                    scan_output_axes=[1],
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
+        # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        graph = parse_graph("""
+            agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {
+                loop_state_final, scan_output = Scan <
+                    num_scan_inputs = 1, scan_input_axes = [1], scan_output_axes = [1],
+                    body = subgraph (loop_state_in, input) => (loop_state_out, output) {
+                        loop_state_out = Identity(loop_state_in)
+                        output = Identity(input)
+                    }
+                > (loop_state_orig, scan_input)
+            }
+        """)
 
         self._assert_inferred(
             graph,
             [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
                 make_tensor_value_info(
-                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
-                ),
-                make_tensor_value_info(
-                    "scan_output", TensorProto.FLOAT, (axis_0_len, seq_len, input_size)
+                    "scan_output", TensorProto.FLOAT, ("axis0", "sequence", 2)
                 ),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
         )
 
     def test_scan_opset9_negative_axes(self) -> None:
-        axis_0_len = "axis0"
-        seq_len = "sequence"
-        input_size = 2
-        loop_state_size = 3
-
-        input_value_infos = [
-            make_tensor_value_info("loop_state_in", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("input", TensorProto.UNDEFINED, None),
-        ]
-        output_value_infos = [
-            make_tensor_value_info("loop_state_out", TensorProto.UNDEFINED, None),
-            make_tensor_value_info("output", TensorProto.UNDEFINED, None),
-        ]
-
-        subgraph = helper.make_graph(
-            [
-                make_node("Identity", ["loop_state_in"], ["loop_state_out"]),
-                make_node("Identity", ["input"], ["output"]),
-            ],
-            "subgraph",
-            input_value_infos,
-            output_value_infos,
-        )
-
-        graph = self._make_graph(
-            [
-                ("loop_state_orig", TensorProto.FLOAT, (loop_state_size,)),
-                ("scan_input", TensorProto.FLOAT, (axis_0_len, seq_len, input_size)),
-            ],
-            [
-                make_node(
-                    "Scan",
-                    ["loop_state_orig", "scan_input"],
-                    ["loop_state_final", "scan_output"],
-                    num_scan_inputs=1,
-                    body=subgraph,
-                    scan_input_axes=[-2],
-                    scan_output_axes=[-2],
-                )
-            ],
-            [],
-        )
+        # The whole graph (including the Scan body subgraph) is expressed in one parse_graph call;
+        # the Scan outputs are left untyped so that shape inference must compute their type/shape.
+        graph = parse_graph("""
+            agraph (float[3] loop_state_orig, float[axis0, sequence, 2] scan_input)
+                => (loop_state_final, scan_output)
+            {
+                loop_state_final, scan_output = Scan <
+                    num_scan_inputs = 1, scan_input_axes = [-2], scan_output_axes = [-2],
+                    body = subgraph (loop_state_in, input) => (loop_state_out, output) {
+                        loop_state_out = Identity(loop_state_in)
+                        output = Identity(input)
+                    }
+                > (loop_state_orig, scan_input)
+            }
+        """)
 
         self._assert_inferred(
             graph,
             [
+                make_tensor_value_info("loop_state_final", TensorProto.FLOAT, (3,)),
                 make_tensor_value_info(
-                    "loop_state_final", TensorProto.FLOAT, (loop_state_size,)
-                ),
-                make_tensor_value_info(
-                    "scan_output", TensorProto.FLOAT, (axis_0_len, seq_len, input_size)
+                    "scan_output", TensorProto.FLOAT, ("axis0", "sequence", 2)
                 ),
             ],
             opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
@@ -6439,41 +6310,17 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_if_ver1(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
-        # subtracts.
-        # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
-        # this breaks the subgraph inferencing as it expects the subgraphs to have zero inputs
-        then_subgraph = helper.make_graph(
-            [make_node("Add", ["current_value", "add_value"], ["then_output"])],
-            "then_subgraph",
-            [],  # no inputs
-            [make_tensor_value_info("then_output", TensorProto.UNDEFINED, None)],
-        )
-
-        else_subgraph = helper.make_graph(
-            [make_node("Sub", ["current_value", "sub_value"], ["else_output"])],
-            "else_subgraph",
-            [],  # no inputs
-            [make_tensor_value_info("else_output", TensorProto.UNDEFINED, None)],
-        )
-
-        graph = self._make_graph(
-            [
-                ("cond", TensorProto.BOOL, (1,)),
-                ("current_value", TensorProto.FLOAT, (1,)),
-                ("add_value", TensorProto.FLOAT, (1,)),
-                ("sub_value", TensorProto.FLOAT, (1,)),
-            ],
-            [
-                make_node(
-                    "If",
-                    ["cond"],
-                    ["if_output"],
-                    then_branch=then_subgraph,
-                    else_branch=else_subgraph,
-                )
-            ],
-            [],
-        )
+        # subtracts. The whole graph (including both subgraphs) is expressed in one parse_graph call;
+        # if_output is left untyped so that shape inference must compute its type/shape.
+        graph = parse_graph("""
+            agraph (bool[1] cond, float[1] current_value, float[1] add_value, float[1] sub_value) => (if_output)
+            {
+                if_output = If (cond) <
+                    then_branch = then_subgraph () => (then_output) { then_output = Add(current_value, add_value) },
+                    else_branch = else_subgraph () => (else_output) { else_output = Sub(current_value, sub_value) }
+                >
+            }
+        """)
 
         self._assert_inferred(
             graph,
@@ -6483,41 +6330,17 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_if(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
-        # subtracts.
-        # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
-        # this breaks the subgraph inferencing as it expects the subgraphs to have zero inputs
-        then_subgraph = helper.make_graph(
-            [make_node("Add", ["current_value", "add_value"], ["then_output"])],
-            "then_subgraph",
-            [],  # no inputs
-            [make_tensor_value_info("then_output", TensorProto.UNDEFINED, None)],
-        )
-
-        else_subgraph = helper.make_graph(
-            [make_node("Sub", ["current_value", "sub_value"], ["else_output"])],
-            "else_subgraph",
-            [],  # no inputs
-            [make_tensor_value_info("else_output", TensorProto.UNDEFINED, None)],
-        )
-
-        graph = self._make_graph(
-            [
-                ("cond", TensorProto.BOOL, (1,)),
-                ("current_value", TensorProto.FLOAT, (1,)),
-                ("add_value", TensorProto.FLOAT, (1,)),
-                ("sub_value", TensorProto.FLOAT, (1,)),
-            ],
-            [
-                make_node(
-                    "If",
-                    ["cond"],
-                    ["if_output"],
-                    then_branch=then_subgraph,
-                    else_branch=else_subgraph,
-                )
-            ],
-            [],
-        )
+        # subtracts. The whole graph (including both subgraphs) is expressed in one parse_graph call;
+        # if_output is left untyped so that shape inference must compute its type/shape.
+        graph = parse_graph("""
+            agraph (bool[1] cond, float[1] current_value, float[1] add_value, float[1] sub_value) => (if_output)
+            {
+                if_output = If (cond) <
+                    then_branch = then_subgraph () => (then_output) { then_output = Add(current_value, add_value) },
+                    else_branch = else_subgraph () => (else_output) { else_output = Sub(current_value, sub_value) }
+                >
+            }
+        """)
 
         self._assert_inferred(
             graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, (1,))]
@@ -6525,41 +6348,18 @@ class TestShapeInference(TestShapeInferenceHelper):
 
     def test_if_with_different_shapes_in_then_else_branches(self) -> None:
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
-        # subtracts.
-        # can't use self._make_graph for the subgraphs as that add more inputs for the Reshape operations it inserts.
-        # this breaks the subgraph inferencing as it expects the subgraphs to have zero inputs
-        then_subgraph = helper.make_graph(
-            [make_node("Add", ["current_value", "add_value"], ["then_output"])],
-            "then_subgraph",
-            [],  # no inputs
-            [make_tensor_value_info("then_output", TensorProto.UNDEFINED, (1,))],
-        )
-
-        else_subgraph = helper.make_graph(
-            [make_node("Sub", ["current_value", "sub_value"], ["else_output"])],
-            "else_subgraph",
-            [],  # no inputs
-            [make_tensor_value_info("else_output", TensorProto.UNDEFINED, (5,))],
-        )
-
-        graph = self._make_graph(
-            [
-                ("cond", TensorProto.BOOL, (1,)),
-                ("current_value", TensorProto.FLOAT, (1,)),
-                ("add_value", TensorProto.FLOAT, (1,)),
-                ("sub_value", TensorProto.FLOAT, (5,)),
-            ],
-            [
-                make_node(
-                    "If",
-                    ["cond"],
-                    ["if_output"],
-                    then_branch=then_subgraph,
-                    else_branch=else_subgraph,
-                )
-            ],
-            [],
-        )
+        # subtracts. The then/else branches produce different shapes ((1,) vs (5,)), so inference merges them
+        # to an unknown dimension. The whole graph is expressed in one parse_graph call, with if_output left
+        # untyped so that shape inference must compute its type/shape.
+        graph = parse_graph("""
+            agraph (bool[1] cond, float[1] current_value, float[1] add_value, float[5] sub_value) => (if_output)
+            {
+                if_output = If (cond) <
+                    then_branch = then_subgraph () => (then_output) { then_output = Add(current_value, add_value) },
+                    else_branch = else_subgraph () => (else_output) { else_output = Sub(current_value, sub_value) }
+                >
+            }
+        """)
 
         self._assert_inferred(
             graph, [make_tensor_value_info("if_output", TensorProto.FLOAT, (None,))]
