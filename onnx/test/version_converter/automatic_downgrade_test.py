@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import automatic_conversion_test_base
 import numpy as np
 import parameterized
@@ -129,7 +127,3 @@ class TestAutomaticDowngrade(automatic_conversion_test_base.TestAutomaticConvers
             }
         """,
         )
-
-
-if __name__ == "__main__":
-    unittest.main()

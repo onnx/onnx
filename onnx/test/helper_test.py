@@ -1186,7 +1186,3 @@ class TestAttrTypeToStr(unittest.TestCase):
     def test_attr_type_to_str_undefined(self):
         result = helper._attr_type_to_str(9999)
         self.assertEqual(result, "UNDEFINED")
-
-
-if __name__ == "__main__":
-    unittest.main()
