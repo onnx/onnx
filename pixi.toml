@@ -109,6 +109,7 @@ pytest-xdist = ">=3.6.1"
 setuptools = ">=75.8.0"
 wheel = ">=0.45.1"
 zizmor = ">=1.24.1,<2"
+onnxruntime = "*"
 
 [feature.reference.dependencies]
 pillow = ">=11.2.1,<12"
@@ -147,7 +148,6 @@ furo = "*"
 markupsafe = "*"
 matplotlib = "*"
 myst-parser = "*"
-onnxruntime = "*"
 pillow = "*"
 pydot = "*"
 sphinx = "<9"  # Seems to be required by sphinx-tabs?

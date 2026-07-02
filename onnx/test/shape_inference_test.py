@@ -236,7 +236,8 @@ class TestShapeInferenceHelper(unittest.TestCase):
 class TestShapeInference(TestShapeInferenceHelper):
     def test_empty_graph(self) -> None:
         graph = self._make_graph(["y"], [], [])
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def _identity_prop(self, op: str, **kwargs: Any) -> None:
         graph = self._make_graph(
@@ -308,7 +309,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5))],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     @parameterized.expand(all_versions_for("Transpose"))
     def test_transpose_preexisting_incorrect_type(self, *_) -> None:
@@ -317,7 +319,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
             [make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 4))],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     @parameterized.expand(all_versions_for("Transpose"))
     def test_transpose_incorrect_repeated_perm(self, *_) -> None:
@@ -326,7 +329,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 1])],
             [],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def _make_matmul_test_all_dims_known(
         self, version, shape1: Sequence[int], shape2: Sequence[int]
@@ -416,7 +420,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     @parameterized.expand(all_versions_for("CastLike"))
     def test_cast_like(self, _, version) -> None:
@@ -673,7 +678,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Concat", ["x", "y", "z"], ["out"], axis=0)],
             [],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     @parameterized.expand(all_versions_for("Concat"))
     def test_concat_3d_axis_2(self, _, version) -> None:
@@ -875,10 +881,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                 call_inference()
             else:
                 # Upsample is deprecated since Version 10.
-                with self.assertRaises(onnx.checker.ValidationError) as cm:
+                with pytest.raises(
+                    onnx.checker.ValidationError, match="Upsample is deprecated"
+                ):
                     call_inference()
-                exception = cm.exception
-                assert "Upsample is deprecated" in str(exception)
 
     @parameterized.expand(all_versions_for("Upsample"))
     def test_upsample_raw_data(self, _, version) -> None:
@@ -923,10 +929,10 @@ class TestShapeInference(TestShapeInferenceHelper):
                 call_inference()
             else:
                 # Upsample is deprecated since Version 10.
-                with self.assertRaises(onnx.checker.ValidationError) as cm:
+                with pytest.raises(
+                    onnx.checker.ValidationError, match="Upsample is deprecated"
+                ):
                     call_inference()
-                exception = cm.exception
-                assert "Upsample is deprecated" in str(exception)
 
     @parameterized.expand(all_versions_for("Expand"))
     def test_expand(self, _, version) -> None:
@@ -1681,10 +1687,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scatter(self, _, version) -> None:
         if version >= 11:
             # Scatter is deprecated in domain_version of 11.
-            with self.assertRaises(onnx.checker.ValidationError) as cm:
+            with pytest.raises(
+                onnx.checker.ValidationError, match="Scatter is deprecated"
+            ):
                 self._test_scatter(version)
-            exception = cm.exception
-            assert "Scatter is deprecated" in str(exception)
         else:
             self._test_scatter(version)
 
@@ -1708,10 +1714,10 @@ class TestShapeInference(TestShapeInferenceHelper):
     def test_scatter_axis1(self, _, version) -> None:
         if version >= 11:
             # Scatter is deprecated in domain_version of 11.
-            with self.assertRaises(onnx.checker.ValidationError) as cm:
+            with pytest.raises(
+                onnx.checker.ValidationError, match="Scatter is deprecated"
+            ):
                 self._test_scatter_axis1(version)
-            exception = cm.exception
-            assert "Scatter is deprecated" in str(exception)
         else:
             self._test_scatter_axis1(version)
 
@@ -2415,12 +2421,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "y"], "z", strides=[0, 1])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("Conv"))
     def test_conv_negative_strides(self, _: str, version: int) -> None:
@@ -2432,12 +2437,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "y"], "z", strides=[-1, 1])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     def test_conv_pads(self) -> None:
         graph = self._make_graph(
@@ -2577,13 +2581,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "w"], "z")],
             [],
         )
-        self.assertRaisesRegex(
-            onnx.shape_inference.InferenceError,
-            "weight tensor",
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="weight tensor"):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(
         [
@@ -2609,13 +2611,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "w"], "z")],
             [],
         )
-        self.assertRaisesRegex(
-            onnx.shape_inference.InferenceError,
-            "weight tensor",
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError, match="weight tensor"):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("Conv"))
     def test_conv_zero_dilations(self, _: str, version: int) -> None:
@@ -2627,12 +2627,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "y"], "z", dilations=[0, 1])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("Conv"))
     def test_conv_negative_dilations(self, _: str, version: int) -> None:
@@ -2644,12 +2643,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "y"], "z", dilations=[-1, 1])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("Conv"))
     def test_conv_negative_pads(self, _: str, version: int) -> None:
@@ -2661,12 +2659,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "y"], "z", pads=[-1, 0, 0, 0])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("Conv"))
     def test_conv_input_too_few_dims(self, _: str, version: int) -> None:
@@ -2678,12 +2675,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "y"], "z")],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("Conv"))
     def test_conv_zero_kernel_shape(self, _: str, version: int) -> None:
@@ -2695,12 +2691,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "y"], "z", kernel_shape=[0, 3])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("Conv"))
     def test_conv_negative_kernel_shape(self, _: str, version: int) -> None:
@@ -2712,12 +2707,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Conv", ["x", "y"], "z", kernel_shape=[-1, 3])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("MaxPool"))
     def test_maxpool_zero_kernel_shape(self, _: str, version: int) -> None:
@@ -2726,12 +2720,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[0, 3])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("MaxPool"))
     def test_maxpool_negative_dilations(self, _: str, version: int) -> None:
@@ -2750,12 +2743,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("MaxPool"))
     def test_maxpool_negative_pads(self, _: str, version: int) -> None:
@@ -2772,12 +2764,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("ConvTranspose"))
     def test_conv_transpose_weight_spatial_rank_mismatch(
@@ -2791,12 +2782,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("ConvTranspose", ["x", "w"], "z")],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("ConvTranspose"))
     def test_conv_transpose_negative_dilations(self, _: str, version: int) -> None:
@@ -2808,12 +2798,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("ConvTranspose", ["x", "w"], "z", dilations=[-1, 1])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("ConvTranspose"))
     def test_conv_transpose_zero_strides(self, _: str, version: int) -> None:
@@ -2825,12 +2814,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("ConvTranspose", ["x", "w"], "z", strides=[0, 1])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("ConvTranspose"))
     def test_conv_transpose_negative_pads(self, _: str, version: int) -> None:
@@ -2842,12 +2830,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("ConvTranspose", ["x", "w"], "z", pads=[-1, 0, 0, 0])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("ConvTranspose"))
     def test_conv_transpose_negative_output_padding(self, _: str, version: int) -> None:
@@ -2867,12 +2854,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("ConvTranspose"))
     def test_conv_transpose_negative_output_shape(self, _: str, version: int) -> None:
@@ -2891,12 +2877,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("ConvTranspose"))
     def test_conv_transpose_zero_kernel_shape(self, _: str, version: int) -> None:
@@ -2908,12 +2893,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("ConvTranspose", ["x", "w"], "z", kernel_shape=[0, 3])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     def test_attention_4d(self) -> None:
         graph = self._make_graph(
@@ -3232,7 +3216,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_past_state_rank_not_4(self) -> None:
         # past_state must be rank 4.
@@ -3249,7 +3234,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_decay_rank_not_3(self) -> None:
         # decay must be rank 3 (3D packed).
@@ -3266,7 +3252,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_gqa_indivisible(self) -> None:
         # q_num_heads must be a positive multiple of kv_num_heads.
@@ -3283,7 +3270,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_gated_delta_missing_decay(self) -> None:
         # gated_delta requires decay; only beta provided.
@@ -3300,7 +3288,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_gated_delta_missing_beta(self) -> None:
         # gated_delta requires beta; only decay provided.
@@ -3317,7 +3306,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_linear_with_decay(self) -> None:
         # update_rule="linear" forbids decay.
@@ -3334,7 +3324,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_linear_with_beta(self) -> None:
         # update_rule="linear" forbids beta.
@@ -3351,7 +3342,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_unknown_update_rule(self) -> None:
         # Only "linear", "gated", "delta", and "gated_delta" are accepted.
@@ -3367,7 +3359,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_q_num_heads_zero(self) -> None:
         # Non-positive head counts must be rejected explicitly, not silently
@@ -3384,7 +3377,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_qpack_indivisible(self) -> None:
         # Packed query last dim must be divisible by q_num_heads so the
@@ -3401,7 +3395,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_decay_last_dim_wrong(self) -> None:
         # With H_kv=4 and d_k=16, decay last dim must be 4 (per-head) or 64
@@ -3419,7 +3414,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_linear_attention_beta_last_dim_wrong(self) -> None:
         # With H_kv=4, beta last dim must be 1 (broadcast) or 4 (per-head).
@@ -3437,7 +3433,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_causal_conv_with_state_static(self) -> None:
         model = onnx.parser.parse_model(
@@ -3511,7 +3508,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_causal_conv_with_state_kernel_zero_fails(self) -> None:
         model = onnx.parser.parse_model(
@@ -3524,7 +3522,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_causal_conv_with_state_weight_rank2_fails(self) -> None:
         model = onnx.parser.parse_model(
@@ -3537,7 +3536,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_causal_conv_with_state_kernel_size_one(self) -> None:
         model = onnx.parser.parse_model(
@@ -3612,7 +3612,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             }
             """
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, model)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(model)
 
     def test_flex_attention_basic(self) -> None:
         """Test FlexAttention basic shape inference with symbolic dimensions."""
@@ -3998,15 +3999,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_DOMAIN, 21),
-                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_DOMAIN, 21),
+                    make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+                ],
+            )
 
     def test_flex_attention_mismatched_elem_type_fails(self) -> None:
         """Test FlexAttention fails when Q, K, V have different element types."""
@@ -4026,15 +4026,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_DOMAIN, 21),
-                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_DOMAIN, 21),
+                    make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+                ],
+            )
 
     def test_flex_attention_gqa_not_divisible_fails(self) -> None:
         """Test FlexAttention fails when Hq is not divisible by Hkv."""
@@ -4054,15 +4053,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_DOMAIN, 21),
-                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_DOMAIN, 21),
+                    make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+                ],
+            )
 
     def test_flex_attention_mismatched_kv_seq_len_fails(self) -> None:
         """Test FlexAttention fails when K and V have different sequence lengths."""
@@ -4082,15 +4080,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_DOMAIN, 21),
-                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_DOMAIN, 21),
+                    make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+                ],
+            )
 
     def test_flex_attention_mismatched_kv_heads_fails(self) -> None:
         """Test FlexAttention fails when K and V have different head counts."""
@@ -4110,15 +4107,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_DOMAIN, 21),
-                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_DOMAIN, 21),
+                    make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+                ],
+            )
 
     def test_flex_attention_mismatched_qk_head_size_fails(self) -> None:
         """Test FlexAttention fails when Q and K have different head sizes."""
@@ -4138,15 +4134,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_DOMAIN, 21),
-                make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_DOMAIN, 21),
+                    make_opsetid(AI_ONNX_PREVIEW_DOMAIN, 1),
+                ],
+            )
 
     def test_average_pool_auto_pads(self) -> None:
         graph = self._make_graph(
@@ -4766,7 +4761,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                 ],
                 [],
             )
-            with self.assertRaises(onnx.shape_inference.InferenceError):
+            with pytest.raises(onnx.shape_inference.InferenceError):
                 self._inferred(
                     graph, opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 6)]
                 )
@@ -5162,7 +5157,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_split_negative_axis(self) -> None:
         graph = self._make_graph(
@@ -5315,7 +5311,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, ())], [make_node("Softmax", ["x"], "z")], []
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_hardmax_2d(self) -> None:
         graph = self._make_graph(
@@ -5339,7 +5336,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, ())], [make_node("Hardmax", ["x"], "z")], []
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_logsoftmax_2d(self) -> None:
         graph = self._make_graph(
@@ -5365,7 +5363,8 @@ class TestShapeInference(TestShapeInferenceHelper):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, ())], [make_node("LogSoftmax", ["x"], "z")], []
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_logsoftmax_3d_negative_axis(self) -> None:
         graph = self._make_graph(
@@ -5459,12 +5458,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("MaxPool"))
     def test_maxpool_negative_strides(self, _: str, version: int) -> None:
@@ -5481,12 +5479,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     def test_maxpool_with_floor_mode(self) -> None:
         graph = self._make_graph(
@@ -5739,12 +5736,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     @parameterized.expand(all_versions_for("AveragePool"))
     def test_averagepool_negative_strides(self, _: str, version: int) -> None:
@@ -5761,12 +5757,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     def test_averagepool_ceil(self) -> None:
         graph = self._make_graph(
@@ -5889,12 +5884,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("MaxRoiPool", ["X", "rois"], ["Y"], pooled_shape=[-1, 2])],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     def test_lp_norm(self) -> None:
         graph = self._make_graph(
@@ -6111,12 +6105,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            onnx.shape_inference.infer_shapes,
-            helper.make_model(graph),
-            strict_mode=True,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(
+                helper.make_model(graph),
+                strict_mode=True,
+            )
 
     def test_conv_transpose_auto_pads(self) -> None:
         graph = self._make_graph(
@@ -6744,7 +6737,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("xI", TensorProto.INT64, (), [0]),
             ],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_conv_transpose_rank0_weight_raises(self) -> None:
         graph = self._make_graph(
@@ -6758,7 +6752,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("W", TensorProto.FLOAT, (), [0.0]),
             ],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_conv_transpose_rank1_weight_raises(self) -> None:
         graph = self._make_graph(
@@ -6772,7 +6767,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("W", TensorProto.FLOAT, (9,), list(range(9))),
             ],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_conv_transpose_rank2_weight_raises(self) -> None:
         graph = self._make_graph(
@@ -6786,7 +6782,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("W", TensorProto.FLOAT, (48, 32), list(range(48 * 32))),
             ],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_conv_transpose_rank2_input_raises(self) -> None:
         graph = self._make_graph(
@@ -6800,7 +6797,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("X", TensorProto.FLOAT, (25, 48), list(range(25 * 48))),
             ],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_conv_transpose_rank0_weight_raises_opset11(self) -> None:
         graph = self._make_graph(
@@ -6814,12 +6812,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("W", TensorProto.FLOAT, (), [0.0]),
             ],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
+            )
 
     def test_conv_transpose_rank0_weight_raises_opset1(self) -> None:
         graph = self._make_graph(
@@ -6833,12 +6830,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("W", TensorProto.FLOAT, (), [0.0]),
             ],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 1)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 1)],
+            )
 
     def test_maxunpool_rank0_indices_raises_opset9(self) -> None:
         graph = self._make_graph(
@@ -6856,12 +6852,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("xI", TensorProto.INT64, (), [0]),
             ],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 9)],
+            )
 
     def test_maxunpool_rank0_indices_raises_opset11(self) -> None:
         graph = self._make_graph(
@@ -6879,12 +6874,11 @@ class TestShapeInference(TestShapeInferenceHelper):
                 make_tensor("xI", TensorProto.INT64, (), [0]),
             ],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, 11)],
+            )
 
     def test_onehot_without_axis(self) -> None:
         graph = self._make_graph(
@@ -7727,11 +7721,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+            )
 
     @unittest.skip(
         "Issue #5960"
@@ -7750,11 +7743,10 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+            )
 
     @parameterized.expand(
         [onnx.TensorProto.FLOAT, onnx.TensorProto.FLOAT16, onnx.TensorProto.BFLOAT16]
@@ -8289,12 +8281,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=opset_imports,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=opset_imports,
+            )
 
         # default_tensor should be a singleton of shape (1,)
         graph = self._make_graph(
@@ -8315,12 +8306,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
         )
 
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=opset_imports,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=opset_imports,
+            )
 
     def make_sparse(
         self,
@@ -8444,7 +8434,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 bad_tensor,
             ],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_range_initializer_invalid_rawdata(self) -> None:
         # Create a TensorProto with empty raw data for `delta`.
@@ -8473,7 +8464,8 @@ class TestShapeInference(TestShapeInferenceHelper):
                 bad_tensor,
             ],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_range_rank_inference(self) -> None:
         graph = self._make_graph(
@@ -9639,7 +9631,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x"], ["y"], equation="i->i")],
             [],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_einsum_outer_prod(self) -> None:
         graph = self._make_graph(
@@ -9755,7 +9748,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             [make_node("Einsum", ["x", "y"], ["z"], equation="i,...j, k, l-> i")],
             [],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_einsum_view_A1(self) -> None:  # returns a view of A1
         graph = self._make_graph(
@@ -10238,7 +10232,8 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(onnx.shape_inference.InferenceError, self._inferred, graph)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(graph)
 
     def test_negative_log_likelihood_input_weight_shape_mismatch(self) -> None:
         N, C, d1, d2 = 3, 4, 5, 6
@@ -10259,11 +10254,12 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            (checker.ValidationError, onnx.shape_inference.InferenceError),
-            self._inferred,
-            graph,
-        )
+        with pytest.raises(
+            (checker.ValidationError, onnx.shape_inference.InferenceError)
+        ):
+            self._inferred(
+                graph,
+            )
 
     def test_softmax_cross_entropy_none(self) -> None:
         graph = self._make_graph(
@@ -10410,12 +10406,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer_shape, input_shape
         )
         # Inferred shape and existing shape differ in dimension 0
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            onnx.shape_inference.infer_shapes,
-            original_model,
-            strict_mode=True,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(
+                original_model,
+                strict_mode=True,
+            )
 
     def test_infer_initializer_input_consistency_all_none(self) -> None:
         initializer_shape = (8, 7)
@@ -10442,12 +10437,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             initializer_shape, input_shape
         )
         # Inferred shape and existing shape differ in rank: (3) vs (2)
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            onnx.shape_inference.infer_shapes,
-            original_model,
-            strict_mode=True,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(
+                original_model,
+                strict_mode=True,
+            )
 
     def test_infer_initializer_input_consistency_all_none_serialized(self) -> None:
         # Reuse test_infer_initializer_input_consistency_all_none test case and check with
@@ -11015,17 +11009,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             )
         )
         # Strict shape inference should catch this invalid type error (int32 is not supported)
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            onnx.shape_inference.infer_shapes,
-            model,
-            strict_mode=True,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(
+                model,
+                strict_mode=True,
+            )
         # Even nornmal shape inference should not produce any invalid shape due to wrong type for ParseData
         inferred_model = onnx.shape_inference.infer_shapes(model)
-        self.assertFalse(
-            inferred_model.graph.output[0].type.tensor_type.HasField("shape")
-        )
+        assert not inferred_model.graph.output[0].type.tensor_type.HasField("shape")
 
     def test_parse_data_with_undefined_tensor_type(self) -> None:
         model = helper.make_model(
@@ -11044,17 +11035,14 @@ class TestShapeInference(TestShapeInferenceHelper):
         # Hardcode the tensor type as UNDEFINED to test catching undefined type error
         model.graph.initializer[0].data_type = TensorProto.UNDEFINED
         # Strict shape inference should catch this undefined type error
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            onnx.shape_inference.infer_shapes,
-            model,
-            strict_mode=True,
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            onnx.shape_inference.infer_shapes(
+                model,
+                strict_mode=True,
+            )
         # Even nornmal shape inference should not produce any invalid shape due to undefined type for ParseData
         inferred_model = onnx.shape_inference.infer_shapes(model)
-        self.assertFalse(
-            inferred_model.graph.output[0].type.tensor_type.HasField("shape")
-        )
+        assert not inferred_model.graph.output[0].type.tensor_type.HasField("shape")
 
         graph = self._make_graph(
             [("x", TensorProto.UINT8, (1, 0, 0)), ("shape", TensorProto.INT64, (3,))],
@@ -11910,7 +11898,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             self._assert_inferred(
                 graph,
                 [
@@ -11953,7 +11941,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             self._assert_inferred(
                 graph,
                 [
@@ -11984,7 +11972,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             self._assert_inferred(
                 graph,
                 [
@@ -12020,7 +12008,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             self._assert_inferred(
                 graph,
                 [
@@ -12053,7 +12041,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             self._assert_inferred(
                 graph,
                 [
@@ -12091,7 +12079,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             self._assert_inferred(
                 graph,
                 [
@@ -12707,15 +12695,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             [cat],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 1),
-                make_opsetid(ONNX_DOMAIN, 11),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 1),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
 
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_tree_ensemble_regressor(self) -> None:
@@ -12855,15 +12842,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             [tree],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 5),
-                make_opsetid(ONNX_DOMAIN, 11),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 5),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
 
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_tree_ensemble_classifier(self) -> None:
@@ -12993,15 +12979,14 @@ class TestShapeInference(TestShapeInferenceHelper):
             ],
             [],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[
-                make_opsetid(ONNX_ML_DOMAIN, 1),
-                make_opsetid(ONNX_DOMAIN, 11),
-            ],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[
+                    make_opsetid(ONNX_ML_DOMAIN, 1),
+                    make_opsetid(ONNX_DOMAIN, 11),
+                ],
+            )
 
     @unittest.skipUnless(ONNX_ML, "ONNX_ML required to test ai.onnx.ml operators")
     def test_zip_map(self) -> None:
@@ -13091,7 +13076,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             outputs=[],
         )
         onnx.defs.register_schema(op_schema)
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, True)
         onnx.defs.deregister_schema(
             op_schema.name, op_schema.since_version, op_schema.domain
@@ -13108,7 +13093,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
@@ -13123,7 +13108,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
@@ -13138,7 +13123,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
@@ -13153,7 +13138,7 @@ class TestShapeInference(TestShapeInferenceHelper):
         }
         """
         model = onnx.parser.parse_model(modeltxt)
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.checker.check_model(model, full_check=True)
             onnx.shape_inference.infer_shapes(model)
 
@@ -13172,12 +13157,11 @@ class TestShapeInference(TestShapeInferenceHelper):
             [],
             initializer=[make_tensor("std.constant", TensorProto.FLOAT, (1,), (-10,))],
         )
-        self.assertRaises(
-            onnx.shape_inference.InferenceError,
-            self._inferred,
-            graph,
-            opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
-        )
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            self._inferred(
+                graph,
+                opset_imports=[helper.make_opsetid(ONNX_DOMAIN, version)],
+            )
 
     def test_protobuf_default(self) -> None:
         model_text = """
@@ -13243,7 +13227,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             foo (x) => (y) { y = local.foo (x) }
         """
         )
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             onnx.shape_inference.infer_shapes(model)
 
     def test_scan_invalid_num_scan_inputs_does_not_crash(self):
@@ -13263,7 +13247,7 @@ class TestShapeInference(TestShapeInferenceHelper):
                     }}
                     """
                 )
-                with self.assertRaises(onnx.shape_inference.InferenceError):
+                with pytest.raises(onnx.shape_inference.InferenceError):
                     onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_function_output_count_mismatch_does_not_crash(self):
@@ -13277,7 +13261,7 @@ class TestShapeInference(TestShapeInferenceHelper):
             F (x) => (y1, y2) { y1 = Identity(x) y2 = Identity(x) }
             """
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_conv_transpose_undersized_weight_raises(self):
@@ -13288,13 +13272,13 @@ class TestShapeInference(TestShapeInferenceHelper):
             g (float[1,1,5] X, float[1,3] W) => (float[1,1,?] Y) { Y = ConvTranspose(X, W) }
             """
         )
-        with self.assertRaises(onnx.shape_inference.InferenceError):
+        with pytest.raises(onnx.shape_inference.InferenceError):
             onnx.shape_inference.infer_shapes(model, strict_mode=True)
 
     def test_infer_shapes_pathlike_error(self) -> None:
-        with self.assertRaisesRegex(
+        with pytest.raises(
             TypeError,
-            r"For Model paths \(str or os.PathLike\), use infer_shapes_path\(\)\.",
+            match=r"For Model paths \(str or os.PathLike\), use infer_shapes_path\(\)\.",
         ):
             onnx.shape_inference.infer_shapes(Path("model.onnx"))
 
@@ -13307,8 +13291,8 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
     def setUp(self) -> None:
         # Ensure the schema is unregistered
-        self.assertFalse(onnx.defs.has(self.custom_op_type, self.op_domain))
-        self.assertFalse(onnx.defs.has(self.dummy_graph_op_type, self.op_domain))
+        assert not onnx.defs.has(self.custom_op_type, self.op_domain)
+        assert not onnx.defs.has(self.dummy_graph_op_type, self.op_domain)
 
     def tearDown(self) -> None:
         # Clean up the registered schema
@@ -13351,7 +13335,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
         def schema_shape_infer_func(ctx: onnx.shape_inference.InferenceContext):
             def parse_tensor_input(t: TypeProto):
-                self.assertTrue(isinstance(t, TypeProto))
+                assert isinstance(t, TypeProto)
                 return (
                     t.tensor_type.elem_type,
                     [
@@ -13360,21 +13344,21 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
                     ],
                 )
 
-            self.assertEqual(ctx.get_num_inputs(), 2)
+            assert ctx.get_num_inputs() == 2
             in0 = ctx.get_input_type(0)
             in1 = ctx.get_input_type(1)
             in0_type, in0_shape = parse_tensor_input(in0)
             in1_type, in1_shape = parse_tensor_input(in1)
-            self.assertEqual(in0_type, TensorProto.FLOAT)
-            self.assertEqual(in1_type, TensorProto.FLOAT)
-            self.assertEqual(len(in0_shape), 2)
-            self.assertEqual(len(in1_shape), 2)
-            self.assertEqual(in0_shape[0], in1_shape[0])
+            assert in0_type == TensorProto.FLOAT
+            assert in1_type == TensorProto.FLOAT
+            assert len(in0_shape) == 2
+            assert len(in1_shape) == 2
+            assert in0_shape[0] == in1_shape[0]
             N, La = in0_shape
             _, Lb = in1_shape
             attr = ctx.get_attribute("out_len")
             out_len = attr.ints
-            self.assertEqual(len(out_len), ctx.get_num_outputs())
+            assert len(out_len) == ctx.get_num_outputs()
             for i in range(ctx.get_num_outputs()):
                 out = ctx.get_output_type(i)
                 out.tensor_type.elem_type = in0_type
@@ -13412,8 +13396,8 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         )
 
         def schema_shape_infer_func(ctx: onnx.shape_inference.InferenceContext):
-            self.assertEqual(ctx.get_num_inputs(), 2)
-            self.assertIsNotNone(ctx.get_attribute("graph"))
+            assert ctx.get_num_inputs() == 2
+            assert ctx.get_attribute("graph") is not None
             gctx = ctx.get_graph_attribute_inferencer("graph")
             outputs = gctx.do_inferencing(
                 [ctx.get_input_type(i) for i in range(ctx.get_num_inputs())],
@@ -13470,7 +13454,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         graph = self.gen_custom_op_graph(N, La, Lb, out_len)
 
         # shape inference before register
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             self.shape_infer_once(graph, N, La, Lb, out_len)
 
         # register schema
@@ -13492,7 +13476,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
         graph = self.gen_dummy_graph_graph(N, La, Lb, out_len)
 
         # shape inference before register
-        with self.assertRaises(onnx.checker.ValidationError):
+        with pytest.raises(onnx.checker.ValidationError):
             self.shape_infer_once(graph, N, La, Lb, out_len)
 
         # register schema
@@ -13528,34 +13512,34 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
 
         def schema_shape_infer_func(ctx: onnx.shape_inference.InferenceContext):
             raw_func(ctx)
-            self.assertIsNone(ctx.get_attribute("not-exist-attr"))
-            self.assertTrue(ctx.has_input(0))
-            self.assertFalse(ctx.has_input(2))
-            with self.assertRaises(TypeError):
-                self.assertFalse(ctx.has_input(-1))
-            self.assertTrue(ctx.has_output(0))
-            self.assertFalse(ctx.has_output(1))
-            with self.assertRaises(TypeError):
-                self.assertFalse(ctx.has_output(-1))
-            with self.assertRaises(onnx.shape_inference.InferenceError):
+            assert ctx.get_attribute("not-exist-attr") is None
+            assert ctx.has_input(0)
+            assert not ctx.has_input(2)
+            with pytest.raises(TypeError):
+                assert not ctx.has_input(-1)
+            assert ctx.has_output(0)
+            assert not ctx.has_output(1)
+            with pytest.raises(TypeError):
+                assert not ctx.has_output(-1)
+            with pytest.raises(onnx.shape_inference.InferenceError):
                 ctx.get_graph_attribute_inferencer("not-exist-attr")
-            self.assertIsNone(ctx.get_input_data(0))
-            with self.assertRaises(RuntimeError):
-                self.assertIsNone(ctx.get_input_data(10))
-            self.assertIsNone(ctx.get_input_sparse_data(0))
-            with self.assertRaises(RuntimeError):
-                self.assertIsNone(ctx.get_input_sparse_data(10))
-            self.assertIsNotNone(ctx.get_input_type(0))
-            with self.assertRaises(RuntimeError):
+            assert ctx.get_input_data(0) is None
+            with pytest.raises(RuntimeError):
+                assert ctx.get_input_data(10) is None
+            assert ctx.get_input_sparse_data(0) is None
+            with pytest.raises(RuntimeError):
+                assert ctx.get_input_sparse_data(10) is None
+            assert ctx.get_input_type(0) is not None
+            with pytest.raises(RuntimeError):
                 ctx.get_input_type(10)
-            self.assertIsNone(ctx.get_symbolic_input(0))
-            with self.assertRaises(RuntimeError):
+            assert ctx.get_symbolic_input(0) is None
+            with pytest.raises(RuntimeError):
                 ctx.get_symbolic_input(10)
-            self.assertIsNotNone(ctx.get_output_type(0))
-            with self.assertRaises(RuntimeError):
+            assert ctx.get_output_type(0) is not None
+            with pytest.raises(RuntimeError):
                 ctx.get_output_type(10)
-            self.assertEqual(ctx.get_num_inputs(), 2)
-            self.assertEqual(ctx.get_num_outputs(), 1)
+            assert ctx.get_num_inputs() == 2
+            assert ctx.get_num_outputs() == 1
 
         schema.set_type_and_shape_inference_function(schema_shape_infer_func)
         onnx.defs.register_schema(schema)
@@ -13606,11 +13590,7 @@ class TestCustomSchemaShapeInference(TestShapeInferenceHelper):
             onnx.shape_inference.infer_shapes(model, data_prop=True, strict_mode=True)
 
             sym = captured["sym"]
-            self.assertIsInstance(sym, TensorShapeProto)
-            self.assertEqual([d.dim_value for d in sym.dim], [2, 3])
+            assert isinstance(sym, TensorShapeProto)
+            assert [d.dim_value for d in sym.dim] == [2, 3]
         finally:
             onnx.defs.deregister_schema(op_type, 1, domain)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)

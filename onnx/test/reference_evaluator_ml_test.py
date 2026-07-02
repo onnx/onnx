@@ -369,7 +369,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_label_encoder_int_string_tensor_attributes(self):
@@ -398,7 +398,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_dict_vectorizer(self):
@@ -429,7 +429,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         # self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_one_hot_encoder_int(self):
@@ -454,7 +454,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_one_hot_encoder_string(self):
@@ -479,7 +479,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_one_hot_encoder_zeros(self):
@@ -504,7 +504,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         self._check_ort(model, {"X": x}, equal=True)
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})[0]
-        self.assertEqual(expected.tolist(), got.tolist())
+        assert expected.tolist() == got.tolist()
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     def test_linear_regressor(self):
@@ -1116,7 +1116,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
         sess = ReferenceEvaluator(model)
         got = sess.run(None, {"X": x})
         assert_allclose(got[0], expected, atol=1e-6)
-        self.assertIn("op_type=TreeEnsembleRegressor", str(sess.rt_nodes_[0]))
+        assert "op_type=TreeEnsembleRegressor" in str(sess.rt_nodes_[0])
 
     @unittest.skipIf(not ONNX_ML, reason="onnx not compiled with ai.onnx.ml")
     @parameterized.expand(
@@ -2132,7 +2132,7 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
         oinf = ReferenceEvaluator(model)
         res = oinf.run(None, {"tokens": inputi})
-        self.assertEqual(output.tolist(), res[0].tolist())
+        assert output.tolist() == res[0].tolist()
 
     def test_onnxrt_tfidf_vectorizer_strings(self):
         inputi = np.array(
@@ -2173,8 +2173,4 @@ class TestReferenceEvaluatorAiOnnxMl(unittest.TestCase):
 
         oinf = ReferenceEvaluator(model)
         res = oinf.run(None, {"tokens": inputi})
-        self.assertEqual(output.tolist(), res[0].tolist())
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert output.tolist() == res[0].tolist()

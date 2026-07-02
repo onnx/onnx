@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
 from typing import TYPE_CHECKING
 
+import pytest
 from shape_inference_test import TestShapeInferenceHelper
 
 import onnx
@@ -37,7 +37,7 @@ class TestFunctionInference(TestShapeInferenceHelper):
         result = onnx.shape_inference.infer_function_output_types(
             function, input_types, attributes
         )
-        self.assertEqual(len(expected_output_types), len(result))
+        assert len(expected_output_types) == len(result)
         for expected, actual in zip(expected_output_types, result, strict=True):
             self._compare_value_infos(expected, actual)
 
@@ -54,7 +54,8 @@ class TestFunctionInference(TestShapeInferenceHelper):
                 function, input_types, attributes
             )
 
-        self.assertRaises(onnx.shape_inference.InferenceError, invoke_inference)
+        with pytest.raises(onnx.shape_inference.InferenceError):
+            invoke_inference()
 
     def test_fi_basic(self):
         code = """
@@ -116,7 +117,3 @@ class TestFunctionInference(TestShapeInferenceHelper):
 
         # A failing test-case with a non-trailing missing optional parameter
         self._check_fails(code, [float_type_, no_type_, int8_type_], [])
-
-
-if __name__ == "__main__":
-    unittest.main()
