@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-import unittest
 
 import numpy as np
 import numpy.testing as npt
@@ -85,7 +84,7 @@ def _large_linear_regression():
     return large_model
 
 
-class TestLargeOnnxReferenceEvaluator(unittest.TestCase):
+class TestLargeOnnxReferenceEvaluator:
     def common_check_reference_evaluator(self, container):
         X = np.arange(9).astype(np.float32).reshape((-1, 3))
         ref = onnx.reference.ReferenceEvaluator(container)

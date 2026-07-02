@@ -3,8 +3,6 @@
 # Copyright (c) ONNX Project Contributors
 from __future__ import annotations
 
-import unittest
-
 import numpy as np
 import pytest
 
@@ -63,7 +61,7 @@ def _run_case(
     )
 
 
-class TestInferenceFunctionCall(unittest.TestCase):
+class TestInferenceFunctionCall:
     def test_add_inference(self) -> None:
         cases = [
             (

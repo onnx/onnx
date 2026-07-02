@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import locale
 import platform
-import unittest
 
 import pytest
 from parameterized import parameterized
@@ -14,7 +13,7 @@ import onnx
 from onnx import GraphProto, OperatorSetIdProto, TensorProto, checker
 
 
-class TestBasicFunctions(unittest.TestCase):
+class TestBasicFunctions:
     def check_graph(self, graph: GraphProto) -> None:
         assert len(graph.node) == 3
         assert graph.node[0].op_type == "MatMul"

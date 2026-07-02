@@ -3,14 +3,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import pytest
 
 from onnx import checker, inliner, parser
 
 
-class InlinerTest(unittest.TestCase):
+class TestInliner:
     def test_basic(self):
         model = parser.parse_model(
             """

@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -97,7 +96,7 @@ M2_DEF = """
     """
 
 
-class TestComposeFunctions(unittest.TestCase):
+class TestComposeFunctions:
     def _test_merge_models(
         self,
         m1def: str,

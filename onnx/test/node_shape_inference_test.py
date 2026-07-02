@@ -3,15 +3,13 @@
 # Copyright (c) ONNX Project Contributors
 from __future__ import annotations
 
-import unittest
-
 import parameterized
 
 import onnx.helper
 import onnx.shape_inference
 
 
-class NodeInferenceTest(unittest.TestCase):
+class TestNodeInference:
     @parameterized.parameterized.expand(
         [
             ("GreaterOrEqual",),

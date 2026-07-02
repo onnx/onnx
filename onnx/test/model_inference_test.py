@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import typing
-import unittest
 
 import pytest
 
@@ -13,7 +12,7 @@ import onnx.parser
 import onnx.shape_inference
 
 
-class TestModelInference(unittest.TestCase):
+class TestModelInference:
     def _check(self, model_text: str, *expected: int):
         """Check that the model inference infers the expected types for outputs.
         Restricted to the simple case of tensor types, so expected types specify

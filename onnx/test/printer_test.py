@@ -3,15 +3,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import pytest
 
 import onnx
 from onnx import parser, printer
 
 
-class TestBasicFunctions(unittest.TestCase):
+class TestBasicFunctions:
     def check_graph(self, graph: onnx.GraphProto) -> None:
         assert len(graph.node) == 3
         assert graph.node[0].op_type == "MatMul"

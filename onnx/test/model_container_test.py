@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-import unittest
 
 import numpy as np
 import pytest
@@ -84,7 +83,7 @@ def _large_linear_regression():
     return large_model
 
 
-class TestLargeOnnx(unittest.TestCase):
+class TestLargeOnnx:
     def test_large_onnx_no_large_initializer(self):
         model_proto = _linear_regression()
         assert isinstance(model_proto, onnx.ModelProto)

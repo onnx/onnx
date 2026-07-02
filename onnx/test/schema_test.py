@@ -191,7 +191,7 @@ class TestSchema(unittest.TestCase):
             ], f"Range type {base_type} should be a supported numeric type"
 
 
-class TestOpSchema(unittest.TestCase):
+class TestOpSchema:
     def test_init(self):
         # Test that the constructor creates an OpSchema object
         schema = defs.OpSchema("test_op", "test_domain", 1)
@@ -336,7 +336,7 @@ class TestOpSchema(unittest.TestCase):
         assert schema.outputs[0].description == "The first output."
 
 
-class TestFormalParameter(unittest.TestCase):
+class TestFormalParameter:
     def test_init(self):
         name = "input1"
         type_str = "tensor(float)"
@@ -365,7 +365,7 @@ class TestFormalParameter(unittest.TestCase):
         assert formal_parameter.differentiation_category == differentiation_category
 
 
-class TestTypeConstraintParam(unittest.TestCase):
+class TestTypeConstraintParam:
     @parameterized.parameterized.expand(
         [
             ("single_type", "T", ["tensor(float)"], "Test description"),
@@ -393,7 +393,7 @@ class TestTypeConstraintParam(unittest.TestCase):
         assert type_constraint.type_param_str == type_param_str
 
 
-class TestAttribute(unittest.TestCase):
+class TestAttribute:
     def test_init(self):
         name = "test_attr"
         type_ = defs.OpSchema.AttrType.STRINGS

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-class TestChecker(unittest.TestCase):
+class TestChecker:
     @property
     def _sample_float_tensor(self) -> TensorProto:
         np_array = np.random.randn(2, 3).astype(np.float32)

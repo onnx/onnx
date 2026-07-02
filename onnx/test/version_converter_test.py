@@ -7,7 +7,6 @@ import contextlib
 import os
 import struct
 import tempfile
-import unittest
 
 import numpy as np
 import parameterized
@@ -25,7 +24,7 @@ from onnx import (
 )
 
 
-class TestVersionConverter(unittest.TestCase):
+class TestVersionConverter:
     def _converted(
         self,
         graph: GraphProto,

@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import numpy as np
 import parameterized
 import pytest
@@ -14,7 +12,7 @@ import onnx.reference
 from onnx import helper, numpy_helper
 
 
-class TestNumpyHelper(unittest.TestCase):
+class TestNumpyHelper:
     def _test_numpy_helper_float_type(self, dtype: np.number) -> None:
         a = np.random.rand(13, 37).astype(dtype)
         tensor_def = numpy_helper.from_array(a, "test")

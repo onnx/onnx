@@ -3,8 +3,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import unittest
-
 import numpy as np
 from numpy.testing import assert_allclose
 
@@ -16,7 +14,7 @@ from onnx.tools import update_model_dims
 from onnx.tools.replace_constants import replace_initializer_by_constant_of_shape
 
 
-class TestToolsFunctions(unittest.TestCase):
+class TestToolsFunctions:
     def test_update_inputs_outputs_dim(self) -> None:
         node_def = helper.make_node(
             "Conv",

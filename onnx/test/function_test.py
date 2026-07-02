@@ -3,13 +3,11 @@
 # Copyright (c) ONNX Project Contributors
 from __future__ import annotations
 
-import unittest
-
 import onnx
 from onnx import checker, utils
 
 
-class TestFunction(unittest.TestCase):
+class TestFunction:
     def _verify_function_set(self, extracted_model, function_set, func_domain):
         checker.check_model(extracted_model)
         assert len(extracted_model.functions) == len(function_set)

@@ -6,7 +6,6 @@ from __future__ import annotations
 import itertools
 import math
 import random
-import unittest
 from typing import Any
 
 import ml_dtypes
@@ -32,7 +31,7 @@ from onnx.numpy_helper import _pack_2bitx4 as _pack_2bit
 from onnx.numpy_helper import _pack_4bitx2 as _pack_4bit
 
 
-class TestHelperAttributeFunctions(unittest.TestCase):
+class TestHelperAttributeFunctions:
     def test_attr_float(self) -> None:
         # float
         attr = helper.make_attribute("float", 1.0)
@@ -315,7 +314,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
                 checker.check_attribute(attr)
 
 
-class TestHelperNodeFunctions(unittest.TestCase):
+class TestHelperNodeFunctions:
     def test_node_no_arg(self) -> None:
         assert defs.has("Relu")
         node_def = helper.make_node("Relu", ["X"], ["Y"], name="test")
@@ -452,7 +451,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
             mk_model([("", 100)])
 
 
-class TestHelperTensorFunctions(unittest.TestCase):
+class TestHelperTensorFunctions:
     def test_make_string_tensor(self) -> None:
         string_list = [s.encode("utf-8") for s in ["Amy", "Billy", "Cindy", "David"]]
         tensor = helper.make_tensor(
@@ -873,7 +872,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
             )
 
 
-class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
+class TestHelperOptionalAndSequenceFunctions:
     def test_make_optional(self) -> None:
         values = [1.1, 2.2, 3.3, 4.4, 5.5]
         values_tensor = helper.make_tensor(
@@ -951,7 +950,7 @@ class TestHelperOptionalAndSequenceFunctions(unittest.TestCase):
         assert sequence_val_info == sequence_val_info_prim
 
 
-class TestPrintableGraph(unittest.TestCase):
+class TestPrintableGraph:
     def test_initializer_with_matching_graph_input(self) -> None:
         add = helper.make_node("Add", ["X", "Y_Initializer"], ["Z"])
         value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1])]
@@ -1128,7 +1127,7 @@ def test_make_tensor_raw(tensor_dtype: int, vals_as_bytes: bool) -> None:
         np.testing.assert_equal(np_array, roundtrip_array)
 
 
-class TestHelperMappingFunctions(unittest.TestCase):
+class TestHelperMappingFunctions:
     # TODO (#4554): remove these tests about catching warnings after the deprecation period
     # Test these new functions should not raise any deprecation warnings
     @pytest.mark.filterwarnings("error::DeprecationWarning")
@@ -1162,7 +1161,7 @@ class TestHelperMappingFunctions(unittest.TestCase):
         assert helper.tensor_dtype_to_field(TensorProto.BFLOAT16) == "int32_data"
 
 
-class TestAttrTypeToStr(unittest.TestCase):
+class TestAttrTypeToStr:
     @parameterized.parameterized.expand(
         [
             (AttributeProto.AttributeType.FLOAT, "FLOAT"),

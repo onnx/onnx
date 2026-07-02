@@ -7,7 +7,6 @@ import io
 import os
 import pathlib
 import tempfile
-import unittest
 
 import google.protobuf.message
 import google.protobuf.text_format
@@ -43,7 +42,7 @@ def _simple_tensor() -> onnx.TensorProto:
         {"format": "onnxtxt"},
     ]
 )
-class TestIO(unittest.TestCase):
+class TestIO:
     format: str
 
     def test_load_model_when_input_is_bytes(self) -> None:
@@ -88,7 +87,7 @@ class TestIO(unittest.TestCase):
         # The onnxtxt format does not support saving/loading tensors yet
     ]
 )
-class TestIOTensor(unittest.TestCase):
+class TestIOTensor:
     """Test loading and saving of TensorProto."""
 
     format: str
@@ -126,7 +125,7 @@ class TestIOTensor(unittest.TestCase):
             assert proto == loaded_proto
 
 
-class TestSaveAndLoadFileExtensions(unittest.TestCase):
+class TestSaveAndLoadFileExtensions:
     def test_save_model_picks_correct_format_from_extension(self) -> None:
         proto = _simple_model()
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -206,7 +205,7 @@ class TestSaveAndLoadFileExtensions(unittest.TestCase):
             assert proto == loaded_proto_as_explicitly_protobuf
 
 
-class TestBasicFunctions(unittest.TestCase):
+class TestBasicFunctions:
     def test_protos_exist(self) -> None:
         # The proto classes should exist
         _ = onnx.AttributeProto

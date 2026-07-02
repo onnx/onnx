@@ -1090,7 +1090,7 @@ class TestSaveExternalDataAbsolutePathValidation(TestLoadExternalDataBase):
             save_external_data(tensor, self.temp_dir)
 
 
-class TestExternalDataInfoSecurity(unittest.TestCase):
+class TestExternalDataInfoSecurity:
     """Tests for ExternalDataInfo hardening against attribute injection and bounds.
 
     Covers all attack vectors from the security advisory: unknown key injection,

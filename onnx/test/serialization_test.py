@@ -86,7 +86,7 @@ class TestRegistry(unittest.TestCase):
             ) == loaded_model.SerializeToString(deterministic=True)
 
 
-class TestCustomSerializer(unittest.TestCase):
+class TestCustomSerializer:
     def test_serialize_deserialize_model(self) -> None:
         serializer = _OnnxTestTextualSerializer()
         model = onnx.parser.parse_model(_TEST_MODEL)

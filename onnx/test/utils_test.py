@@ -8,7 +8,6 @@ import os
 import shutil
 import tarfile
 import tempfile
-import unittest
 
 import pytest
 
@@ -16,7 +15,7 @@ import onnx
 from onnx import TensorProto, helper
 
 
-class TestUtilityFunctions(unittest.TestCase):
+class TestUtilityFunctions:
     def test_extract_model(self) -> None:
         def create_tensor(name):
             return helper.make_tensor_value_info(name, TensorProto.FLOAT, [1, 2])
