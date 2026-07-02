@@ -11,10 +11,7 @@
 
 #include "onnx/defs/type_builders.h"
 
-namespace ONNX_NAMESPACE {
-namespace defs {
-namespace sequence {
-namespace utils {
+namespace ONNX_NAMESPACE::defs::sequence::utils {
 
 // Common documentation for SplitToSequence operator, versions 11 and 24
 static constexpr const char* SplitToSequence_ver11_doc =
@@ -188,7 +185,4 @@ std::function<void(OpSchema&)> SplitToSequenceOpGenerator(
   };
 }
 
-} // namespace utils
-} // namespace sequence
-} // namespace defs
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::defs::sequence::utils

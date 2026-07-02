@@ -9,8 +9,7 @@
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 static bool IsValidIdentifier(const std::string& name) {
   if (name.empty()) {
@@ -68,5 +67,4 @@ TEST(Tensor, ElemNumLargeTensorNoOverflow) {
   EXPECT_EQ(t.size_from_dim(1), int64_t{50000});
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

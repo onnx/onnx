@@ -12,8 +12,7 @@
 
 #include "onnx/version_converter/adapters/adapter.h"
 
-namespace ONNX_NAMESPACE {
-namespace version_conversion {
+namespace ONNX_NAMESPACE::version_conversion {
 
 struct Upsample_6_7 final : public Adapter {
   explicit Upsample_6_7() : Adapter("Upsample", OpSetID(6), OpSetID(7)) {}
@@ -44,5 +43,4 @@ struct Upsample_6_7 final : public Adapter {
   }
 };
 
-} // namespace version_conversion
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::version_conversion

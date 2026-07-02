@@ -9,8 +9,7 @@
 
 #include "onnx/common/visitor.h"
 
-namespace ONNX_NAMESPACE {
-namespace internal { // internal/private API
+namespace ONNX_NAMESPACE::internal { // internal/private API
 
 using AttributeMap = std::unordered_map<std::string, const AttributeProto*>;
 
@@ -65,5 +64,4 @@ class AttributeBinder : public MutableVisitor {
   const AttributeMap& attr_map_;
 };
 
-} // namespace internal
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::internal

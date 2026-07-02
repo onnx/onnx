@@ -5,8 +5,7 @@
 #include "gtest/gtest.h"
 #include "onnx/defs/schema.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 TEST(OpRegistrationTest, GemmOp) {
   const auto* const opSchema = OpSchemaRegistry::Schema("Gemm");
   EXPECT_TRUE(nullptr != opSchema);
@@ -20,5 +19,4 @@ TEST(OpRegistrationTest, GemmOp) {
   EXPECT_NE(opSchema->attributes().count("beta"), 0);
   EXPECT_EQ(opSchema->attributes().at("beta").type, AttributeProto_AttributeType_FLOAT);
 }
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test

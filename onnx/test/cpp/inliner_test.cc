@@ -13,8 +13,7 @@
 #include "onnx/inliner/inliner.h"
 #include "onnx/shape_inference/implementation.h"
 
-namespace ONNX_NAMESPACE {
-namespace Test {
+namespace ONNX_NAMESPACE::Test {
 
 static void InlineFunctions(
     ModelProto& model,
@@ -498,5 +497,4 @@ TEST(Renamer, BasicFunctionality) {
   ASSERT_TRUE(node.output(0).find("test") != std::string::npos); // Should have prefix
 }
 
-} // namespace Test
-} // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE::Test
