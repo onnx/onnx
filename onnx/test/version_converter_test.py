@@ -2870,6 +2870,103 @@ class TestVersionConverter(unittest.TestCase):
 
         self.assertRaises(RuntimeError, test)
 
+    def test_scan_8_9_rejects_no_inputs(self) -> None:
+        # Scan in opset 8 must have at least 1 input; zero inputs is UB (inputs[0] OOB).
+        def test() -> None:
+            nodes = [
+                helper.make_node(
+                    "Scan",
+                    inputs=[],
+                    outputs=["y"],
+                    body=helper.make_graph([], "body", [], []),
+                )
+            ]
+            graph = helper.make_graph(
+                nodes,
+                "test_scan_no_inputs",
+                [],
+                [helper.make_tensor_value_info("y", TensorProto.FLOAT, None)],
+            )
+            model = helper.make_model(
+                graph, opset_imports=[helper.make_operatorsetid("", 8)]
+            )
+            onnx.version_converter.convert_version(model, 9)
+
+        self.assertRaises(RuntimeError, test)
+
+    def test_scan_9_8_with_valid_node(self) -> None:
+        data_type = TensorProto.FLOAT
+        node1 = helper.make_node("Add", inputs=["sum_in", "next"], outputs=["sum_out"])
+        node2 = helper.make_node("Identity", inputs=["sum_out"], outputs=["scan_out"])
+        body = helper.make_graph(
+            [node1, node2],
+            "scan_body",
+            [
+                helper.make_tensor_value_info("sum_in", data_type, [2]),
+                helper.make_tensor_value_info("next", data_type, [2]),
+            ],
+            [
+                helper.make_tensor_value_info("sum_out", data_type, [2]),
+                helper.make_tensor_value_info("scan_out", data_type, [2]),
+            ],
+        )
+        nodes = [
+            helper.make_node(
+                "Scan",
+                inputs=["initial", "x"],
+                outputs=["y", "z"],
+                body=body,
+                num_scan_inputs=1,
+            )
+        ]
+        graph = helper.make_graph(
+            nodes,
+            "test_scan_9_8",
+            [
+                helper.make_tensor_value_info("initial", data_type, [2]),
+                helper.make_tensor_value_info("x", data_type, [3, 2]),
+            ],
+            [
+                helper.make_tensor_value_info("y", data_type, [2]),
+                helper.make_tensor_value_info("z", data_type, [3, 2]),
+            ],
+        )
+        converted_model = self._converted(graph, helper.make_operatorsetid("", 9), 8)
+        assert converted_model.graph.node[0].op_type == "Scan"
+        assert converted_model.opset_import[0].version == 8
+
+    def test_convert_version_ai_onnx_domain_spelling_preserves_custom_domain(
+        self,
+    ) -> None:
+        # convert_graph's default-domain lookup must match "ai.onnx" (not just ""),
+        # and must only increment that entry -- a custom-domain opset_import must
+        # be left untouched.
+        node = helper.make_node("Add", inputs=["X", "Y"], outputs=["Z"])
+        graph = helper.make_graph(
+            [node],
+            "test_default_domain_ai_onnx_spelling",
+            [
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1]),
+                helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1]),
+            ],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1])],
+        )
+        model = helper.make_model(
+            graph,
+            opset_imports=[
+                helper.make_operatorsetid("ai.onnx", 9),
+                helper.make_operatorsetid("custom.domain", 1),
+            ],
+        )
+        converted_model = onnx.version_converter.convert_version(model, 8)
+        checker.check_model(converted_model)
+
+        opset_by_domain = {
+            opset.domain: opset.version for opset in converted_model.opset_import
+        }
+        assert opset_by_domain["ai.onnx"] == 8
+        assert opset_by_domain["custom.domain"] == 1
+
     def _celu_converted(self, dtype: int, src: int, dst: int) -> ModelProto:
         node = helper.make_node("Celu", ["X"], ["Y"], alpha=2.0)
         graph = helper.make_graph(
