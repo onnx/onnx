@@ -34,13 +34,13 @@
     {
       "type": "library",
       "name": "protobuf",
-      "version": "6.31.1",
+      "version": "31.1",
       "bom-ref": "protobuf",
-      "purl": "pkg:github/protocolbuffers/protobuf@v6.31.1",
+      "purl": "pkg:github/protocolbuffers/protobuf@v31.1",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://github.com/protocolbuffers/protobuf/releases/download/v6.31.1/protobuf-6.31.1.tar.gz"
+          "url": "https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protobuf-31.1.tar.gz"
         }
       ],
       "hashes": [
