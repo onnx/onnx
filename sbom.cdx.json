@@ -44,7 +44,7 @@
         }
       ],
       "hashes": [
-        {"alg": "SHA-256", "content": "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"}
+        {"alg": "SHA-256", "content": "12bfd76d27b9ac3d65c00966901609e020481b9474ef75c7ff4601ac06fa0b82"}
       ],
       "licenses": [{"license": {"id": "BSD-3-Clause"}}]
     },
