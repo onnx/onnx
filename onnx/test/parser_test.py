@@ -388,7 +388,7 @@ class TestBasicFunctions:
 
         if not locale_set:
             restore_locale()
-            self.skipTest("No locale with comma decimal separator available")
+            pytest.skip("No locale with comma decimal separator available")
 
         try:
             model_text = """
