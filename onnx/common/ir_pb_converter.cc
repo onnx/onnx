@@ -17,7 +17,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-static std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, int ir_version = IR_VERSION);
+static std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested, int64_t ir_version = IR_VERSION);
 
 static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   Tensor ret;
@@ -119,7 +119,7 @@ static Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto& tp) {
   return ret;
 }
 
-static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node& n, const int ir_version = IR_VERSION) {
+static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node& n, const int64_t ir_version = IR_VERSION) {
   Symbol sym = Symbol(ap.name());
   switch (ap.type()) {
     case ONNX_NAMESPACE::AttributeProto_AttributeType_FLOAT:
@@ -204,7 +204,7 @@ static void convertAttribute(const ONNX_NAMESPACE::AttributeProto& ap, Node& n, 
   }
 }
 
-static void convertAttributes(const ONNX_NAMESPACE::NodeProto& np, Node& n, const int ir_version = IR_VERSION) {
+static void convertAttributes(const ONNX_NAMESPACE::NodeProto& np, Node& n, const int64_t ir_version = IR_VERSION) {
   for (int i = 0; i < np.attribute_size(); i++) {
     convertAttribute(np.attribute(i), n, ir_version);
   }
@@ -239,7 +239,7 @@ static Value* createDummyValue(
   return v;
 }
 
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int ir_version) {
+std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested, const int64_t ir_version) {
   auto g = std::make_unique<Graph>();
 
   if (gp.has_name()) {
