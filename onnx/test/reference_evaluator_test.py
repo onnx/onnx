@@ -6551,7 +6551,3 @@ class TestReferenceEvaluator(unittest.TestCase):
 
         assert_allclose(got_state, expected_state)
         assert_allclose(got_output, expected_output)
-
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)

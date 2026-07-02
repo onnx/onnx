@@ -595,7 +595,3 @@ class TestOpSchemaRegister(unittest.TestCase):
         self.assertEqual(str(schema_b), str(op_schema))
         self.assertEqual(str(schema_c[0]), str(op_schema))
         self.assertEqual(str(schema_d[0]), str(op_schema))
-
-
-if __name__ == "__main__":
-    unittest.main()
